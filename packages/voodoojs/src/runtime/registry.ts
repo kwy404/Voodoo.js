@@ -31,6 +31,11 @@ export interface VoodooConfig {
   currency: string;
   /** Injeta o CSS dos componentes de UI automaticamente. */
   injectStyles: boolean;
+  /**
+   * Retira os atributos `v-*` do HTML depois de processados, deixando o DOM
+   * limpo no inspetor. Os valores continuam acessiveis internamente.
+   */
+  cleanAttributes: boolean;
 }
 
 export const config: VoodooConfig = {
@@ -44,6 +49,7 @@ export const config: VoodooConfig = {
   locale: typeof navigator !== 'undefined' ? navigator.language || 'pt-BR' : 'pt-BR',
   currency: 'BRL',
   injectStyles: true,
+  cleanAttributes: true,
 };
 
 // ---------------------------------------------------------------------------

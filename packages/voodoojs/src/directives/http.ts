@@ -21,7 +21,14 @@
 import { handleError, reactive } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
-import { addCleanup, destroy, evaluateIn, walk } from '../runtime/walker';
+import {
+  addCleanup,
+  destroy,
+  evaluateIn,
+  hasAttr as hasCachedAttr,
+  readAttr,
+  walk,
+} from '../runtime/walker';
 import { http, HttpError, type HttpMethod, type HttpResponse } from '../http';
 import { escapeHtml, parseDuration, debounce } from '../utils';
 import { toast } from '../ui/toast';
@@ -32,12 +39,16 @@ import { toast } from '../ui/toast';
 
 const p = (): string => config.prefix;
 
+/**
+ * Le um atributo de configuracao. Usa o cache do walker, entao continua
+ * funcionando depois que os atributos saem do HTML.
+ */
 function attr(el: Element, name: string): string | null {
-  return el.getAttribute(`${p()}${name}`);
+  return readAttr(el, `${p()}${name}`);
 }
 
 function hasAttr(el: Element, name: string): boolean {
-  return el.hasAttribute(`${p()}${name}`);
+  return hasCachedAttr(el, `${p()}${name}`);
 }
 
 export type SwapMode =

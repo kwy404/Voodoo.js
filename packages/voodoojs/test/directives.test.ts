@@ -702,6 +702,47 @@ describe('directives customizadas', () => {
   });
 });
 
+describe('limpeza dos atributos', () => {
+  it('remove os atributos v-* do HTML depois de renderizar', async () => {
+    const root = mount(
+      '<div v-data="{ n: 0 }"><button v-click="n++" @mouseenter="n++">+</button><b v-text="n"></b></div>'
+    );
+    await settle();
+
+    expect(root.innerHTML).not.toContain('v-data');
+    expect(root.innerHTML).not.toContain('v-click');
+    expect(root.innerHTML).not.toContain('v-text');
+    expect(root.innerHTML).not.toContain('@mouseenter');
+  });
+
+  it('remove os atalhos de dois pontos e mantem o atributo resultante', async () => {
+    const root = mount('<a :href="link" :class="{ ativo: true }">x</a>', { link: '/destino' });
+    await settle();
+
+    const a = root.querySelector('a')!;
+    expect(a.hasAttribute(':href')).toBe(false);
+    expect(a.getAttribute('href')).toBe('/destino');
+    expect(a.classList.contains('ativo')).toBe(true);
+  });
+
+  it('o comportamento continua funcionando sem os atributos', async () => {
+    const root = mount('<div v-data="{ n: 0 }"><button v-click="n++"></button><b v-text="n"></b></div>');
+    await settle();
+
+    root.querySelector('button')!.click();
+    await settle();
+    expect(root.querySelector('b')!.textContent).toBe('1');
+  });
+
+  it('config.cleanAttributes desliga a limpeza', async () => {
+    core.config.cleanAttributes = false;
+    const root = mount('<b v-text="valor"></b>', { valor: 'oi' });
+    await settle();
+    expect(root.innerHTML).toContain('v-text');
+    core.config.cleanAttributes = true;
+  });
+});
+
 describe('variaveis magicas', () => {
   it('$store acessa stores globais', async () => {
     core.store('carrinho', { total: 3 });

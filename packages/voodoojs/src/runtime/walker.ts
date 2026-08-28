@@ -187,6 +187,79 @@ function priorityOf(attr: ParsedAttribute): number {
   return directives.get(attr.name)?.priority ?? 0;
 }
 
+// ---------------------------------------------------------------------------
+// Limpeza dos atributos depois da renderizacao
+// ---------------------------------------------------------------------------
+
+/**
+ * Valor original de cada atributo `v-*`, guardado antes de ele sair do HTML.
+ * As directives continuam lendo pelo cache, entao o comportamento nao muda.
+ */
+const attributeCache = new WeakMap<Element, Map<string, string>>();
+
+/** `true` quando o nome do atributo pertence a Voodoo. */
+export function isVoodooAttribute(name: string): boolean {
+  return (
+    name.startsWith(config.prefix) ||
+    name.startsWith('data-v-') ||
+    name.charCodeAt(0) === 64 /* @ */ ||
+    (name.charCodeAt(0) === 58 /* : */ && name.length > 1)
+  );
+}
+
+/**
+ * Le um atributo da Voodoo mesmo depois que ele foi retirado do HTML.
+ *
+ * Use esta funcao no lugar de `el.getAttribute` sempre que a leitura acontecer
+ * depois da montagem, como dentro de um manipulador de evento ou de uma
+ * requisicao repetida.
+ */
+export function readAttr(el: Element, name: string): string | null {
+  const cached = attributeCache.get(el)?.get(name);
+  if (cached !== undefined) return cached;
+  return el.getAttribute(name);
+}
+
+/** Versao booleana de `readAttr`. */
+export function hasAttr(el: Element, name: string): boolean {
+  const map = attributeCache.get(el);
+  if (map?.has(name)) return true;
+  return el.hasAttribute(name);
+}
+
+/** Todos os atributos da Voodoo que o elemento declarou originalmente. */
+export function originalAttributes(el: Element): Map<string, string> {
+  const map = attributeCache.get(el);
+  if (map) return new Map(map);
+  const out = new Map<string, string>();
+  for (let i = 0; i < el.attributes.length; i++) {
+    const attr = el.attributes[i];
+    if (isVoodooAttribute(attr.name)) out.set(attr.name, attr.value);
+  }
+  return out;
+}
+
+/**
+ * Guarda os atributos no cache e os retira do HTML, deixando a pagina limpa,
+ * do mesmo jeito que um framework com compilador faria.
+ * Controlado por `V.config.cleanAttributes`.
+ */
+function stripAttributes(el: Element): void {
+  if (!config.cleanAttributes) return;
+
+  let map = attributeCache.get(el);
+  if (!map) attributeCache.set(el, (map = new Map()));
+
+  const remover: string[] = [];
+  for (let i = 0; i < el.attributes.length; i++) {
+    const attr = el.attributes[i];
+    if (!isVoodooAttribute(attr.name)) continue;
+    map.set(attr.name, attr.value);
+    remover.push(attr.name);
+  }
+  for (const name of remover) el.removeAttribute(name);
+}
+
 /** Verifica se o elemento tem qualquer atributo da Voodoo. */
 export function hasDirectives(el: Element): boolean {
   const attrs = el.attributes;
@@ -374,7 +447,11 @@ export function walk(node: Node, scope?: Scope): void {
     runDirective(el, attr, current);
   }
 
-  // Passo 4: filhos.
+  // Passo 4: tira os atributos `v-*` do HTML, que ja cumpriram o seu papel.
+  // Os valores continuam disponiveis por `readAttr`.
+  stripAttributes(el);
+
+  // Passo 5: filhos.
   if (!skipChildren.has(el)) walkChildren(el, current);
 }
 

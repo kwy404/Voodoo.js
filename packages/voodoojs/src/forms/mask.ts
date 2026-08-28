@@ -43,12 +43,12 @@ export function registerMask(name: string, patternOrFn: MaskPattern): void {
 /** Tokens aceitos nos padroes de mascara. */
 const TOKENS: Record<string, RegExp> = {
   '9': /\d/,
-  A: /[A-Za-zÀ-ÿ]/,
-  S: /[0-9A-Za-zÀ-ÿ]/,
+  A: /[A-Za-zÀ-ÖØ-öø-ÿ]/,
+  S: /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/,
   '*': /[\s\S]/,
 };
 
-const RELEVANT = /[0-9A-Za-zÀ-ÿ]/;
+const RELEVANT = /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/;
 
 /** Mascaras que representam numero e por isso digitam da direita para a esquerda. */
 const RIGHT_TO_LEFT = new Set(['currency', 'percent']);
@@ -246,7 +246,7 @@ export function unmask(value: string, pattern?: string): string {
     return negative ? `-${numeric}` : numeric;
   }
 
-  return text.replace(/[^0-9A-Za-zÀ-ÿ]/g, '');
+  return text.replace(/[^0-9A-Za-zÀ-ÖØ-öø-ÿ]/g, '');
 }
 
 /**

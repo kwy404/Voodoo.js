@@ -26,18 +26,26 @@ import { magic } from './runtime/scope';
 // Efeitos colaterais: registram as directives de cada modulo.
 import './directives/ui';
 import './directives/forms';
+import './directives/state';
 import './motion';
 import './charts';
-import './ui/components';
 
 import { modal, alert, confirm, prompt, dialog } from './ui/dialog';
 import { palette } from './ui/palette';
 import { hotkey } from './directives/ui';
-import { validator, validate, validateForm, serializeForm, messages } from './forms/validate';
-import { mask, applyMask, unmask, registerMask } from './forms/mask';
-import { animate, spring, stagger, inView, motionPresets, easings } from './motion';
-import { renderChart } from './charts';
-import { xray } from './devtools/xray';
+import {
+  validator,
+  validate,
+  serializeForm,
+  messages,
+  showFormErrors,
+  showFieldError,
+  clearErrors,
+} from './forms/validate';
+import { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
+import { animate, spring, stagger, inView, scrollProgress, motionPresets, easings } from './motion';
+import { renderChart, charts, CHART_COLORS } from './charts';
+import { xray, enableXrayShortcut } from './devtools/xray';
 
 // ---------------------------------------------------------------------------
 // Montagem do objeto chamavel
@@ -87,10 +95,14 @@ Object.assign(V, core, {
   // Formularios
   validator,
   validate,
-  validateForm,
+  validateForm: validate,
   serializeForm,
   messages,
+  showFormErrors,
+  showFieldError,
+  clearErrors,
   mask,
+  masks,
   applyMask,
   unmask,
   registerMask,
@@ -100,12 +112,15 @@ Object.assign(V, core, {
   spring,
   stagger,
   inView,
+  scrollProgress,
   motion: motionPresets,
   easings,
 
   // Graficos
   chart: renderChart,
   renderChart,
+  charts,
+  chartColors: CHART_COLORS,
 
   // Interface
   palette,
@@ -113,6 +128,7 @@ Object.assign(V, core, {
 
   // Ferramentas de inspecao
   xray,
+  enableXrayShortcut,
   devtools: devtoolsBus,
 
   magic,
@@ -176,10 +192,10 @@ export {
 
 export { router, route, navigate } from './router';
 export { i18n, t, setLocale, getLocale } from './i18n';
-export { animate, spring, stagger, inView, easings } from './motion';
-export { renderChart } from './charts';
-export { validator, validate, validateForm, serializeForm } from './forms/validate';
-export { mask, applyMask, unmask, registerMask } from './forms/mask';
+export { animate, spring, stagger, inView, scrollProgress, easings, motionPresets } from './motion';
+export { renderChart, charts } from './charts';
+export { validator, validate, serializeForm, showFormErrors, clearErrors } from './forms/validate';
+export { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
 export { hotkey } from './directives/ui';
 export { xray } from './devtools/xray';
 export { devtoolsBus } from './devtools/bus';

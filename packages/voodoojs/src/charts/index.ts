@@ -21,6 +21,15 @@ import { ensureTokens, injectStyle } from '../dom/style';
 import { config, defineDirective } from '../runtime/registry';
 import { device, escapeHtml } from '../utils';
 
+/**
+ * Preferencia do usuario por menos movimento. Ambientes de teste e renderizacao
+ * no servidor nao tem `matchMedia`, entao ali a resposta e sempre `false`.
+ */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return device.reducedMotion;
+}
+
 // ---------------------------------------------------------------------------
 // Tipos publicos
 // ---------------------------------------------------------------------------
@@ -657,6 +666,23 @@ function titleTag(label: string, value: number, format: ChartFormat): string {
   return `<title>${escapeHtml(label)}: ${escapeHtml(formatChartValue(value, format))}</title>`;
 }
 
+/** Resumo de uma serie inteira, usado no `<title>` das linhas. */
+function seriesSummary(entry: ChartSeries, format: ChartFormat): string {
+  if (entry.values.length === 0) return entry.name;
+  let min = Infinity;
+  let max = -Infinity;
+  for (const value of entry.values) {
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  }
+  const first = entry.values[0];
+  const last = entry.values[entry.values.length - 1];
+  return (
+    `${entry.name}: de ${formatChartValue(first, format)} a ${formatChartValue(last, format)}, ` +
+    `minimo ${formatChartValue(min, format)}, maximo ${formatChartValue(max, format)}`
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Linha, area e sparkline
 // ---------------------------------------------------------------------------
@@ -686,7 +712,12 @@ function renderLine(ctx: RenderContext): string {
       parts.push(`<path class="v-chart-area" d="${area}" fill="${escapeHtml(entry.color)}" fill-opacity="0.16"/>`);
     }
     const dash = ctx.animated ? ' pathLength="1" stroke-dasharray="1"' : '';
-    parts.push(`<path class="v-chart-line" d="${path}" stroke="${escapeHtml(entry.color)}"${dash}/>`);
+    // O `<title>` na linha inteira garante leitura acessivel mesmo no
+    // sparkline, que nao desenha os pontos individuais.
+    parts.push(
+      `<path class="v-chart-line" d="${path}" stroke="${escapeHtml(entry.color)}"${dash}>` +
+        `<title>${escapeHtml(seriesSummary(entry, ctx.format))}</title></path>`
+    );
 
     if (!bare && count <= 40) {
       points.forEach((point, index) => {
@@ -1280,7 +1311,7 @@ function draw(state: ChartState): void {
   const full = normalize(options, type);
   const legend = buildLegend(full, palette);
   const dataset = applyHidden(full, state.hidden, palette);
-  const animated = options.animate !== false && !device.reducedMotion;
+  const animated = options.animate !== false && !prefersReducedMotion();
 
   state.hits = [];
   state.shapeHits = SHAPE_HIT.has(type);

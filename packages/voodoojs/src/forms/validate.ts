@@ -236,8 +236,9 @@ export function findRelatedField(el: FormField, reference: string): FormField | 
 const RE_EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const RE_INTEGER = /^-?\d+$/;
 const RE_DECIMAL = /^-?\d+(?:[.,]\d+)?$/;
-const RE_ALPHA = /^[A-Za-zÀ-ɏ]+$/;
-const RE_ALPHANUM = /^[A-Za-z0-9À-ɏ]+$/;
+// As faixas acentuadas pulam os sinais de multiplicacao e divisao.
+const RE_ALPHA = /^[A-Za-zÀ-ÖØ-öø-ɏ]+$/;
+const RE_ALPHANUM = /^[A-Za-z0-9À-ÖØ-öø-ɏ]+$/;
 
 function digitsOf(value: string): string {
   return value.replace(/\D/g, '');
@@ -794,7 +795,10 @@ export function focusFirstError(form: HTMLElement): boolean {
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  field.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  // Nem todo ambiente implementa a rolagem suave, entao a chamada e protegida.
+  if (typeof field.scrollIntoView === 'function') {
+    field.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+  }
   return true;
 }
 

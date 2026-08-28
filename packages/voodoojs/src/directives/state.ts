@@ -76,6 +76,10 @@ defineDirective(
 
     const stopWatching = watch(scope.data, () => save(), { deep: true });
 
+    // Grava tambem o estado inicial, para a chave existir desde o primeiro
+    // carregamento, mesmo que o usuario nao mexa em nada.
+    save();
+
     cleanup(() => {
       save.flush();
       stopWatching();

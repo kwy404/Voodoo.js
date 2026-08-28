@@ -26,6 +26,15 @@ import { warn } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import { device, parseDuration } from '../utils';
 
+/**
+ * Preferencia do usuario por menos movimento. Ambientes de teste e renderizacao
+ * no servidor nao tem `matchMedia`, entao ali a resposta e sempre `false`.
+ */
+function prefersReducedMotion(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+  return device.reducedMotion;
+}
+
 // ---------------------------------------------------------------------------
 // Tipos publicos
 // ---------------------------------------------------------------------------
@@ -704,7 +713,7 @@ function animateOne(
 ): AnimationControl {
   const tracks = buildTracks(el, keyframes);
 
-  if (device.reducedMotion && !options.force) {
+  if (prefersReducedMotion() && !options.force) {
     applyTracks(el, tracks, 1);
     options.onUpdate?.(1);
     options.onComplete?.();
@@ -867,7 +876,7 @@ export function animate(
  * ```
  */
 export function spring(from: number, to: number, options: SpringOptions = {}): AnimationControl {
-  if (device.reducedMotion) {
+  if (prefersReducedMotion()) {
     options.onUpdate?.(to);
     options.onComplete?.();
     return instantControl();
@@ -1346,7 +1355,7 @@ defineDirective('motion-scroll', ({ el, expression, evaluate, modifiers, cleanup
   const amountAttr = readAttr(el, 'motion-scroll-amount');
   const amount = amountAttr === null ? 0.25 : parseFloat(amountAttr) || 0;
 
-  if (!device.reducedMotion) applyInitial(el, keyframes);
+  if (!prefersReducedMotion()) applyInitial(el, keyframes);
 
   let control: AnimationControl | null = null;
   const stopWatching = inView(
@@ -1357,7 +1366,7 @@ defineDirective('motion-scroll', ({ el, expression, evaluate, modifiers, cleanup
       if (once) return undefined;
       return (): void => {
         control?.stop();
-        if (!device.reducedMotion) applyInitial(el, keyframes);
+        if (!prefersReducedMotion()) applyInitial(el, keyframes);
       };
     },
     { once, amount, margin: readAttr(el, 'motion-scroll-margin') ?? '0px' }
@@ -1473,7 +1482,7 @@ defineDirective('motion-tap', ({ el, expression, evaluate, cleanup }) => {
  * informado. Valores negativos invertem o sentido do movimento.
  */
 defineDirective('parallax', ({ el, expression, evaluate, cleanup }) => {
-  if (device.reducedMotion || typeof window === 'undefined') return;
+  if (prefersReducedMotion() || typeof window === 'undefined') return;
 
   const value = evaluate<unknown>();
   const factor =

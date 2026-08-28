@@ -128,7 +128,25 @@ magic('$form', (scope) => resolveFormState(scope));
 
 const declaredOptions = new WeakMap<HTMLElement, Record<string, string>>();
 
-const REQUEST_DIRECTIVES = ['submit', 'upload', 'dropzone', 'autosave'];
+/**
+ * Directives que disparam requisicao. Alem das deste modulo, entram as do
+ * modulo `directives/http`, que compartilham as mesmas opcoes.
+ */
+const REQUEST_DIRECTIVES = [
+  'submit',
+  'upload',
+  'dropzone',
+  'autosave',
+  'get',
+  'post',
+  'put',
+  'patch',
+  'delete',
+  'load',
+  'load-visible',
+  'search',
+  'resource',
+];
 
 function isRequestHost(el: Element): boolean {
   return REQUEST_DIRECTIVES.some(

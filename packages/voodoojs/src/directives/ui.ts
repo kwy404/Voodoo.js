@@ -25,6 +25,10 @@ import { fadeIn, fadeOut, slideDown, slideUp } from '../dom/transition';
 import { theme, url } from '../storage';
 import { device, escapeHtml, parseDuration, throttle, uid } from '../utils';
 
+// Efeito colateral: registra o sistema de arrastar e soltar, que reaproveita os
+// auxiliares deste modulo. Ver `directives/dnd.ts`.
+import './dnd';
+
 // ---------------------------------------------------------------------------
 // Estilos
 // ---------------------------------------------------------------------------
@@ -106,13 +110,6 @@ const UI_CSS = `
 .v-sticky{position:sticky;top:var(--v-sticky-offset,0px);z-index:5}
 .v-stuck{box-shadow:var(--v-shadow,0 10px 30px rgba(20,17,31,.14))}
 
-.v-sortable{position:relative}
-.v-sort-dragging{position:fixed;z-index:var(--v-z-modal,1000);pointer-events:none;
-  box-shadow:var(--v-shadow,0 10px 30px rgba(20,17,31,.14));opacity:.94;cursor:grabbing}
-.v-sort-placeholder{border:2px dashed var(--v-primary,#6D3BF5);border-radius:var(--v-radius-sm,8px);
-  background:var(--v-surface-2,#FBF7F2);box-sizing:border-box}
-.v-sort-handle{cursor:grab;touch-action:none}
-
 .v-resizable{position:relative}
 .v-resize-handle{position:absolute;background:transparent;touch-action:none;padding:0;border:0}
 .v-resize-handle:focus-visible{outline:2px solid var(--v-primary,#6D3BF5);outline-offset:-2px}
@@ -155,8 +152,11 @@ function ensureUi(): void {
 
 const optionValues = new WeakMap<Element, Record<string, string>>();
 
-/** Le um atributo da Voodoo aceitando `v-nome` e `data-v-nome`. */
-function attrOf(el: Element, name: string): string | null {
+/**
+ * Le um atributo da Voodoo aceitando `v-nome` e `data-v-nome`.
+ * @internal usado tambem por `directives/dnd`.
+ */
+export function attrOf(el: Element, name: string): string | null {
   return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
 }
 
@@ -170,8 +170,11 @@ function selectorFor(name: string): string {
   return `[${config.prefix}${name}],[data-v-${name}]`;
 }
 
-/** Le o valor de uma opcao, primeiro do registro e depois do atributo cru. */
-function readOption(el: Element, name: string): string | null {
+/**
+ * Le o valor de uma opcao, primeiro do registro e depois do atributo cru.
+ * @internal usado tambem por `directives/dnd`.
+ */
+export function readOption(el: Element, name: string): string | null {
   const bag = optionValues.get(el);
   if (bag && name in bag) return bag[name];
   return attrOf(el, name);
@@ -181,8 +184,10 @@ function readOption(el: Element, name: string): string | null {
  * Registra um atributo que existe apenas para configurar outra directive.
  * O valor fica guardado no registro de opcoes, o que evita reler o DOM e deixa
  * o atributo declarado no runtime em vez de solto no HTML.
+ *
+ * @internal usado tambem por `directives/dnd`.
  */
-function defineOption(name: string): void {
+export function defineOption(name: string): void {
   defineDirective(
     name,
     ({ el, expression }) => {
@@ -302,8 +307,11 @@ function unlockScroll(): void {
 
 let liveRegion: HTMLElement | null = null;
 
-/** Anuncia uma mensagem curta para leitores de tela. */
-function announce(message: string): void {
+/**
+ * Anuncia uma mensagem curta para leitores de tela.
+ * @internal usado tambem por `directives/dnd`.
+ */
+export function announce(message: string): void {
   if (typeof document === 'undefined') return;
   ensureUi();
   if (!liveRegion || !liveRegion.isConnected) {
@@ -350,8 +358,10 @@ function hideElement(el: HTMLElement, animated = true): void {
 /**
  * Avalia a expressao de uma directive de UI e devolve o resultado. Quando a
  * expressao e apenas o nome de uma funcao, a funcao e chamada com o detalhe.
+ *
+ * @internal usado tambem por `directives/dnd`.
  */
-function callExpression(
+export function callExpression(
   expression: string,
   scope: Scope,
   el: HTMLElement,
@@ -367,8 +377,11 @@ function callExpression(
   return value;
 }
 
-/** Dispara um evento customizado que sobe pela arvore. */
-function dispatch(el: HTMLElement, type: string, detail: unknown): void {
+/**
+ * Dispara um evento customizado que sobe pela arvore.
+ * @internal usado tambem por `directives/dnd`.
+ */
+export function dispatch(el: HTMLElement, type: string, detail: unknown): void {
   el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
 
@@ -784,11 +797,16 @@ class Popup {
   readonly placement: FloatingPlacement;
   open = false;
   private lastFocus: HTMLElement | null = null;
+  /** Lugar original do painel, para devolver quando a directive e desmontada. */
+  private readonly homeParent: HTMLElement | null;
+  private readonly homeNext: Node | null;
 
   constructor(trigger: HTMLElement, panel: HTMLElement, kind: 'menu' | 'dialog') {
     this.trigger = trigger;
     this.panel = panel;
     this.kind = kind;
+    this.homeParent = panel.parentElement;
+    this.homeNext = panel.nextSibling;
     this.placement = parsePlacement(
       readOption(trigger, kind === 'menu' ? 'dropdown-position' : 'popover-position'),
       'bottom'
@@ -911,6 +929,13 @@ class Popup {
     document.removeEventListener('keydown', this.onKeyDown, true);
     window.removeEventListener('resize', this.reposition);
     window.removeEventListener('scroll', this.reposition, true);
+
+    if (!this.homeParent || this.panel.parentElement === this.homeParent) return;
+    if (this.homeNext && this.homeNext.parentNode === this.homeParent) {
+      this.homeParent.insertBefore(this.panel, this.homeNext);
+    } else {
+      this.homeParent.appendChild(this.panel);
+    }
   }
 }
 
@@ -2109,176 +2134,6 @@ defineDirective('download', ({ el, expression, cleanup }) => {
 
 defineOption('download-name');
 
-// ---------------------------------------------------------------------------
-// v-sortable
-// ---------------------------------------------------------------------------
-
-/** Identificador de um item da lista, usado no evento `voodoo:sorted`. */
-function itemKey(item: HTMLElement, index: number): string {
-  return item.getAttribute('data-id') ?? (item.id || String(index));
-}
-
-defineDirective('sortable', ({ el, expression, cleanup }) => {
-  ensureUi();
-  el.classList.add('v-sortable');
-  const handleSelector = expression.trim();
-
-  const items = (): HTMLElement[] =>
-    Array.from(el.children).filter(
-      (child) => !child.classList.contains('v-sort-placeholder')
-    ) as HTMLElement[];
-
-  for (const item of items()) {
-    if (handleSelector) {
-      const handle = item.querySelector<HTMLElement>(handleSelector);
-      handle?.classList.add('v-sort-handle');
-    } else {
-      item.classList.add('v-sort-handle');
-    }
-    if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
-  }
-  if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', 'Lista reordenavel');
-
-  let dragging: HTMLElement | null = null;
-  let placeholder: HTMLElement | null = null;
-  let startIndex = -1;
-  let grabX = 0;
-  let grabY = 0;
-  let started = false;
-  let pointerId = -1;
-
-  const finishOrder = (item: HTMLElement, from: number): void => {
-    const list = items();
-    const to = list.indexOf(item);
-    const order = list.map((child, index) => itemKey(child, index));
-    dispatch(el, 'voodoo:sorted', { item, from, to, order });
-    announce(`Item movido para a posicao ${to + 1} de ${list.length}`);
-  };
-
-  const onPointerDown = (event: PointerEvent): void => {
-    if (event.button !== 0) return;
-    const target = event.target as HTMLElement | null;
-    if (!target) return;
-    if (handleSelector && !target.closest(handleSelector)) return;
-
-    const item = target.closest(':scope > *') as HTMLElement | null;
-    const list = items();
-    const found = list.find((child) => child === item || child.contains(target));
-    if (!found) return;
-
-    dragging = found;
-    startIndex = list.indexOf(found);
-    const rect = found.getBoundingClientRect();
-    grabX = event.clientX - rect.left;
-    grabY = event.clientY - rect.top;
-    started = false;
-    pointerId = event.pointerId;
-
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-  };
-
-  const beginDrag = (event: PointerEvent): void => {
-    if (!dragging) return;
-    const rect = dragging.getBoundingClientRect();
-
-    placeholder = document.createElement('div');
-    placeholder.className = 'v-sort-placeholder';
-    placeholder.style.height = `${rect.height}px`;
-    placeholder.style.width = `${rect.width}px`;
-    placeholder.setAttribute('aria-hidden', 'true');
-    dragging.parentNode?.insertBefore(placeholder, dragging);
-
-    dragging.classList.add('v-sort-dragging');
-    dragging.style.width = `${rect.width}px`;
-    dragging.style.height = `${rect.height}px`;
-    dragging.style.left = `${event.clientX - grabX}px`;
-    dragging.style.top = `${event.clientY - grabY}px`;
-    started = true;
-  };
-
-  const onPointerMove = (event: PointerEvent): void => {
-    if (!dragging || event.pointerId !== pointerId) return;
-    if (!started) {
-      if (Math.abs(event.clientY - (dragging.getBoundingClientRect().top + grabY)) < 4) {
-        if (Math.abs(event.clientX - (dragging.getBoundingClientRect().left + grabX)) < 4) return;
-      }
-      beginDrag(event);
-    }
-    if (!placeholder) return;
-    event.preventDefault();
-
-    dragging.style.left = `${event.clientX - grabX}px`;
-    dragging.style.top = `${event.clientY - grabY}px`;
-
-    let reference: HTMLElement | null = null;
-    for (const child of items()) {
-      if (child === dragging) continue;
-      const rect = child.getBoundingClientRect();
-      if (event.clientY < rect.top + rect.height / 2) {
-        reference = child;
-        break;
-      }
-    }
-    if (reference !== placeholder.nextElementSibling) {
-      el.insertBefore(placeholder, reference);
-    }
-  };
-
-  const onPointerUp = (): void => {
-    window.removeEventListener('pointermove', onPointerMove);
-    window.removeEventListener('pointerup', onPointerUp);
-    window.removeEventListener('pointercancel', onPointerUp);
-
-    const item = dragging;
-    dragging = null;
-    pointerId = -1;
-    if (!item) return;
-
-    item.classList.remove('v-sort-dragging');
-    item.style.removeProperty('width');
-    item.style.removeProperty('height');
-    item.style.removeProperty('left');
-    item.style.removeProperty('top');
-
-    if (placeholder) {
-      el.insertBefore(item, placeholder);
-      placeholder.remove();
-      placeholder = null;
-      finishOrder(item, startIndex);
-    }
-    started = false;
-  };
-
-  // Reordenacao por teclado, essencial para quem nao usa mouse.
-  const onKeyDown = (event: KeyboardEvent): void => {
-    if (!event.ctrlKey && !event.metaKey) return;
-    if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
-    const item = (event.target as Element | null)?.closest(':scope > *') as HTMLElement | null;
-    const list = items();
-    const found = list.find((child) => child === item || child.contains(event.target as Node));
-    if (!found) return;
-
-    const from = list.indexOf(found);
-    const to = event.key === 'ArrowUp' ? from - 1 : from + 1;
-    if (to < 0 || to >= list.length) return;
-
-    event.preventDefault();
-    if (event.key === 'ArrowUp') el.insertBefore(found, list[to]);
-    else el.insertBefore(found, list[to].nextSibling);
-    found.focus();
-    finishOrder(found, from);
-  };
-
-  el.addEventListener('pointerdown', onPointerDown);
-  el.addEventListener('keydown', onKeyDown);
-  cleanup(() => {
-    onPointerUp();
-    el.removeEventListener('pointerdown', onPointerDown);
-    el.removeEventListener('keydown', onKeyDown);
-  });
-});
 
 // ---------------------------------------------------------------------------
 // v-resizable
@@ -2384,13 +2239,11 @@ interface CommandOption {
   el: HTMLElement;
 }
 
-let openPalette: (() => void) | null = null;
-
 /** Remove acentos e caixa para comparar textos de busca. */
 function normalizeSearch(text: string): string {
   return text
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
 }
 
@@ -2406,8 +2259,11 @@ function collectCommands(): CommandOption[] {
   return out;
 }
 
-/** Abre a paleta de comandos e devolve a funcao que fecha. */
-function showCommandPalette(): void {
+/**
+ * Abre a paleta de comandos, indexando na hora os elementos marcados com
+ * `v-command-item`. Chamar de novo com a paleta aberta nao duplica nada.
+ */
+export function commandPalette(): void {
   ensureUi();
   if (document.querySelector('.v-command')) return;
 
@@ -2552,21 +2408,16 @@ function showCommandPalette(): void {
   input.focus();
 }
 
-openPalette = showCommandPalette;
-
 defineDirective('command', ({ el, expression, cleanup }) => {
   ensureUi();
   const combo = expression.trim() || readOption(el, 'command-key') || 'mod+k';
 
-  const open = (): void => {
-    openPalette?.();
-  };
   const onClick = (event: Event): void => {
     event.preventDefault();
-    open();
+    commandPalette();
   };
 
-  const off = hotkey(combo, open, { allowInInput: true });
+  const off = hotkey(combo, () => commandPalette(), { allowInInput: true });
   const parsed = parseCombo(combo.split(',')[0]);
   if (parsed && !el.hasAttribute('aria-keyshortcuts')) {
     el.setAttribute('aria-keyshortcuts', ariaShortcut(parsed));
