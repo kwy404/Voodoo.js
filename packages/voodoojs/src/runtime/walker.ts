@@ -1,0 +1,546 @@
+/**
+ * @module runtime/walker
+ *
+ * Percorre o DOM, encontra atributos `v-*`, `:` e `@`, e liga cada um ao
+ * sistema reativo. Este e o motor que faz o HTML virar aplicacao.
+ *
+ * Regras de ordem em um mesmo elemento:
+ *   1. `v-ignore` e `v-pre` cancelam o processamento.
+ *   2. Directives terminais (`v-for`, `v-if`) assumem o controle da subarvore.
+ *   3. `v-data` e `v-component` criam o escopo usado pelo restante.
+ *   4. As demais directives rodam por prioridade decrescente.
+ *   5. Os filhos sao percorridos com o escopo resultante.
+ */
+
+import {
+  effect as createEffect,
+  EffectScope,
+  handleError,
+  queuePostFlush,
+  warn,
+} from '../reactivity';
+import { evaluate, allowedGlobals, stringify as stringifyValue } from '../parser/interpreter';
+import { parse } from '../parser/parser';
+import { config, directives, components, type DirectiveContext } from './registry';
+import { Scope, rootScope } from './scope';
+
+// ---------------------------------------------------------------------------
+// Estado por no
+// ---------------------------------------------------------------------------
+
+const nodeScopes = new WeakMap<Node, Scope>();
+const nodeCleanups = new WeakMap<Node, Array<() => void>>();
+const initialized = new WeakSet<Node>();
+const nodeEffectScopes = new WeakMap<Node, EffectScope[]>();
+
+/** Marca um elemento como ja processado. */
+export function isInitialized(node: Node): boolean {
+  return initialized.has(node);
+}
+
+/** Escopo associado a um no, se houver. */
+export function getScope(node: Node): Scope | undefined {
+  return nodeScopes.get(node);
+}
+
+/** Escopo efetivo de um no, subindo pelos ancestrais. */
+export function findScope(node: Node | null): Scope {
+  let current: Node | null = node;
+  while (current) {
+    const scope = nodeScopes.get(current);
+    if (scope) return scope;
+    current = current.parentNode;
+  }
+  return rootScope;
+}
+
+/**
+ * Guarda o escopo de efeitos criado para um no. Serve as devtools, que
+ * precisam saber quantos efeitos reativos dependem de cada elemento.
+ */
+export function trackEffectScope(node: Node, scope: EffectScope): void {
+  let list = nodeEffectScopes.get(node);
+  if (!list) nodeEffectScopes.set(node, (list = []));
+  list.push(scope);
+}
+
+/**
+ * Escopos de efeito ligados a um no, um por directive mais um por texto
+ * interpolado. Usado pelo inspetor `xray` para contar e instrumentar efeitos.
+ */
+export function getEffectScopes(node: Node): EffectScope[] {
+  return nodeEffectScopes.get(node) ?? [];
+}
+
+/** Registra uma funcao executada quando o no for removido do DOM. */
+export function addCleanup(node: Node, fn: () => void): void {
+  let list = nodeCleanups.get(node);
+  if (!list) nodeCleanups.set(node, (list = []));
+  list.push(fn);
+}
+
+/**
+ * Desmonta um no e todos os descendentes: para efeitos, remove listeners e
+ * dispara os hooks `beforeUnmount` e `unmounted`.
+ */
+export function destroy(node: Node): void {
+  if (node.nodeType === 1) {
+    // Percorre os filhos antes, para desmontar de dentro para fora.
+    const children = node.childNodes;
+    for (let i = children.length - 1; i >= 0; i--) {
+      const child = children[i];
+      if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+    }
+  }
+  const list = nodeCleanups.get(node);
+  if (list) {
+    nodeCleanups.delete(node);
+    for (let i = list.length - 1; i >= 0; i--) {
+      try {
+        list[i]();
+      } catch (err) {
+        handleError(err, 'cleanup');
+      }
+    }
+  }
+  nodeScopes.delete(node);
+  nodeEffectScopes.delete(node);
+  initialized.delete(node);
+}
+
+// ---------------------------------------------------------------------------
+// Leitura de atributos
+// ---------------------------------------------------------------------------
+
+export interface ParsedAttribute {
+  /** Nome do atributo como escrito no HTML. */
+  raw: string;
+  /** Nome da directive, sem prefixo, como `text`, `on`, `toast-success`. */
+  name: string;
+  /** Argumento apos os dois pontos, como `click` em `v-on:click`. */
+  arg?: string;
+  modifiers: Record<string, string | true>;
+  /** Valor do atributo. */
+  expression: string;
+}
+
+/**
+ * Converte um atributo do HTML na descricao de uma directive.
+ * Retorna `null` quando o atributo nao pertence a Voodoo.
+ *
+ * ```
+ * v-on:click.prevent="save"  ->  { name:'on', arg:'click', modifiers:{prevent:true} }
+ * :disabled="loading"        ->  { name:'bind', arg:'disabled' }
+ * @submit.prevent="save"     ->  { name:'on', arg:'submit', modifiers:{prevent:true} }
+ * ```
+ */
+export function parseAttribute(name: string, value: string): ParsedAttribute | null {
+  const prefix = config.prefix;
+  let body: string;
+
+  if (name.startsWith('@')) {
+    body = `on:${name.slice(1)}`;
+  } else if (name.startsWith(':') && name.length > 1) {
+    body = `bind:${name.slice(1)}`;
+  } else if (name.startsWith('.') && name.length > 1) {
+    // `.prop="x"` liga direto na propriedade do elemento.
+    body = `bind:${name.slice(1)}.prop`;
+  } else if (name.startsWith(prefix)) {
+    body = name.slice(prefix.length);
+  } else if (name.startsWith('data-v-')) {
+    body = name.slice('data-v-'.length);
+  } else {
+    return null;
+  }
+
+  if (!body) return null;
+
+  const parts = body.split('.');
+  const head = parts.shift() as string;
+  const modifiers: Record<string, string | true> = {};
+  for (const mod of parts) {
+    const eq = mod.indexOf('=');
+    if (eq > -1) modifiers[mod.slice(0, eq)] = mod.slice(eq + 1);
+    else modifiers[mod] = true;
+  }
+
+  const colon = head.indexOf(':');
+  const directiveName = colon > -1 ? head.slice(0, colon) : head;
+  const arg = colon > -1 ? head.slice(colon + 1) : undefined;
+
+  return { raw: name, name: directiveName, arg, modifiers, expression: value };
+}
+
+/** Lista as directives de um elemento, ja ordenadas por prioridade. */
+export function collectDirectives(el: Element): ParsedAttribute[] {
+  const out: ParsedAttribute[] = [];
+  const attrs = el.attributes;
+  for (let i = 0; i < attrs.length; i++) {
+    const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+    if (parsed) out.push(parsed);
+  }
+  if (out.length < 2) return out;
+  return out.sort((a, b) => priorityOf(b) - priorityOf(a));
+}
+
+function priorityOf(attr: ParsedAttribute): number {
+  return directives.get(attr.name)?.priority ?? 0;
+}
+
+/** Verifica se o elemento tem qualquer atributo da Voodoo. */
+export function hasDirectives(el: Element): boolean {
+  const attrs = el.attributes;
+  for (let i = 0; i < attrs.length; i++) {
+    const n = attrs[i].name;
+    if (
+      n.startsWith(config.prefix) ||
+      n.charCodeAt(0) === 64 /* @ */ ||
+      n.charCodeAt(0) === 58 /* : */ ||
+      n.startsWith('data-v-')
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Avaliacao de expressoes
+// ---------------------------------------------------------------------------
+
+/**
+ * Avalia uma expressao no escopo informado. Erros sao reportados sem quebrar a
+ * pagina, porque um atributo com problema nao deve derrubar o resto do app.
+ */
+export function evaluateIn<T = any>(expression: string, scope: Scope, context?: string): T {
+  if (!expression) return undefined as T;
+  try {
+    return evaluate(parse(expression), scope) as T;
+  } catch (err) {
+    handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+    return undefined as T;
+  }
+}
+
+/** Avalia uma expressao e propaga o erro. Usado onde a falha precisa aparecer. */
+export function evaluateStrict<T = any>(expression: string, scope: Scope): T {
+  return evaluate(parse(expression), scope) as T;
+}
+
+// ---------------------------------------------------------------------------
+// Execucao de directives
+// ---------------------------------------------------------------------------
+
+/** Sinaliza que o walker nao deve descer nos filhos deste elemento. */
+const skipChildren = new WeakSet<Element>();
+
+export function markSkipChildren(el: Element): void {
+  skipChildren.add(el);
+}
+
+function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): void {
+  const def = directives.get(attr.name);
+  if (!def) return;
+
+  const scopeOwner = new EffectScope(true);
+  addCleanup(el, () => scopeOwner.stop());
+  trackEffectScope(el, scopeOwner);
+
+  const ctx: DirectiveContext = {
+    el,
+    scope,
+    expression: attr.expression,
+    arg: attr.arg,
+    modifiers: attr.modifiers,
+    raw: attr.raw,
+    evaluate<T = any>(expression?: string): T {
+      return evaluateIn<T>(expression ?? attr.expression, scope, attr.raw);
+    },
+    effect(fn: () => void): void {
+      scopeOwner.run(() => createEffect(fn, { scope: scopeOwner }));
+    },
+    cleanup(fn: () => void): void {
+      addCleanup(el, fn);
+    },
+    walk(node: Node, childScope: Scope): void {
+      walk(node, childScope);
+    },
+  };
+
+  try {
+    def.setup(ctx);
+  } catch (err) {
+    handleError(err, `directive ${attr.raw}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Walker
+// ---------------------------------------------------------------------------
+
+/** Callback usado por `v-component` para montar componentes. Injetado depois. */
+let componentMounter:
+  | ((el: HTMLElement, name: string, scope: Scope) => Scope | null)
+  | null = null;
+
+export function setComponentMounter(
+  fn: (el: HTMLElement, name: string, scope: Scope) => Scope | null
+): void {
+  componentMounter = fn;
+}
+
+/**
+ * Tags que a Voodoo nunca percorre. `TEMPLATE` fica de fora da lista de
+ * proposito: ele precisa aceitar `v-if` e `v-for`. O conteudo de um template
+ * vive em `content`, entao `walkChildren` naturalmente nao desce nele.
+ */
+const HTML_SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
+
+/**
+ * Percorre um no aplicando as directives encontradas.
+ *
+ * @param node raiz do trecho a inicializar
+ * @param scope escopo aplicado ao no. Quando ausente, e deduzido dos ancestrais.
+ */
+export function walk(node: Node, scope?: Scope): void {
+  const activeScope = scope ?? findScope(node.parentNode);
+
+  if (node.nodeType === 11 /* DocumentFragment */) {
+    const children = Array.from(node.childNodes);
+    for (const child of children) walk(child, activeScope);
+    return;
+  }
+
+  if (node.nodeType === 3) {
+    bindTextNode(node as Text, activeScope);
+    return;
+  }
+  if (node.nodeType !== 1) return;
+  const el = node as HTMLElement;
+
+  if (initialized.has(el)) return;
+  if (HTML_SKIP.has(el.tagName)) return;
+
+  // `v-ignore` e `v-pre` desligam a Voodoo naquela subarvore.
+  if (el.hasAttribute(`${config.prefix}ignore`) || el.hasAttribute(`${config.prefix}pre`)) {
+    initialized.add(el);
+    return;
+  }
+
+  let current = activeScope;
+  const attrs = collectDirectives(el);
+  const tagComponent = el.hasAttribute(`${config.prefix}component`)
+    ? null
+    : resolveComponentTag(el.tagName);
+
+  if (attrs.length === 0 && !tagComponent) {
+    walkChildren(el, current);
+    return;
+  }
+
+  initialized.add(el);
+
+  // Passo 1: directives terminais assumem a subarvore inteira.
+  for (const attr of attrs) {
+    const def = directives.get(attr.name);
+    if (def?.terminal) {
+      runDirective(el, attr, current);
+      return;
+    }
+  }
+
+  // Passo 2: criacao de escopo por `v-data` ou componente.
+  const dataAttr = attrs.find((a) => a.name === 'data');
+  const componentAttr = attrs.find((a) => a.name === 'component');
+  const componentName: string = componentAttr
+    ? componentAttr.expression || ''
+    : tagComponent || '';
+
+  if (componentName && componentMounter) {
+    const created = componentMounter(el, componentName, current);
+    if (created) {
+      current = created;
+      nodeScopes.set(el, current);
+    }
+  } else if (dataAttr || componentAttr) {
+    const raw = dataAttr ? evaluateIn<Record<string, unknown>>(dataAttr.expression || '{}', current, 'v-data') : {};
+    current = current.reactiveChild(raw && typeof raw === 'object' ? raw : {}, el);
+    nodeScopes.set(el, current);
+  }
+
+  // Passo 3: demais directives, na ordem de prioridade.
+  for (const attr of attrs) {
+    if (attr.name === 'data' || attr.name === 'component') continue;
+    runDirective(el, attr, current);
+  }
+
+  // Passo 4: filhos.
+  if (!skipChildren.has(el)) walkChildren(el, current);
+}
+
+function walkChildren(el: Element, scope: Scope): void {
+  const children = el.childNodes;
+  // Copia porque directives podem alterar a lista durante a caminhada.
+  const list: Node[] = [];
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (child.nodeType === 1) list.push(child);
+    else if (child.nodeType === 3) bindTextNode(child as Text, scope);
+  }
+  // Um no com escopo proprio ja definido (conteudo de slot, por exemplo)
+  // mantem o escopo de origem em vez de herdar o do pai.
+  for (const child of list) walk(child, nodeScopes.get(child) ?? scope);
+}
+
+// ---------------------------------------------------------------------------
+// Interpolacao de texto com chaves duplas
+// ---------------------------------------------------------------------------
+
+/**
+ * Aceita as duas formas de interpolacao. A forma curta `{ nome }` e a padrao da
+ * Voodoo. A forma dupla `{{ nome }}` existe para quem vem do Vue e para textos
+ * que precisam conter chaves literais ao redor.
+ */
+const MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
+
+/** Elementos onde chaves quase sempre sao codigo, nao interpolacao. */
+const NO_INTERPOLATION = new Set(['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
+
+interface TextSegment {
+  text?: string;
+  expression?: string;
+}
+
+/**
+ * Liga `{ expressao }` dentro de um no de texto ao estado reativo.
+ *
+ * ```html
+ * <p>Ola, { nome }! Voce tem { itens.length } itens.</p>
+ * ```
+ */
+export function bindTextNode(node: Text, scope: Scope): void {
+  const raw = node.textContent;
+  if (!raw || raw.indexOf('{') === -1) return;
+  if (initialized.has(node)) return;
+
+  const parentTag = node.parentElement?.tagName;
+  if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+
+  const segments: TextSegment[] = [];
+  let lastIndex = 0;
+  MUSTACHE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = MUSTACHE.exec(raw)) !== null) {
+    if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
+    const expression = (match[1] ?? match[2] ?? '').trim();
+    if (expression) segments.push({ expression });
+    lastIndex = match.index + match[0].length;
+  }
+  if (!segments.some((s) => s.expression)) return;
+  if (lastIndex < raw.length) segments.push({ text: raw.slice(lastIndex) });
+
+  initialized.add(node);
+
+  const owner = new EffectScope(true);
+  addCleanup(node, () => owner.stop());
+  trackEffectScope(node, owner);
+
+  owner.run(() =>
+    createEffect(() => {
+      let out = '';
+      for (const segment of segments) {
+        out += segment.text ?? stringifyValue(evaluateIn(segment.expression!, scope, 'interpolacao'));
+      }
+      if (node.textContent !== out) node.textContent = out;
+    }, { scope: owner })
+  );
+}
+
+/** Fixa o escopo de um no antes do walker chegar nele. */
+export function markNodeScope(node: Node, scope: Scope): void {
+  nodeScopes.set(node, scope);
+}
+
+/** Resolve `<UserCard>` e `<user-card>` para o nome registrado. */
+export function resolveComponentTag(tagName: string): string | null {
+  const lower = tagName.toLowerCase();
+  if (components.has(lower)) return lower;
+  const alias = componentAliases.get(lower);
+  return alias ?? null;
+}
+
+/** Mapa de nomes sem hifen, para aceitar tags em PascalCase. */
+export const componentAliases = new Map<string, string>();
+
+// ---------------------------------------------------------------------------
+// Hooks de ciclo de vida agendados
+// ---------------------------------------------------------------------------
+
+/** Executa depois que o DOM da rodada atual foi aplicado. */
+export function onMounted(fn: () => void): void {
+  queuePostFlush(fn);
+}
+
+// ---------------------------------------------------------------------------
+// Inicializacao e observacao
+// ---------------------------------------------------------------------------
+
+let started = false;
+let observer: MutationObserver | null = null;
+
+/** Inicializa a Voodoo em uma raiz. Chamado automaticamente no navegador. */
+export function start(root?: Element | Document): void {
+  if (typeof document === 'undefined') return;
+  const target = (root ?? config.root ?? document.body) as Element;
+  if (!target) return;
+
+  Object.assign(allowedGlobals, config.globals);
+
+  walk(target, rootScope);
+
+  if (!started) {
+    started = true;
+    if (config.autoDiscover) observeDOM(target);
+    document.dispatchEvent(new CustomEvent('voodoo:ready', { detail: { root: target } }));
+  }
+}
+
+/**
+ * Observa insercoes e remocoes no DOM. Elementos criados depois do carregamento
+ * ganham suas directives sem nenhuma chamada manual.
+ */
+function observeDOM(target: Element): void {
+  if (typeof MutationObserver === 'undefined') return;
+
+  observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (let i = 0; i < mutation.removedNodes.length; i++) {
+        const removed = mutation.removedNodes[i];
+        if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
+      }
+      for (let i = 0; i < mutation.addedNodes.length; i++) {
+        const added = mutation.addedNodes[i];
+        if (added.nodeType !== 1) continue;
+        if (initialized.has(added)) continue;
+        walk(added, findScope(added.parentNode));
+      }
+    }
+  });
+
+  observer.observe(target, { childList: true, subtree: true });
+}
+
+/** Interrompe a observacao automatica do DOM. */
+export function stopObserving(): void {
+  observer?.disconnect();
+  observer = null;
+  started = false;
+}
+
+/** Reinicializa a Voodoo dentro de uma raiz, util em testes. */
+export function refresh(root?: Element): void {
+  walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
+}
+
+export { rootScope, warn };

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="480" height="480" role="img" aria-labelledby="runesT runesD">
+  <title id="runesT">Padrão de runas do Voodoo.js</title>
+  <desc id="runesD">Textura sutil e repetível com faíscas, anéis, triângulos, luas e pontos de costura em roxo bem claro, feita para o fundo de seções de destaque.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <pattern id="runesTile" width="160" height="160" patternUnits="userSpaceOnUse">
+      <g class="vd-decor" fill="#6D3BF5" opacity="0.12">
+        <path d="M38 22 Q38 34 50 34 Q38 34 38 46 Q38 34 26 34 Q38 34 38 22 Z"/>
+        <circle cx="120" cy="30" r="3"/>
+        <circle cx="92" cy="142" r="3.5"/>
+        <path d="M150 67 Q150 74 157 74 Q150 74 150 81 Q150 74 143 74 Q150 74 150 67 Z"/>
+        <path d="M130 104 A18 18 0 1 0 130 140 A22 22 0 0 0 130 104 Z"/>
+      </g>
+      <g class="vd-decor" fill="none" stroke="#6D3BF5" stroke-width="2.5" opacity="0.12" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="120" cy="30" r="10"/>
+        <path d="M34 116 L48 138 L20 138 Z"/>
+        <path d="M66 62 L74 72 L62 82 L72 92"/>
+        <path d="M132 142 L144 154"/>
+        <path d="M144 142 L132 154"/>
+        <path d="M8 74 L20 74"/>
+        <path d="M14 68 L14 80"/>
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#runesTile)"/>
+</svg>

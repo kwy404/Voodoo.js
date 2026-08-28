@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# Documento de trabalho interno, nao faz parte do pacote publicado.
+CONTRACT.md
+coverage/
+.turbo/
+.DS_Store
+*.log
+.vitest/
+.idea/
+.vscode/

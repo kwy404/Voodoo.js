@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 150" width="380" height="150" role="img" aria-labelledby="lockupT lockupD">
+  <title id="lockupT">Voodoo.js com slogan</title>
+  <desc id="lockupD">Assinatura vertical do Voodoo.js: símbolo do alfinete mágico em V, wordmark Voodoo.js e o slogan JavaScript feels like magic abaixo de um tracinho magenta.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="lockupGrad" gradientUnits="userSpaceOnUse" x1="48" y1="44" x2="78" y2="74">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(36 28) scale(0.875)">
+    <path d="M16 22 L32 50 L46 22" fill="none" stroke="url(#lockupGrad)" stroke-width="9" stroke-linejoin="round"/>
+    <circle cx="16" cy="22" r="7.5" fill="#FF3D8B"/>
+    <path d="M42 20 L50 24 L51 12 Z" fill="#FFB35C"/>
+    <path d="M52 2 Q52 10 60 10 Q52 10 52 18 Q52 10 44 10 Q52 10 52 2 Z" fill="#FFB35C"/>
+  </g>
+
+  <text class="vd-txt-forte" x="110" y="70" font-family="'Space Grotesk', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="44" font-weight="700" letter-spacing="-1.2" fill="#14111F">Voodoo<tspan fill="#6D3BF5">.js</tspan></text>
+
+  <path d="M166 94 L214 94" stroke="#FF3D8B" stroke-width="3" stroke-linecap="round"/>
+
+  <text class="vd-txt" x="190" y="124" text-anchor="middle"
+        font-family="Inter, 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-size="17" font-weight="500" letter-spacing="0.3" fill="#2A2440">JavaScript feels like magic.</text>
+</svg>

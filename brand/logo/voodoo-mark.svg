@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-labelledby="markT markD">
+  <title id="markT">Símbolo do Voodoo.js</title>
+  <desc id="markD">Um alfinete mágico em forma de V: haste roxa com cabeça de bola magenta de um lado e ponta âmbar brilhante do outro, coroada por uma faísca.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="markGrad" gradientUnits="userSpaceOnUse" x1="14" y1="18" x2="48" y2="52">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- haste em V -->
+  <path d="M16 22 L32 50 L46 22" fill="none" stroke="url(#markGrad)" stroke-width="9" stroke-linejoin="round"/>
+  <!-- cabeça do alfinete -->
+  <circle cx="16" cy="22" r="7.5" fill="#FF3D8B"/>
+  <!-- ponta -->
+  <path d="M42 20 L50 24 L51 12 Z" fill="#FFB35C"/>
+  <!-- faísca -->
+  <path d="M52 2 Q52 10 60 10 Q52 10 52 18 Q52 10 44 10 Q52 10 52 2 Z" fill="#FFB35C"/>
+</svg>

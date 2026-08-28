@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" role="img" aria-labelledby="heroT heroD">
+  <title id="heroT">Vudu conjurando interfaces</title>
+  <desc id="heroD">O mascote Vudu aponta a varinha mágica e faz flutuar três elementos de interface, uma tag button, um formulário e um card, ligados a ele por linhas de energia roxa.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="heroCloth" gradientUnits="userSpaceOnUse" x1="60" y1="130" x2="290" y2="410">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="heroPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <radialGradient id="heroGlow" gradientUnits="userSpaceOnUse" cx="257" cy="201" r="90">
+      <stop offset="0" stop-color="#9B7BFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#9B7BFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="heroTip" gradientUnits="userSpaceOnUse" cx="399" cy="196" r="36">
+      <stop offset="0" stop-color="#FFB35C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB35C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- runas de fundo -->
+  <g class="vd-decor" fill="#6D3BF5" opacity="0.13">
+    <path d="M96 60 Q96 70 106 70 Q96 70 96 80 Q96 70 86 70 Q96 70 96 60 Z"/>
+    <path d="M700 92 Q700 100 708 100 Q700 100 700 108 Q700 100 692 100 Q700 100 700 92 Z"/>
+    <path d="M356 62 Q356 69 363 69 Q356 69 356 76 Q356 69 349 69 Q356 69 356 62 Z"/>
+    <path d="M744 430 Q744 439 753 439 Q744 439 744 448 Q744 439 735 439 Q744 439 744 430 Z"/>
+    <path d="M632 468 Q632 475 639 475 Q632 475 632 482 Q632 475 625 475 Q632 475 632 468 Z"/>
+    <circle cx="60" cy="440" r="5"/>
+    <circle cx="770" cy="180" r="4"/>
+    <circle cx="330" cy="470" r="4.5"/>
+  </g>
+  <g class="vd-decor" fill="none" stroke="#6D3BF5" stroke-width="2.5" opacity="0.12" stroke-linecap="round">
+    <path d="M660 40 l18 0 M669 31 l0 18"/>
+    <path d="M40 150 l0 20 M40 150 l14 8"/>
+    <path d="M470 42 l16 10 l-16 10"/>
+  </g>
+
+  <!-- brilho da conjuração -->
+  <circle cx="257" cy="201" r="90" fill="url(#heroGlow)"/>
+
+  <!-- linhas de energia -->
+  <g fill="none" stroke="#6D3BF5" stroke-width="3" stroke-linecap="round" stroke-dasharray="11 9" opacity="0.75">
+    <path d="M257 201 C310 168 362 118 416 124"/>
+    <path d="M257 201 C350 208 462 228 556 268"/>
+    <path d="M257 201 C288 248 330 300 374 336"/>
+  </g>
+  <g fill="#FF3D8B" opacity="0.9">
+    <path d="M340 148 Q340 155 347 155 Q340 155 340 162 Q340 155 333 155 Q340 155 340 148 Z"/>
+    <path d="M430 232 Q430 239 437 239 Q430 239 430 246 Q430 239 423 239 Q430 239 430 232 Z"/>
+    <path d="M318 274 Q318 280 324 280 Q318 280 318 286 Q318 280 312 280 Q318 280 318 274 Z"/>
+  </g>
+
+  <!-- tag button flutuante -->
+  <g>
+    <rect x="423" y="99" width="170" height="60" rx="16" fill="#2A2440" opacity="0.1"/>
+    <rect x="420" y="96" width="170" height="60" rx="16" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <rect x="436" y="112" width="28" height="28" rx="8" fill="#6D3BF5"/>
+    <path d="M444 120 l8 12 l-4 0 l2 6 l-3 1 l-2 -6 l-3 3 Z" fill="#FBF7F2"/>
+    <text x="476" y="135" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="19" font-weight="700" fill="#14111F">button</text>
+  </g>
+
+  <!-- formulário flutuante -->
+  <g>
+    <rect x="563" y="213" width="200" height="150" rx="18" fill="#2A2440" opacity="0.1"/>
+    <rect x="560" y="210" width="200" height="150" rx="18" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <text x="580" y="240" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="15" font-weight="700" fill="#6D3BF5">form</text>
+    <rect x="580" y="252" width="160" height="26" rx="8" fill="#EDE4D8"/>
+    <rect x="588" y="262" width="60" height="6" rx="3" fill="#2A2440" opacity="0.35"/>
+    <rect x="580" y="288" width="160" height="26" rx="8" fill="#EDE4D8"/>
+    <rect x="588" y="298" width="86" height="6" rx="3" fill="#2A2440" opacity="0.35"/>
+    <rect x="580" y="324" width="88" height="24" rx="9" fill="#6D3BF5"/>
+    <rect x="594" y="333" width="60" height="6" rx="3" fill="#FBF7F2" opacity="0.9"/>
+  </g>
+
+  <!-- card flutuante -->
+  <g>
+    <rect x="383" y="303" width="170" height="120" rx="18" fill="#2A2440" opacity="0.1"/>
+    <rect x="380" y="300" width="170" height="120" rx="18" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <circle cx="412" cy="332" r="17" fill="#9B7BFF"/>
+    <circle cx="412" cy="327" r="6" fill="#FBF7F2" opacity="0.9"/>
+    <path d="M402 342 a10 10 0 0 1 20 0 Z" fill="#FBF7F2" opacity="0.9"/>
+    <rect x="440" y="322" width="82" height="8" rx="4" fill="#2A2440" opacity="0.75"/>
+    <rect x="440" y="338" width="54" height="7" rx="3.5" fill="#2A2440" opacity="0.35"/>
+    <rect x="400" y="366" width="130" height="7" rx="3.5" fill="#2A2440" opacity="0.22"/>
+    <rect x="400" y="382" width="98" height="7" rx="3.5" fill="#2A2440" opacity="0.22"/>
+    <rect x="400" y="398" width="52" height="14" rx="7" fill="#FF3D8B" opacity="0.9"/>
+  </g>
+
+  <!-- Vudu -->
+  <g transform="translate(-30 60) scale(0.72)">
+    <ellipse cx="256" cy="470" rx="112" ry="15" fill="#2A2440" opacity="0.13"/>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L218 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L294 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L218 452" stroke="url(#heroCloth)" stroke-width="24"/>
+      <path d="M288 404 L294 452" stroke="url(#heroCloth)" stroke-width="24"/>
+      <path d="M209 440 L228 443" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M285 442 L304 439" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C170 332 152 350 146 372" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C170 332 152 350 146 372" stroke="url(#heroCloth)" stroke-width="24"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#heroCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#heroCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#heroPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <g fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+      <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+      <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+    </g>
+
+    <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+          fill="url(#heroCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+    <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+    <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+    <g>
+      <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+      <g fill="#14111F">
+        <circle cx="208" cy="196" r="3"/><circle cx="220" cy="196" r="3"/>
+        <circle cx="208" cy="208" r="3"/><circle cx="220" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M208 196 L220 208"/><path d="M220 196 L208 208"/>
+      </g>
+    </g>
+
+    <g>
+      <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+      <g fill="#14111F">
+        <circle cx="294" cy="196" r="3"/><circle cx="306" cy="196" r="3"/>
+        <circle cx="294" cy="208" r="3"/><circle cx="306" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M294 196 L306 208"/><path d="M306 196 L294 208"/>
+      </g>
+    </g>
+
+    <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+      <path d="M251 221 L261 229"/><path d="M261 221 L251 229"/>
+    </g>
+
+    <path d="M218 240 Q256 278 294 240" fill="none" stroke="#2A2440" stroke-width="4.5"
+          stroke-linecap="round" stroke-dasharray="9 7"/>
+
+    <g>
+      <circle cx="399" cy="196" r="34" fill="url(#heroTip)"/>
+      <path d="M356 360 L386 236" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M353 358 L383 238" stroke="#9B7BFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+      <circle cx="354" cy="364" r="12" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="350" cy="360" r="3.5" fill="#FBF7F2" opacity="0.8"/>
+      <path d="M376 240 L392 244 L394 203 Z" fill="#FFB35C"/>
+      <path d="M399 181 Q399 196 414 196 Q399 196 399 211 Q399 196 384 196 Q399 196 399 181 Z" fill="#FFB35C"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M320 318 C344 316 364 306 372 294" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C344 316 364 306 372 294" stroke="url(#heroCloth)" stroke-width="24"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="vuduT vuduD">
+  <title id="vuduT">Vudu, mascote do Voodoo.js</title>
+  <desc id="vuduD">Bonequinho de pano cor de areia com costura central em zigue-zague, olhos de botão roxo e magenta, sorriso bordado, remendo roxo no peito e um alfinete mágico de ponta brilhante na mão direita.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="vuduCloth" gradientUnits="userSpaceOnUse" x1="150" y1="100" x2="380" y2="470">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="vuduPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <radialGradient id="vuduGlow" gradientUnits="userSpaceOnUse" cx="399" cy="196" r="36">
+      <stop offset="0" stop-color="#FFB35C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB35C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sombra de apoio -->
+  <ellipse cx="256" cy="470" rx="112" ry="15" fill="#2A2440" opacity="0.13"/>
+
+  <!-- perninhas -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M224 404 L218 452" stroke="#2A2440" stroke-width="32"/>
+    <path d="M288 404 L294 452" stroke="#2A2440" stroke-width="32"/>
+    <path d="M224 404 L218 452" stroke="url(#vuduCloth)" stroke-width="24"/>
+    <path d="M288 404 L294 452" stroke="url(#vuduCloth)" stroke-width="24"/>
+    <path d="M209 440 L228 443" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    <path d="M285 442 L304 439" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+  </g>
+
+  <!-- bracinho esquerdo, atras do corpo -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M196 322 C170 332 152 350 146 372" stroke="#2A2440" stroke-width="32"/>
+    <path d="M196 322 C170 332 152 350 146 372" stroke="url(#vuduCloth)" stroke-width="24"/>
+  </g>
+
+  <!-- pescoço -->
+  <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#vuduCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <!-- tronco -->
+  <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+        fill="url(#vuduCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <!-- costura central em zigue-zague -->
+  <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+        fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- remendo do peito -->
+  <g transform="rotate(-8 215 345)">
+    <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#vuduPatch)" stroke="#2A2440" stroke-width="3.5"/>
+    <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+  </g>
+
+  <!-- tufo de cabelo de linha -->
+  <g fill="none" stroke-width="8" stroke-linecap="round">
+    <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+    <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+    <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+  </g>
+
+  <!-- cabeça -->
+  <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+        fill="url(#vuduCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <!-- costura da testa -->
+  <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+        fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- costura decorativa na bochecha -->
+  <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- bochechas -->
+  <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+  <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+  <!-- olho de botão roxo -->
+  <g>
+    <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+    <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+    <g fill="#14111F">
+      <circle cx="208" cy="196" r="3"/>
+      <circle cx="220" cy="196" r="3"/>
+      <circle cx="208" cy="208" r="3"/>
+      <circle cx="220" cy="208" r="3"/>
+    </g>
+    <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+      <path d="M208 196 L220 208"/>
+      <path d="M220 196 L208 208"/>
+    </g>
+  </g>
+
+  <!-- olho de botão magenta -->
+  <g>
+    <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+    <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+    <g fill="#14111F">
+      <circle cx="294" cy="196" r="3"/>
+      <circle cx="306" cy="196" r="3"/>
+      <circle cx="294" cy="208" r="3"/>
+      <circle cx="306" cy="208" r="3"/>
+    </g>
+    <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+      <path d="M294 196 L306 208"/>
+      <path d="M306 196 L294 208"/>
+    </g>
+  </g>
+
+  <!-- narizinho de ponto cruz -->
+  <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+    <path d="M251 221 L261 229"/>
+    <path d="M261 221 L251 229"/>
+  </g>
+
+  <!-- sorriso bordado -->
+  <path d="M218 240 Q256 278 294 240" fill="none" stroke="#2A2440" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="9 7"/>
+
+  <!-- alfinete mágico -->
+  <g>
+    <circle cx="399" cy="196" r="34" fill="url(#vuduGlow)"/>
+    <path class="vd-haste" d="M356 360 L386 236" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M353 358 L383 238" stroke="#9B7BFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+    <circle cx="354" cy="364" r="12" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+    <circle cx="350" cy="360" r="3.5" fill="#FBF7F2" opacity="0.8"/>
+    <path d="M376 240 L392 244 L394 203 Z" fill="#FFB35C"/>
+    <path d="M386 240 L392 212" stroke="#FBF7F2" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <path d="M399 181 Q399 196 414 196 Q399 196 399 211 Q399 196 384 196 Q399 196 399 181 Z" fill="#FFB35C"/>
+    <path d="M420 232 Q420 240 428 240 Q420 240 420 248 Q420 240 412 240 Q420 240 420 232 Z" fill="#FF3D8B" opacity="0.8"/>
+    <path d="M368 168 Q368 175 375 175 Q368 175 368 182 Q368 175 361 175 Q368 175 368 168 Z" fill="#9B7BFF" opacity="0.8"/>
+  </g>
+
+  <!-- bracinho direito, na frente do alfinete -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M320 318 C344 316 364 306 372 294" stroke="#2A2440" stroke-width="32"/>
+    <path d="M320 318 C344 316 364 306 372 294" stroke="url(#vuduCloth)" stroke-width="24"/>
+  </g>
+</svg>

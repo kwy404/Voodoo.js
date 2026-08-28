@@ -1,0 +1,274 @@
+/* ==========================================================================
+   VOODOO.JS DESIGN SYSTEM
+   reset.css : normalizacao moderna e enxuta
+
+   Objetivo: apagar inconsistencias entre navegadores sem apagar semantica.
+   Depende de tokens.css, entao deve ser carregado depois dele.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. CAIXA E MEDIDAS
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   2. MARGENS ZERADAS
+   Elementos de bloco chegam sem margem. O espacamento e decidido pelo
+   layout, nunca herdado do navegador.
+   -------------------------------------------------------------------------- */
+html,
+body,
+h1, h2, h3, h4, h5, h6,
+p,
+figure,
+blockquote,
+dl, dd,
+ul, ol,
+pre {
+  margin: 0;
+}
+
+ul[class],
+ol[class] {
+  padding: 0;
+  list-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. RAIZ E CORPO
+   -------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Compensa cabecalhos fixos ao pular por ancora. */
+  scroll-padding-top: var(--v-space-16);
+  /* Evita rolagem horizontal acidental em telas estreitas. */
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--v-color-bg);
+  color: var(--v-text);
+  font-family: var(--v-font-sans);
+  font-size: var(--v-text-base);
+  font-weight: var(--v-weight-regular);
+  line-height: var(--v-leading-normal);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   4. TITULOS E TEXTO
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--v-font-display);
+  font-weight: var(--v-weight-bold);
+  line-height: var(--v-leading-tight);
+  letter-spacing: var(--v-tracking-tight);
+  /* Evita que titulos longos estourem a largura do container. */
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+p,
+li,
+dd {
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+small { font-size: var(--v-text-sm); }
+
+strong,
+b { font-weight: var(--v-weight-semibold); }
+
+abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+/* --------------------------------------------------------------------------
+   5. LINKS
+   -------------------------------------------------------------------------- */
+a {
+  color: var(--v-primary);
+  text-decoration-color: color-mix(in srgb, var(--v-primary) 45%, transparent);
+  text-underline-offset: 0.18em;
+  transition: color var(--v-duration-fast) var(--v-ease-out);
+}
+
+a:hover { color: var(--v-primary-hover); }
+
+a:not([class]) { text-decoration-skip-ink: auto; }
+
+/* --------------------------------------------------------------------------
+   6. MIDIA RESPONSIVA
+   -------------------------------------------------------------------------- */
+img,
+picture,
+video,
+canvas,
+svg,
+iframe {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+svg { fill: currentColor; }
+
+/* --------------------------------------------------------------------------
+   7. FORMULARIOS
+   -------------------------------------------------------------------------- */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+textarea {
+  resize: vertical;
+  /* Impede textarea de empurrar o layout para os lados. */
+  max-width: 100%;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+legend { padding: 0; }
+
+::placeholder {
+  color: var(--v-text-subtle);
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   8. TABELAS
+   -------------------------------------------------------------------------- */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+th {
+  text-align: left;
+  font-weight: var(--v-weight-semibold);
+}
+
+/* --------------------------------------------------------------------------
+   9. CODIGO
+   -------------------------------------------------------------------------- */
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--v-font-mono);
+  font-size: 0.9em;
+}
+
+pre {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   10. FOCO ACESSIVEL
+   O contorno some no clique de mouse e aparece na navegacao por teclado.
+   Nunca removemos o foco sem colocar outro no lugar.
+   -------------------------------------------------------------------------- */
+:focus { outline: none; }
+
+:focus-visible {
+  outline: var(--v-focus-width) solid var(--v-focus-ring);
+  outline-offset: var(--v-focus-offset);
+  border-radius: var(--v-radius-sm);
+}
+
+/* Navegadores antigos sem :focus-visible continuam mostrando o contorno. */
+@supports not selector(:focus-visible) {
+  :focus {
+    outline: var(--v-focus-width) solid var(--v-focus-ring);
+    outline-offset: var(--v-focus-offset);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. SELECAO DE TEXTO
+   -------------------------------------------------------------------------- */
+::selection {
+  background-color: var(--v-highlight);
+  color: var(--v-text);
+}
+
+/* --------------------------------------------------------------------------
+   12. DIVERSOS
+   -------------------------------------------------------------------------- */
+hr {
+  border: 0;
+  border-top: var(--v-border-width) solid var(--v-border);
+  margin: 0;
+}
+
+[hidden] { display: none !important; }
+
+summary { cursor: pointer; }
+
+dialog {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   13. MOVIMENTO REDUZIDO
+   Respeita quem pediu menos animacao no sistema operacional.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

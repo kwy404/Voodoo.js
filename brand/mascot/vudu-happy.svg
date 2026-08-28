@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="happyT happyD">
+  <title id="happyT">Vudu comemorando</title>
+  <desc id="happyD">O mascote Vudu pulando de alegria com os bracinhos para cima, boca aberta sorrindo, varinha erguida e faíscas coloridas ao redor.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="happyCloth" gradientUnits="userSpaceOnUse" x1="150" y1="100" x2="380" y2="470">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="happyPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <radialGradient id="happyGlow" gradientUnits="userSpaceOnUse" cx="386" cy="132" r="42">
+      <stop offset="0" stop-color="#FFB35C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB35C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- sombra menor, o boneco esta no ar -->
+  <ellipse cx="256" cy="476" rx="92" ry="12" fill="#2A2440" opacity="0.11"/>
+
+  <!-- faíscas de comemoração -->
+  <g>
+    <path d="M148 186 Q148 200 162 200 Q148 200 148 214 Q148 200 134 200 Q148 200 148 186 Z" fill="#FFB35C"/>
+    <path d="M412 226 Q412 237 423 237 Q412 237 412 248 Q412 237 401 237 Q412 237 412 226 Z" fill="#FF3D8B"/>
+    <path d="M118 306 Q118 315 127 315 Q118 315 118 324 Q118 315 109 315 Q118 315 118 306 Z" fill="#9B7BFF"/>
+    <path d="M306 108 Q306 118 316 118 Q306 118 306 128 Q306 118 296 118 Q306 118 306 108 Z" fill="#FFB35C" opacity="0.9"/>
+    <path d="M420 340 Q420 348 428 348 Q420 348 420 356 Q420 348 412 348 Q420 348 420 340 Z" fill="#2ED9A5"/>
+    <path d="M96 396 Q96 403 103 403 Q96 403 96 410 Q96 403 89 403 Q96 403 96 396 Z" fill="#FF3D8B" opacity="0.75"/>
+  </g>
+
+  <g transform="translate(0 -10)">
+    <!-- perninhas abertas no pulo -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L206 446" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L306 446" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L206 446" stroke="url(#happyCloth)" stroke-width="24"/>
+      <path d="M288 404 L306 446" stroke="url(#happyCloth)" stroke-width="24"/>
+      <path d="M197 434 L216 438" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M296 438 L315 434" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <!-- bracinho esquerdo erguido -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C172 300 160 274 156 250" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C172 300 160 274 156 250" stroke="url(#happyCloth)" stroke-width="24"/>
+    </g>
+
+    <!-- pescoço -->
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#happyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <!-- tronco -->
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#happyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#happyPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <!-- tufo de cabelo, levantado pelo pulo -->
+    <g fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M236 116 C224 90 236 74 250 82" stroke="#6D3BF5"/>
+      <path d="M258 110 C256 78 276 68 288 84" stroke="#FF3D8B"/>
+      <path d="M276 118 C294 96 308 102 306 116" stroke="#9B7BFF"/>
+    </g>
+
+    <!-- cabeça -->
+    <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+          fill="url(#happyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- bochechas mais coradas -->
+    <ellipse cx="180" cy="240" rx="21" ry="13" fill="#FF3D8B" opacity="0.24"/>
+    <ellipse cx="332" cy="240" rx="21" ry="13" fill="#FF3D8B" opacity="0.24"/>
+
+    <!-- olho de botão roxo -->
+    <g>
+      <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+      <g fill="#14111F">
+        <circle cx="208" cy="196" r="3"/><circle cx="220" cy="196" r="3"/>
+        <circle cx="208" cy="208" r="3"/><circle cx="220" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M208 196 L220 208"/><path d="M220 196 L208 208"/>
+      </g>
+    </g>
+
+    <!-- olho de botão magenta -->
+    <g>
+      <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+      <g fill="#14111F">
+        <circle cx="294" cy="196" r="3"/><circle cx="306" cy="196" r="3"/>
+        <circle cx="294" cy="208" r="3"/><circle cx="306" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M294 196 L306 208"/><path d="M306 196 L294 208"/>
+      </g>
+    </g>
+
+    <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+      <path d="M251 221 L261 229"/><path d="M261 221 L251 229"/>
+    </g>
+
+    <!-- boca aberta de alegria -->
+    <path d="M214 236 Q256 292 298 236 Q256 252 214 236 Z" fill="#2A2440"/>
+    <path d="M218 238 Q256 251 294 238" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="6 5" opacity="0.45"/>
+
+    <!-- alfinete mágico erguido -->
+    <g>
+      <circle cx="386" cy="132" r="40" fill="url(#happyGlow)"/>
+      <path class="vd-haste" d="M350 292 L374 180" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M347 290 L371 182" stroke="#9B7BFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+      <circle cx="348" cy="296" r="12" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="344" cy="292" r="3.5" fill="#FBF7F2" opacity="0.8"/>
+      <path d="M366 178 L382 182 L382 145 Z" fill="#FFB35C"/>
+      <path d="M375 179 L380 152" stroke="#FBF7F2" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+      <path d="M386 116 Q386 132 402 132 Q386 132 386 148 Q386 132 370 132 Q386 132 386 116 Z" fill="#FFB35C"/>
+    </g>
+
+    <!-- bracinho direito erguido, na frente da varinha -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M320 318 C344 296 356 272 360 248" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C344 296 356 272 360 248" stroke="url(#happyCloth)" stroke-width="24"/>
+    </g>
+  </g>
+</svg>

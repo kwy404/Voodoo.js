@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" width="800" height="460" role="img" aria-labelledby="httpT httpD">
+  <title id="httpT">Requisições com v-get e v-post</title>
+  <desc id="httpD">O mascote Vudu lança um corvo de papel levando uma carta até um servidor, representando uma requisição v-get ou v-post, e recebe de volta um fragmento de HTML pronto para ser inserido na página.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="httpCloth" gradientUnits="userSpaceOnUse" x1="20" y1="90" x2="220" y2="350">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="httpPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <radialGradient id="httpTip" gradientUnits="userSpaceOnUse" cx="399" cy="196" r="36">
+      <stop offset="0" stop-color="#FFB35C" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFB35C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- arco da requisição -->
+  <path d="M200 168 C300 80 470 74 592 146" fill="none" stroke="#6D3BF5" stroke-width="3.5"
+        stroke-linecap="round" stroke-dasharray="12 10" opacity="0.8"/>
+  <path d="M576 132 L596 150 L570 156 Z" fill="#6D3BF5"/>
+
+  <!-- chips das diretivas -->
+  <g font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace" font-size="16" font-weight="700">
+    <rect x="236" y="34" width="84" height="30" rx="15" fill="#6D3BF5"/>
+    <text x="278" y="55" text-anchor="middle" fill="#FBF7F2">v-get</text>
+    <rect x="330" y="34" width="94" height="30" rx="15" fill="#FF3D8B"/>
+    <text x="377" y="55" text-anchor="middle" fill="#FBF7F2">v-post</text>
+  </g>
+
+  <!-- corvo de papel levando a carta -->
+  <g>
+    <path d="M358 98 C372 78 410 74 432 88 C420 104 384 110 358 98 Z" fill="#FBF7F2" stroke="#2A2440" stroke-width="2.5"/>
+    <path d="M384 88 L396 52 L420 82 Z" fill="#9B7BFF" stroke="#2A2440" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M358 98 L336 86 L344 106 Z" fill="#EDE4D8" stroke="#2A2440" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="437" cy="85" r="9" fill="#FBF7F2" stroke="#2A2440" stroke-width="2.5"/>
+    <path d="M446 81 L463 86 L446 91 Z" fill="#FFB35C"/>
+    <circle cx="439" cy="82" r="2.2" fill="#14111F"/>
+    <g transform="rotate(-8 404 116)">
+      <rect x="388" y="105" width="32" height="22" rx="3" fill="#FBF7F2" stroke="#2A2440" stroke-width="2.5"/>
+      <path d="M388 105 L404 117 L420 105" fill="none" stroke="#2A2440" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- arco da resposta -->
+  <path d="M592 314 C470 402 340 396 254 330" fill="none" stroke="#2ED9A5" stroke-width="3.5"
+        stroke-linecap="round" stroke-dasharray="12 10"/>
+  <path d="M276 322 L252 332 L274 346 Z" fill="#2ED9A5"/>
+
+  <!-- fragmento de HTML devolvido -->
+  <g transform="rotate(-5 452 386)">
+    <rect x="386" y="350" width="146" height="80" rx="14" fill="#2A2440" opacity="0.1"/>
+    <rect x="383" y="347" width="146" height="80" rx="14" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <text x="399" y="373" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="15" font-weight="700" fill="#6D3BF5">&lt;ul&gt;</text>
+    <rect x="411" y="382" width="88" height="7" rx="3.5" fill="#2A2440" opacity="0.3"/>
+    <rect x="411" y="395" width="66" height="7" rx="3.5" fill="#2A2440" opacity="0.3"/>
+    <text x="399" y="420" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="15" font-weight="700" fill="#6D3BF5">&lt;/ul&gt;</text>
+  </g>
+
+  <!-- servidor -->
+  <g>
+    <ellipse cx="676" cy="358" rx="86" ry="14" fill="#2A2440" opacity="0.13"/>
+    <rect x="600" y="122" width="152" height="222" rx="20" fill="#2A2440"/>
+    <rect class="vd-rim" x="600" y="122" width="152" height="222" rx="20" fill="none" stroke="#14111F" stroke-width="3" stroke-opacity="0.45"/>
+    <g>
+      <rect x="616" y="142" width="120" height="56" rx="11" fill="#14111F"/>
+      <circle cx="634" cy="170" r="7" fill="#2ED9A5"/>
+      <rect x="652" y="160" width="66" height="6" rx="3" fill="#FBF7F2" opacity="0.35"/>
+      <rect x="652" y="174" width="44" height="6" rx="3" fill="#FBF7F2" opacity="0.2"/>
+    </g>
+    <g>
+      <rect x="616" y="206" width="120" height="56" rx="11" fill="#14111F"/>
+      <circle cx="634" cy="234" r="7" fill="#FFB35C"/>
+      <rect x="652" y="224" width="66" height="6" rx="3" fill="#FBF7F2" opacity="0.35"/>
+      <rect x="652" y="238" width="52" height="6" rx="3" fill="#FBF7F2" opacity="0.2"/>
+    </g>
+    <g>
+      <rect x="616" y="270" width="120" height="56" rx="11" fill="#14111F"/>
+      <circle cx="634" cy="298" r="7" fill="#9B7BFF"/>
+      <rect x="652" y="288" width="66" height="6" rx="3" fill="#FBF7F2" opacity="0.35"/>
+      <rect x="652" y="302" width="38" height="6" rx="3" fill="#FBF7F2" opacity="0.2"/>
+    </g>
+  </g>
+
+  <!-- Vudu -->
+  <g transform="translate(-60 40) scale(0.62)">
+    <ellipse cx="256" cy="470" rx="112" ry="15" fill="#2A2440" opacity="0.13"/>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L218 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L294 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L218 452" stroke="url(#httpCloth)" stroke-width="24"/>
+      <path d="M288 404 L294 452" stroke="url(#httpCloth)" stroke-width="24"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C170 332 152 350 146 372" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C170 332 152 350 146 372" stroke="url(#httpCloth)" stroke-width="24"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#httpCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#httpCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#httpPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <g fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+      <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+      <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+    </g>
+
+    <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+          fill="url(#httpCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+    <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+    <g>
+      <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+      <g fill="#14111F">
+        <circle cx="208" cy="196" r="3"/><circle cx="220" cy="196" r="3"/>
+        <circle cx="208" cy="208" r="3"/><circle cx="220" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M208 196 L220 208"/><path d="M220 196 L208 208"/>
+      </g>
+    </g>
+
+    <g>
+      <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+      <g fill="#14111F">
+        <circle cx="294" cy="196" r="3"/><circle cx="306" cy="196" r="3"/>
+        <circle cx="294" cy="208" r="3"/><circle cx="306" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M294 196 L306 208"/><path d="M306 196 L294 208"/>
+      </g>
+    </g>
+
+    <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+      <path d="M251 221 L261 229"/><path d="M261 221 L251 229"/>
+    </g>
+
+    <path d="M218 240 Q256 278 294 240" fill="none" stroke="#2A2440" stroke-width="4.5"
+          stroke-linecap="round" stroke-dasharray="9 7"/>
+
+    <g>
+      <circle cx="399" cy="196" r="34" fill="url(#httpTip)"/>
+      <path d="M356 360 L386 236" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <circle cx="354" cy="364" r="12" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <path d="M376 240 L392 244 L394 203 Z" fill="#FFB35C"/>
+      <path d="M399 181 Q399 196 414 196 Q399 196 399 211 Q399 196 384 196 Q399 196 399 181 Z" fill="#FFB35C"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M320 318 C344 316 364 306 372 294" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C344 316 364 306 372 294" stroke="url(#httpCloth)" stroke-width="24"/>
+    </g>
+  </g>
+</svg>

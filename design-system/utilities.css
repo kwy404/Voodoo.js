@@ -1,0 +1,375 @@
+/* ==========================================================================
+   VOODOO.JS DESIGN SYSTEM
+   utilities.css : utilitarios minimos
+
+   Filosofia: utilitario existe para resolver layout e ajuste fino, nao para
+   substituir componente. Se voce repete cinco utilitarios no mesmo lugar
+   toda vez, aquilo virou componente e deve ir para components.css.
+
+   Todos os utilitarios usam !important porque a funcao deles e vencer o
+   componente no ponto exato onde foram aplicados.
+
+   INDICE
+   01. Container
+   02. Layout: stack, row, grid, center
+   03. Flex e alinhamento
+   04. Espacamento
+   05. Tipografia
+   06. Cores de texto e fundo
+   07. Bordas, raios e sombras
+   08. Visibilidade e acessibilidade
+   09. Responsividade
+   ========================================================================== */
+
+
+/* ==========================================================================
+   01. CONTAINER
+   ========================================================================== */
+.v-container {
+  width: 100%;
+  max-width: var(--v-container-xl);
+  margin-inline: auto;
+  padding-inline: var(--v-space-5);
+}
+
+.v-container--sm { max-width: var(--v-container-sm); }
+.v-container--md { max-width: var(--v-container-md); }
+.v-container--lg { max-width: var(--v-container-lg); }
+.v-container--full { max-width: var(--v-container-full); }
+
+
+/* ==========================================================================
+   02. LAYOUT
+   v-stack : coluna com espaco entre os filhos
+   v-row   : linha que quebra sozinha em telas estreitas
+   v-grid  : grade responsiva por largura minima da coluna
+   v-center: centraliza nos dois eixos
+   ========================================================================== */
+.v-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--v-space-4);
+  min-width: 0;
+}
+
+.v-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--v-space-4);
+  min-width: 0;
+}
+
+.v-row--nowrap { flex-wrap: nowrap !important; }
+.v-row--top { align-items: flex-start !important; }
+.v-row--bottom { align-items: flex-end !important; }
+.v-row--between { justify-content: space-between !important; }
+.v-row--end { justify-content: flex-end !important; }
+.v-row--center { justify-content: center !important; }
+
+.v-grid {
+  display: grid !important;
+  gap: var(--v-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  min-width: 0;
+}
+
+/* Grades com numero fixo de colunas. Elas colapsam sozinhas no bloco 09. */
+.v-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.v-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v-grid--wide { grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr)); }
+.v-grid--narrow { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
+
+.v-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.v-full { width: 100% !important; }
+.v-fill { flex: 1 1 auto !important; min-width: 0 !important; }
+.v-shrink-0 { flex: 0 0 auto !important; }
+.v-relative { position: relative !important; }
+
+/* Empurra o proximo elemento para a ponta oposta da linha. */
+.v-push { margin-left: auto !important; }
+
+
+/* ==========================================================================
+   03. ESPACO ENTRE FILHOS (gap)
+   ========================================================================== */
+.v-gap-0 { gap: 0 !important; }
+.v-gap-1 { gap: var(--v-space-1) !important; }
+.v-gap-2 { gap: var(--v-space-2) !important; }
+.v-gap-3 { gap: var(--v-space-3) !important; }
+.v-gap-4 { gap: var(--v-space-4) !important; }
+.v-gap-5 { gap: var(--v-space-5) !important; }
+.v-gap-6 { gap: var(--v-space-6) !important; }
+.v-gap-8 { gap: var(--v-space-8) !important; }
+.v-gap-10 { gap: var(--v-space-10) !important; }
+.v-gap-12 { gap: var(--v-space-12) !important; }
+
+
+/* ==========================================================================
+   04. ESPACAMENTO
+   Padrao de nome: v-<propriedade><eixo>-<passo>
+   m = margin, p = padding, t/b/l/r = lado, x/y = eixo
+   ========================================================================== */
+.v-m-0 { margin: 0 !important; }
+.v-m-auto { margin: auto !important; }
+.v-mx-auto { margin-inline: auto !important; }
+
+.v-mt-0 { margin-top: 0 !important; }
+.v-mt-1 { margin-top: var(--v-space-1) !important; }
+.v-mt-2 { margin-top: var(--v-space-2) !important; }
+.v-mt-3 { margin-top: var(--v-space-3) !important; }
+.v-mt-4 { margin-top: var(--v-space-4) !important; }
+.v-mt-6 { margin-top: var(--v-space-6) !important; }
+.v-mt-8 { margin-top: var(--v-space-8) !important; }
+.v-mt-12 { margin-top: var(--v-space-12) !important; }
+.v-mt-16 { margin-top: var(--v-space-16) !important; }
+
+.v-mb-0 { margin-bottom: 0 !important; }
+.v-mb-1 { margin-bottom: var(--v-space-1) !important; }
+.v-mb-2 { margin-bottom: var(--v-space-2) !important; }
+.v-mb-3 { margin-bottom: var(--v-space-3) !important; }
+.v-mb-4 { margin-bottom: var(--v-space-4) !important; }
+.v-mb-6 { margin-bottom: var(--v-space-6) !important; }
+.v-mb-8 { margin-bottom: var(--v-space-8) !important; }
+.v-mb-12 { margin-bottom: var(--v-space-12) !important; }
+.v-mb-16 { margin-bottom: var(--v-space-16) !important; }
+
+.v-p-0 { padding: 0 !important; }
+.v-p-1 { padding: var(--v-space-1) !important; }
+.v-p-2 { padding: var(--v-space-2) !important; }
+.v-p-3 { padding: var(--v-space-3) !important; }
+.v-p-4 { padding: var(--v-space-4) !important; }
+.v-p-5 { padding: var(--v-space-5) !important; }
+.v-p-6 { padding: var(--v-space-6) !important; }
+.v-p-8 { padding: var(--v-space-8) !important; }
+
+.v-px-2 { padding-inline: var(--v-space-2) !important; }
+.v-px-3 { padding-inline: var(--v-space-3) !important; }
+.v-px-4 { padding-inline: var(--v-space-4) !important; }
+.v-px-5 { padding-inline: var(--v-space-5) !important; }
+.v-px-6 { padding-inline: var(--v-space-6) !important; }
+
+.v-py-2 { padding-block: var(--v-space-2) !important; }
+.v-py-3 { padding-block: var(--v-space-3) !important; }
+.v-py-4 { padding-block: var(--v-space-4) !important; }
+.v-py-6 { padding-block: var(--v-space-6) !important; }
+.v-py-8 { padding-block: var(--v-space-8) !important; }
+.v-py-12 { padding-block: var(--v-space-12) !important; }
+.v-py-16 { padding-block: var(--v-space-16) !important; }
+
+
+/* ==========================================================================
+   05. TIPOGRAFIA
+   ========================================================================== */
+.v-display { font-family: var(--v-font-display) !important; letter-spacing: var(--v-tracking-tight) !important; }
+.v-sans { font-family: var(--v-font-sans) !important; }
+.v-mono { font-family: var(--v-font-mono) !important; }
+
+.v-text-xs { font-size: var(--v-text-xs) !important; }
+.v-text-sm { font-size: var(--v-text-sm) !important; }
+.v-text-base { font-size: var(--v-text-base) !important; }
+.v-text-lg { font-size: var(--v-text-lg) !important; }
+.v-text-xl { font-size: var(--v-text-xl) !important; }
+.v-text-2xl { font-size: var(--v-text-2xl) !important; }
+.v-text-3xl { font-size: var(--v-text-3xl) !important; }
+.v-text-4xl { font-size: var(--v-text-4xl) !important; }
+
+.v-weight-regular { font-weight: var(--v-weight-regular) !important; }
+.v-weight-medium { font-weight: var(--v-weight-medium) !important; }
+.v-weight-semibold { font-weight: var(--v-weight-semibold) !important; }
+.v-weight-bold { font-weight: var(--v-weight-bold) !important; }
+
+.v-leading-tight { line-height: var(--v-leading-tight) !important; }
+.v-leading-normal { line-height: var(--v-leading-normal) !important; }
+.v-leading-relaxed { line-height: var(--v-leading-relaxed) !important; }
+
+.v-uppercase { text-transform: uppercase !important; letter-spacing: var(--v-tracking-wide) !important; }
+.v-align-left { text-align: left !important; }
+.v-align-center { text-align: center !important; }
+.v-align-right { text-align: right !important; }
+.v-nowrap { white-space: nowrap !important; }
+.v-balance { text-wrap: balance !important; }
+.v-tabular { font-variant-numeric: tabular-nums !important; }
+
+/* Limita o texto a um numero confortavel de caracteres por linha. */
+.v-measure { max-width: 62ch !important; }
+
+
+/* ==========================================================================
+   06. CORES DE TEXTO E FUNDO
+   ========================================================================== */
+.v-text-default { color: var(--v-text) !important; }
+.v-text-muted { color: var(--v-text-muted) !important; }
+.v-text-subtle { color: var(--v-text-subtle) !important; }
+.v-text-primary { color: var(--v-primary) !important; }
+.v-text-accent { color: var(--v-accent) !important; }
+.v-text-success { color: var(--v-success) !important; }
+.v-text-warning { color: var(--v-warning) !important; }
+.v-text-danger { color: var(--v-danger) !important; }
+.v-text-info { color: var(--v-info) !important; }
+
+.v-bg-surface { background-color: var(--v-surface) !important; }
+.v-bg-surface-2 { background-color: var(--v-surface-2) !important; }
+.v-bg-surface-3 { background-color: var(--v-surface-3) !important; }
+.v-bg-primary-soft { background-color: var(--v-primary-soft) !important; }
+.v-bg-accent-soft { background-color: var(--v-accent-soft) !important; }
+
+/* Gradiente da marca aplicado ao proprio texto. */
+.v-text-gradient {
+  background-image: linear-gradient(100deg, var(--v-primary), var(--v-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+
+/* ==========================================================================
+   07. BORDAS, RAIOS E SOMBRAS
+   ========================================================================== */
+.v-border { border: var(--v-border-width) solid var(--v-border) !important; }
+.v-border-top { border-top: var(--v-border-width) solid var(--v-border) !important; }
+.v-border-bottom { border-bottom: var(--v-border-width) solid var(--v-border) !important; }
+.v-border-none { border: 0 !important; }
+
+.v-radius-sm { border-radius: var(--v-radius-sm) !important; }
+.v-radius-md { border-radius: var(--v-radius-md) !important; }
+.v-radius-lg { border-radius: var(--v-radius-lg) !important; }
+.v-radius-xl { border-radius: var(--v-radius-xl) !important; }
+.v-radius-full { border-radius: var(--v-radius-full) !important; }
+
+.v-shadow-sm { box-shadow: var(--v-shadow-sm) !important; }
+.v-shadow-md { box-shadow: var(--v-shadow-md) !important; }
+.v-shadow-lg { box-shadow: var(--v-shadow-lg) !important; }
+.v-shadow-glow { box-shadow: var(--v-shadow-glow) !important; }
+.v-shadow-none { box-shadow: none !important; }
+
+
+/* ==========================================================================
+   08. VISIBILIDADE E ACESSIBILIDADE
+   ========================================================================== */
+.v-hidden { display: none !important; }
+.v-invisible { visibility: hidden !important; }
+
+/* Corta o texto em uma linha com reticencias. */
+.v-truncate {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Corta em duas linhas. */
+.v-clamp-2 {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden !important;
+}
+
+/* Visivel apenas para leitores de tela. */
+.v-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Escondido ate receber foco. Usado no link "pular para o conteudo". */
+.v-skip-link {
+  position: absolute;
+  left: var(--v-space-4);
+  top: calc(var(--v-space-4) * -6);
+  z-index: var(--v-z-tooltip);
+  padding: var(--v-space-3) var(--v-space-5);
+  border-radius: var(--v-radius-md);
+  background-color: var(--v-primary);
+  color: var(--v-primary-contrast);
+  font-size: var(--v-text-sm);
+  font-weight: var(--v-weight-semibold);
+  text-decoration: none;
+  transition: top var(--v-duration-base) var(--v-ease-out);
+}
+
+.v-skip-link:focus-visible {
+  top: var(--v-space-4);
+  color: var(--v-primary-contrast);
+}
+
+/* Rolagem controlada dentro do proprio bloco. */
+.v-scroll-x { overflow-x: auto !important; max-width: 100% !important; }
+.v-scroll-y { overflow-y: auto !important; }
+
+
+/* ==========================================================================
+   09. RESPONSIVIDADE
+   Tres pontos de quebra:
+   mobile  : ate 639px
+   tablet  : de 640px a 1023px
+   desktop : a partir de 1024px
+
+   Utilitarios de visibilidade seguem o padrao v-<acao>-<faixa>.
+   ========================================================================== */
+
+/* --- Mobile: ate 639px --------------------------------------------------- */
+@media (max-width: 639px) {
+  .v-hide-mobile { display: none !important; }
+
+  .v-grid--2,
+  .v-grid--3,
+  .v-grid--4 { grid-template-columns: minmax(0, 1fr) !important; }
+
+  .v-row--stack-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .v-container { padding-inline: var(--v-space-4); }
+
+  /* Reduz a tipografia de display para nao gerar rolagem lateral. */
+  .v-text-4xl { font-size: var(--v-text-3xl) !important; }
+  .v-text-3xl { font-size: var(--v-text-2xl) !important; }
+
+  .v-full-mobile { width: 100% !important; }
+}
+
+/* --- Tablet: de 640px a 1023px ------------------------------------------ */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .v-hide-tablet { display: none !important; }
+
+  .v-grid--3,
+  .v-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* --- Desktop: a partir de 1024px ---------------------------------------- */
+@media (min-width: 1024px) {
+  .v-hide-desktop { display: none !important; }
+}
+
+/* --- Atalhos "mostrar apenas em" ---------------------------------------- */
+.v-only-mobile { display: none !important; }
+.v-only-tablet { display: none !important; }
+.v-only-desktop { display: none !important; }
+
+@media (max-width: 639px) {
+  .v-only-mobile { display: revert !important; }
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+  .v-only-tablet { display: revert !important; }
+}
+@media (min-width: 1024px) {
+  .v-only-desktop { display: revert !important; }
+}

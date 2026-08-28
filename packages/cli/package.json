@@ -1,0 +1,27 @@
+{
+  "name": "@voodoo/cli",
+  "version": "0.1.0",
+  "description": "Linha de comando da Voodoo.js: cria projetos, monta builds sob medida e copia componentes para o seu codigo.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "voodoo": "./bin/voodoo.mjs"
+  },
+  "files": [
+    "bin",
+    "templates"
+  ],
+  "scripts": {
+    "build": "node -e \"console.log('CLI e JavaScript puro, nao precisa de build.')\""
+  },
+  "dependencies": {
+    "esbuild": "^0.24.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["voodoojs", "cli", "build", "scaffold"],
+  "publishConfig": {
+    "access": "public"
+  }
+}

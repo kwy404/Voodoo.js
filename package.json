@@ -1,0 +1,31 @@
+{
+  "name": "voodoo-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voodoo.js: JavaScript feels like magic.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=voodoojs && npm run build --workspace=@voodoo/cli",
+    "dev": "npm run dev --workspace=voodoojs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc -p packages/voodoojs/tsconfig.json --noEmit",
+    "format": "prettier --write \"**/*.{ts,js,json,md,html,css}\"",
+    "size": "node scripts/size.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "tsup": "^8.3.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "npm@11.13.0"
+}

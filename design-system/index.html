@@ -1,0 +1,2157 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voodoo.js Design System</title>
+<meta name="description" content="Design system oficial do Voodoo.js. Tokens, componentes e utilitarios em CSS puro, sem dependencias.">
+
+<script>
+  /* Aplica o tema antes da primeira pintura para evitar piscada de cor.
+     Todo acesso ao localStorage fica dentro de try/catch porque o
+     navegador pode bloquear armazenamento em janela anonima. */
+  (function () {
+    var escolha = null;
+    try { escolha = localStorage.getItem("voodoo-theme"); } catch (e) { escolha = null; }
+    if (escolha !== "light" && escolha !== "dark") {
+      escolha = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    document.documentElement.setAttribute("data-theme", escolha);
+  })();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<!-- Ordem obrigatoria: tokens, reset, componentes, utilitarios.
+     Quem preferir um link so pode usar voodoo-ui.css no lugar dos quatro. -->
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="reset.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="utilities.css">
+
+<style>
+  /* ======================================================================
+     Estilos exclusivos desta pagina de vitrine.
+     Prefixo "ds-" para deixar claro que nao fazem parte da biblioteca.
+     Mesmo aqui, todo valor vem dos tokens.
+     ====================================================================== */
+
+  .ds-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--v-z-sticky);
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-4);
+    padding: var(--v-space-3) var(--v-space-5);
+    background-color: color-mix(in srgb, var(--v-surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: var(--v-border-width) solid var(--v-border);
+  }
+
+  .ds-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    min-width: 0;
+    text-decoration: none;
+    color: var(--v-text);
+  }
+
+  .ds-logo {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    border-radius: var(--v-radius-md);
+    background-image: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+    color: var(--v-white);
+    font-family: var(--v-font-display);
+    font-weight: var(--v-weight-bold);
+    font-size: var(--v-text-lg);
+    box-shadow: var(--v-shadow-glow);
+  }
+
+  .ds-brand__name {
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-base);
+    font-weight: var(--v-weight-bold);
+    line-height: 1.1;
+  }
+
+  .ds-brand__tag {
+    display: block;
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+    font-weight: var(--v-weight-regular);
+  }
+
+  .ds-shell {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    align-items: start;
+    max-width: var(--v-container-full);
+    margin-inline: auto;
+  }
+
+  .ds-sidebar {
+    position: sticky;
+    top: 3.75rem;
+    max-height: calc(100vh - 3.75rem);
+    overflow-y: auto;
+    padding: var(--v-space-6) var(--v-space-4);
+    border-right: var(--v-border-width) solid var(--v-border);
+  }
+
+  .ds-nav-group + .ds-nav-group { margin-top: var(--v-space-5); }
+
+  .ds-nav-group__title {
+    font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--v-tracking-wide);
+    color: var(--v-text-subtle);
+    margin-bottom: var(--v-space-2);
+  }
+
+  .ds-nav-group ul { display: flex; flex-direction: column; gap: 2px; }
+
+  .ds-nav-group a {
+    display: block;
+    padding: var(--v-space-2) var(--v-space-3);
+    border-radius: var(--v-radius-sm);
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+    text-decoration: none;
+    transition: background-color var(--v-duration-fast) var(--v-ease-out),
+                color var(--v-duration-fast) var(--v-ease-out);
+  }
+
+  .ds-nav-group a:hover,
+  .ds-nav-group a.is-active {
+    background-color: var(--v-primary-soft);
+    color: var(--v-primary-soft-text);
+    font-weight: var(--v-weight-semibold);
+  }
+
+  .ds-main {
+    min-width: 0;
+    padding: var(--v-space-8) var(--v-space-6) var(--v-space-16);
+  }
+
+  .ds-hero {
+    padding: var(--v-space-10) 0 var(--v-space-8);
+    border-bottom: var(--v-border-width) solid var(--v-border);
+    margin-bottom: var(--v-space-10);
+  }
+
+  .ds-hero h1 {
+    font-size: var(--v-text-4xl);
+    margin-bottom: var(--v-space-4);
+  }
+
+  .ds-section { padding-top: var(--v-space-12); }
+
+  .ds-section > h2 {
+    font-size: var(--v-text-2xl);
+    margin-bottom: var(--v-space-2);
+  }
+
+  .ds-section__lead {
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+    max-width: 62ch;
+    margin-bottom: var(--v-space-6);
+  }
+
+  .ds-sub { padding-top: var(--v-space-8); }
+
+  .ds-sub > h3 {
+    font-size: var(--v-text-lg);
+    margin-bottom: var(--v-space-4);
+  }
+
+  /* Bloco padrao: exemplo renderizado em cima, codigo embaixo. */
+  .ds-demo {
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    overflow: hidden;
+    background-color: var(--v-surface);
+    margin-bottom: var(--v-space-6);
+  }
+
+  .ds-demo__preview {
+    padding: var(--v-space-6);
+    background-color: var(--v-surface);
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--v-border) 1px, transparent 0);
+    background-size: 18px 18px;
+  }
+
+  .ds-demo__preview > * { position: relative; }
+
+  .ds-demo .v-code-block {
+    border: 0;
+    border-top: var(--v-border-width) solid var(--v-border);
+    border-radius: 0;
+  }
+
+  /* Grade de amostras de cor. */
+  .ds-swatches {
+    display: grid;
+    gap: var(--v-space-3);
+    grid-template-columns: repeat(auto-fill, minmax(min(9rem, 100%), 1fr));
+  }
+
+  .ds-swatch {
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-md);
+    overflow: hidden;
+    background-color: var(--v-surface);
+  }
+
+  .ds-swatch__chip { height: 3.5rem; }
+
+  .ds-swatch__meta {
+    padding: var(--v-space-2) var(--v-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .ds-swatch__name {
+    font-family: var(--v-font-mono);
+    font-size: 0.68rem;
+    color: var(--v-text);
+    overflow-wrap: anywhere;
+  }
+
+  .ds-swatch__hex {
+    font-family: var(--v-font-mono);
+    font-size: 0.68rem;
+    color: var(--v-text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Amostras de espacamento, raio e sombra. */
+  .ds-spec {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-4);
+    padding: var(--v-space-2) 0;
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+  }
+
+  .ds-spec__label {
+    width: 8.5rem;
+    flex: 0 0 auto;
+    font-family: var(--v-font-mono);
+    color: var(--v-text);
+  }
+
+  .ds-spec__bar {
+    height: 0.85rem;
+    border-radius: var(--v-radius-sm);
+    background-image: linear-gradient(90deg, var(--v-primary), var(--v-accent));
+  }
+
+  .ds-radius-box {
+    display: grid;
+    place-items: center;
+    height: 5rem;
+    background-color: var(--v-primary-soft);
+    border: var(--v-border-width-thick) solid var(--v-primary);
+    color: var(--v-primary-soft-text);
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-xs);
+  }
+
+  .ds-shadow-box {
+    display: grid;
+    place-items: center;
+    height: 5rem;
+    border-radius: var(--v-radius-lg);
+    background-color: var(--v-surface);
+    border: var(--v-border-width) solid var(--v-border);
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+  }
+
+  .ds-type-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--v-space-4);
+    padding: var(--v-space-2) 0;
+    border-bottom: var(--v-border-width) solid var(--v-border);
+  }
+
+  .ds-type-row:last-child { border-bottom: 0; }
+
+  .ds-type-row__tag {
+    flex: 0 0 auto;
+    width: 8.5rem;
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+  }
+
+  .ds-type-row__sample { min-width: 0; overflow-wrap: anywhere; }
+
+  .ds-copy-btn {
+    color: inherit;
+    font-family: var(--v-font-mono);
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    padding: 2px var(--v-space-2);
+    border-radius: var(--v-radius-sm);
+    transition: background-color var(--v-duration-fast) var(--v-ease-out);
+  }
+
+  .ds-copy-btn:hover { background-color: rgba(255, 255, 255, 0.12); color: var(--v-white); }
+
+  .ds-footer {
+    margin-top: var(--v-space-16);
+    padding-top: var(--v-space-8);
+    border-top: var(--v-border-width) solid var(--v-border);
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  /* ---- Responsivo de verdade ---- */
+  @media (max-width: 1023px) {
+    .ds-shell { grid-template-columns: minmax(0, 1fr); }
+
+    .ds-sidebar {
+      position: sticky;
+      top: 3.75rem;
+      max-height: none;
+      padding: var(--v-space-3) var(--v-space-4);
+      border-right: 0;
+      border-bottom: var(--v-border-width) solid var(--v-border);
+      background-color: var(--v-color-bg);
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .ds-nav {
+      display: flex;
+      gap: var(--v-space-2);
+      width: max-content;
+    }
+
+    .ds-nav-group + .ds-nav-group { margin-top: 0; }
+    .ds-nav-group__title { display: none; }
+    .ds-nav-group ul { flex-direction: row; gap: var(--v-space-2); }
+    .ds-nav-group a { white-space: nowrap; border: var(--v-border-width) solid var(--v-border); }
+
+    .ds-main { padding: var(--v-space-6) var(--v-space-4) var(--v-space-12); }
+  }
+
+  @media (max-width: 639px) {
+    .ds-hero h1 { font-size: var(--v-text-3xl); }
+    .ds-demo__preview { padding: var(--v-space-4); }
+    .ds-spec__label { width: 6rem; }
+    .ds-type-row { flex-direction: column; gap: var(--v-space-1); }
+    .ds-type-row__tag { width: auto; }
+    .ds-brand__tag { display: none; }
+  }
+</style>
+</head>
+
+<body>
+<a class="v-skip-link" href="#conteudo">Pular para o conteudo</a>
+
+<!-- ======================================================================
+     CABECALHO
+     ====================================================================== -->
+<header class="ds-header">
+  <a class="ds-brand" href="#topo">
+    <span class="ds-logo" aria-hidden="true">V</span>
+    <span>
+      <span class="ds-brand__name">Voodoo.js Design System</span>
+      <span class="ds-brand__tag">JavaScript feels like magic.</span>
+    </span>
+  </a>
+
+  <span class="v-push"></span>
+
+  <span class="v-badge v-badge--primary v-hide-mobile">v1.0</span>
+
+  <button
+    type="button"
+    id="alternador-tema"
+    class="v-btn v-btn--secondary v-btn--sm"
+    aria-pressed="false"
+    aria-label="Alternar entre tema claro e escuro">
+    <span id="icone-tema" aria-hidden="true">&#9789;</span>
+    <span id="rotulo-tema">Escuro</span>
+  </button>
+</header>
+
+<div class="ds-shell" id="topo">
+
+  <!-- ====================================================================
+       NAVEGACAO LATERAL
+       ==================================================================== -->
+  <aside class="ds-sidebar">
+    <nav class="ds-nav" aria-label="Secoes do design system">
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Fundamentos</p>
+        <ul>
+          <li><a href="#cores">Cores</a></li>
+          <li><a href="#tipografia">Tipografia</a></li>
+          <li><a href="#espacamento">Espacamento</a></li>
+          <li><a href="#raios">Raios e sombras</a></li>
+        </ul>
+      </div>
+
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Acoes</p>
+        <ul>
+          <li><a href="#botoes">Botoes</a></li>
+          <li><a href="#formularios">Formularios</a></li>
+        </ul>
+      </div>
+
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Conteudo</p>
+        <ul>
+          <li><a href="#cards">Cards</a></li>
+          <li><a href="#badges">Badges e tags</a></li>
+          <li><a href="#alertas">Alertas</a></li>
+          <li><a href="#tabelas">Tabelas</a></li>
+          <li><a href="#codigo">Codigo</a></li>
+        </ul>
+      </div>
+
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Navegacao</p>
+        <ul>
+          <li><a href="#tabs">Tabs</a></li>
+          <li><a href="#accordion">Accordion</a></li>
+          <li><a href="#trilhas">Breadcrumb e paginacao</a></li>
+        </ul>
+      </div>
+
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Sobreposicoes</p>
+        <ul>
+          <li><a href="#modal">Modal</a></li>
+          <li><a href="#drawer">Drawer</a></li>
+          <li><a href="#dropdown">Dropdown</a></li>
+          <li><a href="#tooltip">Tooltip</a></li>
+          <li><a href="#toast">Toast</a></li>
+        </ul>
+      </div>
+
+      <div class="ds-nav-group">
+        <p class="ds-nav-group__title">Feedback</p>
+        <ul>
+          <li><a href="#carregando">Skeleton e spinner</a></li>
+          <li><a href="#progresso">Progresso</a></li>
+          <li><a href="#avatares">Avatares</a></li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ====================================================================
+       CONTEUDO
+       ==================================================================== -->
+  <main class="ds-main" id="conteudo">
+
+    <section class="ds-hero">
+      <span class="v-badge v-badge--accent v-mb-4">Design System</span>
+      <h1><span class="v-text-gradient">Voodoo.js</span> Design System</h1>
+      <p class="v-text-lg v-text-muted v-measure">
+        Uma camada de estilo em CSS puro para produtos construidos com Voodoo.js.
+        Zero dependencias, zero build, zero JavaScript obrigatorio. Voce linka
+        quatro arquivos e ja tem tokens, componentes e utilitarios funcionando
+        em tema claro e escuro.
+      </p>
+      <div class="v-row v-mt-6">
+        <a class="v-btn v-btn--primary v-btn--lg" href="#botoes">Ver componentes</a>
+        <a class="v-btn v-btn--secondary v-btn--lg" href="README.md">Ler a documentacao</a>
+      </div>
+
+      <div class="v-code-block v-mt-8">
+        <div class="v-code-block__header">
+          <span>Instalacao</span>
+          <button type="button" class="ds-copy-btn" data-copiar>copiar</button>
+        </div>
+        <pre class="v-pre"><code>&lt;link rel="stylesheet" href="design-system/voodoo-ui.css"&gt;</code></pre>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         FUNDAMENTOS: CORES
+         ================================================================ -->
+    <section class="ds-section" id="cores">
+      <h2>Cores</h2>
+      <p class="ds-section__lead">
+        A paleta tem tres escalas de marca, roxo, magenta e tinta, mais tres
+        cores de estado. Os componentes nunca usam a paleta bruta: eles usam
+        as cores semanticas, que sao as unicas que mudam com o tema. Os valores
+        abaixo sao lidos ao vivo do CSS, entao mudam quando voce troca o tema.
+      </p>
+
+      <div class="ds-sub">
+        <h3>Roxo, a cor primaria</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-50)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-50</span><span class="ds-swatch__hex" data-token="--v-purple-50"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-100)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-100</span><span class="ds-swatch__hex" data-token="--v-purple-100"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-200)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-200</span><span class="ds-swatch__hex" data-token="--v-purple-200"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-300)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-300</span><span class="ds-swatch__hex" data-token="--v-purple-300"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-400)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-400</span><span class="ds-swatch__hex" data-token="--v-purple-400"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-500</span><span class="ds-swatch__hex" data-token="--v-purple-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-600)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-600</span><span class="ds-swatch__hex" data-token="--v-purple-600"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-700</span><span class="ds-swatch__hex" data-token="--v-purple-700"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-800)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-800</span><span class="ds-swatch__hex" data-token="--v-purple-800"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-purple-900)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-purple-900</span><span class="ds-swatch__hex" data-token="--v-purple-900"></span></div></div>
+        </div>
+      </div>
+
+      <div class="ds-sub">
+        <h3>Magenta, a cor de acento</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-50)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-50</span><span class="ds-swatch__hex" data-token="--v-magenta-50"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-100)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-100</span><span class="ds-swatch__hex" data-token="--v-magenta-100"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-200)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-200</span><span class="ds-swatch__hex" data-token="--v-magenta-200"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-300)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-300</span><span class="ds-swatch__hex" data-token="--v-magenta-300"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-400)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-400</span><span class="ds-swatch__hex" data-token="--v-magenta-400"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-500</span><span class="ds-swatch__hex" data-token="--v-magenta-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-600)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-600</span><span class="ds-swatch__hex" data-token="--v-magenta-600"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-700</span><span class="ds-swatch__hex" data-token="--v-magenta-700"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-800)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-800</span><span class="ds-swatch__hex" data-token="--v-magenta-800"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-magenta-900)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-magenta-900</span><span class="ds-swatch__hex" data-token="--v-magenta-900"></span></div></div>
+        </div>
+      </div>
+
+      <div class="ds-sub">
+        <h3>Tinta, os neutros quentes</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-50)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-50 creme</span><span class="ds-swatch__hex" data-token="--v-ink-50"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-100)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-100 areia</span><span class="ds-swatch__hex" data-token="--v-ink-100"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-200)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-200</span><span class="ds-swatch__hex" data-token="--v-ink-200"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-300)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-300</span><span class="ds-swatch__hex" data-token="--v-ink-300"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-400)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-400</span><span class="ds-swatch__hex" data-token="--v-ink-400"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-500</span><span class="ds-swatch__hex" data-token="--v-ink-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-600)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-600</span><span class="ds-swatch__hex" data-token="--v-ink-600"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-700</span><span class="ds-swatch__hex" data-token="--v-ink-700"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-800)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-800 tinta media</span><span class="ds-swatch__hex" data-token="--v-ink-800"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-ink-900)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-ink-900 tinta escura</span><span class="ds-swatch__hex" data-token="--v-ink-900"></span></div></div>
+        </div>
+      </div>
+
+      <div class="ds-sub">
+        <h3>Cores de estado</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-mint-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-mint-500 menta</span><span class="ds-swatch__hex" data-token="--v-mint-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-mint-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-mint-700</span><span class="ds-swatch__hex" data-token="--v-mint-700"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-amber-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-amber-500 ambar</span><span class="ds-swatch__hex" data-token="--v-amber-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-amber-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-amber-700</span><span class="ds-swatch__hex" data-token="--v-amber-700"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-red-500)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-red-500 perigo</span><span class="ds-swatch__hex" data-token="--v-red-500"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-red-700)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-red-700</span><span class="ds-swatch__hex" data-token="--v-red-700"></span></div></div>
+        </div>
+      </div>
+
+      <div class="ds-sub">
+        <h3>Cores semanticas, as que os componentes usam</h3>
+        <div class="ds-swatches">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-color-bg)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-color-bg</span><span class="ds-swatch__hex" data-token="--v-color-bg"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-surface)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-surface</span><span class="ds-swatch__hex" data-token="--v-surface"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-surface-2)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-surface-2</span><span class="ds-swatch__hex" data-token="--v-surface-2"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-border)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-border</span><span class="ds-swatch__hex" data-token="--v-border"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-text)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-text</span><span class="ds-swatch__hex" data-token="--v-text"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-text-muted)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-text-muted</span><span class="ds-swatch__hex" data-token="--v-text-muted"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-primary)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-primary</span><span class="ds-swatch__hex" data-token="--v-primary"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-primary-hover)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-primary-hover</span><span class="ds-swatch__hex" data-token="--v-primary-hover"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-success)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-success</span><span class="ds-swatch__hex" data-token="--v-success"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-warning)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-warning</span><span class="ds-swatch__hex" data-token="--v-warning"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-danger)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-danger</span><span class="ds-swatch__hex" data-token="--v-danger"></span></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background: var(--v-info)"></div><div class="ds-swatch__meta"><span class="ds-swatch__name">--v-info</span><span class="ds-swatch__hex" data-token="--v-info"></span></div></div>
+        </div>
+      </div>
+
+      <div class="v-code-block v-mt-6">
+        <div class="v-code-block__header">
+          <span>Uso</span>
+          <button type="button" class="ds-copy-btn" data-copiar>copiar</button>
+        </div>
+        <pre class="v-pre"><code>.minha-caixa {
+  background-color: var(--v-surface);
+  color: var(--v-text);
+  border: 1px solid var(--v-border);
+}</code></pre>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         FUNDAMENTOS: TIPOGRAFIA
+         ================================================================ -->
+    <section class="ds-section" id="tipografia">
+      <h2>Tipografia</h2>
+      <p class="ds-section__lead">
+        Space Grotesk nos titulos, Inter no texto corrido e JetBrains Mono no
+        codigo. As tres tem fallback declarado, entao a pagina continua correta
+        mesmo sem baixar nenhuma fonte.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-4xl / 48px</span><span class="ds-type-row__sample v-display v-text-4xl v-weight-bold">Magia em CSS</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-3xl / 36px</span><span class="ds-type-row__sample v-display v-text-3xl v-weight-bold">Magia em CSS</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-2xl / 28px</span><span class="ds-type-row__sample v-display v-text-2xl v-weight-bold">Magia em CSS</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-xl / 22px</span><span class="ds-type-row__sample v-display v-text-xl v-weight-semibold">Magia em CSS</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-lg / 18px</span><span class="ds-type-row__sample v-text-lg">O ritual comeca com um arquivo de tokens.</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-base / 16px</span><span class="ds-type-row__sample v-text-base">O ritual comeca com um arquivo de tokens.</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-sm / 14px</span><span class="ds-type-row__sample v-text-sm v-text-muted">O ritual comeca com um arquivo de tokens.</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-text-xs / 12px</span><span class="ds-type-row__sample v-text-xs v-text-muted">O ritual comeca com um arquivo de tokens.</span></div>
+          <div class="ds-type-row"><span class="ds-type-row__tag">--v-font-mono</span><span class="ds-type-row__sample v-mono v-text-sm">voodoo.spell("hello").cast()</span></div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;h1 class="v-display v-text-4xl v-weight-bold"&gt;Magia em CSS&lt;/h1&gt;
+&lt;p class="v-text-sm v-text-muted v-measure"&gt;Texto de apoio.&lt;/p&gt;
+&lt;code class="v-code"&gt;voodoo.cast()&lt;/code&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         FUNDAMENTOS: ESPACAMENTO
+         ================================================================ -->
+    <section class="ds-section" id="espacamento">
+      <h2>Espacamento</h2>
+      <p class="ds-section__lead">
+        Escala de 4 pixels. Todo espaco da interface e um multiplo dela, o que
+        mantem o ritmo vertical previsivel em qualquer tela.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-1</span><span class="ds-spec__bar" style="width: var(--v-space-1)"></span><span>4px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-2</span><span class="ds-spec__bar" style="width: var(--v-space-2)"></span><span>8px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-3</span><span class="ds-spec__bar" style="width: var(--v-space-3)"></span><span>12px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-4</span><span class="ds-spec__bar" style="width: var(--v-space-4)"></span><span>16px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-6</span><span class="ds-spec__bar" style="width: var(--v-space-6)"></span><span>24px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-8</span><span class="ds-spec__bar" style="width: var(--v-space-8)"></span><span>32px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-12</span><span class="ds-spec__bar" style="width: var(--v-space-12)"></span><span>48px</span></div>
+          <div class="ds-spec"><span class="ds-spec__label">--v-space-16</span><span class="ds-spec__bar" style="width: var(--v-space-16)"></span><span>64px</span></div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-stack v-gap-6"&gt;
+  &lt;div class="v-p-6"&gt;Bloco com padding de 24px&lt;/div&gt;
+  &lt;div class="v-mt-4"&gt;Bloco com 16px acima&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         FUNDAMENTOS: RAIOS E SOMBRAS
+         ================================================================ -->
+    <section class="ds-section" id="raios">
+      <h2>Raios e sombras</h2>
+      <p class="ds-section__lead">
+        Cinco raios e quatro sombras. A sombra glow e a assinatura visual do
+        Voodoo.js e aparece em botoes primarios no hover e em cards de destaque.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-grid v-grid--narrow v-mb-6">
+            <div class="ds-radius-box" style="border-radius: var(--v-radius-sm)">sm 6px</div>
+            <div class="ds-radius-box" style="border-radius: var(--v-radius-md)">md 10px</div>
+            <div class="ds-radius-box" style="border-radius: var(--v-radius-lg)">lg 16px</div>
+            <div class="ds-radius-box" style="border-radius: var(--v-radius-xl)">xl 24px</div>
+            <div class="ds-radius-box" style="border-radius: var(--v-radius-full)">full</div>
+          </div>
+          <div class="v-grid v-grid--narrow">
+            <div class="ds-shadow-box v-shadow-sm">shadow-sm</div>
+            <div class="ds-shadow-box v-shadow-md">shadow-md</div>
+            <div class="ds-shadow-box v-shadow-lg">shadow-lg</div>
+            <div class="ds-shadow-box v-shadow-glow">shadow-glow</div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-card v-radius-xl v-shadow-glow"&gt;Card em destaque&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         BOTOES
+         ================================================================ -->
+    <section class="ds-section" id="botoes">
+      <h2>Botoes</h2>
+      <p class="ds-section__lead">
+        Quatro variantes, tres tamanhos e os estados de hover, ativo, desabilitado
+        e carregando. Em carregamento, mantenha o rotulo no DOM e adicione
+        <code class="v-code">aria-busy="true"</code> para que leitores de tela
+        anunciem a espera.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row v-mb-4">
+            <button type="button" class="v-btn v-btn--primary">Conjurar</button>
+            <button type="button" class="v-btn v-btn--secondary">Cancelar</button>
+            <button type="button" class="v-btn v-btn--ghost">Saiba mais</button>
+            <button type="button" class="v-btn v-btn--danger">Excluir ritual</button>
+          </div>
+          <div class="v-row v-mb-4">
+            <button type="button" class="v-btn v-btn--primary v-btn--sm">Pequeno</button>
+            <button type="button" class="v-btn v-btn--primary">Medio</button>
+            <button type="button" class="v-btn v-btn--primary v-btn--lg">Grande</button>
+          </div>
+          <div class="v-row">
+            <button type="button" class="v-btn v-btn--primary" disabled>Desabilitado</button>
+            <button type="button" class="v-btn v-btn--primary is-loading" aria-busy="true">Salvando</button>
+            <button type="button" class="v-btn v-btn--secondary v-btn--icon" aria-label="Configuracoes">&#9881;</button>
+            <button type="button" class="v-btn v-btn--primary" id="btn-demo-loading">Clique para carregar</button>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;button type="button" class="v-btn v-btn--primary"&gt;Conjurar&lt;/button&gt;
+&lt;button type="button" class="v-btn v-btn--secondary"&gt;Cancelar&lt;/button&gt;
+&lt;button type="button" class="v-btn v-btn--ghost"&gt;Saiba mais&lt;/button&gt;
+&lt;button type="button" class="v-btn v-btn--danger"&gt;Excluir ritual&lt;/button&gt;
+
+&lt;!-- Tamanhos --&gt;
+&lt;button class="v-btn v-btn--primary v-btn--sm"&gt;Pequeno&lt;/button&gt;
+&lt;button class="v-btn v-btn--primary v-btn--lg"&gt;Grande&lt;/button&gt;
+
+&lt;!-- Estados --&gt;
+&lt;button class="v-btn v-btn--primary" disabled&gt;Desabilitado&lt;/button&gt;
+&lt;button class="v-btn v-btn--primary is-loading" aria-busy="true"&gt;Salvando&lt;/button&gt;
+&lt;button class="v-btn v-btn--secondary v-btn--icon" aria-label="Configuracoes"&gt;&amp;#9881;&lt;/button&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         FORMULARIOS
+         ================================================================ -->
+    <section class="ds-section" id="formularios">
+      <h2>Formularios</h2>
+      <p class="ds-section__lead">
+        Todos os controles sao elementos nativos estilizados. Teclado, validacao
+        do navegador e leitores de tela continuam funcionando sem JavaScript.
+        Erros usam <code class="v-code">aria-invalid</code> mais
+        <code class="v-code">aria-describedby</code> apontando para a mensagem.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <form class="v-stack v-gap-5" onsubmit="return false">
+            <div class="v-grid v-grid--2">
+              <div class="v-field">
+                <label class="v-label v-label--required" for="campo-nome">Nome do projeto</label>
+                <input class="v-input" id="campo-nome" type="text" placeholder="grimorio-api" value="grimorio-api">
+                <p class="v-hint">Somente letras minusculas e hifens.</p>
+              </div>
+
+              <div class="v-field">
+                <label class="v-label" for="campo-email">E-mail de contato</label>
+                <input class="v-input" id="campo-email" type="email" placeholder="voce@exemplo.com"
+                       aria-invalid="true" aria-describedby="erro-email" value="voce@">
+                <p class="v-field-error" id="erro-email">Informe um e-mail valido.</p>
+              </div>
+            </div>
+
+            <div class="v-field">
+              <label class="v-label" for="campo-url">Repositorio</label>
+              <div class="v-input-group">
+                <span class="v-input-group__addon">github.com/</span>
+                <input class="v-input" id="campo-url" type="text" placeholder="sua-org/seu-repo">
+              </div>
+            </div>
+
+            <div class="v-grid v-grid--2">
+              <div class="v-field">
+                <label class="v-label" for="campo-ambiente">Ambiente</label>
+                <select class="v-select" id="campo-ambiente">
+                  <option>Producao</option>
+                  <option selected>Homologacao</option>
+                  <option>Desenvolvimento</option>
+                </select>
+              </div>
+
+              <div class="v-field">
+                <label class="v-label" for="campo-token">Token</label>
+                <input class="v-input" id="campo-token" type="text" value="bloqueado" disabled>
+                <p class="v-hint">Campo desabilitado no plano gratuito.</p>
+              </div>
+            </div>
+
+            <div class="v-field">
+              <label class="v-label" for="campo-desc">Descricao</label>
+              <textarea class="v-textarea" id="campo-desc" placeholder="O que este projeto faz?"></textarea>
+            </div>
+
+            <fieldset class="v-stack v-gap-3">
+              <legend class="v-label v-mb-2">Preferencias</legend>
+              <label class="v-choice"><input class="v-checkbox" type="checkbox" checked> Ativar cache de componentes</label>
+              <label class="v-choice"><input class="v-checkbox" type="checkbox"> Enviar relatorio de erros</label>
+              <label class="v-choice"><input class="v-checkbox" type="checkbox" disabled> Modo experimental</label>
+            </fieldset>
+
+            <fieldset class="v-stack v-gap-3">
+              <legend class="v-label v-mb-2">Estrategia de build</legend>
+              <label class="v-choice"><input class="v-radio" type="radio" name="build" checked> Incremental</label>
+              <label class="v-choice"><input class="v-radio" type="radio" name="build"> Completo a cada deploy</label>
+            </fieldset>
+
+            <label class="v-choice">
+              <input class="v-switch" type="checkbox" role="switch" checked>
+              <span>Modo magico ativado</span>
+            </label>
+
+            <label class="v-choice">
+              <input class="v-switch" type="checkbox" role="switch">
+              <span>Recompilar ao salvar</span>
+            </label>
+
+            <div class="v-row">
+              <button type="submit" class="v-btn v-btn--primary">Salvar projeto</button>
+              <button type="reset" class="v-btn v-btn--ghost">Limpar</button>
+            </div>
+          </form>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-field"&gt;
+  &lt;label class="v-label v-label--required" for="nome"&gt;Nome do projeto&lt;/label&gt;
+  &lt;input class="v-input" id="nome" type="text" placeholder="grimorio-api"&gt;
+  &lt;p class="v-hint"&gt;Somente letras minusculas e hifens.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;!-- Campo com erro --&gt;
+&lt;div class="v-field"&gt;
+  &lt;label class="v-label" for="email"&gt;E-mail&lt;/label&gt;
+  &lt;input class="v-input" id="email" type="email"
+         aria-invalid="true" aria-describedby="erro-email"&gt;
+  &lt;p class="v-field-error" id="erro-email"&gt;Informe um e-mail valido.&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;select class="v-select"&gt;&lt;option&gt;Producao&lt;/option&gt;&lt;/select&gt;
+&lt;textarea class="v-textarea"&gt;&lt;/textarea&gt;
+
+&lt;label class="v-choice"&gt;&lt;input class="v-checkbox" type="checkbox"&gt; Ativar cache&lt;/label&gt;
+&lt;label class="v-choice"&gt;&lt;input class="v-radio" type="radio" name="build"&gt; Incremental&lt;/label&gt;
+&lt;input class="v-switch" type="checkbox" role="switch" aria-label="Modo magico"&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         CARDS
+         ================================================================ -->
+    <section class="ds-section" id="cards">
+      <h2>Cards</h2>
+      <p class="ds-section__lead">
+        O card e um container de conteudo com cabecalho, corpo e rodape opcionais.
+        A variante interativa sobe dois pixels no hover e no foco de qualquer
+        elemento interno.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-grid">
+            <article class="v-card">
+              <div class="v-card__header">
+                <div>
+                  <h3 class="v-card__title">Roteador reativo</h3>
+                  <p class="v-card__subtitle">core / router</p>
+                </div>
+                <span class="v-badge v-badge--success">estavel</span>
+              </div>
+              <div class="v-card__body">
+                Navegacao baseada em sinais, sem re-render completo. Suporta rotas
+                aninhadas e carregamento sob demanda.
+              </div>
+              <div class="v-card__footer">
+                <button type="button" class="v-btn v-btn--primary v-btn--sm">Instalar</button>
+                <span class="v-text-xs v-text-muted v-push">4.2 kB</span>
+              </div>
+            </article>
+
+            <article class="v-card v-card--interactive">
+              <div class="v-card__header">
+                <div>
+                  <h3 class="v-card__title">Store atomica</h3>
+                  <p class="v-card__subtitle">core / store</p>
+                </div>
+                <span class="v-badge v-badge--warning">beta</span>
+              </div>
+              <div class="v-card__body">
+                Estado global dividido em atomos independentes. Cada componente
+                assina apenas o atomo que realmente le.
+              </div>
+              <div class="v-card__footer">
+                <button type="button" class="v-btn v-btn--secondary v-btn--sm">Documentacao</button>
+              </div>
+            </article>
+
+            <article class="v-card v-card--glow">
+              <div class="v-card__header">
+                <div>
+                  <h3 class="v-card__title">Compilador de templates</h3>
+                  <p class="v-card__subtitle">labs / compiler</p>
+                </div>
+                <span class="v-badge v-badge--accent">novo</span>
+              </div>
+              <div class="v-card__body">
+                Converte templates em funcoes puras em tempo de build. Zero custo
+                de parsing no navegador.
+              </div>
+              <div class="v-card__footer">
+                <button type="button" class="v-btn v-btn--ghost v-btn--sm">Experimentar</button>
+              </div>
+            </article>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;article class="v-card"&gt;
+  &lt;div class="v-card__header"&gt;
+    &lt;div&gt;
+      &lt;h3 class="v-card__title"&gt;Roteador reativo&lt;/h3&gt;
+      &lt;p class="v-card__subtitle"&gt;core / router&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;span class="v-badge v-badge--success"&gt;estavel&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="v-card__body"&gt;Navegacao baseada em sinais.&lt;/div&gt;
+  &lt;div class="v-card__footer"&gt;
+    &lt;button class="v-btn v-btn--primary v-btn--sm"&gt;Instalar&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/article&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         BADGES E TAGS
+         ================================================================ -->
+    <section class="ds-section" id="badges">
+      <h2>Badges e tags</h2>
+      <p class="ds-section__lead">
+        Badge comunica estado, tag comunica classificacao. Cinco cores semanticas
+        mais a neutra. Nunca use cor sozinha para transmitir a informacao:
+        o texto tambem precisa dizer o que esta acontecendo.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row v-mb-4">
+            <span class="v-badge">neutro</span>
+            <span class="v-badge v-badge--primary">primario</span>
+            <span class="v-badge v-badge--success"><span class="v-badge__dot"></span>sucesso</span>
+            <span class="v-badge v-badge--warning">atencao</span>
+            <span class="v-badge v-badge--danger">perigo</span>
+            <span class="v-badge v-badge--info">informacao</span>
+            <span class="v-badge v-badge--accent">acento</span>
+          </div>
+          <div class="v-row v-mb-4">
+            <span class="v-badge v-badge--solid">primario</span>
+            <span class="v-badge v-badge--solid v-badge--success">sucesso</span>
+            <span class="v-badge v-badge--solid v-badge--warning">atencao</span>
+            <span class="v-badge v-badge--solid v-badge--danger">perigo</span>
+            <span class="v-badge v-badge--solid v-badge--info">informacao</span>
+          </div>
+          <div class="v-row">
+            <span class="v-tag">voodoo/core <button type="button" class="v-tag__remove" aria-label="Remover voodoo/core">&times;</button></span>
+            <span class="v-tag">ssr <button type="button" class="v-tag__remove" aria-label="Remover ssr">&times;</button></span>
+            <span class="v-tag">typescript <button type="button" class="v-tag__remove" aria-label="Remover typescript">&times;</button></span>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;span class="v-badge v-badge--success"&gt;
+  &lt;span class="v-badge__dot"&gt;&lt;/span&gt;sucesso
+&lt;/span&gt;
+&lt;span class="v-badge v-badge--solid v-badge--danger"&gt;perigo&lt;/span&gt;
+
+&lt;span class="v-tag"&gt;
+  voodoo/core
+  &lt;button class="v-tag__remove" aria-label="Remover voodoo/core"&gt;&amp;times;&lt;/button&gt;
+&lt;/span&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         ALERTAS
+         ================================================================ -->
+    <section class="ds-section" id="alertas">
+      <h2>Alertas e callouts</h2>
+      <p class="ds-section__lead">
+        Use <code class="v-code">role="status"</code> em avisos informativos e
+        <code class="v-code">role="alert"</code> em erros que precisam interromper
+        a leitura imediatamente.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-stack">
+            <div class="v-alert v-alert--info" role="status">
+              <span class="v-alert__icon" aria-hidden="true">i</span>
+              <div class="v-alert__content">
+                <strong class="v-alert__title">Nova versao disponivel</strong>
+                A versao 1.4 traz o compilador de templates em modo experimental.
+              </div>
+              <button type="button" class="v-alert__close" aria-label="Fechar aviso">&times;</button>
+            </div>
+
+            <div class="v-alert v-alert--success" role="status">
+              <span class="v-alert__icon" aria-hidden="true">&check;</span>
+              <div class="v-alert__content">
+                <strong class="v-alert__title">Build concluido</strong>
+                Os 128 modulos foram compilados em 1,2 segundo.
+              </div>
+            </div>
+
+            <div class="v-alert v-alert--warning" role="status">
+              <span class="v-alert__icon" aria-hidden="true">!</span>
+              <div class="v-alert__content">
+                <strong class="v-alert__title">Dependencia desatualizada</strong>
+                O pacote voodoo/store esta duas versoes menores atras.
+              </div>
+            </div>
+
+            <div class="v-alert v-alert--danger" role="alert">
+              <span class="v-alert__icon" aria-hidden="true">&times;</span>
+              <div class="v-alert__content">
+                <strong class="v-alert__title">Falha ao publicar</strong>
+                O token de acesso expirou. Gere um novo token e tente de novo.
+              </div>
+            </div>
+
+            <div class="v-callout">
+              <span class="v-callout__title">Por que CSS puro</span>
+              Sem build, o design system funciona igual em qualquer stack: uma
+              pagina estatica, um app Voodoo.js ou um e-mail interno da equipe.
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-alert v-alert--danger" role="alert"&gt;
+  &lt;span class="v-alert__icon" aria-hidden="true"&gt;&amp;times;&lt;/span&gt;
+  &lt;div class="v-alert__content"&gt;
+    &lt;strong class="v-alert__title"&gt;Falha ao publicar&lt;/strong&gt;
+    O token de acesso expirou.
+  &lt;/div&gt;
+  &lt;button class="v-alert__close" aria-label="Fechar aviso"&gt;&amp;times;&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         TABELAS
+         ================================================================ -->
+    <section class="ds-section" id="tabelas">
+      <h2>Tabelas</h2>
+      <p class="ds-section__lead">
+        Envolva sempre a tabela em <code class="v-code">.v-table-wrap</code>.
+        Assim tabelas largas rolam dentro do proprio bloco e nunca criam rolagem
+        horizontal na pagina inteira.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-table-wrap">
+            <table class="v-table v-table--hover">
+              <caption>Pacotes publicados no registro oficial</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Pacote</th>
+                  <th scope="col">Versao</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="v-table__num">Downloads</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">voodoo/core</th>
+                  <td>1.4.2</td>
+                  <td><span class="v-badge v-badge--success">estavel</span></td>
+                  <td class="v-table__num">184.902</td>
+                </tr>
+                <tr>
+                  <th scope="row">voodoo/router</th>
+                  <td>1.1.0</td>
+                  <td><span class="v-badge v-badge--success">estavel</span></td>
+                  <td class="v-table__num">92.147</td>
+                </tr>
+                <tr>
+                  <th scope="row">voodoo/store</th>
+                  <td>0.9.6</td>
+                  <td><span class="v-badge v-badge--warning">beta</span></td>
+                  <td class="v-table__num">31.508</td>
+                </tr>
+                <tr>
+                  <th scope="row">voodoo/compiler</th>
+                  <td>0.2.0</td>
+                  <td><span class="v-badge v-badge--danger">experimental</span></td>
+                  <td class="v-table__num">4.219</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-table-wrap"&gt;
+  &lt;table class="v-table v-table--hover"&gt;
+    &lt;caption&gt;Pacotes publicados&lt;/caption&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;&lt;th scope="col"&gt;Pacote&lt;/th&gt;&lt;th scope="col" class="v-table__num"&gt;Downloads&lt;/th&gt;&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      &lt;tr&gt;&lt;th scope="row"&gt;voodoo/core&lt;/th&gt;&lt;td class="v-table__num"&gt;184.902&lt;/td&gt;&lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         TABS
+         ================================================================ -->
+    <section class="ds-section" id="tabs">
+      <h2>Tabs</h2>
+      <p class="ds-section__lead">
+        O estado ativo e lido de <code class="v-code">aria-selected</code>, nunca
+        de uma classe. As setas do teclado navegam entre as abas.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-tabs" data-tabs>
+            <div class="v-tabs__list" role="tablist" aria-label="Documentacao do pacote">
+              <button type="button" class="v-tab" role="tab" id="aba-1" aria-controls="painel-1" aria-selected="true">Instalacao</button>
+              <button type="button" class="v-tab" role="tab" id="aba-2" aria-controls="painel-2" aria-selected="false" tabindex="-1">Uso</button>
+              <button type="button" class="v-tab" role="tab" id="aba-3" aria-controls="painel-3" aria-selected="false" tabindex="-1">API</button>
+            </div>
+            <div class="v-tabs__panel" role="tabpanel" id="painel-1" aria-labelledby="aba-1" tabindex="0">
+              <p class="v-text-sm v-text-muted">Instale o pacote com o gerenciador da sua preferencia. Nao ha etapa de build obrigatoria.</p>
+            </div>
+            <div class="v-tabs__panel" role="tabpanel" id="painel-2" aria-labelledby="aba-2" tabindex="0" hidden>
+              <p class="v-text-sm v-text-muted">Importe o modulo, declare os sinais e monte o componente na raiz da aplicacao.</p>
+            </div>
+            <div class="v-tabs__panel" role="tabpanel" id="painel-3" aria-labelledby="aba-3" tabindex="0" hidden>
+              <p class="v-text-sm v-text-muted">A API publica tem doze funcoes. Todas retornam objetos imutaveis.</p>
+            </div>
+          </div>
+
+          <div class="v-tabs v-tabs--pills v-mt-8" data-tabs>
+            <div class="v-tabs__list" role="tablist" aria-label="Ambientes">
+              <button type="button" class="v-tab" role="tab" id="aba-p1" aria-controls="painel-p1" aria-selected="true">Producao</button>
+              <button type="button" class="v-tab" role="tab" id="aba-p2" aria-controls="painel-p2" aria-selected="false" tabindex="-1">Homologacao</button>
+            </div>
+            <div class="v-tabs__panel" role="tabpanel" id="painel-p1" aria-labelledby="aba-p1" tabindex="0">
+              <p class="v-text-sm v-text-muted">Variante em pilulas, util quando a barra de abas divide espaco com outros controles.</p>
+            </div>
+            <div class="v-tabs__panel" role="tabpanel" id="painel-p2" aria-labelledby="aba-p2" tabindex="0" hidden>
+              <p class="v-text-sm v-text-muted">Ambiente de homologacao com dados sinteticos.</p>
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-tabs" data-tabs&gt;
+  &lt;div class="v-tabs__list" role="tablist" aria-label="Documentacao"&gt;
+    &lt;button class="v-tab" role="tab" id="aba-1"
+            aria-controls="painel-1" aria-selected="true"&gt;Instalacao&lt;/button&gt;
+    &lt;button class="v-tab" role="tab" id="aba-2"
+            aria-controls="painel-2" aria-selected="false" tabindex="-1"&gt;Uso&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="v-tabs__panel" role="tabpanel" id="painel-1"
+       aria-labelledby="aba-1" tabindex="0"&gt;Conteudo&lt;/div&gt;
+  &lt;div class="v-tabs__panel" role="tabpanel" id="painel-2"
+       aria-labelledby="aba-2" tabindex="0" hidden&gt;Conteudo&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         ACCORDION
+         ================================================================ -->
+    <section class="ds-section" id="accordion">
+      <h2>Accordion</h2>
+      <p class="ds-section__lead">
+        Construido sobre <code class="v-code">&lt;details&gt;</code> e
+        <code class="v-code">&lt;summary&gt;</code>, entao abre, fecha e responde
+        ao teclado sem uma linha de JavaScript.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-accordion">
+            <details class="v-accordion__item" open>
+              <summary class="v-accordion__trigger">O design system precisa de build?</summary>
+              <div class="v-accordion__panel">
+                Nao. Sao quatro arquivos CSS estaticos. Voce pode servir direto do
+                disco, de um CDN ou colar dentro de uma tag style.
+              </div>
+            </details>
+            <details class="v-accordion__item">
+              <summary class="v-accordion__trigger">Da para usar so uma parte?</summary>
+              <div class="v-accordion__panel">
+                Da. O unico arquivo obrigatorio e tokens.css. Os outros tres
+                dependem dele, mas nao dependem entre si, com a excecao dos
+                utilitarios que precisam vir por ultimo para vencer os componentes.
+              </div>
+            </details>
+            <details class="v-accordion__item">
+              <summary class="v-accordion__trigger">Como funciona o tema escuro?</summary>
+              <div class="v-accordion__panel">
+                O tema escuro redefine apenas as variaveis semanticas. Ele responde
+                a preferencia do sistema e tambem ao atributo data-theme no
+                elemento html, colocado pelo alternador do topo da pagina.
+              </div>
+            </details>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-accordion"&gt;
+  &lt;details class="v-accordion__item" open&gt;
+    &lt;summary class="v-accordion__trigger"&gt;Precisa de build?&lt;/summary&gt;
+    &lt;div class="v-accordion__panel"&gt;Nao. Sao quatro arquivos CSS.&lt;/div&gt;
+  &lt;/details&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         BREADCRUMB E PAGINACAO
+         ================================================================ -->
+    <section class="ds-section" id="trilhas">
+      <h2>Breadcrumb e paginacao</h2>
+      <p class="ds-section__lead">
+        Os dois usam <code class="v-code">aria-current</code> para marcar a posicao
+        atual, o que dispensa classe de estado e ja avisa o leitor de tela.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <nav aria-label="Trilha de navegacao" class="v-mb-8">
+            <ol class="v-breadcrumb">
+              <li><a href="#topo">Inicio</a></li>
+              <li><a href="#cores">Design system</a></li>
+              <li><a href="#trilhas">Navegacao</a></li>
+              <li><span aria-current="page">Breadcrumb</span></li>
+            </ol>
+          </nav>
+
+          <nav aria-label="Paginacao de resultados">
+            <ul class="v-pagination">
+              <li><button type="button" class="v-pagination__item" disabled aria-label="Pagina anterior">&#8249;</button></li>
+              <li><button type="button" class="v-pagination__item" aria-current="page">1</button></li>
+              <li><button type="button" class="v-pagination__item">2</button></li>
+              <li><button type="button" class="v-pagination__item">3</button></li>
+              <li><span class="v-pagination__ellipsis" aria-hidden="true">...</span></li>
+              <li><button type="button" class="v-pagination__item">12</button></li>
+              <li><button type="button" class="v-pagination__item" aria-label="Proxima pagina">&#8250;</button></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;nav aria-label="Trilha de navegacao"&gt;
+  &lt;ol class="v-breadcrumb"&gt;
+    &lt;li&gt;&lt;a href="/"&gt;Inicio&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;span aria-current="page"&gt;Breadcrumb&lt;/span&gt;&lt;/li&gt;
+  &lt;/ol&gt;
+&lt;/nav&gt;
+
+&lt;nav aria-label="Paginacao de resultados"&gt;
+  &lt;ul class="v-pagination"&gt;
+    &lt;li&gt;&lt;button class="v-pagination__item" aria-current="page"&gt;1&lt;/button&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;button class="v-pagination__item"&gt;2&lt;/button&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/nav&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         MODAL
+         ================================================================ -->
+    <section class="ds-section" id="modal">
+      <h2>Modal</h2>
+      <p class="ds-section__lead">
+        A raiz do modal usa <code class="v-code">aria-hidden</code> como estado,
+        entao o CSS e o leitor de tela nunca discordam. O foco vai para o dialogo
+        ao abrir e volta para o botao ao fechar. A tecla
+        <kbd class="v-kbd">Esc</kbd> e o clique no fundo tambem fecham.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <button type="button" class="v-btn v-btn--primary" data-abrir="modal-exemplo">Abrir modal</button>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;button class="v-btn v-btn--primary" data-abrir="modal-exemplo"&gt;Abrir modal&lt;/button&gt;
+
+&lt;div class="v-modal-root" id="modal-exemplo" aria-hidden="true"&gt;
+  &lt;div class="v-backdrop" data-fechar&gt;&lt;/div&gt;
+  &lt;div class="v-modal" role="dialog" aria-modal="true"
+       aria-labelledby="modal-titulo" tabindex="-1"&gt;
+    &lt;div class="v-modal__header"&gt;
+      &lt;h2 class="v-modal__title" id="modal-titulo"&gt;Publicar versao&lt;/h2&gt;
+      &lt;button class="v-modal__close" data-fechar aria-label="Fechar"&gt;&amp;times;&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="v-modal__body"&gt;Conteudo do dialogo.&lt;/div&gt;
+    &lt;div class="v-modal__footer"&gt;
+      &lt;button class="v-btn v-btn--secondary" data-fechar&gt;Cancelar&lt;/button&gt;
+      &lt;button class="v-btn v-btn--primary"&gt;Publicar&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         DRAWER
+         ================================================================ -->
+    <section class="ds-section" id="drawer">
+      <h2>Drawer lateral</h2>
+      <p class="ds-section__lead">
+        Mesmo mecanismo do modal, mas o painel desliza pela lateral. Bom para
+        filtros, configuracoes e menus longos em telas pequenas.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row">
+            <button type="button" class="v-btn v-btn--secondary" data-abrir="drawer-exemplo">Abrir drawer</button>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-drawer-root" id="drawer-exemplo" aria-hidden="true"&gt;
+  &lt;div class="v-backdrop" data-fechar&gt;&lt;/div&gt;
+  &lt;aside class="v-drawer" role="dialog" aria-modal="true"
+         aria-labelledby="drawer-titulo" tabindex="-1"&gt;
+    &lt;div class="v-drawer__header"&gt;
+      &lt;h2 class="v-drawer__title" id="drawer-titulo"&gt;Filtros&lt;/h2&gt;
+      &lt;button class="v-modal__close" data-fechar aria-label="Fechar"&gt;&amp;times;&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="v-drawer__body"&gt;Conteudo lateral.&lt;/div&gt;
+    &lt;div class="v-drawer__footer"&gt;
+      &lt;button class="v-btn v-btn--primary v-btn--block"&gt;Aplicar&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/aside&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         DROPDOWN
+         ================================================================ -->
+    <section class="ds-section" id="dropdown">
+      <h2>Dropdown</h2>
+      <p class="ds-section__lead">
+        O gatilho carrega <code class="v-code">aria-haspopup</code> e
+        <code class="v-code">aria-expanded</code>. Clicar fora ou apertar
+        <kbd class="v-kbd">Esc</kbd> fecha o menu.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row">
+            <div class="v-dropdown" data-dropdown>
+              <button type="button" class="v-btn v-btn--secondary" aria-haspopup="true" aria-expanded="false" data-dropdown-trigger>
+                Acoes do projeto <span aria-hidden="true">&#9662;</span>
+              </button>
+              <ul class="v-dropdown__menu" role="menu">
+                <li class="v-dropdown__label" role="presentation">Publicacao</li>
+                <li role="none"><button type="button" class="v-dropdown__item" role="menuitem">Publicar versao</button></li>
+                <li role="none"><button type="button" class="v-dropdown__item" role="menuitem">Gerar changelog</button></li>
+                <li class="v-dropdown__separator" role="separator"></li>
+                <li role="none"><button type="button" class="v-dropdown__item v-dropdown__item--danger" role="menuitem">Arquivar projeto</button></li>
+              </ul>
+            </div>
+
+            <div class="v-dropdown" data-dropdown>
+              <button type="button" class="v-btn v-btn--ghost" aria-haspopup="true" aria-expanded="false" data-dropdown-trigger>
+                Alinhado a direita <span aria-hidden="true">&#9662;</span>
+              </button>
+              <ul class="v-dropdown__menu v-dropdown__menu--right" role="menu">
+                <li role="none"><button type="button" class="v-dropdown__item" role="menuitem">Duplicar</button></li>
+                <li role="none"><button type="button" class="v-dropdown__item" role="menuitem">Renomear</button></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-dropdown" data-dropdown&gt;
+  &lt;button class="v-btn v-btn--secondary" data-dropdown-trigger
+          aria-haspopup="true" aria-expanded="false"&gt;Acoes&lt;/button&gt;
+  &lt;ul class="v-dropdown__menu" role="menu"&gt;
+    &lt;li class="v-dropdown__label"&gt;Publicacao&lt;/li&gt;
+    &lt;li role="none"&gt;&lt;button class="v-dropdown__item" role="menuitem"&gt;Publicar&lt;/button&gt;&lt;/li&gt;
+    &lt;li class="v-dropdown__separator" role="separator"&gt;&lt;/li&gt;
+    &lt;li role="none"&gt;&lt;button class="v-dropdown__item v-dropdown__item--danger"
+        role="menuitem"&gt;Arquivar&lt;/button&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         TOOLTIP
+         ================================================================ -->
+    <section class="ds-section" id="tooltip">
+      <h2>Tooltip</h2>
+      <p class="ds-section__lead">
+        Cem por cento CSS. O texto vem de <code class="v-code">data-tooltip</code>
+        e aparece no hover e no foco por teclado. Repita o texto em
+        <code class="v-code">aria-label</code> para leitores de tela.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row">
+            <span class="v-tooltip" data-tooltip="Compila e publica no registro oficial">
+              <button type="button" class="v-btn v-btn--secondary" aria-label="Publicar. Compila e publica no registro oficial.">Publicar</button>
+            </span>
+            <span class="v-tooltip v-tooltip--bottom" data-tooltip="Aparece embaixo do elemento">
+              <button type="button" class="v-btn v-btn--ghost" aria-label="Dica embaixo. Aparece embaixo do elemento.">Dica embaixo</button>
+            </span>
+            <span class="v-tooltip" data-tooltip="Tooltips longos quebram em varias linhas e limitam a largura em quinze rem">
+              <span class="v-badge v-badge--info" tabindex="0">Texto longo</span>
+            </span>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;span class="v-tooltip" data-tooltip="Compila e publica no registro"&gt;
+  &lt;button class="v-btn v-btn--secondary"
+          aria-label="Publicar. Compila e publica no registro."&gt;Publicar&lt;/button&gt;
+&lt;/span&gt;
+
+&lt;span class="v-tooltip v-tooltip--bottom" data-tooltip="Aparece embaixo"&gt;...&lt;/span&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         TOAST
+         ================================================================ -->
+    <section class="ds-section" id="toast">
+      <h2>Toast</h2>
+      <p class="ds-section__lead">
+        Quatro tipos, cada um com barra de progresso que mostra quanto tempo falta
+        para o aviso sumir. A pilha fica em um container com
+        <code class="v-code">aria-live="polite"</code>, entao mensagens novas sao
+        anunciadas sem roubar o foco.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row v-mb-6">
+            <button type="button" class="v-btn v-btn--secondary v-btn--sm" data-toast="success">Sucesso</button>
+            <button type="button" class="v-btn v-btn--secondary v-btn--sm" data-toast="info">Informacao</button>
+            <button type="button" class="v-btn v-btn--secondary v-btn--sm" data-toast="warning">Atencao</button>
+            <button type="button" class="v-btn v-btn--secondary v-btn--sm" data-toast="danger">Erro</button>
+          </div>
+
+          <p class="v-text-xs v-text-muted v-mb-3">Aparencia estatica dos quatro tipos:</p>
+          <div class="v-stack v-gap-3">
+            <div class="v-toast v-toast--success">
+              <span class="v-toast__icon" aria-hidden="true">&check;</span>
+              <div class="v-toast__content">
+                <strong class="v-toast__title">Deploy concluido</strong>
+                <span class="v-toast__message">A versao 1.4.2 esta no ar.</span>
+              </div>
+              <button type="button" class="v-toast__close" aria-label="Fechar">&times;</button>
+              <span class="v-toast__progress v-toast__progress--slow"></span>
+            </div>
+            <div class="v-toast v-toast--info">
+              <span class="v-toast__icon" aria-hidden="true">i</span>
+              <div class="v-toast__content">
+                <strong class="v-toast__title">Cache limpo</strong>
+                <span class="v-toast__message">Os 42 modulos serao recompilados.</span>
+              </div>
+              <button type="button" class="v-toast__close" aria-label="Fechar">&times;</button>
+              <span class="v-toast__progress v-toast__progress--slow"></span>
+            </div>
+            <div class="v-toast v-toast--warning">
+              <span class="v-toast__icon" aria-hidden="true">!</span>
+              <div class="v-toast__content">
+                <strong class="v-toast__title">Espaco baixo</strong>
+                <span class="v-toast__message">Restam 380 MB no volume de build.</span>
+              </div>
+              <button type="button" class="v-toast__close" aria-label="Fechar">&times;</button>
+              <span class="v-toast__progress v-toast__progress--slow"></span>
+            </div>
+            <div class="v-toast v-toast--danger">
+              <span class="v-toast__icon" aria-hidden="true">&times;</span>
+              <div class="v-toast__content">
+                <strong class="v-toast__title">Build quebrado</strong>
+                <span class="v-toast__message">Erro de tipo em store/atom.ts na linha 88.</span>
+              </div>
+              <button type="button" class="v-toast__close" aria-label="Fechar">&times;</button>
+              <span class="v-toast__progress v-toast__progress--slow"></span>
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-toast-stack" role="region" aria-live="polite" aria-label="Notificacoes"&gt;
+  &lt;div class="v-toast v-toast--success"&gt;
+    &lt;span class="v-toast__icon" aria-hidden="true"&gt;&amp;check;&lt;/span&gt;
+    &lt;div class="v-toast__content"&gt;
+      &lt;strong class="v-toast__title"&gt;Deploy concluido&lt;/strong&gt;
+      &lt;span class="v-toast__message"&gt;A versao 1.4.2 esta no ar.&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;button class="v-toast__close" aria-label="Fechar"&gt;&amp;times;&lt;/button&gt;
+    &lt;span class="v-toast__progress"&gt;&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         SKELETON E SPINNER
+         ================================================================ -->
+    <section class="ds-section" id="carregando">
+      <h2>Skeleton e spinner</h2>
+      <p class="ds-section__lead">
+        Skeleton para conteudo que tem forma conhecida, spinner para espera curta
+        sem forma. Marque o esqueleto com
+        <code class="v-code">aria-hidden="true"</code> e ofereca um texto de
+        carregamento em <code class="v-code">.v-sr-only</code>.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-grid v-grid--2">
+            <div class="v-card">
+              <div class="v-card__body">
+                <span class="v-sr-only">Carregando o conteudo do card</span>
+                <div class="v-row v-row--top v-mb-4" aria-hidden="true">
+                  <span class="v-skeleton v-skeleton--circle"></span>
+                  <span class="v-fill">
+                    <span class="v-skeleton v-skeleton--title v-mb-2"></span>
+                    <span class="v-skeleton v-skeleton--text v-skeleton--w-50"></span>
+                  </span>
+                </div>
+                <div class="v-skeleton-group" aria-hidden="true">
+                  <span class="v-skeleton v-skeleton--text"></span>
+                  <span class="v-skeleton v-skeleton--text"></span>
+                  <span class="v-skeleton v-skeleton--text v-skeleton--w-75"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="v-card">
+              <div class="v-card__body v-stack v-gap-6">
+                <div class="v-spinner-box">
+                  <span class="v-spinner v-spinner--sm" role="status" aria-label="Carregando"></span>
+                  Verificando dependencias
+                </div>
+                <div class="v-spinner-box">
+                  <span class="v-spinner" role="status" aria-label="Carregando"></span>
+                  Compilando modulos
+                </div>
+                <div class="v-spinner-box">
+                  <span class="v-spinner v-spinner--lg v-spinner--accent" role="status" aria-label="Carregando"></span>
+                  Publicando no registro
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;span class="v-sr-only"&gt;Carregando o conteudo&lt;/span&gt;
+&lt;div class="v-skeleton-group" aria-hidden="true"&gt;
+  &lt;span class="v-skeleton v-skeleton--title"&gt;&lt;/span&gt;
+  &lt;span class="v-skeleton v-skeleton--text"&gt;&lt;/span&gt;
+  &lt;span class="v-skeleton v-skeleton--text v-skeleton--w-75"&gt;&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;span class="v-spinner" role="status" aria-label="Carregando"&gt;&lt;/span&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         PROGRESSO E DIVISORIA
+         ================================================================ -->
+    <section class="ds-section" id="progresso">
+      <h2>Barra de progresso e divisoria</h2>
+      <p class="ds-section__lead">
+        A barra usa <code class="v-code">role="progressbar"</code> com
+        <code class="v-code">aria-valuenow</code>. Quando o percentual e
+        desconhecido, use a variante indeterminada.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-stack v-gap-6">
+            <div>
+              <div class="v-progress-label"><span>Compilando modulos</span><b>72%</b></div>
+              <div class="v-progress" role="progressbar" aria-valuenow="72" aria-valuemin="0" aria-valuemax="100" aria-label="Compilando modulos">
+                <span class="v-progress__bar" style="width: 72%"></span>
+              </div>
+            </div>
+
+            <div>
+              <div class="v-progress-label"><span>Cobertura de testes</span><b>94%</b></div>
+              <div class="v-progress v-progress--success v-progress--lg" role="progressbar" aria-valuenow="94" aria-valuemin="0" aria-valuemax="100" aria-label="Cobertura de testes">
+                <span class="v-progress__bar" style="width: 94%"></span>
+              </div>
+            </div>
+
+            <div>
+              <div class="v-progress-label"><span>Orcamento de bundle</span><b>88%</b></div>
+              <div class="v-progress v-progress--warning" role="progressbar" aria-valuenow="88" aria-valuemin="0" aria-valuemax="100" aria-label="Orcamento de bundle">
+                <span class="v-progress__bar" style="width: 88%"></span>
+              </div>
+            </div>
+
+            <div>
+              <div class="v-progress-label"><span>Sincronizando registro</span><b>em andamento</b></div>
+              <div class="v-progress v-progress--indeterminate" role="progressbar" aria-label="Sincronizando registro">
+                <span class="v-progress__bar"></span>
+              </div>
+            </div>
+
+            <hr class="v-divider">
+
+            <p class="v-divider-text">ou continue com</p>
+
+            <div class="v-row">
+              <span class="v-text-sm v-text-muted">Item da esquerda</span>
+              <span class="v-divider v-divider--vertical"></span>
+              <span class="v-text-sm v-text-muted">Item da direita</span>
+            </div>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;div class="v-progress-label"&gt;&lt;span&gt;Compilando&lt;/span&gt;&lt;b&gt;72%&lt;/b&gt;&lt;/div&gt;
+&lt;div class="v-progress" role="progressbar" aria-valuenow="72"
+     aria-valuemin="0" aria-valuemax="100" aria-label="Compilando"&gt;
+  &lt;span class="v-progress__bar" style="width: 72%"&gt;&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;hr class="v-divider"&gt;
+&lt;p class="v-divider-text"&gt;ou continue com&lt;/p&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         AVATARES
+         ================================================================ -->
+    <section class="ds-section" id="avatares">
+      <h2>Avatares</h2>
+      <p class="ds-section__lead">
+        Quatro tamanhos, formato redondo ou quadrado, com variante de anel e
+        agrupamento sobreposto. Sem imagem, o avatar mostra as iniciais.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <div class="v-row v-mb-6">
+            <span class="v-avatar v-avatar--sm" aria-hidden="true">VJ</span>
+            <span class="v-avatar" aria-hidden="true">VJ</span>
+            <span class="v-avatar v-avatar--lg v-avatar--accent" aria-hidden="true">MB</span>
+            <span class="v-avatar v-avatar--xl v-avatar--ring" aria-hidden="true">AL</span>
+            <span class="v-avatar v-avatar--lg v-avatar--square" aria-hidden="true">CD</span>
+          </div>
+
+          <div class="v-row">
+            <div class="v-avatar-group">
+              <span class="v-avatar" aria-hidden="true">AL</span>
+              <span class="v-avatar v-avatar--accent" aria-hidden="true">MB</span>
+              <span class="v-avatar" aria-hidden="true">CD</span>
+              <span class="v-avatar" aria-hidden="true">+9</span>
+            </div>
+            <span class="v-text-sm v-text-muted">12 pessoas mantendo este pacote</span>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;span class="v-avatar v-avatar--lg"&gt;VJ&lt;/span&gt;
+&lt;span class="v-avatar v-avatar--xl v-avatar--ring"&gt;AL&lt;/span&gt;
+
+&lt;div class="v-avatar-group"&gt;
+  &lt;span class="v-avatar"&gt;AL&lt;/span&gt;
+  &lt;span class="v-avatar v-avatar--accent"&gt;MB&lt;/span&gt;
+  &lt;span class="v-avatar"&gt;+9&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+         CODIGO
+         ================================================================ -->
+    <section class="ds-section" id="codigo">
+      <h2>Codigo</h2>
+      <p class="ds-section__lead">
+        Codigo em linha para nomes de tokens e funcoes, bloco de codigo para
+        exemplos. O bloco sempre rola dentro de si mesmo, nunca empurra a pagina.
+      </p>
+
+      <div class="ds-demo">
+        <div class="ds-demo__preview">
+          <p class="v-text-sm v-mb-6">
+            Chame <code class="v-code">voodoo.cast()</code> depois de registrar os
+            componentes, ou pressione <kbd class="v-kbd">Ctrl</kbd> +
+            <kbd class="v-kbd">K</kbd> para abrir a paleta de comandos.
+          </p>
+
+          <div class="v-code-block">
+            <div class="v-code-block__header">
+              <span>app.js</span>
+              <button type="button" class="ds-copy-btn" data-copiar>copiar</button>
+            </div>
+            <pre class="v-pre"><code>import { cast, signal } from "voodoo";
+
+const contador = signal(0);
+
+cast("#app", () =&gt; `
+  &lt;button class="v-btn v-btn--primary"&gt;
+    Cliques: ${contador()}
+  &lt;/button&gt;
+`);</code></pre>
+          </div>
+        </div>
+        <div class="v-code-block">
+          <div class="v-code-block__header"><span>HTML</span><button type="button" class="ds-copy-btn" data-copiar>copiar</button></div>
+          <pre class="v-pre"><code>&lt;code class="v-code"&gt;voodoo.cast()&lt;/code&gt;
+&lt;kbd class="v-kbd"&gt;Ctrl&lt;/kbd&gt;
+
+&lt;div class="v-code-block"&gt;
+  &lt;div class="v-code-block__header"&gt;&lt;span&gt;app.js&lt;/span&gt;&lt;/div&gt;
+  &lt;pre class="v-pre"&gt;&lt;code&gt;const contador = signal(0);&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</code></pre>
+        </div>
+      </div>
+    </section>
+
+
+    <footer class="ds-footer">
+      <p class="v-mb-2">
+        <strong>Voodoo.js Design System</strong>, versao 1.0. CSS puro, sem
+        dependencias e sem etapa de build.
+      </p>
+      <p class="v-text-xs v-text-subtle">
+        Arquivos: tokens.css, reset.css, components.css, utilities.css e o
+        pacote unico voodoo-ui.css. A documentacao completa esta no README.md.
+      </p>
+    </footer>
+
+  </main>
+</div>
+
+
+<!-- ======================================================================
+     SOBREPOSICOES: ficam no fim do body, fora do fluxo do conteudo
+     ====================================================================== -->
+<div class="v-modal-root" id="modal-exemplo" aria-hidden="true">
+  <div class="v-backdrop" data-fechar></div>
+  <div class="v-modal" role="dialog" aria-modal="true" aria-labelledby="modal-exemplo-titulo" tabindex="-1">
+    <div class="v-modal__header">
+      <h2 class="v-modal__title" id="modal-exemplo-titulo">Publicar versao 1.4.2</h2>
+      <button type="button" class="v-modal__close" data-fechar aria-label="Fechar dialogo">&times;</button>
+    </div>
+    <div class="v-modal__body">
+      <p class="v-mb-4">
+        A versao sera publicada no registro oficial e ficara visivel para todos os
+        projetos que dependem de <code class="v-code">voodoo/core</code>.
+      </p>
+      <div class="v-field">
+        <label class="v-label" for="modal-nota">Nota de lancamento</label>
+        <textarea class="v-textarea" id="modal-nota" placeholder="O que mudou nesta versao?"></textarea>
+      </div>
+    </div>
+    <div class="v-modal__footer">
+      <button type="button" class="v-btn v-btn--secondary" data-fechar>Cancelar</button>
+      <button type="button" class="v-btn v-btn--primary" data-fechar>Publicar</button>
+    </div>
+  </div>
+</div>
+
+<div class="v-drawer-root" id="drawer-exemplo" aria-hidden="true">
+  <div class="v-backdrop" data-fechar></div>
+  <aside class="v-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-exemplo-titulo" tabindex="-1">
+    <div class="v-drawer__header">
+      <h2 class="v-drawer__title" id="drawer-exemplo-titulo">Filtros do registro</h2>
+      <button type="button" class="v-modal__close" data-fechar aria-label="Fechar painel">&times;</button>
+    </div>
+    <div class="v-drawer__body">
+      <fieldset class="v-stack v-gap-3 v-mb-6">
+        <legend class="v-label v-mb-2">Status</legend>
+        <label class="v-choice"><input class="v-checkbox" type="checkbox" checked> Estavel</label>
+        <label class="v-choice"><input class="v-checkbox" type="checkbox" checked> Beta</label>
+        <label class="v-choice"><input class="v-checkbox" type="checkbox"> Experimental</label>
+      </fieldset>
+      <div class="v-field">
+        <label class="v-label" for="drawer-ordem">Ordenar por</label>
+        <select class="v-select" id="drawer-ordem">
+          <option>Mais baixados</option>
+          <option>Atualizados recentemente</option>
+          <option>Ordem alfabetica</option>
+        </select>
+      </div>
+    </div>
+    <div class="v-drawer__footer">
+      <button type="button" class="v-btn v-btn--secondary" data-fechar>Limpar</button>
+      <button type="button" class="v-btn v-btn--primary v-fill" data-fechar>Aplicar filtros</button>
+    </div>
+  </aside>
+</div>
+
+<div class="v-toast-stack" id="pilha-toasts" role="region" aria-live="polite" aria-label="Notificacoes"></div>
+
+
+<script>
+/* =========================================================================
+   Comportamento da vitrine.
+   O design system nao exige JavaScript. Este script existe apenas para
+   demonstrar as interacoes: tema, tabs, modal, drawer, dropdown e toasts.
+   ========================================================================= */
+(function () {
+  "use strict";
+
+  var raiz = document.documentElement;
+
+  /* --------------------------------------------------------------------
+     1. ALTERNADOR DE TEMA
+     Grava a escolha no localStorage dentro de try/catch e escreve
+     data-theme no elemento html.
+     -------------------------------------------------------------------- */
+  var botaoTema = document.getElementById("alternador-tema");
+  var iconeTema = document.getElementById("icone-tema");
+  var rotuloTema = document.getElementById("rotulo-tema");
+
+  function pintarBotaoTema(tema) {
+    var vaiParaEscuro = tema !== "dark";
+    if (iconeTema) iconeTema.innerHTML = vaiParaEscuro ? "&#9789;" : "&#9788;";
+    if (rotuloTema) rotuloTema.textContent = vaiParaEscuro ? "Escuro" : "Claro";
+    if (botaoTema) botaoTema.setAttribute("aria-pressed", tema === "dark" ? "true" : "false");
+  }
+
+  function aplicarTema(tema) {
+    raiz.setAttribute("data-theme", tema);
+    try { localStorage.setItem("voodoo-theme", tema); } catch (e) { /* armazenamento bloqueado */ }
+    pintarBotaoTema(tema);
+    mostrarValoresDosTokens();
+  }
+
+  pintarBotaoTema(raiz.getAttribute("data-theme") || "light");
+
+  if (botaoTema) {
+    botaoTema.addEventListener("click", function () {
+      aplicarTema(raiz.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    });
+  }
+
+  /* --------------------------------------------------------------------
+     2. VALORES DOS TOKENS NAS AMOSTRAS DE COR
+     -------------------------------------------------------------------- */
+  function mostrarValoresDosTokens() {
+    var estilo = getComputedStyle(raiz);
+    var alvos = document.querySelectorAll("[data-token]");
+    for (var i = 0; i < alvos.length; i++) {
+      var nome = alvos[i].getAttribute("data-token");
+      var valor = (estilo.getPropertyValue(nome) || "").trim();
+      alvos[i].textContent = valor || nome;
+    }
+  }
+  mostrarValoresDosTokens();
+
+  /* --------------------------------------------------------------------
+     3. LINK ATIVO NA NAVEGACAO LATERAL
+     -------------------------------------------------------------------- */
+  var secoes = document.querySelectorAll(".ds-section[id]");
+  var links = document.querySelectorAll(".ds-nav-group a");
+
+  if ("IntersectionObserver" in window && secoes.length) {
+    var observador = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (entrada) {
+        if (!entrada.isIntersecting) return;
+        var id = entrada.target.getAttribute("id");
+        for (var i = 0; i < links.length; i++) {
+          links[i].classList.toggle("is-active", links[i].getAttribute("href") === "#" + id);
+        }
+      });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+
+    for (var s = 0; s < secoes.length; s++) observador.observe(secoes[s]);
+  }
+
+  /* --------------------------------------------------------------------
+     4. TABS
+     Clique e setas do teclado, sempre atualizando aria-selected.
+     -------------------------------------------------------------------- */
+  document.querySelectorAll("[data-tabs]").forEach(function (grupo) {
+    var abas = Array.prototype.slice.call(grupo.querySelectorAll('[role="tab"]'));
+
+    function selecionar(indice) {
+      abas.forEach(function (aba, i) {
+        var ativa = i === indice;
+        aba.setAttribute("aria-selected", ativa ? "true" : "false");
+        aba.setAttribute("tabindex", ativa ? "0" : "-1");
+        var painel = document.getElementById(aba.getAttribute("aria-controls"));
+        if (painel) painel.hidden = !ativa;
+      });
+      abas[indice].focus();
+    }
+
+    abas.forEach(function (aba, i) {
+      aba.addEventListener("click", function () { selecionar(i); });
+      aba.addEventListener("keydown", function (evento) {
+        var proximo = null;
+        if (evento.key === "ArrowRight") proximo = (i + 1) % abas.length;
+        if (evento.key === "ArrowLeft") proximo = (i - 1 + abas.length) % abas.length;
+        if (evento.key === "Home") proximo = 0;
+        if (evento.key === "End") proximo = abas.length - 1;
+        if (proximo !== null) {
+          evento.preventDefault();
+          selecionar(proximo);
+        }
+      });
+    });
+  });
+
+  /* --------------------------------------------------------------------
+     5. MODAL E DRAWER
+     O estado vive em aria-hidden. O foco entra no dialogo e volta para o
+     botao que abriu.
+     -------------------------------------------------------------------- */
+  var ultimoGatilho = null;
+
+  function abrirSobreposicao(id, gatilho) {
+    var raizSobreposicao = document.getElementById(id);
+    if (!raizSobreposicao) return;
+    ultimoGatilho = gatilho || null;
+    raizSobreposicao.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    /* Um elemento invisivel nao aceita foco. A leitura de offsetWidth forca
+       o recalculo de estilo, entao o dialogo ja esta visivel na linha
+       seguinte e o foco entra nele. */
+    void raizSobreposicao.offsetWidth;
+    var dialogo = raizSobreposicao.querySelector('[role="dialog"]');
+    if (dialogo) dialogo.focus();
+  }
+
+  function fecharSobreposicao(raizSobreposicao) {
+    if (!raizSobreposicao) return;
+    raizSobreposicao.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (ultimoGatilho) {
+      ultimoGatilho.focus();
+      ultimoGatilho = null;
+    }
+  }
+
+  document.querySelectorAll("[data-abrir]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      abrirSobreposicao(botao.getAttribute("data-abrir"), botao);
+    });
+  });
+
+  document.querySelectorAll(".v-modal-root, .v-drawer-root").forEach(function (sobreposicao) {
+    sobreposicao.querySelectorAll("[data-fechar]").forEach(function (botao) {
+      botao.addEventListener("click", function () { fecharSobreposicao(sobreposicao); });
+    });
+  });
+
+  /* --------------------------------------------------------------------
+     6. DROPDOWN
+     -------------------------------------------------------------------- */
+  var dropdowns = Array.prototype.slice.call(document.querySelectorAll("[data-dropdown]"));
+
+  function fecharDropdowns(exceto) {
+    dropdowns.forEach(function (item) {
+      if (item === exceto) return;
+      item.classList.remove("is-open");
+      var gatilho = item.querySelector("[data-dropdown-trigger]");
+      if (gatilho) gatilho.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  dropdowns.forEach(function (item) {
+    var gatilho = item.querySelector("[data-dropdown-trigger]");
+    if (!gatilho) return;
+    gatilho.addEventListener("click", function (evento) {
+      evento.stopPropagation();
+      var abrindo = !item.classList.contains("is-open");
+      fecharDropdowns(item);
+      item.classList.toggle("is-open", abrindo);
+      gatilho.setAttribute("aria-expanded", abrindo ? "true" : "false");
+    });
+  });
+
+  document.addEventListener("click", function () { fecharDropdowns(null); });
+
+  /* --------------------------------------------------------------------
+     7. TECLA ESC FECHA TUDO QUE ESTIVER ABERTO
+     -------------------------------------------------------------------- */
+  document.addEventListener("keydown", function (evento) {
+    if (evento.key !== "Escape") return;
+    fecharDropdowns(null);
+    document.querySelectorAll('.v-modal-root[aria-hidden="false"], .v-drawer-root[aria-hidden="false"]')
+      .forEach(function (sobreposicao) { fecharSobreposicao(sobreposicao); });
+  });
+
+  /* --------------------------------------------------------------------
+     8. TOASTS
+     -------------------------------------------------------------------- */
+  var pilha = document.getElementById("pilha-toasts");
+
+  var conteudos = {
+    success: { icone: "&check;", titulo: "Deploy concluido", texto: "A versao 1.4.2 esta no ar." },
+    info:    { icone: "i",       titulo: "Cache limpo",      texto: "Os 42 modulos serao recompilados." },
+    warning: { icone: "!",       titulo: "Espaco baixo",     texto: "Restam 380 MB no volume de build." },
+    danger:  { icone: "&times;", titulo: "Build quebrado",   texto: "Erro de tipo em store/atom.ts na linha 88." }
+  };
+
+  function criarToast(tipo) {
+    if (!pilha) return;
+    var dados = conteudos[tipo] || conteudos.info;
+
+    var toast = document.createElement("div");
+    toast.className = "v-toast v-toast--" + tipo;
+    toast.innerHTML =
+      '<span class="v-toast__icon" aria-hidden="true">' + dados.icone + "</span>" +
+      '<div class="v-toast__content">' +
+        '<strong class="v-toast__title"></strong>' +
+        '<span class="v-toast__message"></span>' +
+      "</div>" +
+      '<button type="button" class="v-toast__close" aria-label="Fechar notificacao">&times;</button>' +
+      '<span class="v-toast__progress"></span>';
+
+    toast.querySelector(".v-toast__title").textContent = dados.titulo;
+    toast.querySelector(".v-toast__message").textContent = dados.texto;
+
+    function remover() {
+      toast.classList.add("is-leaving");
+      window.setTimeout(function () {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 220);
+    }
+
+    toast.querySelector(".v-toast__close").addEventListener("click", remover);
+    pilha.appendChild(toast);
+    window.setTimeout(remover, 5000);
+  }
+
+  document.querySelectorAll("[data-toast]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      criarToast(botao.getAttribute("data-toast"));
+    });
+  });
+
+  /* --------------------------------------------------------------------
+     9. DEMONSTRACAO DE BOTAO EM CARREGAMENTO
+     -------------------------------------------------------------------- */
+  var botaoCarregando = document.getElementById("btn-demo-loading");
+  if (botaoCarregando) {
+    botaoCarregando.addEventListener("click", function () {
+      botaoCarregando.classList.add("is-loading");
+      botaoCarregando.setAttribute("aria-busy", "true");
+      window.setTimeout(function () {
+        botaoCarregando.classList.remove("is-loading");
+        botaoCarregando.removeAttribute("aria-busy");
+      }, 2000);
+    });
+  }
+
+  /* --------------------------------------------------------------------
+     10. BOTAO COPIAR NOS BLOCOS DE CODIGO
+     -------------------------------------------------------------------- */
+  document.querySelectorAll("[data-copiar]").forEach(function (botao) {
+    botao.addEventListener("click", function () {
+      var bloco = botao.closest(".v-code-block");
+      var codigo = bloco ? bloco.querySelector("code") : null;
+      if (!codigo) return;
+
+      var texto = codigo.textContent;
+      var original = botao.textContent;
+
+      function confirmar() {
+        botao.textContent = "copiado";
+        window.setTimeout(function () { botao.textContent = original; }, 1400);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(confirmar, function () {
+          botao.textContent = "falhou";
+          window.setTimeout(function () { botao.textContent = original; }, 1400);
+        });
+      } else {
+        /* Caminho alternativo para navegadores sem a API de area de transferencia. */
+        var area = document.createElement("textarea");
+        area.value = texto;
+        area.setAttribute("readonly", "");
+        area.style.position = "absolute";
+        area.style.left = "-9999px";
+        document.body.appendChild(area);
+        area.select();
+        try { document.execCommand("copy"); confirmar(); } catch (e) { /* sem suporte */ }
+        document.body.removeChild(area);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

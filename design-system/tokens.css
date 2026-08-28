@@ -1,0 +1,383 @@
+/* ==========================================================================
+   VOODOO.JS DESIGN SYSTEM
+   tokens.css : camada de design tokens
+
+   Esta e a unica fonte de verdade de cores, tipografia, espacamento,
+   raios, sombras, camadas, movimento e larguras de container.
+   Nenhum componente deve escrever valores fixos. Tudo vem daqui.
+
+   Convencao de nome: --v-<categoria>-<variacao>
+   Prefixo "v" de Voodoo, para nunca colidir com outros CSS da pagina.
+   ========================================================================== */
+
+:root {
+  /* ======================================================================
+     1. PALETA BRUTA : ROXO (cor primaria da marca)
+     Base 500 = #6D3BF5 (roxo primario)
+     Passo 400 = #9B7BFF (roxo claro)
+     ====================================================================== */
+  --v-purple-50:  #F3EEFF;
+  --v-purple-100: #E5DBFF;
+  --v-purple-200: #CCB9FF;
+  --v-purple-300: #B398FF;
+  --v-purple-400: #9B7BFF;
+  --v-purple-500: #6D3BF5;
+  --v-purple-600: #5B2EDB;
+  --v-purple-700: #4A24B4;
+  --v-purple-800: #391B8C;
+  --v-purple-900: #281363;
+
+  /* ======================================================================
+     2. PALETA BRUTA : MAGENTA (cor de acento)
+     Base 500 = #FF3D8B (magenta acento)
+     ====================================================================== */
+  --v-magenta-50:  #FFF0F6;
+  --v-magenta-100: #FFDCE9;
+  --v-magenta-200: #FFB8D1;
+  --v-magenta-300: #FF8FB6;
+  --v-magenta-400: #FF669F;
+  --v-magenta-500: #FF3D8B;
+  --v-magenta-600: #E52A75;
+  --v-magenta-700: #BF1E5F;
+  --v-magenta-800: #991549;
+  --v-magenta-900: #730E35;
+
+  /* ======================================================================
+     3. PALETA BRUTA : TINTA (neutros quentes)
+     50 = creme #FBF7F2, 100 = areia #EDE4D8
+     800 = tinta media #2A2440, 900 = tinta escura #14111F
+     ====================================================================== */
+  --v-ink-50:  #FBF7F2;
+  --v-ink-100: #EDE4D8;
+  --v-ink-200: #DCD2C6;
+  --v-ink-300: #C2B7AC;
+  --v-ink-400: #9A9199;
+  --v-ink-500: #726C7D;
+  --v-ink-600: #555066;
+  --v-ink-700: #3D3752;
+  --v-ink-800: #2A2440;
+  --v-ink-900: #14111F;
+
+  /* ======================================================================
+     4. PALETA BRUTA : CORES DE ESTADO
+     Amber, menta e vermelho da marca, com um tom claro e um tom escuro
+     para garantir contraste em fundo claro e em fundo escuro.
+     ====================================================================== */
+  --v-amber-100: #FFEEDA;
+  --v-amber-300: #FFCE96;
+  --v-amber-500: #FFB35C;
+  --v-amber-700: #A35A08;
+  --v-amber-900: #6B3A05;
+
+  --v-mint-100: #D8F8EE;
+  --v-mint-300: #86EACB;
+  --v-mint-500: #2ED9A5;
+  --v-mint-700: #0F7A57;
+  --v-mint-900: #08503A;
+
+  --v-red-100: #FFE2E2;
+  --v-red-300: #FF9C9C;
+  --v-red-500: #FF4D4D;
+  --v-red-700: #C42A2A;
+  --v-red-900: #801A1A;
+
+  /* Branco e preto absolutos, uteis para contraste de botao. */
+  --v-white: #FFFFFF;
+  --v-black: #000000;
+
+  /* ======================================================================
+     5. CORES SEMANTICAS : TEMA CLARO (padrao)
+     Estas sao as unicas cores que os componentes devem consumir.
+     Todas existem aqui no :root puro. Os blocos de tema abaixo apenas
+     as redefinem, nunca criam cor nova.
+     ====================================================================== */
+  --v-color-bg: var(--v-ink-50);
+  --v-surface: var(--v-white);
+  --v-surface-2: #F6F0E8;
+  --v-surface-3: var(--v-ink-100);
+  --v-text: var(--v-ink-900);
+  --v-text-muted: var(--v-ink-600);
+  --v-text-subtle: var(--v-ink-500);
+  --v-border: #E3D9CC;
+  --v-border-strong: var(--v-ink-300);
+
+  --v-primary: var(--v-purple-500);
+  --v-primary-hover: var(--v-purple-600);
+  --v-primary-active: var(--v-purple-700);
+  --v-primary-contrast: var(--v-white);
+  --v-primary-soft: var(--v-purple-50);
+  --v-primary-soft-text: var(--v-purple-700);
+
+  --v-accent: var(--v-magenta-500);
+  --v-accent-hover: var(--v-magenta-600);
+  --v-accent-contrast: var(--v-white);
+  --v-accent-soft: var(--v-magenta-50);
+  --v-accent-soft-text: var(--v-magenta-700);
+
+  --v-success: var(--v-mint-700);
+  --v-success-soft: var(--v-mint-100);
+  --v-success-contrast: var(--v-white);
+
+  --v-warning: var(--v-amber-700);
+  --v-warning-soft: var(--v-amber-100);
+  --v-warning-contrast: var(--v-white);
+
+  --v-danger: var(--v-red-700);
+  --v-danger-hover: var(--v-red-900);
+  --v-danger-soft: var(--v-red-100);
+  --v-danger-contrast: var(--v-white);
+
+  --v-info: var(--v-purple-600);
+  --v-info-soft: var(--v-purple-50);
+  --v-info-contrast: var(--v-white);
+
+  /* Superficies auxiliares de sobreposicao e realce. */
+  --v-overlay: rgba(20, 17, 31, 0.55);
+  --v-highlight: rgba(109, 59, 245, 0.12);
+  --v-skeleton-base: var(--v-ink-100);
+  --v-skeleton-shine: rgba(255, 255, 255, 0.75);
+  --v-code-bg: var(--v-ink-900);
+  --v-code-text: var(--v-ink-50);
+  --v-code-inline-bg: var(--v-purple-50);
+  --v-code-inline-text: var(--v-purple-700);
+  --v-focus-ring: var(--v-purple-500);
+
+  /* ======================================================================
+     6. TIPOGRAFIA
+     Display para titulos, sans para texto corrido, mono para codigo.
+     As fontes reais sao opcionais. Os fallbacks garantem o resultado.
+     ====================================================================== */
+  --v-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --v-font-sans: "Inter", system-ui, sans-serif;
+  --v-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --v-text-xs: 0.75rem;    /* 12px */
+  --v-text-sm: 0.875rem;   /* 14px */
+  --v-text-base: 1rem;     /* 16px */
+  --v-text-lg: 1.125rem;   /* 18px */
+  --v-text-xl: 1.375rem;   /* 22px */
+  --v-text-2xl: 1.75rem;   /* 28px */
+  --v-text-3xl: 2.25rem;   /* 36px */
+  --v-text-4xl: 3rem;      /* 48px */
+
+  --v-weight-regular: 400;
+  --v-weight-medium: 500;
+  --v-weight-semibold: 600;
+  --v-weight-bold: 700;
+
+  --v-leading-tight: 1.15;
+  --v-leading-snug: 1.3;
+  --v-leading-normal: 1.6;
+  --v-leading-relaxed: 1.8;
+
+  --v-tracking-tight: -0.02em;
+  --v-tracking-normal: 0em;
+  --v-tracking-wide: 0.08em;
+
+  /* ======================================================================
+     7. ESPACAMENTO : escala de 4px
+     ====================================================================== */
+  --v-space-1: 0.25rem;   /* 4px */
+  --v-space-2: 0.5rem;    /* 8px */
+  --v-space-3: 0.75rem;   /* 12px */
+  --v-space-4: 1rem;      /* 16px */
+  --v-space-5: 1.25rem;   /* 20px */
+  --v-space-6: 1.5rem;    /* 24px */
+  --v-space-7: 1.75rem;   /* 28px */
+  --v-space-8: 2rem;      /* 32px */
+  --v-space-10: 2.5rem;   /* 40px */
+  --v-space-12: 3rem;     /* 48px */
+  --v-space-14: 3.5rem;   /* 56px */
+  --v-space-16: 4rem;     /* 64px */
+
+  /* ======================================================================
+     8. RAIOS
+     ====================================================================== */
+  --v-radius-sm: 6px;
+  --v-radius-md: 10px;
+  --v-radius-lg: 16px;
+  --v-radius-xl: 24px;
+  --v-radius-full: 999px;
+
+  /* ======================================================================
+     9. SOMBRAS
+     "glow" e a assinatura visual do Voodoo.js: um brilho roxo.
+     ====================================================================== */
+  --v-shadow-sm: 0 1px 2px rgba(20, 17, 31, 0.08), 0 1px 1px rgba(20, 17, 31, 0.04);
+  --v-shadow-md: 0 4px 12px rgba(20, 17, 31, 0.10), 0 2px 4px rgba(20, 17, 31, 0.06);
+  --v-shadow-lg: 0 18px 40px rgba(20, 17, 31, 0.16), 0 6px 12px rgba(20, 17, 31, 0.08);
+  --v-shadow-glow: 0 0 0 1px rgba(109, 59, 245, 0.28), 0 10px 30px rgba(109, 59, 245, 0.32);
+
+  /* ======================================================================
+     10. CAMADAS (z-index)
+     ====================================================================== */
+  --v-z-base: 1;
+  --v-z-dropdown: 1000;
+  --v-z-sticky: 1100;
+  --v-z-backdrop: 1200;
+  --v-z-modal: 1300;
+  --v-z-toast: 1400;
+  --v-z-tooltip: 1500;
+
+  /* ======================================================================
+     11. MOVIMENTO
+     ====================================================================== */
+  --v-duration-fast: 120ms;
+  --v-duration-base: 200ms;
+  --v-duration-slow: 320ms;
+  --v-duration-slower: 600ms;
+
+  --v-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --v-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --v-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ======================================================================
+     12. LAYOUT
+     ====================================================================== */
+  --v-container-sm: 640px;
+  --v-container-md: 768px;
+  --v-container-lg: 1024px;
+  --v-container-xl: 1280px;
+  --v-container-full: 1440px;
+
+  --v-border-width: 1px;
+  --v-border-width-thick: 2px;
+  --v-focus-width: 3px;
+  --v-focus-offset: 2px;
+}
+
+/* ==========================================================================
+   13. TEMA ESCURO AUTOMATICO
+   Vale quando o sistema pede escuro E o usuario nao forcou o tema claro.
+   Apenas variaveis semanticas sao redefinidas aqui.
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --v-color-bg: var(--v-ink-900);
+    --v-surface: #1C182B;
+    --v-surface-2: var(--v-ink-800);
+    --v-surface-3: #352E4F;
+    --v-text: var(--v-ink-50);
+    --v-text-muted: #B9B0C4;
+    --v-text-subtle: #8E86A0;
+    --v-border: #372F52;
+    --v-border-strong: #4C4370;
+
+    --v-primary: #7B52F7;
+    --v-primary-hover: #8F6BFF;
+    --v-primary-active: var(--v-purple-400);
+    --v-primary-contrast: var(--v-white);
+    --v-primary-soft: rgba(123, 82, 247, 0.14);
+    --v-primary-soft-text: var(--v-purple-300);
+
+    --v-accent: var(--v-magenta-500);
+    --v-accent-hover: var(--v-magenta-400);
+    --v-accent-contrast: var(--v-ink-900);
+    --v-accent-soft: rgba(255, 61, 139, 0.14);
+    --v-accent-soft-text: var(--v-magenta-300);
+
+    --v-success: var(--v-mint-500);
+    --v-success-soft: rgba(46, 217, 165, 0.10);
+    --v-success-contrast: var(--v-ink-900);
+
+    --v-warning: var(--v-amber-500);
+    --v-warning-soft: rgba(255, 179, 92, 0.10);
+    --v-warning-contrast: var(--v-ink-900);
+
+    --v-danger: var(--v-red-500);
+    --v-danger-hover: var(--v-red-300);
+    --v-danger-soft: rgba(255, 77, 77, 0.10);
+    --v-danger-contrast: var(--v-ink-900);
+
+    --v-info: var(--v-purple-400);
+    --v-info-soft: rgba(155, 123, 255, 0.10);
+    --v-info-contrast: var(--v-ink-900);
+
+    --v-overlay: rgba(6, 4, 12, 0.72);
+    --v-highlight: rgba(155, 123, 255, 0.18);
+    --v-skeleton-base: #2E2745;
+    --v-skeleton-shine: rgba(255, 255, 255, 0.10);
+    --v-code-bg: #0F0D18;
+    --v-code-text: var(--v-ink-100);
+    --v-code-inline-bg: rgba(123, 82, 247, 0.20);
+    --v-code-inline-text: var(--v-purple-300);
+    --v-focus-ring: var(--v-purple-400);
+
+    --v-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --v-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
+    --v-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.62);
+    --v-shadow-glow: 0 0 0 1px rgba(155, 123, 255, 0.38), 0 12px 34px rgba(109, 59, 245, 0.45);
+  }
+}
+
+/* ==========================================================================
+   14. TEMA ESCURO MANUAL
+   Vale sempre que o atributo data-theme="dark" estiver no elemento raiz,
+   independente da preferencia do sistema. Assim o alternador funciona
+   nos dois sentidos: forcar escuro em sistema claro e forcar claro em
+   sistema escuro (tratado pelo :not([data-theme="light"]) do bloco 13).
+   ========================================================================== */
+:root[data-theme="dark"] {
+  --v-color-bg: var(--v-ink-900);
+  --v-surface: #1C182B;
+  --v-surface-2: var(--v-ink-800);
+  --v-surface-3: #352E4F;
+  --v-text: var(--v-ink-50);
+  --v-text-muted: #B9B0C4;
+  --v-text-subtle: #8E86A0;
+  --v-border: #372F52;
+  --v-border-strong: #4C4370;
+
+  --v-primary: #7B52F7;
+  --v-primary-hover: #8F6BFF;
+  --v-primary-active: var(--v-purple-400);
+  --v-primary-contrast: var(--v-white);
+  --v-primary-soft: rgba(123, 82, 247, 0.14);
+  --v-primary-soft-text: var(--v-purple-300);
+
+  --v-accent: var(--v-magenta-500);
+  --v-accent-hover: var(--v-magenta-400);
+  --v-accent-contrast: var(--v-ink-900);
+  --v-accent-soft: rgba(255, 61, 139, 0.14);
+  --v-accent-soft-text: var(--v-magenta-300);
+
+  --v-success: var(--v-mint-500);
+  --v-success-soft: rgba(46, 217, 165, 0.10);
+  --v-success-contrast: var(--v-ink-900);
+
+  --v-warning: var(--v-amber-500);
+  --v-warning-soft: rgba(255, 179, 92, 0.10);
+  --v-warning-contrast: var(--v-ink-900);
+
+  --v-danger: var(--v-red-500);
+  --v-danger-hover: var(--v-red-300);
+  --v-danger-soft: rgba(255, 77, 77, 0.10);
+  --v-danger-contrast: var(--v-ink-900);
+
+  --v-info: var(--v-purple-400);
+  --v-info-soft: rgba(155, 123, 255, 0.10);
+  --v-info-contrast: var(--v-ink-900);
+
+  --v-overlay: rgba(6, 4, 12, 0.72);
+  --v-highlight: rgba(155, 123, 255, 0.18);
+  --v-skeleton-base: #2E2745;
+  --v-skeleton-shine: rgba(255, 255, 255, 0.10);
+  --v-code-bg: #0F0D18;
+  --v-code-text: var(--v-ink-100);
+  --v-code-inline-bg: rgba(123, 82, 247, 0.20);
+  --v-code-inline-text: var(--v-purple-300);
+  --v-focus-ring: var(--v-purple-400);
+
+  --v-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --v-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.55);
+  --v-shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.62);
+  --v-shadow-glow: 0 0 0 1px rgba(155, 123, 255, 0.38), 0 12px 34px rgba(109, 59, 245, 0.45);
+}
+
+/* Informa ao navegador quais esquemas a pagina suporta, para que
+   barras de rolagem e controles nativos combinem com o tema. */
+:root { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { color-scheme: dark; }
+}

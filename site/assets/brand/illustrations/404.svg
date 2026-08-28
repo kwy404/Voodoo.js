@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 480" width="700" height="480" role="img" aria-labelledby="e404T e404D">
+  <title id="e404T">Página não encontrada</title>
+  <desc id="e404D">O mascote Vudu aparece perdido segurando um mapa com uma rota e um X, ao lado de uma placa de estrada com setas apontando para lados opostos, sobre um número 404 bem grande ao fundo.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="e404Cloth" gradientUnits="userSpaceOnUse" x1="220" y1="140" x2="420" y2="400">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 404 ao fundo -->
+  <text x="350" y="380" text-anchor="middle" font-family="'Space Grotesk', Inter, system-ui, sans-serif"
+        font-size="260" font-weight="700" letter-spacing="-6" fill="#6D3BF5" class="vd-decor">404</text>
+
+  <!-- runas discretas -->
+  <g fill="#6D3BF5" opacity="0.14">
+    <path d="M92 96 Q92 106 102 106 Q92 106 92 116 Q92 106 82 106 Q92 106 92 96 Z"/>
+    <path d="M642 108 Q642 116 650 116 Q642 116 642 124 Q642 116 634 116 Q642 116 642 108 Z"/>
+    <circle cx="120" cy="392" r="4.5"/>
+    <circle cx="596" cy="452" r="4"/>
+  </g>
+
+  <!-- placa de estrada -->
+  <g>
+    <ellipse cx="560" cy="406" rx="46" ry="10" fill="#2A2440" opacity="0.14"/>
+    <rect class="vd-rim" x="553" y="196" width="14" height="210" rx="5" fill="#2A2440" stroke-width="2" stroke-opacity="0.5"/>
+    <g stroke="#2A2440" stroke-width="2.5" stroke-linejoin="round">
+      <path d="M556 202 L556 232 L486 232 L470 217 L486 202 Z" fill="#EDE4D8"/>
+      <path d="M564 246 L564 276 L634 276 L650 261 L634 246 Z" fill="#EDE4D8"/>
+      <path d="M556 290 L556 320 L486 320 L470 305 L486 290 Z" fill="#EDE4D8"/>
+    </g>
+    <g font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace" font-size="15" font-weight="700" fill="#2A2440">
+      <text x="524" y="222" text-anchor="middle">/inicio</text>
+      <text x="602" y="266" text-anchor="middle">/docs</text>
+      <text x="524" y="310" text-anchor="middle" fill="#FF3D8B">???</text>
+    </g>
+  </g>
+
+  <!-- Vudu perdido -->
+  <g transform="translate(160 72) scale(0.72)">
+    <ellipse cx="256" cy="470" rx="112" ry="15" fill="#2A2440" opacity="0.13"/>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L214 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L298 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L214 452" stroke="url(#e404Cloth)" stroke-width="24"/>
+      <path d="M288 404 L298 452" stroke="url(#e404Cloth)" stroke-width="24"/>
+      <path d="M205 440 L224 444" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M289 444 L308 440" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#e404Cloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#e404Cloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <g fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+      <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+      <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+    </g>
+
+    <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+          fill="url(#e404Cloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+    <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+    <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+    <!-- sobrancelhas de dúvida -->
+    <g stroke="#2A2440" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.8">
+      <path d="M194 170 L232 166"/>
+      <path d="M284 160 L320 172"/>
+    </g>
+
+    <g>
+      <circle cx="214" cy="204" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="214" cy="204" r="16" fill="#9B7BFF" opacity="0.5"/>
+      <g fill="#14111F">
+        <circle cx="208" cy="198" r="3"/><circle cx="220" cy="198" r="3"/>
+        <circle cx="208" cy="210" r="3"/><circle cx="220" cy="210" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M208 198 L220 210"/><path d="M220 198 L208 210"/>
+      </g>
+    </g>
+
+    <g>
+      <circle cx="300" cy="204" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="300" cy="204" r="16" fill="#FBF7F2" opacity="0.28"/>
+      <g fill="#14111F">
+        <circle cx="294" cy="198" r="3"/><circle cx="306" cy="198" r="3"/>
+        <circle cx="294" cy="210" r="3"/><circle cx="306" cy="210" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M294 198 L306 210"/><path d="M306 198 L294 210"/>
+      </g>
+    </g>
+
+    <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+      <path d="M251 223 L261 231"/><path d="M261 223 L251 231"/>
+    </g>
+
+    <!-- boquinha torta de dúvida -->
+    <path d="M226 254 Q252 268 288 250" fill="none" stroke="#2A2440" stroke-width="4.5"
+          stroke-linecap="round" stroke-dasharray="9 7"/>
+  </g>
+
+  <!-- mapa -->
+  <g transform="rotate(-6 346 320)">
+    <rect x="273" y="281" width="152" height="84" rx="7" fill="#2A2440" opacity="0.1"/>
+    <rect x="270" y="278" width="152" height="84" rx="7" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <g stroke="#2A2440" opacity="0.18" stroke-dasharray="5 5" stroke-width="2">
+      <path d="M320 278 L320 362"/>
+      <path d="M372 278 L372 362"/>
+    </g>
+    <path d="M292 344 C316 326 336 350 358 322 C368 310 380 302 392 296"
+          fill="none" stroke="#FF3D8B" stroke-width="2.5" stroke-dasharray="6 5" stroke-linecap="round"/>
+    <circle cx="292" cy="344" r="4" fill="#6D3BF5"/>
+    <g stroke="#FF4D4D" stroke-width="3.5" stroke-linecap="round">
+      <path d="M388 290 L400 302"/>
+      <path d="M400 290 L388 302"/>
+    </g>
+    <path d="M300 300 Q300 308 308 308 Q300 308 300 316 Q300 308 292 308 Q300 308 300 300 Z" fill="#6D3BF5" opacity="0.5"/>
+  </g>
+
+  <!-- bracinhos segurando o mapa -->
+  <g transform="translate(160 72) scale(0.72)">
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C184 320 170 318 161 317" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C336 315 348 313 356 311" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C184 320 170 318 161 317" stroke="url(#e404Cloth)" stroke-width="24"/>
+      <path d="M320 318 C336 315 348 313 356 311" stroke="url(#e404Cloth)" stroke-width="24"/>
+    </g>
+  </g>
+
+  <!-- interrogações -->
+  <g font-family="'Space Grotesk', Inter, system-ui, sans-serif" font-weight="700">
+    <text x="214" y="150" font-size="46" fill="#6D3BF5" opacity="0.75" transform="rotate(-14 214 150)">?</text>
+    <text x="450" y="126" font-size="34" fill="#FF3D8B" opacity="0.7" transform="rotate(12 450 126)">?</text>
+    <text x="418" y="184" font-size="24" fill="#9B7BFF" opacity="0.6" transform="rotate(-8 418 184)">?</text>
+  </g>
+</svg>

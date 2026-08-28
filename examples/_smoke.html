@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Teste rapido</title>
+<link rel="stylesheet" href="../design-system/voodoo-ui.css">
+<script src="../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+</head>
+<body>
+<div v-data="{ n: 0, lista: ['a','b'], texto: '' }">
+  <p>Contador: { n }</p>
+  <button class="v-btn v-btn--primary" v-click="n++">Somar</button>
+  <ul><li v-for="(item, i) in lista" :key="item">{ i }: { item }</li></ul>
+  <input class="v-input" v-model="texto" placeholder="digite">
+  <p v-show="texto">Voce digitou: { texto }</p>
+  <p v-count="1250" v-count-duration="800"></p>
+  <button class="v-btn" v-click="$toast.success('funciona')">Toast</button>
+  <input class="v-input" v-mask="cpf" placeholder="CPF">
+</div>
+<div v-component="teste-comp">
+  <b>{ dobro }</b>
+  <button class="v-btn" v-click="somar">mais</button>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  V.component('teste-comp', {
+    state: function () { return { valor: 3 }; },
+    computed: { dobro: function () { return this.valor * 2; } },
+    methods: { somar: function () { this.valor++; } }
+  });
+  V.theme.init();
+  V.start();
+  console.log('CHECK', 'chart=' + typeof V.chart, 'animate=' + typeof V.animate,
+    'validateForm=' + typeof V.validateForm, 'modal=' + typeof V.modal,
+    'sortable=' + (V.directives.has('sortable')), 'tabs=' + (V.directives.has('tabs')),
+    'submit=' + (V.directives.has('submit')));
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+/* ==========================================================================
+   VOODOO.JS DESIGN SYSTEM
+   voodoo-ui.css : pacote unico
+
+   "JavaScript feels like magic."
+
+   Este arquivo existe para quem quer um unico <link> na pagina:
+
+     <link rel="stylesheet" href="design-system/voodoo-ui.css">
+
+   A ordem dos imports importa e nao deve ser alterada:
+   1. tokens     define as variaveis que todo o resto consome
+   2. reset      normaliza o navegador ja usando os tokens
+   3. components desenha os componentes com base nos tokens
+   4. utilities  vem por ultimo para conseguir sobrescrever componentes
+
+   Observacao de performance: cada @import gera uma requisicao em serie.
+   Em producao, prefira concatenar os quatro arquivos em um so, ou linkar
+   os quatro diretamente no HTML na mesma ordem acima.
+
+   As fontes Space Grotesk, Inter e JetBrains Mono sao opcionais. Se elas
+   nao estiverem carregadas na pagina, os fallbacks system-ui e
+   ui-monospace assumem sem quebrar o layout.
+   ========================================================================== */
+
+@import url("tokens.css");
+@import url("reset.css");
+@import url("components.css");
+@import url("utilities.css");

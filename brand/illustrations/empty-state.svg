@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="600" height="480" role="img" aria-labelledby="emptyT emptyD">
+  <title id="emptyT">Caldeirão vazio</title>
+  <desc id="emptyD">O mascote Vudu se apoia na borda de um caldeirão e espia lá dentro, mas ele está completamente vazio. Só sobem alguns fiapos de poeira.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="emptyCloth" gradientUnits="userSpaceOnUse" x1="150" y1="180" x2="300" y2="430">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="emptyPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <linearGradient id="emptyPot" gradientUnits="userSpaceOnUse" x1="295" y1="300" x2="485" y2="412">
+      <stop offset="0" stop-color="#2A2440"/>
+      <stop offset="1" stop-color="#14111F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- runas discretas -->
+  <g fill="#6D3BF5" opacity="0.13">
+    <path d="M96 118 Q96 128 106 128 Q96 128 96 138 Q96 128 86 128 Q96 128 96 118 Z"/>
+    <path d="M528 128 Q528 136 536 136 Q528 136 528 144 Q528 136 520 136 Q528 136 528 128 Z"/>
+    <circle cx="486" cy="196" r="4"/>
+    <circle cx="88" cy="326" r="4.5"/>
+  </g>
+
+  <!-- sombras no chão -->
+  <ellipse cx="390" cy="446" rx="118" ry="16" fill="#2A2440" opacity="0.13"/>
+  <ellipse cx="238" cy="436" rx="72" ry="11" fill="#2A2440" opacity="0.11"/>
+
+  <!-- Vudu -->
+  <g transform="translate(79 144) scale(0.62)">
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L218 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L294 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L218 452" stroke="url(#emptyCloth)" stroke-width="24"/>
+      <path d="M288 404 L294 452" stroke="url(#emptyCloth)" stroke-width="24"/>
+      <path d="M209 440 L228 443" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M285 442 L304 439" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C170 332 152 350 146 372" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C170 332 152 350 146 372" stroke="url(#emptyCloth)" stroke-width="24"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#emptyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#emptyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#emptyPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <!-- cabeça inclinada para dentro do caldeirão -->
+    <g transform="rotate(12 256 288)">
+      <g fill="none" stroke-width="8" stroke-linecap="round">
+        <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+        <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+        <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+      </g>
+
+      <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+            fill="url(#emptyCloth)" stroke="#2A2440" stroke-width="5"/>
+
+      <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+            fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+      <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+      <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+      <g>
+        <circle cx="214" cy="206" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+        <circle cx="214" cy="206" r="16" fill="#9B7BFF" opacity="0.5"/>
+        <g fill="#14111F">
+          <circle cx="208" cy="200" r="3"/><circle cx="220" cy="200" r="3"/>
+          <circle cx="208" cy="212" r="3"/><circle cx="220" cy="212" r="3"/>
+        </g>
+        <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+          <path d="M208 200 L220 212"/><path d="M220 200 L208 212"/>
+        </g>
+      </g>
+
+      <g>
+        <circle cx="300" cy="206" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+        <circle cx="300" cy="206" r="16" fill="#FBF7F2" opacity="0.28"/>
+        <g fill="#14111F">
+          <circle cx="294" cy="200" r="3"/><circle cx="306" cy="200" r="3"/>
+          <circle cx="294" cy="212" r="3"/><circle cx="306" cy="212" r="3"/>
+        </g>
+        <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+          <path d="M294 200 L306 212"/><path d="M306 200 L294 212"/>
+        </g>
+      </g>
+
+      <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+        <path d="M251 227 L261 235"/><path d="M261 227 L251 235"/>
+      </g>
+
+      <!-- boquinha de surpresa -->
+      <ellipse cx="256" cy="258" rx="11" ry="13" fill="#2A2440"/>
+    </g>
+  </g>
+
+  <!-- caldeirão -->
+  <g>
+    <path d="M299 310 C280 318 279 340 296 350" fill="none" stroke="#2A2440" stroke-width="9" stroke-linecap="round"/>
+    <path d="M481 310 C500 318 501 340 484 350" fill="none" stroke="#2A2440" stroke-width="9" stroke-linecap="round"/>
+    <path d="M330 402 L314 440" stroke="#2A2440" stroke-width="15" stroke-linecap="round" fill="none"/>
+    <path d="M450 402 L466 440" stroke="#2A2440" stroke-width="15" stroke-linecap="round" fill="none"/>
+    <path class="vd-rim" d="M295 300 C295 372 330 412 390 412 C450 412 485 372 485 300 Z" fill="url(#emptyPot)" stroke-width="3" stroke-opacity="0.4"/>
+    <path d="M322 334 C318 368 328 390 346 402" fill="none" stroke="#FBF7F2" stroke-width="6"
+          stroke-linecap="round" opacity="0.12"/>
+    <ellipse cx="390" cy="300" rx="95" ry="24" fill="#2A2440"/>
+    <ellipse class="vd-rim" cx="390" cy="300" rx="95" ry="24" fill="none" stroke="#14111F" stroke-width="3" opacity="0.45"/>
+    <ellipse cx="390" cy="301" rx="82" ry="19" fill="#14111F"/>
+  </g>
+
+  <!-- poeira subindo do vazio -->
+  <g fill="#EDE4D8">
+    <circle cx="400" cy="264" r="6" opacity="0.5"/>
+    <circle cx="428" cy="228" r="4.5" opacity="0.35"/>
+    <circle cx="410" cy="196" r="3.5" opacity="0.22"/>
+  </g>
+
+  <!-- bracinho apoiado na borda do caldeirão -->
+  <g transform="translate(79 144) scale(0.62)">
+    <g fill="none" stroke-linecap="round">
+      <path d="M320 318 C344 300 356 272 362 250" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C344 300 356 272 362 250" stroke="url(#emptyCloth)" stroke-width="24"/>
+    </g>
+  </g>
+</svg>

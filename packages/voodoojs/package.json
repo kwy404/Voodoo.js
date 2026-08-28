@@ -1,0 +1,86 @@
+{
+  "name": "voodoojs",
+  "version": "0.1.0",
+  "description": "Voodoo.js: micro framework vanilla que faz quase tudo direto no HTML. Reatividade, directives, HTTP, forms, validacao, toast, modal e UI em menos de 30 KB gzip. JavaScript feels like magic.",
+  "keywords": [
+    "javascript",
+    "framework",
+    "micro-framework",
+    "vanilla",
+    "html-first",
+    "reactivity",
+    "signals",
+    "directives",
+    "alpine",
+    "htmx",
+    "jquery",
+    "petite-vue",
+    "no-build",
+    "cdn",
+    "ajax",
+    "forms",
+    "validation",
+    "toast",
+    "modal",
+    "spa",
+    "hypermedia"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "./dist/voodoo.js",
+    "./dist/voodoo.min.js",
+    "./src/index.ts"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/voodoo.min.js",
+  "jsdelivr": "./dist/voodoo.min.js",
+  "browser": "./dist/voodoo.min.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./reactivity": {
+      "types": "./dist/reactivity.d.ts",
+      "import": "./dist/reactivity.js",
+      "require": "./dist/reactivity.cjs"
+    },
+    "./http": {
+      "types": "./dist/http.d.ts",
+      "import": "./dist/http.js",
+      "require": "./dist/http.cjs"
+    },
+    "./utils": {
+      "types": "./dist/utils.d.ts",
+      "import": "./dist/utils.js",
+      "require": "./dist/utils.cjs"
+    },
+    "./dist/*": "./dist/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voodoojs/voodoo.git",
+    "directory": "packages/voodoojs"
+  },
+  "homepage": "https://voodoojs.dev",
+  "bugs": {
+    "url": "https://github.com/voodoojs/voodoo/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

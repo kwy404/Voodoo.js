@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" width="800" height="460" role="img" aria-labelledby="reactT reactD">
+  <title id="reactT">Sistema reativo do Voodoo.js</title>
+  <desc id="reactD">Um nó de estado central pulsando envia sinais por linhas finas até três nós de DOM. Os dois nós que dependem do estado ficam destacados em menta e se atualizam, enquanto o terceiro, sem dependência, permanece apagado e intacto.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <radialGradient id="reactCore" gradientUnits="userSpaceOnUse" cx="172" cy="204" r="72">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ondas do estado -->
+  <g fill="none" stroke="#6D3BF5">
+    <circle cx="190" cy="223" r="78" stroke-width="2.5" opacity="0.22"/>
+    <circle cx="190" cy="223" r="100" stroke-width="2.5" opacity="0.11"/>
+    <circle cx="190" cy="223" r="122" stroke-width="2.5" opacity="0.05"/>
+  </g>
+
+  <!-- ligações ativas -->
+  <g fill="none" stroke="#6D3BF5" stroke-width="4" stroke-linecap="round">
+    <path d="M240 190 C340 150 440 100 566 89"/>
+    <path d="M246 223 L566 223"/>
+  </g>
+  <!-- ligação sem dependencia -->
+  <path class="vd-haste" d="M240 256 C340 300 440 345 566 357" fill="none" stroke="#2A2440" stroke-width="3"
+        stroke-linecap="round" stroke-dasharray="8 9" opacity="0.22"/>
+
+  <!-- pulsos viajando -->
+  <g>
+    <circle cx="392" cy="139" r="12" fill="#FF3D8B" opacity="0.18"/>
+    <circle cx="392" cy="139" r="6" fill="#FF3D8B"/>
+    <circle cx="404" cy="223" r="12" fill="#FF3D8B" opacity="0.18"/>
+    <circle cx="404" cy="223" r="6" fill="#FF3D8B"/>
+  </g>
+
+  <!-- nó de estado -->
+  <circle cx="190" cy="223" r="56" fill="url(#reactCore)"/>
+  <circle cx="190" cy="223" r="56" fill="none" stroke="#14111F" stroke-width="3" opacity="0.25"/>
+  <text x="190" y="218" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+        font-size="21" font-weight="700" fill="#FBF7F2">count</text>
+  <text x="190" y="242" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+        font-size="17" fill="#FBF7F2" opacity="0.75">42</text>
+  <text class="vd-txt" x="190" y="358" text-anchor="middle" font-family="Inter, 'Space Grotesk', system-ui, sans-serif"
+        font-size="16" font-weight="600" fill="#2A2440" opacity="0.8">estado reativo</text>
+
+  <!-- nó de DOM dependente 1 -->
+  <g>
+    <rect x="560" y="50" width="182" height="78" rx="22" fill="none" stroke="#2ED9A5" stroke-width="3" opacity="0.75"/>
+    <rect x="570" y="60" width="162" height="58" rx="16" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <text x="651" y="96" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="19" font-weight="700" fill="#14111F">&lt;h1&gt;</text>
+    <circle cx="742" cy="60" r="14" fill="#2ED9A5"/>
+    <path d="M736 60 l4 5 l9 -10" fill="none" stroke="#14111F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- nó de DOM dependente 2 -->
+  <g>
+    <rect x="560" y="184" width="182" height="78" rx="22" fill="none" stroke="#2ED9A5" stroke-width="3" opacity="0.75"/>
+    <rect x="570" y="194" width="162" height="58" rx="16" fill="#FBF7F2" stroke="#2A2440" stroke-width="3"/>
+    <text x="651" y="230" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="19" font-weight="700" fill="#14111F">&lt;span&gt;</text>
+    <circle cx="742" cy="194" r="14" fill="#2ED9A5"/>
+    <path d="M736 194 l4 5 l9 -10" fill="none" stroke="#14111F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- nó de DOM sem dependencia -->
+  <g opacity="0.45">
+    <rect x="570" y="328" width="162" height="58" rx="16" fill="#EDE4D8" stroke="#2A2440" stroke-width="3"
+          stroke-dasharray="9 7"/>
+    <text x="651" y="364" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', ui-monospace, monospace"
+          font-size="19" font-weight="700" fill="#14111F">&lt;div&gt;</text>
+  </g>
+
+  <!-- legenda -->
+  <g class="vd-txt" font-family="Inter, 'Space Grotesk', system-ui, sans-serif" font-size="15" fill="#2A2440">
+    <circle cx="60" cy="428" r="7" fill="#2ED9A5"/>
+    <text x="76" y="433">nó dependente: é redesenhado</text>
+    <circle class="vd-txt" cx="360" cy="428" r="7" fill="#2A2440" opacity="0.25"/>
+    <text x="376" y="433" opacity="0.65">nó independente: fica intacto</text>
+  </g>
+</svg>

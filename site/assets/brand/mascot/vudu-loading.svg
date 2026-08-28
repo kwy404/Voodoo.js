@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="loadT loadD">
+  <title id="loadT">Vudu carregando</title>
+  <desc id="loadD">O mascote Vudu girando a varinha mágica no ar enquanto flutua levemente, com três pontinhos de carregamento piscando em sequência abaixo dele.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="loadCloth" gradientUnits="userSpaceOnUse" x1="150" y1="80" x2="380" y2="450">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="loadPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <radialGradient id="loadGlow" gradientUnits="userSpaceOnUse" cx="420" cy="206" r="34">
+      <stop offset="0" stop-color="#FFB35C" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#FFB35C" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .vdBob { transform-box: view-box; transform-origin: 256px 300px; animation: vdBobAnim 1.8s ease-in-out infinite; }
+      .vdWand { transform-box: view-box; transform-origin: 400px 278px; animation: vdSpinAnim 1.5s linear infinite; }
+      .vdDot { animation: vdBlinkAnim 1.2s ease-in-out infinite; }
+      .vdDotB { animation-delay: 0.18s; }
+      .vdDotC { animation-delay: 0.36s; }
+      .vdHalo { animation: vdPulseAnim 1.8s ease-in-out infinite; }
+      @keyframes vdBobAnim { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+      @keyframes vdSpinAnim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes vdBlinkAnim { 0%, 100% { opacity: 0.22; } 40% { opacity: 1; } }
+      @keyframes vdPulseAnim { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.12; } }
+      @media (prefers-reduced-motion: reduce) {
+        .vdBob, .vdWand, .vdDot, .vdHalo { animation: none; }
+      }
+    </style>
+  </defs>
+
+  <!-- sombra de apoio -->
+  <ellipse class="vdHalo" cx="256" cy="452" rx="96" ry="13" fill="#2A2440" opacity="0.3"/>
+
+  <g class="vdBob" transform="translate(0 -24)">
+    <!-- perninhas -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M224 404 L218 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M288 404 L294 452" stroke="#2A2440" stroke-width="32"/>
+      <path d="M224 404 L218 452" stroke="url(#loadCloth)" stroke-width="24"/>
+      <path d="M288 404 L294 452" stroke="url(#loadCloth)" stroke-width="24"/>
+      <path d="M209 440 L228 443" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M285 442 L304 439" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <!-- bracinho esquerdo -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 322 C170 332 152 350 146 372" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 322 C170 332 152 350 146 372" stroke="url(#loadCloth)" stroke-width="24"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#loadCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#loadCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#loadPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <g fill="none" stroke-width="8" stroke-linecap="round">
+      <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+      <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+      <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+    </g>
+
+    <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+          fill="url(#loadCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+    <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+    <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.18"/>
+
+    <g>
+      <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+      <g fill="#14111F">
+        <circle cx="208" cy="196" r="3"/><circle cx="220" cy="196" r="3"/>
+        <circle cx="208" cy="208" r="3"/><circle cx="220" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M208 196 L220 208"/><path d="M220 196 L208 208"/>
+      </g>
+    </g>
+
+    <g>
+      <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+      <g fill="#14111F">
+        <circle cx="294" cy="196" r="3"/><circle cx="306" cy="196" r="3"/>
+        <circle cx="294" cy="208" r="3"/><circle cx="306" cy="208" r="3"/>
+      </g>
+      <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+        <path d="M294 196 L306 208"/><path d="M306 196 L294 208"/>
+      </g>
+    </g>
+
+    <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+      <path d="M251 221 L261 229"/><path d="M261 221 L251 229"/>
+    </g>
+
+    <!-- boquinha concentrada -->
+    <ellipse cx="256" cy="252" rx="13" ry="15" fill="#2A2440"/>
+    <ellipse cx="251" cy="246" rx="3.5" ry="4" fill="#FBF7F2" opacity="0.35"/>
+
+    <!-- alfinete mágico girando -->
+    <g class="vdWand">
+      <circle cx="420" cy="206" r="32" fill="url(#loadGlow)"/>
+      <path class="vd-haste" d="M374 313 L404 243" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M371 311 L401 241" stroke="#9B7BFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.65"/>
+      <circle cx="372" cy="318" r="11" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+      <path d="M398 240 L410 246 L416 215 Z" fill="#FFB35C"/>
+      <path d="M420 194 Q420 206 432 206 Q420 206 420 218 Q420 206 408 206 Q420 206 420 194 Z" fill="#FFB35C"/>
+    </g>
+
+    <!-- bracinho direito, na frente da varinha -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M320 318 C352 308 380 296 400 280" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 318 C352 308 380 296 400 280" stroke="url(#loadCloth)" stroke-width="24"/>
+    </g>
+  </g>
+
+  <!-- pontinhos de carregamento -->
+  <g>
+    <circle class="vdDot" cx="216" cy="486" r="10" fill="#6D3BF5"/>
+    <circle class="vdDot vdDotB" cx="256" cy="486" r="10" fill="#9B7BFF"/>
+    <circle class="vdDot vdDotC" cx="296" cy="486" r="10" fill="#FF3D8B"/>
+  </g>
+</svg>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="sleepT sleepD">
+  <title id="sleepT">Vudu dormindo</title>
+  <desc id="sleepD">O mascote Vudu sentado no chão com a cabeça tombada, olhos de botão semicerrados por pálpebras de pano, boquinha aberta e três letras z subindo no ar.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="sleepCloth" gradientUnits="userSpaceOnUse" x1="150" y1="120" x2="380" y2="490">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="sleepPatch" gradientUnits="userSpaceOnUse" x1="190" y1="340" x2="242" y2="394">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="256" cy="474" rx="134" ry="16" fill="#2A2440" opacity="0.13"/>
+
+  <!-- zzz -->
+  <g font-family="'Space Grotesk', 'Inter', system-ui, sans-serif" font-weight="700">
+    <text x="348" y="182" font-size="30" fill="#6D3BF5" opacity="0.9" transform="rotate(-8 348 182)">z</text>
+    <text x="384" y="138" font-size="40" fill="#9B7BFF" opacity="0.85" transform="rotate(6 384 138)">z</text>
+    <text x="424" y="86" font-size="52" fill="#FF3D8B" opacity="0.75" transform="rotate(-10 424 86)">z</text>
+  </g>
+
+  <!-- varinha descansando no chão -->
+  <g>
+    <path class="vd-haste" d="M364 460 L444 446" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <circle cx="360" cy="462" r="11" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+    <path d="M443 439 L445 453 L470 442 Z" fill="#FFB35C" opacity="0.8"/>
+    <path d="M480 430 Q480 437 487 437 Q480 437 480 444 Q480 437 473 437 Q480 437 480 430 Z" fill="#FFB35C" opacity="0.5"/>
+  </g>
+
+  <g transform="translate(0 22)">
+    <!-- perninhas esticadas para a frente -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M226 408 L184 444" stroke="#2A2440" stroke-width="32"/>
+      <path d="M286 408 L328 444" stroke="#2A2440" stroke-width="32"/>
+      <path d="M226 408 L184 444" stroke="url(#sleepCloth)" stroke-width="24"/>
+      <path d="M286 408 L328 444" stroke="url(#sleepCloth)" stroke-width="24"/>
+      <path d="M188 428 L202 441" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <path d="M310 441 L324 428" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    </g>
+
+    <!-- bracinhos relaxados no chão -->
+    <g fill="none" stroke-linecap="round">
+      <path d="M196 326 C176 348 168 372 172 394" stroke="#2A2440" stroke-width="32"/>
+      <path d="M196 326 C176 348 168 372 172 394" stroke="url(#sleepCloth)" stroke-width="24"/>
+      <path d="M320 322 C342 344 350 368 346 392" stroke="#2A2440" stroke-width="32"/>
+      <path d="M320 322 C342 344 350 368 346 392" stroke="url(#sleepCloth)" stroke-width="24"/>
+    </g>
+
+    <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#sleepCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+          fill="url(#sleepCloth)" stroke="#2A2440" stroke-width="5"/>
+
+    <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L248 370 L264 382 L248 394 L256 406"
+          fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g transform="rotate(-8 215 345)">
+      <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#sleepPatch)" stroke="#2A2440" stroke-width="3.5"/>
+      <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+    </g>
+
+    <!-- cabeça tombada -->
+    <g transform="rotate(-11 256 288)">
+      <g fill="none" stroke-width="8" stroke-linecap="round">
+        <path d="M236 116 C226 92 238 78 252 86" stroke="#6D3BF5"/>
+        <path d="M258 110 C258 82 278 74 288 90" stroke="#FF3D8B"/>
+        <path d="M276 118 C292 100 306 106 304 120" stroke="#9B7BFF"/>
+      </g>
+
+      <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+            fill="url(#sleepCloth)" stroke="#2A2440" stroke-width="5"/>
+
+      <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+            fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+      <ellipse cx="182" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.2"/>
+      <ellipse cx="330" cy="238" rx="18" ry="11" fill="#FF3D8B" opacity="0.2"/>
+
+      <!-- botão roxo com palpebra -->
+      <g>
+        <circle cx="214" cy="202" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+        <circle cx="214" cy="202" r="16" fill="#9B7BFF" opacity="0.5"/>
+        <g fill="#14111F">
+          <circle cx="208" cy="196" r="3"/><circle cx="220" cy="196" r="3"/>
+          <circle cx="208" cy="208" r="3"/><circle cx="220" cy="208" r="3"/>
+        </g>
+        <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+          <path d="M208 196 L220 208"/><path d="M220 196 L208 208"/>
+        </g>
+        <path d="M192.2 212 A24 24 0 0 1 235.8 212 Z" fill="url(#sleepCloth)" stroke="#2A2440" stroke-width="3.5" stroke-linejoin="round"/>
+      </g>
+
+      <!-- botão magenta com palpebra -->
+      <g>
+        <circle cx="300" cy="202" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+        <circle cx="300" cy="202" r="16" fill="#FBF7F2" opacity="0.28"/>
+        <g fill="#14111F">
+          <circle cx="294" cy="196" r="3"/><circle cx="306" cy="196" r="3"/>
+          <circle cx="294" cy="208" r="3"/><circle cx="306" cy="208" r="3"/>
+        </g>
+        <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+          <path d="M294 196 L306 208"/><path d="M306 196 L294 208"/>
+        </g>
+        <path d="M278.2 212 A24 24 0 0 1 321.8 212 Z" fill="url(#sleepCloth)" stroke="#2A2440" stroke-width="3.5" stroke-linejoin="round"/>
+      </g>
+
+      <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+        <path d="M251 224 L261 232"/><path d="M261 224 L251 232"/>
+      </g>
+
+      <!-- boquinha aberta de sono -->
+      <ellipse cx="256" cy="256" rx="11" ry="14" fill="#2A2440"/>
+      <ellipse cx="252" cy="251" rx="3" ry="3.5" fill="#FBF7F2" opacity="0.3"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="favT favD">
+  <title id="favT">Favicon do Voodoo.js</title>
+  <desc id="favD">Quadrado arredondado em tinta escura com o símbolo simplificado do alfinete mágico em V, cabeça magenta e ponta âmbar.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="favGrad" gradientUnits="userSpaceOnUse" x1="8" y1="10" x2="24" y2="26">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="32" height="32" rx="8" fill="#14111F"/>
+  <path d="M10.5 12.5 L16 22.5 L21 12.5" fill="none" stroke="url(#favGrad)" stroke-width="4.4" stroke-linejoin="round"/>
+  <circle cx="10.5" cy="12.5" r="3.6" fill="#FF3D8B"/>
+  <path d="M19.2 11.6 L23 13.6 L23.6 7.6 Z" fill="#FFB35C"/>
+  <path d="M24 4 Q24 8 28 8 Q24 8 24 12 Q24 8 20 8 Q24 8 24 4 Z" fill="#FFB35C"/>
+</svg>

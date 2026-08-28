@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="errT errD">
+  <title id="errT">Vudu triste, estado de erro</title>
+  <desc id="errD">O mascote Vudu cabisbaixo com boca virada para baixo, uma lágrima no rosto, a costura do peito desfiada com linha solta e a varinha caída no chão com a faísca apagada.</desc>
+
+  <defs>
+    <style>
+      .vd-txt { fill: #2A2440; }
+      .vd-txt-forte { fill: #14111F; }
+      .vd-haste { stroke: #2A2440; }
+      .vd-rim { stroke: transparent; }
+      .vd-decor { opacity: 0.13; }
+      @media (prefers-color-scheme: dark) {
+        .vd-txt { fill: #FBF7F2; }
+        .vd-txt-forte { fill: #FBF7F2; }
+        .vd-haste { stroke: #9B7BFF; }
+        .vd-rim { stroke: #FBF7F2; }
+        .vd-decor { opacity: 0.26; }
+      }
+    </style>
+    <linearGradient id="errCloth" gradientUnits="userSpaceOnUse" x1="150" y1="100" x2="380" y2="470">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#EDE4D8"/>
+    </linearGradient>
+    <linearGradient id="errPatch" gradientUnits="userSpaceOnUse" x1="190" y1="318" x2="242" y2="372">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6D3BF5"/>
+    </linearGradient>
+    <linearGradient id="errTear" gradientUnits="userSpaceOnUse" x1="304" y1="240" x2="322" y2="272">
+      <stop offset="0" stop-color="#FBF7F2"/>
+      <stop offset="1" stop-color="#9B7BFF"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="256" cy="470" rx="112" ry="15" fill="#2A2440" opacity="0.13"/>
+
+  <!-- varinha caída, faísca apagada -->
+  <g>
+    <path class="vd-haste" d="M344 456 L430 440" stroke="#2A2440" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <circle cx="340" cy="458" r="11" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5" opacity="0.75"/>
+    <path d="M429 433 L431 447 L457 435 Z" fill="#FFB35C" opacity="0.55"/>
+    <path d="M470 418 Q470 426 478 426 Q470 426 470 434 Q470 426 462 426 Q470 426 470 418 Z" fill="#9B7BFF" opacity="0.35"/>
+    <path d="M452 412 q8 -8 2 -16" fill="none" stroke="#9B7BFF" stroke-width="3" stroke-linecap="round" opacity="0.3"/>
+  </g>
+
+  <!-- perninhas -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M224 404 L220 452" stroke="#2A2440" stroke-width="32"/>
+    <path d="M288 404 L292 452" stroke="#2A2440" stroke-width="32"/>
+    <path d="M224 404 L220 452" stroke="url(#errCloth)" stroke-width="24"/>
+    <path d="M288 404 L292 452" stroke="url(#errCloth)" stroke-width="24"/>
+    <path d="M211 441 L230 443" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+    <path d="M283 443 L302 441" stroke="#2A2440" stroke-width="3.5" stroke-dasharray="6 5" opacity="0.6"/>
+  </g>
+
+  <!-- bracinhos caídos -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M196 322 C178 342 168 362 166 384" stroke="#2A2440" stroke-width="32"/>
+    <path d="M196 322 C178 342 168 362 166 384" stroke="url(#errCloth)" stroke-width="24"/>
+  </g>
+
+  <rect x="232" y="272" width="48" height="36" rx="12" fill="url(#errCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <path d="M256 292 C300 292 330 316 332 356 C334 400 312 424 256 424 C200 424 178 400 180 356 C182 316 212 292 256 292 Z"
+        fill="url(#errCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <!-- costura que parou de fechar -->
+  <path d="M256 298 L264 310 L248 322 L264 334 L248 346 L264 358 L250 368"
+        fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- rasgo aberto -->
+  <ellipse cx="254" cy="380" rx="14" ry="6" fill="#2A2440" opacity="0.5" transform="rotate(-35 254 380)"/>
+  <circle cx="246" cy="374" r="6.5" fill="url(#errCloth)" stroke="#2A2440" stroke-width="2.5"/>
+  <circle cx="261" cy="387" r="5" fill="url(#errCloth)" stroke="#2A2440" stroke-width="2.5"/>
+
+  <!-- linha solta pendurada -->
+  <path d="M250 368 C238 384 252 396 238 408 C228 416 216 412 214 402"
+        fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="214" cy="401" r="4.5" fill="#2A2440"/>
+
+  <g transform="rotate(-8 215 345)">
+    <rect x="190" y="320" width="50" height="50" rx="7" fill="url(#errPatch)" stroke="#2A2440" stroke-width="3.5"/>
+    <rect x="197" y="327" width="36" height="36" rx="4" fill="none" stroke="#FBF7F2" stroke-width="2" stroke-dasharray="5 5" opacity="0.85"/>
+  </g>
+
+  <!-- tufo de cabelo murcho -->
+  <g fill="none" stroke-width="8" stroke-linecap="round">
+    <path d="M236 116 C222 100 224 86 238 84" stroke="#6D3BF5"/>
+    <path d="M258 110 C252 88 266 78 280 88" stroke="#FF3D8B"/>
+    <path d="M276 118 C292 108 304 114 300 126" stroke="#9B7BFF"/>
+  </g>
+
+  <path d="M256 112 C312 112 356 148 358 200 C360 252 314 288 256 288 C198 288 152 252 154 200 C156 148 200 112 256 112 Z"
+        fill="url(#errCloth)" stroke="#2A2440" stroke-width="5"/>
+
+  <path d="M256 122 L264 134 L248 146 L264 158 L256 168"
+        fill="none" stroke="#2A2440" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M170 246 q12 9 24 13" fill="none" stroke="#2A2440" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.5"/>
+
+  <ellipse cx="182" cy="240" rx="18" ry="11" fill="#FF3D8B" opacity="0.13"/>
+  <ellipse cx="330" cy="240" rx="18" ry="11" fill="#FF3D8B" opacity="0.13"/>
+
+  <!-- sobrancelhas tristes -->
+  <g stroke="#2A2440" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.85">
+    <path d="M192 172 L232 164"/>
+    <path d="M282 164 L322 172"/>
+  </g>
+
+  <g>
+    <circle cx="214" cy="204" r="24" fill="#6D3BF5" stroke="#2A2440" stroke-width="3.5"/>
+    <circle cx="214" cy="204" r="16" fill="#9B7BFF" opacity="0.5"/>
+    <g fill="#14111F">
+      <circle cx="208" cy="198" r="3"/><circle cx="220" cy="198" r="3"/>
+      <circle cx="208" cy="210" r="3"/><circle cx="220" cy="210" r="3"/>
+    </g>
+    <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+      <path d="M208 198 L220 210"/><path d="M220 198 L208 210"/>
+    </g>
+  </g>
+
+  <g>
+    <circle cx="300" cy="204" r="24" fill="#FF3D8B" stroke="#2A2440" stroke-width="3.5"/>
+    <circle cx="300" cy="204" r="16" fill="#FBF7F2" opacity="0.28"/>
+    <g fill="#14111F">
+      <circle cx="294" cy="198" r="3"/><circle cx="306" cy="198" r="3"/>
+      <circle cx="294" cy="210" r="3"/><circle cx="306" cy="210" r="3"/>
+    </g>
+    <g stroke="#FBF7F2" stroke-width="2.5" stroke-linecap="round" opacity="0.9">
+      <path d="M294 198 L306 210"/><path d="M306 198 L294 210"/>
+    </g>
+  </g>
+
+  <!-- lágrima -->
+  <path d="M313 234 C322 250 326 258 320 265 C315 271 306 270 303 263 C300 255 306 246 313 234 Z"
+        fill="url(#errTear)" stroke="#9B7BFF" stroke-width="1.5"/>
+  <ellipse cx="310" cy="257" rx="2.5" ry="4" fill="#FBF7F2" opacity="0.85"/>
+
+  <g stroke="#2A2440" stroke-width="3" stroke-linecap="round" opacity="0.75">
+    <path d="M251 223 L261 231"/><path d="M261 223 L251 231"/>
+  </g>
+
+  <!-- boca triste bordada -->
+  <path d="M220 268 Q256 238 292 268" fill="none" stroke="#2A2440" stroke-width="4.5"
+        stroke-linecap="round" stroke-dasharray="9 7"/>
+
+  <!-- bracinho direito caído -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M320 318 C340 338 350 358 352 380" stroke="#2A2440" stroke-width="32"/>
+    <path d="M320 318 C340 338 350 358 352 380" stroke="url(#errCloth)" stroke-width="24"/>
+  </g>
+</svg>
