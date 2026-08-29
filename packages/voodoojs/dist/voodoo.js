@@ -8284,6 +8284,8 @@ Expressao: ${expression}` : message);
   defineOption("accordion-single");
   var Drawer = class {
     constructor(panel) {
+      /** Marca o lugar de origem do painel enquanto ele fica no corpo do documento. */
+      __publicField(this, "origem", null);
       __publicField(this, "panel");
       __publicField(this, "triggers", /* @__PURE__ */ new Set());
       __publicField(this, "open", false);
@@ -8323,7 +8325,7 @@ Expressao: ${expression}` : message);
       }
     }
     show() {
-      var _a;
+      var _a, _b;
       if (this.open) return;
       this.open = true;
       this.lastFocus = document.activeElement;
@@ -8331,6 +8333,11 @@ Expressao: ${expression}` : message);
       this.backdrop.className = "v-drawer-backdrop";
       this.backdrop.addEventListener("click", () => this.hide());
       document.body.appendChild(this.backdrop);
+      if (this.panel.parentElement !== document.body) {
+        this.origem = document.createComment(" v-drawer ");
+        (_a = this.panel.parentNode) == null ? void 0 : _a.insertBefore(this.origem, this.panel);
+        document.body.appendChild(this.panel);
+      }
       this.panel.hidden = false;
       lockScroll();
       requestAnimationFrame(() => {
@@ -8340,7 +8347,7 @@ Expressao: ${expression}` : message);
       });
       document.addEventListener("keydown", this.onKeyDown, true);
       document.addEventListener("pointerdown", this.onPointerDown, true);
-      ((_a = focusableIn(this.panel)[0]) != null ? _a : this.panel).focus();
+      ((_b = focusableIn(this.panel)[0]) != null ? _b : this.panel).focus();
       this.sync();
       dispatch2(this.panel, "voodoo:drawer", { open: true });
     }
@@ -8358,6 +8365,11 @@ Expressao: ${expression}` : message);
         this.panel.hidden = true;
         (_a2 = this.backdrop) == null ? void 0 : _a2.remove();
         this.backdrop = null;
+        if (this.origem && this.origem.parentNode) {
+          this.origem.parentNode.insertBefore(this.panel, this.origem);
+          this.origem.remove();
+          this.origem = null;
+        }
       };
       if (device.reducedMotion) finish();
       else setTimeout(finish, 300);
@@ -11086,6 +11098,409 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
   });
   magic("$history", (scope) => scope.el ? findController(scope.el) : null);
 
+  // src/sound/index.ts
+  init_registry();
+  var contexto = null;
+  var volumeGeral = 0.35;
+  var silenciado = false;
+  var carregouPreferencia = false;
+  var CHAVE_VOLUME = "voodoo:sound:volume";
+  var CHAVE_SILENCIO = "voodoo:sound:muted";
+  function carregarPreferencia() {
+    if (carregouPreferencia) return;
+    carregouPreferencia = true;
+    const salvo = storage.get(CHAVE_VOLUME);
+    if (typeof salvo === "number" && salvo >= 0 && salvo <= 1) volumeGeral = salvo;
+    const mudo = storage.get(CHAVE_SILENCIO);
+    if (typeof mudo === "boolean") silenciado = mudo;
+    if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches && storage.get(CHAVE_VOLUME) === void 0) {
+      volumeGeral = 0.18;
+    }
+  }
+  function obterContexto() {
+    var _a;
+    if (typeof window === "undefined") return null;
+    if (contexto) {
+      if (contexto.state === "suspended") void contexto.resume();
+      return contexto;
+    }
+    const Construtor = (_a = window.AudioContext) != null ? _a : window.webkitAudioContext;
+    if (!Construtor) return null;
+    try {
+      contexto = new Construtor();
+      return contexto;
+    } catch (e) {
+      return null;
+    }
+  }
+  function tocarCamada(ctx, camada, volumeDoEfeito) {
+    var _a, _b, _c, _d;
+    const inicio = ctx.currentTime + ((_a = camada.atraso) != null ? _a : 0);
+    const fim = inicio + camada.duracao;
+    const oscilador = ctx.createOscillator();
+    oscilador.type = (_b = camada.forma) != null ? _b : "sine";
+    oscilador.frequency.setValueAtTime(camada.frequencia, inicio);
+    if (camada.ate !== void 0 && camada.ate !== camada.frequencia) {
+      oscilador.frequency.exponentialRampToValueAtTime(Math.max(1, camada.ate), fim);
+    }
+    const ganho = ctx.createGain();
+    const pico = volumeGeral * volumeDoEfeito * ((_c = camada.volume) != null ? _c : 1);
+    const ataque = (_d = camada.ataque) != null ? _d : 8e-3;
+    ganho.gain.setValueAtTime(1e-4, inicio);
+    ganho.gain.exponentialRampToValueAtTime(Math.max(1e-4, pico), inicio + ataque);
+    ganho.gain.exponentialRampToValueAtTime(1e-4, fim);
+    oscilador.connect(ganho);
+    ganho.connect(ctx.destination);
+    oscilador.start(inicio);
+    oscilador.stop(fim + 0.02);
+  }
+  var efeitos = {
+    /** Toque seco de confirmacao, para botoes comuns. */
+    click: {
+      volume: 0.5,
+      camadas: [{ frequencia: 660, ate: 440, duracao: 0.06, forma: "triangle" }]
+    },
+    /** Estalo curto e agudo, bom para alternar algo. */
+    pop: {
+      volume: 0.5,
+      camadas: [{ frequencia: 880, ate: 1320, duracao: 0.07, forma: "sine" }]
+    },
+    /** Roce leve, para passar o mouse por cima. */
+    hover: {
+      volume: 0.22,
+      camadas: [{ frequencia: 1200, duracao: 0.035, forma: "sine" }]
+    },
+    /** Duas notas subindo, para dar certo. */
+    success: {
+      volume: 0.6,
+      camadas: [
+        { frequencia: 523.25, duracao: 0.1, forma: "sine" },
+        { frequencia: 783.99, duracao: 0.18, forma: "sine", atraso: 0.09 }
+      ]
+    },
+    /** Tres notas subindo, para conclusao de fluxo. */
+    complete: {
+      volume: 0.6,
+      camadas: [
+        { frequencia: 523.25, duracao: 0.1, forma: "sine" },
+        { frequencia: 659.25, duracao: 0.1, forma: "sine", atraso: 0.09 },
+        { frequencia: 1046.5, duracao: 0.22, forma: "sine", atraso: 0.18 }
+      ]
+    },
+    /** Duas notas descendo, para erro. */
+    error: {
+      volume: 0.6,
+      camadas: [
+        { frequencia: 392, duracao: 0.12, forma: "square", volume: 0.5 },
+        { frequencia: 261.63, duracao: 0.24, forma: "square", volume: 0.5, atraso: 0.1 }
+      ]
+    },
+    /** Aviso curto de atencao. */
+    warning: {
+      volume: 0.55,
+      camadas: [
+        { frequencia: 587.33, duracao: 0.1, forma: "triangle" },
+        { frequencia: 587.33, duracao: 0.14, forma: "triangle", atraso: 0.14 }
+      ]
+    },
+    /** Sino discreto, para notificacao que chega. */
+    notify: {
+      volume: 0.5,
+      camadas: [
+        { frequencia: 987.77, duracao: 0.14, forma: "sine" },
+        { frequencia: 1318.51, duracao: 0.3, forma: "sine", atraso: 0.08, volume: 0.6 }
+      ]
+    },
+    /** Toque bem curto para digitacao. */
+    type: {
+      volume: 0.18,
+      camadas: [{ frequencia: 2200, duracao: 0.018, forma: "square" }]
+    },
+    /** Deslizar de abertura, para painel, gaveta e modal. */
+    open: {
+      volume: 0.4,
+      camadas: [{ frequencia: 330, ate: 660, duracao: 0.14, forma: "sine" }]
+    },
+    /** Deslizar de fechamento. */
+    close: {
+      volume: 0.4,
+      camadas: [{ frequencia: 660, ate: 330, duracao: 0.14, forma: "sine" }]
+    },
+    /** Recusa curta, para acao bloqueada. */
+    deny: {
+      volume: 0.5,
+      camadas: [
+        { frequencia: 220, duracao: 0.08, forma: "square", volume: 0.5 },
+        { frequencia: 180, duracao: 0.12, forma: "square", volume: 0.5, atraso: 0.07 }
+      ]
+    },
+    /** Moeda, para pontuacao e recompensa. */
+    coin: {
+      volume: 0.45,
+      camadas: [
+        { frequencia: 987.77, duracao: 0.06, forma: "square" },
+        { frequencia: 1318.51, duracao: 0.16, forma: "square", atraso: 0.05 }
+      ]
+    },
+    /** Passagem de nivel, mais festiva. */
+    levelup: {
+      volume: 0.55,
+      camadas: [
+        { frequencia: 523.25, duracao: 0.08, forma: "square" },
+        { frequencia: 659.25, duracao: 0.08, forma: "square", atraso: 0.07 },
+        { frequencia: 783.99, duracao: 0.08, forma: "square", atraso: 0.14 },
+        { frequencia: 1046.5, duracao: 0.26, forma: "square", atraso: 0.21 }
+      ]
+    },
+    /** Batida grave, para arrastar e soltar. */
+    drop: {
+      volume: 0.5,
+      camadas: [{ frequencia: 180, ate: 90, duracao: 0.12, forma: "triangle" }]
+    }
+  };
+  var NOTAS = {
+    do: 261.63,
+    "do#": 277.18,
+    re: 293.66,
+    "re#": 311.13,
+    mi: 329.63,
+    fa: 349.23,
+    "fa#": 369.99,
+    sol: 392,
+    "sol#": 415.3,
+    la: 440,
+    "la#": 466.16,
+    si: 493.88,
+    // Nomes em ingles, para quem prefere.
+    c: 261.63,
+    d: 293.66,
+    e: 329.63,
+    f: 349.23,
+    g: 392,
+    a: 440,
+    b: 493.88
+  };
+  function frequenciaDaNota(nome) {
+    const limpo = String(nome).trim().toLowerCase();
+    const casamento = /^([a-z]+#?)(\d)?$/.exec(limpo);
+    if (!casamento) return null;
+    const base = NOTAS[casamento[1]];
+    if (base === void 0) return null;
+    const oitava = casamento[2] ? Number(casamento[2]) : 4;
+    return base * 2 ** (oitava - 4);
+  }
+  var arquivos = /* @__PURE__ */ new Map();
+  function tocarArquivo(url2, volume) {
+    let elemento = arquivos.get(url2);
+    if (!elemento) {
+      elemento = new Audio(url2);
+      elemento.preload = "auto";
+      arquivos.set(url2, elemento);
+    }
+    elemento.volume = Math.max(0, Math.min(1, volumeGeral * volume));
+    elemento.currentTime = 0;
+    void elemento.play().catch(() => {
+    });
+  }
+  function pareceCaminho(valor) {
+    return /^(https?:)?\/\//.test(valor) || /^[./]/.test(valor) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(valor);
+  }
+  var sound = {
+    /**
+     * Toca um efeito pelo nome, ou um arquivo pelo caminho.
+     *
+     * ```js
+     * V.sound.play('success')
+     * V.sound.play('/audio/ding.mp3')
+     * V.sound.play('click', { volume: 0.5 })
+     * ```
+     */
+    play(nome, opcoes = {}) {
+      var _a, _b, _c;
+      carregarPreferencia();
+      if (silenciado || !nome) return;
+      const valor = String(nome).trim();
+      const volume = (_a = opcoes.volume) != null ? _a : 1;
+      if (pareceCaminho(valor)) {
+        tocarArquivo(valor, volume);
+        return;
+      }
+      const efeito = efeitos[valor];
+      if (!efeito) {
+        const frequencia = frequenciaDaNota(valor);
+        if (frequencia !== null) this.tone(frequencia, 200, { volume });
+        return;
+      }
+      const ctx = obterContexto();
+      if (!ctx) return;
+      const tom = (_b = opcoes.tom) != null ? _b : 1;
+      const volumeDoEfeito = ((_c = efeito.volume) != null ? _c : 1) * volume;
+      for (const camada of efeito.camadas) {
+        tocarCamada(
+          ctx,
+          tom === 1 ? camada : {
+            ...camada,
+            frequencia: camada.frequencia * tom,
+            ate: camada.ate === void 0 ? void 0 : camada.ate * tom
+          },
+          volumeDoEfeito
+        );
+      }
+    },
+    /**
+     * Toca uma frequencia pura.
+     *
+     * ```js
+     * V.sound.tone(440, 300)
+     * ```
+     *
+     * @param frequencia hertz
+     * @param duracao milissegundos
+     */
+    tone(frequencia, duracao = 200, opcoes = {}) {
+      var _a, _b;
+      carregarPreferencia();
+      if (silenciado) return;
+      const ctx = obterContexto();
+      if (!ctx) return;
+      tocarCamada(
+        ctx,
+        { frequencia, duracao: duracao / 1e3, forma: (_a = opcoes.forma) != null ? _a : "sine" },
+        (_b = opcoes.volume) != null ? _b : 0.5
+      );
+    },
+    /**
+     * Toca uma nota pelo nome.
+     *
+     * ```js
+     * V.sound.note('la', 300)
+     * V.sound.note('do5', 200)
+     * ```
+     */
+    note(nome, duracao = 250, opcoes = {}) {
+      const frequencia = frequenciaDaNota(nome);
+      if (frequencia === null) return;
+      this.tone(frequencia, duracao, opcoes);
+    },
+    /**
+     * Toca uma sequencia de notas.
+     *
+     * ```js
+     * V.sound.melody(['do', 'mi', 'sol', 'do5'], 140)
+     * ```
+     *
+     * @param notas nomes de nota, ou frequencias em hertz
+     * @param intervalo milissegundos entre uma nota e a seguinte
+     */
+    melody(notas, intervalo = 150, opcoes = {}) {
+      carregarPreferencia();
+      if (silenciado) return;
+      notas.forEach((nota, indice) => {
+        const frequencia = typeof nota === "number" ? nota : frequenciaDaNota(nota);
+        if (frequencia === null) return;
+        setTimeout(() => this.tone(frequencia, intervalo * 1.6, opcoes), indice * intervalo);
+      });
+    },
+    /**
+     * Le ou ajusta o volume geral, de 0 a 1. A escolha fica guardada.
+     *
+     * ```js
+     * V.sound.volume()      // le
+     * V.sound.volume(0.6)   // ajusta
+     * ```
+     */
+    volume(valor) {
+      carregarPreferencia();
+      if (valor === void 0) return volumeGeral;
+      volumeGeral = Math.max(0, Math.min(1, valor));
+      storage.set(CHAVE_VOLUME, volumeGeral);
+      return volumeGeral;
+    },
+    /** Silencia. Passe `false` para voltar a tocar. */
+    mute(valor = true) {
+      carregarPreferencia();
+      silenciado = valor;
+      storage.set(CHAVE_SILENCIO, silenciado);
+    },
+    /** Volta a tocar. */
+    unmute() {
+      this.mute(false);
+    },
+    /** Alterna entre silencio e som, e devolve o novo estado. */
+    toggle() {
+      carregarPreferencia();
+      this.mute(!silenciado);
+      return silenciado;
+    },
+    /** `true` quando esta silenciado. */
+    get muted() {
+      carregarPreferencia();
+      return silenciado;
+    },
+    /** Nomes de todos os efeitos disponiveis. */
+    get names() {
+      return Object.keys(efeitos);
+    },
+    /**
+     * Registra um efeito proprio.
+     *
+     * ```js
+     * V.sound.define('meuAviso', {
+     *   volume: 0.5,
+     *   camadas: [
+     *     { frequencia: 700, duracao: 0.1 },
+     *     { frequencia: 900, duracao: 0.2, atraso: 0.08 }
+     *   ]
+     * })
+     * ```
+     */
+    define(nome, efeito) {
+      efeitos[nome] = efeito;
+    },
+    /** Carrega um arquivo antes da hora, para nao atrasar no primeiro toque. */
+    preload(...urls) {
+      for (const url2 of urls) {
+        if (arquivos.has(url2)) continue;
+        const elemento = new Audio(url2);
+        elemento.preload = "auto";
+        arquivos.set(url2, elemento);
+      }
+    }
+  };
+  defineDirective("sound", ({ el, arg, expression, modifiers, scope, cleanup, evaluate: evaluate2 }) => {
+    const evento = arg || "click";
+    const resolver = () => {
+      const bruto = expression.trim();
+      if (!bruto) return "click";
+      if (efeitos[bruto] || pareceCaminho(bruto) || frequenciaDaNota(bruto) !== null) return bruto;
+      const valor = evaluate2();
+      return typeof valor === "string" ? valor : bruto;
+    };
+    const volume = modifiers.volume !== void 0 ? Number(modifiers.volume) : void 0;
+    const tocar = () => {
+      sound.play(resolver(), volume === void 0 ? {} : { volume });
+    };
+    el.addEventListener(evento, tocar);
+    cleanup(() => el.removeEventListener(evento, tocar));
+    void scope;
+  });
+  defineDirective("mute", ({ el, cleanup }) => {
+    const sincronizar = () => {
+      const mudo = sound.muted;
+      el.setAttribute("aria-pressed", String(mudo));
+      el.classList.toggle("v-muted", mudo);
+    };
+    const alternar = () => {
+      sound.toggle();
+      sincronizar();
+      if (!sound.muted) sound.play("pop");
+    };
+    el.addEventListener("click", alternar);
+    sincronizar();
+    cleanup(() => el.removeEventListener("click", alternar));
+  });
+  magic("$sound", () => sound);
+
   // src/ui/dialog.ts
   init_style();
   init_registry();
@@ -12667,6 +13082,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     registerMask,
     palette,
     hotkey,
+    sound,
     magic
   });
   var essential_default = V;

@@ -388,21 +388,31 @@ textarea {
   margin-inline: auto;
 }
 
+/* Todas as grades usam `min(100%, X)` no minimo. Assim, quando a coluna nao
+   couber, a grade vira coluna unica em vez de espremer o conteudo, e nunca
+   nasce rolagem horizontal em telas estreitas. */
 .vd-grid {
   display: grid;
-  gap: clamp(16px, 2vw, 26px);
+  gap: clamp(18px, 2vw, 26px);
+  align-items: stretch;
 }
 
 .vd-grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
 }
 
 .vd-grid-3 {
-  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
 }
 
 .vd-grid-4 {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+/* Todo filho direto de uma grade pode encolher ate zero, o que impede que um
+   bloco largo (codigo, tabela) estique a coluna e empurre a pagina. */
+.vd-grid > * {
+  min-width: 0;
 }
 
 /* ==========================================================================
@@ -412,6 +422,8 @@ textarea {
 /* --- Cartao ------------------------------------------------------------ */
 
 .vd-card {
+  display: flex;
+  flex-direction: column;
   background: var(--vd-surface);
   border: 1px solid var(--vd-line);
   border-radius: var(--vd-radius-lg);
@@ -419,6 +431,14 @@ textarea {
   padding: clamp(20px, 2.4vw, 30px);
   position: relative;
   overflow: hidden;
+  min-width: 0;
+}
+
+/* O bloco de codigo de um cartao desce ate o rodape. Assim os cartoes de uma
+   mesma linha terminam alinhados por baixo, mesmo com textos de tamanhos
+   diferentes. */
+.vd-card > .vd-code:last-child {
+  margin-top: auto;
 }
 
 .vd-card-flat {
@@ -1319,7 +1339,7 @@ textarea {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
   gap: 1px;
   background: var(--vd-line);
   border: 1px solid var(--vd-line);
@@ -1328,34 +1348,44 @@ textarea {
   box-shadow: var(--vd-shadow);
 }
 
+/* Coluna com o numero em cima, o rotulo no meio e a nota sempre colada no
+   rodape. Isso mantem os cinco blocos alinhados entre si. */
 .vd-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   background: var(--vd-surface);
-  padding: 26px 22px;
+  padding: clamp(22px, 2.4vw, 30px) clamp(16px, 1.8vw, 22px);
   text-align: center;
+  min-width: 0;
 }
 
 .vd-stat-n {
   font-family: var(--vd-font-display);
-  font-size: clamp(30px, 3.6vw, 42px);
+  font-size: clamp(32px, 3.4vw, 44px);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.03em;
   color: var(--vd-accent);
   font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
 }
 
 .vd-stat-k {
-  margin-top: 9px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 650;
+  line-height: 1.35;
   color: var(--vd-text);
+  text-wrap: balance;
 }
 
 .vd-stat-s {
-  margin-top: 5px;
+  margin-top: auto;
+  padding-top: 6px;
   font-size: 12.5px;
   color: var(--vd-text-soft);
   line-height: 1.45;
+  text-wrap: pretty;
 }
 
 /* --- Comparacao de abordagens ------------------------------------------ */
@@ -1412,6 +1442,331 @@ textarea {
   border-radius: var(--vd-radius);
   border: 1px dashed var(--vd-line-strong);
   background: var(--vd-surface-2);
+}
+
+/* --- Instalacao em tres passos ----------------------------------------- */
+
+.vd-inst {
+  display: grid;
+  gap: clamp(24px, 3vw, 36px);
+}
+
+.vd-passos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  counter-reset: passo;
+}
+
+.vd-passo {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 22px);
+  align-items: start;
+  padding: clamp(20px, 2.4vw, 28px);
+  border: 1px solid var(--vd-line);
+  border-radius: var(--vd-radius-lg);
+  background: var(--vd-surface);
+  box-shadow: var(--vd-shadow-sm);
+}
+
+.vd-passo-num {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--vd-purple), var(--vd-magenta));
+  color: #fff;
+  font-family: var(--vd-font-display);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+  flex: none;
+}
+
+.vd-passo-corpo {
+  min-width: 0;
+}
+
+.vd-passo-titulo {
+  font-family: var(--vd-font-display);
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.vd-passo-texto {
+  margin-top: 8px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  color: var(--vd-text-muted);
+  max-width: 62ch;
+}
+
+/* Escolha do pacote. Tres cartoes que precisam ter a mesma altura e o tamanho
+   do arquivo sempre grudado no rodape. */
+.vd-pacotes {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+}
+
+.vd-pacote {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: var(--vd-radius);
+  border: 1px solid var(--vd-line-strong);
+  background: var(--vd-surface-2);
+  color: var(--vd-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--vd-fast) var(--vd-ease),
+    background-color var(--vd-fast) var(--vd-ease),
+    transform var(--vd-fast) var(--vd-ease);
+}
+
+.vd-pacote:hover {
+  border-color: var(--vd-accent);
+  transform: translateY(-2px);
+}
+
+.vd-pacote.is-on {
+  border-color: var(--vd-accent);
+  background: var(--vd-accent-soft);
+  box-shadow: 0 0 0 1px var(--vd-accent) inset;
+}
+
+.vd-pacote strong {
+  font-family: var(--vd-font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--vd-text);
+  overflow-wrap: anywhere;
+}
+
+.vd-pacote.is-on strong {
+  color: var(--vd-accent);
+}
+
+.vd-pacote-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--vd-accent-soft);
+  color: var(--vd-accent);
+  font-family: var(--vd-font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.vd-pacote small {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--vd-text-muted);
+}
+
+.vd-pacote em {
+  margin-top: auto;
+  padding-top: 4px;
+  font-family: var(--vd-font-mono);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--vd-mint-text);
+}
+
+.vd-config {
+  padding: clamp(20px, 2.4vw, 30px);
+  border: 1px solid var(--vd-line);
+  border-radius: var(--vd-radius-lg);
+  background: var(--vd-surface-2);
+}
+
+.vd-config .vd-code {
+  margin-top: 18px;
+}
+
+/* Tabela de atributos da tag script. Rola dentro do proprio contorno. */
+.vd-tabela {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.vd-tabela th,
+.vd-tabela td {
+  padding: 11px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--vd-line);
+}
+
+.vd-tabela thead th {
+  font-family: var(--vd-font-display);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vd-text-soft);
+}
+
+.vd-tabela td {
+  color: var(--vd-text-muted);
+  white-space: normal;
+}
+
+.vd-tabela td:first-child {
+  white-space: nowrap;
+}
+
+.vd-tabela code {
+  font-size: 12.5px;
+  color: var(--vd-accent);
+}
+
+.vd-tabela tr:last-child th,
+.vd-tabela tr:last-child td {
+  border-bottom: none;
+}
+
+/* --- Guia passo a passo ------------------------------------------------ */
+
+.vd-guia {
+  display: grid;
+  gap: clamp(20px, 2.6vw, 30px);
+  counter-reset: guia;
+}
+
+.vd-guia-passo {
+  display: grid;
+  gap: clamp(16px, 2.4vw, 28px);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: stretch;
+  padding: clamp(20px, 2.6vw, 32px);
+  border: 1px solid var(--vd-line);
+  border-radius: var(--vd-radius-lg);
+  background: var(--vd-surface);
+  box-shadow: var(--vd-shadow-sm);
+}
+
+.vd-guia-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vd-guia-selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--vd-font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vd-accent);
+  margin-bottom: 12px;
+}
+
+.vd-guia-selo b {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--vd-accent-soft);
+  font-size: 12.5px;
+}
+
+.vd-guia-titulo {
+  font-family: var(--vd-font-display);
+  font-size: clamp(19px, 2.2vw, 25px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.vd-guia-desc {
+  margin-top: 10px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  color: var(--vd-text-muted);
+  max-width: 56ch;
+}
+
+.vd-guia-texto .vd-code {
+  margin-top: auto;
+}
+
+/* Palco do resultado ao vivo, ao lado do codigo. */
+.vd-guia-palco {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--vd-radius);
+  border: 1px dashed var(--vd-line-strong);
+  background: var(--vd-surface-2);
+  overflow: hidden;
+}
+
+.vd-guia-palco-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px dashed var(--vd-line-strong);
+  font-family: var(--vd-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vd-text-soft);
+}
+
+.vd-guia-palco-corpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 22px 18px;
+  min-height: 168px;
+}
+
+.vd-guia-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.vd-guia-valor {
+  font-family: var(--vd-font-display);
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--vd-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .vd-guia-passo {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* --- Playground -------------------------------------------------------- */
@@ -1560,11 +1915,12 @@ textarea {
 .vd-dcard {
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 14px;
+  min-width: 0;
   background: var(--vd-surface);
   border: 1px solid var(--vd-line);
   border-radius: var(--vd-radius-lg);
-  padding: 22px;
+  padding: clamp(18px, 2vw, 24px);
   transition:
     transform var(--vd-normal) var(--vd-ease),
     border-color var(--vd-normal) var(--vd-ease),
@@ -1597,14 +1953,22 @@ textarea {
   padding: 14px 16px;
 }
 
+/* A demonstracao fica sempre colada no rodape do cartao, entao todos os
+   cartoes de uma mesma linha terminam na mesma altura. */
 .vd-ddemo {
+  margin-top: auto;
   border-top: 1px dashed var(--vd-line-strong);
-  padding-top: 15px;
+  padding-top: 16px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  min-height: 56px;
+  min-height: 76px;
+  min-width: 0;
+}
+
+.vd-ddemo > * {
+  min-width: 0;
 }
 
 .vd-ddemo-tag {
@@ -1651,6 +2015,8 @@ textarea {
   background: var(--vd-mint-soft);
   padding: 5px 11px;
   border-radius: 7px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .vd-list-demo {
@@ -1675,8 +2041,9 @@ textarea {
 
 .vd-showcase {
   display: grid;
-  gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  align-items: stretch;
 }
 
 .vd-show {
@@ -1686,26 +2053,51 @@ textarea {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  transition:
+    border-color var(--vd-normal) var(--vd-ease),
+    box-shadow var(--vd-normal) var(--vd-ease);
+}
+
+.vd-show:hover {
+  border-color: var(--vd-accent);
+  box-shadow: var(--vd-shadow);
 }
 
 .vd-show-head {
-  padding: 16px 20px 12px;
+  padding: 18px 22px 14px;
   border-bottom: 1px solid var(--vd-line);
 }
 
+/* O palco cresce para ocupar a sobra, entao os cartoes da mesma linha ficam
+   com a mesma altura e o codigo sempre encosta no rodape. */
 .vd-show-stage {
-  padding: 24px 20px;
+  flex: 1;
+  padding: 24px 22px;
   background: var(--vd-surface-2);
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
   align-items: center;
   justify-content: center;
-  min-height: 116px;
+  align-content: center;
+  min-height: 132px;
+  min-width: 0;
+  overflow-x: auto;
 }
 
+/* Variante empilhada: cada peca ocupa a largura toda e respira. */
 .vd-show-stage.is-block {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+  justify-content: stretch;
+}
+
+.vd-show-stage.is-block > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vd-show .vd-code {
@@ -1713,30 +2105,47 @@ textarea {
   border: none;
   border-top: 1px solid var(--vd-line);
   font-size: 12px;
+  flex: none;
 }
 
 /* --- Minigames --------------------------------------------------------- */
 
 .vd-game {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--vd-line);
   border-radius: var(--vd-radius-lg);
   background: var(--vd-surface);
   overflow: hidden;
+  min-width: 0;
 }
 
 .vd-game-head {
-  padding: 22px 24px 16px;
+  padding: 22px clamp(16px, 2vw, 24px) 16px;
+  border-bottom: 1px solid var(--vd-line);
 }
 
 .vd-game-body {
-  padding: 0 24px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(16px, 2vw, 22px) clamp(16px, 2vw, 24px) clamp(20px, 2.4vw, 26px);
+  min-width: 0;
+}
+
+/* As utilidades de margem nao fazem sentido dentro de um corpo que ja usa
+   `gap`. Zera para as pecas do jogo ficarem com espacamento parelho. */
+.vd-game-body > .vd-mt,
+.vd-game-body > .vd-verdict-box,
+.vd-game-body > .vd-code {
+  margin-top: 0;
 }
 
 .vd-scoreboard {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
 }
 
 .vd-score {
@@ -1839,8 +2248,9 @@ textarea {
 
 .vd-upgrade {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 13px 15px;
   border-radius: var(--vd-radius);
   border: 1px solid var(--vd-line);
@@ -1849,9 +2259,10 @@ textarea {
 
 .vd-upgrade + .vd-upgrade { margin-top: 9px; }
 
-.vd-upgrade-info { flex: 1; min-width: 0; }
+.vd-upgrade-info { flex: 1 1 150px; min-width: 0; }
 .vd-upgrade-name { font-weight: 650; font-size: 14.5px; }
-.vd-upgrade-desc { font-size: 12.5px; color: var(--vd-text-soft); }
+.vd-upgrade-desc { font-size: 12.5px; line-height: 1.45; color: var(--vd-text-soft); }
+.vd-upgrade .vd-mini { flex: none; white-space: nowrap; }
 
 /* Caca ao bug. */
 .vd-buglines {

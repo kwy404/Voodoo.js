@@ -1,4 +1,4 @@
-import { core, magic, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query } from './chunk-JIAMJPVM.js';
+import { core, magic, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query } from './chunk-W4LUTZE7.js';
 import './chunk-ABAHVFPX.js';
 import './chunk-7U443GSF.js';
 import './chunk-45K3USNK.js';
@@ -38,6 +38,7 @@ Object.assign(V, core, {
   registerMask,
   palette,
   hotkey,
+  sound,
   magic
 });
 var essential_default = V;

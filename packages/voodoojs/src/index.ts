@@ -27,6 +27,8 @@ import { magic } from './runtime/scope';
 import './directives/ui';
 import './directives/forms';
 import './directives/state';
+// Registra v-sound e v-mute, mais o efeito colateral do modulo de audio.
+import './sound';
 import './motion';
 import './charts';
 // Registra os componentes prontos: VButton, VCard, VInput, VSelect e os demais.
@@ -45,6 +47,7 @@ import {
   clearErrors,
 } from './forms/validate';
 import { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
+import { sound } from './sound';
 import { animate, spring, stagger, inView, scrollProgress, motionPresets, easings } from './motion';
 import { renderChart, charts, CHART_COLORS } from './charts';
 import { xray, enableXrayShortcut } from './devtools/xray';
@@ -127,6 +130,7 @@ Object.assign(V, core, {
   // Interface
   palette,
   hotkey,
+  sound,
 
   // Ferramentas de inspecao
   xray,
@@ -199,6 +203,7 @@ export { renderChart, charts } from './charts';
 export { validator, validate, serializeForm, showFormErrors, clearErrors } from './forms/validate';
 export { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
 export { hotkey } from './directives/ui';
+export { sound, efeitos as soundEffects } from './sound';
 export { xray } from './devtools/xray';
 export { devtoolsBus } from './devtools/bus';
 

@@ -1,5 +1,5 @@
-import { c as core, V as VoodooCollection } from './query-Diauz51M.js';
-export { C as ComponentDefinition, D as DirectiveBinding, a as DirectiveHooks, P as PRIORITY, S as Scope, b as VoodooConfig, d as VoodooPlugin, e as VoodooRuntimeError, f as VoodooSyntaxError, g as addCleanup, h as allStores, i as allowedGlobals, j as cache, k as clearParseCache, l as config, m as cookie, n as defineComponent, o as defineDirective, p as destroy, q as ensureTokens, r as enter, s as evaluate, t as fadeIn, u as fadeOut, v as findScope, w as fromHtml, x as getScope, y as injectStyle, z as instances, A as leave, B as magic, E as magics, F as mountComponent, G as parse, H as query, I as ready, J as refresh, K as removeStore, L as rootScope, M as session, N as slideDown, O as slideUp, Q as start, R as storage, T as store, U as storeNames, W as stringify, X as theme, Y as toast, Z as tokenize, _ as url, $ as viewTransition, a0 as walk } from './query-Diauz51M.js';
+import { c as core, V as VoodooCollection } from './query-gOiWi_Tk.js';
+export { C as ComponentDefinition, D as DirectiveBinding, a as DirectiveHooks, P as PRIORITY, S as Scope, b as VoodooConfig, d as VoodooPlugin, e as VoodooRuntimeError, f as VoodooSyntaxError, g as addCleanup, h as allStores, i as allowedGlobals, j as cache, k as clearParseCache, l as config, m as cookie, n as defineComponent, o as defineDirective, p as destroy, q as ensureTokens, r as enter, s as evaluate, t as fadeIn, u as fadeOut, v as findScope, w as fromHtml, x as getScope, y as injectStyle, z as instances, A as leave, B as magic, E as magics, F as mountComponent, G as parse, H as query, I as ready, J as refresh, K as removeStore, L as rootScope, M as session, N as slideDown, O as slideUp, Q as start, R as storage, T as store, U as storeNames, W as stringify, X as theme, Y as toast, Z as tokenize, _ as url, $ as viewTransition, a0 as walk } from './query-gOiWi_Tk.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.js';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.js';
 export { DebouncedFunction, FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './utils.js';
@@ -47,6 +47,151 @@ interface HotkeyOptions {
  * @returns funcao que remove o atalho
  */
 declare function hotkey(combo: string, handler: (event: KeyboardEvent) => void, options?: HotkeyOptions): () => void;
+
+/**
+ * @module sound
+ *
+ * Som nativo, sem arquivo e sem dependencia.
+ *
+ * Os efeitos sao sintetizados na hora com a Web Audio API, entao nao existe
+ * download, nao existe pasta de audio e o custo em bytes e proximo de zero.
+ * Tambem da para tocar um arquivo proprio quando voce quiser.
+ *
+ * ```html
+ * <button v-sound="click">Salvar</button>
+ * <button v-sound="success" v-post="/api/pedidos">Finalizar</button>
+ * <a v-sound:mouseenter="hover" href="/precos">Precos</a>
+ * <input v-sound:input="type">
+ * ```
+ *
+ * ```js
+ * V.sound.play('success')
+ * V.sound.note('do', 300)
+ * V.sound.melody(['do', 'mi', 'sol'], 140)
+ * V.sound.volume(0.4)
+ * V.sound.mute()
+ * ```
+ *
+ * Regras de bom comportamento que o modulo segue sozinho:
+ *
+ * - navegador nenhum deixa tocar audio antes de a pessoa interagir, entao o
+ *   contexto so e criado no primeiro gesto;
+ * - quem liga `prefers-reduced-motion` costuma preferir menos estimulo, entao o
+ *   volume padrao cai pela metade nesse caso;
+ * - a preferencia de silencio fica guardada e vale nas proximas visitas.
+ */
+type FormaDeOnda = 'sine' | 'square' | 'sawtooth' | 'triangle';
+interface Camada {
+    /** Frequencia inicial em hertz. */
+    frequencia: number;
+    /** Frequencia final, para o som deslizar. Ausente mantem a inicial. */
+    ate?: number;
+    /** Duracao em segundos. */
+    duracao: number;
+    /** Volume relativo da camada, de 0 a 1. */
+    volume?: number;
+    forma?: FormaDeOnda;
+    /** Atraso em segundos desde o inicio do efeito. */
+    atraso?: number;
+    /** Tempo de subida do volume, em segundos. */
+    ataque?: number;
+}
+interface Efeito {
+    camadas: Camada[];
+    /** Volume do efeito inteiro, de 0 a 1. */
+    volume?: number;
+}
+/**
+ * Biblioteca de efeitos. Cada um foi desenhado para ser curto e discreto:
+ * som de interface existe para confirmar uma acao, nao para chamar atencao.
+ */
+declare const efeitos: Record<string, Efeito>;
+interface OpcoesDeToque {
+    /** Volume relativo, de 0 a 1. Multiplica o volume geral. */
+    volume?: number;
+    /** Multiplica a frequencia de todas as camadas, deixando o som mais agudo. */
+    tom?: number;
+}
+declare const sound: {
+    /**
+     * Toca um efeito pelo nome, ou um arquivo pelo caminho.
+     *
+     * ```js
+     * V.sound.play('success')
+     * V.sound.play('/audio/ding.mp3')
+     * V.sound.play('click', { volume: 0.5 })
+     * ```
+     */
+    play(nome: string, opcoes?: OpcoesDeToque): void;
+    /**
+     * Toca uma frequencia pura.
+     *
+     * ```js
+     * V.sound.tone(440, 300)
+     * ```
+     *
+     * @param frequencia hertz
+     * @param duracao milissegundos
+     */
+    tone(frequencia: number, duracao?: number, opcoes?: OpcoesDeToque & {
+        forma?: FormaDeOnda;
+    }): void;
+    /**
+     * Toca uma nota pelo nome.
+     *
+     * ```js
+     * V.sound.note('la', 300)
+     * V.sound.note('do5', 200)
+     * ```
+     */
+    note(nome: string, duracao?: number, opcoes?: OpcoesDeToque): void;
+    /**
+     * Toca uma sequencia de notas.
+     *
+     * ```js
+     * V.sound.melody(['do', 'mi', 'sol', 'do5'], 140)
+     * ```
+     *
+     * @param notas nomes de nota, ou frequencias em hertz
+     * @param intervalo milissegundos entre uma nota e a seguinte
+     */
+    melody(notas: Array<string | number>, intervalo?: number, opcoes?: OpcoesDeToque): void;
+    /**
+     * Le ou ajusta o volume geral, de 0 a 1. A escolha fica guardada.
+     *
+     * ```js
+     * V.sound.volume()      // le
+     * V.sound.volume(0.6)   // ajusta
+     * ```
+     */
+    volume(valor?: number): number;
+    /** Silencia. Passe `false` para voltar a tocar. */
+    mute(valor?: boolean): void;
+    /** Volta a tocar. */
+    unmute(): void;
+    /** Alterna entre silencio e som, e devolve o novo estado. */
+    toggle(): boolean;
+    /** `true` quando esta silenciado. */
+    readonly muted: boolean;
+    /** Nomes de todos os efeitos disponiveis. */
+    readonly names: string[];
+    /**
+     * Registra um efeito proprio.
+     *
+     * ```js
+     * V.sound.define('meuAviso', {
+     *   volume: 0.5,
+     *   camadas: [
+     *     { frequencia: 700, duracao: 0.1 },
+     *     { frequencia: 900, duracao: 0.2, atraso: 0.08 }
+     *   ]
+     * })
+     * ```
+     */
+    define(nome: string, efeito: Efeito): void;
+    /** Carrega um arquivo antes da hora, para nao atrasar no primeiro toque. */
+    preload(...urls: string[]): void;
+};
 
 /** Alvo aceito por `animate` e `stagger`. */
 type MotionTarget = Element | ArrayLike<Element> | string | null | undefined;
@@ -1411,4 +1556,4 @@ interface Voodoo extends Omit<typeof core, never> {
 }
 declare const V: Voodoo;
 
-export { V, type Voodoo, VoodooCollection, alert, animate, applyMask, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, dialog, easings, getLocale, hotkey, i18n, inView, mask, masks, modal, motionPresets, navigate, network, palette, prompt, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, spring, stagger, t, unmask, validate, validator, xray };
+export { V, type Voodoo, VoodooCollection, alert, animate, applyMask, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, dialog, easings, getLocale, hotkey, i18n, inView, mask, masks, modal, motionPresets, navigate, network, palette, prompt, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, validate, validator, xray };

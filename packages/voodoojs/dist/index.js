@@ -1,5 +1,5 @@
-import { magic, markSkipChildren, core, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-JIAMJPVM.js';
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, defineComponent, destroy, dialog, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk } from './chunk-JIAMJPVM.js';
+import { magic, markSkipChildren, core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-W4LUTZE7.js';
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, defineComponent, destroy, dialog, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk } from './chunk-W4LUTZE7.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-ABAHVFPX.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-ABAHVFPX.js';
 import { http } from './chunk-7U443GSF.js';
@@ -6568,6 +6568,7 @@ Object.assign(V, core, {
   // Interface
   palette,
   hotkey,
+  sound,
   // Ferramentas de inspecao
   xray,
   enableXrayShortcut,

@@ -1190,6 +1190,9 @@ defineOption('accordion-single');
 
 /** Gaveta lateral com backdrop, trava de rolagem e foco preso. */
 class Drawer {
+  /** Marca o lugar de origem do painel enquanto ele fica no corpo do documento. */
+  private origem: Comment | null = null;
+
   readonly panel: HTMLElement;
   readonly triggers = new Set<HTMLElement>();
   open = false;
@@ -1244,6 +1247,16 @@ class Drawer {
     this.backdrop.addEventListener('click', () => this.hide());
     document.body.appendChild(this.backdrop);
 
+    // Leva o painel para o corpo do documento enquanto estiver aberto. Um
+    // ancestral com filter, backdrop-filter, transform, perspective ou contain
+    // vira o bloco de referencia de um elemento fixo, o que desloca a gaveta e
+    // ainda aplica o desfoque do ancestral sobre ela.
+    if (this.panel.parentElement !== document.body) {
+      this.origem = document.createComment(' v-drawer ');
+      this.panel.parentNode?.insertBefore(this.origem, this.panel);
+      document.body.appendChild(this.panel);
+    }
+
     this.panel.hidden = false;
     lockScroll();
     requestAnimationFrame(() => {
@@ -1273,6 +1286,13 @@ class Drawer {
       this.panel.hidden = true;
       this.backdrop?.remove();
       this.backdrop = null;
+
+      // Devolve o painel para onde ele estava escrito no HTML.
+      if (this.origem && this.origem.parentNode) {
+        this.origem.parentNode.insertBefore(this.panel, this.origem);
+        this.origem.remove();
+        this.origem = null;
+      }
     };
     if (device.reducedMotion) finish();
     else setTimeout(finish, 300);

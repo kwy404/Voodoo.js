@@ -19,6 +19,8 @@ import { magic } from './runtime/scope';
 import './directives/ui';
 import './directives/forms';
 import './directives/state';
+// Registra v-sound e v-mute, mais o efeito colateral do modulo de audio.
+import './sound';
 
 import { modal, alert, confirm, prompt, dialog } from './ui/dialog';
 import { palette } from './ui/palette';
@@ -33,6 +35,7 @@ import {
   clearErrors,
 } from './forms/validate';
 import { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
+import { sound } from './sound';
 
 export interface VoodooEssential extends Omit<typeof core, never> {
   (input?: unknown, context?: unknown): VoodooCollection;
@@ -69,6 +72,7 @@ Object.assign(V, core, {
 
   palette,
   hotkey,
+  sound,
   magic,
 });
 
