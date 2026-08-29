@@ -30,6 +30,29 @@ export default defineConfig([
     banner: { js: banner },
   },
 
+  // Build minimo: reatividade, directives, componentes, DOM e requisicoes.
+  {
+    entry: { 'voodoo.core': 'src/browser-minimo.ts' },
+    format: ['iife'],
+    globalName: 'Voodoo',
+    outExtension: () => ({ js: '.js' }),
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    footer: globalFooter,
+  },
+  {
+    entry: { 'voodoo.core.min': 'src/browser-minimo.ts' },
+    format: ['iife'],
+    globalName: 'Voodoo',
+    outExtension: () => ({ js: '.js' }),
+    minify: true,
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    footer: globalFooter,
+  },
+
   // Build essencial para CDN. E o arquivo servido por padrao.
   {
     entry: { voodoo: 'src/browser-essential.ts' },

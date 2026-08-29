@@ -10,7 +10,7 @@ Reatividade de verdade, componentes, requisições, formulários, gráficos e in
 em uma tag `<script>`. Sem build, sem npm, sem configuração.
 
 [![download](https://img.shields.io/badge/download-voodoo.min.js-6D3BF5)](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js)
-[![gzip](https://img.shields.io/badge/gzip-36%20KB-2ED9A5)](#tamanho-real)
+[![gzip](https://img.shields.io/badge/gzip-41%20KB-2ED9A5)](#tamanho-real)
 [![dependencias](https://img.shields.io/badge/depend%C3%AAncias-0-9B7BFF)](#zero-dependencias)
 [![testes](https://img.shields.io/badge/testes-190%20passando-2ED9A5)](#testes)
 [![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6)](#typescript)
@@ -152,7 +152,6 @@ com o arquivo baixado.
 - [Gráficos e animações](#graficos-e-animacoes)
 - [Recursos exclusivos](#recursos-exclusivos)
 - [API em JavaScript](#api-em-javascript)
-- [Linha de comando](#linha-de-comando)
 - [Comparativo honesto](#comparativo-honesto)
 - [Quando não usar a Voodoo](#quando-nao-usar-a-voodoo)
 - [Migrando](#migrando)
@@ -185,7 +184,7 @@ com o arquivo baixado.
 Em destaque:
 
 - <a id="zero-dependencias"></a>**Zero dependências.** Nada de React, Vue, lodash, jQuery ou Axios por baixo. Só APIs do navegador.
-- **Sem passo de build.** Uma tag `<script>` e acabou. Também funciona com bundler e TypeScript quando você quiser.
+- **Sem passo de build.** Uma tag `<script>` e acabou. Nada para instalar, nada para compilar, nada para configurar.
 - **Sem `eval` e sem `new Function`.** A Voodoo tem um analisador de expressões próprio, então funciona com Content Security Policy restritiva, sem `unsafe-eval`.
 - **HTML limpo no final.** Depois de processados, os atributos `v-*` saem do DOM. O inspetor do navegador mostra HTML normal, sem sujeira de framework.
 - **Atualizações granulares.** Rastreamento de dependência por chave. Mudou `count`, só quem leu `count` é reexecutado.
@@ -194,38 +193,37 @@ Em destaque:
 
 ## Instalação
 
-A Voodoo.js é um arquivo só. Baixe, coloque ao lado do seu HTML e pronto.
-Sem gerenciador de pacotes, sem CDN de terceiros, sem passo de build.
+A Voodoo.js é um arquivo pronto. Baixe, coloque junto do seu HTML e acabou.
+Não existe gerenciador de pacotes, não existe CDN de terceiros, não existe passo de build.
 
-### 1. Baixe o arquivo
+### 1. Escolha e baixe o arquivo
 
-| Pacote | O que vem dentro | Tamanho | Download |
+| Arquivo | O que vem dentro | Gzip | Download |
 | --- | --- | --- | --- |
-| **Essencial** | Reatividade, directives, componentes, DOM, HTTP, formulários, validação, máscaras, interface, arrastar e soltar, avisos | 75 KB gzip | [voodoo.min.js](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js) |
-| **Completo** | Tudo do essencial, mais gráficos, animações com física, roteador, idiomas, inspetor e 29 componentes prontos | 120 KB gzip | [voodoo.full.min.js](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js) |
+| **voodoo.core.min.js** | Reatividade, expressões, componentes, DOM encadeável, todas as directives de estado, renderização, eventos e requisições por atributo | **41 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.core.min.js) |
+| **voodoo.min.js** | O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos e avisos | **76 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js) |
+| **voodoo.full.min.js** | Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos | **120 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js) |
 
-Comece pelo essencial. Troque pelo completo quando precisar de gráfico, animação ou dos componentes prontos.
+Na dúvida, comece pelo **voodoo.min.js**. Ele cobre a maioria das páginas.
+Troque pelo completo quando precisar de gráfico, animação ou dos componentes prontos.
 
-Pela linha de comando:
+Pelo terminal:
 
 ```bash
 curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js
 ```
 
-Ou clone o repositório e pegue de `packages/voodoojs/dist/`:
+Ou baixe o repositório inteiro pelo botão **Code** e pegue os arquivos de
+`packages/voodoojs/dist/`.
 
-```bash
-git clone https://github.com/kwy404/Voodoo.js.git
-```
-
-### 2. Coloque a tag na página
+### 2. Aponte uma tag para o arquivo
 
 ```html
 <script src="voodoo.min.js" defer></script>
 ```
 
-Só isso. A biblioteca inicializa sozinha quando o documento fica pronto.
-Não existe `V.init()` para chamar.
+Acabou. Não existe `V.init()` para chamar: a biblioteca começa sozinha assim que
+a página fica pronta.
 
 ### 3. Escreva HTML
 
@@ -237,7 +235,7 @@ Não existe `V.init()` para chamar.
 
 ### Configuração pela própria tag
 
-Dá para ajustar tudo sem escrever JavaScript:
+Dá para ajustar tudo sem escrever uma linha de JavaScript:
 
 ```html
 <script src="voodoo.min.js"
@@ -250,13 +248,13 @@ Dá para ajustar tudo sem escrever JavaScript:
 
 | Atributo | O que faz |
 | --- | --- |
-| `data-prefix` | Troca `v-` por outro prefixo, útil para HTML estritamente validado |
+| `data-prefix` | Troca `v-` por outro prefixo, útil em HTML validado com rigor |
 | `data-base-url` | URL base das requisições feitas por atributo |
 | `data-locale` | Idioma dos formatadores de data, número e moeda |
-| `data-devtools` | Liga avisos detalhados e o atalho do inspetor |
+| `data-devtools` | Liga o inspetor de reatividade e os avisos detalhados |
 | `data-no-styles` | Não injeta o CSS dos componentes de interface |
 | `data-keep-attributes` | Mantém os atributos `v-*` no HTML depois de processados |
-| `data-manual` | Não inicia sozinho. Você chama `V.start()` quando quiser |
+| `data-manual` | Não começa sozinho. Você chama `V.start()` quando quiser |
 
 Com `data-manual` você configura antes de começar:
 
@@ -268,22 +266,6 @@ Com `data-manual` você configura antes de começar:
   V.start();
 </script>
 ```
-
-### Monte um pacote só com o que você usa
-
-Se 75 KB ainda for mais do que você precisa, o repositório traz uma ferramenta que
-monta um arquivo sob medida. Escolhendo apenas núcleo, directives e DOM, o resultado
-fica em **36 KB gzip**:
-
-```bash
-git clone https://github.com/kwy404/Voodoo.js.git
-cd Voodoo.js
-npm install
-node packages/cli/bin/voodoo.mjs build --modules=core,directives,dom --out=voodoo.custom.min.js
-```
-
-Rodando `node packages/cli/bin/voodoo.mjs build` sem argumentos, aparece um menu com os
-17 módulos disponíveis.
 
 ## Início rápido
 
@@ -398,6 +380,28 @@ A lista completa sai com `V.directives` no console do navegador.
 ```
 
 ### Atributos, classes e estilos
+
+O dois pontos na frente do nome liga **qualquer atributo de qualquer tag** ao estado.
+Vale para atributos comuns, de acessibilidade, de dados, de SVG e de tags próprias.
+Mudou o valor no estado, muda na tela.
+
+```html
+<input :placeholder="'Buscar entre ' + produtos.length + ' itens'">
+<img :src="foto" :alt="descricao" :width="largura">
+<a :href="'/produto/' + id" :target="novaAba ? '_blank' : '_self'">
+<div :aria-label="rotulo" :data-estado="situacao" :title="dica">
+<circle :r="raio" :fill="cor">
+<minha-tag :dado="valor">
+```
+
+Atributos booleanos entendem verdadeiro e falso: quando o valor é falso, o atributo
+some do HTML em vez de virar a palavra `false`.
+
+```html
+<button :disabled="carregando">Salvar</button>
+<input :readonly="travado">
+<details :open="aberto">
+```
 
 | Directive | Exemplo |
 | --- | --- |
@@ -784,22 +788,6 @@ V.debounce(fn, 300)  V.formatCurrency(1234.5)  V.formatDate(d, 'DD/MM/YYYY')
 V.relativeTime(d)  V.slugify(s)  V.groupBy(lista, 'tipo')  V.uuid()  V.clone(o)
 ```
 
-## Linha de comando
-
-```bash
-npx voodoo init minha-pagina    # cria um projeto pronto para abrir no navegador
-npx voodoo build                # monta um bundle so com os modulos que voce escolher
-npx voodoo add card             # copia um componente para o seu codigo, para voce editar
-npx voodoo info                 # mostra os modulos e o tamanho de cada um
-```
-
-O `build` abre um menu com os 17 módulos disponíveis. Escolhendo apenas núcleo, directives e
-DOM, o resultado fica em **36 KB gzip**.
-
-```bash
-npx voodoo build --modules=core,directives,dom,http --out=voodoo.custom.min.js
-```
-
 ## Comparativo honesto
 
 | | Voodoo.js | Alpine.js | HTMX | Vue 3 | React 19 | jQuery |
@@ -878,14 +866,14 @@ A diferença é que não existe passo de build nem arquivo `.vue`, e a interpola
 
 Medido com `node scripts/size.mjs` neste repositório:
 
-| Bundle | Cru | Gzip | Brotli | O que inclui |
+| Arquivo | Cru | Gzip | Brotli | O que inclui |
 | --- | --- | --- | --- | --- |
-| Sob medida (núcleo, directives, DOM) | 108 KB | **36 KB** | 31 KB | Reatividade, directives, componentes, DOM |
-| `voodoo.min.js` | 235 KB | **75 KB** | 64 KB | O anterior mais HTTP, formulários, validação, máscaras, interface, arrastar e soltar, avisos |
-| `voodoo.full.min.js` | 399 KB | **120 KB** | 100 KB | Tudo, mais gráficos, animações, roteador, idiomas, inspetor e 29 componentes |
+| `voodoo.core.min.js` | 119 KB | **41 KB** | 36 KB | Reatividade, expressões, componentes, DOM, directives e requisições |
+| `voodoo.min.js` | 236 KB | **76 KB** | 64 KB | O anterior, mais formulários, validação, máscaras, interface, arrastar e soltar |
+| `voodoo.full.min.js` | 400 KB | **120 KB** | 100 KB | Tudo, mais gráficos, animações, roteador, idiomas, inspetor e 29 componentes |
 
-Importando por bundler, o tree shaking derruba o que você não usa: importar apenas
-`reactive` e `http` traz cerca de 9 KB gzip.
+Os três arquivos são gerados a partir do mesmo código fonte. A diferença entre eles
+é apenas quanta coisa vem junto.
 
 ## Demos
 
@@ -901,15 +889,9 @@ Aplicações completas em [`examples/`](examples/):
 | [Kanban](examples/kanban/) | Arrastar cartões entre colunas, modal de edição, persistência |
 | [Chat](examples/chat/) | Lista de mensagens, indicador de digitando, rolagem automática |
 
-Para rodar tudo localmente:
-
-```bash
-git clone https://github.com/kwy404/Voodoo.js.git
-cd Voodoo.js
-npm install
-npm run build
-node scripts/serve.mjs
-```
+Cada demo e um arquivo HTML que ja vem com o bundle ao lado. Baixe o repositorio
+pelo botao **Code**, abra a pasta `examples/` e clique em qualquer `index.html`.
+Nao precisa instalar nem compilar nada para ver as demos rodando.
 
 ## Roadmap
 
@@ -929,7 +911,12 @@ Ainda não implementado, sem data marcada:
 
 ## Contribuindo
 
+Para **usar** a Voodoo.js você não precisa de nada além do arquivo baixado.
+O que vem abaixo é só para quem vai mexer no código da própria biblioteca.
+
 ```bash
+git clone https://github.com/kwy404/Voodoo.js.git
+cd Voodoo.js
 npm install
 npm test          # 190 testes
 npm run typecheck
