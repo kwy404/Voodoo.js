@@ -14,11 +14,18 @@
  * ```
  */
 
-import { reactive, watch, type WatchStopHandle } from '../reactivity';
+import { reactive, ref, watch, type WatchStopHandle } from '../reactivity';
 
 export type StoreDefinition = Record<string, any>;
 
 const stores = new Map<string, Record<string, any>>();
+
+/**
+ * Versao do conjunto de stores. Ler esta referencia dentro do proxy `$store`
+ * faz com que criar um store novo atualize quem ja estava na tela esperando
+ * por ele, mesmo que o registro aconteca depois do carregamento.
+ */
+const versao = ref(0);
 const persistHandles = new Map<string, WatchStopHandle>();
 
 export interface StoreOptions {
@@ -76,6 +83,7 @@ export function store<T extends StoreDefinition>(
   }
 
   stores.set(name, created);
+  versao.value++;
 
   if (options.persist && typeof localStorage !== 'undefined') {
     const stop = watch(
@@ -108,8 +116,14 @@ function stripFunctions(source: Record<string, any>): Record<string, any> {
 export const allStores: Record<string, Record<string, any>> = new Proxy(
   {},
   {
-    get: (_t, key: string) => stores.get(key),
-    has: (_t, key: string) => stores.has(key as string),
+    get: (_t, key: string) => {
+      void versao.value; // assina a criacao de stores novos
+      return stores.get(key);
+    },
+    has: (_t, key: string) => {
+      void versao.value;
+      return stores.has(key as string);
+    },
     ownKeys: () => [...stores.keys()],
     getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }),
   }

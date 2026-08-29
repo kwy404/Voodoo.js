@@ -31,7 +31,18 @@ import {
   type PropDefinition,
 } from './registry';
 import { Scope } from './scope';
-import { addCleanup, componentAliases, evaluateIn, parseAttribute } from './walker';
+import {
+  addCleanup,
+  componentAliases,
+  destroy as destroyElement,
+  evaluateIn,
+  findScope,
+  getScope,
+  isInitialized,
+  parseAttribute,
+  restoreAttributes,
+  walk as walkElement,
+} from './walker';
 
 export interface ComponentInstance {
   $el: HTMLElement;
@@ -71,6 +82,48 @@ export function defineComponent(name: string, definition: ComponentDefinition): 
   components.set(normalized, definition);
   // Permite `<UserCard>`, que o HTML entrega como tag "usercard".
   componentAliases.set(normalized.replace(/-/g, ''), normalized);
+  mountPending(normalized);
+}
+
+/**
+ * Monta as tags que ja estavam na pagina esperando por este componente.
+ *
+ * Sem isso, registrar um componente depois que a pagina carregou nao teria
+ * efeito nenhum, o que e justamente o caso mais comum: a tag do CDN com
+ * `defer` roda antes do script da aplicacao.
+ */
+function mountPending(normalized: string): void {
+  if (typeof document === 'undefined' || !document.body) return;
+
+  const semHifen = normalized.replace(/-/g, '');
+  const seletores = [normalized, semHifen, `[${config.prefix}component="${normalized}"]`];
+
+  for (const seletor of seletores) {
+    let encontrados: Element[];
+    try {
+      encontrados = Array.from(document.querySelectorAll(seletor));
+    } catch {
+      continue; // seletor invalido para nomes sem hifen
+    }
+    for (const el of encontrados) {
+      // Ja e um componente montado: nada a fazer.
+      if (getScope(el)?.component) continue;
+
+      const escopo = findScope(el.parentNode);
+
+      // O elemento pode ter sido percorrido antes do componente existir, por
+      // causa de outros atributos como `@evento`. Nesse caso ele foi marcado
+      // como pronto sem nunca ter sido montado, entao desmontamos e refazemos.
+      if (isInitialized(el)) {
+        destroyElement(el);
+        // Os atributos ja tinham sido retirados do HTML pela limpeza, entao
+        // precisam voltar para que o walker os enxergue de novo.
+        restoreAttributes(el);
+      }
+
+      walkElement(el, escopo);
+    }
+  }
 }
 
 /** Converte o valor bruto de um atributo para o tipo declarado na prop. */

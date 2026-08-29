@@ -12,8 +12,8 @@ const DIST = 'packages/voodoojs/dist';
 
 /** Metas em kilobytes comprimidos com gzip. */
 const BUDGET = {
-  'voodoo.min.js': 60,
-  'index.js': 60,
+  'voodoo.min.js': 80,
+  'voodoo.full.min.js': 125,
 };
 
 function kb(bytes) {

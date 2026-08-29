@@ -72,6 +72,21 @@ export function getEffectScopes(node: Node): EffectScope[] {
   return nodeEffectScopes.get(node) ?? [];
 }
 
+/**
+ * Nos que a propria Voodoo retira do documento de proposito, como o elemento
+ * modelo de `v-for` e os ramos de `v-if`.
+ *
+ * Sem esta marca o MutationObserver enxergaria a remocao como saida de tela e
+ * chamaria `destroy`, o que pararia justamente o efeito reativo que acabou de
+ * ser criado para controlar a lista.
+ */
+const remocoesIgnoradas = new WeakSet<Node>();
+
+/** Retira um no do documento sem que o observador trate como desmontagem. */
+export function removeQuietly(node: ChildNode): void {
+  remocoesIgnoradas.add(node);
+  node.remove();
+}
 /** Registra uma funcao executada quando o no for removido do DOM. */
 export function addCleanup(node: Node, fn: () => void): void {
   let list = nodeCleanups.get(node);
@@ -103,6 +118,7 @@ export function destroy(node: Node): void {
       }
     }
   }
+  if (node.nodeType === 1) unindexElement(node as Element);
   nodeScopes.delete(node);
   nodeEffectScopes.delete(node);
   initialized.delete(node);
@@ -177,7 +193,10 @@ export function collectDirectives(el: Element): ParsedAttribute[] {
   const attrs = el.attributes;
   for (let i = 0; i < attrs.length; i++) {
     const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-    if (parsed) out.push(parsed);
+    if (parsed) {
+      out.push(parsed);
+      indexDirective(el, parsed.name);
+    }
   }
   if (out.length < 2) return out;
   return out.sort((a, b) => priorityOf(b) - priorityOf(a));
@@ -187,6 +206,70 @@ function priorityOf(attr: ParsedAttribute): number {
   return directives.get(attr.name)?.priority ?? 0;
 }
 
+/**
+ * Indice de quais elementos declararam cada directive.
+ *
+ * Como os atributos `v-*` saem do HTML depois de processados, seletores CSS
+ * como `[v-tab]` deixariam de funcionar. Este indice guarda a informacao no
+ * runtime, entao as directives estruturais continuam se encontrando.
+ */
+const directiveIndex = new Map<string, Set<Element>>();
+
+function indexDirective(el: Element, name: string): void {
+  let set = directiveIndex.get(name);
+  if (!set) directiveIndex.set(name, (set = new Set()));
+  set.add(el);
+}
+
+function unindexElement(el: Element): void {
+  for (const set of directiveIndex.values()) set.delete(el);
+}
+
+/** `true` quando o elemento declarou a directive, mesmo ja limpa do HTML. */
+export function hasDirective(el: Element, name: string): boolean {
+  if (directiveIndex.get(name)?.has(el)) return true;
+  return el.hasAttribute(`${config.prefix}${name}`) || el.hasAttribute(`data-v-${name}`);
+}
+
+/**
+ * Descendentes de `root` que declararam a directive informada, na ordem do
+ * documento. Substitui `root.querySelectorAll("[v-nome]")`.
+ */
+export function queryDirective(root: ParentNode, name: string): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const set = directiveIndex.get(name);
+  const raiz = root as Element;
+
+  if (set) {
+    for (const el of set) {
+      if (!el.isConnected) continue;
+      if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el as HTMLElement);
+    }
+  }
+
+  // Elementos ainda nao processados continuam com o atributo no HTML.
+  for (const el of Array.from(
+    root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
+  )) {
+    if (!out.includes(el as HTMLElement)) out.push(el as HTMLElement);
+  }
+
+  // Ordem do documento, para a navegacao por teclado ficar previsivel.
+  out.sort((a, b) =>
+    a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+  );
+  return out;
+}
+
+/** Ancestral mais proximo que declarou a directive, incluindo o proprio. */
+export function closestDirective(el: Element | null, name: string): HTMLElement | null {
+  let atual: Element | null = el;
+  while (atual) {
+    if (hasDirective(atual, name)) return atual as HTMLElement;
+    atual = atual.parentElement;
+  }
+  return null;
+}
 // ---------------------------------------------------------------------------
 // Limpeza dos atributos depois da renderizacao
 // ---------------------------------------------------------------------------
@@ -260,6 +343,20 @@ function stripAttributes(el: Element): void {
   for (const name of remover) el.removeAttribute(name);
 }
 
+/**
+ * Devolve ao HTML os atributos que a limpeza havia retirado.
+ *
+ * Serve para remontar um elemento, por exemplo quando um componente e
+ * registrado depois que a pagina ja foi percorrida. Sem isso o elemento seria
+ * percorrido de novo sem nenhum atributo para ler.
+ */
+export function restoreAttributes(el: Element): void {
+  const map = attributeCache.get(el);
+  if (!map) return;
+  for (const [name, value] of map) {
+    if (!el.hasAttribute(name)) el.setAttribute(name, value);
+  }
+}
 /** Verifica se o elemento tem qualquer atributo da Voodoo. */
 export function hasDirectives(el: Element): boolean {
   const attrs = el.attributes;
@@ -429,10 +526,13 @@ export function walk(node: Node, scope?: Scope): void {
     ? componentAttr.expression || ''
     : tagComponent || '';
 
+  let montouComponente = false;
+
   if (componentName && componentMounter) {
     const created = componentMounter(el, componentName, current);
     if (created) {
       current = created;
+      montouComponente = true;
       nodeScopes.set(el, current);
     }
   } else if (dataAttr || componentAttr) {
@@ -442,9 +542,15 @@ export function walk(node: Node, scope?: Scope): void {
   }
 
   // Passo 3: demais directives, na ordem de prioridade.
+  //
+  // Atributos escritos na tag de um componente pertencem a quem escreveu a tag,
+  // ou seja, ao escopo de fora. E o que faz `@salvo="ultimo = $event"` gravar no
+  // estado do pai, e nao dentro do componente. O escopo criado pelo componente
+  // vale para o conteudo interno, tratado no passo 5.
+  const escopoDosAtributos = montouComponente ? activeScope : current;
   for (const attr of attrs) {
     if (attr.name === 'data' || attr.name === 'component') continue;
-    runDirective(el, attr, current);
+    runDirective(el, attr, escopoDosAtributos);
   }
 
   // Passo 4: tira os atributos `v-*` do HTML, que ja cumpriram o seu papel.
@@ -594,6 +700,10 @@ function observeDOM(target: Element): void {
     for (const mutation of mutations) {
       for (let i = 0; i < mutation.removedNodes.length; i++) {
         const removed = mutation.removedNodes[i];
+        if (remocoesIgnoradas.has(removed)) {
+          remocoesIgnoradas.delete(removed);
+          continue;
+        }
         if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
       }
       for (let i = 0; i < mutation.addedNodes.length; i++) {

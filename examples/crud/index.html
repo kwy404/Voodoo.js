@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CRUD de usuarios com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle essencial: esta demo usa reatividade, directives, formularios, mascaras, validacao, dialogo e notificacoes. -->
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ------------------------------------------------------------------
+     CSS proprio da demo. Tudo sai dos tokens --v-*, entao o tema claro e
+     o tema escuro funcionam sem nenhuma regra duplicada.
+     Nenhum seletor depende de atributo v-*, porque o walker retira esses
+     atributos do HTML depois de montar a pagina.
+     ------------------------------------------------------------------ */
+
+  body {
+    background:
+      radial-gradient(1000px 480px at 12% -10%, color-mix(in srgb, var(--v-primary) 18%, transparent), transparent 62%),
+      radial-gradient(820px 420px at 92% 2%, color-mix(in srgb, var(--v-accent) 14%, transparent), transparent 60%),
+      var(--v-color-bg);
+    min-height: 100vh;
+  }
+
+  .crud-shell {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: var(--v-space-8) var(--v-space-4) var(--v-space-16);
+  }
+
+  /* ---------- cabecalho ---------- */
+  .crud-topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-4);
+    flex-wrap: wrap;
+    margin-bottom: var(--v-space-7);
+  }
+
+  .crud-marca { display: flex; align-items: center; gap: var(--v-space-3); }
+
+  .crud-selo {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--v-radius-lg);
+    color: var(--v-primary-contrast);
+    background: linear-gradient(140deg, var(--v-primary), var(--v-accent));
+    box-shadow: var(--v-shadow-md);
+  }
+
+  .crud-titulo {
+    margin: 0;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-2xl);
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-tight);
+  }
+
+  .crud-subtitulo {
+    margin: 2px 0 0;
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  .crud-acoes-topo { display: flex; align-items: center; gap: var(--v-space-2); margin-left: auto; }
+
+  /* O alternador troca o icone pelo aria-pressed, que a directive mantem
+     atualizado. aria-pressed e um atributo normal, nao some do HTML. */
+  .crud-tema .crud-icone-lua { display: none; }
+  .crud-tema[aria-pressed="true"] .crud-icone-sol { display: none; }
+  .crud-tema[aria-pressed="true"] .crud-icone-lua { display: block; }
+
+  /* ---------- metricas ---------- */
+  .crud-metricas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--v-space-4);
+    margin-bottom: var(--v-space-6);
+  }
+
+  .crud-metrica {
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    background-color: var(--v-surface);
+    box-shadow: var(--v-shadow-sm);
+    padding: var(--v-space-4) var(--v-space-5);
+  }
+
+  .crud-metrica__rotulo {
+    display: block;
+    color: var(--v-text-subtle);
+    font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--v-tracking-wide);
+  }
+
+  .crud-metrica__valor {
+    display: block;
+    margin-top: 4px;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-2xl);
+    font-weight: var(--v-weight-bold);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--v-leading-tight);
+  }
+
+  .crud-metrica--destaque { border-color: color-mix(in srgb, var(--v-primary) 45%, var(--v-border)); }
+  .crud-metrica--destaque .crud-metrica__valor { color: var(--v-primary); }
+
+  /* ---------- painel da tabela ---------- */
+  .crud-painel-lista {
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-xl);
+    background-color: var(--v-surface);
+    box-shadow: var(--v-shadow-md);
+    overflow: hidden;
+  }
+
+  .crud-barra {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-4);
+    flex-wrap: wrap;
+    padding: var(--v-space-4) var(--v-space-5);
+    border-bottom: var(--v-border-width) solid var(--v-border);
+    background-color: var(--v-surface-2);
+  }
+
+  .crud-busca { position: relative; flex: 1 1 240px; min-width: 200px; }
+  .crud-busca .v-input { padding-left: 40px; }
+  .crud-busca__icone {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--v-text-subtle);
+    pointer-events: none;
+  }
+
+  .crud-instavel {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--v-space-2);
+    color: var(--v-text-muted);
+    font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-medium);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .crud-lista-wrap { border: 0; border-radius: 0; box-shadow: none; }
+  .crud-lista-wrap .v-table thead th { background-color: var(--v-surface); }
+
+  /* ---------- celulas ---------- */
+  .crud-pessoa { display: flex; align-items: center; gap: var(--v-space-3); }
+
+  .crud-avatar {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: var(--v-radius-full);
+    font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-bold);
+    letter-spacing: 0.02em;
+    background-color: var(--v-primary-soft);
+    color: var(--v-primary-soft-text);
+  }
+
+  .crud-avatar--admin { background-color: var(--v-danger-soft); color: var(--v-danger); }
+  .crud-avatar--editor { background-color: var(--v-accent-soft); color: var(--v-accent-soft-text); }
+  .crud-avatar--leitor { background-color: var(--v-info-soft); color: var(--v-info); }
+
+  .crud-pessoa__nome { font-weight: var(--v-weight-semibold); color: var(--v-text); }
+  .crud-pessoa__email { color: var(--v-text-subtle); font-size: var(--v-text-xs); }
+
+  .crud-mono { font-family: var(--v-font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .crud-linha-acoes { display: flex; gap: var(--v-space-2); justify-content: flex-end; }
+  .crud-btn-perigo { color: var(--v-danger); }
+  .crud-btn-perigo:hover:not(:disabled) { background-color: var(--v-danger-soft); }
+
+  /* ---------- estados ---------- */
+  .crud-estado { padding: var(--v-space-12) var(--v-space-5); text-align: center; }
+
+  .crud-estado__icone {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto var(--v-space-4);
+    display: grid;
+    place-items: center;
+    border-radius: var(--v-radius-full);
+    background-color: var(--v-surface-3);
+    color: var(--v-text-subtle);
+  }
+
+  .crud-estado__titulo {
+    margin: 0 0 6px;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-lg);
+    font-weight: var(--v-weight-bold);
+    color: var(--v-text);
+  }
+
+  .crud-estado__texto {
+    margin: 0 auto var(--v-space-5);
+    max-width: 34rem;
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  .crud-carregando { padding: var(--v-space-3) var(--v-space-5) var(--v-space-5); }
+
+  .crud-esqueleto {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-3) 0;
+    border-bottom: var(--v-border-width) solid var(--v-border);
+  }
+  .crud-esqueleto:last-child { border-bottom: 0; }
+  .crud-esqueleto__texto { flex: 1; display: grid; gap: 8px; }
+
+  /* ---------- painel lateral do formulario ---------- */
+  .crud-formulario { width: min(30rem, 100%); }
+  .crud-formulario .v-drawer__body { color: var(--v-text); }
+  .crud-formulario .v-drawer__footer .v-btn { flex: 1 1 0; }
+
+  .crud-campos { display: grid; gap: var(--v-space-4); }
+  .crud-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: var(--v-space-4); }
+
+  .crud-dica {
+    margin: 0;
+    padding: var(--v-space-3) var(--v-space-4);
+    border-radius: var(--v-radius-md);
+    background-color: var(--v-primary-soft);
+    color: var(--v-primary-soft-text);
+    font-size: var(--v-text-xs);
+    line-height: var(--v-leading-normal);
+  }
+
+  .crud-rodape {
+    margin-top: var(--v-space-8);
+    text-align: center;
+    color: var(--v-text-subtle);
+    font-size: var(--v-text-xs);
+  }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 760px) {
+    .crud-coluna-opcional { display: none; }
+    .v-table { min-width: 0; }
+    .crud-acoes-topo { width: 100%; margin-left: 0; }
+    .crud-acoes-topo .crud-novo { flex: 1; }
+    .crud-dupla { grid-template-columns: 1fr; }
+    .crud-shell { padding-top: var(--v-space-5); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .crud-selo, .crud-metrica, .crud-avatar { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="crud-shell" v-component="crud-usuarios" style="visibility: hidden;">
+
+  <header class="crud-topo">
+    <div class="crud-marca">
+      <span class="crud-selo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M19 8v6M22 11h-6"></path>
+        </svg>
+      </span>
+      <div>
+        <h1 class="crud-titulo">Cadastro de usuarios</h1>
+        <p class="crud-subtitulo">CRUD completo com validacao, mascaras e API simulada.</p>
+      </div>
+    </div>
+
+    <div class="crud-acoes-topo">
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon crud-tema" v-theme-toggle aria-pressed="false">
+        <svg class="crud-icone-sol" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <svg class="crud-icone-lua" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+        </svg>
+      </button>
+
+      <button type="button" class="v-btn v-btn--primary crud-novo" @click="abrirNovo()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        Novo usuario
+      </button>
+    </div>
+  </header>
+
+  <section class="crud-metricas" aria-label="Resumo do cadastro">
+    <div class="crud-metrica">
+      <span class="crud-metrica__rotulo">Cadastrados</span>
+      <span class="crud-metrica__valor">{ usuarios.length }</span>
+    </div>
+    <div class="crud-metrica">
+      <span class="crud-metrica__rotulo">Administradores</span>
+      <span class="crud-metrica__valor">{ totalAdministradores }</span>
+    </div>
+    <div class="crud-metrica crud-metrica--destaque">
+      <span class="crud-metrica__rotulo">Na tela agora</span>
+      <span class="crud-metrica__valor">{ filtrados.length }</span>
+    </div>
+  </section>
+
+  <section class="crud-painel-lista">
+    <div class="crud-barra">
+      <div class="crud-busca">
+        <span class="crud-busca__icone" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-3.2-3.2"></path>
+          </svg>
+        </span>
+        <input class="v-input" type="search" v-model="busca" v-debounce="350"
+               placeholder="Buscar por nome, e-mail, CPF ou telefone"
+               aria-label="Buscar usuarios">
+      </div>
+
+      <label class="crud-instavel">
+        <input class="v-switch" type="checkbox" v-model="instavel">
+        Simular instabilidade da API
+      </label>
+    </div>
+
+    <div class="crud-carregando" v-show="carregando" aria-live="polite">
+      <div class="crud-esqueleto" v-for="n in 5" :key="n">
+        <span class="v-skeleton v-skeleton--circle" style="width: 36px; height: 36px;"></span>
+        <span class="crud-esqueleto__texto">
+          <span class="v-skeleton v-skeleton--text v-skeleton--w-50"></span>
+          <span class="v-skeleton v-skeleton--text v-skeleton--w-75"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="crud-estado" v-show="semResultado">
+      <span class="crud-estado__icone" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.2-3.2"></path>
+        </svg>
+      </span>
+      <h2 class="crud-estado__titulo">{ termo ? 'Nada encontrado para ' + termo : 'Nenhum usuario cadastrado' }</h2>
+      <p class="crud-estado__texto">{ termo ? 'Confira a escrita ou limpe a busca para ver a lista inteira.' : 'A lista esta vazia. Comece cadastrando a primeira pessoa do time.' }</p>
+      <button type="button" class="v-btn v-btn--secondary" v-show="termo" @click="limparBusca()">Limpar busca</button>
+      <button type="button" class="v-btn v-btn--primary" v-show="!termo" @click="abrirNovo()">Cadastrar o primeiro usuario</button>
+    </div>
+
+    <!-- A tabela usa v-show, e nao v-if, para o v-for nunca ser desmontado.
+         Assim a lista continua viva a cada busca, cadastro, edicao e exclusao. -->
+    <div class="v-table-wrap crud-lista-wrap" v-show="comResultado">
+      <table class="v-table v-table--hover">
+        <thead>
+          <tr>
+            <th scope="col">Usuario</th>
+            <th scope="col" class="crud-coluna-opcional">CPF</th>
+            <th scope="col" class="crud-coluna-opcional">Telefone</th>
+            <th scope="col">Perfil</th>
+            <th scope="col"><span class="v-sr-only">Acoes</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="u in filtrados" :key="u.id">
+            <td>
+              <span class="crud-pessoa">
+                <span class="crud-avatar" :class="'crud-avatar--' + u.perfil" aria-hidden="true">{ iniciais(u.nome) }</span>
+                <span>
+                  <span class="crud-pessoa__nome">{ u.nome }</span><br>
+                  <span class="crud-pessoa__email">{ u.email }</span>
+                </span>
+              </span>
+            </td>
+            <td class="crud-mono crud-coluna-opcional">{ u.cpf }</td>
+            <td class="crud-mono crud-coluna-opcional">{ u.telefone }</td>
+            <td>
+              <span class="v-badge" :class="classePerfil(u.perfil)">{ rotuloPerfil(u.perfil) }</span>
+            </td>
+            <td>
+              <span class="crud-linha-acoes">
+                <button type="button" class="v-btn v-btn--ghost v-btn--sm"
+                        @click="abrirEdicao(u)" :aria-label="'Editar ' + u.nome">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                  </svg>
+                  Editar
+                </button>
+                <button type="button" class="v-btn v-btn--ghost v-btn--sm crud-btn-perigo"
+                        @click="excluir(u)" :disabled="excluindoId === u.id" :aria-label="'Excluir ' + u.nome">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path>
+                  </svg>
+                  Excluir
+                </button>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="crud-rodape">
+    Demo da Voodoo.js. A API e simulada em memoria, entao nada sai desta aba e tudo volta ao normal ao recarregar.
+  </p>
+
+  <!-- Painel lateral com o formulario. Ele fica sempre no HTML e o estado
+       aberto ou fechado vem do aria-hidden, que e o que o design system le. -->
+  <div class="v-drawer-root" aria-hidden="true" :aria-hidden="painelAberto ? 'false' : 'true'">
+    <div class="v-backdrop" @click="fechar()"></div>
+
+    <form class="v-drawer crud-formulario" v-ref="formulario" v-validate
+          @submit.prevent="salvar()" @keydown.esc="fechar()"
+          aria-labelledby="crud-titulo-painel">
+      <header class="v-drawer__header">
+        <h2 class="v-drawer__title" id="crud-titulo-painel">{ tituloDoPainel }</h2>
+        <button type="button" class="v-btn v-btn--ghost v-btn--icon" @click="fechar()" aria-label="Fechar painel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="v-drawer__body">
+        <div class="crud-campos">
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-nome">Nome completo</label>
+            <input class="v-input" id="crud-nome" name="nome" type="text" autocomplete="off"
+                   v-model="form.nome" v-required v-minlength="3"
+                   placeholder="Maria Aparecida Souza">
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-email">E-mail</label>
+            <input class="v-input" id="crud-email" name="email" type="email" autocomplete="off"
+                   v-model="form.email" v-required v-email
+                   placeholder="maria@empresa.com.br">
+          </div>
+
+          <div class="crud-dupla">
+            <div class="v-field">
+              <label class="v-label v-label--required" for="crud-cpf">CPF</label>
+              <input class="v-input" id="crud-cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off"
+                     v-model="form.cpf" v-mask="cpf" v-required v-cpf
+                     placeholder="000.000.000-00">
+            </div>
+
+            <div class="v-field">
+              <label class="v-label v-label--required" for="crud-telefone">Telefone</label>
+              <input class="v-input" id="crud-telefone" name="telefone" type="text" inputmode="numeric" autocomplete="off"
+                     v-model="form.telefone" v-mask="phone" v-required v-phone
+                     placeholder="(11) 90000-0000">
+            </div>
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-perfil">Perfil de acesso</label>
+            <select class="v-select" id="crud-perfil" name="perfil" v-model="form.perfil" v-required>
+              <option value="">Selecione um perfil</option>
+              <option v-for="p in perfis" :key="p.valor" :value="p.valor">{ p.rotulo }</option>
+            </select>
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-senha">Senha</label>
+            <input class="v-input" id="crud-senha" name="senha" type="password" autocomplete="new-password"
+                   v-model="form.senha" v-required v-minlength="8"
+                   placeholder="Ao menos 8 caracteres">
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-confirmacao">Confirmar senha</label>
+            <input class="v-input" id="crud-confirmacao" name="confirmacao" type="password" autocomplete="new-password"
+                   v-model="form.confirmacao" v-required v-match="#crud-senha"
+                   placeholder="Repita a senha">
+          </div>
+
+          <p class="crud-dica">
+            A senha e pedida nas duas telas so para exercitar a regra de confirmacao. Ela nao e guardada em lugar nenhum.
+          </p>
+        </div>
+      </div>
+
+      <footer class="v-drawer__footer">
+        <button type="button" class="v-btn v-btn--secondary" @click="fechar()" :disabled="salvando">Cancelar</button>
+        <button type="submit" class="v-btn v-btn--primary"
+                :class="salvando ? 'is-loading' : ''" :disabled="salvando">{ rotuloDoBotao }</button>
+      </footer>
+    </form>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ------------------------------------------------------------------
+     Ajuste de mensagem. A regra `match` fala em "campos" no plural, e
+     aqui ela so cuida da confirmacao de senha.
+     ------------------------------------------------------------------ */
+  Object.assign(V.messages, {
+    match: 'As senhas nao conferem.'
+  });
+
+  /* Perfis aceitos. A mesma lista alimenta o select e as etiquetas da tabela. */
+  var PERFIS = [
+    { valor: 'admin', rotulo: 'Administrador', classe: 'v-badge--danger' },
+    { valor: 'editor', rotulo: 'Editor', classe: 'v-badge--accent' },
+    { valor: 'leitor', rotulo: 'Leitor', classe: 'v-badge--info' }
+  ];
+
+  /* ------------------------------------------------------------------
+     API simulada: um array em memoria com latencia e falha aleatoria.
+     Nao existe servidor aqui, entao este array faz as vezes de banco.
+     ------------------------------------------------------------------ */
+  var LATENCIA = 420;
+  var CHANCE_DE_FALHA = 0.25;
+
+  var BANCO = [
+    { id: 'usr-1', nome: 'Maria Aparecida Souza', email: 'maria.souza@empresa.com.br', cpf: '529.982.247-25', telefone: '(11) 98812-4477', perfil: 'admin' },
+    { id: 'usr-2', nome: 'Joao Pedro Almeida', email: 'joao.almeida@empresa.com.br', cpf: '390.533.447-05', telefone: '(21) 3344-5566', perfil: 'editor' },
+    { id: 'usr-3', nome: 'Carla Regina Nunes', email: 'carla.nunes@empresa.com.br', cpf: '153.509.460-56', telefone: '(31) 99654-1020', perfil: 'leitor' },
+    { id: 'usr-4', nome: 'Rafael Teixeira Lima', email: 'rafael.lima@empresa.com.br', cpf: '875.948.210-92', telefone: '(41) 98877-3311', perfil: 'editor' },
+    { id: 'usr-5', nome: 'Beatriz Moraes Campos', email: 'beatriz.campos@empresa.com.br', cpf: '064.784.420-63', telefone: '(51) 3222-8080', perfil: 'leitor' },
+    { id: 'usr-6', nome: 'Diego Fontes Barreto', email: 'diego.barreto@empresa.com.br', cpf: '287.654.321-42', telefone: '(71) 99123-4567', perfil: 'admin' }
+  ];
+
+  function copiar(registro) {
+    return {
+      id: registro.id,
+      nome: registro.nome,
+      email: registro.email,
+      cpf: registro.cpf,
+      telefone: registro.telefone,
+      perfil: registro.perfil
+    };
+  }
+
+  function listar() {
+    return BANCO.map(copiar);
+  }
+
+  function indiceDe(id) {
+    for (var i = 0; i < BANCO.length; i++) {
+      if (BANCO[i].id === id) return i;
+    }
+    return -1;
+  }
+
+  function emailEmUso(email, ignorarId) {
+    var alvo = String(email).toLowerCase();
+    for (var i = 0; i < BANCO.length; i++) {
+      if (BANCO[i].id !== ignorarId && BANCO[i].email.toLowerCase() === alvo) return true;
+    }
+    return false;
+  }
+
+  /* Grava um registro novo ou atualiza o existente. Lanca erro de negocio,
+     que a tela mostra como notificacao vermelha. */
+  function gravar(id, dados) {
+    if (emailEmUso(dados.email, id)) {
+      throw new Error('Este e-mail ja esta cadastrado para outra pessoa.');
+    }
+    if (id) {
+      var posicao = indiceDe(id);
+      if (posicao === -1) throw new Error('Este cadastro nao existe mais.');
+      BANCO[posicao] = Object.assign(copiar(BANCO[posicao]), dados);
+      return copiar(BANCO[posicao]);
+    }
+    var novo = Object.assign({ id: V.uid('usr-') }, dados);
+    BANCO.unshift(novo);
+    return copiar(novo);
+  }
+
+  function apagar(id) {
+    var posicao = indiceDe(id);
+    if (posicao === -1) throw new Error('Este cadastro ja tinha sido removido.');
+    BANCO.splice(posicao, 1);
+    return true;
+  }
+
+  function mensagemDoErro(erro) {
+    return erro && erro.message ? erro.message : 'Algo deu errado. Tente de novo.';
+  }
+
+  function digitos(texto) {
+    return String(texto).replace(/\D/g, '');
+  }
+
+  /* ------------------------------------------------------------------
+     Componente. Toda a logica mora aqui, onde `this` funciona.
+     ------------------------------------------------------------------ */
+  V.component('crud-usuarios', {
+
+    state: function () {
+      return {
+        perfis: PERFIS,
+        usuarios: [],
+        carregando: true,
+        salvando: false,
+        excluindoId: '',
+        busca: '',
+        instavel: true,
+        painelAberto: false,
+        editandoId: '',
+        form: {
+          nome: '',
+          email: '',
+          cpf: '',
+          telefone: '',
+          perfil: '',
+          senha: '',
+          confirmacao: ''
+        }
+      };
+    },
+
+    computed: {
+      termo: function () {
+        return this.busca.trim();
+      },
+
+      /* A busca chega com atraso por causa do v-debounce no campo, entao
+         este computado so recalcula quando o usuario para de digitar. */
+      filtrados: function () {
+        var procurado = this.termo.toLowerCase();
+        if (!procurado) return this.usuarios;
+
+        var numeros = digitos(procurado);
+        return this.usuarios.filter(function (u) {
+          if (u.nome.toLowerCase().indexOf(procurado) !== -1) return true;
+          if (u.email.toLowerCase().indexOf(procurado) !== -1) return true;
+          if (u.perfil.indexOf(procurado) !== -1) return true;
+          if (numeros && digitos(u.cpf).indexOf(numeros) !== -1) return true;
+          if (numeros && digitos(u.telefone).indexOf(numeros) !== -1) return true;
+          return false;
+        });
+      },
+
+      totalAdministradores: function () {
+        return this.usuarios.filter(function (u) { return u.perfil === 'admin'; }).length;
+      },
+
+      semResultado: function () {
+        return !this.carregando && this.filtrados.length === 0;
+      },
+
+      comResultado: function () {
+        return !this.carregando && this.filtrados.length > 0;
+      },
+
+      tituloDoPainel: function () {
+        return this.editandoId ? 'Editar cadastro' : 'Novo usuario';
+      },
+
+      rotuloDoBotao: function () {
+        if (this.salvando) return 'Salvando...';
+        return this.editandoId ? 'Salvar alteracoes' : 'Cadastrar usuario';
+      }
+    },
+
+    mounted: function () {
+      // A pagina so aparece depois que as directives rodaram, para nao
+      // deixar as chaves da interpolacao piscarem na tela.
+      this.$el.style.visibility = 'visible';
+      this.carregar();
+    },
+
+    methods: {
+
+      /* ----------------------------------------------------------------
+         Camada de acesso a API simulada
+         ---------------------------------------------------------------- */
+
+      /* Espera a latencia, sorteia a falha e so entao executa a operacao. */
+      chamada: function (executar) {
+        var self = this;
+        return V.sleep(LATENCIA).then(function () {
+          if (self.instavel && Math.random() < CHANCE_DE_FALHA) {
+            throw new Error('A API simulada nao respondeu a tempo. Tente de novo.');
+          }
+          return executar();
+        });
+      },
+
+      /* A primeira carga nunca falha, para a demo sempre abrir com dados. */
+      carregar: function () {
+        var self = this;
+        this.carregando = true;
+        V.sleep(LATENCIA + 260).then(function () {
+          self.usuarios = listar();
+          self.carregando = false;
+        });
+      },
+
+      /* ----------------------------------------------------------------
+         Painel lateral
+         ---------------------------------------------------------------- */
+
+      abrirNovo: function () {
+        this.editandoId = '';
+        this.preencherFormulario({ nome: '', email: '', cpf: '', telefone: '', perfil: '' });
+        this.abrirPainel();
+      },
+
+      abrirEdicao: function (usuario) {
+        this.editandoId = usuario.id;
+        this.preencherFormulario(usuario);
+        this.abrirPainel();
+      },
+
+      preencherFormulario: function (origem) {
+        this.form.nome = origem.nome || '';
+        this.form.email = origem.email || '';
+        this.form.cpf = origem.cpf || '';
+        this.form.telefone = origem.telefone || '';
+        this.form.perfil = origem.perfil || '';
+        this.form.senha = '';
+        this.form.confirmacao = '';
+      },
+
+      abrirPainel: function () {
+        var formulario = this.$refs.formulario;
+        if (formulario) V.clearErrors(formulario);
+        this.painelAberto = true;
+
+        // O foco so pode ir para o campo depois que o painel ficar visivel.
+        V.nextTick(function () {
+          var campo = formulario ? formulario.querySelector('#crud-nome') : null;
+          if (campo) campo.focus();
+        });
+      },
+
+      fechar: function () {
+        if (this.salvando) return;
+        this.painelAberto = false;
+        this.editandoId = '';
+        this.preencherFormulario({});
+        var formulario = this.$refs.formulario;
+        if (formulario) V.clearErrors(formulario);
+      },
+
+      /* ----------------------------------------------------------------
+         Gravar
+         ---------------------------------------------------------------- */
+
+      salvar: function () {
+        if (this.salvando) return;
+
+        var self = this;
+        var criando = !this.editandoId;
+
+        // A biblioteca ja desenhou as regras nos atributos do formulario.
+        // Aqui so perguntamos o resultado e seguimos se estiver valido.
+        V.validateForm(this.$refs.formulario)
+          .then(function (resultado) {
+            if (!resultado.valid) {
+              V.toast.error('Confira os campos destacados antes de salvar.');
+              return null;
+            }
+
+            var id = self.editandoId;
+            var dados = self.dadosDoFormulario();
+            self.salvando = true;
+
+            return self.chamada(function () { return gravar(id, dados); });
+          })
+          .then(function (registro) {
+            self.salvando = false;
+            if (!registro) return;
+
+            self.usuarios = listar();
+            self.fechar();
+
+            V.toast.success(criando ? 'Usuario cadastrado com sucesso.' : 'Cadastro atualizado com sucesso.', {
+              description: registro.nome
+            });
+          })
+          .catch(function (erro) {
+            self.salvando = false;
+            V.toast.error('Nao foi possivel salvar.', { description: mensagemDoErro(erro) });
+          });
+      },
+
+      dadosDoFormulario: function () {
+        // O CPF e o telefone saem do estado ja com a mascara aplicada,
+        // porque o v-mask formata antes do v-model gravar.
+        return {
+          nome: this.form.nome.trim(),
+          email: this.form.email.trim().toLowerCase(),
+          cpf: this.form.cpf,
+          telefone: this.form.telefone,
+          perfil: this.form.perfil
+        };
+      },
+
+      /* ----------------------------------------------------------------
+         Excluir
+         ---------------------------------------------------------------- */
+
+      excluir: function (usuario) {
+        var self = this;
+        var nome = usuario.nome;
+        var id = usuario.id;
+
+        V.confirm('O cadastro de ' + nome + ' sera removido da lista. Esta acao nao pode ser desfeita.', {
+          title: 'Excluir usuario',
+          danger: true,
+          confirmLabel: 'Excluir',
+          cancelLabel: 'Manter'
+        })
+          .then(function (confirmado) {
+            if (!confirmado) return null;
+            self.excluindoId = id;
+            return self.chamada(function () { return apagar(id); });
+          })
+          .then(function (removido) {
+            self.excluindoId = '';
+            if (!removido) return;
+            self.usuarios = listar();
+            V.toast.success('Usuario removido.', { description: nome });
+          })
+          .catch(function (erro) {
+            self.excluindoId = '';
+            V.toast.error('Nao foi possivel excluir.', { description: mensagemDoErro(erro) });
+          });
+      },
+
+      /* ----------------------------------------------------------------
+         Apoio para a tabela
+         ---------------------------------------------------------------- */
+
+      limparBusca: function () {
+        this.busca = '';
+      },
+
+      rotuloPerfil: function (valor) {
+        for (var i = 0; i < PERFIS.length; i++) {
+          if (PERFIS[i].valor === valor) return PERFIS[i].rotulo;
+        }
+        return valor;
+      },
+
+      classePerfil: function (valor) {
+        for (var i = 0; i < PERFIS.length; i++) {
+          if (PERFIS[i].valor === valor) return PERFIS[i].classe;
+        }
+        return '';
+      },
+
+      iniciais: function (nome) {
+        var partes = String(nome).trim().split(/\s+/);
+        var primeira = partes[0] ? partes[0].charAt(0) : '';
+        var ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+        return (primeira + ultima).toUpperCase();
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+});
+</script>
+
+</body>
+</html>

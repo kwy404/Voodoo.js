@@ -17,16 +17,29 @@
  */
 
 import { queuePostFlush } from '../reactivity';
-import { config, defineDirective, PRIORITY } from '../runtime/registry';
+import { defineDirective, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
-import { evaluateIn } from '../runtime/walker';
 import { ensureTokens, injectStyle } from '../dom/style';
 import { fadeIn, fadeOut, slideDown, slideUp } from '../dom/transition';
 import { theme, url } from '../storage';
 import { device, escapeHtml, parseDuration, throttle, uid } from '../utils';
+import {
+  announce,
+  closestDirective,
+  ownedByDirective,
+  queryDirective,
+  attrOf,
+  callExpression,
+  defineOption,
+  dispatch,
+  hasAttrOf,
+  readOption,
+  selectorFor,
+  storeOption,
+} from './shared';
 
-// Efeito colateral: registra o sistema de arrastar e soltar, que reaproveita os
-// auxiliares deste modulo. Ver `directives/dnd.ts`.
+// Efeito colateral: registra o sistema de arrastar e soltar, que compartilha os
+// auxiliares de `directives/shared`. Ver `directives/dnd.ts`.
 import './dnd';
 
 // ---------------------------------------------------------------------------
@@ -147,59 +160,6 @@ function ensureUi(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Leitura de atributos e opcoes
-// ---------------------------------------------------------------------------
-
-const optionValues = new WeakMap<Element, Record<string, string>>();
-
-/**
- * Le um atributo da Voodoo aceitando `v-nome` e `data-v-nome`.
- * @internal usado tambem por `directives/dnd`.
- */
-export function attrOf(el: Element, name: string): string | null {
-  return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
-}
-
-/** Verifica a presenca de um atributo da Voodoo. */
-function hasAttrOf(el: Element, name: string): boolean {
-  return el.hasAttribute(`${config.prefix}${name}`) || el.hasAttribute(`data-v-${name}`);
-}
-
-/** Seletor CSS que casa com as duas grafias aceitas de um atributo. */
-function selectorFor(name: string): string {
-  return `[${config.prefix}${name}],[data-v-${name}]`;
-}
-
-/**
- * Le o valor de uma opcao, primeiro do registro e depois do atributo cru.
- * @internal usado tambem por `directives/dnd`.
- */
-export function readOption(el: Element, name: string): string | null {
-  const bag = optionValues.get(el);
-  if (bag && name in bag) return bag[name];
-  return attrOf(el, name);
-}
-
-/**
- * Registra um atributo que existe apenas para configurar outra directive.
- * O valor fica guardado no registro de opcoes, o que evita reler o DOM e deixa
- * o atributo declarado no runtime em vez de solto no HTML.
- *
- * @internal usado tambem por `directives/dnd`.
- */
-export function defineOption(name: string): void {
-  defineDirective(
-    name,
-    ({ el, expression }) => {
-      const bag = optionValues.get(el) ?? {};
-      bag[name] = expression;
-      optionValues.set(el, bag);
-    },
-    { priority: PRIORITY.BIND }
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Auxiliares de DOM
 // ---------------------------------------------------------------------------
 
@@ -305,29 +265,6 @@ function unlockScroll(): void {
   document.body.style.paddingRight = savedPaddingRight;
 }
 
-let liveRegion: HTMLElement | null = null;
-
-/**
- * Anuncia uma mensagem curta para leitores de tela.
- * @internal usado tambem por `directives/dnd`.
- */
-export function announce(message: string): void {
-  if (typeof document === 'undefined') return;
-  ensureUi();
-  if (!liveRegion || !liveRegion.isConnected) {
-    liveRegion = document.createElement('div');
-    liveRegion.className = 'v-visually-hidden';
-    liveRegion.setAttribute('role', 'status');
-    liveRegion.setAttribute('aria-live', 'polite');
-    document.body.appendChild(liveRegion);
-  }
-  const region = liveRegion;
-  region.textContent = '';
-  setTimeout(() => {
-    region.textContent = message;
-  }, 40);
-}
-
 /** Verifica se um elemento esta escondido no momento. */
 function isHidden(el: HTMLElement): boolean {
   if (el.hasAttribute('hidden')) return true;
@@ -356,35 +293,7 @@ function hideElement(el: HTMLElement, animated = true): void {
 }
 
 /**
- * Avalia a expressao de uma directive de UI e devolve o resultado. Quando a
- * expressao e apenas o nome de uma funcao, a funcao e chamada com o detalhe.
- *
- * @internal usado tambem por `directives/dnd`.
- */
-export function callExpression(
-  expression: string,
-  scope: Scope,
-  el: HTMLElement,
-  event?: Event,
-  detail?: unknown
-): unknown {
-  if (!expression.trim()) return undefined;
-  const local = scope.child({ $el: el, $event: event ?? null, $detail: detail });
-  const value = evaluateIn<unknown>(expression, local, 'directive de UI');
-  if (typeof value === 'function') {
-    return (value as (payload?: unknown) => unknown).call(scope.data, detail ?? event);
-  }
-  return value;
-}
-
 /**
- * Dispara um evento customizado que sobe pela arvore.
- * @internal usado tambem por `directives/dnd`.
- */
-export function dispatch(el: HTMLElement, type: string, detail: unknown): void {
-  el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
-}
-
 // ---------------------------------------------------------------------------
 // Posicionamento flutuante
 // ---------------------------------------------------------------------------
@@ -1101,8 +1010,8 @@ defineOption('tooltip-delay');
 
 defineDirective('tabs', ({ el, expression, cleanup }) => {
   ensureUi();
-  const tabs = ownedBy(el, selectorFor('tab'), selectorFor('tabs'));
-  const panels = ownedBy(el, selectorFor('tab-panel'), selectorFor('tabs'));
+  const tabs = ownedByDirective(el, 'tab', 'tabs');
+  const panels = ownedByDirective(el, 'tab-panel', 'tabs');
   if (!tabs.length) return;
 
   const idOf = (tab: HTMLElement, index: number): string => attrOf(tab, 'tab') || String(index);
@@ -1148,14 +1057,14 @@ defineDirective('tabs', ({ el, expression, cleanup }) => {
   };
 
   const onClick = (event: Event): void => {
-    const tab = (event.target as Element | null)?.closest(selectorFor('tab')) as HTMLElement | null;
+    const tab = closestDirective(event.target as Element | null, 'tab');
     if (!tab || !tabs.includes(tab)) return;
     event.preventDefault();
     activate(idOf(tab, tabs.indexOf(tab)));
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    const tab = (event.target as Element | null)?.closest(selectorFor('tab')) as HTMLElement | null;
+    const tab = closestDirective(event.target as Element | null, 'tab');
     if (!tab || !tabs.includes(tab)) return;
 
     const current = tabs.indexOf(tab);
@@ -1201,7 +1110,7 @@ defineOption('tabs-url');
 
 defineDirective('accordion', ({ el, cleanup }) => {
   ensureUi();
-  const items = ownedBy(el, selectorFor('accordion-item'), selectorFor('accordion'));
+  const items = ownedByDirective(el, 'accordion-item', 'accordion');
   if (!items.length) return;
 
   const single = hasAttrOf(el, 'accordion-single');
@@ -1432,7 +1341,7 @@ defineDirective('drawer-close', ({ el, expression, cleanup }) => {
   const panel = expression.trim()
     ? resolveTarget(el, expression)
     : (el.closest('.v-drawer-panel') as HTMLElement | null) ??
-      (el.closest(selectorFor('drawer-content')) as HTMLElement | null);
+      closestDirective(el, 'drawer-content');
   if (!panel) return;
 
   makeInteractive(el, cleanup);
@@ -1955,9 +1864,7 @@ defineDirective('copy', ({ el, expression, cleanup }) => {
 
 defineDirective('copy-from', ({ el, expression, cleanup }) => {
   ensureUi();
-  const bag = optionValues.get(el) ?? {};
-  bag['copy-from'] = expression;
-  optionValues.set(el, bag);
+  storeOption(el, 'copy-from', expression);
 
   // Sem `v-copy` no mesmo elemento, `v-copy-from` sozinho ja funciona.
   if (hasAttrOf(el, 'copy')) return;
@@ -2250,7 +2157,7 @@ function normalizeSearch(text: string): string {
 /** Reune os comandos declarados na pagina com `v-command-item`. */
 function collectCommands(): CommandOption[] {
   const out: CommandOption[] = [];
-  for (const item of Array.from(document.querySelectorAll<HTMLElement>(selectorFor('command-item')))) {
+  for (const item of queryDirective(document, 'command-item')) {
     const label = (attrOf(item, 'command-item') || item.textContent || '').trim();
     if (!label) continue;
     if (item.closest('[hidden]')) continue;
@@ -2432,9 +2339,7 @@ defineDirective('command', ({ el, expression, cleanup }) => {
 });
 
 defineDirective('command-item', ({ el, expression }) => {
-  const bag = optionValues.get(el) ?? {};
-  bag['command-item'] = expression;
-  optionValues.set(el, bag);
+  storeOption(el, 'command-item', expression);
   if (!el.hasAttribute('data-v-command-label') && expression.trim()) {
     el.setAttribute('data-v-command-label', expression.trim());
   }

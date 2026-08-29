@@ -17,7 +17,14 @@
 import { reactive, warn } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import { magic, type Scope } from '../runtime/scope';
-import { destroy, evaluateIn, findScope, markNodeScope, walk } from '../runtime/walker';
+import {
+  destroy,
+  evaluateIn,
+  findScope,
+  hasAttr,
+  markNodeScope,
+  walk,
+} from '../runtime/walker';
 import { ensureTokens, injectStyle } from '../dom/style';
 import { http, request, HttpError, type HttpMethod, type HttpResponse } from '../http';
 import { toast } from '../ui/toast';
@@ -150,7 +157,7 @@ const REQUEST_DIRECTIVES = [
 
 function isRequestHost(el: Element): boolean {
   return REQUEST_DIRECTIVES.some(
-    (name) => el.hasAttribute(`${config.prefix}${name}`) || el.hasAttribute(`data-v-${name}`)
+    (name) => hasAttr(el, `${config.prefix}${name}`) || hasAttr(el, `data-v-${name}`)
   );
 }
 

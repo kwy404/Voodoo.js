@@ -17,6 +17,7 @@ import {
   evaluateIn,
   markSkipChildren,
   markNodeScope,
+  removeQuietly,
   walk,
 } from '../runtime/walker';
 import { enter, leave, type TransitionOptions } from '../dom/transition';
@@ -164,7 +165,7 @@ defineDirective(
 
     // Retira os modelos do documento e limpa os atributos de controle.
     for (const branch of branches) {
-      branch.template.remove();
+      removeQuietly(branch.template);
       branch.template.removeAttribute(`${p}if`);
       branch.template.removeAttribute(`${p}else-if`);
       branch.template.removeAttribute(`${p}else`);
@@ -291,7 +292,9 @@ defineDirective(
 
     const template = el.cloneNode(true) as Element;
     template.removeAttribute(`${p}for`);
-    el.remove();
+    // Remocao silenciosa: o elemento original vira modelo, nao esta saindo de
+    // cena, entao o observador nao deve desmontar o efeito da lista.
+    removeQuietly(el);
 
     let blocks: ForBlock[] = [];
 
@@ -576,8 +579,12 @@ const SYSTEM_MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
 export function runHandler(expression: string, scope: Scope, event: Event, el: HTMLElement): void {
   const payload = (event as CustomEvent).detail;
   const isEmit = (event as any).__voodoo === true;
+  // Em evento vindo de `emit`, `$event` entrega direto a carga enviada, que e o
+  // que a pessoa espera ao escrever `@salvo="ultimo = $event"`. O evento cru
+  // continua disponivel em `$rawEvent`.
   const local = scope.child({
-    $event: event,
+    $event: isEmit ? payload : event,
+    $rawEvent: event,
     $el: el,
     $detail: payload,
   });
@@ -1091,3 +1098,13 @@ for (const name of [
 ]) {
   defineDirective(name, () => undefined, { priority: PRIORITY.TRANSITION });
 }
+
+// ---------------------------------------------------------------------------
+// v-data e v-component
+// ---------------------------------------------------------------------------
+
+// O walker trata estes dois diretamente, porque eles criam o escopo usado pelo
+// restante do elemento. O registro existe para que a ordenacao por prioridade,
+// a limpeza dos atributos e o inspetor os reconhecam como directives de verdade.
+defineDirective('data', () => undefined, { priority: PRIORITY.DATA });
+defineDirective('component', () => undefined, { priority: PRIORITY.COMPONENT });

@@ -1,0 +1,2523 @@
+/**
+ * @module ui/components
+ *
+ * Biblioteca de componentes prontos da Voodoo. Tudo se usa escrevendo HTML,
+ * sem uma linha de JavaScript, e cada tag aceita as duas escritas: `<VButton>`
+ * e `<v-button>`.
+ *
+ * ```html
+ * <VButton variant="primary" size="lg" icon="check">Salvar</VButton>
+ * <VCard title="Faturamento"><p>Conteudo</p></VCard>
+ * <VInput label="E-mail" type="email" hint="Nunca compartilhamos" v-model="email" />
+ * <VSelect label="Estado" options="estados" v-model="uf" searchable="true" />
+ * <VBadge tone="success">Ativo</VBadge>
+ * <VAvatar name="Ana Souza" src="/ana.jpg" size="md" />
+ * ```
+ *
+ * Regra de ouro do modulo: nenhuma cor fica fixa no CSS. Tudo vem das
+ * variaveis geradas por `V.palette()`, entao trocar a paleta muda a interface
+ * inteira na hora, nos dois temas.
+ *
+ * Os controles de formulario nunca usam a aparencia padrao do navegador. Cada
+ * um e desenhado do zero com `appearance: none` e guarda um elemento nativo
+ * escondido, que mantem a acessibilidade e o envio dentro de um `<form>`.
+ */
+
+import { nextTick } from '../reactivity';
+import { config, type ComponentDefinition } from '../runtime/registry';
+import { defineComponent } from '../runtime/component';
+import { evaluateIn } from '../runtime/walker';
+import { ensureTokens, injectStyle } from '../dom/style';
+import { get as getPath, titleCase, uid } from '../utils';
+import { ensurePalette } from './palette';
+
+// ---------------------------------------------------------------------------
+// Auxiliares compartilhados
+// ---------------------------------------------------------------------------
+
+/**
+ * Interpreta um atributo booleano. Aceita a forma curta (`<VButton loading>`),
+ * o texto (`loading="true"`) e a ligacao reativa (`:loading="salvando"`).
+ */
+function flag(value: unknown): boolean {
+  if (value === true) return true;
+  if (value === false || value === null || value === undefined) return false;
+  if (typeof value === 'number') return value !== 0;
+  const text = String(value).trim().toLowerCase();
+  return text === '' || text === 'true' || text === '1' || text === 'sim' || text === 'yes';
+}
+
+/** Gera computados `isX` a partir das props booleanas informadas. */
+function flags(...names: string[]): Record<string, (this: any) => boolean> {
+  const out: Record<string, (this: any) => boolean> = {};
+  for (const name of names) {
+    const key = `is${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+    out[key] = function (this: any): boolean {
+      return flag(this[name]);
+    };
+  }
+  return out;
+}
+
+/** Prop booleana: aceita atributo vazio, texto ou ligacao reativa. */
+const BOOL = { type: 'any' as const, default: false };
+/** Prop de texto com valor padrao vazio. */
+const TEXT = { type: 'string' as const, default: '' };
+
+/**
+ * Resolve um atributo que pode ser o nome de uma variavel do escopo de fora,
+ * um JSON ou uma lista separada por virgulas.
+ *
+ * ```html
+ * <VSelect options="estados" />          <!-- variavel do v-data em volta -->
+ * <VSelect options="SP, RJ, MG" />       <!-- lista literal -->
+ * <VSelect :options="listaCarregada" />  <!-- ligacao reativa -->
+ * ```
+ */
+function fromOuterScope(instance: any, raw: unknown): unknown {
+  if (raw == null || typeof raw !== 'string') return raw;
+  const text = raw.trim();
+  if (!text) return null;
+
+  if (text.startsWith('[') || text.startsWith('{')) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  }
+
+  const head = text.split(/[.[(]/)[0].trim();
+  if (!/^[A-Za-z_$][\w$]*$/.test(head)) return null;
+
+  const parent = instance.$scope?.parent;
+  if (!parent || !parent.has(head)) return null;
+  return evaluateIn(text, parent, 'atributo de lista');
+}
+
+/** Quebra uma lista escrita em um atributo, respeitando espacos. */
+function splitList(text: string): string[] {
+  return String(text)
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/** Faz o elemento hospedeiro responder como campo nativo, para o `v-model`. */
+function hostModel(instance: any, model: { get(): unknown; set(value: unknown): void }): void {
+  const el = instance.$el as HTMLElement;
+  Object.defineProperty(el, 'value', {
+    configurable: true,
+    enumerable: false,
+    get: model.get,
+    set: model.set,
+  });
+}
+
+/** Avisa o `v-model` do hospedeiro que o valor mudou. */
+function notify(el: HTMLElement): void {
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+// ---------------------------------------------------------------------------
+// Icones
+// ---------------------------------------------------------------------------
+
+const ICON_PATHS: Record<string, string> = {
+  check: '<path d="m5 12.5 4.4 4.4L19 7.6"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  minus: '<path d="M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
+  'chevron-down': '<path d="m6 9.5 6 6 6-6"/>',
+  'chevron-up': '<path d="m6 14.5 6-6 6 6"/>',
+  'chevron-left': '<path d="m14.5 6-6 6 6 6"/>',
+  'chevron-right': '<path d="m9.5 6 6 6-6 6"/>',
+  'arrow-up': '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  'arrow-down': '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  'arrow-right': '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  'arrow-left': '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  user: '<circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20a7.4 7.4 0 0 1 14.4 0"/>',
+  users: '<circle cx="9.5" cy="8.5" r="3.2"/><path d="M3.4 19.5a6.4 6.4 0 0 1 12.2 0M16 5.6a3.2 3.2 0 0 1 0 5.9M17.4 14.4a6.4 6.4 0 0 1 3.2 5.1"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.8 7 8.2 6 8.2-6"/>',
+  lock: '<rect x="4.5" y="10.5" width="15" height="9.5" rx="2.4"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
+  eye: '<path d="M2.6 12S6.4 5.8 12 5.8 21.4 12 21.4 12 17.6 18.2 12 18.2 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.8"/>',
+  'eye-off': '<path d="M4 4l16 16M9.9 6.2A9.3 9.3 0 0 1 12 6c5.6 0 9.4 6 9.4 6a17 17 0 0 1-3.3 3.9M6.3 8.2A17 17 0 0 0 2.6 12S6.4 18 12 18c1 0 1.9-.2 2.7-.5"/>',
+  calendar: '<rect x="3.5" y="5" width="17" height="15" rx="2.4"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  clock: '<circle cx="12" cy="12" r="8.6"/><path d="M12 7.4V12l3 1.8"/>',
+  star: '<path d="m12 4 2.5 5.2 5.5.8-4 3.9 1 5.6-5-2.7-5 2.7 1-5.6-4-3.9 5.5-.8z"/>',
+  info: '<circle cx="12" cy="12" r="8.6"/><path d="M12 11v5.2M12 7.6v.2"/>',
+  alert: '<circle cx="12" cy="12" r="8.6"/><path d="M12 7.5v5M12 16.4v.2"/>',
+  warning: '<path d="M12 4.4 2.8 19.6h18.4z"/><path d="M12 10v3.8M12 16.9v.2"/>',
+  trash: '<path d="M4.5 7h15M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7M6.6 7l.8 12a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5l.8-12"/>',
+  edit: '<path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14 6.5 17.5 10"/>',
+  copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.2"/><path d="M15.5 5.5A1.5 1.5 0 0 0 14 4H6a2 2 0 0 0-2 2v8a1.5 1.5 0 0 0 1.5 1.5"/>',
+  download: '<path d="M12 4v11M7.5 11 12 15.5 16.5 11M4.5 19.5h15"/>',
+  upload: '<path d="M12 20V8.5M7.5 12.5 12 8l4.5 4.5M4.5 4.5h15"/>',
+  settings: '<circle cx="12" cy="12" r="3.1"/><path d="M19.6 14.4a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06A2 2 0 1 1 4.15 16.9l.06-.06a1.7 1.7 0 0 0 .34-1.87A1.7 1.7 0 0 0 3 13.94H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.08 4.08l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V10a1.7 1.7 0 0 0 1.56 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.3 1z"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/><path d="M9.6 20.5v-6h4.8v6"/>',
+  heart: '<path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20Z"/>',
+  bell: '<path d="M18 9a6 6 0 1 0-12 0c0 5.2-2 6.5-2 6.5h16S18 14.2 18 9"/><path d="M13.7 19.5a2 2 0 0 1-3.4 0"/>',
+  filter: '<path d="M4 5.5h16l-6.2 7.3v5.3l-3.6 2v-7.3z"/>',
+  external: '<path d="M14 4.5h5.5V10M19 5l-8 8"/><path d="M18 13.5V18a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V7.5A1.5 1.5 0 0 1 6 6h4.5"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-13.7-4.8L4 8.4"/><path d="M4 4.5v4h4M4 13a8 8 0 0 0 13.7 4.8L20 15.6"/><path d="M20 19.5v-4h-4"/>',
+  folder: '<path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3.7l2 2.4h7.3A1.5 1.5 0 0 1 20 9.9v7.6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/>',
+  file: '<path d="M13.5 4H7a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 7 20h10a1.5 1.5 0 0 0 1.5-1.5V9z"/><path d="M13.5 4v5h5"/>',
+  image: '<rect x="4" y="5" width="16" height="14" rx="2.2"/><circle cx="9" cy="10" r="1.7"/><path d="m5 17 4.6-4.3 3.4 3 2.6-2.3L19 17"/>',
+  link: '<path d="M10.6 13.4a3.6 3.6 0 0 0 5.1 0l2.4-2.4a3.6 3.6 0 0 0-5.1-5.1l-1.3 1.3"/><path d="M13.4 10.6a3.6 3.6 0 0 0-5.1 0l-2.4 2.4a3.6 3.6 0 0 0 5.1 5.1l1.3-1.3"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  more: '<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>',
+  logout: '<path d="M14.5 8V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v12A1.5 1.5 0 0 0 6 19.5h7a1.5 1.5 0 0 0 1.5-1.5v-2"/><path d="M9.5 12h10.5M16.5 8.5 20 12l-3.5 3.5"/>',
+  card: '<rect x="3" y="6" width="18" height="12" rx="2.4"/><path d="M3 10h18"/>',
+  chart: '<path d="M4.5 19.5h15"/><path d="M7.5 19.5V11M12 19.5V5.5M16.5 19.5v-6"/>',
+  box: '<path d="M20 8.6 12 4 4 8.6v6.8L12 20l8-4.6z"/><path d="m4 8.6 8 4.6 8-4.6M12 13.2V20"/>',
+  inbox: '<path d="M4 13.5h4l1.4 2.4h5.2l1.4-2.4h4"/><path d="M4.6 13.5 7 5.6A1.5 1.5 0 0 1 8.5 4.5h7A1.5 1.5 0 0 1 17 5.6l2.4 7.9V18a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18z"/>',
+};
+
+/** SVG inline de um icone do conjunto interno. Devolve vazio se nao existir. */
+function iconSvg(name: unknown): string {
+  const key = String(name ?? '').trim();
+  if (!key) return '';
+  const body = ICON_PATHS[key];
+  if (!body) return '';
+  return (
+    '<svg class="v-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" ' +
+    `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${body}</svg>`
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Estilos
+// ---------------------------------------------------------------------------
+
+const CSS = `
+.v-ic{width:1em;height:1em;flex:none}
+.v-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.v-native-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;
+  border:0;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0)}
+@keyframes v-spin{to{transform:rotate(360deg)}}
+@keyframes v-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes v-shimmer{0%{background-position:-180% 0}100%{background-position:180% 0}}
+@keyframes v-indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
+
+/* ------------------------------------------------------------------ botao */
+.v-btn{appearance:none;-webkit-appearance:none;position:relative;display:inline-flex;
+  align-items:center;justify-content:center;gap:8px;vertical-align:middle;white-space:nowrap;
+  font-family:var(--v-font-sans);font-weight:600;line-height:1;text-decoration:none;
+  border:1px solid transparent;border-radius:var(--v-radius-sm);cursor:pointer;
+  transition:background-color .15s var(--v-ease),border-color .15s var(--v-ease),
+    color .15s var(--v-ease),box-shadow .15s var(--v-ease),transform .08s var(--v-ease)}
+.v-btn:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-btn:active:not([disabled]){transform:translateY(1px)}
+.v-btn[disabled]{cursor:not-allowed;opacity:.58}
+.v-btn[data-block="true"]{width:100%;display:flex}
+.v-btn[data-rounded="true"]{border-radius:var(--v-radius-full)}
+.v-btn-label{display:inline-flex;align-items:center}
+.v-btn-label:empty{display:none}
+
+.v-btn[data-size="sm"]{min-height:32px;padding:0 12px;font-size:13px;gap:6px}
+.v-btn[data-size="md"]{min-height:40px;padding:0 16px;font-size:14px}
+.v-btn[data-size="lg"]{min-height:46px;padding:0 20px;font-size:15px}
+.v-btn[data-size="xl"]{min-height:54px;padding:0 26px;font-size:16px}
+.v-btn .v-ic{font-size:1.15em}
+
+.v-btn[data-variant="primary"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
+.v-btn[data-variant="primary"]:hover:not([disabled]){background:var(--v-primary-hover);border-color:var(--v-primary-hover);color:var(--v-primary-contrast-hover)}
+.v-btn[data-variant="primary"]:active:not([disabled]){background:var(--v-primary-active);border-color:var(--v-primary-active);color:var(--v-primary-contrast-active)}
+.v-btn[data-variant="accent"]{background:var(--v-accent);border-color:var(--v-accent);color:var(--v-accent-contrast)}
+.v-btn[data-variant="accent"]:hover:not([disabled]){background:var(--v-accent-hover);border-color:var(--v-accent-hover);color:var(--v-accent-contrast-hover)}
+.v-btn[data-variant="success"]{background:var(--v-success);border-color:var(--v-success);color:var(--v-success-contrast)}
+.v-btn[data-variant="success"]:hover:not([disabled]){background:var(--v-success-hover);border-color:var(--v-success-hover);color:var(--v-success-contrast-hover)}
+.v-btn[data-variant="warning"]{background:var(--v-warning);border-color:var(--v-warning);color:var(--v-warning-contrast)}
+.v-btn[data-variant="warning"]:hover:not([disabled]){background:var(--v-warning-hover);border-color:var(--v-warning-hover);color:var(--v-warning-contrast-hover)}
+.v-btn[data-variant="danger"]{background:var(--v-danger);border-color:var(--v-danger);color:var(--v-danger-contrast)}
+.v-btn[data-variant="danger"]:hover:not([disabled]){background:var(--v-danger-hover);border-color:var(--v-danger-hover);color:var(--v-danger-contrast-hover)}
+.v-btn[data-variant="secondary"]{background:var(--v-surface-3);border-color:var(--v-border);color:var(--v-text)}
+.v-btn[data-variant="secondary"]:hover:not([disabled]){background:var(--v-surface-2);border-color:var(--v-border-strong);color:var(--v-text)}
+.v-btn[data-variant="outline"]{background:transparent;border-color:var(--v-primary-border);color:var(--v-primary-soft-text)}
+.v-btn[data-variant="outline"]:hover:not([disabled]){background:var(--v-primary-soft);border-color:var(--v-primary);color:var(--v-primary-soft-text)}
+.v-btn[data-variant="ghost"]{background:transparent;border-color:transparent;color:var(--v-text-muted)}
+.v-btn[data-variant="ghost"]:hover:not([disabled]){background:var(--v-surface-3);color:var(--v-text)}
+.v-btn[data-variant="link"]{background:transparent;border-color:transparent;color:var(--v-primary);padding:0 4px;min-height:auto}
+.v-btn[data-variant="link"]:hover:not([disabled]){color:var(--v-primary-hover);text-decoration:underline}
+
+.v-btn-spin{width:1em;height:1em;border-radius:50%;border:2px solid currentColor;
+  border-top-color:transparent;animation:v-spin .7s linear infinite;flex:none}
+
+/* ------------------------------------------------------- botao de icone */
+.v-icon-btn{appearance:none;-webkit-appearance:none;display:inline-grid;place-items:center;
+  border:1px solid transparent;border-radius:var(--v-radius-sm);cursor:pointer;
+  font-family:var(--v-font-sans);
+  transition:background-color .15s var(--v-ease),border-color .15s var(--v-ease),color .15s var(--v-ease)}
+.v-icon-btn:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-icon-btn[disabled]{cursor:not-allowed;opacity:.58}
+.v-icon-btn[data-rounded="true"]{border-radius:var(--v-radius-full)}
+.v-icon-btn[data-size="sm"]{width:30px;height:30px;font-size:15px}
+.v-icon-btn[data-size="md"]{width:38px;height:38px;font-size:17px}
+.v-icon-btn[data-size="lg"]{width:46px;height:46px;font-size:20px}
+.v-icon-btn[data-variant="primary"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
+.v-icon-btn[data-variant="primary"]:hover:not([disabled]){background:var(--v-primary-hover);border-color:var(--v-primary-hover);color:var(--v-primary-contrast-hover)}
+.v-icon-btn[data-variant="danger"]{background:var(--v-danger);border-color:var(--v-danger);color:var(--v-danger-contrast)}
+.v-icon-btn[data-variant="danger"]:hover:not([disabled]){background:var(--v-danger-hover);border-color:var(--v-danger-hover);color:var(--v-danger-contrast-hover)}
+.v-icon-btn[data-variant="secondary"]{background:var(--v-surface-3);border-color:var(--v-border);color:var(--v-text)}
+.v-icon-btn[data-variant="secondary"]:hover:not([disabled]){background:var(--v-surface-2);border-color:var(--v-border-strong);color:var(--v-text)}
+.v-icon-btn[data-variant="outline"]{background:transparent;border-color:var(--v-border-strong);color:var(--v-text)}
+.v-icon-btn[data-variant="outline"]:hover:not([disabled]){background:var(--v-surface-3);border-color:var(--v-primary);color:var(--v-text)}
+.v-icon-btn[data-variant="ghost"]{background:transparent;border-color:transparent;color:var(--v-text-muted)}
+.v-icon-btn[data-variant="ghost"]:hover:not([disabled]){background:var(--v-surface-3);color:var(--v-text)}
+
+/* ------------------------------------------------------------------ card */
+.v-card{display:flex;flex-direction:column;background:var(--v-surface);color:var(--v-text);
+  border:1px solid var(--v-border);border-radius:var(--v-radius);box-shadow:var(--v-shadow-sm);
+  font-family:var(--v-font-sans);overflow:hidden;
+  transition:box-shadow .18s var(--v-ease),border-color .18s var(--v-ease),transform .18s var(--v-ease)}
+.v-card[data-hoverable="true"]:hover{box-shadow:var(--v-shadow);border-color:var(--v-border-strong);transform:translateY(-2px)}
+.v-card-head{display:flex;gap:12px;align-items:flex-start;padding:18px 18px 0}
+.v-card-icon{flex:none;width:36px;height:36px;display:grid;place-items:center;font-size:18px;
+  border-radius:var(--v-radius-sm);background:var(--v-primary-soft);color:var(--v-primary-soft-text)}
+.v-card-heading{flex:1;min-width:0}
+.v-card-title{margin:0;font-size:15.5px;font-weight:650;line-height:1.35;color:var(--v-text)}
+.v-card-sub{margin:4px 0 0;font-size:13.5px;line-height:1.5;color:var(--v-text-muted)}
+.v-card-actions{flex:none;display:flex;gap:8px;align-items:center}
+.v-card-actions:empty{display:none}
+.v-card-body{padding:18px;font-size:14px;line-height:1.6;color:var(--v-text)}
+.v-card-head+.v-card-body{padding-top:14px}
+.v-card-body>:first-child{margin-top:0}
+.v-card-body>:last-child{margin-bottom:0}
+.v-card-body:empty{display:none}
+.v-card-foot{padding:0 18px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.v-card-foot:empty{display:none}
+.v-card[data-padded="false"] .v-card-body{padding:0}
+
+/* ------------------------------------------------------------ formulario */
+.v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
+.v-label{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;
+  line-height:1.3;color:var(--v-text)}
+.v-label[data-size="sm"]{font-size:12.5px}
+.v-label[data-size="lg"]{font-size:14px}
+.v-req{color:var(--v-danger);font-weight:700}
+.v-hint{margin:0;font-size:12.5px;line-height:1.45;color:var(--v-text-muted)}
+.v-error-text{margin:0;font-size:12.5px;line-height:1.45;font-weight:600;color:var(--v-danger)}
+
+.v-control{position:relative;display:flex;align-items:center;gap:8px;
+  background:var(--v-surface);border:1px solid var(--v-border);border-radius:var(--v-radius-sm);
+  transition:border-color .15s var(--v-ease),box-shadow .15s var(--v-ease),background-color .15s var(--v-ease)}
+.v-control:focus-within{border-color:var(--v-primary);box-shadow:0 0 0 3px var(--v-focus-ring)}
+.v-field[data-error="true"] .v-control{border-color:var(--v-danger)}
+.v-field[data-error="true"] .v-control:focus-within{box-shadow:0 0 0 3px var(--v-danger-ring)}
+.v-field[data-disabled="true"] .v-control{background:var(--v-surface-3);opacity:.72}
+.v-control-ic{flex:none;display:grid;place-items:center;font-size:16px;color:var(--v-text-soft);padding-left:11px}
+.v-control-ic+.v-input,.v-control-ic+.v-textarea{padding-left:2px}
+.v-control[data-size="sm"]{--v-control-h:34px;font-size:13px}
+.v-control[data-size="md"]{--v-control-h:40px;font-size:14px}
+.v-control[data-size="lg"]{--v-control-h:46px;font-size:15px}
+
+.v-input,.v-textarea{appearance:none;-webkit-appearance:none;flex:1;min-width:0;width:100%;
+  background:transparent;border:0;outline:none;font-family:inherit;font-size:inherit;
+  line-height:1.45;color:var(--v-text);padding:0 12px;min-height:calc(var(--v-control-h,40px) - 2px)}
+.v-textarea{padding:10px 12px;resize:vertical;min-height:96px}
+.v-textarea[data-resize="none"]{resize:none}
+.v-input::placeholder,.v-textarea::placeholder{color:var(--v-text-soft);opacity:1}
+.v-input:disabled,.v-textarea:disabled{cursor:not-allowed;color:var(--v-text-muted)}
+.v-input::-webkit-outer-spin-button,.v-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.v-input[type="number"]{-moz-appearance:textfield}
+.v-affix{flex:none;display:grid;place-items:center;padding-right:10px;color:var(--v-text-soft);font-size:16px}
+.v-clear{appearance:none;background:none;border:0;cursor:pointer;color:var(--v-text-soft);
+  display:grid;place-items:center;width:22px;height:22px;border-radius:var(--v-radius-full);
+  margin-right:8px;font-size:14px;flex:none}
+.v-clear:hover{background:var(--v-surface-3);color:var(--v-text)}
+.v-clear:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:1px}
+.v-counter{font-size:12px;color:var(--v-text-soft);text-align:right}
+
+/* ----------------------------------------------------------- combobox */
+.v-select{position:relative;font-family:var(--v-font-sans)}
+.v-select-trigger{appearance:none;-webkit-appearance:none;width:100%;display:flex;align-items:center;
+  gap:8px;text-align:left;cursor:pointer;background:var(--v-surface);color:var(--v-text);
+  border:1px solid var(--v-border);border-radius:var(--v-radius-sm);font-family:inherit;
+  min-height:var(--v-control-h,40px);padding:0 10px 0 12px;font-size:14px;
+  transition:border-color .15s var(--v-ease),box-shadow .15s var(--v-ease)}
+.v-select-trigger[data-size="sm"]{--v-control-h:34px;font-size:13px}
+.v-select-trigger[data-size="lg"]{--v-control-h:46px;font-size:15px}
+.v-select-trigger:hover:not([disabled]){border-color:var(--v-border-strong)}
+.v-select-trigger:focus-visible{outline:none;border-color:var(--v-primary);box-shadow:0 0 0 3px var(--v-focus-ring)}
+.v-select.is-open>.v-select-trigger{border-color:var(--v-primary);box-shadow:0 0 0 3px var(--v-focus-ring)}
+.v-select-trigger[disabled]{cursor:not-allowed;background:var(--v-surface-3);color:var(--v-text-muted)}
+.v-field[data-error="true"] .v-select-trigger{border-color:var(--v-danger)}
+.v-select-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v-select-value[data-placeholder="true"]{color:var(--v-text-soft)}
+.v-select-arrow{flex:none;font-size:16px;color:var(--v-text-soft);transition:transform .18s var(--v-ease)}
+.v-select.is-open .v-select-arrow{transform:rotate(180deg)}
+
+.v-select-pop{position:absolute;z-index:var(--v-z-dropdown,900);top:calc(100% + 6px);left:0;right:0;
+  background:var(--v-surface);border:1px solid var(--v-border);border-radius:var(--v-radius-sm);
+  box-shadow:var(--v-shadow);overflow:hidden;display:flex;flex-direction:column;max-height:280px}
+.v-select-search{padding:8px;border-bottom:1px solid var(--v-border);display:flex;align-items:center;gap:8px}
+.v-select-input{appearance:none;-webkit-appearance:none;flex:1;min-width:0;background:var(--v-surface-2);
+  border:1px solid var(--v-border);border-radius:var(--v-radius-sm);padding:7px 10px;
+  font-family:inherit;font-size:13.5px;color:var(--v-text);outline:none}
+.v-select-input:focus{border-color:var(--v-primary);box-shadow:0 0 0 2px var(--v-focus-ring)}
+.v-select-input::placeholder{color:var(--v-text-soft)}
+.v-select-list{list-style:none;margin:0;padding:5px;overflow-y:auto;overscroll-behavior:contain}
+.v-select-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--v-radius-sm);
+  font-size:14px;line-height:1.35;color:var(--v-text);cursor:pointer;user-select:none}
+.v-select-opt.is-active{background:var(--v-primary-soft);color:var(--v-primary-soft-text)}
+.v-select-opt.is-selected{font-weight:600}
+.v-select-opt.is-disabled{opacity:.45;cursor:not-allowed}
+.v-select-check{flex:none;width:16px;height:16px;display:grid;place-items:center;
+  color:var(--v-primary-soft-text);opacity:0}
+.v-select-opt.is-selected .v-select-check{opacity:1}
+.v-select-empty{padding:14px 10px;text-align:center;font-size:13.5px;color:var(--v-text-muted)}
+
+/* -------------------------------------------- caixa, radio e interruptor */
+.v-check{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;
+  font-family:var(--v-font-sans);font-size:14px;line-height:1.45;color:var(--v-text)}
+.v-check[data-disabled="true"]{cursor:not-allowed;opacity:.6}
+.v-check-slot{position:relative;flex:none;display:inline-flex;margin-top:1px}
+.v-check-native{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;
+  appearance:none;-webkit-appearance:none;cursor:inherit}
+.v-check-box{width:19px;height:19px;display:grid;place-items:center;background:var(--v-surface);
+  border:1.5px solid var(--v-border-strong);border-radius:5px;color:var(--v-primary-contrast);
+  transition:background-color .14s var(--v-ease),border-color .14s var(--v-ease)}
+.v-check[data-shape="round"] .v-check-box{border-radius:var(--v-radius-full)}
+.v-check-box .v-ic{font-size:13px;opacity:0;transform:scale(.6);
+  transition:opacity .14s var(--v-ease),transform .14s var(--v-ease)}
+.v-check-native:checked+.v-check-box{background:var(--v-primary);border-color:var(--v-primary)}
+.v-check-native:checked+.v-check-box .v-ic{opacity:1;transform:none}
+.v-check-native:focus-visible+.v-check-box{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-check-native:disabled+.v-check-box{background:var(--v-surface-3);border-color:var(--v-border)}
+.v-check[data-error="true"] .v-check-box{border-color:var(--v-danger)}
+.v-check-text{min-width:0}
+.v-check-desc{display:block;margin-top:2px;font-size:12.5px;color:var(--v-text-muted)}
+
+.v-radio-dot{width:9px;height:9px;border-radius:var(--v-radius-full);background:var(--v-primary-contrast);
+  opacity:0;transform:scale(.4);transition:opacity .14s var(--v-ease),transform .14s var(--v-ease)}
+.v-check-native:checked+.v-check-box .v-radio-dot{opacity:1;transform:none}
+
+.v-switch-track{width:40px;height:23px;border-radius:var(--v-radius-full);background:var(--v-border-strong);
+  display:flex;align-items:center;padding:2px;transition:background-color .18s var(--v-ease)}
+.v-switch-thumb{width:19px;height:19px;border-radius:var(--v-radius-full);background:var(--v-surface);
+  box-shadow:var(--v-shadow-sm);transition:transform .18s var(--v-ease)}
+.v-check-native:checked+.v-switch-track{background:var(--v-primary)}
+.v-check-native:checked+.v-switch-track .v-switch-thumb{transform:translateX(17px)}
+.v-check-native:focus-visible+.v-switch-track{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-check-native:disabled+.v-switch-track{opacity:.6}
+.v-check[data-size="sm"] .v-switch-track{width:34px;height:20px}
+.v-check[data-size="sm"] .v-switch-thumb{width:16px;height:16px}
+.v-check[data-size="sm"] .v-check-native:checked+.v-switch-track .v-switch-thumb{transform:translateX(14px)}
+
+/* --------------------------------------------------- selo, etiqueta, alerta */
+.v-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--v-font-sans);
+  font-weight:600;line-height:1;border-radius:var(--v-radius-full);border:1px solid transparent;
+  white-space:nowrap;vertical-align:middle}
+.v-badge[data-size="sm"]{font-size:11px;padding:3px 8px}
+.v-badge[data-size="md"]{font-size:12px;padding:4px 10px}
+.v-badge[data-size="lg"]{font-size:13px;padding:6px 12px}
+.v-badge-dot{width:6px;height:6px;border-radius:var(--v-radius-full);background:currentColor;flex:none}
+.v-badge[data-variant="soft"][data-tone="neutral"]{background:var(--v-surface-3);color:var(--v-text-muted)}
+.v-badge[data-variant="soft"][data-tone="primary"]{background:var(--v-primary-soft);color:var(--v-primary-soft-text)}
+.v-badge[data-variant="soft"][data-tone="accent"]{background:var(--v-accent-soft);color:var(--v-accent-soft-text)}
+.v-badge[data-variant="soft"][data-tone="success"]{background:var(--v-success-soft);color:var(--v-success-soft-text)}
+.v-badge[data-variant="soft"][data-tone="warning"]{background:var(--v-warning-soft);color:var(--v-warning-soft-text)}
+.v-badge[data-variant="soft"][data-tone="danger"]{background:var(--v-danger-soft);color:var(--v-danger-soft-text)}
+.v-badge[data-variant="soft"][data-tone="info"]{background:var(--v-info-soft);color:var(--v-info-soft-text)}
+.v-badge[data-variant="solid"][data-tone="neutral"]{background:var(--v-text-muted);color:var(--v-surface)}
+.v-badge[data-variant="solid"][data-tone="primary"]{background:var(--v-primary);color:var(--v-primary-contrast)}
+.v-badge[data-variant="solid"][data-tone="accent"]{background:var(--v-accent);color:var(--v-accent-contrast)}
+.v-badge[data-variant="solid"][data-tone="success"]{background:var(--v-success);color:var(--v-success-contrast)}
+.v-badge[data-variant="solid"][data-tone="warning"]{background:var(--v-warning);color:var(--v-warning-contrast)}
+.v-badge[data-variant="solid"][data-tone="danger"]{background:var(--v-danger);color:var(--v-danger-contrast)}
+.v-badge[data-variant="solid"][data-tone="info"]{background:var(--v-info);color:var(--v-info-contrast)}
+.v-badge[data-variant="outline"]{background:transparent}
+.v-badge[data-variant="outline"][data-tone="neutral"]{border-color:var(--v-border-strong);color:var(--v-text-muted)}
+.v-badge[data-variant="outline"][data-tone="primary"]{border-color:var(--v-primary-border);color:var(--v-primary-soft-text)}
+.v-badge[data-variant="outline"][data-tone="accent"]{border-color:var(--v-accent-border);color:var(--v-accent-soft-text)}
+.v-badge[data-variant="outline"][data-tone="success"]{border-color:var(--v-success-border);color:var(--v-success-soft-text)}
+.v-badge[data-variant="outline"][data-tone="warning"]{border-color:var(--v-warning-border);color:var(--v-warning-soft-text)}
+.v-badge[data-variant="outline"][data-tone="danger"]{border-color:var(--v-danger-border);color:var(--v-danger-soft-text)}
+.v-badge[data-variant="outline"][data-tone="info"]{border-color:var(--v-info-border);color:var(--v-info-soft-text)}
+
+.v-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans);font-size:12.5px;
+  font-weight:600;line-height:1;padding:5px 6px 5px 10px;border-radius:var(--v-radius-sm);
+  border:1px solid transparent;vertical-align:middle}
+.v-tag[data-closable="false"]{padding-right:10px}
+.v-tag-close{appearance:none;background:none;border:0;cursor:pointer;color:inherit;opacity:.65;
+  display:grid;place-items:center;width:18px;height:18px;border-radius:var(--v-radius-full);font-size:12px}
+.v-tag-close:hover{opacity:1;background:rgba(0,0,0,.08)}
+.v-tag-close:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+
+.v-alert{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--v-radius);
+  border:1px solid transparent;font-family:var(--v-font-sans);font-size:14px;line-height:1.55}
+.v-alert-icon{flex:none;font-size:18px;margin-top:1px}
+.v-alert-body{flex:1;min-width:0}
+.v-alert-title{margin:0 0 3px;font-size:14.5px;font-weight:650;line-height:1.4}
+.v-alert-text>:first-child{margin-top:0}
+.v-alert-text>:last-child{margin-bottom:0}
+.v-alert-close{appearance:none;background:none;border:0;cursor:pointer;color:inherit;opacity:.6;
+  flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:var(--v-radius-sm);font-size:14px}
+.v-alert-close:hover{opacity:1}
+.v-alert-close:focus-visible{outline:2px solid currentColor;outline-offset:1px}
+.v-alert[data-tone="info"]{background:var(--v-info-soft);color:var(--v-info-soft-text);border-color:var(--v-info-border)}
+.v-alert[data-tone="primary"]{background:var(--v-primary-soft);color:var(--v-primary-soft-text);border-color:var(--v-primary-border)}
+.v-alert[data-tone="success"]{background:var(--v-success-soft);color:var(--v-success-soft-text);border-color:var(--v-success-border)}
+.v-alert[data-tone="warning"]{background:var(--v-warning-soft);color:var(--v-warning-soft-text);border-color:var(--v-warning-border)}
+.v-alert[data-tone="danger"]{background:var(--v-danger-soft);color:var(--v-danger-soft-text);border-color:var(--v-danger-border)}
+.v-alert[data-tone="neutral"]{background:var(--v-surface-2);color:var(--v-text);border-color:var(--v-border)}
+
+/* -------------------------------------------------------------- avatar */
+.v-avatar{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--v-font-sans);font-weight:650;overflow:hidden;flex:none;
+  border-radius:var(--v-radius-full);background:var(--v-primary-soft);color:var(--v-primary-soft-text);
+  user-select:none;vertical-align:middle}
+.v-avatar[data-shape="square"]{border-radius:var(--v-radius-sm);overflow:visible}
+.v-avatar[data-shape="square"] .v-avatar-img{border-radius:var(--v-radius-sm)}
+.v-avatar[data-size="xs"]{width:24px;height:24px;font-size:10px}
+.v-avatar[data-size="sm"]{width:32px;height:32px;font-size:12px}
+.v-avatar[data-size="md"]{width:40px;height:40px;font-size:14px}
+.v-avatar[data-size="lg"]{width:52px;height:52px;font-size:18px}
+.v-avatar[data-size="xl"]{width:68px;height:68px;font-size:23px}
+.v-avatar-img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.v-avatar-status{position:absolute;right:0;bottom:0;width:28%;height:28%;border-radius:var(--v-radius-full);
+  border:2px solid var(--v-surface);background:var(--v-text-soft)}
+.v-avatar-status[data-status="online"]{background:var(--v-success)}
+.v-avatar-status[data-status="busy"]{background:var(--v-danger)}
+.v-avatar-status[data-status="away"]{background:var(--v-warning)}
+
+/* ------------------------------------------------- spinner e esqueleto */
+.v-spinner{display:inline-block;border-radius:50%;border-style:solid;border-color:var(--v-border);
+  border-top-color:var(--v-primary);animation:v-spin .7s linear infinite;vertical-align:middle}
+.v-spinner[data-tone="accent"]{border-top-color:var(--v-accent)}
+.v-spinner[data-tone="success"]{border-top-color:var(--v-success)}
+.v-spinner[data-tone="danger"]{border-top-color:var(--v-danger)}
+.v-spinner[data-tone="current"]{border-color:currentColor;border-top-color:transparent;opacity:.65}
+.v-spinner[data-size="sm"]{width:16px;height:16px;border-width:2px}
+.v-spinner[data-size="md"]{width:22px;height:22px;border-width:2.5px}
+.v-spinner[data-size="lg"]{width:32px;height:32px;border-width:3px}
+
+.v-skeleton{display:block;background:var(--v-surface-3);border-radius:var(--v-radius-sm);
+  background-image:linear-gradient(90deg,transparent 0%,var(--v-surface-2) 50%,transparent 100%);
+  background-size:180% 100%;animation:v-shimmer 1.5s linear infinite}
+.v-skeleton[data-circle="true"]{border-radius:var(--v-radius-full)}
+.v-skeleton-stack{display:flex;flex-direction:column;gap:8px}
+
+/* ------------------------------------------------------------- progresso */
+.v-progress{font-family:var(--v-font-sans);display:flex;flex-direction:column;gap:6px}
+.v-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--v-text-muted)}
+.v-progress-value{font-weight:650;color:var(--v-text)}
+.v-progress-track{position:relative;width:100%;background:var(--v-surface-3);border-radius:var(--v-radius-full);
+  overflow:hidden}
+.v-progress[data-size="sm"] .v-progress-track{height:5px}
+.v-progress[data-size="md"] .v-progress-track{height:9px}
+.v-progress[data-size="lg"] .v-progress-track{height:14px}
+.v-progress-bar{height:100%;border-radius:inherit;background:var(--v-primary);
+  transition:width .35s var(--v-ease)}
+.v-progress[data-tone="accent"] .v-progress-bar{background:var(--v-accent)}
+.v-progress[data-tone="success"] .v-progress-bar{background:var(--v-success)}
+.v-progress[data-tone="warning"] .v-progress-bar{background:var(--v-warning)}
+.v-progress[data-tone="danger"] .v-progress-bar{background:var(--v-danger)}
+.v-progress[data-indeterminate="true"] .v-progress-bar{width:30% !important;animation:v-indeterminate 1.3s var(--v-ease) infinite}
+
+/* ------------------------------------------------------------- divisor */
+.v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
+  font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
+.v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
+.v-divider[data-label="false"]::after{display:none}
+.v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
+.v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
+
+/* -------------------------------------------------------------- tabela */
+.v-table-wrap{width:100%;overflow-x:auto;background:var(--v-surface);border:1px solid var(--v-border);
+  border-radius:var(--v-radius);font-family:var(--v-font-sans)}
+.v-table{width:100%;border-collapse:collapse;font-size:14px;color:var(--v-text)}
+.v-table th,.v-table td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--v-border);
+  vertical-align:middle}
+.v-table thead th{background:var(--v-surface-2);font-size:12.5px;font-weight:650;letter-spacing:.02em;
+  text-transform:uppercase;color:var(--v-text-muted);white-space:nowrap;position:sticky;top:0;z-index:1}
+.v-table tbody tr:last-child td{border-bottom:0}
+.v-table[data-striped="true"] tbody tr:nth-child(even){background:var(--v-surface-2)}
+.v-table[data-hover="true"] tbody tr:hover{background:var(--v-primary-soft)}
+.v-table[data-dense="true"] th,.v-table[data-dense="true"] td{padding:7px 12px}
+.v-th{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;margin:0;
+  font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit}
+.v-th[data-sortable="true"]{cursor:pointer}
+.v-th[data-sortable="true"]:hover{color:var(--v-text)}
+.v-th:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px;border-radius:4px}
+.v-th-arrow{font-size:12px;opacity:0;transition:opacity .15s var(--v-ease)}
+.v-th[aria-sort="ascending"] .v-th-arrow,.v-th[aria-sort="descending"] .v-th-arrow{opacity:1;color:var(--v-primary)}
+.v-table-empty{text-align:center;color:var(--v-text-muted);padding:34px 14px;font-size:14px}
+
+/* ---------------------------------------------------------- paginacao */
+.v-pagination{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--v-font-sans)}
+.v-page{appearance:none;min-width:34px;height:34px;padding:0 9px;display:inline-grid;place-items:center;
+  background:transparent;border:1px solid transparent;border-radius:var(--v-radius-sm);
+  font-family:inherit;font-size:13.5px;font-weight:600;color:var(--v-text-muted);cursor:pointer;
+  transition:background-color .14s var(--v-ease),color .14s var(--v-ease),border-color .14s var(--v-ease)}
+.v-page:hover:not([disabled]):not([aria-current="page"]){background:var(--v-surface-3);color:var(--v-text)}
+.v-page:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-page[disabled]{opacity:.4;cursor:not-allowed}
+.v-page[aria-current="page"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
+.v-page-gap{min-width:24px;text-align:center;color:var(--v-text-soft);user-select:none}
+
+/* ----------------------------------------------------------- migalhas */
+.v-breadcrumb{font-family:var(--v-font-sans);font-size:13.5px}
+.v-breadcrumb-list{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0}
+.v-breadcrumb-item{display:inline-flex;align-items:center;gap:6px;color:var(--v-text-muted)}
+.v-breadcrumb-item a{color:inherit;text-decoration:none;border-radius:4px}
+.v-breadcrumb-item a:hover{color:var(--v-primary);text-decoration:underline}
+.v-breadcrumb-item a:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-breadcrumb-item[aria-current="page"]{color:var(--v-text);font-weight:600}
+.v-breadcrumb-sep{color:var(--v-text-soft);user-select:none}
+
+/* ------------------------------------------------------------ metrica */
+.v-stat{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;background:var(--v-surface);
+  border:1px solid var(--v-border);border-radius:var(--v-radius);font-family:var(--v-font-sans)}
+.v-stat-icon{flex:none;width:40px;height:40px;display:grid;place-items:center;font-size:19px;
+  border-radius:var(--v-radius-sm);background:var(--v-primary-soft);color:var(--v-primary-soft-text)}
+.v-stat-body{flex:1;min-width:0}
+.v-stat-label{font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--v-text-muted)}
+.v-stat-value{margin-top:4px;font-size:26px;font-weight:700;line-height:1.15;color:var(--v-text);
+  overflow-wrap:anywhere}
+.v-stat-row{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
+.v-stat-delta{display:inline-flex;align-items:center;gap:3px;font-size:12.5px;font-weight:700;
+  padding:2px 7px;border-radius:var(--v-radius-full)}
+.v-stat-delta[data-dir="up"]{background:var(--v-success-soft);color:var(--v-success-soft-text)}
+.v-stat-delta[data-dir="down"]{background:var(--v-danger-soft);color:var(--v-danger-soft-text)}
+.v-stat-delta[data-dir="flat"]{background:var(--v-surface-3);color:var(--v-text-muted)}
+.v-stat-hint{font-size:12.5px;color:var(--v-text-muted)}
+
+/* ------------------------------------------------------- estado vazio */
+.v-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
+  padding:44px 22px;font-family:var(--v-font-sans);color:var(--v-text)}
+.v-empty-icon{width:58px;height:58px;display:grid;place-items:center;font-size:27px;
+  border-radius:var(--v-radius-full);background:var(--v-surface-3);color:var(--v-text-soft)}
+.v-empty-title{margin:0;font-size:16px;font-weight:650}
+.v-empty-desc{margin:0;font-size:14px;line-height:1.55;color:var(--v-text-muted);max-width:46ch}
+.v-empty-actions{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.v-empty-actions:empty{display:none}
+
+/* ----------------------------------------------------------- linha do tempo */
+.v-timeline{list-style:none;margin:0;padding:0;font-family:var(--v-font-sans);
+  display:flex;flex-direction:column}
+.v-timeline-item{position:relative;display:flex;gap:14px;padding-bottom:20px}
+.v-timeline-item:last-child{padding-bottom:0}
+.v-timeline-rail{position:relative;flex:none;width:14px;display:flex;justify-content:center}
+.v-timeline-dot{position:relative;z-index:1;width:12px;height:12px;margin-top:4px;
+  border-radius:var(--v-radius-full);background:var(--v-primary);
+  box-shadow:0 0 0 3px var(--v-primary-soft)}
+.v-timeline-item[data-tone="success"] .v-timeline-dot{background:var(--v-success);box-shadow:0 0 0 3px var(--v-success-soft)}
+.v-timeline-item[data-tone="warning"] .v-timeline-dot{background:var(--v-warning);box-shadow:0 0 0 3px var(--v-warning-soft)}
+.v-timeline-item[data-tone="danger"] .v-timeline-dot{background:var(--v-danger);box-shadow:0 0 0 3px var(--v-danger-soft)}
+.v-timeline-item[data-tone="muted"] .v-timeline-dot{background:var(--v-border-strong);box-shadow:0 0 0 3px var(--v-surface-3)}
+.v-timeline-item:not(:last-child) .v-timeline-rail::after{content:"";position:absolute;top:14px;bottom:-20px;
+  width:2px;background:var(--v-border)}
+.v-timeline-body{flex:1;min-width:0;padding-bottom:2px}
+.v-timeline-title{font-size:14px;font-weight:650;color:var(--v-text)}
+.v-timeline-desc{margin:3px 0 0;font-size:13.5px;line-height:1.55;color:var(--v-text-muted)}
+.v-timeline-time{display:block;margin-top:3px;font-size:12px;color:var(--v-text-soft)}
+
+/* ---------------------------------------------------------------- passos */
+.v-steps{display:flex;gap:0;font-family:var(--v-font-sans);list-style:none;margin:0;padding:0}
+.v-steps[data-vertical="true"]{flex-direction:column;gap:4px}
+.v-step{flex:1;display:flex;align-items:flex-start;gap:10px;min-width:0;position:relative;padding-right:12px}
+.v-steps[data-vertical="true"] .v-step{padding:0 0 20px}
+.v-step-mark{flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:var(--v-radius-full);
+  font-size:13px;font-weight:700;background:var(--v-surface-3);color:var(--v-text-muted);
+  border:1.5px solid transparent}
+.v-step[data-state="current"] .v-step-mark{background:var(--v-primary);color:var(--v-primary-contrast)}
+.v-step[data-state="done"] .v-step-mark{background:var(--v-success-soft);color:var(--v-success-soft-text);
+  border-color:var(--v-success-border)}
+.v-step-text{min-width:0;padding-top:4px}
+.v-step-label{font-size:13.5px;font-weight:650;color:var(--v-text-muted);line-height:1.35}
+.v-step[data-state="current"] .v-step-label,.v-step[data-state="done"] .v-step-label{color:var(--v-text)}
+.v-step-line{position:absolute;left:28px;right:0;top:14px;height:2px;background:var(--v-border)}
+.v-step[data-state="done"] .v-step-line{background:var(--v-success)}
+.v-steps[data-vertical="true"] .v-step-line{left:13px;right:auto;top:30px;bottom:2px;width:2px;height:auto}
+.v-step:last-child .v-step-line{display:none}
+
+/* ------------------------------------------------------------ avaliacao */
+.v-rating{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans)}
+.v-rating-stars{display:inline-flex;gap:2px}
+.v-star{appearance:none;background:none;border:0;padding:2px;cursor:pointer;line-height:0;
+  color:var(--v-border-strong);transition:color .13s var(--v-ease),transform .13s var(--v-ease)}
+.v-star:hover:not([disabled]){transform:scale(1.12)}
+.v-star:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px;border-radius:4px}
+.v-star[data-on="true"]{color:var(--v-warning)}
+.v-star[data-on="true"] .v-ic{fill:currentColor}
+.v-star[disabled]{cursor:default}
+.v-rating[data-size="sm"] .v-ic{font-size:15px}
+.v-rating[data-size="md"] .v-ic{font-size:20px}
+.v-rating[data-size="lg"] .v-ic{font-size:26px}
+.v-rating-value{font-size:13px;font-weight:650;color:var(--v-text-muted)}
+
+/* --------------------------------------------------------------- tooltip */
+.v-tipwrap{position:relative;display:inline-flex}
+.v-tip{position:absolute;z-index:var(--v-z-tooltip,1200);padding:6px 10px;border-radius:var(--v-radius-sm);
+  background:var(--v-text);color:var(--v-surface);font-family:var(--v-font-sans);font-size:12.5px;
+  font-weight:600;line-height:1.35;white-space:nowrap;pointer-events:none;opacity:0;
+  transform:translateY(4px);transition:opacity .14s var(--v-ease),transform .14s var(--v-ease)}
+.v-tip[data-placement="top"]{bottom:calc(100% + 8px);left:50%;translate:-50% 0}
+.v-tip[data-placement="bottom"]{top:calc(100% + 8px);left:50%;translate:-50% 0}
+.v-tip[data-placement="left"]{right:calc(100% + 8px);top:50%;translate:0 -50%}
+.v-tip[data-placement="right"]{left:calc(100% + 8px);top:50%;translate:0 -50%}
+.v-tipwrap:hover .v-tip,.v-tipwrap:focus-within .v-tip{opacity:1;transform:none}
+
+/* ------------------------------------------------------------ codigo */
+.v-code{position:relative;background:var(--v-surface-inset);border:1px solid var(--v-border);
+  border-radius:var(--v-radius);overflow:hidden;font-family:var(--v-font-mono)}
+.v-code-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 10px 8px 14px;background:var(--v-surface-2);border-bottom:1px solid var(--v-border);
+  font-family:var(--v-font-sans);font-size:12.5px;color:var(--v-text-muted)}
+.v-code-name{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v-code-copy{appearance:none;display:inline-flex;align-items:center;gap:6px;background:transparent;
+  border:1px solid var(--v-border);border-radius:var(--v-radius-sm);padding:4px 9px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:650;color:var(--v-text-muted);flex:none;
+  transition:background-color .14s var(--v-ease),color .14s var(--v-ease),border-color .14s var(--v-ease)}
+.v-code-copy:hover{background:var(--v-surface-3);color:var(--v-text);border-color:var(--v-border-strong)}
+.v-code-copy:focus-visible{outline:2px solid var(--v-focus-ring);outline-offset:2px}
+.v-code-copy[data-copied="true"]{color:var(--v-success-soft-text);border-color:var(--v-success-border);
+  background:var(--v-success-soft)}
+.v-code-pre{margin:0;padding:14px;overflow-x:auto;font-size:13px;line-height:1.65;
+  color:var(--v-text);tab-size:2}
+.v-code[data-wrap="true"] .v-code-pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.v-code-pre code{font-family:inherit;background:none;padding:0}
+
+@media (max-width:600px){
+  .v-steps{flex-direction:column;gap:4px}
+  .v-steps .v-step{padding:0 0 20px}
+  .v-steps .v-step-line{left:13px;right:auto;top:30px;bottom:2px;width:2px;height:auto}
+  .v-stat-value{font-size:22px}
+}
+@media (prefers-reduced-motion: reduce){
+  .v-btn,.v-icon-btn,.v-card,.v-control,.v-select-trigger,.v-select-arrow,.v-check-box,
+  .v-check-box .v-ic,.v-radio-dot,.v-switch-track,.v-switch-thumb,.v-progress-bar,.v-star,
+  .v-tip,.v-page,.v-code-copy{transition:none}
+  .v-skeleton,.v-spinner,.v-btn-spin{animation-duration:1.6s}
+  .v-progress[data-indeterminate="true"] .v-progress-bar{animation-duration:2.4s}
+}
+`;
+
+let stylesReady = false;
+
+function ensureStyles(): void {
+  if (stylesReady) return;
+  stylesReady = true;
+  ensureTokens();
+  ensurePalette();
+  injectStyle('components', CSS);
+}
+
+// ---------------------------------------------------------------------------
+// Registro
+// ---------------------------------------------------------------------------
+
+/** Registra um componente da biblioteca, garantindo o CSS e os utilitarios. */
+function register(name: string, definition: ComponentDefinition): void {
+  const original = definition.beforeMount;
+  definition.methods = {
+    svgIcon: (value: unknown) => iconSvg(value),
+    hasFlag: (value: unknown) => flag(value),
+    ...(definition.methods ?? {}),
+  };
+  definition.beforeMount = function (this: any): void {
+    ensureStyles();
+    original?.call(this);
+  };
+  defineComponent(name, definition);
+}
+
+// ---------------------------------------------------------------------------
+// VButton
+// ---------------------------------------------------------------------------
+
+register('v-button', {
+  props: {
+    variant: { type: 'string', default: 'primary' },
+    size: { type: 'string', default: 'md' },
+    icon: TEXT,
+    iconRight: TEXT,
+    type: { type: 'string', default: 'button' },
+    loading: BOOL,
+    disabled: BOOL,
+    block: BOOL,
+    rounded: BOOL,
+    ariaLabel: TEXT,
+  },
+  computed: {
+    ...flags('loading', 'disabled', 'block', 'rounded'),
+    blocked(this: any): boolean {
+      return flag(this.disabled) || flag(this.loading);
+    },
+  },
+  template: `
+    <button class="v-btn" :type="type" :data-variant="variant" :data-size="size"
+      :data-block="isBlock" :data-rounded="isRounded" :disabled="blocked"
+      :aria-busy="isLoading" :aria-label="ariaLabel || null">
+      <span class="v-btn-spin" v-if="isLoading" aria-hidden="true"></span>
+      <span class="v-btn-ic" v-if="icon && !isLoading" v-html="svgIcon(icon)"></span>
+      <span class="v-btn-label"><slot></slot></span>
+      <span class="v-btn-ic" v-if="iconRight" v-html="svgIcon(iconRight)"></span>
+    </button>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VIconButton
+// ---------------------------------------------------------------------------
+
+register('v-icon-button', {
+  props: {
+    icon: { type: 'string', default: 'more' },
+    label: TEXT,
+    variant: { type: 'string', default: 'ghost' },
+    size: { type: 'string', default: 'md' },
+    type: { type: 'string', default: 'button' },
+    disabled: BOOL,
+    loading: BOOL,
+    rounded: BOOL,
+  },
+  computed: {
+    ...flags('disabled', 'loading', 'rounded'),
+    blocked(this: any): boolean {
+      return flag(this.disabled) || flag(this.loading);
+    },
+    accessibleName(this: any): string {
+      return this.label || this.icon || 'Ação';
+    },
+  },
+  template: `
+    <button class="v-icon-btn" :type="type" :data-variant="variant" :data-size="size"
+      :data-rounded="isRounded" :disabled="blocked" :aria-label="accessibleName" :title="label || null">
+      <span class="v-btn-spin" v-if="isLoading" aria-hidden="true"></span>
+      <span v-if="!isLoading" v-html="svgIcon(icon)"></span>
+    </button>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VCard
+// ---------------------------------------------------------------------------
+
+register('v-card', {
+  props: {
+    title: TEXT,
+    subtitle: TEXT,
+    icon: TEXT,
+    padded: { type: 'any', default: true },
+    hoverable: BOOL,
+  },
+  computed: {
+    ...flags('hoverable'),
+    isPadded(this: any): boolean {
+      return this.padded === true || flag(this.padded);
+    },
+  },
+  template: `
+    <div class="v-card" :data-hoverable="isHoverable" :data-padded="isPadded">
+      <div class="v-card-head" v-if="title || subtitle || icon">
+        <span class="v-card-icon" v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+        <div class="v-card-heading">
+          <h3 class="v-card-title" v-if="title" v-text="title"></h3>
+          <p class="v-card-sub" v-if="subtitle" v-text="subtitle"></p>
+        </div>
+        <div class="v-card-actions"><slot name="actions"></slot></div>
+      </div>
+      <div class="v-card-body"><slot></slot></div>
+      <div class="v-card-foot"><slot name="footer"></slot></div>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VLabel
+// ---------------------------------------------------------------------------
+
+register('v-label', {
+  props: {
+    for: TEXT,
+    size: { type: 'string', default: 'md' },
+    required: BOOL,
+  },
+  computed: { ...flags('required') },
+  template: `
+    <label class="v-label" :data-size="size" :for="for || null">
+      <span><slot></slot></span>
+      <span class="v-req" v-if="isRequired" aria-hidden="true">*</span>
+    </label>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VField
+// ---------------------------------------------------------------------------
+
+register('v-field', {
+  props: {
+    label: TEXT,
+    hint: TEXT,
+    error: TEXT,
+    for: TEXT,
+    required: BOOL,
+    disabled: BOOL,
+  },
+  computed: { ...flags('required', 'disabled') },
+  template: `
+    <div class="v-field" :data-error="!!error" :data-disabled="isDisabled">
+      <label class="v-label" v-if="label" :for="for || null">
+        <span v-text="label"></span>
+        <span class="v-req" v-if="isRequired" aria-hidden="true">*</span>
+      </label>
+      <div class="v-field-control"><slot></slot></div>
+      <p class="v-hint" v-if="hint && !error" v-text="hint"></p>
+      <p class="v-error-text" v-if="error" role="alert" v-text="error"></p>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VInput
+// ---------------------------------------------------------------------------
+
+register('v-input', {
+  props: {
+    label: TEXT,
+    type: { type: 'string', default: 'text' },
+    placeholder: TEXT,
+    hint: TEXT,
+    error: TEXT,
+    value: TEXT,
+    name: TEXT,
+    id: TEXT,
+    icon: TEXT,
+    suffix: TEXT,
+    size: { type: 'string', default: 'md' },
+    autocomplete: TEXT,
+    inputmode: TEXT,
+    maxlength: TEXT,
+    min: TEXT,
+    max: TEXT,
+    step: TEXT,
+    required: BOOL,
+    disabled: BOOL,
+    readonly: BOOL,
+    clearable: BOOL,
+  },
+  state(props: Record<string, any>) {
+    return { fieldId: props.id || uid('v-input-') };
+  },
+  computed: {
+    ...flags('required', 'disabled', 'readonly', 'clearable'),
+    hintId(this: any): string {
+      return `${this.fieldId}-hint`;
+    },
+    errorId(this: any): string {
+      return `${this.fieldId}-error`;
+    },
+    describedBy(this: any): string | null {
+      if (this.error) return this.errorId;
+      if (this.hint) return this.hintId;
+      return null;
+    },
+  },
+  methods: {
+    clear(this: any): void {
+      this.value = '';
+      notify(this.$el);
+      this.emit('clear');
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.value,
+      set: (next: unknown) => {
+        this.value = next == null ? '' : String(next);
+      },
+    });
+  },
+  template: `
+    <div class="v-field" :data-error="!!error" :data-disabled="isDisabled">
+      <label class="v-label" v-if="label" :for="fieldId">
+        <span v-text="label"></span>
+        <span class="v-req" v-if="isRequired" aria-hidden="true">*</span>
+      </label>
+      <div class="v-control" :data-size="size">
+        <span class="v-control-ic" v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+        <input class="v-input" :id="fieldId" :type="type" :name="name || null"
+          :placeholder="placeholder || null" :autocomplete="autocomplete || null"
+          :inputmode="inputmode || null" :maxlength="maxlength || null"
+          :min="min || null" :max="max || null" :step="step || null"
+          :required="isRequired" :disabled="isDisabled" :readonly="isReadonly"
+          :aria-invalid="!!error" :aria-describedby="describedBy" v-model="value">
+        <button type="button" class="v-clear" v-if="isClearable && value && !isDisabled"
+          v-click="clear" aria-label="Limpar campo" v-html="svgIcon('x')"></button>
+        <span class="v-affix" v-if="suffix" v-text="suffix"></span>
+      </div>
+      <p class="v-hint" :id="hintId" v-if="hint && !error" v-text="hint"></p>
+      <p class="v-error-text" :id="errorId" v-if="error" role="alert" v-text="error"></p>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VTextarea
+// ---------------------------------------------------------------------------
+
+register('v-textarea', {
+  props: {
+    label: TEXT,
+    placeholder: TEXT,
+    hint: TEXT,
+    error: TEXT,
+    value: TEXT,
+    name: TEXT,
+    id: TEXT,
+    rows: { type: 'number', default: 4 },
+    maxlength: TEXT,
+    size: { type: 'string', default: 'md' },
+    resize: { type: 'string', default: 'vertical' },
+    required: BOOL,
+    disabled: BOOL,
+    readonly: BOOL,
+    counter: BOOL,
+  },
+  state(props: Record<string, any>) {
+    return { fieldId: props.id || uid('v-textarea-') };
+  },
+  computed: {
+    ...flags('required', 'disabled', 'readonly', 'counter'),
+    hintId(this: any): string {
+      return `${this.fieldId}-hint`;
+    },
+    errorId(this: any): string {
+      return `${this.fieldId}-error`;
+    },
+    describedBy(this: any): string | null {
+      if (this.error) return this.errorId;
+      if (this.hint) return this.hintId;
+      return null;
+    },
+    counterText(this: any): string {
+      const used = String(this.value ?? '').length;
+      return this.maxlength ? `${used}/${this.maxlength}` : String(used);
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.value,
+      set: (next: unknown) => {
+        this.value = next == null ? '' : String(next);
+      },
+    });
+  },
+  template: `
+    <div class="v-field" :data-error="!!error" :data-disabled="isDisabled">
+      <label class="v-label" v-if="label" :for="fieldId">
+        <span v-text="label"></span>
+        <span class="v-req" v-if="isRequired" aria-hidden="true">*</span>
+      </label>
+      <div class="v-control" :data-size="size">
+        <textarea class="v-textarea" :id="fieldId" :name="name || null" :rows="rows"
+          :placeholder="placeholder || null" :maxlength="maxlength || null"
+          :data-resize="resize" :required="isRequired" :disabled="isDisabled" :readonly="isReadonly"
+          :aria-invalid="!!error" :aria-describedby="describedBy" v-model="value"></textarea>
+      </div>
+      <p class="v-counter" v-if="isCounter" v-text="counterText"></p>
+      <p class="v-hint" :id="hintId" v-if="hint && !error" v-text="hint"></p>
+      <p class="v-error-text" :id="errorId" v-if="error" role="alert" v-text="error"></p>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VSelect
+// ---------------------------------------------------------------------------
+
+interface SelectOption {
+  value: string;
+  label: string;
+  disabled: boolean;
+}
+
+/** Normaliza qualquer formato de lista para `{ value, label, disabled }`. */
+function normalizeOptions(raw: unknown): SelectOption[] {
+  if (!raw) return [];
+  const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? splitList(raw) : [];
+  return list.map((item) => {
+    if (item != null && typeof item === 'object') {
+      const source = item as Record<string, unknown>;
+      const value = source.value ?? source.id ?? source.key ?? source.label ?? '';
+      const label = source.label ?? source.text ?? source.name ?? source.title ?? value;
+      return { value: String(value), label: String(label), disabled: flag(source.disabled) };
+    }
+    return { value: String(item), label: String(item), disabled: false };
+  });
+}
+
+register('v-select', {
+  inheritScope: true,
+  props: {
+    label: TEXT,
+    placeholder: { type: 'string', default: 'Selecione' },
+    searchPlaceholder: { type: 'string', default: 'Buscar...' },
+    emptyText: { type: 'string', default: 'Nenhuma opção encontrada' },
+    options: { type: 'any', default: '' },
+    value: { type: 'any', default: '' },
+    hint: TEXT,
+    error: TEXT,
+    name: TEXT,
+    id: TEXT,
+    size: { type: 'string', default: 'md' },
+    multiple: BOOL,
+    searchable: BOOL,
+    clearable: BOOL,
+    disabled: BOOL,
+    required: BOOL,
+  },
+  state(props: Record<string, any>) {
+    const base = props.id || uid('v-select-');
+    const initial = props.value;
+    return {
+      open: false,
+      query: '',
+      activeIndex: -1,
+      selected: Array.isArray(initial) ? '' : initial == null ? '' : String(initial),
+      selectedList: Array.isArray(initial) ? initial.map(String) : [],
+      fieldId: base,
+    };
+  },
+  computed: {
+    ...flags('multiple', 'searchable', 'clearable', 'disabled', 'required'),
+    listId(this: any): string {
+      return `${this.fieldId}-list`;
+    },
+    labelId(this: any): string {
+      return `${this.fieldId}-label`;
+    },
+    hintId(this: any): string {
+      return `${this.fieldId}-hint`;
+    },
+    errorId(this: any): string {
+      return `${this.fieldId}-error`;
+    },
+    describedBy(this: any): string | null {
+      if (this.error) return this.errorId;
+      if (this.hint) return this.hintId;
+      return null;
+    },
+    allOptions(this: any): SelectOption[] {
+      return normalizeOptions(fromOuterScope(this, this.options) ?? this.options);
+    },
+    filtered(this: any): SelectOption[] {
+      const term = String(this.query ?? '').trim().toLowerCase();
+      if (!term) return this.allOptions;
+      return this.allOptions.filter((option: SelectOption) =>
+        option.label.toLowerCase().includes(term)
+      );
+    },
+    currentValue(this: any): string | string[] {
+      return flag(this.multiple) ? this.selectedList : this.selected;
+    },
+    hasSelection(this: any): boolean {
+      return flag(this.multiple) ? this.selectedList.length > 0 : this.selected !== '';
+    },
+    display(this: any): string {
+      if (!this.hasSelection) return this.placeholder;
+      const labelOf = (value: string): string => {
+        const found = this.allOptions.find((option: SelectOption) => option.value === String(value));
+        return found ? found.label : String(value);
+      };
+      if (flag(this.multiple)) return this.selectedList.map(labelOf).join(', ');
+      return labelOf(this.selected);
+    },
+    activeId(this: any): string | null {
+      if (!this.open || this.activeIndex < 0) return null;
+      if (this.activeIndex >= this.filtered.length) return null;
+      return `${this.listId}-opt-${this.activeIndex}`;
+    },
+  },
+  methods: {
+    optionId(this: any, index: number): string {
+      return `${this.listId}-opt-${index}`;
+    },
+    isSelected(this: any, value: unknown): boolean {
+      if (flag(this.multiple)) return this.selectedList.indexOf(String(value)) > -1;
+      return this.selected === String(value);
+    },
+    openList(this: any): void {
+      if (flag(this.disabled) || this.open) return;
+      this.open = true;
+      this.query = '';
+      const index = this.filtered.findIndex((option: SelectOption) => this.isSelected(option.value));
+      this.activeIndex = index > -1 ? index : 0;
+      void nextTick(() => {
+        const search = this.$refs.search as HTMLInputElement | undefined;
+        if (search) search.focus();
+      });
+    },
+    closeList(this: any): void {
+      if (!this.open) return;
+      this.open = false;
+      this.activeIndex = -1;
+    },
+    closeAndFocus(this: any): void {
+      const wasOpen = this.open;
+      this.closeList();
+      if (!wasOpen) return;
+      void nextTick(() => {
+        const trigger = this.$refs.trigger as HTMLButtonElement | undefined;
+        if (trigger) trigger.focus();
+      });
+    },
+    toggleList(this: any): void {
+      if (this.open) this.closeAndFocus();
+      else this.openList();
+    },
+    choose(this: any, option: SelectOption): void {
+      if (!option || option.disabled) return;
+      if (flag(this.multiple)) {
+        const list = [...this.selectedList];
+        const index = list.indexOf(option.value);
+        if (index > -1) list.splice(index, 1);
+        else list.push(option.value);
+        this.selectedList = list;
+      } else {
+        this.selected = option.value;
+        this.closeAndFocus();
+      }
+      notify(this.$el);
+      this.emit('change', this.currentValue);
+    },
+    clear(this: any): void {
+      this.selected = '';
+      this.selectedList = [];
+      notify(this.$el);
+      this.emit('change', this.currentValue);
+    },
+    move(this: any, step: number): void {
+      const list = this.filtered;
+      if (!list.length) return;
+      let next = this.activeIndex + step;
+      if (next < 0) next = list.length - 1;
+      if (next >= list.length) next = 0;
+      this.activeIndex = next;
+    },
+    onKey(this: any, event: KeyboardEvent): void {
+      const key = event.key;
+      if (key === 'Escape') {
+        event.preventDefault();
+        this.closeAndFocus();
+        return;
+      }
+      if (key === 'ArrowDown' || key === 'ArrowUp') {
+        event.preventDefault();
+        if (!this.open) this.openList();
+        else this.move(key === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      if (key === 'Home' || key === 'End') {
+        if (!this.open) return;
+        event.preventDefault();
+        this.activeIndex = key === 'Home' ? 0 : this.filtered.length - 1;
+        return;
+      }
+      if (key === 'Enter') {
+        event.preventDefault();
+        if (!this.open) this.openList();
+        else this.choose(this.filtered[this.activeIndex]);
+        return;
+      }
+      if (key === ' ' && !flag(this.searchable)) {
+        event.preventDefault();
+        this.toggleList();
+        return;
+      }
+      if (key === 'Tab' && this.open) this.closeList();
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.currentValue,
+      set: (next: unknown) => {
+        if (flag(this.multiple)) {
+          // O `v-model` do runtime entrega texto. Uma lista chega como
+          // "a,b", entao voltamos ao array separando pelas virgulas.
+          this.selectedList = Array.isArray(next)
+            ? next.map(String)
+            : splitList(String(next ?? ''));
+          return;
+        }
+        this.selected = next == null ? '' : String(next);
+      },
+    });
+  },
+  template: `
+    <div class="v-field" :data-error="!!error" :data-disabled="isDisabled">
+      <label class="v-label" :id="labelId" v-if="label" v-click="openList">
+        <span v-text="label"></span>
+        <span class="v-req" v-if="isRequired" aria-hidden="true">*</span>
+      </label>
+      <div class="v-select" :class="{ 'is-open': open }" v-on:click.outside="closeList">
+        <button type="button" class="v-select-trigger" :data-size="size" v-ref="trigger"
+          :id="fieldId" :role="isSearchable ? 'button' : 'combobox'"
+          aria-haspopup="listbox" :aria-expanded="open" :aria-controls="listId"
+          :aria-labelledby="label ? labelId : null" :aria-describedby="describedBy"
+          :aria-activedescendant="isSearchable ? null : activeId"
+          :disabled="isDisabled" v-click="toggleList" v-keydown="onKey">
+          <span class="v-select-value" :data-placeholder="!hasSelection" v-text="display"></span>
+          <span class="v-clear" v-if="isClearable && hasSelection && !isDisabled"
+            role="button" tabindex="0" aria-label="Limpar seleção"
+            v-click.stop="clear" v-keydown.enter.stop="clear" v-html="svgIcon('x')"></span>
+          <span class="v-select-arrow" aria-hidden="true" v-html="svgIcon('chevron-down')"></span>
+        </button>
+        <div class="v-select-pop" v-if="open">
+          <div class="v-select-search" v-if="isSearchable">
+            <input type="text" class="v-select-input" v-ref="search" v-model="query"
+              role="combobox" aria-autocomplete="list" :aria-controls="listId"
+              :aria-expanded="open" :aria-activedescendant="activeId"
+              :placeholder="searchPlaceholder" aria-label="Buscar opção" v-keydown="onKey">
+          </div>
+          <ul class="v-select-list" :id="listId" role="listbox"
+            :aria-multiselectable="isMultiple" :aria-labelledby="label ? labelId : null">
+            <li v-for="(option, index) in filtered" :key="option.value" class="v-select-opt"
+              :id="optionId(index)" role="option" :aria-selected="isSelected(option.value)"
+              :aria-disabled="option.disabled"
+              :class="{ 'is-active': index === activeIndex, 'is-selected': isSelected(option.value), 'is-disabled': option.disabled }"
+              v-click="choose(option)" v-mouseenter="activeIndex = index">
+              <span class="v-select-check" v-html="svgIcon('check')" aria-hidden="true"></span>
+              <span v-text="option.label"></span>
+            </li>
+            <li class="v-select-empty" v-if="!filtered.length" v-text="emptyText"></li>
+          </ul>
+        </div>
+      </div>
+      <select class="v-native-hidden" tabindex="-1" aria-hidden="true" :name="name || null"
+        :multiple="isMultiple" :required="isRequired" :disabled="isDisabled">
+        <option v-for="option in allOptions" :key="option.value" :value="option.value"
+          :selected="isSelected(option.value)" v-text="option.label"></option>
+      </select>
+      <p class="v-hint" :id="hintId" v-if="hint && !error" v-text="hint"></p>
+      <p class="v-error-text" :id="errorId" v-if="error" role="alert" v-text="error"></p>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VCheckbox
+// ---------------------------------------------------------------------------
+
+register('v-checkbox', {
+  props: {
+    label: TEXT,
+    description: TEXT,
+    error: TEXT,
+    name: TEXT,
+    id: TEXT,
+    value: { type: 'string', default: 'on' },
+    checked: BOOL,
+    disabled: BOOL,
+    required: BOOL,
+  },
+  state(props: Record<string, any>) {
+    return { fieldId: props.id || uid('v-check-') };
+  },
+  computed: {
+    ...flags('checked', 'disabled', 'required'),
+  },
+  methods: {
+    onToggle(this: any, event: Event): void {
+      const input = event.target as HTMLInputElement;
+      this.checked = input.checked;
+      this.emit('change', input.checked);
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => flag(this.checked),
+      set: (next: unknown) => {
+        this.checked = flag(next);
+      },
+    });
+  },
+  template: `
+    <label class="v-check" :for="fieldId" :data-disabled="isDisabled" :data-error="!!error">
+      <span class="v-check-slot">
+        <input type="checkbox" class="v-check-native" :id="fieldId" :name="name || null"
+          :value="value" :checked="isChecked" :disabled="isDisabled" :required="isRequired"
+          :aria-invalid="!!error" v-input="onToggle">
+        <span class="v-check-box" aria-hidden="true" v-html="svgIcon('check')"></span>
+      </span>
+      <span class="v-check-text">
+        <slot></slot><span v-if="label" v-text="label"></span>
+        <span class="v-check-desc" v-if="description" v-text="description"></span>
+      </span>
+    </label>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VRadio
+// ---------------------------------------------------------------------------
+
+register('v-radio', {
+  props: {
+    label: TEXT,
+    description: TEXT,
+    error: TEXT,
+    name: TEXT,
+    id: TEXT,
+    value: { type: 'string', default: '' },
+    checked: BOOL,
+    disabled: BOOL,
+    required: BOOL,
+  },
+  state(props: Record<string, any>) {
+    return {
+      fieldId: props.id || uid('v-radio-'),
+      selected: flag(props.checked) ? String(props.value ?? '') : '',
+    };
+  },
+  computed: {
+    ...flags('disabled', 'required'),
+    isChecked(this: any): boolean {
+      return this.selected !== '' && this.selected === String(this.value ?? '');
+    },
+  },
+  methods: {
+    onPick(this: any): void {
+      this.selected = String(this.value ?? '');
+      this.emit('change', this.selected);
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.selected,
+      set: (next: unknown) => {
+        this.selected = next == null ? '' : String(next);
+      },
+    });
+  },
+  template: `
+    <label class="v-check" :for="fieldId" data-shape="round"
+      :data-disabled="isDisabled" :data-error="!!error">
+      <span class="v-check-slot">
+        <input type="radio" class="v-check-native" :id="fieldId" :name="name || null"
+          :value="value" :checked="isChecked" :disabled="isDisabled" :required="isRequired"
+          :aria-invalid="!!error" v-input="onPick">
+        <span class="v-check-box" aria-hidden="true"><span class="v-radio-dot"></span></span>
+      </span>
+      <span class="v-check-text">
+        <slot></slot><span v-if="label" v-text="label"></span>
+        <span class="v-check-desc" v-if="description" v-text="description"></span>
+      </span>
+    </label>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VSwitch
+// ---------------------------------------------------------------------------
+
+register('v-switch', {
+  props: {
+    label: TEXT,
+    description: TEXT,
+    name: TEXT,
+    id: TEXT,
+    size: { type: 'string', default: 'md' },
+    checked: BOOL,
+    disabled: BOOL,
+  },
+  state(props: Record<string, any>) {
+    return { fieldId: props.id || uid('v-switch-') };
+  },
+  computed: { ...flags('checked', 'disabled') },
+  methods: {
+    onToggle(this: any, event: Event): void {
+      const input = event.target as HTMLInputElement;
+      this.checked = input.checked;
+      this.emit('change', input.checked);
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => flag(this.checked),
+      set: (next: unknown) => {
+        this.checked = flag(next);
+      },
+    });
+  },
+  template: `
+    <label class="v-check" :for="fieldId" :data-size="size" :data-disabled="isDisabled">
+      <span class="v-check-slot">
+        <input type="checkbox" role="switch" class="v-check-native" :id="fieldId"
+          :name="name || null" :checked="isChecked" :disabled="isDisabled"
+          :aria-checked="isChecked" v-input="onToggle">
+        <span class="v-switch-track" aria-hidden="true"><span class="v-switch-thumb"></span></span>
+      </span>
+      <span class="v-check-text">
+        <slot></slot><span v-if="label" v-text="label"></span>
+        <span class="v-check-desc" v-if="description" v-text="description"></span>
+      </span>
+    </label>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VBadge
+// ---------------------------------------------------------------------------
+
+register('v-badge', {
+  props: {
+    tone: { type: 'string', default: 'neutral' },
+    variant: { type: 'string', default: 'soft' },
+    size: { type: 'string', default: 'md' },
+    icon: TEXT,
+    dot: BOOL,
+  },
+  computed: { ...flags('dot') },
+  template: `
+    <span class="v-badge" :data-tone="tone" :data-variant="variant" :data-size="size">
+      <span class="v-badge-dot" v-if="isDot" aria-hidden="true"></span>
+      <span v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+      <span><slot></slot></span>
+    </span>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VTag
+// ---------------------------------------------------------------------------
+
+register('v-tag', {
+  props: {
+    tone: { type: 'string', default: 'neutral' },
+    variant: { type: 'string', default: 'soft' },
+    icon: TEXT,
+    closable: BOOL,
+    removeLabel: { type: 'string', default: 'Remover' },
+  },
+  computed: { ...flags('closable') },
+  methods: {
+    remove(this: any): void {
+      this.emit('remove', this.$el.textContent?.trim() ?? '');
+    },
+  },
+  template: `
+    <span class="v-tag v-badge" :data-tone="tone" :data-variant="variant" data-size="md"
+      :data-closable="isClosable">
+      <span v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+      <span><slot></slot></span>
+      <button type="button" class="v-tag-close" v-if="isClosable" :aria-label="removeLabel"
+        v-click="remove" v-html="svgIcon('x')"></button>
+    </span>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VAlert
+// ---------------------------------------------------------------------------
+
+const ALERT_ICONS: Record<string, string> = {
+  info: 'info',
+  primary: 'info',
+  success: 'check',
+  warning: 'warning',
+  danger: 'alert',
+  neutral: 'info',
+};
+
+register('v-alert', {
+  props: {
+    tone: { type: 'string', default: 'info' },
+    title: TEXT,
+    icon: TEXT,
+    closable: BOOL,
+    closeLabel: { type: 'string', default: 'Fechar aviso' },
+  },
+  state() {
+    return { visible: true };
+  },
+  computed: {
+    ...flags('closable'),
+    resolvedIcon(this: any): string {
+      if (this.icon === 'none') return '';
+      return this.icon || ALERT_ICONS[this.tone] || 'info';
+    },
+    liveRole(this: any): string {
+      return this.tone === 'danger' ? 'alert' : 'status';
+    },
+  },
+  methods: {
+    dismiss(this: any): void {
+      this.visible = false;
+      this.emit('close');
+    },
+  },
+  template: `
+    <div class="v-alert" v-show="visible" :data-tone="tone" :role="liveRole">
+      <span class="v-alert-icon" v-if="resolvedIcon" v-html="svgIcon(resolvedIcon)" aria-hidden="true"></span>
+      <div class="v-alert-body">
+        <p class="v-alert-title" v-if="title" v-text="title"></p>
+        <div class="v-alert-text"><slot></slot></div>
+      </div>
+      <button type="button" class="v-alert-close" v-if="isClosable" :aria-label="closeLabel"
+        v-click="dismiss" v-html="svgIcon('x')"></button>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VAvatar
+// ---------------------------------------------------------------------------
+
+const AVATAR_TONES = ['primary', 'accent', 'success', 'warning', 'danger', 'info'];
+
+register('v-avatar', {
+  props: {
+    name: TEXT,
+    src: TEXT,
+    alt: TEXT,
+    size: { type: 'string', default: 'md' },
+    shape: { type: 'string', default: 'circle' },
+    status: TEXT,
+  },
+  state() {
+    return { failed: false };
+  },
+  computed: {
+    initials(this: any): string {
+      const parts = String(this.name ?? '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      if (!parts.length) return '?';
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    },
+    tone(this: any): string {
+      // Uma soma simples dos codigos do nome escolhe sempre a mesma cor da
+      // paleta para a mesma pessoa.
+      const text = String(this.name ?? '');
+      let sum = 0;
+      for (let i = 0; i < text.length; i++) sum = (sum + text.charCodeAt(i)) % 9973;
+      return AVATAR_TONES[sum % AVATAR_TONES.length];
+    },
+    toneStyle(this: any): Record<string, string> {
+      return {
+        background: `var(--v-${this.tone}-soft)`,
+        color: `var(--v-${this.tone}-soft-text)`,
+      };
+    },
+    showImage(this: any): boolean {
+      return !!this.src && !this.failed;
+    },
+    imageAlt(this: any): string {
+      return this.alt || this.name || 'Avatar';
+    },
+  },
+  methods: {
+    onError(this: any): void {
+      this.failed = true;
+    },
+  },
+  template: `
+    <span class="v-avatar" :data-size="size" :data-shape="shape" :style="toneStyle"
+      :title="name || null">
+      <img class="v-avatar-img" v-if="showImage" :src="src" :alt="imageAlt" v-on:error="onError">
+      <span v-if="!showImage" aria-hidden="true" v-text="initials"></span>
+      <span class="v-sr" v-if="!showImage && name" v-text="name"></span>
+      <span class="v-avatar-status" v-if="status" :data-status="status"
+        :aria-label="status" role="img"></span>
+    </span>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VSpinner
+// ---------------------------------------------------------------------------
+
+register('v-spinner', {
+  props: {
+    size: { type: 'string', default: 'md' },
+    tone: { type: 'string', default: 'primary' },
+    label: { type: 'string', default: 'Carregando' },
+  },
+  template: `
+    <span class="v-spinner" :data-size="size" :data-tone="tone" role="status"
+      :aria-label="label"></span>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VSkeleton
+// ---------------------------------------------------------------------------
+
+register('v-skeleton', {
+  props: {
+    width: { type: 'string', default: '100%' },
+    height: { type: 'string', default: '14px' },
+    radius: TEXT,
+    lines: { type: 'number', default: 1 },
+    circle: BOOL,
+  },
+  computed: {
+    ...flags('circle'),
+    count(this: any): number {
+      const value = Number(this.lines);
+      return Number.isFinite(value) && value > 0 ? Math.floor(value) : 1;
+    },
+    boxStyle(this: any): Record<string, string> {
+      const style: Record<string, string> = { width: this.width, height: this.height };
+      if (this.radius) style.borderRadius = this.radius;
+      if (flag(this.circle)) style.width = style.height = this.height;
+      return style;
+    },
+    lastStyle(this: any): Record<string, string> {
+      return { ...this.boxStyle, width: '62%' };
+    },
+  },
+  template: `
+    <div class="v-skeleton-stack" role="status" aria-label="Carregando conteúdo" aria-busy="true">
+      <span class="v-skeleton" v-for="index in count" :key="index" :data-circle="isCircle"
+        :style="index === count && count > 1 ? lastStyle : boxStyle"></span>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VProgress
+// ---------------------------------------------------------------------------
+
+register('v-progress', {
+  props: {
+    value: { type: 'number', default: 0 },
+    max: { type: 'number', default: 100 },
+    tone: { type: 'string', default: 'primary' },
+    size: { type: 'string', default: 'md' },
+    label: TEXT,
+    showValue: BOOL,
+    indeterminate: BOOL,
+  },
+  computed: {
+    ...flags('showValue', 'indeterminate'),
+    percent(this: any): number {
+      const max = Number(this.max) || 100;
+      const value = Number(this.value) || 0;
+      const ratio = (value / max) * 100;
+      return Math.min(100, Math.max(0, Math.round(ratio * 10) / 10));
+    },
+    barStyle(this: any): Record<string, string> {
+      return { width: `${this.percent}%` };
+    },
+    percentText(this: any): string {
+      return `${Math.round(this.percent)}%`;
+    },
+  },
+  template: `
+    <div class="v-progress" :data-tone="tone" :data-size="size" :data-indeterminate="isIndeterminate">
+      <div class="v-progress-head" v-if="label || isShowValue">
+        <span v-text="label"></span>
+        <span class="v-progress-value" v-if="isShowValue" v-text="percentText"></span>
+      </div>
+      <div class="v-progress-track" role="progressbar" :aria-label="label || 'Progresso'"
+        :aria-valuenow="isIndeterminate ? null : percent" aria-valuemin="0" aria-valuemax="100">
+        <div class="v-progress-bar" :style="barStyle"></div>
+      </div>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VDivider
+// ---------------------------------------------------------------------------
+
+register('v-divider', {
+  props: {
+    label: TEXT,
+    vertical: BOOL,
+    spacing: TEXT,
+  },
+  computed: {
+    ...flags('vertical'),
+    spacingStyle(this: any): Record<string, string> {
+      if (!this.spacing) return {};
+      return flag(this.vertical) ? { margin: `0 ${this.spacing}` } : { margin: `${this.spacing} 0` };
+    },
+  },
+  template: `
+    <div class="v-divider" role="separator" :data-vertical="isVertical" :data-label="!!label"
+      :aria-orientation="isVertical ? 'vertical' : 'horizontal'" :style="spacingStyle">
+      <span v-if="label" v-text="label"></span>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VTable
+// ---------------------------------------------------------------------------
+
+interface TableColumn {
+  key: string;
+  label: string;
+  align: string;
+  sortable: boolean;
+}
+
+/**
+ * Le a declaracao de colunas de um atributo.
+ *
+ * ```html
+ * <VTable columns="nome:Nome, total:Total:right" rows="pedidos" />
+ * ```
+ */
+function parseColumns(raw: unknown): TableColumn[] {
+  if (Array.isArray(raw)) {
+    return raw.map((item) => {
+      if (item != null && typeof item === 'object') {
+        const source = item as Record<string, unknown>;
+        const key = String(source.key ?? source.field ?? source.name ?? '');
+        return {
+          key,
+          label: String(source.label ?? source.title ?? titleCase(key)),
+          align: String(source.align ?? 'left'),
+          sortable: source.sortable === undefined ? true : flag(source.sortable),
+        };
+      }
+      const key = String(item);
+      return { key, label: titleCase(key), align: 'left', sortable: true };
+    });
+  }
+
+  if (typeof raw !== 'string') return [];
+  return splitList(raw).map((spec) => {
+    const parts = spec.split(':').map((part) => part.trim());
+    const key = parts[0];
+    return {
+      key,
+      label: parts[1] || titleCase(key),
+      align: parts[2] || 'left',
+      sortable: parts[3] !== 'fixed',
+    };
+  });
+}
+
+register('v-table', {
+  inheritScope: true,
+  props: {
+    columns: { type: 'any', default: '' },
+    rows: { type: 'any', default: '' },
+    empty: { type: 'string', default: 'Nenhum registro encontrado' },
+    sortable: { type: 'any', default: true },
+    dense: BOOL,
+    striped: BOOL,
+    hover: { type: 'any', default: true },
+    caption: TEXT,
+  },
+  state() {
+    return { sortKey: '', sortDir: 'asc' };
+  },
+  computed: {
+    ...flags('dense', 'striped'),
+    isSortable(this: any): boolean {
+      return this.sortable === true || flag(this.sortable);
+    },
+    isHover(this: any): boolean {
+      return this.hover === true || flag(this.hover);
+    },
+    cols(this: any): TableColumn[] {
+      return parseColumns(fromOuterScope(this, this.columns) ?? this.columns);
+    },
+    allRows(this: any): Array<Record<string, unknown>> {
+      const source = fromOuterScope(this, this.rows) ?? this.rows;
+      return Array.isArray(source) ? source : [];
+    },
+    sorted(this: any): Array<Record<string, unknown>> {
+      const key = this.sortKey;
+      if (!key || !this.isSortable) return this.allRows;
+      const factor = this.sortDir === 'desc' ? -1 : 1;
+      return [...this.allRows].sort((a: unknown, b: unknown) => {
+        const left = getPath(a, key);
+        const right = getPath(b, key);
+        if (left == null && right == null) return 0;
+        if (left == null) return -factor;
+        if (right == null) return factor;
+        if (typeof left === 'number' && typeof right === 'number') {
+          return (left - right) * factor;
+        }
+        return String(left).localeCompare(String(right), config.locale, { numeric: true }) * factor;
+      });
+    },
+  },
+  methods: {
+    cell(this: any, row: unknown, column: TableColumn): string {
+      const value = getPath(row, column.key);
+      if (value === null || value === undefined) return '';
+      return String(value);
+    },
+    ariaSort(this: any, column: TableColumn): string | null {
+      if (!this.isSortable || !column.sortable) return null;
+      if (this.sortKey !== column.key) return 'none';
+      return this.sortDir === 'asc' ? 'ascending' : 'descending';
+    },
+    canSort(this: any, column: TableColumn): boolean {
+      return this.isSortable && column.sortable;
+    },
+    arrowFor(this: any, column: TableColumn): string {
+      if (this.sortKey !== column.key) return 'chevron-down';
+      return this.sortDir === 'asc' ? 'chevron-up' : 'chevron-down';
+    },
+    toggleSort(this: any, column: TableColumn): void {
+      if (!this.canSort(column)) return;
+      if (this.sortKey === column.key) {
+        this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortKey = column.key;
+        this.sortDir = 'asc';
+      }
+      this.emit('sort', { key: this.sortKey, direction: this.sortDir });
+    },
+    alignStyle(this: any, column: TableColumn): Record<string, string> {
+      return { textAlign: column.align };
+    },
+  },
+  template: `
+    <div class="v-table-wrap">
+      <table class="v-table" :data-dense="isDense" :data-striped="isStriped" :data-hover="isHover">
+        <caption class="v-sr" v-if="caption" v-text="caption"></caption>
+        <thead>
+          <tr>
+            <th v-for="column in cols" :key="column.key" :style="alignStyle(column)"
+              scope="col" :aria-sort="ariaSort(column)">
+              <button type="button" class="v-th" :data-sortable="canSort(column)"
+                :aria-sort="ariaSort(column)" :disabled="!canSort(column)" v-click="toggleSort(column)">
+                <span v-text="column.label"></span>
+                <span class="v-th-arrow" v-if="canSort(column)" v-html="svgIcon(arrowFor(column))"></span>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(row, index) in sorted" :key="index">
+            <td v-for="column in cols" :key="column.key" :style="alignStyle(column)"
+              v-text="cell(row, column)"></td>
+          </tr>
+          <tr v-if="!sorted.length">
+            <td class="v-table-empty" :colspan="cols.length || 1" v-text="empty"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VPagination
+// ---------------------------------------------------------------------------
+
+register('v-pagination', {
+  props: {
+    page: { type: 'number', default: 1 },
+    pages: { type: 'number', default: 1 },
+    total: { type: 'number', default: 0 },
+    perPage: { type: 'number', default: 10 },
+    siblings: { type: 'number', default: 1 },
+    previousLabel: { type: 'string', default: 'Anterior' },
+    nextLabel: { type: 'string', default: 'Próxima' },
+    ariaLabel: { type: 'string', default: 'Paginação' },
+  },
+  computed: {
+    lastPage(this: any): number {
+      const declared = Number(this.pages) || 0;
+      if (declared > 0) return declared;
+      const total = Number(this.total) || 0;
+      const perPage = Number(this.perPage) || 10;
+      return Math.max(1, Math.ceil(total / perPage));
+    },
+    currentPage(this: any): number {
+      const value = Number(this.page) || 1;
+      return Math.min(Math.max(1, Math.round(value)), this.lastPage);
+    },
+    /** Numeros visiveis, com `0` marcando as reticencias. */
+    items(this: any): number[] {
+      const last = this.lastPage;
+      const current = this.currentPage;
+      const siblings = Math.max(0, Number(this.siblings) || 0);
+      const window = siblings * 2 + 5;
+      if (last <= window) return Array.from({ length: last }, (_, i) => i + 1);
+
+      const out: number[] = [1];
+      const start = Math.max(2, current - siblings);
+      const end = Math.min(last - 1, current + siblings);
+      if (start > 2) out.push(0);
+      for (let page = start; page <= end; page++) out.push(page);
+      if (end < last - 1) out.push(0);
+      out.push(last);
+      return out;
+    },
+  },
+  methods: {
+    go(this: any, page: number): void {
+      const target = Math.min(Math.max(1, page), this.lastPage);
+      if (target === this.currentPage) return;
+      this.page = target;
+      notify(this.$el);
+      this.emit('change', target);
+    },
+    isCurrent(this: any, page: number): string | null {
+      return page === this.currentPage ? 'page' : null;
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.currentPage,
+      set: (next: unknown) => {
+        const value = Number(next);
+        this.page = Number.isFinite(value) && value > 0 ? Math.round(value) : 1;
+      },
+    });
+  },
+  template: `
+    <nav class="v-pagination" :aria-label="ariaLabel">
+      <button type="button" class="v-page" :disabled="currentPage <= 1"
+        :aria-label="previousLabel" v-click="go(currentPage - 1)" v-html="svgIcon('chevron-left')"></button>
+      <template v-for="(item, index) in items" :key="index">
+        <span class="v-page-gap" v-if="item === 0" aria-hidden="true">...</span>
+        <button type="button" class="v-page" v-if="item !== 0" :aria-current="isCurrent(item)"
+          :aria-label="'Página ' + item" v-click="go(item)" v-text="item"></button>
+      </template>
+      <button type="button" class="v-page" :disabled="currentPage >= lastPage"
+        :aria-label="nextLabel" v-click="go(currentPage + 1)" v-html="svgIcon('chevron-right')"></button>
+    </nav>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VBreadcrumb
+// ---------------------------------------------------------------------------
+
+interface CrumbItem {
+  label: string;
+  href: string;
+}
+
+/** Le `Início:/, Painel:/painel, Perfil` ou uma lista de objetos. */
+function parseCrumbs(raw: unknown): CrumbItem[] {
+  if (Array.isArray(raw)) {
+    return raw.map((item) => {
+      if (item != null && typeof item === 'object') {
+        const source = item as Record<string, unknown>;
+        return {
+          label: String(source.label ?? source.text ?? source.title ?? ''),
+          href: String(source.href ?? source.url ?? source.to ?? ''),
+        };
+      }
+      return { label: String(item), href: '' };
+    });
+  }
+  if (typeof raw !== 'string') return [];
+  return splitList(raw).map((spec) => {
+    const separator = spec.indexOf(':');
+    if (separator === -1) return { label: spec, href: '' };
+    return { label: spec.slice(0, separator).trim(), href: spec.slice(separator + 1).trim() };
+  });
+}
+
+register('v-breadcrumb', {
+  inheritScope: true,
+  props: {
+    items: { type: 'any', default: '' },
+    separator: { type: 'string', default: '/' },
+    ariaLabel: { type: 'string', default: 'Trilha de navegação' },
+  },
+  computed: {
+    crumbs(this: any): CrumbItem[] {
+      return parseCrumbs(fromOuterScope(this, this.items) ?? this.items);
+    },
+  },
+  methods: {
+    isLast(this: any, index: number): boolean {
+      return index === this.crumbs.length - 1;
+    },
+  },
+  template: `
+    <nav class="v-breadcrumb" :aria-label="ariaLabel">
+      <ol class="v-breadcrumb-list">
+        <li class="v-breadcrumb-item" v-for="(crumb, index) in crumbs" :key="index"
+          :aria-current="isLast(index) ? 'page' : null">
+          <a v-if="crumb.href && !isLast(index)" :href="crumb.href" v-text="crumb.label"></a>
+          <span v-if="!crumb.href || isLast(index)" v-text="crumb.label"></span>
+          <span class="v-breadcrumb-sep" v-if="!isLast(index)" aria-hidden="true" v-text="separator"></span>
+        </li>
+      </ol>
+    </nav>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VStat
+// ---------------------------------------------------------------------------
+
+register('v-stat', {
+  props: {
+    label: TEXT,
+    value: TEXT,
+    delta: { type: 'any', default: '' },
+    hint: TEXT,
+    icon: TEXT,
+    suffix: { type: 'string', default: '%' },
+    /** Quando `true`, uma variacao negativa e considerada positiva. */
+    inverted: BOOL,
+  },
+  computed: {
+    ...flags('inverted'),
+    deltaNumber(this: any): number | null {
+      if (this.delta === '' || this.delta === null || this.delta === undefined) return null;
+      const value = Number(String(this.delta).replace(',', '.').replace('%', ''));
+      return Number.isFinite(value) ? value : null;
+    },
+    hasDelta(this: any): boolean {
+      return this.deltaNumber !== null;
+    },
+    direction(this: any): string {
+      const value = this.deltaNumber;
+      if (value === null || value === 0) return 'flat';
+      const positive = value > 0;
+      const good = flag(this.inverted) ? !positive : positive;
+      return good ? 'up' : 'down';
+    },
+    deltaIcon(this: any): string {
+      const value = this.deltaNumber;
+      if (value === null || value === 0) return 'minus';
+      return value > 0 ? 'arrow-up' : 'arrow-down';
+    },
+    deltaText(this: any): string {
+      const value = this.deltaNumber;
+      if (value === null) return '';
+      const sign = value > 0 ? '+' : '';
+      return `${sign}${value}${this.suffix}`;
+    },
+  },
+  template: `
+    <div class="v-stat">
+      <span class="v-stat-icon" v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+      <div class="v-stat-body">
+        <div class="v-stat-label" v-text="label"></div>
+        <div class="v-stat-value" v-text="value"></div>
+        <div class="v-stat-row" v-if="hasDelta || hint">
+          <span class="v-stat-delta" v-if="hasDelta" :data-dir="direction">
+            <span v-html="svgIcon(deltaIcon)" aria-hidden="true"></span>
+            <span v-text="deltaText"></span>
+          </span>
+          <span class="v-stat-hint" v-if="hint" v-text="hint"></span>
+        </div>
+        <div class="v-stat-row"><slot></slot></div>
+      </div>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VEmptyState
+// ---------------------------------------------------------------------------
+
+register('v-empty-state', {
+  props: {
+    icon: { type: 'string', default: 'inbox' },
+    title: { type: 'string', default: 'Nada por aqui' },
+    description: TEXT,
+  },
+  template: `
+    <div class="v-empty">
+      <span class="v-empty-icon" v-if="icon" v-html="svgIcon(icon)" aria-hidden="true"></span>
+      <h3 class="v-empty-title" v-text="title"></h3>
+      <p class="v-empty-desc" v-if="description" v-text="description"></p>
+      <div class="v-empty-actions"><slot></slot></div>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VTimeline
+// ---------------------------------------------------------------------------
+
+interface TimelineItem {
+  title: string;
+  description: string;
+  time: string;
+  tone: string;
+}
+
+/** Le `Pedido criado|Recebemos seu pedido|09:12; Enviado||14:30`. */
+function parseTimeline(raw: unknown): TimelineItem[] {
+  if (Array.isArray(raw)) {
+    return raw.map((item) => {
+      if (item != null && typeof item === 'object') {
+        const source = item as Record<string, unknown>;
+        return {
+          title: String(source.title ?? source.label ?? ''),
+          description: String(source.description ?? source.text ?? ''),
+          time: String(source.time ?? source.date ?? ''),
+          tone: String(source.tone ?? 'primary'),
+        };
+      }
+      return { title: String(item), description: '', time: '', tone: 'primary' };
+    });
+  }
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  return raw
+    .split(';')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const parts = entry.split('|').map((part) => part.trim());
+      return {
+        title: parts[0] ?? '',
+        description: parts[1] ?? '',
+        time: parts[2] ?? '',
+        tone: parts[3] || 'primary',
+      };
+    });
+}
+
+register('v-timeline', {
+  inheritScope: true,
+  props: {
+    items: { type: 'any', default: '' },
+  },
+  computed: {
+    entries(this: any): TimelineItem[] {
+      return parseTimeline(fromOuterScope(this, this.items) ?? this.items);
+    },
+  },
+  template: `
+    <ol class="v-timeline">
+      <li class="v-timeline-item" v-for="(entry, index) in entries" :key="index" :data-tone="entry.tone">
+        <span class="v-timeline-rail" aria-hidden="true"><span class="v-timeline-dot"></span></span>
+        <div class="v-timeline-body">
+          <div class="v-timeline-title" v-text="entry.title"></div>
+          <p class="v-timeline-desc" v-if="entry.description" v-text="entry.description"></p>
+          <time class="v-timeline-time" v-if="entry.time" v-text="entry.time"></time>
+        </div>
+      </li>
+      <li class="v-timeline-item" v-if="!entries.length">
+        <span class="v-timeline-rail" aria-hidden="true"><span class="v-timeline-dot"></span></span>
+        <div class="v-timeline-body"><slot></slot></div>
+      </li>
+    </ol>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VSteps
+// ---------------------------------------------------------------------------
+
+register('v-steps', {
+  inheritScope: true,
+  props: {
+    steps: { type: 'any', default: '' },
+    current: { type: 'number', default: 0 },
+    vertical: BOOL,
+    ariaLabel: { type: 'string', default: 'Etapas' },
+  },
+  computed: {
+    ...flags('vertical'),
+    list(this: any): string[] {
+      const source = fromOuterScope(this, this.steps) ?? this.steps;
+      if (Array.isArray(source)) {
+        return source.map((item) =>
+          item != null && typeof item === 'object'
+            ? String((item as Record<string, unknown>).label ?? (item as Record<string, unknown>).title ?? '')
+            : String(item)
+        );
+      }
+      return typeof source === 'string' ? splitList(source) : [];
+    },
+    currentIndex(this: any): number {
+      const value = Number(this.current);
+      return Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;
+    },
+  },
+  methods: {
+    stateOf(this: any, index: number): string {
+      if (index < this.currentIndex) return 'done';
+      if (index === this.currentIndex) return 'current';
+      return 'todo';
+    },
+  },
+  template: `
+    <ol class="v-steps" :data-vertical="isVertical" :aria-label="ariaLabel">
+      <li class="v-step" v-for="(step, index) in list" :key="index" :data-state="stateOf(index)"
+        :aria-current="index === currentIndex ? 'step' : null">
+        <span class="v-step-line" aria-hidden="true"></span>
+        <span class="v-step-mark" aria-hidden="true">
+          <span v-if="stateOf(index) === 'done'" v-html="svgIcon('check')"></span>
+          <span v-if="stateOf(index) !== 'done'" v-text="index + 1"></span>
+        </span>
+        <span class="v-step-text"><span class="v-step-label" v-text="step"></span></span>
+      </li>
+    </ol>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VRating
+// ---------------------------------------------------------------------------
+
+register('v-rating', {
+  props: {
+    value: { type: 'number', default: 0 },
+    max: { type: 'number', default: 5 },
+    size: { type: 'string', default: 'md' },
+    label: { type: 'string', default: 'Avaliação' },
+    readonly: BOOL,
+    disabled: BOOL,
+    showValue: BOOL,
+    allowClear: { type: 'any', default: true },
+  },
+  state() {
+    return { hovered: 0 };
+  },
+  computed: {
+    ...flags('readonly', 'disabled', 'showValue'),
+    locked(this: any): boolean {
+      return flag(this.readonly) || flag(this.disabled);
+    },
+    total(this: any): number {
+      const value = Number(this.max);
+      return Number.isFinite(value) && value > 0 ? Math.floor(value) : 5;
+    },
+    score(this: any): number {
+      const value = Number(this.value);
+      return Number.isFinite(value) ? Math.min(Math.max(0, value), this.total) : 0;
+    },
+    shown(this: any): number {
+      return this.hovered > 0 ? this.hovered : this.score;
+    },
+    valueText(this: any): string {
+      return `${this.score} de ${this.total}`;
+    },
+  },
+  methods: {
+    isOn(this: any, index: number): boolean {
+      return index <= this.shown;
+    },
+    pick(this: any, index: number): void {
+      if (this.locked) return;
+      const clears = this.allowClear === true || flag(this.allowClear);
+      const next = clears && this.score === index ? 0 : index;
+      this.value = next;
+      this.hovered = 0;
+      notify(this.$el);
+      this.emit('change', next);
+    },
+    preview(this: any, index: number): void {
+      if (this.locked) return;
+      this.hovered = index;
+    },
+    reset(this: any): void {
+      this.hovered = 0;
+    },
+    onKey(this: any, event: KeyboardEvent): void {
+      if (this.locked) return;
+      const key = event.key;
+      if (key === 'ArrowRight' || key === 'ArrowUp') {
+        event.preventDefault();
+        this.pick(Math.min(this.total, this.score + 1));
+      } else if (key === 'ArrowLeft' || key === 'ArrowDown') {
+        event.preventDefault();
+        this.pick(Math.max(0, this.score - 1));
+      } else if (key === 'Home') {
+        event.preventDefault();
+        this.pick(1);
+      } else if (key === 'End') {
+        event.preventDefault();
+        this.pick(this.total);
+      }
+    },
+  },
+  beforeMount(this: any): void {
+    hostModel(this, {
+      get: () => this.score,
+      set: (next: unknown) => {
+        const value = Number(next);
+        this.value = Number.isFinite(value) ? value : 0;
+      },
+    });
+  },
+  template: `
+    <div class="v-rating" :data-size="size" role="slider" :aria-label="label"
+      aria-valuemin="0" :aria-valuemax="total" :aria-valuenow="score" :aria-valuetext="valueText"
+      :tabindex="locked ? -1 : 0" :aria-readonly="locked" v-keydown="onKey" v-mouseleave="reset">
+      <span class="v-rating-stars">
+        <button type="button" class="v-star" v-for="index in total" :key="index"
+          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' de ' + total"
+          :tabindex="-1" v-click="pick(index)" v-mouseenter="preview(index)"
+          v-html="svgIcon('star')"></button>
+      </span>
+      <span class="v-rating-value" v-if="isShowValue" v-text="valueText"></span>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VTooltipButton
+// ---------------------------------------------------------------------------
+
+register('v-tooltip-button', {
+  props: {
+    tooltip: TEXT,
+    placement: { type: 'string', default: 'top' },
+    variant: { type: 'string', default: 'ghost' },
+    size: { type: 'string', default: 'md' },
+    icon: TEXT,
+    type: { type: 'string', default: 'button' },
+    disabled: BOOL,
+    ariaLabel: TEXT,
+  },
+  state() {
+    return { tipId: uid('v-tip-') };
+  },
+  computed: {
+    ...flags('disabled'),
+    accessibleName(this: any): string | null {
+      return this.ariaLabel || null;
+    },
+  },
+  template: `
+    <span class="v-tipwrap">
+      <button class="v-btn" :type="type" :data-variant="variant" :data-size="size"
+        :disabled="isDisabled" :aria-describedby="tooltip ? tipId : null" :aria-label="accessibleName">
+        <span class="v-btn-ic" v-if="icon" v-html="svgIcon(icon)"></span>
+        <span class="v-btn-label"><slot></slot></span>
+      </button>
+      <span class="v-tip" v-if="tooltip" :id="tipId" role="tooltip"
+        :data-placement="placement" v-text="tooltip"></span>
+    </span>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// VCodeBlock
+// ---------------------------------------------------------------------------
+
+/** Copia texto usando a API moderna, com recurso antigo como reserva. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Cai para o modo reserva abaixo.
+  }
+  try {
+    const holder = document.createElement('textarea');
+    holder.value = text;
+    holder.setAttribute('readonly', '');
+    holder.style.position = 'fixed';
+    holder.style.opacity = '0';
+    document.body.appendChild(holder);
+    holder.select();
+    const ok = document.execCommand('copy');
+    holder.remove();
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+register('v-code-block', {
+  props: {
+    code: TEXT,
+    language: TEXT,
+    filename: TEXT,
+    copyLabel: { type: 'string', default: 'Copiar' },
+    copiedLabel: { type: 'string', default: 'Copiado' },
+    wrap: BOOL,
+  },
+  state() {
+    return { copied: false };
+  },
+  computed: {
+    ...flags('wrap'),
+    header(this: any): string {
+      return this.filename || this.language || '';
+    },
+    buttonLabel(this: any): string {
+      return this.copied ? this.copiedLabel : this.copyLabel;
+    },
+    buttonIcon(this: any): string {
+      return this.copied ? 'check' : 'copy';
+    },
+  },
+  methods: {
+    async copy(this: any): Promise<void> {
+      const holder = this.$refs.code as HTMLElement | undefined;
+      const text = this.code || holder?.textContent || '';
+      const ok = await copyText(String(text));
+      if (!ok) return;
+      this.copied = true;
+      this.emit('copy', text);
+      setTimeout(() => {
+        this.copied = false;
+      }, 1800);
+    },
+  },
+  template: `
+    <div class="v-code" :data-wrap="isWrap">
+      <div class="v-code-head">
+        <span class="v-code-name" v-text="header"></span>
+        <button type="button" class="v-code-copy" :data-copied="copied"
+          :aria-label="buttonLabel" v-click="copy">
+          <span v-html="svgIcon(buttonIcon)" aria-hidden="true"></span>
+          <span v-text="buttonLabel"></span>
+        </button>
+      </div>
+      <pre class="v-code-pre"><code v-ref="code" :class="language ? 'language-' + language : null"
+        v-text="code"><slot></slot></code></pre>
+    </div>
+  `,
+});
+
+// ---------------------------------------------------------------------------
+// Registro publico
+// ---------------------------------------------------------------------------
+
+/** Nomes de todos os componentes registrados por este modulo. */
+export const componentNames = [
+  'v-button',
+  'v-icon-button',
+  'v-card',
+  'v-input',
+  'v-textarea',
+  'v-select',
+  'v-checkbox',
+  'v-radio',
+  'v-switch',
+  'v-label',
+  'v-field',
+  'v-badge',
+  'v-tag',
+  'v-alert',
+  'v-avatar',
+  'v-spinner',
+  'v-skeleton',
+  'v-progress',
+  'v-divider',
+  'v-table',
+  'v-pagination',
+  'v-breadcrumb',
+  'v-stat',
+  'v-empty-state',
+  'v-timeline',
+  'v-steps',
+  'v-rating',
+  'v-tooltip-button',
+  'v-code-block',
+] as const;
+
+/** Conjunto de icones disponivel para as props `icon` dos componentes. */
+export const iconNames = Object.keys(ICON_PATHS);
+
+export { iconSvg, ensureStyles as ensureComponentStyles };

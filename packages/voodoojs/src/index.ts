@@ -29,6 +29,8 @@ import './directives/forms';
 import './directives/state';
 import './motion';
 import './charts';
+// Registra os componentes prontos: VButton, VCard, VInput, VSelect e os demais.
+import './ui/components';
 
 import { modal, alert, confirm, prompt, dialog } from './ui/dialog';
 import { palette } from './ui/palette';

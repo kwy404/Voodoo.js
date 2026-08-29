@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel administrativo com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle completo: esta demo usa o modulo de graficos. -->
+<script src="../../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
+<style>
+  body { background: var(--v-color-bg); min-height: 100vh; }
+
+  .db-shell { max-width: 1320px; margin: 0 auto; padding: var(--v-space-6) var(--v-space-4) var(--v-space-16); }
+
+  /* ---------- cabecalho ---------- */
+  .db-topo {
+    display: flex; align-items: center; gap: var(--v-space-4);
+    flex-wrap: wrap; margin-bottom: var(--v-space-6);
+  }
+  .db-titulo { font-family: var(--v-font-display); font-size: var(--v-text-2xl); margin: 0; letter-spacing: var(--v-tracking-tight); }
+  .db-sub { color: var(--v-text-muted); font-size: var(--v-text-sm); margin: 2px 0 0; }
+
+  .db-periodos { display: flex; gap: 4px; padding: 4px; background: var(--v-surface-2); border: 1px solid var(--v-border); border-radius: var(--v-radius-full); }
+  .db-periodo {
+    border: 0; background: transparent; color: var(--v-text-muted); cursor: pointer;
+    border-radius: var(--v-radius-full); padding: 6px 15px;
+    font: var(--v-weight-semibold) var(--v-text-sm)/1 var(--v-font-sans);
+    transition: background var(--v-duration-fast), color var(--v-duration-fast);
+  }
+  .db-periodo:hover { color: var(--v-text); }
+  .db-periodo[aria-pressed="true"] { background: var(--v-primary); color: var(--v-primary-contrast); box-shadow: var(--v-shadow-sm); }
+
+  /* ---------- metricas ---------- */
+  .db-metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: var(--v-space-4); margin-bottom: var(--v-space-5); }
+  .db-metrica {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); padding: var(--v-space-5);
+    box-shadow: var(--v-shadow-sm);
+  }
+  .db-metrica::after {
+    content: ""; position: absolute; inset: auto auto -30px -20px;
+    width: 120px; height: 90px; border-radius: 50%;
+    background: var(--db-cor, var(--v-primary)); opacity: .1; filter: blur(10px);
+  }
+  .db-metrica-topo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .db-metrica-icone {
+    width: 34px; height: 34px; flex: none; border-radius: var(--v-radius-md);
+    display: grid; place-items: center; font-size: 16px;
+    background: color-mix(in srgb, var(--db-cor, var(--v-primary)) 16%, transparent);
+    color: var(--db-cor, var(--v-primary));
+  }
+  .db-metrica-rotulo { font-size: var(--v-text-xs); text-transform: uppercase; letter-spacing: var(--v-tracking-wide); color: var(--v-text-subtle); font-weight: var(--v-weight-semibold); }
+  .db-metrica-valor { position: relative; font-family: var(--v-font-display); font-size: var(--v-text-3xl); line-height: 1; font-variant-numeric: tabular-nums; }
+  .db-metrica-rodape { position: relative; display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: var(--v-text-sm); }
+  .db-alta { color: var(--v-success); font-weight: var(--v-weight-semibold); }
+  .db-baixa { color: var(--v-danger); font-weight: var(--v-weight-semibold); }
+
+  /* ---------- paineis ---------- */
+  .db-linha { display: grid; gap: var(--v-space-4); margin-bottom: var(--v-space-5); }
+  .db-linha--2 { grid-template-columns: 1.7fr 1fr; }
+  .db-painel {
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); padding: var(--v-space-5); box-shadow: var(--v-shadow-sm);
+  }
+  .db-painel-topo { display: flex; align-items: baseline; gap: var(--v-space-3); margin-bottom: var(--v-space-4); flex-wrap: wrap; }
+  .db-painel-titulo { font-family: var(--v-font-display); font-size: var(--v-text-lg); margin: 0; }
+  .db-painel-nota { color: var(--v-text-muted); font-size: var(--v-text-sm); margin: 0; }
+
+  /* ---------- tabela ---------- */
+  .db-ordenavel { cursor: pointer; user-select: none; white-space: nowrap; }
+  .db-ordenavel:hover { color: var(--v-primary); }
+  .db-seta { opacity: .45; font-size: 10px; margin-left: 3px; }
+  .db-seta-ativa { opacity: 1; color: var(--v-primary); }
+  .db-vazio { text-align: center; padding: var(--v-space-12) var(--v-space-4); color: var(--v-text-muted); }
+
+  .db-pilula { display: inline-flex; align-items: center; gap: 6px; }
+  .db-ponto { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .db-barra-mini { display: block; height: 6px; width: 100%; max-width: 120px; background: var(--v-surface-3); border-radius: var(--v-radius-full); overflow: hidden; }
+  .db-barra-mini span { display: block; height: 100%; border-radius: var(--v-radius-full); background: var(--v-primary); }
+
+  @media (max-width: 960px) {
+    .db-linha--2 { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .db-periodo, .db-metrica { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="db-shell" v-component="painel" v-cloak>
+
+  <header class="db-topo">
+    <div>
+      <h1 class="db-titulo">Painel de vendas</h1>
+      <p class="db-sub">Dados gerados no navegador, sem servidor. Periodo de { rotuloPeriodo }.</p>
+    </div>
+    <div class="v-push"></div>
+
+    <div class="db-periodos" role="group" aria-label="Periodo">
+      <button class="db-periodo" v-for="op in periodos" :key="op.dias"
+              v-click="trocarPeriodo(op.dias)"
+              :aria-pressed="periodo === op.dias ? 'true' : 'false'">{ op.rotulo }</button>
+    </div>
+
+    <button class="v-btn v-btn--ghost v-btn--sm v-btn--icon" v-theme-toggle aria-label="Alternar tema">
+      <span aria-hidden="true">◐</span>
+    </button>
+  </header>
+
+  <!-- Metricas com numeros animados -->
+  <section class="db-metricas">
+    <article class="db-metrica" v-for="m in metricas" :key="m.chave" :style="{ '--db-cor': m.cor }">
+      <div class="db-metrica-topo">
+        <span class="db-metrica-icone" aria-hidden="true">{ m.icone }</span>
+        <span class="db-metrica-rotulo">{ m.rotulo }</span>
+      </div>
+      <div class="db-metrica-valor" v-count="m.valor" v-count-duration="900"
+           :v-count-format="m.formato" :v-count-prefix="m.prefixo" :v-count-suffix="m.sufixo"></div>
+      <div class="db-metrica-rodape">
+        <span :class="m.variacao >= 0 ? 'db-alta' : 'db-baixa'">
+          { m.variacao >= 0 ? '▲' : '▼' } { Math.abs(m.variacao).toFixed(1) }%
+        </span>
+        <span class="v-text-muted">contra o periodo anterior</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- Receita e rosca -->
+  <section class="db-linha db-linha--2">
+    <div class="db-painel">
+      <div class="db-painel-topo">
+        <h2 class="db-painel-titulo">Receita</h2>
+        <p class="db-painel-nota">Total de { totalReceitaFormatado } no periodo</p>
+      </div>
+      <div v-chart="graficoReceita"></div>
+    </div>
+
+    <div class="db-painel">
+      <div class="db-painel-topo">
+        <h2 class="db-painel-titulo">Canais</h2>
+      </div>
+      <div v-chart="graficoCanais"></div>
+    </div>
+  </section>
+
+  <!-- Barras por categoria -->
+  <section class="db-linha">
+    <div class="db-painel">
+      <div class="db-painel-topo">
+        <h2 class="db-painel-titulo">Vendas por categoria</h2>
+        <p class="db-painel-nota">Comparando com o periodo anterior</p>
+      </div>
+      <div v-chart="graficoCategorias"></div>
+    </div>
+  </section>
+
+  <!-- Tabela -->
+  <section class="db-painel">
+    <div class="db-painel-topo">
+      <h2 class="db-painel-titulo">Pedidos</h2>
+      <p class="db-painel-nota">{ pedidosFiltrados.length } de { pedidos.length } pedidos</p>
+      <div class="v-push"></div>
+      <input class="v-input" type="search" placeholder="Buscar cliente, produto ou cidade"
+             v-model="busca" v-debounce="250" style="max-width: 280px"
+             aria-label="Buscar pedidos">
+    </div>
+
+    <div class="v-table-wrap" v-show="pedidosFiltrados.length">
+      <table class="v-table v-table--hover">
+        <thead>
+          <tr>
+            <th class="db-ordenavel" v-for="col in colunas" :key="col.chave" v-click="ordenarPor(col.chave)"
+                :aria-sort="ordem === col.chave ? (crescente ? 'ascending' : 'descending') : 'none'">
+              { col.rotulo }
+              <span class="db-seta" :class="ordem === col.chave ? 'db-seta-ativa' : ''">
+                { ordem === col.chave ? (crescente ? '▲' : '▼') : '↕' }
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in pedidosFiltrados" :key="p.id">
+            <td class="v-mono v-text-sm v-text-muted">#{ p.id }</td>
+            <td class="v-weight-semibold">{ p.cliente }</td>
+            <td>{ p.produto }</td>
+            <td>{ p.cidade }</td>
+            <td>
+              <span class="db-pilula">
+                <span class="db-ponto" :style="{ background: corDoStatus(p.status) }"></span>
+                { p.status }
+              </span>
+            </td>
+            <td class="v-tabular">{ formatarData(p.data) }</td>
+            <td class="v-tabular v-weight-semibold">{ formatarMoeda(p.valor) }</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="db-vazio" v-if="!pedidosFiltrados.length">
+      <p class="v-text-lg v-weight-semibold">Nenhum pedido encontrado</p>
+      <p>Nao achamos nada para "{ busca }" neste periodo.</p>
+      <button class="v-btn v-btn--secondary v-mt-4" v-click="busca = ''">Limpar a busca</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  var CATEGORIAS = ['Eletronicos', 'Moda', 'Casa', 'Esporte', 'Livros', 'Beleza'];
+  var CANAIS = ['Loja online', 'Aplicativo', 'Marketplace', 'Loja fisica'];
+  var STATUS = ['Pago', 'Enviado', 'Entregue', 'Cancelado'];
+  var CORES_STATUS = { Pago: '#6D3BF5', Enviado: '#FFB35C', Entregue: '#2ED9A5', Cancelado: '#FF4D4D' };
+
+  var NOMES = ['Ana Souza', 'Bruno Lima', 'Carla Dias', 'Diego Rocha', 'Elisa Prado',
+    'Fabio Nunes', 'Gabriela Reis', 'Heitor Alves', 'Isabel Cruz', 'Joao Bastos',
+    'Karina Melo', 'Lucas Farias', 'Marina Tavares', 'Nelson Pinto', 'Olivia Ramos'];
+  var PRODUTOS = ['Fone sem fio', 'Tenis de corrida', 'Cafeteira', 'Mochila urbana',
+    'Monitor 27 polegadas', 'Jaqueta corta vento', 'Luminaria de mesa', 'Teclado mecanico',
+    'Panela de ferro', 'Livro de fotografia'];
+  var CIDADES = ['Sao Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba',
+    'Porto Alegre', 'Recife', 'Salvador', 'Fortaleza', 'Manaus', 'Goiania'];
+
+  /**
+   * Gerador simples com semente, para os numeros nascerem sempre iguais.
+   * Assim o painel nao muda de valores a cada recarregar, o que atrapalharia
+   * a comparacao entre periodos.
+   */
+  function gerador(semente) {
+    var estado = semente;
+    return function () {
+      estado = (estado * 1664525 + 1013904223) % 4294967296;
+      return estado / 4294967296;
+    };
+  }
+
+  var aleatorio = gerador(20260828);
+
+  /** Base de pedidos dos ultimos 180 dias, criada uma vez so. */
+  function criarPedidos() {
+    var lista = [];
+    var hoje = Date.now();
+    for (var i = 0; i < 420; i++) {
+      var diasAtras = Math.floor(aleatorio() * 180);
+      var categoria = CATEGORIAS[Math.floor(aleatorio() * CATEGORIAS.length)];
+      lista.push({
+        id: 4200 + i,
+        cliente: NOMES[Math.floor(aleatorio() * NOMES.length)],
+        produto: PRODUTOS[Math.floor(aleatorio() * PRODUTOS.length)],
+        cidade: CIDADES[Math.floor(aleatorio() * CIDADES.length)],
+        categoria: categoria,
+        canal: CANAIS[Math.floor(aleatorio() * CANAIS.length)],
+        status: STATUS[Math.floor(aleatorio() * STATUS.length)],
+        valor: Math.round((60 + aleatorio() * 1900) * 100) / 100,
+        data: hoje - diasAtras * 86400000,
+        diasAtras: diasAtras
+      });
+    }
+    return lista;
+  }
+
+  var TODOS = criarPedidos();
+
+  V.component('painel', {
+    state: function () {
+      return {
+        todos: TODOS,
+        periodo: 30,
+        busca: '',
+        ordem: 'data',
+        crescente: false,
+        periodos: [
+          { dias: 7, rotulo: '7 dias' },
+          { dias: 30, rotulo: '30 dias' },
+          { dias: 90, rotulo: '90 dias' },
+          { dias: 180, rotulo: '6 meses' }
+        ],
+        colunas: [
+          { chave: 'id', rotulo: 'Pedido' },
+          { chave: 'cliente', rotulo: 'Cliente' },
+          { chave: 'produto', rotulo: 'Produto' },
+          { chave: 'cidade', rotulo: 'Cidade' },
+          { chave: 'status', rotulo: 'Status' },
+          { chave: 'data', rotulo: 'Data' },
+          { chave: 'valor', rotulo: 'Valor' }
+        ]
+      };
+    },
+
+    computed: {
+      rotuloPeriodo: function () {
+        var atual = this.periodos.filter(function (p) { return p.dias === this.periodo; }, this);
+        return atual.length ? atual[0].rotulo : this.periodo + ' dias';
+      },
+
+      /** Pedidos dentro do periodo escolhido. Base de todos os graficos. */
+      pedidos: function () {
+        var limite = this.periodo;
+        return this.todos.filter(function (p) { return p.diasAtras < limite; });
+      },
+
+      /** Mesmo tamanho de janela, porem deslocado para tras. */
+      pedidosAnteriores: function () {
+        var limite = this.periodo;
+        return this.todos.filter(function (p) {
+          return p.diasAtras >= limite && p.diasAtras < limite * 2;
+        });
+      },
+
+      totalReceita: function () {
+        return this.pedidos.reduce(function (soma, p) { return soma + p.valor; }, 0);
+      },
+
+      totalReceitaFormatado: function () { return V.formatCurrency(this.totalReceita); },
+
+      metricas: function () {
+        var atuais = this.pedidos;
+        var antes = this.pedidosAnteriores;
+        var soma = function (lista) {
+          return lista.reduce(function (total, p) { return total + p.valor; }, 0);
+        };
+        var receita = soma(atuais);
+        var receitaAntes = soma(antes);
+        var clientes = V.unique(atuais.map(function (p) { return p.cliente; })).length;
+        var clientesAntes = V.unique(antes.map(function (p) { return p.cliente; })).length;
+        var ticket = atuais.length ? receita / atuais.length : 0;
+        var ticketAntes = antes.length ? receitaAntes / antes.length : 0;
+
+        var variacao = function (agora, antigo) {
+          if (!antigo) return agora ? 100 : 0;
+          return ((agora - antigo) / antigo) * 100;
+        };
+
+        return [
+          { chave: 'receita', rotulo: 'Receita', icone: '◈', cor: '#6D3BF5',
+            valor: receita, formato: 'currency', prefixo: '', sufixo: '',
+            variacao: variacao(receita, receitaAntes) },
+          { chave: 'pedidos', rotulo: 'Pedidos', icone: '▤', cor: '#FF3D8B',
+            valor: atuais.length, formato: 'number', prefixo: '', sufixo: '',
+            variacao: variacao(atuais.length, antes.length) },
+          { chave: 'ticket', rotulo: 'Ticket medio', icone: '◎', cor: '#2ED9A5',
+            valor: ticket, formato: 'currency', prefixo: '', sufixo: '',
+            variacao: variacao(ticket, ticketAntes) },
+          { chave: 'clientes', rotulo: 'Clientes unicos', icone: '☺', cor: '#FFB35C',
+            valor: clientes, formato: 'number', prefixo: '', sufixo: '',
+            variacao: variacao(clientes, clientesAntes) }
+        ];
+      },
+
+      /** Receita agrupada em fatias de tempo, para o grafico de linha. */
+      graficoReceita: function () {
+        var passos = this.periodo <= 7 ? 7 : this.periodo <= 30 ? 10 : 12;
+        var tamanho = Math.ceil(this.periodo / passos);
+        var baldes = [];
+        var rotulos = [];
+
+        for (var i = passos - 1; i >= 0; i--) {
+          var inicio = i * tamanho;
+          var fim = inicio + tamanho;
+          var soma = this.pedidos.reduce(function (total, p) {
+            return p.diasAtras >= inicio && p.diasAtras < fim ? total + p.valor : total;
+          }, 0);
+          baldes.push(Math.round(soma));
+          rotulos.push(inicio === 0 ? 'hoje' : 'ha ' + inicio + 'd');
+        }
+
+        return {
+          type: 'area',
+          name: 'Receita',
+          data: baldes,
+          labels: rotulos,
+          format: 'currency',
+          smooth: true,
+          height: 280,
+          colors: ['#6D3BF5']
+        };
+      },
+
+      graficoCategorias: function () {
+        var atual = this.somarPor(this.pedidos, 'categoria');
+        var antes = this.somarPor(this.pedidosAnteriores, 'categoria');
+        return {
+          // Nesta biblioteca `bar` desenha em pe e `column` desenha deitado.
+          type: 'bar',
+          labels: CATEGORIAS,
+          data: [
+            { name: 'Periodo atual', data: CATEGORIAS.map(function (c) { return Math.round(atual[c] || 0); }), color: '#6D3BF5' },
+            { name: 'Periodo anterior', data: CATEGORIAS.map(function (c) { return Math.round(antes[c] || 0); }), color: '#9B7BFF' }
+          ],
+          format: 'currency',
+          height: 300
+        };
+      },
+
+      graficoCanais: function () {
+        var porCanal = this.somarPor(this.pedidos, 'canal');
+        return {
+          type: 'donut',
+          data: CANAIS.map(function (c) { return { label: c, value: Math.round(porCanal[c] || 0) }; }),
+          format: 'currency',
+          height: 280,
+          colors: ['#6D3BF5', '#FF3D8B', '#2ED9A5', '#FFB35C']
+        };
+      },
+
+      /** Tabela: aplica a busca e depois a ordenacao escolhida. */
+      pedidosFiltrados: function () {
+        var termo = String(this.busca || '').trim().toLowerCase();
+        var lista = this.pedidos;
+
+        if (termo) {
+          lista = lista.filter(function (p) {
+            return p.cliente.toLowerCase().indexOf(termo) !== -1 ||
+              p.produto.toLowerCase().indexOf(termo) !== -1 ||
+              p.cidade.toLowerCase().indexOf(termo) !== -1 ||
+              p.status.toLowerCase().indexOf(termo) !== -1;
+          });
+        }
+
+        return V.sortBy(lista, this.ordem, this.crescente ? 'asc' : 'desc').slice(0, 40);
+      }
+    },
+
+    methods: {
+      somarPor: function (lista, campo) {
+        var saida = {};
+        for (var i = 0; i < lista.length; i++) {
+          var chave = lista[i][campo];
+          saida[chave] = (saida[chave] || 0) + lista[i].valor;
+        }
+        return saida;
+      },
+
+      trocarPeriodo: function (dias) { this.periodo = dias; },
+
+      ordenarPor: function (chave) {
+        if (this.ordem === chave) this.crescente = !this.crescente;
+        else { this.ordem = chave; this.crescente = false; }
+      },
+
+      corDoStatus: function (status) { return CORES_STATUS[status] || 'var(--v-text-muted)'; },
+      formatarMoeda: function (valor) { return V.formatCurrency(valor); },
+      formatarData: function (valor) { return V.formatDate(valor, 'DD/MM/YYYY'); }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+});
+</script>
+</body>
+</html>

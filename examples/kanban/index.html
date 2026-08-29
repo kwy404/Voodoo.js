@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quadro Kanban com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle essencial: esta demo usa directives, componentes, dialogos e arrastar e soltar. -->
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ------------------------------------------------------------------
+     Regra da casa: nada de CSS baseado em atributo v-*, porque a Voodoo
+     limpa esses atributos do HTML depois de processar. Aqui so entram
+     classes normais, atributos data-* e as classes que a propria
+     biblioteca aplica no arrastar e soltar.
+     ------------------------------------------------------------------ */
+
+  body {
+    background:
+      radial-gradient(1000px 480px at 12% -10%, color-mix(in srgb, var(--v-primary) 18%, transparent), transparent 62%),
+      radial-gradient(820px 420px at 90% 0%, color-mix(in srgb, var(--v-accent) 14%, transparent), transparent 60%),
+      var(--v-color-bg);
+    min-height: 100vh;
+  }
+
+  .kb-app {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: var(--v-space-6) var(--v-space-4) var(--v-space-12);
+  }
+
+  /* Evita o piscar das chaves de interpolacao antes da Voodoo iniciar.
+     A classe sai no fim do script, logo depois de V.start(). */
+  .kb-app.is-oculto { visibility: hidden; }
+
+  /* ---------------- cabecalho ---------------- */
+  .kb-topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--v-space-6);
+  }
+  .kb-marca {
+    width: 44px; height: 44px; flex: none;
+    border-radius: var(--v-radius-md);
+    background: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+    box-shadow: var(--v-shadow-glow);
+    display: grid; place-items: center;
+  }
+  .kb-marca span {
+    display: block; width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+  }
+  .kb-titulo {
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-2xl);
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-tight);
+    margin: 0;
+  }
+  .kb-subtitulo {
+    margin: 2px 0 0;
+    font-size: var(--v-text-sm);
+    color: var(--v-text-muted);
+  }
+
+  /* ---------------- controles ---------------- */
+  .kb-controles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-4);
+    margin-bottom: var(--v-space-5);
+    background: color-mix(in srgb, var(--v-surface) 70%, transparent);
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .kb-busca { flex: 1 1 240px; min-width: 200px; }
+  .kb-chips { display: flex; flex-wrap: wrap; gap: var(--v-space-2); }
+
+  .kb-chip {
+    --kb-cor: var(--v-text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-semibold);
+    line-height: 1.4;
+    color: var(--v-text-muted);
+    background: var(--v-surface);
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-full);
+    cursor: pointer;
+    transition:
+      background-color var(--v-duration-fast) var(--v-ease-out),
+      border-color var(--v-duration-fast) var(--v-ease-out),
+      color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .kb-chip:hover { border-color: var(--v-border-strong); color: var(--v-text); }
+  .kb-chip::before {
+    content: "";
+    width: 8px; height: 8px; flex: none;
+    border-radius: 50%;
+    background: var(--kb-cor);
+  }
+  .kb-chip.is-ativo {
+    color: color-mix(in srgb, var(--kb-cor) 68%, var(--v-text));
+    background: color-mix(in srgb, var(--kb-cor) 16%, var(--v-surface));
+    border-color: color-mix(in srgb, var(--kb-cor) 44%, transparent);
+  }
+  .kb-chip--todas::before { background: var(--v-border-strong); }
+
+  .kb-resumo {
+    font-size: var(--v-text-sm);
+    color: var(--v-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- quadro ---------------- */
+  .kb-quadro {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--v-space-4);
+  }
+
+  .kb-coluna {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
+    max-height: min(68vh, 640px);
+    background: color-mix(in srgb, var(--v-surface) 62%, transparent);
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    box-shadow: var(--v-shadow-sm);
+  }
+
+  .kb-coluna__topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-2);
+    padding: var(--v-space-3) var(--v-space-3) var(--v-space-3) var(--v-space-4);
+    border-bottom: var(--v-border-width) solid var(--v-border);
+  }
+  .kb-ponto {
+    width: 10px; height: 10px; flex: none;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+  }
+  .kb-coluna__nome {
+    margin: 0;
+    font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-wide);
+    text-transform: uppercase;
+    color: var(--v-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kb-conta {
+    font-variant-numeric: tabular-nums;
+    min-width: 1.6rem;
+    justify-content: center;
+  }
+  .kb-espaco { flex: 1 1 auto; }
+
+  .kb-add {
+    flex: none;
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--v-radius-sm);
+    color: var(--v-text-muted);
+    background: transparent;
+    border: var(--v-border-width) solid transparent;
+    cursor: pointer;
+    transition:
+      background-color var(--v-duration-fast) var(--v-ease-out),
+      color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .kb-add:hover { background: var(--v-surface-3); color: var(--v-primary); }
+  .kb-add svg { width: 16px; height: 16px; }
+
+  /* O corpo e quem rola. A lista ocupa toda a altura para que a coluna
+     inteira seja area de soltura, mesmo quando esta vazia. */
+  .kb-coluna__corpo {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 160px;
+    overflow-y: auto;
+    padding: var(--v-space-3);
+    scrollbar-width: thin;
+  }
+
+  .kb-lista {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--v-space-3);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-height: 80px;
+    border-radius: var(--v-radius-md);
+  }
+
+  /* Aviso de coluna vazia. Precisa ficar sem pointer-events, senao o
+     arraste nao enxerga a lista embaixo dele. */
+  .kb-vazio {
+    position: absolute;
+    inset: var(--v-space-3);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--v-space-4);
+    pointer-events: none;
+    font-size: var(--v-text-sm);
+    color: var(--v-text-subtle);
+    border: 1px dashed var(--v-border);
+    border-radius: var(--v-radius-md);
+  }
+
+  /* ---------------- cartao ---------------- */
+  .kb-cartao {
+    --kb-prio: var(--v-border-strong);
+    position: relative;
+    display: flex;
+    gap: var(--v-space-2);
+    padding: var(--v-space-3) var(--v-space-3) var(--v-space-3) var(--v-space-2);
+    background: var(--v-surface);
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-md);
+    box-shadow: var(--v-shadow-sm);
+    transition:
+      box-shadow var(--v-duration-base) var(--v-ease-out),
+      border-color var(--v-duration-base) var(--v-ease-out);
+  }
+  .kb-cartao::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 10px; bottom: 10px;
+    width: 3px;
+    border-radius: var(--v-radius-full);
+    background: var(--kb-prio);
+  }
+  .kb-cartao:hover { box-shadow: var(--v-shadow-md); border-color: var(--v-border-strong); }
+  .kb-cartao:focus-visible {
+    outline: var(--v-focus-width) solid var(--v-focus-ring);
+    outline-offset: var(--v-focus-offset);
+  }
+  .kb-cartao[data-prioridade="alta"]  { --kb-prio: var(--v-danger); }
+  .kb-cartao[data-prioridade="media"] { --kb-prio: var(--v-warning); }
+  .kb-cartao[data-prioridade="baixa"] { --kb-prio: var(--v-success); }
+
+  /* Alca de arraste: mantem o resto do cartao livre para clicar e para
+     rolar a coluna com o dedo. */
+  .kb-alca {
+    flex: none;
+    width: 14px;
+    align-self: stretch;
+    border-radius: var(--v-radius-sm);
+    color: var(--v-text-subtle);
+    opacity: 0.5;
+    cursor: grab;
+    touch-action: none;
+    background-image: radial-gradient(currentColor 1.1px, transparent 1.2px);
+    background-size: 6px 6px;
+    background-position: center;
+    transition: opacity var(--v-duration-fast) var(--v-ease-out);
+  }
+  .kb-cartao:hover .kb-alca { opacity: 1; }
+
+  .kb-cartao__corpo { flex: 1 1 auto; min-width: 0; }
+  .kb-cartao__linha {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-2);
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .kb-etiqueta {
+    --kb-cor: var(--v-primary);
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 0.6875rem;
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-wide);
+    text-transform: uppercase;
+    border-radius: var(--v-radius-full);
+    color: color-mix(in srgb, var(--kb-cor) 70%, var(--v-text));
+    background: color-mix(in srgb, var(--kb-cor) 16%, var(--v-surface));
+    border: 1px solid color-mix(in srgb, var(--kb-cor) 34%, transparent);
+  }
+  .kb-prioridade {
+    font-size: var(--v-text-xs);
+    color: var(--v-text-subtle);
+  }
+  .kb-cartao__titulo {
+    margin: 0;
+    font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-semibold);
+    line-height: var(--v-leading-snug);
+    color: var(--v-text);
+    overflow-wrap: anywhere;
+  }
+  .kb-cartao__descricao {
+    margin: 6px 0 0;
+    font-size: var(--v-text-xs);
+    line-height: var(--v-leading-normal);
+    color: var(--v-text-muted);
+    overflow-wrap: anywhere;
+  }
+  .kb-cartao__acoes {
+    display: flex;
+    gap: var(--v-space-1);
+    margin-top: var(--v-space-2);
+    opacity: 0.75;
+    transition: opacity var(--v-duration-fast) var(--v-ease-out);
+  }
+  .kb-cartao:hover .kb-cartao__acoes,
+  .kb-cartao:focus-within .kb-cartao__acoes { opacity: 1; }
+  .kb-perigo { color: var(--v-danger); }
+
+  /* ---------------- feedback do arrastar e soltar ----------------
+     A biblioteca injeta o CSS dela no <head> em tempo de execucao, ou
+     seja, depois deste bloco. Por isso cada regra aqui usa duas classes,
+     para vencer no peso do seletor. */
+  .kb-lista .kb-cartao.v-dragging {
+    opacity: 0.35;
+    outline: 2px dashed var(--v-primary);
+    outline-offset: -2px;
+  }
+  .kb-cartao.v-grabbed {
+    outline: 2px solid var(--v-primary);
+    outline-offset: 2px;
+    box-shadow: var(--v-shadow-glow);
+  }
+  .kb-cartao.v-drag-ghost {
+    border-color: var(--v-primary);
+    box-shadow: var(--v-shadow-lg);
+    opacity: 0.96;
+  }
+  .kb-coluna .kb-lista.v-drop-active {
+    outline: 1px dashed var(--v-border-strong);
+    outline-offset: 4px;
+    background: transparent;
+  }
+  .kb-coluna .kb-lista.v-drop-over {
+    outline: 2px dashed var(--v-primary);
+    outline-offset: 4px;
+    background: color-mix(in srgb, var(--v-primary) 8%, transparent);
+  }
+
+  /* ---------------- modal ---------------- */
+  .kb-modal { max-width: 34rem; }
+  .kb-modal__grade {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--v-space-4);
+  }
+  .kb-modal__corpo { color: var(--v-text); }
+  .kb-fechar {
+    font-size: var(--v-text-xl);
+    line-height: 1;
+  }
+
+  .kb-dica {
+    margin: var(--v-space-6) 0 0;
+    font-size: var(--v-text-xs);
+    color: var(--v-text-subtle);
+    text-align: center;
+  }
+  .kb-dica kbd { margin: 0 2px; }
+
+  /* ---------------- celular ---------------- */
+  @media (max-width: 900px) {
+    .kb-quadro {
+      overflow-x: auto;
+      padding-bottom: var(--v-space-3);
+      scroll-snap-type: x proximity;
+    }
+    .kb-coluna {
+      flex: 0 0 78vw;
+      max-width: 340px;
+      max-height: 72vh;
+      scroll-snap-align: start;
+    }
+    .kb-modal__grade { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .kb-cartao,
+    .kb-chip,
+    .kb-alca,
+    .kb-add,
+    .kb-cartao__acoes { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="kb-app is-oculto" v-component="quadro-kanban">
+
+  <header class="kb-topo">
+    <div class="kb-marca" aria-hidden="true"><span></span></div>
+    <div>
+      <h1 class="kb-titulo">Quadro Kanban</h1>
+      <p class="kb-subtitulo">Arraste os cartoes entre as colunas. Tudo fica salvo neste navegador.</p>
+    </div>
+    <div class="v-push"></div>
+    <button class="v-btn v-btn--ghost v-btn--sm" v-click="restaurarExemplo">Restaurar exemplo</button>
+    <button class="v-btn v-btn--ghost v-btn--sm" v-click="alternarTema">
+      <span aria-hidden="true">◐</span>
+      { tema === 'dark' ? 'Tema claro' : 'Tema escuro' }
+    </button>
+  </header>
+
+  <section class="kb-controles" aria-label="Filtros do quadro">
+    <div class="kb-busca">
+      <label class="v-sr-only" for="kb-busca">Buscar nos cartoes</label>
+      <input id="kb-busca" class="v-input" type="search" placeholder="Buscar por titulo ou descricao"
+             v-model="busca" v-debounce="200">
+    </div>
+
+    <div class="kb-chips" role="group" aria-label="Filtrar por etiqueta">
+      <button class="kb-chip kb-chip--todas" v-click="filtrarEtiqueta('')"
+              v-class="{ 'is-ativo': !filtroEtiqueta }"
+              :aria-pressed="!filtroEtiqueta ? 'true' : 'false'">
+        Todas
+      </button>
+      <button class="kb-chip" v-for="etq in etiquetas" :key="etq.id"
+              :style="{ '--kb-cor': etq.cor }"
+              v-class="{ 'is-ativo': filtroEtiqueta === etq.id }"
+              :aria-pressed="filtroEtiqueta === etq.id ? 'true' : 'false'"
+              v-click="filtrarEtiqueta(etq.id)">
+        { etq.nome }
+      </button>
+    </div>
+
+    <div class="v-push"></div>
+    <p class="kb-resumo">{ resumo }</p>
+    <button class="v-btn v-btn--secondary v-btn--sm" v-show="temFiltro" v-click="limparFiltros">
+      Limpar filtros
+    </button>
+  </section>
+
+  <!-- Todas as listas do quadro pertencem ao mesmo grupo, entao o cartao
+       viaja livremente de uma coluna para a outra. -->
+  <div class="kb-quadro" v-dnd-group="quadro">
+
+    <section class="kb-coluna" v-for="coluna in colunas" :key="coluna.id">
+      <header class="kb-coluna__topo">
+        <span class="kb-ponto" :style="{ background: coluna.cor, color: coluna.cor }" aria-hidden="true"></span>
+        <h2 class="kb-coluna__nome">{ coluna.nome }</h2>
+        <span class="v-badge kb-conta">{ contagens[coluna.id].visiveis }</span>
+        <span class="kb-espaco"></span>
+        <button class="kb-add" v-click="abrirNovo(coluna.id)" :aria-label="'Novo cartao em ' + coluna.nome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="kb-coluna__corpo">
+        <ul class="kb-lista"
+            v-sortable
+            v-sortable-group="quadro"
+            v-sortable-handle=".kb-alca"
+            :data-coluna="coluna.id"
+            :aria-label="'Cartoes em ' + coluna.nome"
+            @voodoo:sorted="aoOrdenar($event)">
+          <li class="kb-cartao" v-for="cartao in porColuna[coluna.id]" :key="cartao.id"
+              :data-id="cartao.id"
+              :data-prioridade="cartao.prioridade"
+              v-show="cartaoVisivel(cartao)">
+            <span class="kb-alca" aria-hidden="true"></span>
+            <div class="kb-cartao__corpo">
+              <div class="kb-cartao__linha">
+                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">
+                  { nomeEtiqueta(cartao.etiqueta) }
+                </span>
+                <span class="kb-prioridade">Prioridade { nomePrioridade(cartao.prioridade) }</span>
+              </div>
+              <h3 class="kb-cartao__titulo">{ cartao.titulo }</h3>
+              <p class="kb-cartao__descricao" v-show="cartao.descricao">{ cartao.descricao }</p>
+              <div class="kb-cartao__acoes">
+                <button class="v-btn v-btn--ghost v-btn--sm" v-click.stop="abrirEdicao(cartao)">Editar</button>
+                <button class="v-btn v-btn--ghost v-btn--sm kb-perigo" v-click.stop="excluir(cartao)">Excluir</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+
+        <p class="kb-vazio" v-show="contagens[coluna.id].visiveis === 0">
+          { contagens[coluna.id].total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <p class="kb-dica">
+    Pelo teclado: navegue ate um cartao com <kbd class="v-kbd">Tab</kbd>,
+    pegue com <kbd class="v-kbd">Espaco</kbd>, mova com as setas e solte com
+    <kbd class="v-kbd">Espaco</kbd>. <kbd class="v-kbd">Esc</kbd> cancela.
+  </p>
+
+  <!-- Modal de criar e editar, montado com v-if e as classes do design system. -->
+  <div class="v-modal-root" v-if="modalAberto" v-transition="fade" v-escape="fecharModal()">
+    <div class="v-backdrop" v-click="fecharModal()"></div>
+
+    <div class="v-modal kb-modal" v-transition="scale" v-focus-trap
+         role="dialog" aria-modal="true" aria-labelledby="kb-modal-titulo">
+      <div class="v-modal__header">
+        <h2 class="v-modal__title" id="kb-modal-titulo">{ tituloDoModal }</h2>
+        <button class="v-modal__close kb-fechar" v-click="fecharModal()" aria-label="Fechar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form @submit.prevent="salvarCartao()">
+        <div class="v-modal__body kb-modal__corpo">
+          <div class="v-field">
+            <label class="v-label" for="kb-campo-titulo">Titulo</label>
+            <input id="kb-campo-titulo" class="v-input" type="text" maxlength="80"
+                   placeholder="O que precisa ser feito?" v-model="rascunho.titulo">
+            <p class="v-field-error" v-show="erro">{ erro }</p>
+          </div>
+
+          <div class="v-field v-mt-4">
+            <label class="v-label" for="kb-campo-descricao">Descricao</label>
+            <textarea id="kb-campo-descricao" class="v-textarea" rows="3" maxlength="240"
+                      placeholder="Detalhes, criterios de aceite, links..."
+                      v-model="rascunho.descricao"></textarea>
+          </div>
+
+          <div class="kb-modal__grade v-mt-4">
+            <div class="v-field">
+              <label class="v-label" for="kb-campo-etiqueta">Etiqueta</label>
+              <select id="kb-campo-etiqueta" class="v-select" v-model="rascunho.etiqueta">
+                <option v-for="etq in etiquetas" :key="etq.id" :value="etq.id">{ etq.nome }</option>
+              </select>
+            </div>
+            <div class="v-field">
+              <label class="v-label" for="kb-campo-prioridade">Prioridade</label>
+              <select id="kb-campo-prioridade" class="v-select" v-model="rascunho.prioridade">
+                <option v-for="p in prioridades" :key="p.id" :value="p.id">{ p.nome }</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="v-field v-mt-4">
+            <label class="v-label" for="kb-campo-coluna">Coluna</label>
+            <select id="kb-campo-coluna" class="v-select" v-model="rascunho.coluna">
+              <option v-for="col in colunas" :key="col.id" :value="col.id">{ col.nome }</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="v-modal__footer">
+          <button class="v-btn v-btn--ghost" type="button" v-click="fecharModal()">Cancelar</button>
+          <button class="v-btn v-btn--primary" type="submit">{ editandoId ? 'Salvar alteracoes' : 'Criar cartao' }</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Chave unica deste quadro no localStorage. */
+  var CHAVE = 'voodoo:kanban:quadro';
+
+  var COLUNAS = [
+    { id: 'fazer',      nome: 'A fazer',      cor: '#7B52F7' },
+    { id: 'andamento',  nome: 'Em andamento', cor: '#FF3D8B' },
+    { id: 'revisao',    nome: 'Em revisao',   cor: '#FFB35C' },
+    { id: 'concluido',  nome: 'Concluido',    cor: '#2ED9A5' }
+  ];
+
+  var ETIQUETAS = [
+    { id: 'bug',           nome: 'Bug',           cor: '#FF4D4D' },
+    { id: 'melhoria',      nome: 'Melhoria',      cor: '#2ED9A5' },
+    { id: 'urgente',       nome: 'Urgente',       cor: '#FF3D8B' },
+    { id: 'design',        nome: 'Design',        cor: '#7B52F7' },
+    { id: 'documentacao',  nome: 'Documentacao',  cor: '#3E9BE0' }
+  ];
+
+  var PRIORIDADES = [
+    { id: 'alta',  nome: 'alta' },
+    { id: 'media', nome: 'media' },
+    { id: 'baixa', nome: 'baixa' }
+  ];
+
+  /* ------------------------------------------------------------------
+     Ajudantes de dados
+     ------------------------------------------------------------------ */
+
+  function cartao(id, titulo, descricao, etiqueta, prioridade, coluna) {
+    return {
+      id: id,
+      titulo: titulo,
+      descricao: descricao,
+      etiqueta: etiqueta,
+      prioridade: prioridade,
+      coluna: coluna
+    };
+  }
+
+  function exemplo() {
+    return [
+      cartao('c-01', 'Desenhar a pagina de precos', 'Tres planos, com destaque no plano do meio.', 'design', 'alta', 'fazer'),
+      cartao('c-02', 'Escrever o guia de instalacao', 'Passo a passo com CDN e com npm.', 'documentacao', 'media', 'fazer'),
+      cartao('c-03', 'Filtro por etiqueta no quadro', 'Deve funcionar junto com a busca por texto.', 'melhoria', 'baixa', 'fazer'),
+      cartao('c-04', 'Arrastar cartao no celular', 'Conferir o toque e a rolagem automatica da coluna.', 'urgente', 'alta', 'andamento'),
+      cartao('c-05', 'Modal fecha no Esc', 'Tambem precisa fechar no clique fora e no botao.', 'melhoria', 'media', 'andamento'),
+      cartao('c-06', 'Contraste dos botoes no tema escuro', 'O texto some sobre o roxo claro.', 'bug', 'alta', 'revisao'),
+      cartao('c-07', 'Revisar os textos da interface', 'Sem gerundio solto e sem abreviacao.', 'documentacao', 'baixa', 'revisao'),
+      cartao('c-08', 'Salvar o quadro no navegador', 'Recarregar a pagina precisa devolver tudo igual.', 'melhoria', 'media', 'concluido'),
+      cartao('c-09', 'Tema claro e escuro', 'Tudo saindo dos tokens do design system.', 'design', 'baixa', 'concluido')
+    ];
+  }
+
+  /* Confere se um valor esta entre as opcoes conhecidas. */
+  function umDe(valor, lista, padrao) {
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i].id === valor) return valor;
+    }
+    return padrao;
+  }
+
+  function texto(valor) {
+    return typeof valor === 'string' ? valor : '';
+  }
+
+  /* Le o quadro salvo. Devolve null quando nunca houve nada gravado, e um
+     array (que pode estar vazio) quando existe um quadro valido. */
+  function carregar() {
+    var salvo = V.storage.get(CHAVE, null);
+    if (!salvo || !Array.isArray(salvo.cartoes)) return null;
+
+    var lista = [];
+    salvo.cartoes.forEach(function (bruto) {
+      if (!bruto || typeof bruto !== 'object') return;
+      var id = texto(bruto.id);
+      var titulo = texto(bruto.titulo).trim();
+      if (!id || !titulo) return;
+      lista.push(cartao(
+        id,
+        titulo,
+        texto(bruto.descricao),
+        umDe(bruto.etiqueta, ETIQUETAS, 'melhoria'),
+        umDe(bruto.prioridade, PRIORIDADES, 'media'),
+        umDe(bruto.coluna, COLUNAS, COLUNAS[0].id)
+      ));
+    });
+    return lista;
+  }
+
+  /* ------------------------------------------------------------------
+     Componente
+     ------------------------------------------------------------------ */
+
+  V.component('quadro-kanban', {
+
+    state: function () {
+      var salvos = carregar();
+      return {
+        colunas: COLUNAS,
+        etiquetas: ETIQUETAS,
+        prioridades: PRIORIDADES,
+
+        cartoes: salvos === null ? exemplo() : salvos,
+
+        busca: '',
+        filtroEtiqueta: '',
+
+        modalAberto: false,
+        editandoId: null,
+        erro: '',
+        rascunho: {
+          titulo: '',
+          descricao: '',
+          etiqueta: 'melhoria',
+          prioridade: 'media',
+          coluna: COLUNAS[0].id
+        },
+
+        tema: V.theme.resolved
+      };
+    },
+
+    computed: {
+
+      /* Os cartoes agrupados por coluna, na ordem do proprio array. E daqui
+         que cada lista do quadro tira o seu v-for. */
+      porColuna: function () {
+        var mapa = {};
+        this.colunas.forEach(function (col) { mapa[col.id] = []; });
+        this.cartoes.forEach(function (c) {
+          if (mapa[c.coluna]) mapa[c.coluna].push(c);
+        });
+        return mapa;
+      },
+
+      /* Total e quantidade visivel de cada coluna, para o contador do topo. */
+      contagens: function () {
+        var self = this;
+        var mapa = {};
+        this.colunas.forEach(function (col) { mapa[col.id] = { total: 0, visiveis: 0 }; });
+        this.cartoes.forEach(function (c) {
+          var alvo = mapa[c.coluna];
+          if (!alvo) return;
+          alvo.total += 1;
+          if (self.cartaoVisivel(c)) alvo.visiveis += 1;
+        });
+        return mapa;
+      },
+
+      totalVisiveis: function () {
+        var self = this;
+        return this.cartoes.filter(function (c) { return self.cartaoVisivel(c); }).length;
+      },
+
+      temFiltro: function () {
+        return !!this.filtroEtiqueta || !!String(this.busca).trim();
+      },
+
+      resumo: function () {
+        if (!this.temFiltro) {
+          return this.cartoes.length + (this.cartoes.length === 1 ? ' cartao no quadro' : ' cartoes no quadro');
+        }
+        return this.totalVisiveis + ' de ' + this.cartoes.length + ' cartoes';
+      },
+
+      tituloDoModal: function () {
+        return this.editandoId ? 'Editar cartao' : 'Novo cartao';
+      }
+    },
+
+    methods: {
+
+      /* ---------- consultas simples ---------- */
+
+      cartaoVisivel: function (c) {
+        if (this.filtroEtiqueta && c.etiqueta !== this.filtroEtiqueta) return false;
+        var termo = String(this.busca).trim().toLowerCase();
+        if (!termo) return true;
+        return (c.titulo + ' ' + c.descricao).toLowerCase().indexOf(termo) !== -1;
+      },
+
+      corEtiqueta: function (id) {
+        for (var i = 0; i < ETIQUETAS.length; i++) {
+          if (ETIQUETAS[i].id === id) return ETIQUETAS[i].cor;
+        }
+        return 'var(--v-text-muted)';
+      },
+
+      nomeEtiqueta: function (id) {
+        for (var i = 0; i < ETIQUETAS.length; i++) {
+          if (ETIQUETAS[i].id === id) return ETIQUETAS[i].nome;
+        }
+        return 'Sem etiqueta';
+      },
+
+      nomePrioridade: function (id) {
+        for (var i = 0; i < PRIORIDADES.length; i++) {
+          if (PRIORIDADES[i].id === id) return PRIORIDADES[i].nome;
+        }
+        return 'media';
+      },
+
+      /* ---------- filtros ---------- */
+
+      filtrarEtiqueta: function (id) {
+        this.filtroEtiqueta = this.filtroEtiqueta === id ? '' : id;
+      },
+
+      limparFiltros: function () {
+        this.busca = '';
+        this.filtroEtiqueta = '';
+      },
+
+      /* ---------- arrastar e soltar ----------
+
+         O v-sortable ja moveu o no no DOM quando este metodo roda. O
+         trabalho aqui e remontar o array para que ele conte exatamente a
+         mesma historia, senao o proximo v-for desfaz o movimento.
+
+         O detalhe do evento traz { item, oldIndex, newIndex, from, to,
+         order }. O campo `order` e a lista de data-id daquela lista na
+         nova ordem. Quando o cartao troca de coluna, o evento acontece
+         duas vezes, uma em cada lista, sempre com a ordem da lista que
+         disparou. Por isso o alvo do evento, e nao `detalhe.to`, e quem
+         diz qual coluna precisa ser remontada.
+
+         Detalhe importante: o filtro esconde cartao com v-show, nunca
+         tirando do v-for. Assim `order` sempre lista a coluna inteira e
+         nenhum cartao escondido se perde na remontagem. */
+      aoOrdenar: function (evento) {
+        var detalhe = evento.detail || {};
+        var lista = evento.currentTarget || evento.target;
+        if (!lista || typeof lista.getAttribute !== 'function') return;
+
+        var idColuna = lista.getAttribute('data-coluna');
+        var ordem = Array.isArray(detalhe.order) ? detalhe.order : [];
+        if (!idColuna || !ordem.length) return;
+
+        this.aplicarOrdem(idColuna, ordem);
+      },
+
+      /* Remonta o array inteiro a partir da nova ordem de uma coluna. */
+      aplicarOrdem: function (idColuna, ordem) {
+        var mapa = {};
+        this.cartoes.forEach(function (c) { mapa[c.id] = c; });
+
+        /* Todo cartao citado na ordem passa a pertencer a esta coluna. */
+        var citado = {};
+        var daColuna = [];
+        ordem.forEach(function (id) {
+          var alvo = mapa[id];
+          if (!alvo || citado[id]) return;
+          citado[id] = true;
+          alvo.coluna = idColuna;
+          daColuna.push(alvo);
+        });
+        if (!daColuna.length) return;
+
+        var demais = this.cartoes.filter(function (c) { return !citado[c.id]; });
+
+        /* Reconstroi coluna por coluna, preservando a ordem relativa de
+           quem nao foi tocado. */
+        var nova = [];
+        this.colunas.forEach(function (col) {
+          if (col.id === idColuna) {
+            daColuna.forEach(function (c) { nova.push(c); });
+          }
+          demais.forEach(function (c) { if (c.coluna === col.id) nova.push(c); });
+        });
+
+        /* Rede de seguranca: nenhum cartao pode sumir na remontagem. */
+        var dentro = {};
+        nova.forEach(function (c) { dentro[c.id] = true; });
+        this.cartoes.forEach(function (c) { if (!dentro[c.id]) nova.push(c); });
+
+        this.cartoes = nova;
+        this.salvar();
+      },
+
+      /* ---------- modal ---------- */
+
+      abrirNovo: function (idColuna) {
+        this.editandoId = null;
+        this.erro = '';
+        this.rascunho = {
+          titulo: '',
+          descricao: '',
+          etiqueta: 'melhoria',
+          prioridade: 'media',
+          coluna: umDe(idColuna, COLUNAS, COLUNAS[0].id)
+        };
+        this.modalAberto = true;
+        this.focarTitulo();
+      },
+
+      abrirEdicao: function (c) {
+        this.editandoId = c.id;
+        this.erro = '';
+        this.rascunho = {
+          titulo: c.titulo,
+          descricao: c.descricao,
+          etiqueta: c.etiqueta,
+          prioridade: c.prioridade,
+          coluna: c.coluna
+        };
+        this.modalAberto = true;
+        this.focarTitulo();
+      },
+
+      fecharModal: function () {
+        this.modalAberto = false;
+        this.editandoId = null;
+        this.erro = '';
+      },
+
+      /* O campo so existe depois que o v-if montar o modal, entao o foco
+         espera a fila de atualizacao terminar. */
+      focarTitulo: function () {
+        V.nextTick(function () {
+          var campo = document.getElementById('kb-campo-titulo');
+          if (campo) campo.focus();
+        });
+      },
+
+      salvarCartao: function () {
+        var titulo = String(this.rascunho.titulo || '').trim();
+        if (!titulo) {
+          this.erro = 'Escreva um titulo para o cartao.';
+          this.focarTitulo();
+          return;
+        }
+
+        var descricao = String(this.rascunho.descricao || '').trim();
+        var etiqueta = umDe(this.rascunho.etiqueta, ETIQUETAS, 'melhoria');
+        var prioridade = umDe(this.rascunho.prioridade, PRIORIDADES, 'media');
+        var coluna = umDe(this.rascunho.coluna, COLUNAS, COLUNAS[0].id);
+
+        if (this.editandoId) {
+          var procurado = this.editandoId;
+          var alvo = null;
+          this.cartoes.forEach(function (c) { if (c.id === procurado) alvo = c; });
+          if (alvo) {
+            alvo.titulo = titulo;
+            alvo.descricao = descricao;
+            alvo.etiqueta = etiqueta;
+            alvo.prioridade = prioridade;
+            alvo.coluna = coluna;
+          }
+          V.toast.success('Cartao atualizado.');
+        } else {
+          this.cartoes.push(cartao(V.uid('cartao-'), titulo, descricao, etiqueta, prioridade, coluna));
+          V.toast.success('Cartao criado.');
+        }
+
+        this.salvar();
+        this.fecharModal();
+      },
+
+      /* ---------- excluir ---------- */
+
+      excluir: function (c) {
+        var self = this;
+        var id = c.id;
+        V.confirm('O cartao "' + c.titulo + '" sera removido do quadro.', {
+          title: 'Excluir o cartao?',
+          danger: true,
+          confirmLabel: 'Excluir'
+        }).then(function (confirmado) {
+          if (!confirmado) return;
+          self.cartoes = self.cartoes.filter(function (item) { return item.id !== id; });
+          self.salvar();
+          V.toast.success('Cartao excluido.');
+        });
+      },
+
+      restaurarExemplo: function () {
+        var self = this;
+        V.confirm('O quadro atual sera apagado e os cartoes de exemplo voltam.', {
+          title: 'Restaurar o exemplo?',
+          danger: true,
+          confirmLabel: 'Restaurar'
+        }).then(function (confirmado) {
+          if (!confirmado) return;
+          self.cartoes = exemplo();
+          self.limparFiltros();
+          self.salvar();
+          V.toast.info('Quadro restaurado.');
+        });
+      },
+
+      /* ---------- tema e persistencia ---------- */
+
+      alternarTema: function () {
+        this.tema = V.theme.toggle();
+      },
+
+      salvar: function () {
+        var lista = this.cartoes.map(function (c) {
+          return cartao(c.id, c.titulo, c.descricao, c.etiqueta, c.prioridade, c.coluna);
+        });
+        V.storage.set(CHAVE, { versao: 1, cartoes: lista });
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+
+  /* O quadro ja esta montado, pode aparecer. */
+  var app = document.querySelector('.kb-app');
+  if (app) app.classList.remove('is-oculto');
+});
+</script>
+
+</body>
+</html>

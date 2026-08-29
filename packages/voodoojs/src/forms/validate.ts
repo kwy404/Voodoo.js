@@ -14,6 +14,7 @@
 
 import { warn } from '../reactivity';
 import { config, defineDirective } from '../runtime/registry';
+import { originalAttributes, readAttr } from '../runtime/walker';
 import { ensureTokens, injectStyle } from '../dom/style';
 import { http, HttpError } from '../http';
 import { uid } from '../utils';
@@ -152,9 +153,12 @@ export function validator(name: string, fn: ValidatorFn, defaultMessage?: string
 // Leitura de atributos e de campos
 // ---------------------------------------------------------------------------
 
-/** Le um atributo da Voodoo aceitando tanto `v-nome` quanto `data-v-nome`. */
+/**
+ * Le um atributo da Voodoo aceitando tanto `v-nome` quanto `data-v-nome`.
+ * Usa `readAttr` porque o walker retira os atributos do HTML depois de montar.
+ */
 export function readDirectiveAttr(el: Element, name: string): string | null {
-  return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
+  return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 
 function hasDirectiveAttr(el: Element, name: string): boolean {
@@ -565,15 +569,17 @@ export function fieldRules(el: FormField): FieldRule[] {
     found.push({ name, param });
   };
 
-  for (const attribute of Array.from(el.attributes)) {
-    const name = ruleNameFromAttribute(attribute.name);
+  // `originalAttributes` devolve os atributos declarados, mesmo os que o
+  // walker ja retirou do HTML.
+  for (const [attrName, attrValue] of originalAttributes(el)) {
+    const name = ruleNameFromAttribute(attrName);
     if (!name) continue;
     // `v-required="false"` desliga a regra sem precisar remover o atributo.
-    if (attribute.value.trim() === 'false') {
+    if (attrValue.trim() === 'false') {
       seen.add(name);
       continue;
     }
-    push(name, attribute.value);
+    push(name, attrValue);
   }
 
   const type = fieldType(el);

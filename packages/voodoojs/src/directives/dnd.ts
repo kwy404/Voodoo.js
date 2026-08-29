@@ -26,7 +26,7 @@ import { defineDirective } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import { evaluateIn } from '../runtime/walker';
 import { device } from '../utils';
-import { announce, callExpression, defineOption, dispatch, readOption } from './ui';
+import { announce, callExpression, defineOption, dispatch, readOption } from './shared';
 
 // ---------------------------------------------------------------------------
 // Estilos

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { query, ready, VoodooCollection } from '../src/dom/query';
 import { hotkey } from '../src/directives/ui';
 import { directives } from '../src/runtime/registry';
-import { walk } from '../src/runtime/walker';
+import { walk, queryDirective } from '../src/runtime/walker';
 import { rootScope } from '../src/runtime/scope';
 
 describe('smoke', () => {
@@ -60,11 +60,11 @@ describe('smoke', () => {
     const botao = document.getElementById('t') as HTMLElement;
     expect(botao.getAttribute('aria-expanded')).toBe('false');
 
-    const tabs = Array.from(document.querySelectorAll('[v-tab]'));
+    const tabs = queryDirective(document, 'tab');
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
-    expect((document.querySelector('[v-tab-panel="b"]') as HTMLElement).hidden).toBe(true);
+    expect((queryDirective(document, 'tab-panel')[1] as HTMLElement).hidden).toBe(true);
     (tabs[1] as HTMLElement).click();
-    expect((document.querySelector('[v-tab-panel="b"]') as HTMLElement).hidden).toBe(false);
+    expect((queryDirective(document, 'tab-panel')[1] as HTMLElement).hidden).toBe(false);
   });
 
   it('hotkey dispara e pode ser removido', () => {

@@ -3,37 +3,32 @@
 <head>
 <meta charset="utf-8">
 <title>Teste rapido</title>
-<link rel="stylesheet" href="../design-system/voodoo-ui.css">
-<script src="../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<script src="../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
 </head>
 <body>
-<div v-data="{ n: 0, lista: ['a','b'], texto: '' }">
-  <p>Contador: { n }</p>
-  <button class="v-btn v-btn--primary" v-click="n++">Somar</button>
-  <ul><li v-for="(item, i) in lista" :key="item">{ i }: { item }</li></ul>
-  <input class="v-input" v-model="texto" placeholder="digite">
-  <p v-show="texto">Voce digitou: { texto }</p>
-  <p v-count="1250" v-count-duration="800"></p>
-  <button class="v-btn" v-click="$toast.success('funciona')">Toast</button>
-  <input class="v-input" v-mask="cpf" placeholder="CPF">
-</div>
-<div v-component="teste-comp">
-  <b>{ dobro }</b>
-  <button class="v-btn" v-click="somar">mais</button>
+<div v-component="teste">
+  <div id="B" v-if="pronto"><i class="b" v-for="p in lista" :key="p.id">[{ p.nome }]</i></div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  V.component('teste-comp', {
-    state: function () { return { valor: 3 }; },
-    computed: { dobro: function () { return this.valor * 2; } },
-    methods: { somar: function () { this.valor++; } }
+  V.component('teste', {
+    state: function () { return { lista: [], pronto: false }; },
+    mounted: function () {
+      var self = this;
+      setTimeout(function () { self.pronto = true; self.lista = [{ id: 1, nome: 'um' }]; }, 150);
+    }
   });
-  V.theme.init();
+  // Hipotese: o MutationObserver do walker destroi o elemento modelo que o
+  // v-for retira do DOM de proposito, matando o efeito da lista.
+  V.config.autoDiscover = false;
   V.start();
-  console.log('CHECK', 'chart=' + typeof V.chart, 'animate=' + typeof V.animate,
-    'validateForm=' + typeof V.validateForm, 'modal=' + typeof V.modal,
-    'sortable=' + (V.directives.has('sortable')), 'tabs=' + (V.directives.has('tabs')),
-    'submit=' + (V.directives.has('submit')));
+  setTimeout(function () {
+    var inst = Array.from(V.instances)[0];
+    inst.lista.push({ id: 2, nome: 'dois' });
+    setTimeout(function () {
+      console.log('SEM OBSERVER  B=' + document.querySelectorAll('.b').length + ' (esperado 2)');
+    }, 300);
+  }, 600);
 });
 </script>
 </body>

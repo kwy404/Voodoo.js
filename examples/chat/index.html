@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat em tempo real com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle essencial: esta demo nao usa graficos. -->
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ==========================================================
+     Todo o CSS usa os tokens --v-* do design system, entao a
+     demo funciona igual no tema claro e no tema escuro.
+     Nenhuma regra depende de atributo v-*, porque a Voodoo
+     retira esses atributos do HTML depois de processar.
+     ========================================================== */
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1000px 520px at 12% -10%, color-mix(in srgb, var(--v-primary) 18%, transparent), transparent 62%),
+      radial-gradient(860px 460px at 92% 6%, color-mix(in srgb, var(--v-accent) 14%, transparent), transparent 60%),
+      var(--v-color-bg);
+  }
+
+  .ch-app { padding: var(--v-space-6) var(--v-space-4); }
+  .ch-app.is-cloaked { visibility: hidden; }
+
+  .ch-janela {
+    max-width: 1180px;
+    margin: 0 auto;
+    height: min(84vh, 800px);
+    min-height: 520px;
+    display: grid;
+    grid-template-columns: 336px 1fr;
+    background: var(--v-surface);
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-xl);
+    box-shadow: var(--v-shadow-lg);
+    overflow: hidden;
+  }
+
+  /* ---------------- barra lateral ---------------- */
+
+  .ch-lateral {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid var(--v-border);
+    background: var(--v-surface-2);
+  }
+
+  .ch-lateral-topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-4) var(--v-space-4) var(--v-space-3);
+  }
+
+  .ch-marca {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-2);
+    font-family: var(--v-font-display);
+    font-weight: var(--v-weight-bold);
+    font-size: var(--v-text-lg);
+    letter-spacing: var(--v-tracking-tight);
+  }
+
+  .ch-marca-icone {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--v-radius-full);
+    background: linear-gradient(140deg, var(--v-primary), var(--v-accent));
+    color: var(--v-primary-contrast);
+    font-size: 17px;
+    line-height: 1;
+    flex: none;
+  }
+
+  .ch-busca { padding: 0 var(--v-space-4) var(--v-space-3); }
+  .ch-busca-campo { position: relative; }
+  .ch-busca-campo .v-input { padding-left: 38px; padding-right: 34px; }
+  .ch-busca-icone {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--v-text-subtle);
+    pointer-events: none;
+    font-size: 14px;
+  }
+  .ch-busca-limpar {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: var(--v-radius-full);
+    background: var(--v-surface-3);
+    color: var(--v-text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .ch-lista {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 var(--v-space-2) var(--v-space-3);
+  }
+
+  .ch-item {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: 10px var(--v-space-3);
+    margin-bottom: 2px;
+    border: 0;
+    border-radius: var(--v-radius-lg);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    transition: background-color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .ch-item:hover { background: color-mix(in srgb, var(--v-primary) 9%, transparent); }
+  .ch-item:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+  .ch-item.is-ativa { background: color-mix(in srgb, var(--v-primary) 16%, transparent); }
+
+  .ch-avatar-caixa { position: relative; flex: none; }
+  .ch-avatar { font-size: 20px; }
+  .ch-ponto {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 11px;
+    height: 11px;
+    border-radius: var(--v-radius-full);
+    background: var(--v-success);
+    border: 2px solid var(--v-surface-2);
+  }
+
+  .ch-item-corpo { display: block; min-width: 0; }
+  .ch-item-nome {
+    display: block;
+    font-weight: var(--v-weight-semibold);
+    font-size: var(--v-text-sm);
+    margin-bottom: 2px;
+  }
+  .ch-item-resumo {
+    display: block;
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+  }
+
+  .ch-item-lado {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+  .ch-hora { font-size: 11px; color: var(--v-text-subtle); font-variant-numeric: tabular-nums; }
+
+  .ch-vazio {
+    padding: var(--v-space-8) var(--v-space-4);
+    text-align: center;
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  /* ---------------- painel da conversa ---------------- */
+
+  .ch-conversa {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    background: var(--v-surface);
+  }
+
+  .ch-conversa-topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-3) var(--v-space-4);
+    border-bottom: 1px solid var(--v-border);
+    background: var(--v-surface);
+  }
+  .ch-conversa-nome { font-weight: var(--v-weight-semibold); line-height: 1.2; }
+  .ch-conversa-estado { font-size: var(--v-text-xs); color: var(--v-text-muted); }
+  .ch-conversa-estado.is-digitando { color: var(--v-primary); }
+
+  .ch-voltar { display: none; }
+
+  .ch-mensagens {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--v-space-5) var(--v-space-5) var(--v-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background:
+      radial-gradient(520px 300px at 78% 6%, color-mix(in srgb, var(--v-accent) 7%, transparent), transparent 70%),
+      var(--v-surface);
+    scroll-behavior: smooth;
+  }
+
+  .ch-dia {
+    align-self: center;
+    margin-bottom: 4px;
+    padding: 3px 12px;
+    border-radius: var(--v-radius-full);
+    background: var(--v-surface-3);
+    color: var(--v-text-muted);
+    font-size: 11px;
+    font-weight: var(--v-weight-semibold);
+  }
+
+  .ch-linha { display: flex; }
+  .ch-linha.is-minha { justify-content: flex-end; }
+
+  .ch-bolha {
+    max-width: min(76%, 480px);
+    padding: 8px 12px 6px;
+    border-radius: 16px;
+    background: var(--v-surface-2);
+    border: 1px solid var(--v-border);
+    box-shadow: var(--v-shadow-sm);
+    font-size: var(--v-text-sm);
+    line-height: 1.45;
+    word-break: break-word;
+    animation: ch-entrar 240ms var(--v-ease-out) both;
+  }
+  .ch-linha.is-dele .ch-bolha { border-bottom-left-radius: 5px; }
+  .ch-linha.is-minha .ch-bolha {
+    border-bottom-right-radius: 5px;
+    background: linear-gradient(140deg, var(--v-primary), color-mix(in srgb, var(--v-primary) 62%, var(--v-accent)));
+    border-color: transparent;
+    color: var(--v-primary-contrast);
+  }
+
+  .ch-rodape-bolha {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-top: 2px;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    opacity: .75;
+  }
+  .ch-linha.is-minha .ch-rodape-bolha { opacity: .88; }
+  .ch-marcador { letter-spacing: -1px; }
+  .ch-marcador.is-lido { color: #9BE7FF; }
+
+  @keyframes ch-entrar {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* indicador de digitando */
+  .ch-digitando {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 11px 14px;
+    border-radius: 16px;
+    border-bottom-left-radius: 5px;
+    background: var(--v-surface-2);
+    border: 1px solid var(--v-border);
+  }
+  .ch-pingo {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--v-radius-full);
+    background: var(--v-text-subtle);
+    animation: ch-pulo 1.1s infinite ease-in-out;
+  }
+  .ch-pingo:nth-child(2) { animation-delay: .16s; }
+  .ch-pingo:nth-child(3) { animation-delay: .32s; }
+
+  @keyframes ch-pulo {
+    0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* ---------------- compositor ---------------- */
+
+  .ch-compositor {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-2);
+    padding: var(--v-space-3) var(--v-space-4);
+    border-top: 1px solid var(--v-border);
+    background: var(--v-surface);
+  }
+  .ch-compositor .v-input { flex: 1 1 auto; border-radius: var(--v-radius-full); }
+
+  .ch-emoji-caixa { position: relative; flex: none; }
+
+  .ch-emoji-painel {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 0;
+    width: 272px;
+    padding: 10px;
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    background: var(--v-surface);
+    box-shadow: var(--v-shadow-lg);
+    z-index: 5;
+  }
+  .ch-emoji-titulo {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: var(--v-tracking-wide);
+    color: var(--v-text-subtle);
+    margin-bottom: 7px;
+  }
+  .ch-emoji-grade {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 2px;
+  }
+  .ch-emoji-botao {
+    border: 0;
+    background: transparent;
+    border-radius: var(--v-radius-md);
+    padding: 4px 0;
+    font-size: 18px;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: transform var(--v-duration-fast) var(--v-ease-out), background-color var(--v-duration-fast);
+  }
+  .ch-emoji-botao:hover { transform: scale(1.22); background: var(--v-surface-2); }
+  .ch-emoji-botao:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 1px; }
+
+  .ch-dica {
+    max-width: 1180px;
+    margin: var(--v-space-4) auto 0;
+    text-align: center;
+    font-size: var(--v-text-xs);
+    color: var(--v-text-muted);
+  }
+
+  /* ---------------- celular: uma coluna ---------------- */
+
+  @media (max-width: 860px) {
+    .ch-app { padding: var(--v-space-2); }
+
+    .ch-janela {
+      grid-template-columns: 1fr;
+      height: calc(100vh - var(--v-space-4));
+      min-height: 0;
+      border-radius: var(--v-radius-lg);
+    }
+
+    .ch-lateral,
+    .ch-conversa { grid-area: 1 / 1; }
+
+    .ch-lateral { border-right: 0; }
+    .ch-conversa { display: none; }
+
+    .ch-janela.is-conversa .ch-lateral { display: none; }
+    .ch-janela.is-conversa .ch-conversa { display: flex; }
+
+    .ch-voltar { display: inline-flex; }
+    .ch-bolha { max-width: 86%; }
+    .ch-emoji-painel { width: min(272px, calc(100vw - 40px)); }
+  }
+
+  /* ---------------- menos movimento ---------------- */
+
+  @media (prefers-reduced-motion: reduce) {
+    .ch-mensagens { scroll-behavior: auto; }
+    .ch-bolha,
+    .ch-pingo,
+    .ch-emoji-botao,
+    .ch-item { animation: none !important; transition: none !important; }
+    .ch-pingo { opacity: .75; }
+  }
+</style>
+</head>
+<body>
+
+<main class="ch-app is-cloaked" v-component="chat-app">
+
+  <div class="ch-janela" :class="{ 'is-conversa': telaConversa }">
+
+    <!-- ============ barra lateral ============ -->
+    <aside class="ch-lateral">
+      <div class="ch-lateral-topo">
+        <span class="ch-marca">
+          <span class="ch-marca-icone" aria-hidden="true">💬</span>
+          Voodoo Chat
+        </span>
+        <span class="v-badge v-badge--accent v-badge--solid" v-show="totalNaoLidas > 0">{ totalNaoLidas }</span>
+        <span class="v-push"></span>
+        <button type="button" class="v-btn v-btn--ghost v-btn--sm v-btn--icon"
+                v-click="alternarTema"
+                :aria-label="temaEscuro ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'">
+          <span aria-hidden="true">{ temaEscuro ? '☀️' : '🌙' }</span>
+        </button>
+      </div>
+
+      <div class="ch-busca">
+        <label class="v-sr-only" for="ch-busca-campo">Buscar conversas</label>
+        <div class="ch-busca-campo">
+          <span class="ch-busca-icone" aria-hidden="true">🔍</span>
+          <input id="ch-busca-campo" class="v-input" type="search" autocomplete="off"
+                 placeholder="Buscar conversas" v-model="busca">
+          <button type="button" class="ch-busca-limpar" v-show="busca.length > 0"
+                  v-click="limparBusca" aria-label="Limpar a busca">
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="ch-lista" aria-label="Lista de conversas">
+        <button type="button" class="ch-item"
+                v-for="c in conversasFiltradas" :key="c.id"
+                v-click="selecionar(c)"
+                :class="{ 'is-ativa': c.id === ativaId }"
+                :aria-current="c.id === ativaId ? 'true' : 'false'">
+          <span class="ch-avatar-caixa">
+            <span class="v-avatar ch-avatar" aria-hidden="true">{ c.avatar }</span>
+            <span class="ch-ponto" v-show="c.online"></span>
+          </span>
+          <span class="ch-item-corpo">
+            <span class="ch-item-nome v-truncate">{ c.nome }</span>
+            <span class="ch-item-resumo v-truncate">{ c.digitando ? 'digitando...' : c.resumo }</span>
+          </span>
+          <span class="ch-item-lado">
+            <span class="ch-hora">{ c.horario }</span>
+            <span class="v-badge v-badge--solid" v-show="c.naoLidas > 0">{ c.naoLidas }</span>
+          </span>
+        </button>
+
+        <p class="ch-vazio" v-show="conversasFiltradas.length === 0" v-transition="fade">
+          Nenhuma conversa encontrada para essa busca.
+        </p>
+      </div>
+    </aside>
+
+    <!-- ============ conversa ativa ============ -->
+    <section class="ch-conversa">
+
+      <header class="ch-conversa-topo">
+        <button type="button" class="v-btn v-btn--ghost v-btn--sm v-btn--icon ch-voltar"
+                v-click="voltar" aria-label="Voltar para a lista de conversas">
+          <span aria-hidden="true">←</span>
+        </button>
+        <span class="ch-avatar-caixa">
+          <span class="v-avatar ch-avatar" aria-hidden="true">{ ativa.avatar }</span>
+          <span class="ch-ponto" v-show="ativa.online"></span>
+        </span>
+        <div>
+          <div class="ch-conversa-nome">{ ativa.nome }</div>
+          <div class="ch-conversa-estado" :class="{ 'is-digitando': ativa.digitando }">
+            { ativa.digitando ? 'digitando...' : (ativa.online ? 'online agora' : 'visto por ultimo hoje') }
+          </div>
+        </div>
+        <span class="v-push"></span>
+        <span class="v-badge v-badge--info">{ mensagens.length } mensagens</span>
+      </header>
+
+      <div class="ch-mensagens" v-ref="painel" role="log" aria-live="polite" aria-label="Mensagens da conversa">
+        <span class="ch-dia">Hoje</span>
+
+        <div class="ch-linha" v-for="m in mensagens" :key="m.id"
+             :class="m.autor === 'eu' ? 'is-minha' : 'is-dele'">
+          <div class="ch-bolha">
+            <div>{ m.texto }</div>
+            <div class="ch-rodape-bolha">
+              <span>{ m.hora }</span>
+              <span v-show="m.autor === 'eu'">
+                <span class="ch-marcador" v-show="m.estado === 'enviando'" aria-hidden="true">◌</span>
+                <span class="ch-marcador" v-show="m.estado === 'enviado'" aria-hidden="true">✓</span>
+                <span class="ch-marcador is-lido" v-show="m.estado === 'lido'" aria-hidden="true">✓✓</span>
+                <span class="v-sr-only">{ rotuloEstado(m.estado) }</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ch-linha is-dele" v-show="ativa.digitando" v-transition="fade">
+          <div class="ch-digitando" :aria-label="ativa.nome + ' esta digitando'">
+            <span class="ch-pingo"></span>
+            <span class="ch-pingo"></span>
+            <span class="ch-pingo"></span>
+          </div>
+        </div>
+      </div>
+
+      <footer class="ch-compositor">
+        <div class="ch-emoji-caixa" @outside="fecharEmojis">
+          <button type="button" class="v-btn v-btn--ghost v-btn--icon"
+                  v-click="alternarEmojis"
+                  :aria-expanded="emojisAberto ? 'true' : 'false'"
+                  aria-label="Abrir o seletor de emojis">
+            <span aria-hidden="true">😊</span>
+          </button>
+
+          <div class="ch-emoji-painel" v-show="emojisAberto" v-transition="scale">
+            <p class="ch-emoji-titulo">Emojis usados com frequencia</p>
+            <div class="ch-emoji-grade">
+              <button type="button" class="ch-emoji-botao"
+                      v-for="e in emojis" :key="e"
+                      v-click="inserirEmoji(e)" :aria-label="'Inserir o emoji ' + e">
+                <span aria-hidden="true">{ e }</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <label class="v-sr-only" for="ch-campo">Escreva uma mensagem</label>
+        <input id="ch-campo" class="v-input" type="text" autocomplete="off"
+               placeholder="Escreva uma mensagem e aperte Enter"
+               v-ref="campo" v-model="rascunho" @keyup.enter="enviar">
+
+        <button type="button" class="v-btn v-btn--primary v-btn--icon"
+                v-click="enviar" :disabled="!rascunho.trim()" aria-label="Enviar a mensagem">
+          <span aria-hidden="true">➤</span>
+        </button>
+      </footer>
+
+    </section>
+  </div>
+
+  <p class="ch-dica">
+    Tudo acontece no navegador, sem servidor. As respostas sao sorteadas do repertorio de cada contato.
+  </p>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Contador simples para dar um identificador unico a cada mensagem. */
+  var sequencia = 0;
+  function msg(autor, texto, hora, estado) {
+    sequencia = sequencia + 1;
+    return { id: 'm' + sequencia, autor: autor, texto: texto, hora: hora, estado: estado };
+  }
+
+  /* Repertorio e historico de cada conversa, tudo em memoria. */
+  var CONVERSAS = [
+    {
+      id: 'ana',
+      nome: 'Ana Beatriz',
+      avatar: '👩🏻‍💻',
+      online: true,
+      naoLidas: 0,
+      digitando: false,
+      horario: '09:41',
+      resumo: 'Manda o link do repositorio depois',
+      repertorio: [
+        'Boa, ja anotei aqui 👍',
+        'Perfeito, vou olhar ainda hoje.',
+        'Manda o link do repositorio depois 🙂',
+        'Concordo, fica bem mais simples assim.',
+        'Consigo revisar de tarde, pode ser?',
+        'Show, deixa comigo entao 🚀'
+      ],
+      mensagens: [
+        msg('contato', 'Bom dia! Conseguiu terminar a tela de listagem? 🙂', '09:32', 'lido'),
+        msg('eu', 'Bom dia! Terminei sim, faltou so o estado vazio.', '09:36', 'lido'),
+        msg('contato', 'Manda o link do repositorio depois', '09:41', 'lido')
+      ]
+    },
+    {
+      id: 'carlos',
+      nome: 'Carlos Menezes',
+      avatar: '🧔🏽',
+      online: true,
+      naoLidas: 2,
+      digitando: false,
+      horario: '09:18',
+      resumo: 'A reuniao mudou para as 15h',
+      repertorio: [
+        'Combinado, te aviso quando confirmar.',
+        'A sala grande ja esta reservada ✅',
+        'Vou levar os numeros do trimestre.',
+        'Beleza, marquei na agenda.',
+        'Prefere chamada de video ou presencial?'
+      ],
+      mensagens: [
+        msg('contato', 'Fala! Tudo certo para amanha?', '09:10', 'lido'),
+        msg('contato', 'A reuniao mudou para as 15h', '09:18', 'lido')
+      ]
+    },
+    {
+      id: 'juliana',
+      nome: 'Juliana Prado',
+      avatar: '👩🏽‍🎨',
+      online: false,
+      naoLidas: 0,
+      digitando: false,
+      horario: '08:55',
+      resumo: 'Adorei a paleta nova 💜',
+      repertorio: [
+        'Adorei a paleta nova 💜',
+        'Vou ajustar o espacamento dos cartoes.',
+        'Ficou bem mais legivel no tema escuro 🌙',
+        'Te mando o arquivo do design ate amanha.',
+        'Posso testar com um contraste maior?'
+      ],
+      mensagens: [
+        msg('eu', 'Subi a versao com os tokens de cor novos.', '08:47', 'lido'),
+        msg('contato', 'Adorei a paleta nova 💜', '08:55', 'lido')
+      ]
+    },
+    {
+      id: 'time',
+      nome: 'Time de Produto',
+      avatar: '🛠️',
+      online: true,
+      naoLidas: 5,
+      digitando: false,
+      horario: '08:30',
+      resumo: 'Rafael: fecho a sprint hoje',
+      repertorio: [
+        'Rafael: fecho a sprint hoje ✅',
+        'Marina: subi a correcao em producao.',
+        'Rafael: alguem revisa o meu pull request?',
+        'Marina: a metrica de retencao subiu 4% 📈',
+        'Rafael: bora alinhar as 16h?'
+      ],
+      mensagens: [
+        msg('contato', 'Marina: pessoal, o teste A entrou no ar 🎉', '08:12', 'lido'),
+        msg('eu', 'Boa! Vou acompanhar os numeros durante o dia.', '08:20', 'lido'),
+        msg('contato', 'Rafael: fecho a sprint hoje', '08:30', 'lido')
+      ]
+    },
+    {
+      id: 'suporte',
+      nome: 'Suporte Voodoo',
+      avatar: '🎧',
+      online: false,
+      naoLidas: 0,
+      digitando: false,
+      horario: 'Ontem',
+      resumo: 'Seu chamado foi encerrado',
+      repertorio: [
+        'Registrei o seu pedido, obrigado! 🙏',
+        'Seu chamado foi encerrado com sucesso.',
+        'Precisando de algo mais, e so chamar.',
+        'Vou encaminhar para o time responsavel.'
+      ],
+      mensagens: [
+        msg('eu', 'Consegui resolver, pode fechar o chamado.', 'Ontem', 'lido'),
+        msg('contato', 'Seu chamado foi encerrado', 'Ontem', 'lido')
+      ]
+    },
+    {
+      id: 'familia',
+      nome: 'Familia',
+      avatar: '🏡',
+      online: true,
+      naoLidas: 1,
+      digitando: false,
+      horario: 'Ontem',
+      resumo: 'Mae: almoco no domingo?',
+      repertorio: [
+        'Mae: almoco no domingo? 🍲',
+        'Pai: comprei o pao na volta 🥖',
+        'Mae: leva o bolo de fuba, todo mundo gosta.',
+        'Pai: chegamos por volta do meio dia.'
+      ],
+      mensagens: [
+        msg('contato', 'Mae: almoco no domingo?', 'Ontem', 'lido')
+      ]
+    }
+  ];
+
+  var EMOJIS = [
+    '😀', '😁', '😂', '🥰', '😍', '😅', '🤔', '😎',
+    '😴', '🤯', '🥳', '😭', '👍', '👏', '🙏', '💪',
+    '🔥', '✨', '💜', '❤️', '🎉', '🚀', '☕', '🍕',
+    '✅', '📌', '📈', '🐛', '💡', '🌙', '☀️', '🎧'
+  ];
+
+  V.component('chat-app', {
+
+    state: function () {
+      return {
+        conversas: CONVERSAS,
+        emojis: EMOJIS,
+        ativaId: CONVERSAS[0].id,
+        busca: '',
+        rascunho: '',
+        emojisAberto: false,
+        telaConversa: false,
+        temaEscuro: false
+      };
+    },
+
+    computed: {
+      /* Lista da barra lateral, filtrada pelo campo de busca. */
+      conversasFiltradas: function () {
+        var termo = String(this.busca || '').trim().toLowerCase();
+        if (!termo) return this.conversas;
+        return this.conversas.filter(function (c) {
+          return c.nome.toLowerCase().indexOf(termo) !== -1
+            || String(c.resumo).toLowerCase().indexOf(termo) !== -1;
+        });
+      },
+
+      /* Conversa aberta. Nunca fica nula, entao o cabecalho sempre tem dados. */
+      ativa: function () {
+        var id = this.ativaId;
+        var achadas = this.conversas.filter(function (c) { return c.id === id; });
+        return achadas[0] || this.conversas[0];
+      },
+
+      mensagens: function () {
+        return this.ativa.mensagens;
+      },
+
+      totalNaoLidas: function () {
+        return this.conversas.reduce(function (soma, c) { return soma + c.naoLidas; }, 0);
+      }
+    },
+
+    methods: {
+      /* Hora atual no formato 24h. `new` so pode aparecer aqui, nunca no HTML. */
+      horaAgora: function () {
+        var d = new Date();
+        var h = d.getHours();
+        var m = d.getMinutes();
+        return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+      },
+
+      rotuloEstado: function (estado) {
+        if (estado === 'enviando') return 'Enviando';
+        if (estado === 'enviado') return 'Enviada';
+        return 'Lida';
+      },
+
+      /* Espera o DOM da lista ser atualizado antes de mexer no scrollTop. */
+      rolar: function () {
+        var self = this;
+        V.nextTick(function () {
+          var painel = self.$refs.painel;
+          if (!painel) return;
+          painel.scrollTop = painel.scrollHeight;
+        });
+      },
+
+      selecionar: function (conversa) {
+        this.ativaId = conversa.id;
+        conversa.naoLidas = 0;
+        this.emojisAberto = false;
+        this.telaConversa = true;
+        this.rolar();
+      },
+
+      voltar: function () {
+        this.telaConversa = false;
+      },
+
+      limparBusca: function () {
+        this.busca = '';
+      },
+
+      alternarEmojis: function () {
+        this.emojisAberto = !this.emojisAberto;
+      },
+
+      fecharEmojis: function () {
+        if (this.emojisAberto) this.emojisAberto = false;
+      },
+
+      inserirEmoji: function (emoji) {
+        this.rascunho = this.rascunho + emoji;
+        var campo = this.$refs.campo;
+        if (campo) campo.focus();
+      },
+
+      enviar: function () {
+        var texto = String(this.rascunho || '').trim();
+        if (!texto) return;
+
+        var self = this;
+        var conversa = this.ativa;
+        var hora = this.horaAgora();
+
+        conversa.mensagens.push(msg('eu', texto, hora, 'enviando'));
+        conversa.resumo = texto;
+        conversa.horario = hora;
+
+        this.rascunho = '';
+        this.emojisAberto = false;
+        this.rolar();
+
+        /* Pega a mensagem ja reativa para que as trocas de estado aparecam. */
+        var enviada = conversa.mensagens[conversa.mensagens.length - 1];
+        setTimeout(function () { enviada.estado = 'enviado'; }, 700);
+        setTimeout(function () { enviada.estado = 'lido'; }, 1700);
+        setTimeout(function () { self.responder(conversa); }, 1000);
+      },
+
+      /* O contato aparece digitando e responde com uma frase sorteada. */
+      responder: function (conversa) {
+        var self = this;
+        conversa.digitando = true;
+        if (conversa.id === this.ativaId) this.rolar();
+
+        var espera = 1100 + Math.floor(Math.random() * 1100);
+        setTimeout(function () {
+          conversa.digitando = false;
+
+          var texto = V.sample(conversa.repertorio) || 'Combinado!';
+          var hora = self.horaAgora();
+          conversa.mensagens.push(msg('contato', texto, hora, 'lido'));
+          conversa.resumo = texto;
+          conversa.horario = hora;
+
+          if (conversa.id === self.ativaId) self.rolar();
+          else conversa.naoLidas = conversa.naoLidas + 1;
+        }, espera);
+      },
+
+      alternarTema: function () {
+        V.theme.toggle();
+        this.temaEscuro = V.theme.resolved === 'dark';
+      }
+    },
+
+    mounted: function () {
+      this.temaEscuro = V.theme.resolved === 'dark';
+      this.rolar();
+    }
+  });
+
+  V.theme.init();
+  V.start();
+
+  /* A pagina so aparece depois que a Voodoo montou tudo, sem piscar. */
+  var app = document.querySelector('.ch-app');
+  if (app) app.classList.remove('is-cloaked');
+});
+</script>
+</body>
+</html>

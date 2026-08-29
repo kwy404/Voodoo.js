@@ -6,11 +6,17 @@ const banner = `/**
  * (c) 2026 Voodoo.js contributors. MIT License.
  */`;
 
+/** Publica o objeto global depois que o IIFE termina de avaliar. */
+const globalFooter = {
+  js: 'if(typeof window!=="undefined"){window.V=Voodoo.default||Voodoo;window.Voodoo=window.V;}',
+};
+
 export default defineConfig([
-  // Builds modulares para bundlers (ESM + CJS + tipos, com tree shaking).
+  // Builds modulares para bundlers: ESM, CJS e tipos, com tree shaking.
   {
     entry: {
       index: 'src/index.ts',
+      essential: 'src/essential.ts',
       reactivity: 'src/reactivity/index.ts',
       http: 'src/http/index.ts',
       utils: 'src/utils/index.ts',
@@ -23,21 +29,20 @@ export default defineConfig([
     target: 'es2020',
     banner: { js: banner },
   },
-  // Build de navegador (CDN): global `V` e `Voodoo`, com auto init.
+
+  // Build essencial para CDN. E o arquivo servido por padrao.
   {
-    entry: { voodoo: 'src/browser.ts' },
+    entry: { voodoo: 'src/browser-essential.ts' },
     format: ['iife'],
     globalName: 'Voodoo',
     outExtension: () => ({ js: '.js' }),
     sourcemap: true,
     target: 'es2018',
     banner: { js: banner },
-    footer: {
-      js: 'if(typeof window!=="undefined"){window.V=Voodoo.default||Voodoo;window.Voodoo=window.V;}',
-    },
+    footer: globalFooter,
   },
   {
-    entry: { 'voodoo.min': 'src/browser.ts' },
+    entry: { 'voodoo.min': 'src/browser-essential.ts' },
     format: ['iife'],
     globalName: 'Voodoo',
     outExtension: () => ({ js: '.js' }),
@@ -45,8 +50,30 @@ export default defineConfig([
     sourcemap: true,
     target: 'es2018',
     banner: { js: banner },
-    footer: {
-      js: 'if(typeof window!=="undefined"){window.V=Voodoo.default||Voodoo;window.Voodoo=window.V;}',
-    },
+    footer: globalFooter,
+  },
+
+  // Build completo: soma graficos, animacoes, roteador, idiomas, inspetor e
+  // a biblioteca de componentes prontos.
+  {
+    entry: { 'voodoo.full': 'src/browser.ts' },
+    format: ['iife'],
+    globalName: 'Voodoo',
+    outExtension: () => ({ js: '.js' }),
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    footer: globalFooter,
+  },
+  {
+    entry: { 'voodoo.full.min': 'src/browser.ts' },
+    format: ['iife'],
+    globalName: 'Voodoo',
+    outExtension: () => ({ js: '.js' }),
+    minify: true,
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    footer: globalFooter,
   },
 ]);

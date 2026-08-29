@@ -1,8 +1,4 @@
 node_modules/
-dist/
-
-# Documento de trabalho interno, nao faz parte do pacote publicado.
-CONTRACT.md
 coverage/
 .turbo/
 .DS_Store
@@ -10,3 +6,19 @@ coverage/
 .vitest/
 .idea/
 .vscode/
+
+# Saida de build de trabalho. O bundle publicado fica versionado
+# em packages/voodoojs/dist, veja a excecao logo abaixo.
+dist/
+!packages/voodoojs/dist/
+!packages/voodoojs/dist/**
+
+# Documentos em markdown ficam apenas na maquina, com excecao do README
+# principal, que e a porta de entrada do repositorio.
+*.md
+!/README.md
+
+# Arquivos de trabalho interno.
+CONTRACT.md
+lista-temp.mjs
+verifica-temp.mjs

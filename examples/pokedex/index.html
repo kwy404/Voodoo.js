@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokedex com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle completo: esta demo usa o modulo de graficos. -->
+<script src="../../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
+<style>
+  body {
+    background:
+      radial-gradient(1100px 520px at 15% -8%, color-mix(in srgb, var(--v-primary) 20%, transparent), transparent 60%),
+      radial-gradient(900px 460px at 88% 4%, color-mix(in srgb, var(--v-accent) 16%, transparent), transparent 60%),
+      var(--v-color-bg);
+    min-height: 100vh;
+  }
+
+  .pk-shell { max-width: 1240px; margin: 0 auto; padding: var(--v-space-6) var(--v-space-4) var(--v-space-16); }
+
+  /* ---------- cabecalho ---------- */
+  .pk-topo { display: flex; align-items: center; gap: var(--v-space-4); flex-wrap: wrap; margin-bottom: var(--v-space-6); }
+  .pk-marca { display: flex; align-items: center; gap: var(--v-space-3); }
+  .pk-bola {
+    width: 40px; height: 40px; border-radius: 50%; flex: none;
+    background: linear-gradient(180deg, var(--v-accent) 0 48%, var(--v-surface) 48% 52%, var(--v-surface-3) 52% 100%);
+    border: 2px solid var(--v-text); position: relative; box-shadow: var(--v-shadow-md);
+  }
+  .pk-bola::after {
+    content: ""; position: absolute; inset: 0; margin: auto;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--v-surface); border: 2px solid var(--v-text);
+  }
+  .pk-titulo { font-family: var(--v-font-display); font-size: var(--v-text-2xl); font-weight: 700; letter-spacing: var(--v-tracking-tight); margin: 0; }
+  .pk-subtitulo { color: var(--v-text-muted); font-size: var(--v-text-sm); margin: 2px 0 0; }
+
+  /* ---------- filtros ---------- */
+  .pk-filtros { display: grid; gap: var(--v-space-4); margin-bottom: var(--v-space-6); }
+  .pk-busca-linha { display: flex; gap: var(--v-space-3); flex-wrap: wrap; align-items: center; }
+  .pk-busca { position: relative; flex: 1 1 260px; }
+  .pk-busca .v-input { padding-left: 40px; }
+  .pk-busca-icone { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--v-text-subtle); pointer-events: none; }
+
+  .pk-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pk-chip {
+    border: 1px solid var(--v-border); background: var(--v-surface); color: var(--v-text-muted);
+    border-radius: var(--v-radius-full); padding: 5px 13px; font-size: var(--v-text-xs);
+    font-weight: var(--v-weight-semibold); cursor: pointer; text-transform: capitalize;
+    transition: transform var(--v-duration-fast) var(--v-ease-out), border-color var(--v-duration-fast), color var(--v-duration-fast);
+  }
+  .pk-chip:hover { transform: translateY(-1px); border-color: var(--v-border-strong); }
+  .pk-chip[aria-pressed="true"] { color: var(--v-primary-contrast); border-color: transparent; }
+
+  /* ---------- grade ---------- */
+  .pk-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: var(--v-space-4); }
+
+  .pk-card {
+    position: relative; border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); padding: var(--v-space-4); cursor: pointer; overflow: hidden;
+    text-align: center; box-shadow: var(--v-shadow-sm);
+    transition: transform var(--v-duration-base) var(--v-ease-out), box-shadow var(--v-duration-base), border-color var(--v-duration-base);
+  }
+  .pk-card::before {
+    content: ""; position: absolute; inset: -40% 30% auto -30%; height: 190px; border-radius: 50%;
+    background: var(--pk-cor, var(--v-primary)); opacity: .16; filter: blur(14px);
+    transition: opacity var(--v-duration-base);
+  }
+  .pk-card:hover { transform: translateY(-4px); box-shadow: var(--v-shadow-lg); border-color: var(--pk-cor, var(--v-primary)); }
+  .pk-card:hover::before { opacity: .3; }
+  .pk-card:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: var(--v-focus-offset); }
+
+  .pk-numero { position: relative; font: var(--v-weight-bold) var(--v-text-xs)/1 var(--v-font-mono); color: var(--v-text-subtle); text-align: left; }
+  .pk-sprite { position: relative; width: 116px; height: 116px; margin: 4px auto 6px; display: block; image-rendering: auto; }
+  .pk-nome { position: relative; font-weight: var(--v-weight-semibold); text-transform: capitalize; margin-bottom: 8px; }
+  .pk-tipos { position: relative; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .pk-tipo {
+    border-radius: var(--v-radius-full); padding: 3px 10px; font-size: 11px;
+    font-weight: var(--v-weight-bold); color: #fff; text-transform: capitalize;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .28);
+  }
+
+  .pk-fav {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    background: color-mix(in srgb, var(--v-surface) 78%, transparent); border: 1px solid var(--v-border);
+    border-radius: 50%; width: 30px; height: 30px; display: grid; place-items: center;
+    cursor: pointer; font-size: 14px; line-height: 1; color: var(--v-text-subtle);
+    transition: transform var(--v-duration-fast) var(--v-ease-spring), color var(--v-duration-fast);
+  }
+  .pk-fav:hover { transform: scale(1.14); }
+  .pk-fav[aria-pressed="true"] { color: var(--v-accent); border-color: var(--v-accent); }
+
+  /* ---------- estados ---------- */
+  .pk-estado { text-align: center; padding: var(--v-space-16) var(--v-space-4); color: var(--v-text-muted); }
+  .pk-estado h3 { font-family: var(--v-font-display); color: var(--v-text); margin: 0 0 6px; }
+  .pk-esqueleto { border: 1px solid var(--v-border); border-radius: var(--v-radius-lg); background: var(--v-surface); padding: var(--v-space-4); height: 218px; }
+  .pk-rodape-lista { text-align: center; padding: var(--v-space-8) 0 0; color: var(--v-text-muted); font-size: var(--v-text-sm); }
+
+  /* ---------- modal ---------- */
+  .pk-modal-fundo {
+    position: fixed; inset: 0; z-index: var(--v-z-modal); display: grid; place-items: center;
+    background: var(--v-overlay); padding: var(--v-space-4); overflow-y: auto;
+  }
+  .pk-modal {
+    width: min(760px, 100%); background: var(--v-surface); border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-xl); box-shadow: var(--v-shadow-lg); overflow: hidden;
+  }
+  .pk-modal-topo { position: relative; padding: var(--v-space-6); display: flex; gap: var(--v-space-5); align-items: center; flex-wrap: wrap; }
+  .pk-modal-topo::before { content: ""; position: absolute; inset: 0; background: var(--pk-cor, var(--v-primary)); opacity: .16; }
+  .pk-modal-sprite { position: relative; width: 150px; height: 150px; flex: none; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .28)); }
+  .pk-modal-ident { position: relative; flex: 1 1 200px; }
+  .pk-modal-nome { font-family: var(--v-font-display); font-size: var(--v-text-3xl); text-transform: capitalize; margin: 0; line-height: 1.05; }
+  .pk-fechar {
+    position: absolute; top: 12px; right: 12px; z-index: 3; width: 34px; height: 34px;
+    border-radius: 50%; border: 1px solid var(--v-border); background: var(--v-surface);
+    color: var(--v-text); cursor: pointer; font-size: 18px; line-height: 1;
+  }
+  .pk-modal-corpo { padding: var(--v-space-6); display: grid; gap: var(--v-space-6); grid-template-columns: 250px 1fr; }
+  .pk-medidas { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--v-space-3); margin-bottom: var(--v-space-5); }
+  .pk-medida { border: 1px solid var(--v-border); border-radius: var(--v-radius-md); padding: 10px 12px; background: var(--v-surface-2); }
+  .pk-medida span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: var(--v-tracking-wide); color: var(--v-text-subtle); }
+  .pk-medida strong { font-size: var(--v-text-lg); font-family: var(--v-font-display); }
+
+  .pk-barra-linha { display: grid; grid-template-columns: 96px 40px 1fr; align-items: center; gap: 10px; margin-bottom: 9px; font-size: var(--v-text-sm); }
+  .pk-barra-trilho { display: block; height: 8px; background: var(--v-surface-3); border-radius: var(--v-radius-full); overflow: hidden; }
+  .pk-barra-preenchida { display: block; height: 100%; border-radius: var(--v-radius-full); transition: width var(--v-duration-slow) var(--v-ease-out); }
+
+  .pk-radar { width: 100%; min-height: 240px; }
+
+  @media (max-width: 720px) {
+    .pk-modal-corpo { grid-template-columns: 1fr; }
+    .pk-modal-nome { font-size: var(--v-text-2xl); }
+    .pk-modal-sprite { width: 116px; height: 116px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pk-card, .pk-chip, .pk-fav, .pk-barra-preenchida { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="pk-shell" v-component="pokedex-app" v-cloak>
+
+  <header class="pk-topo">
+    <div class="pk-marca">
+      <div class="pk-bola" aria-hidden="true"></div>
+      <div>
+        <h1 class="pk-titulo">Pokedex</h1>
+        <p class="pk-subtitulo">{ totalIndice } especies vindas da PokeAPI, filtradas no navegador</p>
+      </div>
+    </div>
+    <div class="v-push"></div>
+    <button class="v-btn v-btn--ghost v-btn--sm" v-click="alternarFavoritos"
+            :aria-pressed="soFavoritos ? 'true' : 'false'">
+      Favoritos
+      <span class="v-badge v-badge--accent" v-show="$store.pokedex.ids.length">{ $store.pokedex.ids.length }</span>
+    </button>
+    <button class="v-btn v-btn--ghost v-btn--sm v-btn--icon" v-click="$theme.toggle()" aria-label="Alternar tema">
+      <span aria-hidden="true">◐</span>
+    </button>
+  </header>
+
+  <section class="pk-filtros">
+    <div class="pk-busca-linha">
+      <div class="pk-busca">
+        <span class="pk-busca-icone" aria-hidden="true">⌕</span>
+        <label class="v-sr-only" for="pk-busca-campo">Buscar pelo nome</label>
+        <input id="pk-busca-campo" class="v-input" type="search" placeholder="Buscar por nome ou numero"
+               v-model="busca" v-debounce="350">
+      </div>
+      <select class="v-select" v-model="ordem" aria-label="Ordenar a lista" style="flex: 0 1 190px">
+        <option value="numero">Ordem numerica</option>
+        <option value="nome">Ordem alfabetica</option>
+      </select>
+      <button class="v-btn v-btn--secondary" v-click="limparFiltros" v-show="temFiltro">Limpar filtros</button>
+    </div>
+
+    <!-- A lista de tipos vem de v-resource, com cache de dez minutos. -->
+    <div v-resource="tipos: https://pokeapi.co/api/v2/type?limit=21" v-cache="10m">
+      <div class="pk-chips" v-if="tipos.data">
+        <button class="pk-chip" v-click="filtrarTipo('')" :aria-pressed="tipo === '' ? 'true' : 'false'"
+                :style="tipo === '' ? { background: 'var(--v-primary)', color: 'var(--v-primary-contrast)' } : {}">
+          Todos
+        </button>
+        <button class="pk-chip" v-for="t in tipos.data.results" :key="t.name"
+                v-click="filtrarTipo(t.name)"
+                :aria-pressed="tipo === t.name ? 'true' : 'false'"
+                :style="tipo === t.name ? { background: corDoTipo(t.name), color: '#fff' } : {}">
+          { nomeDoTipo(t.name) }
+        </button>
+      </div>
+      <p class="v-text-sm v-text-muted" v-if="!tipos.data && tipos.loading">Carregando os tipos...</p>
+      <p class="v-text-sm v-text-danger" v-if="!tipos.data && tipos.error">
+        Nao foi possivel carregar os tipos.
+        <button class="v-btn v-btn--sm v-btn--ghost" v-click="tipos.reload()">Tentar de novo</button>
+      </p>
+    </div>
+  </section>
+
+  <!-- Erro geral -->
+  <div class="pk-estado" v-if="erro">
+    <h3>A PokeAPI nao respondeu</h3>
+    <p>{ erro }</p>
+    <button class="v-btn v-btn--primary v-mt-4" v-click="recarregar">Tentar de novo</button>
+  </div>
+
+  <!-- Carregando o primeiro lote -->
+  <div class="pk-grade" v-if="!erro && carregando && !itens.length">
+    <div class="pk-esqueleto" v-for="n in 12">
+      <div class="v-skeleton v-skeleton--circle" style="width: 96px; height: 96px; margin: 8px auto"></div>
+      <div class="v-skeleton v-skeleton--text v-skeleton--w-75 v-mt-4" style="margin-inline: auto"></div>
+      <div class="v-skeleton v-skeleton--text v-skeleton--w-50 v-mt-2" style="margin-inline: auto"></div>
+    </div>
+  </div>
+
+  <!-- Nenhum resultado -->
+  <div class="pk-estado" v-if="!erro && !carregando && !itens.length">
+    <h3>Nenhum Pokemon por aqui</h3>
+    <p>Tente outro nome ou remova os filtros.</p>
+    <button class="v-btn v-btn--secondary v-mt-4" v-click="limparFiltros">Limpar filtros</button>
+  </div>
+
+  <!-- Grade. Usa v-show de proposito: um v-for que so e percorrido depois do
+       V.start() perde a reatividade, ver a anotacao no README. -->
+  <div class="pk-grade" v-show="!erro && itens.length">
+    <article class="pk-card" v-for="p in itens" :key="p.id"
+             :style="{ '--pk-cor': p.cor }"
+             tabindex="0" role="button"
+             v-click="abrir(p)" @keyup.enter="abrir(p)"
+             v-motion="fadeUp">
+      <button class="pk-fav" v-click.stop="alternarFavorito(p.id)"
+              :aria-pressed="ehFavorito(p.id) ? 'true' : 'false'"
+              :aria-label="'Favoritar ' + p.nome">
+        <span aria-hidden="true">{ ehFavorito(p.id) ? '★' : '☆' }</span>
+      </button>
+      <div class="pk-numero">#{ p.numero }</div>
+      <img class="pk-sprite" :src="p.imagem" :alt="p.nome" loading="lazy" width="116" height="116">
+      <div class="pk-nome">{ p.nome }</div>
+      <div class="pk-tipos">
+        <span class="pk-tipo" v-for="t in p.tipos" :key="t" :style="{ background: corDoTipo(t) }">{ nomeDoTipo(t) }</span>
+      </div>
+    </article>
+  </div>
+
+  <div class="pk-rodape-lista" v-show="!erro && itens.length">
+    <span v-show="carregandoMais">Carregando mais...</span>
+    <button class="v-btn v-btn--secondary" v-show="temMais && !carregandoMais" v-click="carregarMais">
+      Carregar mais
+    </button>
+    <span v-show="!temMais">Voce chegou ao fim da lista, { itens.length } de { totalFiltrado }.</span>
+  </div>
+
+  <!-- Detalhe -->
+  <div class="pk-modal-fundo" v-if="modalAberto" v-transition="fade"
+       @click.self="fechar" @keyup.esc.window="fechar"
+       role="dialog" aria-modal="true" aria-label="Detalhes do Pokemon">
+    <div class="pk-modal" :style="{ '--pk-cor': selecionado.cor }" v-transition="scale">
+      <button class="pk-fechar" v-click="fechar" aria-label="Fechar">×</button>
+
+      <div class="pk-modal-topo">
+        <img class="pk-modal-sprite" :src="selecionado.imagem" :alt="selecionado.nome" width="150" height="150">
+        <div class="pk-modal-ident">
+          <div class="pk-numero">#{ selecionado.numero }</div>
+          <h2 class="pk-modal-nome">{ selecionado.nome }</h2>
+          <div class="pk-tipos" style="justify-content: flex-start; margin-top: 8px">
+            <span class="pk-tipo" v-for="t in selecionado.tipos" :key="t" :style="{ background: corDoTipo(t) }">
+              { nomeDoTipo(t) }
+            </span>
+          </div>
+          <button class="v-btn v-btn--sm v-mt-4" v-click="alternarFavorito(selecionado.id)">
+            { ehFavorito(selecionado.id) ? '★ Nos favoritos' : '☆ Favoritar' }
+          </button>
+        </div>
+      </div>
+
+      <div class="pk-modal-corpo">
+        <div>
+          <div class="pk-medidas">
+            <div class="pk-medida"><span>Altura</span><strong>{ selecionado.altura } m</strong></div>
+            <div class="pk-medida"><span>Peso</span><strong>{ selecionado.peso } kg</strong></div>
+            <div class="pk-medida"><span>Base</span><strong>{ selecionado.total }</strong></div>
+            <div class="pk-medida"><span>Exp.</span><strong>{ selecionado.experiencia }</strong></div>
+          </div>
+          <h3 class="v-text-sm v-text-muted v-mb-2">Habilidades</h3>
+          <div class="pk-tipos" style="justify-content: flex-start">
+            <span class="v-tag" v-for="h in selecionado.habilidades" :key="h">{ h }</span>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="v-text-sm v-text-muted v-mb-2">Atributos base</h3>
+
+          <!-- Grafico de radar do modulo de graficos da Voodoo, reativo. -->
+          <div class="pk-radar" v-chart="graficoRadar" v-chart-height="240"></div>
+
+          <div class="v-mt-4">
+            <div class="pk-barra-linha" v-for="s in selecionado.stats" :key="s.chave">
+              <span class="v-text-muted">{ s.rotulo }</span>
+              <strong class="v-tabular">{ s.valor }</strong>
+              <span class="pk-barra-trilho">
+                <span class="pk-barra-preenchida"
+                      :style="{ width: s.porcento + '%', background: selecionado.cor }"></span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Cores oficiais de cada tipo, usadas nas etiquetas, no brilho do cartao e no grafico. */
+  var CORES = {
+    normal: '#9098A1', fire: '#FF6D3E', water: '#4A90DA', electric: '#F3C534',
+    grass: '#5CBB59', ice: '#75CEC8', fighting: '#D3425F', poison: '#A864C7',
+    ground: '#DA7C4D', flying: '#8FA8DD', psychic: '#F97176', bug: '#90C12C',
+    rock: '#C5B78C', ghost: '#5F6DBC', dragon: '#0C69C8', dark: '#5A5465',
+    steel: '#5A8EA1', fairy: '#EC8FE6', stellar: '#3FA9A0', unknown: '#788089'
+  };
+
+  var NOMES_TIPO = {
+    normal: 'normal', fire: 'fogo', water: 'agua', electric: 'eletrico',
+    grass: 'planta', ice: 'gelo', fighting: 'lutador', poison: 'venenoso',
+    ground: 'terrestre', flying: 'voador', psychic: 'psiquico', bug: 'inseto',
+    rock: 'pedra', ghost: 'fantasma', dragon: 'dragao', dark: 'sombrio',
+    steel: 'metalico', fairy: 'fada', stellar: 'estelar', unknown: 'desconhecido'
+  };
+
+  var ROTULOS_STAT = {
+    'hp': 'HP', 'attack': 'Ataque', 'defense': 'Defesa',
+    'special-attack': 'Ataque esp.', 'special-defense': 'Defesa esp.', 'speed': 'Velocidade'
+  };
+
+  var ROTULOS_CURTOS = {
+    'hp': 'HP', 'attack': 'ATQ', 'defense': 'DEF',
+    'special-attack': 'AT.E', 'special-defense': 'DF.E', 'speed': 'VEL'
+  };
+
+  var API = 'https://pokeapi.co/api/v2/';
+  var POR_LOTE = 24;
+  var TETO_STAT = 180;
+
+  /* Store global com os favoritos. Ele persiste sozinho no localStorage e
+     aparece direto no HTML por { $store.pokedex.ids.length }. */
+  V.store('pokedex', { ids: [] }, { persist: true });
+
+  V.component('pokedex-app', {
+    state: function () {
+      return {
+        indice: [],        // lista crua vinda da PokeAPI, com nome e numero
+        itens: [],         // lote ja detalhado e exibido na grade
+        busca: '',
+        tipo: '',
+        ordem: 'numero',
+        soFavoritos: false,
+        nomesDoTipo: null, // conjunto de nomes do tipo escolhido
+        geracao: 0,        // invalida lotes que chegam depois de trocar o filtro
+        carregando: true,
+        carregandoMais: false,
+        erro: '',
+        selecionado: null,
+        // O modal tem um booleano proprio: assim o conteudo continua lendo o
+        // ultimo Pokemon enquanto a saida acontece, sem expressao em null.
+        modalAberto: false
+      };
+    },
+
+    computed: {
+      totalIndice: function () {
+        return V.formatNumber(this.indice.length);
+      },
+
+      /* Lista filtrada e ordenada, ainda sem os detalhes de cada Pokemon. */
+      base: function () {
+        var termo = String(this.busca || '').trim().toLowerCase();
+        var favoritos = V.stores.pokedex.ids;
+        var so = this.soFavoritos;
+        var nomes = this.nomesDoTipo;
+
+        var lista = this.indice.filter(function (p) {
+          if (so && favoritos.indexOf(p.id) === -1) return false;
+          if (nomes && !nomes.has(p.nome)) return false;
+          if (!termo) return true;
+          return p.nome.indexOf(termo) !== -1 || String(p.id) === termo || p.numero.indexOf(termo) !== -1;
+        });
+
+        if (this.ordem === 'nome') return V.sortBy(lista, 'nome');
+        return lista;
+      },
+
+      totalFiltrado: function () { return this.base.length; },
+      temMais: function () { return this.itens.length < this.base.length; },
+      temFiltro: function () {
+        return !!this.busca || !!this.tipo || this.soFavoritos || this.ordem !== 'numero';
+      },
+
+      /* Opcoes entregues ao v-chart. Trocar de Pokemon redesenha sozinho. */
+      graficoRadar: function () {
+        var alvo = this.selecionado;
+        if (!alvo) return { type: 'radar', data: [], labels: [] };
+        return {
+          type: 'radar',
+          name: alvo.nome,
+          data: alvo.stats.map(function (s) { return s.valor; }),
+          labels: alvo.stats.map(function (s) { return ROTULOS_CURTOS[s.chave] || s.chave; }),
+          colors: [alvo.cor],
+          max: TETO_STAT,
+          showLegend: false,
+          height: 240
+        };
+      }
+    },
+
+    watch: {
+      busca: function () { this.reiniciarLista(); },
+      ordem: function () { this.reiniciarLista(); },
+      soFavoritos: function () { this.reiniciarLista(); },
+      nomesDoTipo: function () { this.reiniciarLista(); }
+    },
+
+    methods: {
+      /* --------------------------------------------------------------
+         Carregamento
+         -------------------------------------------------------------- */
+      iniciar: function () {
+        var self = this;
+        this.carregando = true;
+        this.erro = '';
+
+        V.http.get(API + 'pokemon?limit=1400', { cache: 600000, retry: 1, timeout: 15000 })
+          .then(function (resposta) {
+            self.indice = (resposta.results || []).map(function (item) {
+              var partes = item.url.split('/').filter(Boolean);
+              var id = Number(partes[partes.length - 1]);
+              return { id: id, nome: item.name, numero: String(id).padStart(4, '0'), url: item.url };
+            }).filter(function (p) { return p.id > 0; });
+            self.carregando = false;
+            self.carregarMais();
+          })
+          .catch(function (err) {
+            self.carregando = false;
+            self.erro = err && err.message ? err.message : 'Falha de rede.';
+          });
+      },
+
+      recarregar: function () {
+        this.itens = [];
+        this.iniciar();
+      },
+
+      /* Troca de filtro: descarta o lote em voo e comeca a lista do zero. */
+      reiniciarLista: function () {
+        this.geracao = this.geracao + 1;
+        this.carregandoMais = false;
+        this.itens = [];
+        this.carregarMais();
+      },
+
+      /* Busca os detalhes do proximo lote e adiciona na grade. */
+      carregarMais: function () {
+        if (this.carregandoMais) return;
+        var fatia = this.base.slice(this.itens.length, this.itens.length + POR_LOTE);
+        if (!fatia.length) return;
+
+        var self = this;
+        var geracao = this.geracao;
+        this.carregandoMais = true;
+
+        Promise.all(fatia.map(function (p) {
+          return V.http.get(p.url, { cache: 900000, timeout: 15000 }).catch(function () { return null; });
+        })).then(function (detalhes) {
+          // Um filtro pode ter mudado enquanto a rede respondia.
+          if (self.geracao !== geracao) return;
+          var novos = detalhes.filter(Boolean).map(function (d) { return self.normalizar(d); });
+          self.itens = self.itens.concat(novos);
+          self.carregandoMais = false;
+        }).catch(function () {
+          if (self.geracao === geracao) self.carregandoMais = false;
+        });
+      },
+
+      /* Rolagem infinita: quando falta pouco para o fim, pede o proximo lote. */
+      aoRolar: function () {
+        if (this.carregando || this.carregandoMais || !this.temMais) return;
+        var altura = document.documentElement.scrollHeight;
+        var restante = altura - (window.innerHeight + window.scrollY);
+        if (restante < 700) this.carregarMais();
+      },
+
+      /* Transforma a resposta crua da PokeAPI no formato que a tela usa. */
+      normalizar: function (dados) {
+        var tipos = (dados.types || []).map(function (t) { return t.type.name; });
+        var stats = (dados.stats || []).map(function (s) {
+          return {
+            chave: s.stat.name,
+            rotulo: ROTULOS_STAT[s.stat.name] || s.stat.name,
+            valor: s.base_stat,
+            porcento: Math.round(Math.min(100, (s.base_stat / TETO_STAT) * 100))
+          };
+        });
+        var total = stats.reduce(function (soma, s) { return soma + s.valor; }, 0);
+        var sprites = dados.sprites || {};
+        var arte = sprites.other && sprites.other['official-artwork']
+          ? sprites.other['official-artwork'].front_default
+          : null;
+
+        return {
+          id: dados.id,
+          nome: dados.name,
+          numero: String(dados.id).padStart(4, '0'),
+          tipos: tipos,
+          cor: CORES[tipos[0]] || CORES.unknown,
+          imagem: arte || sprites.front_default || '',
+          altura: (dados.height / 10).toFixed(1).replace('.', ','),
+          peso: (dados.weight / 10).toFixed(1).replace('.', ','),
+          experiencia: dados.base_experience || 0,
+          habilidades: (dados.abilities || []).map(function (a) { return a.ability.name.replace(/-/g, ' '); }),
+          stats: stats,
+          total: total
+        };
+      },
+
+      /* --------------------------------------------------------------
+         Filtros
+         -------------------------------------------------------------- */
+      filtrarTipo: function (nome) {
+        var self = this;
+        this.tipo = nome;
+        if (!nome) {
+          this.nomesDoTipo = null;
+          return;
+        }
+        V.http.get(API + 'type/' + nome, { cache: 900000 }).then(function (dados) {
+          if (self.tipo !== nome) return;
+          var conjunto = new Set((dados.pokemon || []).map(function (p) { return p.pokemon.name; }));
+          self.nomesDoTipo = conjunto;
+        }).catch(function () {
+          V.toast.error('Nao foi possivel filtrar por esse tipo.');
+        });
+      },
+
+      alternarFavoritos: function () { this.soFavoritos = !this.soFavoritos; },
+
+      limparFiltros: function () {
+        this.busca = '';
+        this.ordem = 'numero';
+        this.soFavoritos = false;
+        this.tipo = '';
+        this.nomesDoTipo = null;
+      },
+
+      /* --------------------------------------------------------------
+         Favoritos, guardados no store global
+         -------------------------------------------------------------- */
+      ehFavorito: function (id) { return V.stores.pokedex.ids.indexOf(id) !== -1; },
+
+      alternarFavorito: function (id) {
+        var lista = V.stores.pokedex.ids;
+        var posicao = lista.indexOf(id);
+        if (posicao === -1) {
+          lista.push(id);
+          V.toast.success('Adicionado aos favoritos.');
+        } else {
+          lista.splice(posicao, 1);
+          V.toast('Removido dos favoritos.');
+        }
+      },
+
+      /* --------------------------------------------------------------
+         Detalhe
+         -------------------------------------------------------------- */
+      abrir: function (pokemon) {
+        this.selecionado = pokemon;
+        this.modalAberto = true;
+        document.body.style.overflow = 'hidden';
+      },
+
+      fechar: function () {
+        if (!this.modalAberto) return;
+        this.modalAberto = false;
+        document.body.style.overflow = '';
+      },
+
+      corDoTipo: function (nome) { return CORES[nome] || CORES.unknown; },
+      nomeDoTipo: function (nome) { return NOMES_TIPO[nome] || nome; }
+    },
+
+    mounted: function () {
+      var self = this;
+      this.iniciar();
+      this.aoRolarComEspera = V.throttle(function () { self.aoRolar(); }, 200);
+      window.addEventListener('scroll', this.aoRolarComEspera, { passive: true });
+    },
+
+    unmounted: function () {
+      if (this.aoRolarComEspera) window.removeEventListener('scroll', this.aoRolarComEspera);
+    }
+  });
+
+  V.theme.init();
+  V.start();
+});
+</script>
+</body>
+</html>

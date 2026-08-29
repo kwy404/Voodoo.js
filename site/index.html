@@ -1,0 +1,2186 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>Voodoo.js: micro framework JavaScript sem build, direto no HTML</title>
+    <meta
+      name="description"
+      content="Voodoo.js e um micro framework JavaScript vanilla sem build e sem dependencias. Reatividade real, componentes, HTTP declarativo, formularios, animacoes e interface pronta em uma tag script. A alternativa leve ao Vue, ao React e ao jQuery."
+    />
+    <meta
+      name="keywords"
+      content="javascript framework sem build, alternativa ao jquery, alternativa leve ao vue, html first framework, reactive html attributes, micro framework javascript, no build step frontend, framework sem bundler, javascript vanilla reativo"
+    />
+    <meta name="author" content="Voodoo.js contributors" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="theme-color" content="#14111f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fbf7f2" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <link rel="canonical" href="https://voodoojs.dev/" />
+    <link rel="alternate" hreflang="pt-BR" href="https://voodoojs.dev/" />
+    <link rel="alternate" hreflang="en" href="https://voodoojs.dev/?lang=en" />
+    <link rel="alternate" hreflang="es" href="https://voodoojs.dev/?lang=es" />
+    <link rel="alternate" hreflang="fr" href="https://voodoojs.dev/?lang=fr" />
+    <link rel="alternate" hreflang="de" href="https://voodoojs.dev/?lang=de" />
+    <link rel="alternate" hreflang="x-default" href="https://voodoojs.dev/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Voodoo.js" />
+    <meta property="og:url" content="https://voodoojs.dev/" />
+    <meta property="og:title" content="Voodoo.js: JavaScript feels like magic." />
+    <meta
+      property="og:description"
+      content="Micro framework JavaScript sem passo de build. Reatividade, componentes, requisicoes HTTP e animacoes escritas direto nos atributos do HTML."
+    />
+    <meta property="og:image" content="https://voodoojs.dev/assets/brand/logo/voodoo-lockup.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Vudu, o mascote da Voodoo.js, conjurando componentes de interface."
+    />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="de_DE" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Voodoo.js: JavaScript feels like magic." />
+    <meta
+      name="twitter:description"
+      content="Micro framework JavaScript sem passo de build. Reatividade, componentes, requisicoes HTTP e animacoes escritas direto nos atributos do HTML."
+    />
+    <meta name="twitter:image" content="https://voodoojs.dev/assets/brand/logo/voodoo-lockup.svg" />
+    <meta
+      name="twitter:image:alt"
+      content="Vudu, o mascote da Voodoo.js, conjurando componentes de interface."
+    />
+
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/brand/logo/voodoo-mark.svg" />
+
+    <!-- Tema escolhido antes da primeira pintura, para a pagina nunca piscar
+         no tema errado. O escuro e o padrao da marca. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('voodoo:theme');
+          var theme = saved && saved !== 'system' ? saved.replace(/"/g, '') : 'dark';
+          if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+          if (!saved || saved === 'system') localStorage.setItem('voodoo:theme', 'dark');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (err) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
+
+    <!-- CSS critico da primeira dobra, embutido para nao bloquear a pintura. -->
+    <style>
+      :root {
+        --vd-bg: #f7f3ee;
+        --vd-text: #16121f;
+        --vd-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+        --vd-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      :root[data-theme="dark"] {
+        --vd-bg: #0d0a17;
+        --vd-text: #f5f2ff;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--vd-bg);
+        color: var(--vd-text);
+        font-family: var(--vd-font-sans);
+        font-size: 17px;
+        line-height: 1.65;
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--vd-font-display);
+        font-weight: 700;
+        line-height: 1.1;
+        letter-spacing: -0.025em;
+        margin: 0;
+      }
+      img,
+      svg {
+        max-width: 100%;
+        display: block;
+      }
+      [v-cloak] {
+        visibility: hidden;
+      }
+    </style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap"
+    />
+    <link rel="stylesheet" href="assets/voodoo-ui.css" />
+    <link rel="stylesheet" href="assets/styles.css" />
+
+    <script src="voodoo.full.min.js" defer></script>
+    <script src="assets/i18n.js" defer></script>
+    <script src="assets/app.js" defer></script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Voodoo.js",
+            "alternateName": "Voodoo",
+            "url": "https://voodoojs.dev/",
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": "JavaScript Framework",
+            "operatingSystem": "Any browser with Proxy and MutationObserver",
+            "softwareVersion": "0.1.0",
+            "fileSize": "85KB",
+            "programmingLanguage": "TypeScript",
+            "license": "https://opensource.org/licenses/MIT",
+            "description": "Micro framework JavaScript vanilla sem passo de build e sem dependencias. Reatividade real, componentes, HTTP declarativo, formularios, validacao, mascaras, animacoes, graficos e interface pronta, tudo escrito nos atributos do HTML.",
+            "featureList": [
+              "Reatividade sem DOM virtual",
+              "Zero passo de build",
+              "Zero dependencias em runtime",
+              "Requisicoes HTTP declarativas",
+              "Componentes com props, slots e ciclo de vida",
+              "Validacao de formularios e mascaras",
+              "Animacoes com fisica de mola",
+              "Graficos em SVG puro",
+              "Internacionalizacao reativa"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Organization",
+              "name": "Voodoo.js contributors",
+              "url": "https://github.com/voodoojs/voodoo"
+            },
+            "image": "https://voodoojs.dev/assets/brand/logo/voodoo-lockup.svg",
+            "inLanguage": ["pt-BR", "en", "es", "fr", "de"]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Voodoo.js",
+                "item": "https://voodoojs.dev/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Playground",
+                "item": "https://voodoojs.dev/#playground"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Directives",
+                "item": "https://voodoojs.dev/#directives"
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "Perguntas frequentes",
+                "item": "https://voodoojs.dev/#faq"
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "O que e a Voodoo.js?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Um micro framework JavaScript vanilla que coloca reatividade, componentes, requisicoes HTTP, formularios, animacoes e interface direto nos atributos do HTML. Voce carrega uma tag script e escreve o comportamento no proprio markup, sem passo de build e sem dependencias."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Preciso de Node, npm ou de um passo de build?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nao. Uma tag script apontando para o arquivo ja resolve. Node e npm existem apenas para quem prefere instalar pelo gerenciador de pacotes e importar modulos em um bundler que ja usa."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Qual e o tamanho real do arquivo?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "O build essencial tem cerca de 58 KB servido com gzip. O build completo, com graficos, animacoes, roteador, idiomas e os componentes prontos, tem cerca de 85 KB com gzip. Nao existe pedaco carregado depois."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "A Voodoo.js e uma alternativa ao jQuery?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Sim, e uma alternativa direta. O jQuery deixa o DOM como fonte da verdade e voce sincroniza tudo na mao. A Voodoo.js inverte isso: o estado e a fonte da verdade e a tela acompanha sozinha. Ainda assim ela oferece uma colecao encadeavel parecida, chamando V como funcao."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Vale a pena trocar Vue ou React pela Voodoo.js?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Depende do tamanho do projeto. Para paginas, paineis, sites institucionais e telas de administracao a Voodoo.js entrega o mesmo resultado com muito menos cerimonia. Para aplicacoes enormes, com centenas de componentes e um time grande, Vue e React continuam melhores."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Como a reatividade funciona sem DOM virtual?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Cada expressao do HTML vira um efeito que registra exatamente quais propriedades ele leu. Quando uma dessas propriedades muda, apenas os efeitos que dependem dela rodam de novo e escrevem no no de texto ou no atributo correspondente. Nao existe arvore intermediaria nem comparacao de arvores."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Da para usar junto com Rails, Laravel, Django ou WordPress?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Da, e este e um dos melhores usos. O servidor continua entregando HTML e a Voodoo.js apenas acrescenta comportamento. As directives de HTTP inclusive aceitam fragmentos de HTML vindos do servidor e trocam o conteudo no lugar certo."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "A biblioteca usa eval ou new Function?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nunca. As expressoes dos atributos passam por um analisador lexico e sintatico proprio e sao avaliadas por um interpretador de arvore, com uma lista fechada de globais liberados. Isso mantem a biblioteca compativel com politicas de seguranca de conteudo estritas."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Em quais navegadores funciona?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Em qualquer navegador moderno com suporte a Proxy e a MutationObserver, o que cobre Chrome, Edge, Firefox e Safari nas versoes atuais e em varias versoes anteriores. O bundle e compilado para ES2018."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Tem TypeScript?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A biblioteca inteira e escrita em TypeScript estrito e o pacote publica os arquivos de tipos. Quem importa pelo npm recebe tipagem completa da API em JavaScript. As expressoes escritas nos atributos continuam sendo avaliadas em tempo de execucao."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Como faco uma requisicao sem escrever fetch?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Escreva o verbo como atributo. A directive v-get busca a URL e coloca a resposta onde v-target apontar. A directive v-resource cria um objeto reativo com data, loading, error e um metodo reload, pronto para usar no template. Ha ainda v-post, v-put, v-patch, v-delete, v-search e v-poll."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Como contribuo ou reporto um problema?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "O repositorio esta no GitHub sob licenca MIT. Issues, discussoes e pedidos de merge sao bem vindos. Uma estrela ajuda outras pessoas a encontrarem o projeto."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="vd-skip" href="#conteudo" v-t="nav.skip">Pular para o conteudo</a>
+
+    <!-- =================================================================
+         CABECALHO
+         ================================================================= -->
+    <header class="vd-header" v-data="{ menu: false, lang: false, dark: true }">
+      <div class="vd-shell-wide vd-headbar">
+        <a class="vd-logo" href="#" aria-label="Voodoo.js">
+          <img
+            class="vd-logo-light"
+            src="assets/brand/logo/voodoo-logo.svg"
+            alt="Voodoo.js"
+            width="340"
+            height="88"
+          />
+          <img
+            class="vd-logo-dark"
+            src="assets/brand/logo/voodoo-logo-dark.svg"
+            alt="Voodoo.js"
+            width="340"
+            height="88"
+          />
+        </a>
+
+        <nav class="vd-nav" aria-label="Principal">
+          <a href="#problema" v-t="nav.problem">Por que</a>
+          <a href="#instalacao" v-t="nav.install">Instalacao</a>
+          <a href="#playground" v-t="nav.playground">Playground</a>
+          <a href="#directives" v-t="nav.directives">Directives</a>
+          <a href="#componentes" v-t="nav.components">Componentes</a>
+          <a href="#jogos" v-t="nav.games">Minigames</a>
+          <a href="#comparativo" v-t="nav.compare">Comparativo</a>
+          <a href="#faq" v-t="nav.faq">Perguntas</a>
+        </nav>
+
+        <div class="vd-headtools">
+          <!-- Seletor de idioma -->
+          <div class="vd-lang" @outside="lang = false">
+            <button
+              class="vd-lang-btn"
+              type="button"
+              :aria-expanded="lang ? 'true' : 'false'"
+              aria-haspopup="true"
+              :aria-label="$t('nav.language')"
+              @click="lang = !lang"
+            >
+              <span class="vd-lang-flag" aria-hidden="true" v-text="
+                locales.filter(l => l.code === $locale)[0].flag
+              ">🇧🇷</span>
+              <span v-text="locales.filter(l => l.code === $locale)[0].short">PT</span>
+            </button>
+
+            <div class="vd-lang-menu" v-if="lang" role="menu" v-motion="fadeDown">
+              <button
+                class="vd-lang-item"
+                type="button"
+                role="menuitem"
+                v-for="l in locales"
+                :key="l.code"
+                :class="{ 'is-on': l.code === $locale }"
+                :lang="l.code"
+                @click="$i18n.setLocale(l.code); lang = false"
+              >
+                <span class="vd-lang-flag" aria-hidden="true" v-text="l.flag"></span>
+                <span v-text="l.name"></span>
+                <span class="vd-lang-code" v-text="l.code"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tema -->
+          <button
+            class="vd-iconbtn"
+            type="button"
+            v-init="dark = $theme.resolved === 'dark'"
+            :aria-label="$t('nav.theme')"
+            :title="dark ? $t('nav.themeLight') : $t('nav.themeDark')"
+            @click="dark = !dark; $theme.set(dark ? 'dark' : 'light')"
+          >
+            <svg v-if="dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke-linecap="round" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" stroke-linejoin="round" />
+            </svg>
+          </button>
+
+          <a
+            class="vd-iconbtn"
+            :href="github"
+            target="_blank"
+            rel="noopener"
+            aria-label="GitHub"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C16.9 4.7 18 5 18 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z" />
+            </svg>
+          </a>
+
+          <button
+            class="vd-iconbtn vd-burger"
+            type="button"
+            :aria-label="menu ? $t('nav.close') : $t('nav.menu')"
+            :aria-expanded="menu ? 'true' : 'false'"
+            @click="menu = !menu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <path v-if="!menu" d="M4 7h16M4 12h16M4 17h16" />
+              <path v-else d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <nav class="vd-drawer" v-if="menu" v-motion="fadeDown" aria-label="Principal">
+        <a href="#problema" @click="menu = false" v-t="nav.problem">Por que</a>
+        <a href="#instalacao" @click="menu = false" v-t="nav.install">Instalacao</a>
+        <a href="#playground" @click="menu = false" v-t="nav.playground">Playground</a>
+        <a href="#directives" @click="menu = false" v-t="nav.directives">Directives</a>
+        <a href="#componentes" @click="menu = false" v-t="nav.components">Componentes</a>
+        <a href="#jogos" @click="menu = false" v-t="nav.games">Minigames</a>
+        <a href="#demos" v-t="demos.title" @click="menu = false">Aplicacoes completas</a>
+        <a href="#comparativo" @click="menu = false" v-t="nav.compare">Comparativo</a>
+        <a href="#faq" @click="menu = false" v-t="nav.faq">Perguntas</a>
+      </nav>
+    </header>
+
+    <main id="conteudo">
+      <!-- =================================================================
+           1. HEROI
+           ================================================================= -->
+      <section class="vd-hero">
+        <div class="vd-hero-runes" aria-hidden="true"></div>
+        <div class="vd-shell-wide vd-hero-grid">
+          <div>
+            <span class="vd-pill">
+              <i class="vd-pill-dot" aria-hidden="true"></i>
+              <span v-t="hero.badge">Zero build, zero dependencias, uma tag script</span>
+            </span>
+
+            <h1>
+              <span class="vd-slogan">JavaScript feels like magic.</span>
+              <span v-t="hero.title"
+                >O micro framework JavaScript sem build que faz quase tudo pelo HTML</span
+              >
+            </h1>
+
+            <p class="vd-hero-lead" v-t="hero.lead">
+              Reatividade de verdade, componentes, requisicoes HTTP, formularios, animacoes e
+              interface pronta, escritos em atributos do proprio HTML. Coloque uma tag script na
+              pagina e pronto.
+            </p>
+
+            <div class="vd-hero-cta">
+              <a class="vd-btn vd-btn-primary" href="#instalacao">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+                <span v-t="hero.ctaStart">Comecar agora</span>
+              </a>
+              <a class="vd-btn vd-btn-ghost" :href="github" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C16.9 4.7 18 5 18 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z" />
+                </svg>
+                <span v-t="hero.ctaGithub">Ver no GitHub</span>
+              </a>
+            </div>
+
+            <div class="vd-hero-install">
+              <span class="vd-hero-install-label" v-t="hero.installLabel">Instalacao em uma linha</span>
+              <div class="vd-cmd">
+                <code v-text="cdnTag">&lt;script src="voodoo.full.min.js" defer&gt;&lt;/script&gt;</code>
+                <button class="vd-copy" type="button" data-done="false" @click="copyText(cdnTag, $el)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" aria-hidden="true">
+                    <rect x="9" y="9" width="12" height="12" rx="2" />
+                    <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                  </svg>
+                  <span v-t="hero.copy">Copiar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="vd-hero-side">
+            <img
+              class="vd-mascot"
+              src="assets/brand/mascot/vudu-wave.svg"
+              :alt="$t('hero.mascotAlt')"
+              alt="Vudu, o mascote da Voodoo.js, acenando com o alfinete magico."
+              width="512"
+              height="512"
+            />
+
+            <div class="vd-live">
+              <div class="vd-live-bar">
+                <span class="vd-live-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="vd-live-name" v-t="hero.demoTitle">Funcionando aqui, agora</span>
+              </div>
+
+              <div class="vd-live-split">
+                <div class="vd-live-pane">
+                  <span class="vd-live-label" v-t="hero.demoHtml">O HTML</span>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-data="{ n: 0 }"&gt;
+  &lt;output&gt;{ n }&lt;/output&gt;
+
+  &lt;button @click="n--"&gt;-&lt;/button&gt;
+  &lt;button @click="n++"&gt;+&lt;/button&gt;
+  &lt;button @click="n = 0"&gt;zerar&lt;/button&gt;
+
+  &lt;p&gt;dobro: { n * 2 }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+                </div>
+
+                <div class="vd-live-pane">
+                  <span class="vd-live-label" v-t="hero.demoResult">O resultado</span>
+                  <div class="vd-live-out">
+                    <div class="vd-counter" v-data="{ n: 0 }">
+                      <output class="vd-counter-value" v-text="n">0</output>
+                      <div class="vd-counter-row">
+                        <button class="vd-round" type="button" :aria-label="$t('hero.decrease')" @click="n--">-</button>
+                        <button class="vd-round" type="button" :aria-label="$t('hero.increase')" @click="n++">+</button>
+                        <button class="vd-mini" type="button" @click="n = 0" v-t="hero.reset">Zerar</button>
+                      </div>
+                      <p class="vd-counter-meta">
+                        { $t('hero.clicks', { n: n }) } <span aria-hidden="true">|</span>
+                        { $t('hero.double') }: <b>{ n * 2 }</b>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="vd-hero-note" v-t="hero.demoHint">
+                Este contador roda com a Voodoo.js carregada nesta pagina. Nao existe build nem
+                passo de compilacao.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           2. BARRA DE NUMEROS
+           ================================================================= -->
+      <section class="vd-shell-wide" aria-labelledby="numeros">
+        <h2 id="numeros" class="vd-sr" v-t="stats.title">A biblioteca em quatro numeros</h2>
+        <div class="vd-stats">
+          <div class="vd-stat" v-motion-scroll="fadeUp">
+            <div class="vd-stat-n"><span v-count="stats.gzip" v-count-duration="1.6s">85</span></div>
+            <div class="vd-stat-k" v-t="stats.bundle">KB com gzip</div>
+            <p class="vd-stat-s" v-t="stats.bundleNote">O arquivo inteiro, servido comprimido</p>
+          </div>
+          <div class="vd-stat" v-motion-scroll="fadeUp">
+            <div class="vd-stat-n"><span v-count="stats.directives" v-count-duration="1.6s">253</span></div>
+            <div class="vd-stat-k" v-t="stats.directives">directives</div>
+            <p class="vd-stat-s" v-t="stats.directivesNote">Contadas ao vivo em V.directives</p>
+          </div>
+          <div class="vd-stat" v-motion-scroll="fadeUp">
+            <div class="vd-stat-n"><span v-count="stats.deps" v-count-duration="1.2s">0</span></div>
+            <div class="vd-stat-k" v-t="stats.deps">dependencias</div>
+            <p class="vd-stat-s" v-t="stats.depsNote">Nada no node_modules em producao</p>
+          </div>
+          <div class="vd-stat" v-motion-scroll="fadeUp">
+            <div class="vd-stat-n"><span v-count="stats.build" v-count-duration="1.2s">0</span></div>
+            <div class="vd-stat-k" v-t="stats.build">passos de build</div>
+            <p class="vd-stat-s" v-t="stats.buildNote">Sem bundler, sem transpilador, sem espera</p>
+          </div>
+          <div class="vd-stat" v-motion-scroll="fadeUp">
+            <div class="vd-stat-n"><span v-count="stats.tests" v-count-duration="1.8s">177</span></div>
+            <div class="vd-stat-k" v-t="stats.tests">testes automatizados</div>
+            <p class="vd-stat-s" v-t="stats.testsNote">Rodando a cada mudanca no repositorio</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           3. O PROBLEMA QUE A VOODOO RESOLVE
+           ================================================================= -->
+      <section class="vd-section" id="problema">
+        <div class="vd-shell">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.problem">Por que</span>
+            <h2 class="vd-h2" v-t="problem.title">O mesmo contador, quatro caminhos</h2>
+            <p class="vd-lead" v-t="problem.lead">
+              Um contador com botoes de somar e subtrair, um valor derivado e a tela sempre em dia.
+              O resultado e identico nos quatro. O que muda e quanto voce precisa escrever, e quanto
+              voce precisa instalar antes de comecar.
+            </p>
+          </div>
+
+          <div v-data="{ via: 'voodoo' }">
+            <div class="vd-tabs" role="tablist">
+              <button class="vd-tab" type="button" role="tab" :aria-selected="via === 'vanilla'" :class="{ 'is-on': via === 'vanilla' }" @click="via = 'vanilla'" v-t="problem.tabVanilla">JavaScript puro</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="via === 'jquery'" :class="{ 'is-on': via === 'jquery' }" @click="via = 'jquery'" v-t="problem.tabJquery">jQuery</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="via === 'vue'" :class="{ 'is-on': via === 'vue' }" @click="via = 'vue'" v-t="problem.tabVue">Vue</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="via === 'voodoo'" :class="{ 'is-on': via === 'voodoo' }" @click="via = 'voodoo'" v-t="problem.tabVoodoo">Voodoo.js</button>
+            </div>
+
+            <div class="vd-compare-meta">
+              <span class="vd-metric"><b v-text="via === 'vanilla' ? 24 : via === 'jquery' ? 18 : via === 'vue' ? 21 : 7">7</b> <span v-t="problem.lines">linhas</span></span>
+              <span class="vd-metric"><b v-text="via === 'vanilla' ? 612 : via === 'jquery' ? 447 : via === 'vue' ? 486 : 178">178</b> <span v-t="problem.chars">caracteres</span></span>
+              <span class="vd-metric" :class="{ 'is-good': via === 'vanilla' || via === 'jquery' || via === 'voodoo' }">
+                <span v-t="problem.build">Build</span>
+                <b v-text="via === 'vue' ? $t('problem.buildYes') : $t('problem.buildNo')">nenhum</b>
+              </span>
+              <span class="vd-metric" :class="{ 'is-good': via === 'vanilla' || via === 'voodoo' }">
+                <span v-t="problem.deps">Dependencias</span>
+                <b v-text="via === 'vanilla' ? 0 : via === 'jquery' ? 1 : via === 'vue' ? 1 : 0">0</b>
+              </span>
+            </div>
+
+            <div v-show="via === 'vanilla'">
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;div id="app"&gt;
+  &lt;output id="valor"&gt;0&lt;/output&gt;
+  &lt;button id="menos"&gt;-&lt;/button&gt;
+  &lt;button id="mais"&gt;+&lt;/button&gt;
+  &lt;p&gt;dobro: &lt;span id="dobro"&gt;0&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  let n = 0;
+  const valor = document.getElementById('valor');
+  const dobro = document.getElementById('dobro');
+
+  function render() {
+    valor.textContent = n;
+    dobro.textContent = n * 2;
+  }
+
+  document.getElementById('mais')
+    .addEventListener('click', () =&gt; { n++; render(); });
+  document.getElementById('menos')
+    .addEventListener('click', () =&gt; { n--; render(); });
+
+  render();
+&lt;/script&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="problem.noteVanilla">
+                Funciona, mas voce escreve e mantem a sincronia entre estado e tela na mao.
+              </p>
+            </div>
+
+            <div v-show="via === 'jquery'">
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;script src="https://code.jquery.com/jquery-3.7.1.min.js"&gt;&lt;/script&gt;
+
+&lt;div id="app"&gt;
+  &lt;output id="valor"&gt;0&lt;/output&gt;
+  &lt;button id="menos"&gt;-&lt;/button&gt;
+  &lt;button id="mais"&gt;+&lt;/button&gt;
+  &lt;p&gt;dobro: &lt;span id="dobro"&gt;0&lt;/span&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  function render(n) {
+    $('#valor').text(n);
+    $('#dobro').text(n * 2);
+  }
+
+  $('#mais').on('click', function () {
+    render(+$('#valor').text() + 1);
+  });
+  $('#menos').on('click', function () {
+    render(+$('#valor').text() - 1);
+  });
+&lt;/script&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="problem.noteJquery">
+                Menos codigo para achar elementos, porem a fonte da verdade continua sendo o DOM.
+              </p>
+            </div>
+
+            <div v-show="via === 'vue'">
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;!-- Contador.vue, compilado por Vite antes de ir para o navegador --&gt;
+&lt;script setup&gt;
+  import { ref, computed } from 'vue';
+
+  const n = ref(0);
+  const dobro = computed(() =&gt; n.value * 2);
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div&gt;
+    &lt;output&gt;{{ n }}&lt;/output&gt;
+    &lt;button @click="n--"&gt;-&lt;/button&gt;
+    &lt;button @click="n++"&gt;+&lt;/button&gt;
+    &lt;p&gt;dobro: {{ dobro }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+
+&lt;!-- mais: package.json, vite.config.js, main.js, node_modules --&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="problem.noteVue">
+                Reatividade excelente e ecossistema enorme. O preco e um passo de build.
+              </p>
+            </div>
+
+            <div v-show="via === 'voodoo'">
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;script src="voodoo.full.min.js" defer&gt;&lt;/script&gt;
+
+&lt;div v-data="{ n: 0 }"&gt;
+  &lt;output&gt;{ n }&lt;/output&gt;
+  &lt;button @click="n--"&gt;-&lt;/button&gt;
+  &lt;button @click="n++"&gt;+&lt;/button&gt;
+  &lt;p&gt;dobro: { n * 2 }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="problem.noteVoodoo">
+                O estado mora em um atributo, a tela acompanha sozinha e nada precisa ser instalado.
+              </p>
+            </div>
+          </div>
+
+          <p class="vd-verdict" v-t="problem.verdict">
+            A Voodoo.js nao inventou a reatividade. Ela apenas devolveu a reatividade para dentro do
+            HTML, sem cobrar um passo de build por isso.
+          </p>
+
+          <img
+            class="vd-art vd-mt-l"
+            src="assets/brand/illustrations/reactivity.svg"
+            :alt="$t('problem.artAlt')"
+            alt="Um no de estado central pulsando envia sinais ate tres nos de DOM que dependem dele."
+            width="800"
+            height="460"
+            loading="lazy"
+            v-motion-scroll="fadeUp"
+          />
+        </div>
+      </section>
+
+      <!-- =================================================================
+           4. HTML LIMPO
+           ================================================================= -->
+      <section class="vd-section vd-section-tint">
+        <div class="vd-shell">
+          <div class="vd-head">
+            <span class="vd-eyebrow">data-*</span>
+            <h2 class="vd-h2" v-t="clean.title">O HTML final fica limpo</h2>
+            <p class="vd-lead" v-t="clean.lead">
+              Depois que a Voodoo.js processa um elemento, ela guarda os atributos em memoria e os
+              retira do documento.
+            </p>
+          </div>
+
+          <div class="vd-clean-grid">
+            <div>
+              <div class="vd-codehead"><span v-t="clean.before">O que voce escreve</span></div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;p class="saudacao"
+   v-data="{ nome: 'Vudu' }"
+   v-text="'Ola, ' + nome"&gt;&lt;/p&gt;</code></pre>
+            </div>
+            <div>
+              <div class="vd-codehead"><span v-t="clean.after">O que fica no DOM</span></div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;p class="saudacao"&gt;Ola, Vudu&lt;/p&gt;</code></pre>
+            </div>
+          </div>
+
+          <div class="vd-clean-demo">
+            <p class="saudacao" id="demo-limpo" v-data="{ nome: 'Vudu' }" v-text="'Ola, ' + nome">Ola, Vudu</p>
+            <p class="vd-soft" v-t="clean.inspect">
+              Inspecione o elemento acima com as ferramentas do navegador e confira.
+            </p>
+          </div>
+
+          <p class="vd-pg-desc" v-t="clean.note">
+            Se voce precisa dos atributos por algum motivo, desligue com
+            V.config.cleanAttributes = false.
+          </p>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           5. INSTALACAO E CONFIGURACAO
+           ================================================================= -->
+      <section class="vd-section" id="instalacao">
+        <div class="vd-shell">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.install">Instalacao</span>
+            <h2 class="vd-h2" v-t="install.title">Instalacao e configuracao</h2>
+            <p class="vd-lead" v-t="install.lead">
+              Escolha o caminho que combina com o seu projeto. Os tres entregam exatamente a mesma
+              biblioteca.
+            </p>
+          </div>
+
+          <div v-data="{ modo: 'cdn' }">
+            <div class="vd-tabs" role="tablist">
+              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'cdn'" :class="{ 'is-on': modo === 'cdn' }" @click="modo = 'cdn'" v-t="install.tabCdn">CDN</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'npm'" :class="{ 'is-on': modo === 'npm' }" @click="modo = 'npm'" v-t="install.tabNpm">npm</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'dl'" :class="{ 'is-on': modo === 'dl' }" @click="modo = 'dl'" v-t="install.tabDownload">Download</button>
+            </div>
+
+            <div class="vd-mt" v-show="modo === 'cdn'">
+              <div class="vd-cmd">
+                <code v-text="cdnTag"></code>
+                <button class="vd-copy" type="button" data-done="false" @click="copyText(cdnTag, $el)">
+                  <span v-t="hero.copy">Copiar</span>
+                </button>
+              </div>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;!doctype html&gt;
+&lt;html lang="pt-BR"&gt;
+  &lt;head&gt;
+    &lt;meta charset="utf-8"&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div v-data="{ nome: 'mundo' }"&gt;
+      &lt;h1&gt;Ola, { nome }!&lt;/h1&gt;
+      &lt;input v-model="nome"&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="install.cdnNote">
+                O caminho mais rapido. Cole a tag no final do head, com defer.
+              </p>
+            </div>
+
+            <div class="vd-mt" v-show="modo === 'npm'">
+              <div class="vd-cmd">
+                <code v-text="npmCmd">npm install voodoojs</code>
+                <button class="vd-copy" type="button" data-done="false" @click="copyText(npmCmd, $el)">
+                  <span v-t="hero.copy">Copiar</span>
+                </button>
+              </div>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="js">import V from 'voodoojs';
+
+// Directives e componentes registrados, DOM ainda intacto.
+V.config.prefix = 'v-';
+V.start();
+
+// Ou apenas o que voce usa, com tree shaking:
+import { reactive, http, toast } from 'voodoojs';</code></pre>
+              <p class="vd-pg-desc" v-t="install.npmNote">
+                Para quem ja usa um bundler. O pacote exporta modulos ESM e CJS.
+              </p>
+            </div>
+
+            <div class="vd-mt" v-show="modo === 'dl'">
+              <div class="vd-row">
+                <a class="vd-btn vd-btn-primary vd-btn-sm" href="voodoo.full.min.js" download>
+                  voodoo.full.min.js
+                </a>
+                <span class="vd-chip">{ stats.raw } KB</span>
+                <span class="vd-chip vd-chip-mint">{ stats.gzip } KB gzip</span>
+                <span class="vd-chip vd-chip-magenta">{ stats.brotli } KB brotli</span>
+              </div>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script src="/js/voodoo.full.min.js" defer&gt;&lt;/script&gt;</code></pre>
+              <p class="vd-pg-desc" v-t="install.downloadNote">
+                Baixe o arquivo, coloque ao lado do seu HTML e sirva do seu proprio dominio.
+              </p>
+            </div>
+          </div>
+
+          <h3 class="vd-h3 vd-mt-l" v-t="install.configTitle">Configuracao</h3>
+          <p class="vd-lead" v-t="install.configLead">
+            Tudo pode ser ajustado por atributos na propria tag script, ou por JavaScript antes de
+            chamar V.start().
+          </p>
+
+          <div class="vd-grid vd-grid-2 vd-mt" v-motion-stagger="70">
+            <article class="vd-card" v-motion-scroll="fadeUp">
+              <h4 class="vd-card-title" v-t="install.cfgPrefixTitle">Prefixo dos atributos</h4>
+              <p class="vd-card-text" v-t="install.cfgPrefixText">
+                Troque v- por data-v- quando o HTML precisar passar por um validador estrito.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script src="voodoo.full.min.js" data-prefix="data-v-" defer&gt;&lt;/script&gt;
+
+&lt;div data-v-data="{ n: 1 }"&gt;{ n }&lt;/div&gt;</code></pre>
+            </article>
+
+            <article class="vd-card" v-motion-scroll="fadeUp">
+              <h4 class="vd-card-title" v-t="install.cfgBaseTitle">URL base das requisicoes</h4>
+              <p class="vd-card-text" v-t="install.cfgBaseText">
+                Defina uma vez e escreva apenas o caminho em v-get, v-post e nos demais verbos.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script src="voodoo.full.min.js" data-base-url="https://api.exemplo.com" defer&gt;&lt;/script&gt;
+
+&lt;div v-resource="usuarios: /usuarios"&gt;...&lt;/div&gt;</code></pre>
+            </article>
+
+            <article class="vd-card" v-motion-scroll="fadeUp">
+              <h4 class="vd-card-title" v-t="install.cfgLocaleTitle">Idioma e moeda</h4>
+              <p class="vd-card-text" v-t="install.cfgLocaleText">
+                Controla os formatadores de data, numero e moeda, e o idioma inicial do modulo de
+                i18n.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="js">V.i18n({
+  locale: 'pt-BR',
+  fallback: 'en',
+  currency: 'BRL',
+  messages: { 'pt-BR': { ola: 'Ola' }, en: { ola: 'Hello' } }
+});
+
+V.setLocale('en');</code></pre>
+            </article>
+
+            <article class="vd-card" v-motion-scroll="fadeUp">
+              <h4 class="vd-card-title" v-t="install.cfgPaletteTitle">Paleta de cores</h4>
+              <p class="vd-card-text" v-t="install.cfgPaletteText">
+                Informe duas cores e a Voodoo.js gera a escala inteira, a versao escura e a cor de
+                texto com o melhor contraste.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="js">V.palette({
+  primary: '#6D3BF5',
+  accent: '#FF3D8B',
+  radius: '12px',
+  font: 'Inter'
+});</code></pre>
+            </article>
+          </div>
+
+          <article class="vd-card vd-card-flat vd-mt">
+            <h4 class="vd-card-title" v-t="install.manualTitle">Iniciar na mao</h4>
+            <p class="vd-card-text" v-t="install.manualText">
+              Com data-manual a biblioteca nao toca no documento ate voce chamar V.start().
+            </p>
+            <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script src="voodoo.full.min.js" data-manual&gt;&lt;/script&gt;
+&lt;script&gt;
+  V.config.cleanAttributes = false;
+  V.config.devtools = true;
+  V.start();
+&lt;/script&gt;</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           6. PLAYGROUND
+           ================================================================= -->
+      <section class="vd-section vd-section-tint" id="playground">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.playground">Playground</span>
+            <h2 class="vd-h2" v-t="playground.title">Playground</h2>
+            <p class="vd-lead" v-t="playground.lead">
+              Edite o HTML da esquerda e veja o resultado da direita mudar na hora. Cada exemplo roda
+              dentro de um quadro isolado que carrega a Voodoo.js de verdade.
+            </p>
+          </div>
+
+          <div class="vd-pg" v-data="{ id: 'state', code: exampleCode('state') }">
+            <div class="vd-pg-list" role="tablist" :aria-label="$t('playground.examples')">
+              <button
+                class="vd-pg-item"
+                type="button"
+                role="tab"
+                v-for="ex in examples"
+                :key="ex.id"
+                :aria-selected="id === ex.id"
+                :class="{ 'is-on': id === ex.id }"
+                @click="id = ex.id; code = exampleCode(ex.id)"
+                v-text="$t('playground.ex.' + ex.id)"
+              ></button>
+            </div>
+
+            <div>
+              <div class="vd-pg-main">
+                <div class="vd-pg-box">
+                  <div class="vd-pg-boxhead">
+                    <span v-t="playground.editor">Editor de HTML</span>
+                    <button class="vd-btn vd-btn-quiet vd-btn-sm" type="button" @click="code = exampleCode(id)" v-t="playground.reset">Restaurar exemplo</button>
+                  </div>
+                  <textarea
+                    class="vd-pg-editor"
+                    v-model="code"
+                    spellcheck="false"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    :aria-label="$t('playground.editor')"
+                  ></textarea>
+                </div>
+
+                <div class="vd-pg-box">
+                  <div class="vd-pg-boxhead">
+                    <span v-t="playground.preview">Resultado ao vivo</span>
+                    <span class="vd-dot" aria-hidden="true"></span>
+                  </div>
+                  <iframe
+                    class="vd-pg-frame"
+                    id="pgFrame"
+                    data-live="true"
+                    :title="$t('playground.preview')"
+                    sandbox="allow-scripts allow-same-origin allow-popups"
+                  ></iframe>
+                </div>
+              </div>
+
+              <p class="vd-pg-desc" v-effect="preview('pgFrame', code)" v-text="$t('playground.exDesc.' + id)"></p>
+              <p class="vd-soft" v-t="playground.hint">
+                A atualizacao acontece pouco depois de voce parar de digitar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           7. TOUR PELAS DIRECTIVES
+           ================================================================= -->
+      <section class="vd-section" id="directives">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.directives">Directives</span>
+            <h2 class="vd-h2" v-t="directives.title">Tour pelas directives</h2>
+            <p class="vd-lead" v-t="directives.lead">
+              Cada cartao traz o nome, a explicacao, o codigo e uma demonstracao que funciona ali
+              mesmo.
+            </p>
+          </div>
+
+          <div v-data="{ cat: 'all' }">
+            <div class="vd-catbar" role="tablist">
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'all'" :class="{ 'is-on': cat === 'all' }" @click="cat = 'all'">Todas</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'state'" :class="{ 'is-on': cat === 'state' }" @click="cat = 'state'" v-t="directives.cat.state">Estado</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'render'" :class="{ 'is-on': cat === 'render' }" @click="cat = 'render'" v-t="directives.cat.render">Renderizacao</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'events'" :class="{ 'is-on': cat === 'events' }" @click="cat = 'events'" v-t="directives.cat.events">Eventos</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'forms'" :class="{ 'is-on': cat === 'forms' }" @click="cat = 'forms'" v-t="directives.cat.forms">Formularios</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'http'" :class="{ 'is-on': cat === 'http' }" @click="cat = 'http'" v-t="directives.cat.http">HTTP</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'ui'" :class="{ 'is-on': cat === 'ui' }" @click="cat = 'ui'" v-t="directives.cat.ui">Interface</button>
+              <button class="vd-tab" type="button" role="tab" :aria-selected="cat === 'motion'" :class="{ 'is-on': cat === 'motion' }" @click="cat = 'motion'" v-t="directives.cat.motion">Animacao</button>
+            </div>
+
+            <!-- ESTADO -->
+            <div v-show="cat === 'all' || cat === 'state'">
+              <h3 class="vd-h3" v-t="directives.cat.state">Estado</h3>
+              <p class="vd-soft" v-t="directives.catDesc.state">Onde os dados moram e como eles nascem.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-data</span>
+                  <p class="vd-ddesc" v-t="directives.d.data">Cria um escopo reativo com os valores escritos ali dentro.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-data="{ pocoes: 3 }"&gt;
+  { pocoes } pocoes
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ pocoes: 3 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="pocoes++">+1</button>
+                    <span class="vd-out">{ pocoes } pocoes</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-init</span>
+                  <p class="vd-ddesc" v-t="directives.d.init">Executa uma expressao assim que o elemento entra na pagina.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-data="{ hora: '' }"
+   v-init="hora = $d(new Date(), 'time')"&gt;
+  { hora }
+&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ hora: '' }" v-init="hora = $d(new Date(), 'time')">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">{ hora }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-effect</span>
+                  <p class="vd-ddesc" v-t="directives.d.effect">Reexecuta a expressao sempre que algo que ela le muda.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-data="{ a: 2, b: 0 }"&gt;
+  &lt;span v-effect="b = a * a"&gt;{ a } ao quadrado = { b }&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ a: 2, b: 0 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="a++">a + 1</button>
+                    <span class="vd-out" v-effect="b = a * a">{ a }² = { b }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-ref</span>
+                  <p class="vd-ddesc" v-t="directives.d.ref">Guarda o elemento em $refs para usar dentro do escopo.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-data="{}"&gt;
+  &lt;input v-ref="campo"&gt;
+  &lt;button @click="$refs.campo.focus()"&gt;Focar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{}">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" v-ref="campo" aria-label="v-ref" />
+                    <button class="vd-mini" type="button" @click="$refs.campo.focus()">focus()</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-persist</span>
+                  <p class="vd-ddesc">
+                    O estado sobrevive ao recarregar a pagina, gravado em localStorage.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-data="{ nota: '' }" v-persist="rascunho"&gt;
+  &lt;input v-model="nota"&gt;
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ nota: '' }" v-persist="landing-demo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" v-model="nota" placeholder="Escreva e recarregue" />
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-cloak</span>
+                  <p class="vd-ddesc" v-t="directives.d.cloak">
+                    Some do HTML depois da inicializacao, o que evita o piscar do conteudo cru.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;style&gt;[v-cloak]{visibility:hidden}&lt;/style&gt;
+
+&lt;div v-cloak v-data="{ n: 1 }"&gt;{ n }&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" v-cloak v-data="{ n: 1 }">{ n } sem piscar</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- RENDERIZACAO -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'render'">
+              <h3 class="vd-h3" v-t="directives.cat.render">Renderizacao</h3>
+              <p class="vd-soft" v-t="directives.catDesc.render">Como os dados viram tela.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-text</span>
+                  <p class="vd-ddesc" v-t="directives.d.text">Escreve texto com escape, entao nada de HTML injetado.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-text="'&lt;b&gt;nao vira negrito&lt;/b&gt;'"&gt;&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" v-text="'<b>nao vira negrito</b>'"></span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-html</span>
+                  <p class="vd-ddesc" v-t="directives.d.html">Insere HTML e inicializa as directives que vierem dentro dele.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-html="'&lt;b&gt;isto vira negrito&lt;/b&gt;'"&gt;&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" v-html="'<b>isto vira negrito</b>'"></span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-if / v-else</span>
+                  <p class="vd-ddesc" v-t="directives.d.if">Insere e remove o elemento do DOM, com cadeia v-else-if e v-else.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-if="n &gt; 2"&gt;muitos&lt;/p&gt;
+&lt;p v-else-if="n === 2"&gt;dois&lt;/p&gt;
+&lt;p v-else&gt;poucos&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ n: 1 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="n = n > 2 ? 1 : n + 1">n = { n }</button>
+                    <span class="vd-out" v-if="n > 2">muitos</span>
+                    <span class="vd-out" v-else-if="n === 2">dois</span>
+                    <span class="vd-out" v-else>poucos</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-show</span>
+                  <p class="vd-ddesc" v-t="directives.d.show">Mantem o elemento no DOM e apenas alterna a exibicao.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-show="aberto"&gt;continua no DOM&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ aberto: true }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="aberto = !aberto">alternar</button>
+                    <span class="vd-out" v-show="aberto">continua no DOM</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-for</span>
+                  <p class="vd-ddesc" v-t="directives.d.for">Percorre listas, objetos, numeros e textos, com indice e :key.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;li v-for="(item, i) in itens" :key="item"&gt;
+  { i + 1 }. { item }
+&lt;/li&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ itens: ['erva', 'po', 'pena'] }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="itens = itens.concat('novo ' + itens.length)">+ item</button>
+                    <ul class="vd-list-demo">
+                      <li v-for="(item, i) in itens" :key="item">{ i + 1 }. { item }</li>
+                    </ul>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-once</span>
+                  <p class="vd-ddesc" v-t="directives.d.once">Avalia uma unica vez e nunca mais reage.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;span v-once="n"&gt;&lt;/span&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ n: 1 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="n++">n = { n }</button>
+                    <span class="vd-out">fixo: <b v-once="n"></b></span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- EVENTOS -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'events'">
+              <h3 class="vd-h3" v-t="directives.cat.events">Eventos</h3>
+              <p class="vd-soft" v-t="directives.catDesc.events">Como a pagina responde a quem usa.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">@click / v-click</span>
+                  <p class="vd-ddesc" v-t="directives.d.click">Atalho de v-on:click, com todos os modificadores.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button @click="n++"&gt;+1&lt;/button&gt;
+&lt;button v-click="n = 0"&gt;zerar&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ n: 0 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="n++">+1</button>
+                    <button class="vd-mini" type="button" v-click="n = 0">zerar</button>
+                    <span class="vd-out">{ n }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">@keyup.enter</span>
+                  <p class="vd-ddesc" v-t="directives.d.keys">Filtra por tecla direto no atributo, sem comparar event.key na mao.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input @keyup.enter="msg = $event.target.value"&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ msg: '' }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" @keyup.enter="msg = $event.target.value" placeholder="Aperte Enter" aria-label="Enter" />
+                    <span class="vd-out" v-show="msg">{ msg }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">@outside</span>
+                  <p class="vd-ddesc" v-t="directives.d.outside">Dispara quando o clique acontece fora do elemento, ideal para menus.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-show="aberto" @outside="aberto = false"&gt;
+  clique fora para fechar
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ aberto: false }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="aberto = !aberto">abrir</button>
+                    <span class="vd-out" v-show="aberto" @outside="aberto = false">clique fora</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">@hold</span>
+                  <p class="vd-ddesc" v-t="directives.d.on">Liga qualquer evento, inclusive os sinteticos como hold, outside e swipe.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button @hold.700="apagar()"&gt;segure para apagar&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ feito: false }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @hold.700="feito = true">segure 0,7s</button>
+                    <span class="vd-out" v-show="feito">segurou</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">@input.debounce</span>
+                  <p class="vd-ddesc" v-t="directives.d.debounce">Segura a execucao ate a pessoa parar, util em busca e em rolagem.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input @input.debounce.500="busca = $event.target.value"&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ busca: '' }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" @input.debounce.500="busca = $event.target.value" placeholder="Espera 500ms" aria-label="debounce" />
+                    <span class="vd-out">{ busca || '...' }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">@visible</span>
+                  <p class="vd-ddesc">
+                    Dispara quando o elemento entra na area visivel da tela.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div @visible="carregado = true"&gt;...&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ visto: false }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" @visible="visto = true">{ visto ? 'este cartao apareceu' : 'aguardando' }</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- FORMULARIOS -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'forms'">
+              <h3 class="vd-h3" v-t="directives.cat.forms">Formularios</h3>
+              <p class="vd-soft" v-t="directives.catDesc.forms">Campos ligados ao estado nos dois sentidos.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-model</span>
+                  <p class="vd-ddesc" v-t="directives.d.model">Liga o campo ao estado nos dois sentidos, em qualquer tipo de campo.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input v-model="nome"&gt;
+&lt;p&gt;Ola, { nome }&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ nome: 'Vudu' }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" v-model="nome" aria-label="v-model" />
+                    <span class="vd-out">Ola, { nome }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-model.number</span>
+                  <p class="vd-ddesc" v-t="directives.d.modelNumber">Converte para numero, corta espacos, adia a escrita ou espera a digitacao parar.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input type="number" v-model.number="qtd"&gt;
+&lt;p&gt;{ qtd * 2 }&lt;/p&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ qtd: 2 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" type="number" v-model.number="qtd" aria-label="v-model.number" />
+                    <span class="vd-out">dobro: { qtd * 2 }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-mask</span>
+                  <p class="vd-ddesc">
+                    Formata o campo enquanto a pessoa digita, preservando a posicao do cursor.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input v-mask="cpf"&gt;
+&lt;input v-mask="(99) 99999-9999"&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" v-mask="cpf" placeholder="000.000.000-00" aria-label="v-mask cpf" />
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-required / v-email</span>
+                  <p class="vd-ddesc">
+                    Regras de validacao escritas como atributos, com a mensagem no lugar certo.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;form v-validate&gt;
+  &lt;input name="email" v-required v-email&gt;
+&lt;/form&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <form v-validate style="width: 100%">
+                      <input class="vd-field" name="email" v-required v-email placeholder="voce@exemplo.com" aria-label="v-email" />
+                    </form>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-model em grupo</span>
+                  <p class="vd-ddesc" v-t="directives.d.modelGroup">Caixas de selecao viram uma lista, e o select acompanha o valor sozinho.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input type="checkbox" value="erva" v-model="escolhas"&gt;
+&lt;input type="checkbox" value="po" v-model="escolhas"&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ escolhas: ['erva'] }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <label><input type="checkbox" value="erva" v-model="escolhas" /> erva</label>
+                    <label><input type="checkbox" value="po" v-model="escolhas" /> po</label>
+                    <span class="vd-out">{ escolhas.join(', ') || 'nada' }</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-model.debounce</span>
+                  <p class="vd-ddesc">
+                    Escreve no estado apenas quando a digitacao para, o que evita trabalho a toa.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input v-model.debounce.400="busca"&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ busca: '' }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <input class="vd-field" v-model.debounce.400="busca" placeholder="Digite rapido" aria-label="v-model.debounce" />
+                    <span class="vd-out">{ busca || '...' }</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- HTTP -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'http'">
+              <h3 class="vd-h3" v-t="directives.cat.http">HTTP</h3>
+              <p class="vd-soft" v-t="directives.catDesc.http">Requisicoes escritas como atributos.</p>
+              <div class="vd-grid vd-grid-2 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-resource</span>
+                  <p class="vd-ddesc" v-t="directives.d.resource">Cria um objeto reativo com data, loading, error e reload.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-resource="user: /api/users/1"&gt;
+  &lt;p v-if="user.loading"&gt;carregando&lt;/p&gt;
+  &lt;h4 v-else&gt;{ user.data.name }&lt;/h4&gt;
+  &lt;button @click="user.reload()"&gt;atualizar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-resource="user: https://jsonplaceholder.typicode.com/users/1">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" v-if="user.loading">carregando</span>
+                    <span class="vd-out" v-else-if="user.error">offline</span>
+                    <span class="vd-out" v-else>{ user.data.name }</span>
+                    <button class="vd-mini" type="button" @click="user.reload()">reload()</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-get e v-target</span>
+                  <p class="vd-ddesc" v-t="directives.d.get">Faz a requisicao e coloca a resposta onde v-target apontar.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-get="/api/dica" v-target="#saida"&gt;
+  Buscar dica
+&lt;/button&gt;
+&lt;div id="saida"&gt;&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" v-get="https://jsonplaceholder.typicode.com/todos/1" v-target="#saida-http" v-json-path="title">
+                      v-get
+                    </button>
+                    <span class="vd-out" id="saida-http">aguardando</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-search</span>
+                  <p class="vd-ddesc" v-t="directives.d.search">Busca enquanto a pessoa digita, com espera embutida.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;input v-search="/api/busca" v-param="q"
+       v-target="#resultados" v-debounce="300"&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">v-search + v-param + v-debounce</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-post</span>
+                  <p class="vd-ddesc" v-t="directives.d.post">Envia o formulario inteiro sem escrever uma linha de fetch.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;form v-post="/api/contato" v-validate
+      v-toast-success="Enviado!" v-target="#retorno"&gt;
+  &lt;input name="email" v-required v-email&gt;
+  &lt;button type="submit"&gt;Enviar&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">v-post + v-validate + v-toast-success</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- INTERFACE -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'ui'">
+              <h3 class="vd-h3" v-t="directives.cat.ui">Interface</h3>
+              <p class="vd-soft" v-t="directives.catDesc.ui">Peças de interface e servicos globais.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">$toast</span>
+                  <p class="vd-ddesc" v-t="directives.d.toast">Avisos prontos, com tema, posicao e fila.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button @click="$toast.success('Pronto!')"&gt;
+  Avisar
+&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="$toast.success('Feitico lancado!')">success</button>
+                    <button class="vd-mini" type="button" @click="$toast.error('O caldeirao virou.')">error</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-tooltip</span>
+                  <p class="vd-ddesc">
+                    Dica acessivel presa ao elemento, com posicao e atraso configuraveis.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-tooltip="Isto e uma dica"&gt;?&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" v-tooltip="Isto e uma dica da Voodoo.js">passe o mouse</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-copy</span>
+                  <p class="vd-ddesc">
+                    Copia um texto para a area de transferencia e avisa quem clicou.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-copy="npm install voodoojs"&gt;Copiar&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" v-copy="npm install voodoojs">v-copy</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-t e v-locale</span>
+                  <p class="vd-ddesc" v-t="directives.d.locale">Troca o idioma da pagina inteira sem recarregar.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;h1 v-t="titulo.principal"&gt;&lt;/h1&gt;
+&lt;button v-locale="en"&gt;English&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">{ $locale }</span>
+                    <button class="vd-mini" type="button" v-locale="pt-BR">pt-BR</button>
+                    <button class="vd-mini" type="button" v-locale="en">en</button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-teleport</span>
+                  <p class="vd-ddesc" v-t="directives.d.teleport">Move o elemento para outro ponto do documento, como o body.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-teleport="body"&gt;vou para o fim do body&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">usado por modais e avisos</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">$screen e $theme</span>
+                  <p class="vd-ddesc">
+                    Variaveis magicas reativas para tamanho de tela, rede, tema e area de
+                    transferencia.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-show="$screen.mobile"&gt;tela estreita&lt;/p&gt;
+&lt;button v-theme-toggle&gt;alternar tema&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out">{ $screen.width }px</span>
+                    <span class="vd-out" v-show="$screen.mobile">mobile</span>
+                    <span class="vd-out" v-show="$screen.desktop">desktop</span>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <!-- ANIMACAO -->
+            <div class="vd-mt-l" v-show="cat === 'all' || cat === 'motion'">
+              <h3 class="vd-h3" v-t="directives.cat.motion">Animacao</h3>
+              <p class="vd-soft" v-t="directives.catDesc.motion">Movimento com fisica de verdade.</p>
+              <div class="vd-grid vd-grid-3 vd-mt">
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-motion</span>
+                  <p class="vd-ddesc" v-t="directives.d.motion">Anima o elemento na entrada, com tween ou com mola.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-motion="fadeUp"&gt;entra subindo&lt;/div&gt;
+&lt;div v-motion="{ opacity: [0,1], scale: [0.6,1], spring: true }"&gt;&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ k: 0 }">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" @click="k++">repetir</button>
+                    <span class="vd-out" v-for="i in [k]" :key="i" v-motion="pop">pop</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-motion-scroll</span>
+                  <p class="vd-ddesc" v-t="directives.d.motionScroll">Anima quando o elemento aparece na tela durante a rolagem.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;section v-motion-scroll="fadeUp"&gt;...&lt;/section&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out" v-motion-scroll.repeat="slideRight">este entrou rolando</span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-motion-hover</span>
+                  <p class="vd-ddesc" v-t="directives.d.motionHover">Anima no mouse e tambem no foco pelo teclado.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-motion-hover="{ scale: 1.08, rotate: -3 }"&gt;
+  passe o mouse
+&lt;/button&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <button class="vd-mini" type="button" v-motion-hover="{ scale: 1.12, rotate: -4 }" v-motion-tap="{ scale: 0.9 }">
+                      passe o mouse
+                    </button>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-count</span>
+                  <p class="vd-ddesc" v-t="directives.d.count">Conta de zero ate o numero, com formato de numero, moeda ou porcentagem.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;b v-count="128400" v-count-duration="2s"&gt;&lt;/b&gt;
+&lt;b v-count="4990" v-count-format="currency"&gt;&lt;/b&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out"><b v-count="128400" v-count-duration="2s"></b></span>
+                    <span class="vd-out"><b v-count="4990" v-count-format="currency"></b></span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-typewriter</span>
+                  <p class="vd-ddesc" v-t="directives.d.typewriter">Escreve o texto letra por letra.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;h2 v-typewriter="JavaScript feels like magic."
+    v-typewriter-speed="55"&gt;&lt;/h2&gt;</code></pre>
+                  <div class="vd-ddemo">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <span class="vd-out"><b v-typewriter="JavaScript feels like magic." v-typewriter-speed="60"></b></span>
+                  </div>
+                </article>
+
+                <article class="vd-dcard">
+                  <span class="vd-dname">v-chart</span>
+                  <p class="vd-ddesc">
+                    Onze tipos de grafico em SVG puro, responsivos, acessiveis e ligados ao estado.
+                  </p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;div v-chart="{ type: 'area', data: vendas,
+                labels: meses, smooth: true }"&gt;&lt;/div&gt;</code></pre>
+                  <div class="vd-ddemo" v-data="{ dados: [8, 14, 6, 19, 12, 22] }" style="display: block">
+                    <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
+                    <div v-chart="{ type: 'area', data: dados, smooth: true, showGrid: false }" style="height: 90px"></div>
+                    <button class="vd-mini" type="button" @click="dados = dados.map(() => Math.round(Math.random() * 24) + 2)">
+                      sortear
+                    </button>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <img
+            class="vd-art vd-mt-l"
+            src="assets/brand/illustrations/directives.svg"
+            :alt="$t('directives.artAlt')"
+            alt="Uma varinha magica toca um cartao de codigo e dele saem etiquetas de directives."
+            width="800"
+            height="460"
+            loading="lazy"
+            v-motion-scroll="fadeUp"
+          />
+        </div>
+      </section>
+
+      <!-- =================================================================
+           8. COMPONENTES PRONTOS
+           ================================================================= -->
+      <section class="vd-section vd-section-tint" id="componentes">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.components">Componentes</span>
+            <h2 class="vd-h2" v-t="components.title">Componentes prontos</h2>
+            <p class="vd-lead" v-t="components.lead">
+              Componentes registrados com V.component e montados por tag propria. O HTML fica do lado
+              do resultado, e o resultado e real.
+            </p>
+            <p class="vd-soft vd-mt">
+              <span class="vd-chip">{ stats.components } componentes</span>
+            </p>
+          </div>
+
+          <div class="vd-showcase">
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VButton</h3>
+                <p class="vd-card-text" v-t="components.button">Botao com variantes, tamanhos e estado de carregamento.</p>
+              </div>
+              <div class="vd-show-stage">
+                <v-button variant="primary" icon="check">Salvar</v-button>
+                <v-button variant="soft" icon="star">Favoritar</v-button>
+                <v-button variant="ghost">Cancelar</v-button>
+                <v-button variant="danger" icon="trash">Apagar</v-button>
+                <v-button loading>Salvando</v-button>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-button variant="primary" icon="check"&gt;Salvar&lt;/v-button&gt;
+&lt;v-button variant="danger" icon="trash"&gt;Apagar&lt;/v-button&gt;
+&lt;v-button loading&gt;Salvando&lt;/v-button&gt;</code></pre>
+            </article>
+
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VCard</h3>
+                <p class="vd-card-text" v-t="components.card">Cartao com cabecalho, corpo e rodape por slots nomeados.</p>
+              </div>
+              <div class="vd-show-stage is-block">
+                <v-card title="Feitico salvo" subtitle="Ha instantes" icon="star">
+                  O caldeirao aceitou o ingrediente e o resultado ficou estavel.
+                  <div slot="footer">
+                    <v-badge tone="success">estavel</v-badge>
+                  </div>
+                </v-card>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-card title="Feitico salvo" subtitle="Ha instantes" icon="star"&gt;
+  O caldeirao aceitou o ingrediente.
+  &lt;div slot="footer"&gt;&lt;v-badge tone="success"&gt;estavel&lt;/v-badge&gt;&lt;/div&gt;
+&lt;/v-card&gt;</code></pre>
+            </article>
+
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VInput, VSelect, VSwitch</h3>
+                <p class="vd-card-text" v-t="components.input">Campo com rotulo, dica e mensagem de erro.</p>
+              </div>
+              <div class="vd-show-stage is-block">
+                <v-input label="Nome do feitico" placeholder="Elixir violeta" hint="Entre tres e trinta letras" icon="edit"></v-input>
+                <v-select
+                  label="Ingrediente"
+                  :options="[{ value: 'erva', label: 'Raiz de mandragora' }, { value: 'po', label: 'Po de estrela' }, { value: 'pena', label: 'Pena de corvo' }]"
+                  searchable
+                ></v-select>
+                <v-switch label="Modo caldeirao" description="Aquece antes de misturar" checked></v-switch>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-input label="Nome do feitico" hint="Entre tres e trinta letras"&gt;&lt;/v-input&gt;
+&lt;v-select label="Ingrediente" :options="lista" searchable&gt;&lt;/v-select&gt;
+&lt;v-switch label="Modo caldeirao" checked&gt;&lt;/v-switch&gt;</code></pre>
+            </article>
+
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VBadge, VTag, VAvatar</h3>
+                <p class="vd-card-text" v-t="components.badge">Etiqueta curta para estado e categoria.</p>
+              </div>
+              <div class="vd-show-stage">
+                <v-badge tone="success">estavel</v-badge>
+                <v-badge tone="warning" dot>em teste</v-badge>
+                <v-badge tone="danger" variant="solid">quebrado</v-badge>
+                <v-tag tone="primary" closable>reatividade</v-tag>
+                <v-avatar name="Vudu Voodoo"></v-avatar>
+                <v-avatar name="Ana Lima" status="online"></v-avatar>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-badge tone="success"&gt;estavel&lt;/v-badge&gt;
+&lt;v-tag tone="primary" closable&gt;reatividade&lt;/v-tag&gt;
+&lt;v-avatar name="Vudu Voodoo" status="online"&gt;&lt;/v-avatar&gt;</code></pre>
+            </article>
+
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VAlert, VProgress, VRating</h3>
+                <p class="vd-card-text">Avisos, barras de progresso e avaliacao por estrelas.</p>
+              </div>
+              <div class="vd-show-stage is-block">
+                <v-alert tone="success" title="Feitico concluido">O resultado ficou estavel.</v-alert>
+                <v-progress :value="72" tone="primary" label="Preparo" show-value></v-progress>
+                <v-rating :value="4" show-value></v-rating>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-alert tone="success" title="Feitico concluido"&gt;...&lt;/v-alert&gt;
+&lt;v-progress :value="72" label="Preparo" show-value&gt;&lt;/v-progress&gt;
+&lt;v-rating :value="4" show-value&gt;&lt;/v-rating&gt;</code></pre>
+            </article>
+
+            <article class="vd-show">
+              <div class="vd-show-head">
+                <h3 class="vd-card-title">VStat, VSteps, VEmptyState</h3>
+                <p class="vd-card-text">Numeros, etapas e estados vazios com o mascote da marca.</p>
+              </div>
+              <div class="vd-show-stage is-block">
+                <v-stat label="Pocoes preparadas" value="1.284" delta="12" icon="chart"></v-stat>
+                <v-steps :steps="['Colher', 'Ferver', 'Misturar', 'Engarrafar']" :current="2"></v-steps>
+                <v-empty-state title="Nada por aqui" description="Escolha um ingrediente para comecar."></v-empty-state>
+              </div>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;v-stat label="Pocoes preparadas" value="1.284" delta="12"&gt;&lt;/v-stat&gt;
+&lt;v-steps :steps="etapas" :current="2"&gt;&lt;/v-steps&gt;
+&lt;v-empty-state title="Nada por aqui"&gt;&lt;/v-empty-state&gt;</code></pre>
+            </article>
+          </div>
+
+          <p class="vd-pg-desc" v-t="components.note">
+            Componentes sao apenas escopo com estado, metodos, computados, props, slots e ciclo de
+            vida. Nao existe compilacao de template.
+          </p>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           9. MINIGAMES
+           ================================================================= -->
+      <section class="vd-section" id="jogos">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.games">Minigames</span>
+            <h2 class="vd-h2" v-t="games.title">Minigames que ensinam</h2>
+            <p class="vd-lead" v-t="games.lead">
+              Quatro brincadeiras construidas inteiramente com a Voodoo.js. Jogue primeiro, depois
+              abra o codigo ao lado e veja que nao tem truque nenhum.
+            </p>
+          </div>
+
+          <div class="vd-grid vd-grid-2">
+            <!-- Memoria -->
+            <section class="vd-game" v-data="{ deck: makeDeck(), moves: 0, pairs: 0, time: 0, started: 0, won: false, locked: false, code: false }">
+              <div class="vd-game-head">
+                <h3 class="vd-card-title" v-t="games.memory.title">Jogo da memoria</h3>
+                <p class="vd-card-text" v-t="games.memory.desc">Vire as cartas e ache os pares.</p>
+              </div>
+              <div class="vd-game-body">
+                <div class="vd-scoreboard">
+                  <span class="vd-score"><b>{ moves }</b> <span v-t="games.memory.moves">jogadas</span></span>
+                  <span class="vd-score"><b>{ pairs }</b>/8 <span v-t="games.memory.pairs">pares</span></span>
+                  <span class="vd-score"><b>{ time }</b>s <span v-t="games.memory.time">tempo</span></span>
+                  <button class="vd-mini" type="button" @click="memReset($data)" v-t="games.memory.restart">Reiniciar</button>
+                  <button class="vd-mini" type="button" @click="code = !code" v-text="code ? $t('games.hideCode') : $t('games.showCode')"></button>
+                </div>
+
+                <div class="vd-mem" role="grid">
+                  <button
+                    class="vd-mem-card"
+                    type="button"
+                    v-for="(card, i) in deck"
+                    :key="card.id"
+                    :class="{ 'is-up': card.up, 'is-done': card.done }"
+                    :aria-label="$t('games.memory.cardLabel', { n: i + 1 })"
+                    @click="memFlip($data, card)"
+                    v-text="card.up || card.done ? card.face : ''"
+                  ></button>
+                </div>
+
+                <p class="vd-verdict-box is-right" v-show="won">
+                  { $t('games.memory.won', { moves: moves, time: time }) }
+                </p>
+
+                <pre class="vd-code vd-mt" v-show="code" v-ignore><code data-hl="html">&lt;div v-data="{ deck: makeDeck(), moves: 0, pairs: 0 }"&gt;
+  &lt;button v-for="card in deck" :key="card.id"
+          :class="{ 'is-up': card.up, 'is-done': card.done }"
+          @click="memFlip($data, card)"
+          v-text="card.up || card.done ? card.face : ''"&gt;&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+              </div>
+            </section>
+
+            <!-- Clicker -->
+            <section class="vd-game" v-data="{ potions: 0, wand: 0, cauldron: 0, familiar: 0, ticking: false, code: false }" v-init="clickerStart($data)">
+              <div class="vd-game-head">
+                <h3 class="vd-card-title" v-t="games.clicker.title">Clicker magico</h3>
+                <p class="vd-card-text" v-t="games.clicker.desc">Clique no caldeirao para juntar pocoes.</p>
+              </div>
+              <div class="vd-game-body">
+                <div class="vd-scoreboard">
+                  <span class="vd-score"><b>{ Math.floor(potions) }</b> <span v-t="games.clicker.potions">pocoes</span></span>
+                  <span class="vd-score"><b>{ 1 + wand }</b> <span v-t="games.clicker.perClick">por clique</span></span>
+                  <span class="vd-score"><b>{ cauldron + familiar * 5 }</b> <span v-t="games.clicker.perSecond">por segundo</span></span>
+                  <button class="vd-mini" type="button" @click="potions = 0; wand = 0; cauldron = 0; familiar = 0" v-t="games.clicker.reset">Recomecar</button>
+                </div>
+
+                <div class="vd-clicker">
+                  <button class="vd-cauldron" type="button" @click="potions += 1 + wand" :aria-label="$t('games.clicker.brew')" v-motion-tap="{ scale: 0.92 }">
+                    <span aria-hidden="true">🧪</span>
+                  </button>
+
+                  <div>
+                    <div class="vd-upgrade">
+                      <div class="vd-upgrade-info">
+                        <div class="vd-upgrade-name" v-t="games.clicker.wand">Varinha afiada</div>
+                        <div class="vd-upgrade-desc" v-t="games.clicker.wandDesc">Soma uma pocao a cada clique.</div>
+                      </div>
+                      <button class="vd-mini" type="button" :disabled="potions < clickerCost(10, wand)" @click="clickerBuy($data, 'wand', clickerCost(10, wand))">
+                        { clickerCost(10, wand) } 🧪
+                      </button>
+                      <span class="vd-chip">{ wand }</span>
+                    </div>
+
+                    <div class="vd-upgrade">
+                      <div class="vd-upgrade-info">
+                        <div class="vd-upgrade-name" v-t="games.clicker.cauldron">Caldeirao borbulhante</div>
+                        <div class="vd-upgrade-desc" v-t="games.clicker.cauldronDesc">Produz uma pocao por segundo.</div>
+                      </div>
+                      <button class="vd-mini" type="button" :disabled="potions < clickerCost(50, cauldron)" @click="clickerBuy($data, 'cauldron', clickerCost(50, cauldron))">
+                        { clickerCost(50, cauldron) } 🧪
+                      </button>
+                      <span class="vd-chip">{ cauldron }</span>
+                    </div>
+
+                    <div class="vd-upgrade">
+                      <div class="vd-upgrade-info">
+                        <div class="vd-upgrade-name" v-t="games.clicker.familiar">Corvo ajudante</div>
+                        <div class="vd-upgrade-desc" v-t="games.clicker.familiarDesc">Produz cinco pocoes por segundo.</div>
+                      </div>
+                      <button class="vd-mini" type="button" :disabled="potions < clickerCost(400, familiar)" @click="clickerBuy($data, 'familiar', clickerCost(400, familiar))">
+                        { clickerCost(400, familiar) } 🧪
+                      </button>
+                      <span class="vd-chip">{ familiar }</span>
+                    </div>
+
+                    <div class="vd-mt" v-chart="{ type: 'progress', data: Math.min(100, Math.round(potions / 10)) }" style="height: 90px"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Caca ao bug -->
+            <section class="vd-game" v-data="{ step: 0, score: 0, answered: false, picked: -1, right: false, finished: false }">
+              <div class="vd-game-head">
+                <h3 class="vd-card-title" v-t="games.bug.title">Caca ao bug</h3>
+                <p class="vd-card-text" v-t="games.bug.desc">Cada trecho tem exatamente um erro.</p>
+              </div>
+              <div class="vd-game-body">
+                <div class="vd-scoreboard">
+                  <span class="vd-score"><b>{ score }</b> <span v-t="games.bug.score">acertos</span> <span v-t="games.bug.of">de</span> { bugs.length }</span>
+                  <span class="vd-score">{ step + 1 } / { bugs.length }</span>
+                </div>
+
+                <div v-if="!finished">
+                  <p class="vd-soft">{ $t('games.bug.q' + bugs[step].id) }</p>
+                  <p class="vd-card-text" v-t="games.bug.question">Qual linha esta errada?</p>
+
+                  <div class="vd-buglines">
+                    <button
+                      class="vd-bugline"
+                      type="button"
+                      v-for="(line, i) in bugs[step].lines"
+                      :key="i"
+                      :class="{ 'is-right': answered && i === bugs[step].wrong, 'is-wrong': answered && i === picked && !right }"
+                      @click="bugAnswer($data, i)"
+                    >
+                      <span class="vd-bugnum" aria-hidden="true">{ i + 1 }</span>
+                      <span v-text="line"></span>
+                    </button>
+                  </div>
+
+                  <div class="vd-verdict-box" :class="{ 'is-right': right, 'is-wrong': !right }" v-show="answered">
+                    <b v-text="right ? $t('games.bug.correct') : $t('games.bug.wrong')"></b>
+                    { $t('games.bug.e' + bugs[step].id) }
+                  </div>
+
+                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" v-show="answered" @click="bugNext($data)" v-t="games.bug.next">
+                    Proximo trecho
+                  </button>
+                </div>
+
+                <div v-else>
+                  <p class="vd-verdict-box is-right">
+                    { $t('games.bug.finished', { score: score, total: bugs.length }) }
+                  </p>
+                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" @click="bugReset($data)" v-t="games.bug.again">
+                    Jogar de novo
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Montar a directive -->
+            <section class="vd-game" v-data="{ slots: ['', '', '', ''], status: '', solved: false }">
+              <div class="vd-game-head">
+                <h3 class="vd-card-title" v-t="games.builder.title">Monte a directive</h3>
+                <p class="vd-card-text" v-t="games.builder.desc">
+                  Arraste as pecas para os espacos e monte a linha que renderiza a lista.
+                </p>
+              </div>
+              <div class="vd-game-body">
+                <p class="vd-live-label" v-t="games.builder.pieces">Pecas</p>
+                <div class="vd-pieces">
+                  <button
+                    class="vd-piece"
+                    type="button"
+                    draggable="true"
+                    v-for="p in builderPieces"
+                    :key="p"
+                    :class="{ 'is-used': slots.indexOf(p) > -1 }"
+                    @dragstart="$event.dataTransfer.setData('text/plain', p)"
+                    @click="builderPlace($data, p)"
+                    v-text="p"
+                  ></button>
+                </div>
+
+                <p class="vd-live-label" v-t="games.builder.line">Sua linha</p>
+                <div class="vd-slots">
+                  <span>&lt;li</span>
+                  <span
+                    class="vd-slot"
+                    v-for="(s, i) in slots"
+                    :key="i"
+                    :class="{ 'is-filled': s }"
+                    @dragover.prevent="0"
+                    @drop.prevent="builderPlace($data, $event.dataTransfer.getData('text/plain'), i)"
+                    @click="slots[i] = ''"
+                    v-text="s || $t('games.builder.drop')"
+                  ></span>
+                  <span>&gt;{ item.nome }&lt;/li&gt;</span>
+                </div>
+
+                <div class="vd-row vd-mt">
+                  <button class="vd-btn vd-btn-primary vd-btn-sm" type="button" @click="builderCheck($data)" v-t="games.builder.check">Conferir</button>
+                  <button class="vd-btn vd-btn-quiet vd-btn-sm" type="button" @click="builderClear($data)" v-t="games.builder.clear">Limpar</button>
+                </div>
+
+                <p class="vd-soft vd-mt" v-t="games.builder.keyboard">
+                  Use Tab para escolher uma peca e Enter para coloca-la na linha.
+                </p>
+
+                <div class="vd-verdict-box" :class="{ 'is-right': status === 'correct', 'is-wrong': status === 'wrong' }" v-show="status">
+                  { status === 'correct' ? $t('games.builder.correct') : status === 'incomplete' ? $t('games.builder.incomplete') : $t('games.builder.wrong') }
+                </div>
+
+                <div v-show="solved" v-data="{ itens: [{ id: 1, nome: 'Raiz de mandragora' }, { id: 2, nome: 'Po de estrela' }, { id: 3, nome: 'Pena de corvo' }] }">
+                  <p class="vd-live-label vd-mt" v-t="games.builder.result">Resultado</p>
+                  <ul class="vd-list-demo">
+                    <li v-for="item in itens" :key="item.id">{ item.nome }</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           10. APLICACOES COMPLETAS EM QUADRO
+           ================================================================= -->
+      <section class="vd-section vd-section-tint" id="demos">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.examples">Exemplos</span>
+            <h2 class="vd-h2" v-t="demos.title">Aplicacoes completas</h2>
+            <p class="vd-lead" v-t="demos.lead">
+              Cada demonstracao e uma pagina inteira feita so com a Voodoo.js, rodando de verdade
+              dentro do quadro.
+            </p>
+          </div>
+
+          <div v-data="{ app: 'todo', larg: 'desktop' }">
+            <div class="vd-row" style="justify-content: space-between; margin-bottom: 16px">
+              <div class="vd-tabs" role="tablist">
+                <button class="vd-tab" type="button" role="tab" :aria-selected="app === 'todo'" :class="{ 'is-on': app === 'todo' }" @click="app = 'todo'" v-t="demos.todo">Lista de tarefas</button>
+                <button class="vd-tab" type="button" role="tab" :aria-selected="app === 'dash'" :class="{ 'is-on': app === 'dash' }" @click="app = 'dash'" v-t="demos.dash">Painel com graficos</button>
+                <button class="vd-tab" type="button" role="tab" :aria-selected="app === 'table'" :class="{ 'is-on': app === 'table' }" @click="app = 'table'" v-t="demos.table">Tabela de dados</button>
+                <button class="vd-tab" type="button" role="tab" :aria-selected="app === 'shop'" :class="{ 'is-on': app === 'shop' }" @click="app = 'shop'" v-t="demos.shop">Carrinho de compras</button>
+              </div>
+
+              <div class="vd-tabs" role="group" :aria-label="$t('demos.width')">
+                <button class="vd-tab" type="button" :class="{ 'is-on': larg === 'phone' }" @click="larg = 'phone'" v-t="demos.phone">Celular</button>
+                <button class="vd-tab" type="button" :class="{ 'is-on': larg === 'tablet' }" @click="larg = 'tablet'" v-t="demos.tablet">Tablet</button>
+                <button class="vd-tab" type="button" :class="{ 'is-on': larg === 'desktop' }" @click="larg = 'desktop'" v-t="demos.desktop">Computador</button>
+              </div>
+            </div>
+
+            <div class="vd-browser">
+              <div class="vd-browser-bar">
+                <span class="vd-live-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="vd-urlbar">voodoojs.dev/examples/{ app }</span>
+                <span class="vd-chip">{ larg === 'phone' ? '375px' : larg === 'tablet' ? '768px' : '100%' }</span>
+              </div>
+              <div class="vd-viewport">
+                <iframe
+                  id="demoFrame"
+                  data-live="true"
+                  :title="$t('demos.' + app)"
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                  :style="{ maxWidth: larg === 'phone' ? '375px' : larg === 'tablet' ? '768px' : '100%' }"
+                ></iframe>
+              </div>
+            </div>
+
+            <p class="vd-pg-desc" v-effect="preview('demoFrame', demos[app], 60)" v-text="$t('demos.' + app + 'Desc')"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           11. COMPARATIVO
+           ================================================================= -->
+      <section class="vd-section" id="comparativo">
+        <div class="vd-shell-wide">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="nav.compare">Comparativo</span>
+            <h2 class="vd-h2" v-t="compare.title">Comparativo honesto</h2>
+            <p class="vd-lead" v-t="compare.lead">
+              Numeros aproximados de bundles minificados com gzip. Cada ferramenta foi feita para um
+              problema diferente.
+            </p>
+          </div>
+
+          <div class="vd-tablewrap">
+            <table class="vd-table">
+              <caption class="vd-sr">{ $t('compare.title') }</caption>
+              <thead>
+                <tr>
+                  <th scope="col" v-t="compare.feature">Criterio</th>
+                  <th scope="col" v-for="(tool, i) in compare.tools" :key="tool" :class="{ 'is-us': i === 0 }" v-text="tool"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in compare.rows" :key="row.key">
+                  <th scope="row" v-text="$t('compare.' + row.key)"></th>
+                  <td v-for="(c, i) in row.cells" :key="i" :class="{ 'is-us': i === 0, 'vd-yes': row.tone[i] === 'yes', 'vd-no': row.tone[i] === 'no', 'vd-warn': row.tone[i] === 'warn' }" v-text="cell(c)"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="vd-card vd-mt-l">
+            <h3 class="vd-h3" v-t="compare.honestTitle">Quando a Voodoo.js nao e a melhor escolha</h3>
+            <ul class="vd-stack vd-mt">
+              <li v-t="compare.honest1">
+                Aplicacao muito grande, com centenas de componentes e um time inteiro trabalhando
+                junto.
+              </li>
+              <li v-t="compare.honest2">Renderizacao no servidor com hidratacao.</li>
+              <li v-t="compare.honest3">Dependencia forte de bibliotecas de terceiros ja prontas.</li>
+              <li v-t="compare.honest4">Verificacao de tipos dentro do template.</li>
+            </ul>
+            <p class="vd-verdict" v-t="compare.honestNote">
+              Se o seu caso esta em uma dessas quatro linhas, use a ferramenta certa.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           12. PERGUNTAS FREQUENTES
+           ================================================================= -->
+      <section class="vd-section vd-section-tint" id="faq">
+        <div class="vd-shell">
+          <div class="vd-head vd-head-center">
+            <span class="vd-eyebrow" v-t="nav.faq">Perguntas</span>
+            <h2 class="vd-h2" v-t="faq.title">Perguntas frequentes</h2>
+            <p class="vd-lead" v-t="faq.lead">
+              As duvidas que aparecem antes de alguem colocar a tag script na pagina.
+            </p>
+          </div>
+
+          <div v-accordion>
+            <div class="vd-acc" v-accordion-item v-for="n in 12" :key="n">
+              <div class="vd-acc-btn">
+                <span v-text="$t('faq.q' + n)"></span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-text="$t('faq.a' + n)"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           13. CHAMADA FINAL
+           ================================================================= -->
+      <section class="vd-section">
+        <div class="vd-shell">
+          <div class="vd-final">
+            <div>
+              <h2 class="vd-h2" v-t="final.title">Pronto para conjurar?</h2>
+              <p class="vd-lead" v-t="final.lead">
+                Abra as demonstracoes completas, leia a documentacao e deixe uma estrela se a
+                Voodoo.js resolver o seu problema.
+              </p>
+              <div class="vd-hero-cta">
+                <a class="vd-btn vd-btn-primary" href="/examples/" v-t="final.examples">Ver as demos</a>
+                <a class="vd-btn vd-btn-ghost" :href="github + '#readme'" target="_blank" rel="noopener" v-t="final.docs">Ler a documentacao</a>
+                <a class="vd-btn vd-btn-ghost" :href="github" target="_blank" rel="noopener" v-t="final.github">Dar uma estrela no GitHub</a>
+              </div>
+            </div>
+            <img
+              src="assets/brand/mascot/vudu-happy.svg"
+              :alt="$t('final.artAlt')"
+              alt="Vudu, o mascote da Voodoo.js, feliz."
+              width="512"
+              height="512"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- =================================================================
+         RODAPE
+         ================================================================= -->
+    <footer class="vd-footer">
+      <div class="vd-shell-wide">
+        <div class="vd-foot-grid">
+          <div>
+            <a class="vd-logo" href="#" aria-label="Voodoo.js">
+              <img class="vd-logo-light" src="assets/brand/logo/voodoo-logo.svg" alt="Voodoo.js" width="340" height="88" loading="lazy" />
+              <img class="vd-logo-dark" src="assets/brand/logo/voodoo-logo-dark.svg" alt="Voodoo.js" width="340" height="88" loading="lazy" />
+            </a>
+            <p class="vd-foot-tag" v-t="footer.tagline">
+              Micro framework JavaScript sem build. Feito para quem gosta de HTML.
+            </p>
+          </div>
+
+          <div>
+            <h2 class="vd-foot-title" v-t="footer.product">Produto</h2>
+            <ul class="vd-foot-list">
+              <li><a href="#instalacao" v-t="nav.install">Instalacao</a></li>
+              <li><a href="#playground" v-t="nav.playground">Playground</a></li>
+              <li><a href="#directives" v-t="nav.directives">Directives</a></li>
+              <li><a href="#componentes" v-t="nav.components">Componentes</a></li>
+              <li><a href="#comparativo" v-t="nav.compare">Comparativo</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 class="vd-foot-title" v-t="footer.resources">Recursos</h2>
+            <ul class="vd-foot-list">
+              <li><a href="/examples/" v-t="nav.examples">Exemplos</a></li>
+              <li><a :href="github + '#readme'" target="_blank" rel="noopener" v-t="nav.docs">Documentacao</a></li>
+              <li><a href="https://www.npmjs.com/package/voodoojs" target="_blank" rel="noopener">npm</a></li>
+              <li><a :href="github + '/blob/main/brand/README.md'" target="_blank" rel="noopener" v-t="footer.brand">Marca</a></li>
+              <li><a :href="github + '/tree/main/design-system'" target="_blank" rel="noopener" v-t="footer.designSystem">Design system</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 class="vd-foot-title" v-t="footer.community">Comunidade</h2>
+            <ul class="vd-foot-list">
+              <li><a :href="github" target="_blank" rel="noopener">GitHub</a></li>
+              <li><a :href="github + '/issues'" target="_blank" rel="noopener" v-t="footer.issues">Reportar um problema</a></li>
+              <li><a :href="github + '/discussions'" target="_blank" rel="noopener" v-t="footer.discussions">Discussoes</a></li>
+              <li><a :href="github + '/blob/main/LICENSE'" target="_blank" rel="noopener" v-t="footer.license">Licenca MIT</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="vd-foot-end">
+          <span v-t="footer.rights">Codigo aberto sob licenca MIT.</span>
+          <span v-t="footer.madeWith">Esta pagina inteira foi construida com a propria Voodoo.js.</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

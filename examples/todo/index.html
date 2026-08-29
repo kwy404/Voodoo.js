@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lista de tarefas com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle essencial: reatividade, directives, interface, formularios e arrastar e soltar. -->
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Demo: lista de tarefas
+     Todo o CSS proprio usa apenas os tokens --v-* do design system,
+     entao o tema claro e o tema escuro saem de graca.
+     Nenhuma regra depende de atributo v-*, porque a Voodoo limpa
+     esses atributos do HTML depois de processar a pagina.
+     ================================================================== */
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 420px at 12% -10%, color-mix(in srgb, var(--v-primary) 18%, transparent), transparent 62%),
+      radial-gradient(760px 380px at 92% 2%, color-mix(in srgb, var(--v-accent) 14%, transparent), transparent 62%),
+      var(--v-color-bg);
+  }
+
+  .td-pagina {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--v-space-8) var(--v-space-4) var(--v-space-16);
+  }
+
+  /* A pagina so aparece depois que a Voodoo montou tudo, para nao
+     piscar as chaves de interpolacao. A classe entra via JavaScript. */
+  .td-app { opacity: 0; transform: translateY(10px); }
+
+  body.td-pronto .td-app {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--v-duration-slow) var(--v-ease-out),
+      transform var(--v-duration-slow) var(--v-ease-out);
+  }
+
+  /* ---------- cabecalho ---------- */
+  .td-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--v-space-4);
+    margin-bottom: var(--v-space-6);
+  }
+
+  .td-marca { display: flex; align-items: center; gap: var(--v-space-3); }
+
+  .td-selo {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--v-radius-lg);
+    background: linear-gradient(140deg, var(--v-primary), var(--v-accent));
+    box-shadow: var(--v-shadow-glow);
+    position: relative;
+  }
+
+  .td-selo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 15px;
+    height: 9px;
+    border: solid var(--v-white, #fff);
+    border-width: 0 0 2.5px 2.5px;
+    transform: translateY(-2px) rotate(-45deg);
+  }
+
+  .td-titulo {
+    margin: 0;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-2xl);
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-tight);
+    line-height: var(--v-leading-tight);
+  }
+
+  .td-subtitulo {
+    margin: 3px 0 0;
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  .td-tema { flex: none; }
+
+  /* ---------- cartao principal ---------- */
+  .td-cartao { padding: var(--v-space-5); }
+
+  .td-composer { display: flex; gap: var(--v-space-3); align-items: stretch; }
+  .td-campo { flex: 1 1 auto; min-width: 0; }
+  .td-adicionar { flex: none; height: auto; }
+
+  .td-progresso {
+    height: 6px;
+    margin: var(--v-space-5) 0 var(--v-space-4);
+    border-radius: var(--v-radius-full);
+    background-color: var(--v-surface-3);
+    overflow: hidden;
+  }
+
+  .td-progresso__barra {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--v-primary), var(--v-accent));
+    transition: width var(--v-duration-slow) var(--v-ease-out);
+  }
+
+  /* ---------- barra de filtros ---------- */
+  .td-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--v-space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--v-space-4);
+  }
+
+  .td-filtros { display: flex; gap: var(--v-space-2); flex-wrap: wrap; }
+
+  .td-filtro {
+    border-radius: var(--v-radius-full);
+    color: var(--v-text-muted);
+  }
+
+  .td-filtro:hover { background-color: var(--v-surface-2); }
+
+  .td-filtro--ativo {
+    background-color: var(--v-primary-soft);
+    color: var(--v-primary-soft-text);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--v-primary) 38%, transparent);
+  }
+
+  .td-filtro--ativo:hover { background-color: var(--v-primary-soft); }
+
+  .td-contador {
+    font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-semibold);
+    color: var(--v-text-muted);
+  }
+
+  /* ---------- lista ---------- */
+  .td-lista {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .td-item {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-3);
+    margin-bottom: var(--v-space-2);
+    border: var(--v-border-width) solid var(--v-border);
+    border-radius: var(--v-radius-md);
+    background-color: var(--v-surface);
+    box-shadow: var(--v-shadow-sm);
+    overflow: hidden;
+    animation: td-entra 280ms var(--v-ease-out) both;
+    transition:
+      border-color var(--v-duration-fast) var(--v-ease-out),
+      box-shadow var(--v-duration-fast) var(--v-ease-out),
+      background-color var(--v-duration-fast) var(--v-ease-out);
+  }
+
+  .td-item:hover { border-color: var(--v-border-strong); }
+  .td-item:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+
+  .td-item--feito { background-color: var(--v-surface-2); }
+  .td-item--editando { border-color: var(--v-primary); box-shadow: var(--v-shadow-md); }
+
+  /* Alca de arraste desenhada so com CSS, sem imagem e sem emoji. */
+  .td-alca {
+    flex: none;
+    width: 16px;
+    height: 26px;
+    border-radius: var(--v-radius-sm);
+    color: var(--v-text-subtle);
+    opacity: 0.45;
+    background-image: radial-gradient(currentColor 1.5px, transparent 1.6px);
+    background-size: 6px 6px;
+    background-position: 1px 2px;
+    transition: opacity var(--v-duration-fast) var(--v-ease-out);
+  }
+
+  .td-item:hover .td-alca,
+  .td-item:focus-within .td-alca { opacity: 1; }
+
+  .td-conteudo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .td-marca { flex: none; }
+
+  .td-texto {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--v-text-sm);
+    line-height: var(--v-leading-snug);
+    overflow-wrap: anywhere;
+    cursor: text;
+    transition:
+      color var(--v-duration-base) var(--v-ease-out),
+      opacity var(--v-duration-base) var(--v-ease-out);
+  }
+
+  .td-item--feito .td-texto {
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    color: var(--v-text-subtle);
+    opacity: 0.75;
+  }
+
+  .td-edicao { flex: 1 1 auto; min-width: 0; }
+
+  .td-apagar {
+    flex: none;
+    color: var(--v-text-muted);
+    opacity: 0.6;
+    transition: opacity var(--v-duration-fast) var(--v-ease-out), color var(--v-duration-fast) var(--v-ease-out);
+  }
+
+  .td-item:hover .td-apagar,
+  .td-apagar:focus-visible { opacity: 1; }
+  .td-apagar:hover { color: var(--v-danger); background-color: var(--v-danger-soft); }
+
+  /* ---------- estado vazio ---------- */
+  .td-vazio {
+    text-align: center;
+    padding: var(--v-space-10) var(--v-space-4);
+    border: 1.5px dashed var(--v-border-strong);
+    border-radius: var(--v-radius-lg);
+    background-color: color-mix(in srgb, var(--v-surface-2) 60%, transparent);
+    animation: td-entra 320ms var(--v-ease-out) both;
+  }
+
+  .td-vazio__marca {
+    display: block;
+    width: 34px;
+    height: 34px;
+    margin: 0 auto var(--v-space-3);
+    border-radius: var(--v-radius-full);
+    border: 2px dashed var(--v-border-strong);
+    opacity: 0.8;
+  }
+
+  .td-vazio__titulo {
+    margin: 0;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-lg);
+    font-weight: var(--v-weight-semibold);
+  }
+
+  .td-vazio__dica {
+    margin: var(--v-space-2) 0 0;
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  /* ---------- rodape do cartao ---------- */
+  .td-rodape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--v-space-3);
+    flex-wrap: wrap;
+    margin-top: var(--v-space-4);
+    padding-top: var(--v-space-4);
+    border-top: var(--v-border-width) solid var(--v-border);
+  }
+
+  .td-limpar { color: var(--v-danger); }
+  .td-limpar:hover { background-color: var(--v-danger-soft); }
+
+  /* ---------- notas de rodape ---------- */
+  .td-nota {
+    margin: var(--v-space-5) 0 0;
+    padding: var(--v-space-3) var(--v-space-4);
+    border-radius: var(--v-radius-md);
+    background-color: color-mix(in srgb, var(--v-surface) 70%, transparent);
+    border: var(--v-border-width) solid var(--v-border);
+    color: var(--v-text-muted);
+    font-size: var(--v-text-sm);
+  }
+
+  .td-nota strong { color: var(--v-accent-soft-text); font-weight: var(--v-weight-bold); }
+
+  .td-ajuda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--v-space-2) var(--v-space-4);
+    margin: var(--v-space-4) 0 0;
+    color: var(--v-text-subtle);
+    font-size: var(--v-text-xs);
+  }
+
+  .td-ajuda span { display: inline-flex; align-items: center; gap: var(--v-space-2); }
+
+  /* ---------- icones ---------- */
+  .td-icone {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Alternador de tema: o icone segue o tema resolvido.
+     data-theme="dark" e data-theme="light" vem de V.theme,
+     e a media query cobre o caso "seguir o sistema". */
+  .td-icone--sol { display: none; }
+  .td-icone--lua { display: block; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .td-icone--sol { display: block; }
+    :root:not([data-theme="light"]) .td-icone--lua { display: none; }
+  }
+
+  :root[data-theme="dark"] .td-icone--sol { display: block; }
+  :root[data-theme="dark"] .td-icone--lua { display: none; }
+  :root[data-theme="light"] .td-icone--sol { display: none; }
+  :root[data-theme="light"] .td-icone--lua { display: block; }
+
+  /* ---------- animacoes ---------- */
+  @keyframes td-entra {
+    from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* A saida precisa terminar antes de o item sair do array.
+     O metodo remover() marca o item, espera a animacao e so entao
+     mexe na lista, senao o v-for apagaria o no na hora. */
+  @keyframes td-sai {
+    0% {
+      opacity: 1;
+      transform: none;
+      max-height: 8rem;
+      margin-bottom: var(--v-space-2);
+      padding-block: var(--v-space-3);
+    }
+    55% {
+      opacity: 0;
+      transform: translateX(40px);
+      max-height: 8rem;
+      margin-bottom: var(--v-space-2);
+      padding-block: var(--v-space-3);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(40px);
+      max-height: 0;
+      margin-bottom: 0;
+      padding-block: 0;
+      border-width: 0;
+    }
+  }
+
+  .td-item--saindo { pointer-events: none; }
+  .td-item.td-item--saindo { animation: td-sai 240ms var(--v-ease-out) forwards; }
+
+  /* O fantasma do arraste e um clone do item e recebe a posicao por
+     transform inline. Sem cancelar a animacao aqui, ela sobrescreveria
+     esse transform e o fantasma ficaria preso no canto. */
+  .td-item.v-drag-ghost {
+    animation: none;
+    box-shadow: var(--v-shadow-lg);
+    border-color: var(--v-primary);
+  }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 560px) {
+    .td-pagina { padding: var(--v-space-5) var(--v-space-3) var(--v-space-12); }
+    .td-cartao { padding: var(--v-space-4); }
+    .td-composer { flex-direction: column; }
+    .td-adicionar { width: 100%; }
+    .td-barra { align-items: flex-start; }
+    .td-titulo { font-size: var(--v-text-xl); }
+  }
+
+  /* ---------- movimento reduzido ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 1ms !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<main class="td-pagina">
+  <section class="td-app" v-component="lista-tarefas">
+
+    <header class="td-topo">
+      <div class="td-marca">
+        <span class="td-selo" aria-hidden="true"></span>
+        <div>
+          <h1 class="td-titulo">Minhas tarefas</h1>
+          <p class="td-subtitulo">Lista completa em Voodoo.js, sem passo de compilacao.</p>
+        </div>
+      </div>
+
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon td-tema" v-theme-toggle>
+        <svg class="td-icone td-icone--lua" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"></path>
+        </svg>
+        <svg class="td-icone td-icone--sol" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.1"></circle>
+          <path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"></path>
+        </svg>
+      </button>
+    </header>
+
+    <div class="v-card td-cartao">
+
+      <!-- 1. Adicionar: Enter no campo ou clique no botao. -->
+      <div class="td-composer">
+        <input type="text" class="v-input td-campo"
+               v-model="novaTarefa"
+               v-ref="campoNovo"
+               @keyup.enter="adicionar"
+               placeholder="O que precisa ser feito?"
+               aria-label="Texto da nova tarefa"
+               maxlength="120" autocomplete="off">
+
+        <button type="button" class="v-btn v-btn--primary td-adicionar" v-click="adicionar">
+          <svg class="td-icone" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5.5v13M5.5 12h13"></path>
+          </svg>
+          <span>Adicionar</span>
+        </button>
+      </div>
+
+      <div class="td-progresso" role="progressbar"
+           aria-label="Progresso das tarefas"
+           aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progresso">
+        <div class="td-progresso__barra" :style="{ width: progresso + '%' }"></div>
+      </div>
+
+      <!-- 5. Filtros. O ativo ganha destaque pelo :class. -->
+      <div class="td-barra">
+        <div class="td-filtros" role="group" aria-label="Filtrar tarefas">
+          <button type="button" class="v-btn v-btn--sm td-filtro"
+                  :class="{ 'td-filtro--ativo': filtro === 'todas' }"
+                  :aria-pressed="filtro === 'todas' ? 'true' : 'false'"
+                  v-click="filtro = 'todas'">
+            Todas <span class="v-badge">{ total }</span>
+          </button>
+
+          <button type="button" class="v-btn v-btn--sm td-filtro"
+                  :class="{ 'td-filtro--ativo': filtro === 'ativas' }"
+                  :aria-pressed="filtro === 'ativas' ? 'true' : 'false'"
+                  v-click="filtro = 'ativas'">
+            Ativas <span class="v-badge">{ pendentes }</span>
+          </button>
+
+          <button type="button" class="v-btn v-btn--sm td-filtro"
+                  :class="{ 'td-filtro--ativo': filtro === 'concluidas' }"
+                  :aria-pressed="filtro === 'concluidas' ? 'true' : 'false'"
+                  v-click="filtro = 'concluidas'">
+            Concluidas <span class="v-badge">{ feitas }</span>
+          </button>
+        </div>
+
+        <!-- 6. Contador com singular e plural corretos. -->
+        <span class="td-contador">{ rotuloPendentes }</span>
+      </div>
+
+      <!-- 9. Arrastar para reordenar. Cada item leva :data-id, e o
+           evento voodoo:sorted entrega a nova ordem desses mesmos ids. -->
+      <ul class="td-lista"
+          v-sortable
+          v-sortable-handle=".td-alca"
+          @voodoo:sorted="reordenar($event)"
+          aria-label="Lista de tarefas. Arraste pela alca, ou use espaco e as setas pelo teclado.">
+
+        <li class="td-item"
+            v-for="t in visiveis"
+            :key="t.id"
+            :data-id="t.id"
+            :class="{ 'td-item--feito': t.feito, 'td-item--saindo': t.saindo, 'td-item--editando': editandoId === t.id }">
+
+          <span class="td-alca" aria-hidden="true" title="Arraste para reordenar"></span>
+
+          <!-- O espaco dentro do item nao pode virar arraste pelo teclado,
+               senao a barra de espaco quebraria a caixa e a edicao. -->
+          <div class="td-conteudo" @keydown.space.stop="true">
+
+            <!-- 2. Concluir. O v-model grava direto no item da lista. -->
+            <input type="checkbox" class="v-checkbox td-marca"
+                   v-model="t.feito"
+                   @change="aoMarcar(t)"
+                   :aria-label="'Concluir a tarefa: ' + t.titulo">
+
+            <!-- 3. Dois cliques abrem a edicao em linha. -->
+            <span class="td-texto"
+                  v-show="editandoId !== t.id"
+                  v-dblclick="editar(t)"
+                  title="De dois cliques para editar">{ t.titulo }</span>
+
+            <input type="text" class="v-input td-edicao"
+                   v-show="editandoId === t.id"
+                   v-model="textoEdicao"
+                   :data-edicao="t.id"
+                   @keyup.enter="salvarEdicao(t)"
+                   @keyup.esc="cancelarEdicao"
+                   @blur="salvarEdicao(t)"
+                   aria-label="Editar o texto da tarefa"
+                   maxlength="120" autocomplete="off">
+
+            <!-- 4. Remover, com animacao de saida antes de sumir do array. -->
+            <button type="button" class="v-btn v-btn--ghost v-btn--icon v-btn--sm td-apagar"
+                    v-click="remover(t)"
+                    :aria-label="'Remover a tarefa: ' + t.titulo">
+              <svg class="td-icone" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.5 6.5l11 11M17.5 6.5l-11 11"></path>
+              </svg>
+            </button>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Blocos v-if independentes, sem cadeia v-else em volta de lista. -->
+      <div class="td-vazio" v-if="visiveis.length === 0">
+        <span class="td-vazio__marca" aria-hidden="true"></span>
+        <p class="td-vazio__titulo">{ tituloVazio }</p>
+        <p class="td-vazio__dica">{ dicaVazio }</p>
+      </div>
+
+      <footer class="td-rodape" v-if="total > 0">
+        <span class="v-badge v-badge--success">{ rotuloFeitas }</span>
+
+        <!-- 7. So aparece quando existe alguma tarefa concluida. -->
+        <button type="button" class="v-btn v-btn--ghost v-btn--sm td-limpar"
+                v-show="temFeitas"
+                v-click="limparConcluidas">
+          Limpar concluidas
+        </button>
+      </footer>
+    </div>
+
+    <!-- Store global da Voodoo, lido direto no HTML por $store. -->
+    <p class="td-nota">
+      Desde a sua primeira visita: <strong>{ $store.estatisticas.criadas }</strong> tarefas criadas e
+      <strong>{ $store.estatisticas.concluidas }</strong> marcadas como concluidas.
+      Esses dois numeros moram em um store global, separado do estado do componente.
+    </p>
+
+    <p class="td-ajuda">
+      <span><kbd class="v-kbd">Enter</kbd> adiciona e salva</span>
+      <span><kbd class="v-kbd">Esc</kbd> cancela a edicao</span>
+      <span><kbd class="v-kbd">Espaco</kbd> e setas reordenam</span>
+    </p>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var CHAVE = 'voodoo:demo:tarefas';
+  var SAIDA = 240; // precisa casar com a duracao da animacao td-sai
+
+  // ------------------------------------------------------------------
+  // Store global: numeros que sobrevivem ao recarregar e nao pertencem
+  // a nenhum componente. No HTML aparecem como { $store.estatisticas.x }.
+  // ------------------------------------------------------------------
+  V.store('estatisticas', {
+    criadas: 0,
+    concluidas: 0,
+    somarCriada: function () { this.criadas = this.criadas + 1; },
+    somarConcluida: function () { this.concluidas = this.concluidas + 1; }
+  }, { persist: true });
+
+  // ------------------------------------------------------------------
+  // Componente com toda a logica da lista.
+  // ------------------------------------------------------------------
+  V.component('lista-tarefas', {
+
+    state: function () {
+      var salvas = V.storage.get(CHAVE, null);
+
+      if (!Array.isArray(salvas)) {
+        salvas = [
+          { id: V.uid('t'), titulo: 'Ler o guia rapido da Voodoo.js', feito: true },
+          { id: V.uid('t'), titulo: 'Arrastar esta tarefa pela alca da esquerda', feito: false },
+          { id: V.uid('t'), titulo: 'Dar dois cliques no texto para editar', feito: false },
+          { id: V.uid('t'), titulo: 'Marcar tudo e usar o botao Limpar concluidas', feito: false }
+        ];
+      }
+
+      // Normaliza o que veio do localStorage: a chave "saindo" precisa
+      // existir desde o inicio para o proxy reativo enxergar as trocas.
+      var tarefas = [];
+      for (var i = 0; i < salvas.length; i++) {
+        var bruta = salvas[i] || {};
+        var titulo = bruta.titulo == null ? '' : String(bruta.titulo);
+        if (!titulo) continue;
+        tarefas.push({
+          id: bruta.id ? String(bruta.id) : V.uid('t'),
+          titulo: titulo,
+          feito: bruta.feito === true,
+          saindo: false
+        });
+      }
+
+      return {
+        tarefas: tarefas,
+        novaTarefa: '',
+        filtro: 'todas',
+        editandoId: null,
+        textoEdicao: ''
+      };
+    },
+
+    computed: {
+      // Itens que ainda contam: os que estao saindo ja nao valem.
+      vivas: function () {
+        return this.tarefas.filter(function (t) { return !t.saindo; });
+      },
+
+      // O que a lista mostra, de acordo com o filtro escolhido.
+      visiveis: function () {
+        var filtro = this.filtro;
+        return this.tarefas.filter(function (t) {
+          if (filtro === 'ativas') return !t.feito;
+          if (filtro === 'concluidas') return t.feito;
+          return true;
+        });
+      },
+
+      total: function () { return this.vivas.length; },
+
+      pendentes: function () {
+        return this.vivas.filter(function (t) { return !t.feito; }).length;
+      },
+
+      feitas: function () {
+        return this.vivas.filter(function (t) { return t.feito; }).length;
+      },
+
+      temFeitas: function () { return this.feitas > 0; },
+
+      rotuloPendentes: function () {
+        var n = this.pendentes;
+        if (n === 0) return 'Tudo em dia por aqui';
+        if (n === 1) return '1 tarefa pendente';
+        return n + ' tarefas pendentes';
+      },
+
+      rotuloFeitas: function () {
+        var n = this.feitas;
+        return n === 1 ? '1 tarefa concluida' : n + ' tarefas concluidas';
+      },
+
+      progresso: function () {
+        if (this.total === 0) return 0;
+        return Math.round((this.feitas / this.total) * 100);
+      },
+
+      tituloVazio: function () {
+        if (this.filtro === 'ativas') return 'Nenhuma tarefa ativa';
+        if (this.filtro === 'concluidas') return 'Nenhuma tarefa concluida';
+        return 'Sua lista esta vazia';
+      },
+
+      dicaVazio: function () {
+        if (this.filtro === 'todas') {
+          return 'Escreva a primeira tarefa no campo acima e pressione Enter.';
+        }
+        return 'Troque o filtro para ver as outras tarefas.';
+      }
+    },
+
+    methods: {
+
+      adicionar: function () {
+        var texto = String(this.novaTarefa || '').trim();
+        if (!texto) return;
+
+        this.tarefas.push({ id: V.uid('t'), titulo: texto, feito: false, saindo: false });
+        this.novaTarefa = '';
+
+        V.store('estatisticas').somarCriada();
+        this.salvar();
+
+        // Depois de clicar no botao, o cursor volta para o campo.
+        if (this.$refs.campoNovo) this.$refs.campoNovo.focus();
+      },
+
+      aoMarcar: function (tarefa) {
+        if (tarefa.feito) V.store('estatisticas').somarConcluida();
+        this.salvar();
+      },
+
+      // ---------------- edicao em linha ----------------
+
+      editar: function (tarefa) {
+        if (tarefa.saindo) return;
+        this.editandoId = tarefa.id;
+        this.textoEdicao = tarefa.titulo;
+
+        var raiz = this.$el;
+        var alvo = tarefa.id;
+        V.nextTick(function () {
+          var campo = raiz.querySelector('[data-edicao="' + alvo + '"]');
+          if (!campo) return;
+          campo.focus();
+          campo.select();
+        });
+      },
+
+      // Enter e a saida do campo caem aqui. Esc limpa o editandoId antes,
+      // entao a checagem abaixo faz o blur seguinte nao salvar nada.
+      salvarEdicao: function (tarefa) {
+        if (this.editandoId !== tarefa.id) return;
+
+        var texto = String(this.textoEdicao || '').trim();
+        this.editandoId = null;
+        this.textoEdicao = '';
+
+        if (!texto || texto === tarefa.titulo) return;
+        tarefa.titulo = texto;
+        this.salvar();
+      },
+
+      cancelarEdicao: function () {
+        this.editandoId = null;
+        this.textoEdicao = '';
+      },
+
+      // ---------------- remocao com animacao ----------------
+
+      // O v-for apaga o no assim que o item sai do array. Por isso o item
+      // e marcado primeiro, a animacao roda, e a lista so muda depois.
+      remover: function (tarefa) {
+        if (tarefa.saindo) return;
+        if (this.editandoId === tarefa.id) this.cancelarEdicao();
+
+        tarefa.saindo = true;
+        this.salvar();
+
+        var alvos = {};
+        alvos[tarefa.id] = true;
+        this.descartarDepois(alvos);
+      },
+
+      limparConcluidas: function () {
+        var alvos = {};
+        var achou = false;
+
+        this.tarefas.forEach(function (t) {
+          if (!t.feito || t.saindo) return;
+          t.saindo = true;
+          alvos[t.id] = true;
+          achou = true;
+        });
+
+        if (!achou) return;
+        if (this.editandoId && alvos[this.editandoId]) this.cancelarEdicao();
+        this.salvar();
+        this.descartarDepois(alvos);
+      },
+
+      descartarDepois: function (alvos) {
+        var self = this;
+        setTimeout(function () {
+          self.tarefas = self.tarefas.filter(function (t) { return !alvos[t.id]; });
+          self.salvar();
+        }, this.esperaSaida());
+      },
+
+      esperaSaida: function () {
+        var reduzido = typeof window.matchMedia === 'function' &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return reduzido ? 0 : SAIDA + 40;
+      },
+
+      // ---------------- reordenacao ----------------
+
+      // $event.detail.order traz os data-id na nova ordem da lista visivel.
+      // As posicoes que estavam sendo mostradas sao repreenchidas nessa
+      // ordem, entao arrastar continua correto mesmo com um filtro ligado.
+      reordenar: function (evento) {
+        var detalhe = evento && evento.detail ? evento.detail : null;
+        var ordem = detalhe && detalhe.order ? detalhe.order : null;
+        if (!ordem || ordem.length < 2) return;
+
+        var porId = {};
+        this.tarefas.forEach(function (t) { porId[t.id] = t; });
+
+        var fila = [];
+        ordem.forEach(function (id) {
+          if (porId[id]) fila.push(porId[id]);
+        });
+        if (fila.length < 2) return;
+
+        var movidas = {};
+        fila.forEach(function (t) { movidas[t.id] = true; });
+
+        var posicao = 0;
+        var nova = this.tarefas.map(function (t) {
+          if (!movidas[t.id]) return t;
+          var proxima = fila[posicao];
+          posicao = posicao + 1;
+          return proxima;
+        });
+
+        this.tarefas = nova;
+        this.salvar();
+      },
+
+      // ---------------- persistencia ----------------
+
+      // 8. Persistencia. Itens em animacao de saida ja nao sao gravados.
+      salvar: function () {
+        var limpas = [];
+        this.tarefas.forEach(function (t) {
+          if (t.saindo) return;
+          limpas.push({ id: t.id, titulo: t.titulo, feito: t.feito, saindo: false });
+        });
+        V.storage.set(CHAVE, limpas);
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+  document.body.classList.add('td-pronto');
+});
+</script>
+
+</body>
+</html>
