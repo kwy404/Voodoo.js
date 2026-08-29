@@ -1771,136 +1771,13 @@ textarea {
 
 /* --- Playground -------------------------------------------------------- */
 
-.vd-pg {
-  display: grid;
-  gap: 18px;
-  grid-template-columns: 232px minmax(0, 1fr);
-  align-items: start;
-}
-
-.vd-pg-list {
-  display: grid;
-  gap: 4px;
-  max-height: 560px;
-  overflow-y: auto;
-  padding: 8px;
-  border: 1px solid var(--vd-line);
-  border-radius: var(--vd-radius);
-  background: var(--vd-surface-2);
-}
-
-.vd-pg-item {
-  display: block;
-  width: 100%;
-  padding: 11px 13px;
-  border: none;
-  border-radius: var(--vd-radius-sm);
-  background: transparent;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 560;
-  color: var(--vd-text-muted);
-  cursor: pointer;
-  transition:
-    background-color var(--vd-fast) var(--vd-ease),
-    color var(--vd-fast) var(--vd-ease);
-}
-
-.vd-pg-item:hover {
-  background: var(--vd-accent-soft);
-  color: var(--vd-text);
-}
-
-.vd-pg-item.is-on {
-  background: linear-gradient(135deg, var(--vd-purple), var(--vd-magenta));
-  color: #fff;
-  font-weight: 650;
-}
-
-.vd-pg-main {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  min-width: 0;
-}
-
-.vd-pg-box {
-  border: 1px solid var(--vd-line);
-  border-radius: var(--vd-radius);
-  background: var(--vd-surface);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.vd-pg-boxhead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--vd-line);
-  background: var(--vd-surface-2);
-  font-family: var(--vd-font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--vd-text-soft);
-}
-
-.vd-pg-editor {
-  width: 100%;
-  min-height: 340px;
-  border: none;
-  padding: 16px 18px;
-  background: var(--vd-code-bg);
-  color: var(--vd-code-fg);
-  font-family: var(--vd-font-mono);
-  font-size: 13px;
-  line-height: 1.65;
-  resize: vertical;
-  tab-size: 2;
-  white-space: pre;
-  overflow: auto;
-}
-
-.vd-pg-editor:focus {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--vd-ring);
-}
-
-.vd-pg-frame {
-  width: 100%;
-  min-height: 340px;
-  border: none;
-  background: var(--vd-surface);
-  flex: 1;
-  display: block;
-}
-
+/* A aparencia do playground vive em `assets/playground.js`, junto do
+   componente. Aqui fica so a nota de apoio, que outras secoes tambem usam. */
 .vd-pg-desc {
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: 14.5px;
   color: var(--vd-text-muted);
-}
-
-.vd-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--vd-mint);
-  display: inline-block;
-  flex: none;
-}
-
-.vd-dot[data-busy="true"] {
-  background: var(--vd-amber);
-  animation: vd-pulse 900ms ease-in-out infinite;
-}
-
-@keyframes vd-pulse {
-  50% { opacity: 0.3; }
+  max-width: 74ch;
 }
 
 /* --- Tour pelas directives --------------------------------------------- */
@@ -2587,14 +2464,6 @@ textarea {
 }
 
 @media (max-width: 860px) {
-  .vd-pg { grid-template-columns: minmax(0, 1fr); }
-  .vd-pg-list {
-    max-height: none;
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
   .vd-clicker { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -2618,7 +2487,6 @@ textarea {
   .vd-headbar { height: 64px; }
   .vd-drawer { inset-block-start: 64px; }
   .vd-foot-grid { grid-template-columns: minmax(0, 1fr); }
-  .vd-mem { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vd-counter-value { font-size: 54px; }
   .vd-card { padding: 18px; }
   .vd-acc-btn { padding: 16px 17px; font-size: 15.5px; }
@@ -2626,11 +2494,28 @@ textarea {
   .vd-viewport { padding: 10px; }
   .vd-cmd { padding-left: 14px; gap: 8px; }
   .vd-copy { padding: 8px 12px; }
+
+  /* O numero do passo sai da coluna propria e vira uma etiqueta em cima do
+     titulo. Assim o texto ganha a largura inteira em vez de ficar espremido. */
+  .vd-passo {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .vd-passo-num { width: 38px; height: 38px; font-size: 17px; }
+
+  .vd-verdict { padding: 18px 20px; font-size: 15.5px; }
+  .vd-guia-palco-corpo { padding: 18px 16px; }
+  .vd-show-stage { padding: 20px 16px; }
+  .vd-show-head { padding: 16px 16px 12px; }
 }
 
-@media (max-width: 400px) {
-  .vd-mem { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+@media (max-width: 420px) {
+  .vd-mem { gap: 7px; }
+  .vd-mem-card { border-radius: var(--vd-radius-sm); }
   .vd-hero-cta .vd-btn { width: 100%; }
+  .vd-row > .vd-btn { width: 100%; }
+  .vd-scoreboard { gap: 6px; }
+  .vd-score { padding: 5px 10px; font-size: 12px; }
 }
 
 /* ==========================================================================

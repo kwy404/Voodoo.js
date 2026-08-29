@@ -344,13 +344,13 @@
         </a>
 
         <nav class="vd-nav" aria-label="Principal">
-          <a href="#problema" v-t="nav.problem">Por que</a>
+          <a href="#guia" v-t="guide.eyebrow">Guia rapido</a>
           <a href="#instalacao" v-t="nav.install">Instalacao</a>
           <a href="#playground" v-t="nav.playground">Playground</a>
           <a href="#directives" v-t="nav.directives">Directives</a>
           <a href="#componentes" v-t="nav.components">Componentes</a>
+          <a href="#som" v-t="sound.eyebrow">Som</a>
           <a href="#jogos" v-t="nav.games">Minigames</a>
-          <a href="#comparativo" v-t="nav.compare">Comparativo</a>
           <a href="#faq" v-t="nav.faq">Perguntas</a>
         </nav>
 
@@ -417,6 +417,26 @@
             </svg>
           </button>
 
+          <!-- Silencio do som nativo. A directive v-mute alterna o estado,
+               grava a escolha e marca o proprio botao com a classe `v-muted`,
+               que o CSS usa para trocar o icone. -->
+          <button
+            class="vd-iconbtn vd-mute"
+            type="button"
+            v-mute
+            :aria-label="$t('sound.mute')"
+            :title="$t('sound.mute')"
+          >
+            <svg class="vd-ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4z" />
+              <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+            </svg>
+            <svg class="vd-ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4z" />
+              <path d="m16 9 5 6M21 9l-5 6" />
+            </svg>
+          </button>
+
           <a
             class="vd-iconbtn vd-gh"
             :href="github"
@@ -446,10 +466,12 @@
 
       <nav class="vd-drawer" v-if="menu" v-motion="fadeDown" aria-label="Principal">
         <a href="#problema" @click="menu = false" v-t="nav.problem">Por que</a>
+        <a href="#guia" @click="menu = false" v-t="guide.eyebrow">Guia rapido</a>
         <a href="#instalacao" @click="menu = false" v-t="nav.install">Instalacao</a>
         <a href="#playground" @click="menu = false" v-t="nav.playground">Playground</a>
         <a href="#directives" @click="menu = false" v-t="nav.directives">Directives</a>
         <a href="#componentes" @click="menu = false" v-t="nav.components">Componentes</a>
+        <a href="#som" @click="menu = false" v-t="sound.eyebrow">Som</a>
         <a href="#jogos" @click="menu = false" v-t="nav.games">Minigames</a>
         <a href="#demos" v-t="demos.title" @click="menu = false">Aplicacoes completas</a>
         <a href="#comparativo" @click="menu = false" v-t="nav.compare">Comparativo</a>
