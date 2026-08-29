@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cliente HTTP · Documentação da Voodoo.js</title>
+<meta name="description" content="Referência das directives de requisição e do cliente V.http: gatilhos, modos de troca, v-resource, opções, erros, interceptadores, upload com progresso, SSE, streaming, cache e fila offline.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/http.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Referência</p>
+<h1>Cliente HTTP</h1>
+<p class="doc-resumo">
+  Duas camadas: as directives, que resolvem a maior parte dos casos sem uma linha de JavaScript, e
+  o cliente completo em <code>V.http</code>. O guia de
+  <a href="../guia/buscando-dados.html">buscando dados</a> ensina a usar; esta página lista tudo.
+</p>
+
+<h2 id="gatilhos">Gatilhos das directives</h2>
+
+<p>Cada verbo dispara no gatilho natural do elemento:</p>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Elemento</th><th>Gatilho</th></tr></thead>
+<tbody>
+<tr><td><code>&lt;form&gt;</code></td><td><code>submit</code></td></tr>
+<tr><td><code>&lt;input&gt;</code>, <code>&lt;select&gt;</code>, <code>&lt;textarea&gt;</code></td><td><code>change</code>, ou <code>click</code> em botões</td></tr>
+<tr><td>qualquer outro</td><td><code>click</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p><code>v-trigger</code> troca o padrão:</p>
+
+<pre data-lang="html"><code>&lt;div v-get="/api/status" v-trigger="load"&gt;...&lt;/div&gt;
+&lt;div v-get="/api/banner" v-trigger="visible"&gt;...&lt;/div&gt;
+&lt;input v-get="/api/buscar" v-trigger="keyup" v-debounce="300"&gt;
+&lt;div v-get="/api/feed" v-trigger="visible.repeat"&gt;...&lt;/div&gt;
+&lt;button v-get="/api/x" v-trigger="click.once"&gt;Só uma vez&lt;/button&gt;</code></pre>
+
+<p>
+  Gatilhos especiais: <code>load</code> e <code>ready</code> disparam na montagem;
+  <code>visible</code> e <code>revealed</code> disparam quando o elemento chega perto da tela. Os
+  modificadores aceitos no texto são <code>once</code> e <code>repeat</code>.
+</p>
+
+<h2 id="swap">v-target e v-swap</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Modo</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>innerHTML</code></td><td>Substitui o conteúdo do alvo. Padrão</td></tr>
+<tr><td><code>outerHTML</code>, <code>replace</code></td><td>Substitui o alvo inteiro</td></tr>
+<tr><td><code>textContent</code></td><td>Escreve como texto puro</td></tr>
+<tr><td><code>beforebegin</code></td><td>Insere antes do alvo</td></tr>
+<tr><td><code>afterbegin</code>, <code>prepend</code></td><td>Insere como primeiro filho</td></tr>
+<tr><td><code>beforeend</code>, <code>append</code></td><td>Insere como último filho</td></tr>
+<tr><td><code>afterend</code></td><td>Insere depois do alvo</td></tr>
+<tr><td><code>delete</code></td><td>Remove o alvo</td></tr>
+<tr><td><code>none</code></td><td>Não mexe no DOM</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>O HTML inserido é percorrido pela Voodoo, então ele pode trazer novas directives.</p>
+
+<h2 id="resposta">Tratando a resposta</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Atributo</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>v-as="nome"</code></td><td>Guarda a resposta no escopo em vez de escrever no DOM</td></tr>
+<tr><td><code>v-json-path="dados.itens"</code></td><td>Recorta um pedaço da resposta antes</td></tr>
+<tr><td><code>v-template="#linha"</code></td><td>Renderiza cada item com um <code>&lt;template&gt;</code> da página</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Dentro do template você tem <code>item</code> (o objeto inteiro), <code>index</code> e cada
+  chave do objeto como variável direta.
+</p>
+
+<h2 id="busca">v-search</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Atributo</th><th>Padrão</th></tr></thead>
+<tbody>
+<tr><td><code>v-param</code></td><td>o <code>name</code> do input, ou <code>q</code></td></tr>
+<tr><td><code>v-debounce</code></td><td>300 ms</td></tr>
+<tr><td><code>v-min-length</code></td><td>0</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="resource">v-resource</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Campo</th><th>O que é</th></tr></thead>
+<tbody>
+<tr><td><code>data</code></td><td>Corpo da resposta, ou <code>null</code></td></tr>
+<tr><td><code>loading</code></td><td><code>true</code> durante a requisição</td></tr>
+<tr><td><code>error</code></td><td><code>{ name, message }</code>, ou <code>null</code></td></tr>
+<tr><td><code>loaded</code></td><td><code>true</code> depois do primeiro sucesso</td></tr>
+<tr><td><code>reload()</code></td><td>Refaz a requisição</td></tr>
+<tr><td><code>set(valor)</code></td><td>Troca os dados localmente, útil em atualização otimista</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  A sintaxe é <code>nome: url</code>. Sem nome, o recurso se chama <code>resource</code>. Aceita
+  <code>v-method</code>, <code>v-params</code>, <code>v-cache</code>, <code>v-retry</code>,
+  <code>v-timeout</code>, <code>v-json-path</code>, <code>v-poll</code> e <code>v-manual</code>,
+  que não busca na montagem e espera o <code>reload()</code>.
+</p>
+
+<h2 id="carregando">Carregamento, avisos e callbacks</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Atributo</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>v-loading</code></td><td>Seletor de um elemento que fica escondido até a requisição começar</td></tr>
+<tr><td><code>v-loading-class</code></td><td>Classe aplicada durante a requisição. Padrão <code>v-loading</code></td></tr>
+<tr><td><code>v-disable-loading</code></td><td>Desabilita o botão enquanto a requisição corre</td></tr>
+<tr><td><code>v-toast-success</code></td><td>Notificação de sucesso</td></tr>
+<tr><td><code>v-toast-error</code></td><td>Notificação de erro. Sem ele, o erro do servidor vira a mensagem</td></tr>
+<tr><td><code>v-on-success</code></td><td>Expressão executada no sucesso. Tem <code>$el</code>, <code>data</code> e <code>response</code></td></tr>
+<tr><td><code>v-on-error</code></td><td>Expressão executada no erro. Tem <code>$el</code>, <code>error</code> e <code>message</code></td></tr>
+<tr><td><code>v-on-complete</code></td><td>Expressão executada sempre, no fim</td></tr>
+<tr><td><code>v-redirect</code></td><td>Navega para a URL depois do sucesso</td></tr>
+<tr><td><code>v-scroll-to</code></td><td>Rola suavemente até o seletor depois do sucesso</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Durante a requisição o elemento também recebe <code>aria-busy="true"</code>.</p>
+
+<h2 id="rede">Rede</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Atributo</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>v-params</code></td><td>Objeto que vira query string</td></tr>
+<tr><td><code>v-body</code></td><td>Expressão que vira o corpo da requisição</td></tr>
+<tr><td><code>v-headers</code></td><td>Objeto de cabeçalhos</td></tr>
+<tr><td><code>v-cache</code></td><td>Guarda a resposta por um tempo. Só para GET. Aceita <code>30s</code>, <code>5m</code></td></tr>
+<tr><td><code>v-retry</code></td><td>Tentativas extras em falha de rede e erro 5xx</td></tr>
+<tr><td><code>v-timeout</code></td><td>Tempo até abortar</td></tr>
+<tr><td><code>v-offline-queue</code></td><td>Guarda a requisição quando o navegador está offline e reenvia depois</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="eventos">Eventos</h2>
+
+<pre data-lang="html"><code>&lt;div v-get="/api/x"
+     @voodoo:before-request="console.log('indo')"
+     @voodoo:success="console.log($detail.data)"
+     @voodoo:error="console.log($detail.message)"
+     @voodoo:complete="console.log('fim')"&gt;
+&lt;/div&gt;</code></pre>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Cancelamento automático</span>
+  <p>
+    Uma nova requisição do mesmo elemento cancela a anterior que ainda estiver pendente. Isso
+    resolve a corrida clássica da busca enquanto se digita, sem nenhuma configuração.
+  </p>
+</div>
+
+<h2 id="cliente">O cliente V.http</h2>
+
+<pre data-lang="js"><code>const usuarios = await V.http.get('/api/usuarios');
+const criado   = await V.http.post('/api/usuarios', { nome: 'Ana' });
+await V.http.put('/api/usuarios/1', { nome: 'Bia' });
+await V.http.patch('/api/usuarios/1', { ativo: false });
+await V.http.delete('/api/usuarios/1');
+await V.http.head('/api/usuarios');</code></pre>
+
+<p>Os atalhos devolvem apenas os dados. Para a resposta completa, use <code>request</code>:</p>
+
+<pre data-lang="js"><code>const resposta = await V.http.request({ url: '/api/usuarios', method: 'GET' });
+resposta.data;
+resposta.status;
+resposta.headers.get('x-total');
+resposta.ok;
+resposta.raw;     // o Response original</code></pre>
+
+<h3 id="opcoes">Opções</h3>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Opção</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>params</code></td><td>Objeto que vira query string. Valores nulos e vazios são omitidos</td></tr>
+<tr><td><code>headers</code></td><td>Cabeçalhos da requisição</td></tr>
+<tr><td><code>timeout</code></td><td>Milissegundos até abortar. Padrão 30000. <code>0</code> desliga</td></tr>
+<tr><td><code>retry</code></td><td>Tentativas extras em falha de rede e 5xx. A espera dobra a cada rodada</td></tr>
+<tr><td><code>retryDelay</code></td><td>Espera inicial entre tentativas. Padrão 500 ms</td></tr>
+<tr><td><code>cache</code></td><td>Milissegundos de cache. Só para GET</td></tr>
+<tr><td><code>signal</code></td><td><code>AbortSignal</code> para cancelar</td></tr>
+<tr><td><code>credentials</code></td><td>Padrão <code>same-origin</code></td></tr>
+<tr><td><code>responseType</code></td><td><code>auto</code>, <code>json</code>, <code>text</code>, <code>blob</code>, <code>arrayBuffer</code>, <code>formData</code></td></tr>
+<tr><td><code>offlineQueue</code></td><td>Guarda a requisição quando offline e reenvia ao voltar</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3 id="corpo">Corpo</h3>
+
+<p>
+  Objetos viram JSON com o cabeçalho certo. <code>FormData</code>, <code>Blob</code>,
+  <code>URLSearchParams</code>, <code>ArrayBuffer</code> e texto passam como estão.
+</p>
+
+<h3 id="erros">Erros</h3>
+
+<pre data-lang="js"><code>try {
+  await V.http.get('/api/x');
+} catch (err) {
+  if (err instanceof V.HttpError) {
+    err.status;            // 0 quando não houve resposta
+    err.response?.data;    // corpo do erro
+    err.isNetworkError;    // true em falha de rede, timeout ou cancelamento
+    err.config;            // a configuração usada
+  }
+}</code></pre>
+
+<p>Erros 4xx não são repetidos. Erros 5xx e falhas de rede respeitam o <code>retry</code>.</p>
+
+<h3 id="interceptadores">Interceptadores</h3>
+
+<pre data-lang="js"><code>const off = V.http.interceptors.request.use((config) =&gt; {
+  config.headers = { ...config.headers, 'X-Tenant': tenantAtual() };
+  return config;
+});
+
+V.http.interceptors.response.use((resposta) =&gt; resposta);
+
+V.http.interceptors.error.use((erro) =&gt; {
+  if (erro.status === 401) location.assign('/login');
+});
+
+off();  // remove o interceptador de requisição</code></pre>
+
+<p>
+  Interceptadores podem ser assíncronos. O de requisição precisa devolver a configuração, e o de
+  resposta precisa devolver a resposta.
+</p>
+
+<h3 id="auth">Autenticação e cabeçalhos padrão</h3>
+
+<pre data-lang="js"><code>V.http.setBaseURL('https://api.exemplo.com');
+V.http.setToken('meu-jwt');                  // Authorization: Bearer meu-jwt
+V.http.setToken('chave', 'Token');           // Authorization: Token chave
+V.http.setToken(null);                       // remove
+V.http.setHeader('Accept-Language', 'pt-BR');
+V.http.setHeader('Accept-Language', null);   // remove</code></pre>
+
+<p>
+  Toda requisição já leva <code>X-Requested-With: XMLHttpRequest</code>. Em métodos que escrevem,
+  o token CSRF é lido de <code>&lt;meta name="csrf-token"&gt;</code> e enviado em
+  <code>X-CSRF-TOKEN</code>. Os nomes são configuráveis em
+  <code>V.http.defaults.csrfMeta</code> e <code>V.http.defaults.csrfHeader</code>.
+</p>
+
+<h3 id="upload">Upload com progresso</h3>
+
+<pre data-lang="js"><code>const dados = new FormData();
+dados.append('arquivo', input.files[0]);
+
+await V.http.upload('/api/arquivos', dados, {
+  onProgress: (porcentagem, enviado, total) =&gt; {
+    barra.style.width = porcentagem + '%';
+  }
+});</code></pre>
+
+<p>
+  Usa <code>XMLHttpRequest</code> por baixo, porque só ele reporta progresso real de envio.
+</p>
+
+<h3 id="sse">Server-Sent Events e streaming</h3>
+
+<pre data-lang="js"><code>const fonte = V.http.sse('/api/eventos', {
+  message: (dados) =&gt; console.log(dados),
+  error: (e) =&gt; console.warn('conexão caiu', e)
+});
+fonte.close();
+
+await V.http.stream('/api/logs', (linha) =&gt; console.log(JSON.parse(linha)));</code></pre>
+
+<p>
+  No SSE, o JSON é convertido automaticamente quando possível. O <code>stream</code> entrega linha
+  a linha, o que serve bem para NDJSON e respostas longas.
+</p>
+
+<h3 id="cache">Cache</h3>
+
+<pre data-lang="js"><code>await V.http.get('/api/config', { cache: 300000 });
+V.http.clearCache();                // limpa tudo
+V.http.clearCache('/api/produtos'); // limpa o que contém o texto
+V.http.clearCache(/^GET \/api\//);  // limpa pelo padrão</code></pre>
+
+<h3 id="offline">Fila offline</h3>
+
+<pre data-lang="js"><code>await V.http.post('/api/pedidos', pedido, { offlineQueue: true });
+await V.http.flushOfflineQueue();   // força o reenvio</code></pre>
+
+<p>
+  Requisições com <code>offlineQueue: true</code> disparadas com o navegador offline são guardadas
+  no <code>localStorage</code> e reenviadas quando a conexão volta. A resposta imediata é
+  sintética, com <code>status: 0</code> e <code>statusText: 'offline-queued'</code> — trate esse
+  caso na interface, ou o usuário acha que a operação já terminou.
+</p>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>
