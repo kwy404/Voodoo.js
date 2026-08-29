@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atributos, classes e estilos · Documentação da Voodoo.js</title>
+<meta name="description" content="O dois pontos liga qualquer atributo de qualquer tag ao estado: atributos comuns, booleanos, de acessibilidade, de dados, de SVG, classes, estilos, v-bind em bloco e escrita em propriedade.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/atributos-classes-estilos.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentos</p>
+<h1>Atributos, classes e estilos</h1>
+<p class="doc-resumo">
+  Não é só o texto que muda. O <code>href</code>, o <code>src</code>, o <code>disabled</code>, a
+  classe e a cor também precisam acompanhar o estado. Um dois pontos na frente do nome liga
+  qualquer atributo de qualquer tag.
+</p>
+
+<h2 id="qualquer-atributo">Qualquer atributo, qualquer tag</h2>
+
+<pre data-lang="html"><code>&lt;img :src="foto" :alt="descricao" :width="largura"&gt;
+&lt;a :href="'/produto/' + id" :target="novaAba ? '_blank' : '_self'"&gt;Ver&lt;/a&gt;
+&lt;input :placeholder="'Buscar entre ' + produtos.length + ' itens'"&gt;
+&lt;div :aria-label="rotulo" :data-estado="situacao" :title="dica"&gt;&lt;/div&gt;
+&lt;circle :r="raio" :fill="cor"&gt;&lt;/circle&gt;
+&lt;minha-tag :dado="valor"&gt;&lt;/minha-tag&gt;</code></pre>
+
+<p>
+  Vale para atributos comuns, de acessibilidade, de dados, de SVG e de tags próprias. A forma
+  longa é <code>v-bind:nome</code>; as duas fazem a mesma coisa.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ raio: 30, cor: '#6d3bf5', rotulo: 'Círculo roxo' }"&gt;
+  &lt;div class="linha"&gt;
+    &lt;input type="range" min="10" max="45" v-model.number="raio"&gt;
+    &lt;input type="color" v-model="cor"&gt;
+  &lt;/div&gt;
+  &lt;svg width="100" height="100" role="img" :aria-label="rotulo"&gt;
+    &lt;circle cx="50" cy="50" :r="raio" :fill="cor"&gt;&lt;/circle&gt;
+  &lt;/svg&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="booleanos">Atributos que são ligados ou desligados</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ carregando: false }"&gt;
+  &lt;label&gt;&lt;input type="checkbox" v-model="carregando"&gt; carregando&lt;/label&gt;
+  &lt;p&gt;&lt;button :disabled="carregando"&gt;Salvar&lt;/button&gt;&lt;/p&gt;
+  &lt;p&gt;&lt;input :readonly="carregando" value="um campo"&gt;&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Quando o valor é falso, o atributo <b>some do HTML</b> em vez de virar a palavra
+  <code>false</code> — que, para o navegador, seria tão verdadeira quanto qualquer outra. A Voodoo
+  trata assim <code>disabled</code>, <code>checked</code>, <code>readonly</code>,
+  <code>required</code>, <code>selected</code>, <code>hidden</code>, <code>open</code>,
+  <code>multiple</code>, <code>autofocus</code>, <code>novalidate</code> e <code>inert</code>.
+</p>
+
+<h2 id="classes">Classes</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;style&gt;
+  .cartao { padding: .6rem; border: 1px solid #3d3560; border-radius: 8px }
+  .ativo  { border-color: #2ed9a5 }
+  .erro   { border-color: #ff3d8b }
+&lt;/style&gt;
+
+&lt;div v-data="{ selecionado: false, temErro: false }"&gt;
+  &lt;div class="linha"&gt;
+    &lt;label&gt;&lt;input type="checkbox" v-model="selecionado"&gt; selecionado&lt;/label&gt;
+    &lt;label&gt;&lt;input type="checkbox" v-model="temErro"&gt; erro&lt;/label&gt;
+  &lt;/div&gt;
+  &lt;div class="cartao" :class="{ ativo: selecionado, erro: temErro }"&gt;
+    A classe "cartao" nunca é removida.
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  A forma de objeto liga cada classe a uma condição. A forma de lista aceita textos e objetos
+  misturados:
+</p>
+
+<pre data-lang="html"><code>&lt;div :class="['base', tema, { grande: expandido }]"&gt;&lt;/div&gt;</code></pre>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">O que já estava escrito continua lá</span>
+  <p>
+    As classes escritas no <code>class</code> são sempre preservadas. O <code>:class</code> só
+    acrescenta e remove as que ele mesmo controla, então ele convive com CSS de terceiros e com
+    classes adicionadas por outro código.
+  </p>
+</div>
+
+<h2 id="estilos">Estilos</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ cor: '#2ed9a5', largura: 60 }"&gt;
+  &lt;div class="linha"&gt;
+    &lt;input type="color" v-model="cor"&gt;
+    &lt;input type="range" min="10" max="100" v-model.number="largura"&gt;
+  &lt;/div&gt;
+  &lt;div :style="{ background: cor, width: largura + '%', height: '2rem', borderRadius: '6px' }"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  A forma de texto também vale, e propriedades customizadas passam intactas:
+</p>
+
+<pre data-lang="html"><code>&lt;div :style="'width: ' + largura + 'px'"&gt;&lt;/div&gt;
+&lt;div :style="{ '--v-primary': corDaMarca }"&gt;&lt;/div&gt;</code></pre>
+
+<p>
+  Nomes em camelCase viram traço: <code>borderRadius</code> chega ao CSS como
+  <code>border-radius</code>.
+</p>
+
+<h2 id="varios">Vários de uma vez, e propriedades</h2>
+
+<pre data-lang="html"><code>&lt;input v-bind="{ placeholder: 'Nome', maxlength: '10', required: true }"&gt;
+&lt;video .currentTime="segundos"&gt;&lt;/video&gt;</code></pre>
+
+<p>
+  <code>v-bind</code> sem argumento aplica um objeto inteiro — útil quando as opções vêm de uma
+  variável, ou quando um componente repassa props. O ponto na frente do nome escreve na
+  <b>propriedade</b> do elemento em vez do atributo, que é o que resolve casos como
+  <code>currentTime</code>, <code>value</code> e <code>indeterminate</code>, onde o atributo e a
+  propriedade não são a mesma coisa.
+</p>
+
+<h2 id="atributos-somem">Os atributos somem depois</h2>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Vale repetir</span>
+  <p>
+    Depois que a página monta, <code>:class</code>, <code>:style</code>, <code>v-show</code> e os
+    demais atributos <code>v-*</code> saem do HTML. O resultado do que eles fizeram permanece — a
+    classe está aplicada, o estilo está no elemento —, mas o atributo em si não existe mais.
+    Nunca escreva CSS apoiado em seletores como <code>[v-show]</code>, e nunca procure por eles
+    com <code>querySelectorAll</code>.
+  </p>
+</div>
+
+<h2 id="refs">Pegando o elemento em si</h2>
+
+<p>
+  Quando o que você precisa é do elemento, e não de um atributo dele, o <code>v-ref</code> guarda
+  a referência em <code>$refs</code>:
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{}"&gt;
+  &lt;input v-ref="busca" placeholder="Vou receber o foco"&gt;
+  &lt;button @click="$refs.busca.focus()"&gt;Focar o campo&lt;/button&gt;
+  &lt;button @click="$refs.busca.value = ''"&gt;Limpar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="teleport">Mandando o elemento para outro lugar</h2>
+
+<p>
+  Um modal escrito no meio da página costuma esbarrar em <code>overflow: hidden</code> e em
+  <code>z-index</code> de um ancestral. O <code>v-teleport</code> move o elemento no documento
+  sem que ele perca o escopo de onde veio:
+</p>
+
+<pre data-lang="html"><code>&lt;div v-teleport="body"&gt;Este bloco vai para o final do body&lt;/div&gt;
+&lt;div v-teleport="#area-de-modais"&gt;Este vai para um container específico&lt;/div&gt;</code></pre>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

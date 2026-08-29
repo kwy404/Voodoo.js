@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado e escopo com v-data · Documentação da Voodoo.js</title>
+<meta name="description" content="Onde a página guarda o que precisa lembrar: o v-data, o que é escopo, como a leitura sobe a cadeia, para onde vai a escrita e o que exatamente é reativo.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/estado-e-escopo.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentos</p>
+<h1>Estado e escopo com <code>v-data</code></h1>
+<p class="doc-resumo">
+  Toda página interativa precisa lembrar de alguma coisa: se o menu está aberto, o que foi
+  digitado, quais itens estão na lista. Na Voodoo isso mora em um <code>v-data</code>, e o
+  pedaço de HTML que o declara é o dono daquele estado.
+</p>
+
+<h2 id="o-basico">O básico</h2>
+
+<p>
+  O valor do <code>v-data</code> é um objeto. Cada chave vira uma variável disponível naquele
+  elemento e em tudo que estiver dentro dele.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ aberto: false, itens: ['pão', 'leite'] }"&gt;
+  &lt;button @click="aberto = !aberto"&gt;Alternar menu&lt;/button&gt;
+  &lt;p v-show="aberto"&gt;{ itens.length } itens na lista&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Não existe declaração em outro arquivo, não existe <code>setState</code>, não existe passo de
+  registro. O objeto do atributo <b>é</b> o estado.
+</p>
+
+<h2 id="escopo">Escopo, e o que um escopo enxerga do outro</h2>
+
+<p>
+  Cada <code>v-data</code> cria um escopo. Escopos aninham, e o de dentro enxerga o de fora.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ tema: 'escuro' }"&gt;
+  &lt;div v-data="{ aberto: false }"&gt;
+    &lt;button @click="aberto = !aberto"&gt;Tema atual: { tema }&lt;/button&gt;
+    &lt;p v-show="aberto"&gt;O botão enxerga <b>tema</b> e <b>aberto</b> ao mesmo tempo.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>Duas regras evitam praticamente toda a surpresa daqui:</p>
+
+<ul>
+  <li>
+    <b>A leitura sobe a cadeia.</b> A Voodoo procura a variável no <code>v-data</code> mais
+    próximo, depois nos ancestrais, depois na raiz.
+  </li>
+  <li>
+    <b>A escrita vai para quem já tem a chave.</b> Escrever em <code>tema</code> de dentro do
+    escopo interno altera o <code>tema</code> do escopo externo, e não uma cópia. Uma chave que
+    não existe em lugar nenhum é criada no escopo local.
+  </li>
+</ul>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">O erro clássico</span>
+  <p>
+    Escrever <code>@click="abrto = true"</code> com um erro de digitação não estoura nada: a
+    biblioteca cria a chave <code>abrto</code> no escopo local, e o <code>v-show="aberto"</code>
+    continua parado, sem nenhuma mensagem. Se um valor não reage, comece conferindo o nome.
+    Ligar <code>data-devtools</code> na tag do script transforma esses casos em aviso no console.
+  </p>
+</div>
+
+<h2 id="o-que-e-reativo">O que é reativo</h2>
+
+<p>
+  Tudo que está dentro de um <code>v-data</code> vira um objeto observado, em profundidade.
+  Trocar um valor, empurrar um item em uma lista, apagar uma chave: qualquer uma dessas coisas
+  reexecuta apenas os pedaços da página que leram aquele valor.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ carrinho: [] }"&gt;
+  &lt;button @click="carrinho.push({ nome: 'Caneca', preco: 39 })"&gt;Adicionar&lt;/button&gt;
+  &lt;button @click="carrinho.pop()"&gt;Remover&lt;/button&gt;
+  &lt;p&gt;{ carrinho.length } itens, total { carrinho.reduce((s, i) =&gt; s + i.preco, 0) }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  O parágrafo se atualiza porque leu <code>carrinho.length</code>. Um outro parágrafo que não leia
+  nada de <code>carrinho</code> nem chega a ser visitado — é isso que a documentação quer dizer
+  com <i>atualização granular</i>.
+</p>
+
+<h3 id="metodos-de-array">Métodos de array funcionam todos</h3>
+
+<p>
+  <code>push</code>, <code>pop</code>, <code>splice</code>, <code>sort</code>,
+  <code>reverse</code>, <code>shift</code> e <code>unshift</code> disparam a atualização. Atribuir
+  por índice (<code>lista[2] = 'x'</code>) e mexer em <code>lista.length</code> também. Não existe
+  a limitação clássica de precisar trocar o array inteiro.
+</p>
+
+<h2 id="funcoes-no-estado">Funções dentro do estado</h2>
+
+<p>
+  Uma chave do <code>v-data</code> pode ser uma função. Dentro dela, <code>this</code> é o próprio
+  escopo, o que evita repetir expressões longas em vários atributos.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  itens: [{ nome: 'Caneca', preco: 39 }, { nome: 'Camiseta', preco: 89 }],
+  total() { return this.itens.reduce((s, i) =&gt; s + i.preco, 0) },
+  adicionar() { this.itens.push({ nome: 'Novo', preco: 10 }) }
+}"&gt;
+  &lt;button @click="adicionar()"&gt;Adicionar item&lt;/button&gt;
+  &lt;p&gt;{ itens.length } itens, R$ { total() }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="v-init">Rodando algo assim que o escopo nasce</h2>
+
+<p>
+  O <code>v-init</code> executa uma expressão uma única vez, logo depois que o escopo é criado.
+  Serve para preparar valores derivados, disparar uma primeira busca ou ler algo do documento.
+</p>
+
+<pre data-lang="html"><code>&lt;div v-data="{ agora: '' }" v-init="agora = new Date().toLocaleTimeString()"&gt;
+  &lt;p&gt;A página abriu às { agora }.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="onde-guardar">Onde guardar cada coisa</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>O dado é</th><th>Guarde em</th></tr></thead>
+<tbody>
+<tr><td>Usado só por aquele bloco de HTML</td><td><code>v-data</code> no elemento que envolve o bloco</td></tr>
+<tr><td>Usado por partes distantes da página</td><td><a href="stores.html">Store global</a>, com <code>$store</code></td></tr>
+<tr><td>Precisa sobreviver ao F5</td><td><code>v-persist</code>, na página de <a href="estado-persistente.html">estado persistente</a></td></tr>
+<tr><td>Vem de um servidor</td><td><a href="buscando-dados.html">Directives de HTTP</a>, que já escrevem no escopo</td></tr>
+<tr><td>É a mesma coisa repetida em vários lugares</td><td><a href="componentes.html">Um componente</a>, com o estado dentro dele</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="fora-do-html">Lendo e escrevendo o escopo pelo JavaScript</h2>
+
+<p>
+  Às vezes o valor precisa mudar a partir de código solto — um <i>callback</i> de outra biblioteca,
+  um <code>setInterval</code>, um evento do próprio navegador. <code>V.getScope(elemento)</code>
+  devolve o escopo daquele nó, e <code>.data</code> é o objeto reativo: escrever nele atualiza a
+  tela do mesmo jeito que uma directive.
+</p>
+
+<pre data-lang="html"><code>&lt;div id="painel" v-data="{ online: true }"&gt;
+  &lt;p&gt;{ online ? 'Conectado' : 'Sem conexão' }&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  const painel = V.getScope(document.getElementById('painel')).data;
+  addEventListener('offline', () =&gt; { painel.online = false; });
+  addEventListener('online',  () =&gt; { painel.online = true; });
+&lt;/script&gt;</code></pre>
+
+<p>
+  <code>V.getScope(no)</code> devolve o escopo declarado naquele nó, ou <code>undefined</code> se
+  ele não declarou nenhum. <code>V.findScope(no)</code> sobe pelos ancestrais até achar um, e cai
+  no escopo raiz quando não encontra. O escopo raiz é <code>V.scope</code>, e
+  <code>V.data({ ... })</code> escreve nele valores visíveis para a página inteira.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Existe caminho pronto para isso</span>
+  <p>
+    Para esse caso específico, as directives <code>v-online</code> e <code>v-offline</code> já
+    fazem o trabalho sem JavaScript. O exemplo vale como forma de alcançar o escopo de fora,
+    que é o que interessa aqui.
+  </p>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

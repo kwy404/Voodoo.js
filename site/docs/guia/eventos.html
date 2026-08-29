@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eventos e modificadores · Documentação da Voodoo.js</title>
+<meta name="description" content="As três formas de escutar um evento, os modificadores que resolvem prevent, stop, outside, debounce e throttle, as teclas, os eventos que a Voodoo inventa e o que existe dentro do handler.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/eventos.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentos</p>
+<h1>Eventos e modificadores</h1>
+<p class="doc-resumo">
+  O usuário clica, digita, envia. Alguma coisa precisa acontecer. Toda a escuta de eventos cabe em
+  um atributo, e os modificadores dão de graça o que normalmente vira código de apoio:
+  <code>preventDefault</code>, <code>stopPropagation</code>, clique fora, espera de digitação.
+</p>
+
+<h2 id="tres-escritas">Três escritas, o mesmo resultado</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
+  &lt;button @click="n++"&gt;Somar&lt;/button&gt;
+  &lt;button v-on:click="n = 0"&gt;Zerar&lt;/button&gt;
+  &lt;button v-click="n--"&gt;Subtrair&lt;/button&gt;
+  &lt;p&gt;{ n }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  <code>@evento</code> é a mais curta, <code>v-on:evento</code> é a completa, e
+  <code>v-click</code>, <code>v-input</code>, <code>v-keyup</code> e outros atalhos existem para
+  quem prefere um nome único por linha. Escolha uma e mantenha no projeto inteiro.
+</p>
+
+<h2 id="modificadores">Modificadores</h2>
+
+<p>
+  Depois do nome do evento, um ponto liga comportamentos comuns:
+</p>
+
+<pre data-lang="html"><code>&lt;form @submit.prevent="salvar()"&gt;Não recarrega a página&lt;/form&gt;
+&lt;div class="overlay" @click.self="fechar()"&gt;Só o clique no próprio overlay conta&lt;/div&gt;
+&lt;button @click.once="comecar()"&gt;Roda uma vez e desliga&lt;/button&gt;
+&lt;div @keydown.escape.window="fechar()"&gt;Escuta no window inteiro&lt;/div&gt;
+&lt;div @click.outside="fecharMenu()"&gt;Clique em qualquer lugar fora daqui&lt;/div&gt;</code></pre>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Modificador</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>.prevent</code></td><td><code>preventDefault()</code> antes de rodar a expressão</td></tr>
+<tr><td><code>.stop</code></td><td><code>stopPropagation()</code>, o evento não sobe</td></tr>
+<tr><td><code>.self</code></td><td>Só dispara quando o alvo é o próprio elemento</td></tr>
+<tr><td><code>.once</code></td><td>Roda uma vez e remove o ouvinte</td></tr>
+<tr><td><code>.capture</code></td><td>Escuta na fase de captura</td></tr>
+<tr><td><code>.passive</code></td><td>Marca o ouvinte como passivo, útil em rolagem e toque</td></tr>
+<tr><td><code>.window</code></td><td>Instala o ouvinte no <code>window</code></td></tr>
+<tr><td><code>.document</code></td><td>Instala o ouvinte no <code>document</code></td></tr>
+<tr><td><code>.outside</code></td><td>Dispara em cliques fora do elemento</td></tr>
+<tr><td><code>.debounce</code></td><td>Espera o usuário parar antes de rodar</td></tr>
+<tr><td><code>.throttle</code></td><td>Limita a uma execução por intervalo</td></tr>
+</tbody>
+</table>
+</div>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ texto: '', vezes: 0 }"&gt;
+  &lt;input v-model="texto" @input.debounce="vezes++" v-debounce="500"&gt;
+  &lt;p&gt;Digitou: { texto }&lt;/p&gt;
+  &lt;p&gt;Disparou { vezes } vezes, contando meio segundo de silêncio.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="teclas">Teclas</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ ultimo: 'nada ainda' }"&gt;
+  &lt;input placeholder="Enter, Esc ou Ctrl+Enter"
+         @keyup.enter="ultimo = 'Enter'"
+         @keydown.esc="ultimo = 'Esc'"
+         @keydown.ctrl.enter="ultimo = 'Ctrl+Enter'"&gt;
+  &lt;p&gt;Última tecla reconhecida: { ultimo }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Nomes aceitos: <code>.enter</code>, <code>.esc</code> ou <code>.escape</code>,
+  <code>.space</code>, <code>.tab</code>, <code>.delete</code>, <code>.backspace</code>,
+  <code>.up</code>, <code>.down</code>, <code>.left</code>, <code>.right</code>, qualquer letra de
+  <code>.a</code> a <code>.z</code> e qualquer dígito de <code>.0</code> a <code>.9</code>. As
+  teclas de sistema são <code>.ctrl</code>, <code>.shift</code>, <code>.alt</code> e
+  <code>.meta</code>, e combinam com as demais na mesma escrita.
+</p>
+
+<pre data-lang="html"><code>&lt;div @keydown.meta.k.window.prevent="abrirBusca()"&gt;&lt;/div&gt;</code></pre>
+
+<h2 id="eventos-inventados">Eventos que o navegador não tem</h2>
+
+<p>
+  Alguns comportamentos aparecem o tempo todo em interface e não existem como evento nativo. A
+  Voodoo os oferece com o mesmo formato dos outros:
+</p>
+
+<pre data-lang="html"><code>&lt;button @hold.2s="apagarTudo()"&gt;Segure dois segundos para apagar&lt;/button&gt;
+&lt;div @visible="carregarMais()"&gt;Dispara quando entra na área visível&lt;/div&gt;
+&lt;div @swipeleft="proximo()" @swiperight="anterior()"&gt;Gestos de arrastar&lt;/div&gt;
+&lt;button v-hotkey="ctrl+k" @click="abrirPaleta()"&gt;Atalho global de teclado&lt;/button&gt;</code></pre>
+
+<p>
+  E alguns apelidos mais legíveis para eventos que já existem: <code>@hover</code> para
+  <code>mouseenter</code>, <code>@unhover</code> para <code>mouseleave</code>, <code>@tap</code>
+  para <code>click</code>, <code>@press</code> para <code>pointerdown</code>,
+  <code>@release</code> para <code>pointerup</code>, <code>@rightclick</code> para
+  <code>contextmenu</code> e <code>@type</code> para <code>input</code>.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ estado: 'parado' }"&gt;
+  &lt;button @hold.1s="estado = 'segurou um segundo!'"
+          @hover="estado = 'passou o mouse'"
+          @unhover="estado = 'saiu'"&gt;
+    Passe o mouse, ou segure o clique
+  &lt;/button&gt;
+  &lt;p&gt;{ estado }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="dentro-do-handler">Dentro do handler</h2>
+
+<p>
+  Três variáveis estão sempre disponíveis na expressão de um evento:
+</p>
+
+<pre data-lang="html"><code>&lt;input @input="busca = $event.target.value"&gt;
+&lt;button @click="$el.classList.add('clicado')"&gt;Uso o próprio elemento&lt;/button&gt;
+&lt;section @filtro="aplicar($detail)"&gt;Recebo o detalhe de um evento customizado&lt;/section&gt;</code></pre>
+
+<p>
+  <code>$event</code> é o evento, <code>$el</code> é o elemento e <code>$detail</code> é o
+  <code>detail</code> de um <code>CustomEvent</code>.
+</p>
+
+<h2 id="eventos-proprios">Emitindo os seus próprios eventos</h2>
+
+<p>
+  <code>$dispatch</code> emite um <code>CustomEvent</code> que sobe pela árvore, o que permite a
+  um trecho avisar outro sem que os dois compartilhem estado.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ recebido: '' }" @produto-escolhido="recebido = $detail.nome"&gt;
+  &lt;button @click="$dispatch('produto-escolhido', { nome: 'Caneca' })"&gt;Escolher caneca&lt;/button&gt;
+  &lt;button @click="$dispatch('produto-escolhido', { nome: 'Camiseta' })"&gt;Escolher camiseta&lt;/button&gt;
+  &lt;p&gt;Escolhido: { recebido || 'nada' }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="limpeza">Limpeza automática</h2>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Você não precisa remover nada</span>
+  <p>
+    Todo ouvinte instalado por uma directive é removido sozinho quando o elemento sai do DOM,
+    inclusive os que foram registrados em <code>window</code> ou <code>document</code> pelos
+    modificadores <code>.window</code> e <code>.document</code>. Um <code>v-if</code> que fecha
+    leva junto tudo o que estava escutando lá dentro.
+  </p>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

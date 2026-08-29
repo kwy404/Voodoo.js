@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentação da Voodoo.js</title>
+<meta name="description" content="A documentação completa da Voodoo.js: guia do começo ao fim, referência de directives, do objeto V e dos componentes prontos, com exemplos que rodam na própria página.">
+<link rel="canonical" href="https://voodoojs.dev/docs/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Voodoo.js 0.1.0</p>
+<h1>Documentação</h1>
+<p class="doc-resumo">
+  A Voodoo.js coloca o comportamento da página dentro do próprio HTML. Você escreve atributos,
+  a biblioteca liga cada um ao estado reativo, e a tela se atualiza sozinha. Sem passo de build,
+  sem <code>eval</code>, sem dependência nenhuma.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ nome: '' }"&gt;
+  &lt;input v-model="nome" placeholder="Seu nome"&gt;
+  &lt;p v-show="nome"&gt;Olá, { nome }!&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Esse bloco acima não é uma imagem nem um vídeo: ele está rodando de verdade, dentro desta
+  página, com a mesma biblioteca que você vai baixar. Toda a documentação é assim.
+</p>
+
+<h2 id="por-onde-comecar">Por onde começar</h2>
+
+<p>
+  Se você nunca usou a biblioteca, siga o guia na ordem. São vinte e quatro páginas curtas, cada
+  uma resolvendo um problema concreto, e cada uma continuando de onde a anterior parou. Em duas
+  horas você passa do arquivo vazio a uma página com dados de servidor, formulário validado e
+  componentes próprios.
+</p>
+
+<ul class="doc-cartoes">
+  <li><a class="doc-cartao" href="guia/o-que-e.html">
+    <em>Passo 1</em><b>O que é e quando usar</b>
+    <span>Para que serve, quando vale mais a pena escolher outra coisa, e o que a biblioteca faz de diferente.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="guia/instalacao.html">
+    <em>Passo 2</em><b>Instalação e primeiro arquivo</b>
+    <span>Baixar um arquivo, apontar uma tag, escrever HTML. Do zero até algo funcionando na tela.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="guia/estado-e-escopo.html">
+    <em>Passo 3</em><b>Estado e escopo</b>
+    <span>O <code>v-data</code>, o que é escopo, como um escopo enxerga o outro e onde guardar cada coisa.</span>
+  </a></li>
+</ul>
+
+<h2 id="ja-conheco">Já conheço, quero a referência</h2>
+
+<p>
+  A referência é a parte que você consulta com pressa, no meio de um problema. Ela lista tudo o
+  que existe, sem narrativa: nomes, argumentos, valores aceitos e o comportamento exato.
+</p>
+
+<ul class="doc-cartoes">
+  <li><a class="doc-cartao" href="referencia/directives.html">
+    <em>Referência</em><b>Directives</b>
+    <span>Todas as directives por categoria, com o que cada uma recebe e o que devolve.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="referencia/objeto-v.html">
+    <em>Referência</em><b>O objeto V</b>
+    <span>Tudo que a biblioteca publica em <code>window.V</code>, método por método.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="referencia/magias.html">
+    <em>Referência</em><b>Variáveis mágicas</b>
+    <span>Os <code>$</code> que existem dentro de qualquer expressão, do <code>$el</code> ao <code>$toast</code>.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="referencia/componentes-prontos.html">
+    <em>Referência</em><b>Componentes prontos</b>
+    <span>Os 29 componentes do build completo e as props de cada um.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="referencia/http.html">
+    <em>Referência</em><b>Cliente HTTP</b>
+    <span>O <code>V.http</code>, os interceptadores, o cache e o tratamento de erro.</span>
+  </a></li>
+  <li><a class="doc-cartao" href="referencia/utilitarios.html">
+    <em>Referência</em><b>Utilitários</b>
+    <span>Formatadores, funções de array, de texto, de data e o resto da caixa de ferramentas.</span>
+  </a></li>
+</ul>
+
+<h2 id="o-que-vem-na-caixa">O que vem na caixa</h2>
+
+<p>
+  A biblioteca é publicada em três arquivos. Todos são o mesmo projeto, cortado em pontos
+  diferentes. Você escolhe um, baixa, e pronto.
+</p>
+
+<div class="doc-tabela">
+<table>
+<thead>
+<tr><th>Arquivo</th><th>O que vem dentro</th><th>Gzip</th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>voodoo.core.min.js</code></td>
+  <td>Reatividade, expressões, componentes, DOM encadeável, estado, renderização, eventos e requisições por atributo</td>
+  <td><b>41 KB</b></td>
+</tr>
+<tr>
+  <td><code>voodoo.min.js</code></td>
+  <td>O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som</td>
+  <td><b>78 KB</b></td>
+</tr>
+<tr>
+  <td><code>voodoo.full.min.js</code></td>
+  <td>Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos</td>
+  <td><b>122 KB</b></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Na dúvida, comece pelo <code>voodoo.min.js</code>. A página de
+  <a href="guia/instalacao.html">instalação</a> explica como escolher e como trocar depois.
+</p>
+
+<h2 id="tres-regras">Três regras que evitam quase todo problema</h2>
+
+<p>
+  Elas aparecem de novo, com calma, nas páginas certas. Ficam aqui porque respondem à maioria das
+  dúvidas de quem está começando.
+</p>
+
+<ol class="doc-passos">
+  <li>
+    <b>Os atributos <code>v-*</code> somem do HTML.</b>
+    Depois que a biblioteca processa um elemento, ela guarda o valor em memória e retira o
+    atributo do documento. Nenhuma regra de CSS e nenhum <code>querySelector</code> pode depender
+    de <code>[v-tab]</code> ou parecido. Use classes ou <code>data-*</code>.
+  </li>
+  <li>
+    <b>Interpolação usa uma chave só.</b>
+    <code>{ nome }</code> é a forma padrão. <code>{{ nome }}</code> também é aceita, para quem vem
+    do Vue. A varredura fecha na primeira chave, então expressões com objeto dentro
+    (<code>{ $t('x', { n: 1 }) }</code>) precisam de <code>v-text</code>.
+  </li>
+  <li>
+    <b>Não existe <code>eval</code>.</b>
+    As expressões passam por um parser próprio. Isso deixa a biblioteca rodar sob Content
+    Security Policy restritiva, e também explica por que a expressão aceita menos coisas do que
+    JavaScript inteiro. A página de
+    <a href="referencia/objeto-v.html">referência</a> lista o que entra.
+  </li>
+</ol>
+
+<h2 id="mapa">Mapa completo</h2>
+
+<p>
+  O menu da esquerda tem tudo. Se você prefere buscar, o campo do topo procura em todas as
+  páginas de uma vez — o atalho é <kbd>Ctrl</kbd> + <kbd>K</kbd>, ou apenas <kbd>/</kbd>.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Prefere ler tudo de uma vez</span>
+  <p>
+    O <a href="https://github.com/kwy404/Voodoo.js#readme">README do repositório</a> é a
+    documentação inteira em um arquivo só, na mesma ordem do guia. É a versão para ler offline,
+    ou para pesquisar com <kbd>Ctrl</kbd> + <kbd>F</kbd>.
+  </p>
+</div>
+
+</article>
+
+<script src="assets/docs.js"></script>
+</body>
+</html>

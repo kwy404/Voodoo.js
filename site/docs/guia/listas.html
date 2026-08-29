@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listas e por que a chave importa · Documentação da Voodoo.js</title>
+<meta name="description" content="O v-for sobre arrays, números, textos, objetos, Map e Set; o papel do :key ao reordenar e filtrar; e por que v-for e v-if não convivem no mesmo elemento.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/listas.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentos</p>
+<h1>Listas e por que a chave importa</h1>
+<p class="doc-resumo">
+  Você tem uma lista e quer um elemento para cada item. O <code>v-for</code> faz isso, e o
+  <code>:key</code> é o que separa uma lista que se comporta de uma lista que perde o foco do
+  campo toda vez que alguém filtra.
+</p>
+
+<h2 id="basico">O básico</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ produtos: [
+  { id: 1, nome: 'Caneca', preco: 39 },
+  { id: 2, nome: 'Camiseta', preco: 89 }
+] }"&gt;
+  &lt;ul&gt;
+    &lt;li v-for="p in produtos" :key="p.id"&gt;{ p.nome } — R$ { p.preco }&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;button @click="produtos.push({ id: Date.now(), nome: 'Novo', preco: 10 })"&gt;
+    Adicionar
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="formas">Todas as formas aceitas</h2>
+
+<p>
+  <code>v-for</code> não se limita a arrays. <code>in</code> e <code>of</code> são equivalentes.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  usuarios: [{ id: 1, nome: 'Ana' }, { id: 2, nome: 'Beto' }],
+  configuracoes: { tema: 'escuro', idioma: 'pt-BR' }
+}"&gt;
+  &lt;p&gt;Com índice:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="(usuario, i) in usuarios" :key="usuario.id"&gt;{ i }: { usuario.nome }&lt;/li&gt;&lt;/ul&gt;
+
+  &lt;p&gt;Sobre um objeto:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="(valor, chave) in configuracoes"&gt;{ chave } = { valor }&lt;/li&gt;&lt;/ul&gt;
+
+  &lt;p&gt;Sobre um número:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="n in 3"&gt;Item { n }&lt;/li&gt;&lt;/ul&gt;
+
+  &lt;p&gt;Sobre um texto:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="letra in 'abc'"&gt;{ letra }&lt;/li&gt;&lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Arrays, números, textos, objetos, <code>Map</code> e <code>Set</code> funcionam. Sobre um
+  número, a contagem começa em 1 — <code>v-for="n in 3"</code> dá 1, 2 e 3.
+</p>
+
+<p>
+  Para repetir um grupo de elementos sem um invólucro, o <code>&lt;template&gt;</code> vale aqui
+  também:
+</p>
+
+<pre data-lang="html"><code>&lt;dl&gt;
+  &lt;template v-for="p in produtos" :key="p.id"&gt;
+    &lt;dt&gt;{ p.nome }&lt;/dt&gt;
+    &lt;dd&gt;{ p.preco }&lt;/dd&gt;
+  &lt;/template&gt;
+&lt;/dl&gt;</code></pre>
+
+<h2 id="chave">Por que a chave importa</h2>
+
+<p>
+  O <code>:key</code> diz à Voodoo como reconhecer o mesmo item entre duas atualizações. Sem
+  chave, a biblioteca só sabe a posição: se a lista é reordenada ou filtrada, ela reaproveita o
+  elemento da posição 1 para o novo item da posição 1, seja ele qual for.
+</p>
+
+<p>
+  Na prática isso significa campo perdendo o foco, texto em edição sumindo e rolagem pulando.
+  Compare as duas listas abaixo: digite em um dos campos e depois clique em embaralhar.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ tarefas: [
+  { id: 1, texto: 'Comprar café' },
+  { id: 2, texto: 'Responder e-mail' },
+  { id: 3, texto: 'Pagar boleto' }
+] }"&gt;
+  &lt;button @click="tarefas.reverse()"&gt;Inverter a ordem&lt;/button&gt;
+
+  &lt;p&gt;&lt;b&gt;Com :key&lt;/b&gt;&lt;/p&gt;
+  &lt;div v-for="t in tarefas" :key="t.id"&gt;&lt;input v-model="t.texto"&gt;&lt;/div&gt;
+
+  &lt;p&gt;&lt;b&gt;Sem :key&lt;/b&gt;&lt;/p&gt;
+  &lt;div v-for="t in tarefas"&gt;&lt;input v-model="t.texto"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Regra prática</span>
+  <p>
+    Sempre que a lista puder ser reordenada, filtrada ou ter itens removidos do meio, coloque
+    <code>:key</code>. A chave precisa ser estável e única na lista: o <code>id</code> do banco
+    serve; o índice da posição, não — ele muda junto com a ordem, que é justamente o problema que
+    a chave deveria resolver.
+  </p>
+</div>
+
+<h2 id="filtrando">Filtrando e ordenando</h2>
+
+<p>
+  Não existe filtro embutido na directive: a expressão do <code>v-for</code> aceita qualquer
+  expressão que devolva uma coleção, então <code>filter</code>, <code>slice</code> e
+  <code>sort</code> resolvem — com a ressalva de que <code>sort</code> altera o array original,
+  então vale copiar antes.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  busca: '',
+  produtos: [
+    { id: 1, nome: 'Caneca', preco: 39 },
+    { id: 2, nome: 'Camiseta', preco: 89 },
+    { id: 3, nome: 'Caderno', preco: 25 }
+  ]
+}"&gt;
+  &lt;input v-model="busca" placeholder="Filtrar..."&gt;
+
+  &lt;ul&gt;
+    &lt;li v-for="p in produtos.filter(p =&gt; p.nome.toLowerCase().includes(busca.toLowerCase()))"
+        :key="p.id"&gt;
+      { p.nome } — R$ { p.preco }
+    &lt;/li&gt;
+  &lt;/ul&gt;
+
+  &lt;p v-if="!produtos.some(p =&gt; p.nome.toLowerCase().includes(busca.toLowerCase()))"&gt;
+    Nada encontrado.
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Quando a expressão fica longa demais para caber no atributo, mova-a para uma função do
+  <code>v-data</code> — o resultado é o mesmo e o HTML volta a ser legível.
+</p>
+
+<h2 id="for-e-if">v-for e v-if não convivem no mesmo elemento</h2>
+
+<p>
+  Os dois assumem o controle daquele nó, então a biblioteca não tem como decidir quem manda.
+  Coloque a condição em um filho, ou envolva a repetição em um <code>&lt;template&gt;</code>.
+</p>
+
+<pre data-lang="html"><code>&lt;!-- não faça isso --&gt;
+&lt;li v-for="n in lista" v-if="n % 2 === 0"&gt;{ n }&lt;/li&gt;
+
+&lt;!-- faça isso --&gt;
+&lt;li v-for="n in lista"&gt;
+  &lt;span v-if="n % 2 === 0"&gt;{ n }&lt;/span&gt;
+&lt;/li&gt;
+
+&lt;!-- ou filtre na própria expressão --&gt;
+&lt;li v-for="n in lista.filter(n =&gt; n % 2 === 0)"&gt;{ n }&lt;/li&gt;</code></pre>
+
+<h2 id="dentro-do-item">O que existe dentro de cada item</h2>
+
+<p>
+  Cada iteração cria um escopo próprio. Dentro dele valem a variável do item, o índice quando
+  declarado, e tudo que os escopos de fora oferecem. As variáveis mágicas continuam disponíveis,
+  <code>$el</code> apontando para o elemento daquela iteração.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ etiqueta: 'Produto', itens: ['Caneca', 'Camiseta'] }"&gt;
+  &lt;ul&gt;
+    &lt;li v-for="(item, i) in itens"&gt;
+      { etiqueta } { i + 1 }: { item }
+      &lt;button @click="itens.splice(i, 1)"&gt;remover&lt;/button&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;p v-if="!itens.length"&gt;A lista está vazia.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="limite">O limite que vale conhecer</h2>
+
+<p>
+  O <code>v-for</code> renderiza todos os itens da fonte: não existe virtualização. Para listas de
+  algumas centenas de linhas isso é irrelevante. Para dezenas de milhares atualizando ao mesmo
+  tempo, pagine, use rolagem infinita com <code>v-infinite-scroll</code>, ou escolha uma
+  ferramenta que virtualize. A página de <a href="../referencia/desempenho.html">desempenho</a>
+  mede o custo real com números.
+</p>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

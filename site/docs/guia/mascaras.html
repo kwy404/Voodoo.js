@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Máscaras de campo · Documentação da Voodoo.js</title>
+<meta name="description" content="Máscaras de digitação que preservam a posição do cursor: as prontas, o padrão por caracteres, o valor limpo no estado, moeda e porcentagem, e como criar as suas.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/mascaras.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Dados e formulários</p>
+<h1>Máscaras de campo</h1>
+<p class="doc-resumo">
+  Máscaras de digitação que preservam a posição do cursor, inclusive quando o usuário edita o
+  meio do texto ou apaga um separador. É o detalhe que separa uma máscara boa de uma máscara que
+  todo mundo desliga depois de dois dias.
+</p>
+
+<h2 id="basico">O básico</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{}"&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask="cpf" placeholder="CPF"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask="phone" placeholder="Telefone"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask="cep" placeholder="CEP"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask="(99) 99999-9999" placeholder="Padrão próprio"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask-currency placeholder="Moeda"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Experimente editar o meio de um número já digitado: o cursor fica onde estava. Apague em cima
+  de um ponto: o dígito anterior é removido, e não só o separador.
+</p>
+
+<h2 id="prontas">Máscaras prontas</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Nome</th><th>Formato</th><th>Exemplo</th></tr></thead>
+<tbody>
+<tr><td><code>cpf</code></td><td><code>999.999.999-99</code></td><td>123.456.789-01</td></tr>
+<tr><td><code>cnpj</code></td><td><code>99.999.999/9999-99</code></td><td>12.345.678/0001-90</td></tr>
+<tr><td><code>cpfcnpj</code></td><td>Troca sozinha conforme o tamanho</td><td>123.456.789-01 ou 12.345.678/0001-90</td></tr>
+<tr><td><code>cep</code></td><td><code>99999-999</code></td><td>01001-000</td></tr>
+<tr><td><code>phone</code></td><td><code>(99) 9999-9999</code> ou <code>(99) 99999-9999</code></td><td>(11) 98765-4321</td></tr>
+<tr><td><code>date</code></td><td><code>99/99/9999</code></td><td>28/08/2026</td></tr>
+<tr><td><code>time</code></td><td><code>99:99</code></td><td>14:30</td></tr>
+<tr><td><code>datetime</code></td><td><code>99/99/9999 99:99</code></td><td>28/08/2026 14:30</td></tr>
+<tr><td><code>currency</code></td><td>Moeda, digitando da direita para a esquerda</td><td>R$ 1.234,56</td></tr>
+<tr><td><code>percent</code></td><td>Porcentagem, mesmo estilo</td><td>12,50%</td></tr>
+<tr><td><code>card</code></td><td>Cartão, com o formato certo para American Express</td><td>4111 1111 1111 1111</td></tr>
+<tr><td><code>cvv</code></td><td>Até quatro dígitos</td><td>123</td></tr>
+<tr><td><code>plate</code></td><td>Placa antiga ou Mercosul, escolhida pelo conteúdo</td><td>ABC-1234 ou ABC1D23</td></tr>
+<tr><td><code>hex</code></td><td>Cor em hexadecimal</td><td>#6D3BF5</td></tr>
+<tr><td><code>ip</code></td><td>Endereço IPv4, com cada grupo limitado a 255</td><td>192.168.0.1</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Máscara e validação são coisas separadas, e combinam bem: a máscara formata enquanto se digita,
+  a regra confere no fim.
+</p>
+
+<pre data-lang="html"><code>&lt;input v-mask="cpf" v-cpf&gt;
+&lt;input v-mask="cpfcnpj" placeholder="CPF ou CNPJ"&gt;
+&lt;input v-mask="phone" v-phone&gt;</code></pre>
+
+<h2 id="padrao">Máscara por padrão de caracteres</h2>
+
+<p>
+  Quando o valor não é o nome de uma máscara conhecida, ele é lido como padrão:
+</p>
+
+<pre data-lang="html"><code>&lt;input v-mask="(99) 99999-9999"&gt;
+&lt;input v-mask="AAA-9999"&gt;
+&lt;input v-mask="SSSS SSSS"&gt;
+&lt;input v-mask="\R\S 9999"&gt;</code></pre>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Token</th><th>Aceita</th></tr></thead>
+<tbody>
+<tr><td><code>9</code></td><td>Dígito</td></tr>
+<tr><td><code>A</code></td><td>Letra, com acento</td></tr>
+<tr><td><code>S</code></td><td>Letra ou dígito</td></tr>
+<tr><td><code>*</code></td><td>Qualquer caractere</td></tr>
+<tr><td><code>\</code></td><td>Escapa o próximo caractere, tornando literal</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Qualquer outro caractere do padrão entra como separador fixo e só aparece quando ainda existe
+  conteúdo depois dele — por isso a máscara não empurra parênteses vazios para dentro de um campo
+  ainda em branco.
+</p>
+
+<h2 id="valor-limpo">v-model e o valor limpo</h2>
+
+<p>
+  Por padrão o estado recebe o texto formatado. Com <code>.unmask</code> (ou <code>.raw</code>),
+  ele recebe o valor limpo, enquanto a tela continua mostrando a máscara — que é quase sempre o
+  que o servidor quer receber.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ form: { cpf: '', preco: '' } }"&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask.unmask="cpf" v-model="form.cpf" placeholder="CPF"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-mask-currency.unmask v-model="form.preco" placeholder="Preço"&gt;&lt;/div&gt;
+  &lt;p&gt;Vai para o servidor: { JSON.stringify(form) }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  <code>v-mask</code> roda antes de <code>v-model</code>, então o estado nunca vê o valor pela
+  metade.
+</p>
+
+<h2 id="moeda">Moeda e porcentagem</h2>
+
+<p>
+  <code>v-mask-currency</code> digita da direita para a esquerda, como uma calculadora:
+</p>
+
+<pre data-lang="html"><code>&lt;input v-mask-currency&gt;                      &lt;!-- R$ 1.234,56 --&gt;
+&lt;input v-mask-currency="US$ "&gt;               &lt;!-- US$ 1.234,56 --&gt;
+&lt;input v-mask-currency v-mask-decimals="0"&gt;  &lt;!-- R$ 1.234 --&gt;
+&lt;input v-mask-currency v-mask-suffix=" /mês"&gt;
+&lt;input v-mask-currency.plain&gt;                &lt;!-- 1.234,56, sem prefixo --&gt;
+&lt;input v-mask-currency.dot&gt;                  &lt;!-- 1,234.56, no padrão americano --&gt;</code></pre>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Ajuste</th><th>Onde</th></tr></thead>
+<tbody>
+<tr><td>Prefixo</td><td>O próprio valor da directive, ou <code>v-mask-prefix</code></td></tr>
+<tr><td>Sufixo</td><td><code>v-mask-suffix</code></td></tr>
+<tr><td>Casas decimais</td><td><code>v-mask-decimals</code>. Padrão 2</td></tr>
+<tr><td>Separadores invertidos</td><td>Modificador <code>.dot</code></td></tr>
+<tr><td>Sem prefixo</td><td>Modificador <code>.plain</code></td></tr>
+<tr><td>Valor limpo no estado</td><td>Modificador <code>.unmask</code> ou <code>.raw</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="cuidados">Cuidados</h2>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Máscara só em campo textual</span>
+  <p>
+    <code>v-mask</code> precisa de <code>&lt;input&gt;</code> ou <code>&lt;textarea&gt;</code> com
+    tipo textual. Tipos como <code>number</code>, <code>range</code>, <code>date</code> e
+    <code>color</code> não aceitam máscara, porque o navegador já controla o valor. Use
+    <code>type="text"</code> com <code>inputmode</code>, que traz o teclado numérico no celular
+    sem tirar o controle do campo:
+  </p>
+</div>
+
+<pre data-lang="html"><code>&lt;input type="text" inputmode="numeric" v-mask="cpf"&gt;
+&lt;input type="text" inputmode="decimal" v-mask-currency&gt;</code></pre>
+
+<p>
+  Um valor que já vem do servidor no <code>value</code> é formatado assim que a directive monta,
+  então uma tela de edição abre com tudo no lugar.
+</p>
+
+<h2 id="criando">Criando máscaras</h2>
+
+<p>Por padrão de caracteres:</p>
+
+<pre data-lang="js"><code>V.registerMask('processo', '9999999-99.9999.9.99.9999');
+V.registerMask('renavam', '99999999999');</code></pre>
+
+<p>Por função, para casos que mudam conforme o conteúdo:</p>
+
+<pre data-lang="js"><code>V.registerMask('inscricao', (valor) =&gt; {
+  const digitos = valor.replace(/\D/g, '');
+  return digitos.length &lt;= 9
+    ? V.applyMask(digitos, '999.999.999')
+    : V.applyMask(digitos, '999.999.999.999');
+});</code></pre>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div&gt;
+  &lt;script&gt;
+    V.registerMask('processo', '9999999-99.9999.9.99.9999');
+  &lt;/script&gt;
+  &lt;input v-mask="processo" placeholder="Número do processo"&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="javascript">Por JavaScript</h2>
+
+<pre data-lang="js"><code>V.mask('12345678901', 'cpf');        // '123.456.789-01'
+V.applyMask('1234', '99-99');        // '12-34'
+V.unmask('123.456.789-01');          // '12345678901'
+V.unmask('R$ 1.234,56', 'currency'); // '1234.56'
+
+V.mask.currency('123456');           // 'R$ 1.234,56'
+V.mask.percent('1250');              // '12,50%'</code></pre>
+
+<p>
+  A tabela completa de <code>V.mask</code> está na
+  <a href="../referencia/mascaras.html">referência de máscaras</a>.
+</p>
+
+<h2 id="cursor">Como o cursor é tratado</h2>
+
+<p>
+  A implementação conta os caracteres significativos antes do cursor, reformata o texto e recoloca
+  o cursor depois do mesmo número de caracteres significativos. Daí vêm as três consequências que
+  interessam: editar o meio do texto não joga o cursor para o fim; apagar em cima de um separador
+  remove o caractere útil anterior; e máscaras numéricas mantêm o cursor no fim, antes do sufixo.
+</p>
+
+<p>
+  A propriedade <code>value</code> do input é substituída, de forma que ler
+  <code>input.value</code> devolva o valor limpo quando <code>.unmask</code> está ativo, e
+  escrever nela sempre passe pela máscara. Ao desmontar, a propriedade original é restaurada.
+</p>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

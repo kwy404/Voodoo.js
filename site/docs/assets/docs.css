@@ -931,6 +931,21 @@ h3:hover .doc-ancora,
    11. Cartões
    -------------------------------------------------------------------------- */
 
+.doc-artigo kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0.1em 0.4em;
+  border: 1px solid var(--borda-forte);
+  border-bottom-width: 2px;
+  border-radius: 0.3rem;
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-family: var(--fonte-mono);
+  font-size: 0.78em;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+}
 .doc-cartoes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));

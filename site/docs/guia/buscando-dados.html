@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buscando dados de um servidor · Documentação da Voodoo.js</title>
+<meta name="description" content="Os cinco verbos por atributo, o que acontece com a resposta, onde o resultado é colocado, gatilhos como v-poll e v-search, estados de carregando e erro, e o v-resource.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/buscando-dados.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Dados e formulários</p>
+<h1>Buscando dados de um servidor</h1>
+<p class="doc-resumo">
+  Buscar dados, enviar um formulário, excluir um registro. Normalmente isso vira
+  <code>fetch</code>, <code>then</code>, montagem manual de HTML e tratamento de erro repetido em
+  toda tela. Na Voodoo é um atributo.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Sobre os exemplos desta página</span>
+  <p>
+    Os blocos aqui não rodam ao vivo como nas outras páginas: eles precisariam de um servidor de
+    verdade do outro lado. As URLs são fictícias — troque por endereços da sua API.
+  </p>
+</div>
+
+<h2 id="cinco-verbos">Os cinco verbos</h2>
+
+<pre data-lang="html"><code>&lt;button v-get="/api/usuarios" v-target="#lista"&gt;Carregar&lt;/button&gt;
+
+&lt;div id="lista"&gt;&lt;/div&gt;</code></pre>
+
+<p>
+  Existem <code>v-get</code>, <code>v-post</code>, <code>v-put</code>, <code>v-patch</code> e
+  <code>v-delete</code>. Cada elemento tem um gatilho natural: um <code>&lt;form&gt;</code>
+  dispara no <code>submit</code>, um campo dispara no <code>change</code>, e todo o resto dispara
+  no <code>click</code>.
+</p>
+
+<p>A URL pode ser fixa ou uma expressão:</p>
+
+<pre data-lang="html"><code>&lt;button v-delete="'/api/usuarios/' + u.id"
+        v-confirm="Excluir usuário?"
+        v-toast-success="Usuário excluído!"&gt;Excluir&lt;/button&gt;</code></pre>
+
+<h2 id="resposta">O que acontece com a resposta</h2>
+
+<p>
+  Se o servidor devolve HTML, ele entra direto no alvo. Se devolve JSON, a Voodoo transforma em
+  HTML legível: uma lista de objetos vira tabela, um objeto vira lista de definições, e todos os
+  valores são escapados no caminho.
+</p>
+
+<p>
+  Se você prefere controlar o formato, aponte um <code>&lt;template&gt;</code> da própria página:
+</p>
+
+<pre data-lang="html"><code>&lt;button v-get="/api/usuarios" v-target="#lista" v-template="#linha"&gt;Carregar&lt;/button&gt;
+
+&lt;template id="linha"&gt;
+  &lt;li&gt;&lt;strong&gt;{ nome }&lt;/strong&gt; &lt;small&gt;{ email }&lt;/small&gt;&lt;/li&gt;
+&lt;/template&gt;
+
+&lt;ul id="lista"&gt;&lt;/ul&gt;</code></pre>
+
+<p>
+  E se você não quer HTML nenhum, só o dado no estado, o <code>v-as</code> escreve na variável e
+  o resto da página reage como reagiria a qualquer outra mudança:
+</p>
+
+<pre data-lang="html"><code>&lt;div v-data="{ usuarios: [] }"&gt;
+  &lt;button v-get="/api/usuarios" v-as="usuarios"&gt;Carregar&lt;/button&gt;
+  &lt;ul&gt;
+    &lt;li v-for="u in usuarios" :key="u.id"&gt;{ u.nome }&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+
+<h2 id="onde">Onde o resultado é colocado</h2>
+
+<p>
+  <code>v-target</code> é o seletor do elemento que recebe. Sem ele, o alvo é o próprio elemento.
+  <code>v-swap</code> decide como:
+</p>
+
+<pre data-lang="html"><code>&lt;button v-get="/api/comentarios?pagina=2" v-target="#comentarios" v-swap="append"&gt;
+  Carregar mais
+&lt;/button&gt;</code></pre>
+
+<p>
+  Modos aceitos: <code>innerHTML</code> (o padrão), <code>outerHTML</code>, <code>replace</code>,
+  <code>textContent</code>, <code>beforebegin</code>, <code>afterbegin</code>,
+  <code>beforeend</code>, <code>afterend</code>, <code>append</code>, <code>prepend</code>,
+  <code>delete</code> e <code>none</code>.
+</p>
+
+<h2 id="gatilhos">Outros gatilhos</h2>
+
+<pre data-lang="html"><code>&lt;div v-get="/api/status" v-poll="5s" v-target="#status"&gt;&lt;/div&gt;
+&lt;div v-load-visible="/api/comentarios"&gt;&lt;/div&gt;
+&lt;input v-search="/api/produtos" v-param="q" v-target="#resultados" v-debounce="300"&gt;
+&lt;div v-get="/api/banner" v-trigger="visible"&gt;&lt;/div&gt;</code></pre>
+
+<ul>
+  <li><code>v-poll</code> repete em intervalo fixo e pausa quando a aba não está visível.</li>
+  <li><code>v-load-visible</code> busca quando o elemento chega perto da tela.</li>
+  <li>
+    <code>v-search</code> faz busca enquanto o usuário digita, com <code>v-param</code> para o
+    nome do parâmetro e <code>v-min-length</code> para o mínimo de caracteres.
+  </li>
+</ul>
+
+<h2 id="carregando">Carregando, erro, e o que fazer depois</h2>
+
+<pre data-lang="html"><code>&lt;button v-get="/api/relatorio"
+        v-target="#saida"
+        v-loading="#spinner"
+        v-disable-loading
+        v-on-success="$toast.success('Pronto!')"
+        v-on-error="console.warn($detail)"&gt;
+  Gerar
+&lt;/button&gt;
+
+&lt;div id="spinner"&gt;Gerando relatório...&lt;/div&gt;</code></pre>
+
+<p>
+  Durante a requisição o elemento ganha a classe <code>v-loading</code> e o atributo
+  <code>aria-busy="true"</code> — as duas coisas dão gancho para o CSS e para leitores de tela sem
+  nenhum código a mais. Uma nova requisição do mesmo elemento cancela a anterior que ainda estiver
+  pendente, o que resolve sozinho o clique repetido.
+</p>
+
+<h2 id="v-resource">v-resource: dados, carregando e erro em uma linha</h2>
+
+<p>
+  Quando você quer o estado da requisição disponível no HTML, e não só o resultado:
+</p>
+
+<pre data-lang="html"><code>&lt;div v-resource="produtos: /api/produtos"&gt;
+
+  &lt;p v-if="produtos.loading"&gt;Carregando...&lt;/p&gt;
+  &lt;p v-else-if="produtos.error"&gt;Falhou: { produtos.error.message }&lt;/p&gt;
+
+  &lt;ul v-else&gt;
+    &lt;li v-for="p in produtos.data" :key="p.id"&gt;{ p.nome }&lt;/li&gt;
+  &lt;/ul&gt;
+
+  &lt;button @click="produtos.reload()"&gt;Atualizar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+<p>
+  A sintaxe é <code>nome: url</code>. O objeto criado tem <code>data</code>, <code>loading</code>,
+  <code>error</code>, <code>loaded</code>, <code>reload()</code> e <code>set()</code>. Ele aceita
+  <code>v-method</code>, <code>v-params</code>, <code>v-cache</code>, <code>v-retry</code>,
+  <code>v-timeout</code>, <code>v-json-path</code>, <code>v-poll</code> e <code>v-manual</code>,
+  que segura a primeira busca até você chamar <code>reload()</code>.
+</p>
+
+<h2 id="apoio">Atributos de apoio</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Atributo</th><th>Para que serve</th></tr></thead>
+<tbody>
+<tr><td><code>v-body</code></td><td>Corpo da requisição, como objeto ou expressão</td></tr>
+<tr><td><code>v-params</code></td><td>Parâmetros de query</td></tr>
+<tr><td><code>v-headers</code></td><td>Cabeçalhos extras</td></tr>
+<tr><td><code>v-cache</code></td><td>Guarda a resposta pelo tempo indicado</td></tr>
+<tr><td><code>v-retry</code></td><td>Tenta de novo quando falha</td></tr>
+<tr><td><code>v-timeout</code></td><td>Desiste depois do tempo indicado</td></tr>
+<tr><td><code>v-json-path</code></td><td>Pega um pedaço de dentro da resposta, como <code>data.items</code></td></tr>
+<tr><td><code>v-redirect</code></td><td>Navega para uma URL quando dá certo</td></tr>
+<tr><td><code>v-scroll-to</code></td><td>Rola até um elemento depois da troca</td></tr>
+<tr><td><code>v-loading-class</code></td><td>Classe aplicada durante a requisição</td></tr>
+<tr><td><code>v-on-complete</code></td><td>Expressão executada no fim, deu certo ou não</td></tr>
+<tr><td><code>v-offline-queue</code></td><td>Guarda a requisição sem rede e reenvia quando a conexão volta</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="javascript">O mesmo, em JavaScript</h2>
+
+<pre data-lang="js"><code>const usuarios = await V.http.get('/api/users', { params: { pagina: 2 }, cache: 60000 });
+await V.http.post('/api/users', { nome: 'Ana' });
+await V.http.upload('/api/arquivos', formData, { onProgress: (p) =&gt; console.log(p) });
+
+V.http.setBaseURL('https://api.exemplo.com');
+V.http.setToken('meu-jwt');
+V.http.interceptors.response.use((r) =&gt; r);</code></pre>
+
+<p>
+  A superfície completa — interceptadores, cache, cancelamento, <code>HttpError</code> e upload
+  com progresso — está na <a href="../referencia/http.html">referência do cliente HTTP</a>.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">CSRF sem configurar nada</span>
+  <p>
+    Métodos que escrevem levam o token de <code>&lt;meta name="csrf-token"&gt;</code> no cabeçalho
+    <code>X-CSRF-TOKEN</code> automaticamente. Se o seu servidor usa outro nome de cabeçalho,
+    ajuste por um interceptador de requisição.
+  </p>
+</div>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Detalhe conhecido</span>
+  <p>
+    <code>v-confirm</code> no mesmo elemento de um verbo HTTP pergunta duas vezes. Use
+    <code>v-confirm</code> junto de <code>v-click</code>, ou peça a confirmação dentro da própria
+    expressão com <code>$confirm(...)</code>.
+  </p>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>
