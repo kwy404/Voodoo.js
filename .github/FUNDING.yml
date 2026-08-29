@@ -1,0 +1,23 @@
+# Financiamento da Voodoo.js
+#
+# Este arquivo controla o botao "Sponsor" que o GitHub mostra no repositorio.
+# Nenhuma conta esta configurada ainda, entao tudo aqui esta comentado de
+# proposito. Para ligar, descomente apenas as linhas das plataformas que o
+# projeto realmente usa e preencha com os nomes de usuario corretos.
+#
+# Documentacao:
+# https://docs.github.com/pt/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# github: [usuario]
+# patreon: usuario
+# open_collective: nome-do-projeto
+# ko_fi: usuario
+# tidelift: npm/voodoojs
+# community_bridge: nome-do-projeto
+# liberapay: usuario
+# issuehunt: usuario
+# lfx_crowdfunding: nome-do-projeto
+# polar: usuario
+# buy_me_a_coffee: usuario
+# thanks_dev: usuario
+# custom: ['https://exemplo.com/apoiar']

@@ -38,6 +38,18 @@ export function isInitialized(node: Node): boolean {
   return initialized.has(node);
 }
 
+/**
+ * Marca um no como ja tratado, para o walker nunca descer nele.
+ *
+ * Usado nos modelos que o `v-if` guarda fora do documento. Sem esta marca, a
+ * caminhada do elemento pai, que ja tinha a lista de filhos em maos, entraria
+ * no modelo e inicializaria o `v-for` de dentro dele, corrompendo o modelo
+ * para todas as renderizacoes seguintes.
+ */
+export function markInitialized(node: Node): void {
+  initialized.add(node);
+}
+
 /** Escopo associado a um no, se houver. */
 export function getScope(node: Node): Scope | undefined {
   return nodeScopes.get(node);
@@ -187,17 +199,37 @@ export function parseAttribute(name: string, value: string): ParsedAttribute | n
   return { raw: name, name: directiveName, arg, modifiers, expression: value };
 }
 
-/** Lista as directives de um elemento, ja ordenadas por prioridade. */
+/**
+ * Lista as directives de um elemento, ja ordenadas por prioridade.
+ *
+ * Quando o elemento ja passou pela limpeza do HTML, a leitura vem do cache.
+ * E o que permite remontar um elemento depois, por exemplo quando o componente
+ * dele so foi registrado mais tarde. Repor os atributos no DOM nao serviria,
+ * porque nomes como `@click` sao recusados por `setAttribute`.
+ */
 export function collectDirectives(el: Element): ParsedAttribute[] {
   const out: ParsedAttribute[] = [];
-  const attrs = el.attributes;
-  for (let i = 0; i < attrs.length; i++) {
-    const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-    if (parsed) {
-      out.push(parsed);
-      indexDirective(el, parsed.name);
+  const cache = attributeCache.get(el);
+
+  if (cache && cache.size) {
+    for (const [name, value] of cache) {
+      const parsed = parseAttribute(name, value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
+    }
+  } else {
+    const attrs = el.attributes;
+    for (let i = 0; i < attrs.length; i++) {
+      const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
     }
   }
+
   if (out.length < 2) return out;
   return out.sort((a, b) => priorityOf(b) - priorityOf(a));
 }
@@ -354,7 +386,14 @@ export function restoreAttributes(el: Element): void {
   const map = attributeCache.get(el);
   if (!map) return;
   for (const [name, value] of map) {
-    if (!el.hasAttribute(name)) el.setAttribute(name, value);
+    if (el.hasAttribute(name)) continue;
+    // Nomes com arroba ou dois pontos sao recusados por `setAttribute`, e nem
+    // precisam voltar: `collectDirectives` ja le do cache.
+    try {
+      el.setAttribute(name, value);
+    } catch {
+      // Silencio proposital: o cache continua sendo a fonte da verdade.
+    }
   }
 }
 /** Verifica se o elemento tem qualquer atributo da Voodoo. */
@@ -606,8 +645,24 @@ export function bindTextNode(node: Text, scope: Scope): void {
   if (!raw || raw.indexOf('{') === -1) return;
   if (initialized.has(node)) return;
 
-  const parentTag = node.parentElement?.tagName;
-  if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+  // Sobe pelos ancestrais por dois motivos. Primeiro, um trecho de codigo com
+  // destaque de sintaxe coloca o texto dentro de <span>, e o pai direto deixaria
+  // de ser <pre>. Segundo, v-ignore e v-pre precisam valer para a subarvore
+  // inteira, mesmo quando a caminhada entra por um filho, o que acontece quando
+  // um script reescreve o conteudo de um bloco de codigo depois da montagem.
+  let ancestral: Element | null = node.parentElement;
+  while (ancestral) {
+    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+    if (
+      ancestral.hasAttribute(`${config.prefix}ignore`) ||
+      ancestral.hasAttribute(`${config.prefix}pre`) ||
+      ancestral.hasAttribute('data-v-ignore') ||
+      ancestral.hasAttribute('data-v-pre')
+    ) {
+      return;
+    }
+    ancestral = ancestral.parentElement;
+  }
 
   const segments: TextSegment[] = [];
   let lastIndex = 0;

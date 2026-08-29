@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" role="img" aria-label="Bandeira dos Estados Unidos">
+  <rect width="20" height="14" rx="2" fill="#fff"/>
+  <g fill="#C0223B">
+    <rect width="20" height="2" y="0"/>
+    <rect width="20" height="2" y="4"/>
+    <rect width="20" height="2" y="8"/>
+    <rect width="20" height="2" y="12"/>
+  </g>
+  <rect width="9" height="8" fill="#1B3A8C"/>
+  <g fill="#fff">
+    <circle cx="2" cy="2" r=".6"/><circle cx="4.5" cy="2" r=".6"/><circle cx="7" cy="2" r=".6"/>
+    <circle cx="3.25" cy="4" r=".6"/><circle cx="5.75" cy="4" r=".6"/>
+    <circle cx="2" cy="6" r=".6"/><circle cx="4.5" cy="6" r=".6"/><circle cx="7" cy="6" r=".6"/>
+  </g>
+  <rect width="20" height="14" rx="2" fill="none" stroke="rgba(0,0,0,.12)"/>
+</svg>

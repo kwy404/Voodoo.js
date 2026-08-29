@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 14" width="20" height="14" role="img" aria-label="Bandera de Espana">
+  <rect width="20" height="14" rx="2" fill="#C60B1E"/>
+  <rect width="20" height="7" y="3.5" fill="#FFC400"/>
+  <rect x="3.4" y="5" width="3" height="4" rx=".6" fill="#C60B1E"/>
+  <rect x="4.1" y="5.7" width="1.6" height="2.6" rx=".3" fill="#FFC400"/>
+</svg>

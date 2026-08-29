@@ -15,6 +15,7 @@ import {
   addCleanup,
   destroy,
   evaluateIn,
+  markInitialized,
   markSkipChildren,
   markNodeScope,
   removeQuietly,
@@ -74,8 +75,12 @@ export function transitionOptions(el: Element): TransitionOptions | null {
 // ---------------------------------------------------------------------------
 
 defineDirective('text', ({ el, effect, evaluate: ev }) => {
+  // O conteudo escrito aqui e resultado, nao modelo. Marcar os nos de texto
+  // impede que a caminhada trate um valor como "{ a: 1 }" como interpolacao.
   effect(() => {
     el.textContent = stringify(ev());
+    const primeiro = el.firstChild;
+    if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
   });
 });
 
@@ -169,6 +174,10 @@ defineDirective(
       branch.template.removeAttribute(`${p}if`);
       branch.template.removeAttribute(`${p}else-if`);
       branch.template.removeAttribute(`${p}else`);
+      // O modelo sai de cena e nunca deve ser percorrido. A caminhada do
+      // elemento pai ja tinha este no na lista, e sem a marca ela entraria
+      // aqui e inicializaria as directives de dentro do proprio modelo.
+      markInitialized(branch.template);
     }
 
     const options = transitionOptions(el);

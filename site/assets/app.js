@@ -31,7 +31,7 @@
 
   var GITHUB = 'https://github.com/voodoojs/voodoo';
   var SITE = 'https://voodoojs.dev';
-  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js';
+  var CDN = 'voodoo.min.js';
 
   // =====================================================================
   // 1. Idioma, tema e paleta
@@ -112,7 +112,7 @@
    * um efeito, entao acompanha cada troca de idioma sem nenhum ouvinte.
    */
   V.effect(function () {
-    var locale = V.i18n.locale;
+    var locale = V.getLocale();
     var title = V.t('meta.title');
     var description = V.t('meta.description');
 
@@ -257,252 +257,7 @@
   paintCode(document);
 
   // =====================================================================
-  // 4. Dados dos exemplos do playground
-  // =====================================================================
-
-  /**
-   * Cada exemplo e HTML puro, do jeito que a pessoa escreveria no proprio
-   * arquivo. Nada aqui e pre processado: o texto entra inteiro no quadro de
-   * pre visualizacao, que carrega a mesma `voodoo.full.min.js` da pagina.
-   */
-  var EXAMPLES = [
-    {
-      id: 'state',
-      code:
-        '<div v-data="{ nome: \'Vudu\', cliques: 0 }">\n' +
-        '  <h3>Ola, { nome }!</h3>\n' +
-        '  <p>Voce clicou { cliques } vezes.</p>\n\n' +
-        '  <input v-model="nome" placeholder="Escreva um nome">\n' +
-        '  <button @click="cliques++">Clique aqui</button>\n' +
-        '  <button @click="cliques = 0">Zerar</button>\n\n' +
-        '  <p v-show="cliques > 4">Ja deu, ne?</p>\n' +
-        '</div>',
-    },
-    {
-      id: 'conditional',
-      code:
-        '<div v-data="{ nivel: 2 }">\n' +
-        '  <button @click="nivel = 1">Baixo</button>\n' +
-        '  <button @click="nivel = 2">Medio</button>\n' +
-        '  <button @click="nivel = 3">Alto</button>\n\n' +
-        '  <p v-if="nivel === 1">Uma vela apenas.</p>\n' +
-        '  <p v-else-if="nivel === 2">O caldeirao borbulha.</p>\n' +
-        '  <p v-else>O ceu ficou roxo.</p>\n\n' +
-        '  <p v-show="nivel === 3" class="aviso">\n' +
-        '    v-show continua no DOM, so muda a exibicao.\n' +
-        '  </p>\n' +
-        '</div>',
-    },
-    {
-      id: 'list',
-      code:
-        '<div v-data="{\n' +
-        '  itens: [\n' +
-        '    { id: 1, nome: \'Raiz de mandragora\', qtd: 3 },\n' +
-        '    { id: 2, nome: \'Po de estrela\', qtd: 7 },\n' +
-        '    { id: 3, nome: \'Pena de corvo\', qtd: 1 }\n' +
-        '  ]\n' +
-        '}">\n' +
-        '  <ul>\n' +
-        '    <li v-for="(item, i) in itens" :key="item.id">\n' +
-        '      { i + 1 }. { item.nome }\n' +
-        '      <button @click="item.qtd++">+</button>\n' +
-        '      <b>{ item.qtd }</b>\n' +
-        '      <button @click="itens = itens.filter(x => x.id !== item.id)">x</button>\n' +
-        '    </li>\n' +
-        '  </ul>\n' +
-        '  <p v-if="!itens.length">O caldeirao esta vazio.</p>\n' +
-        '</div>',
-    },
-    {
-      id: 'form',
-      code:
-        '<div v-data="{ form: { nome: \'\', idade: 0, aceito: false, cor: \'roxo\' } }">\n' +
-        '  <label>Nome <input v-model.trim="form.nome"></label>\n' +
-        '  <label>Idade <input type="number" v-model.number="form.idade"></label>\n' +
-        '  <label><input type="checkbox" v-model="form.aceito"> Aceito o feitico</label>\n' +
-        '  <label>Cor\n' +
-        '    <select v-model="form.cor">\n' +
-        '      <option>roxo</option>\n' +
-        '      <option>magenta</option>\n' +
-        '      <option>ambar</option>\n' +
-        '    </select>\n' +
-        '  </label>\n\n' +
-        '  <pre v-text="JSON.stringify(form, null, 2)"></pre>\n' +
-        '</div>',
-    },
-    {
-      id: 'events',
-      code:
-        '<div v-data="{ log: [], aberto: false, busca: \'\' }">\n' +
-        '  <button @click.once="log.push(\'so uma vez\')">once</button>\n' +
-        '  <button @click.stop="log.push(\'nao sobe\')">stop</button>\n' +
-        '  <input @keyup.enter="log.push(\'enter: \' + $event.target.value)"\n' +
-        '         placeholder="Aperte Enter">\n' +
-        '  <input v-model.debounce.400="busca" placeholder="Espera 400ms">\n' +
-        '  <p>Busca: <b>{ busca }</b></p>\n\n' +
-        '  <div>\n' +
-        '    <button @click="aberto = !aberto">Menu</button>\n' +
-        '    <div v-show="aberto" @outside="aberto = false" class="menu">\n' +
-        '      Clique fora para fechar.\n' +
-        '    </div>\n' +
-        '  </div>\n\n' +
-        '  <ul><li v-for="l in log">{ l }</li></ul>\n' +
-        '</div>',
-    },
-    {
-      id: 'http',
-      code:
-        '<div v-resource="pessoa: https://jsonplaceholder.typicode.com/users/1">\n' +
-        '  <p v-if="pessoa.loading">Consultando o oraculo...</p>\n' +
-        '  <p v-else-if="pessoa.error">{ pessoa.error.message }</p>\n' +
-        '  <div v-else>\n' +
-        '    <h3>{ pessoa.data.name }</h3>\n' +
-        '    <p>{ pessoa.data.email }</p>\n' +
-        '    <p>{ pessoa.data.company.catchPhrase }</p>\n' +
-        '  </div>\n' +
-        '  <button @click="pessoa.reload()">Recarregar</button>\n' +
-        '</div>',
-    },
-    {
-      id: 'component',
-      code:
-        '<script>\n' +
-        '  V.component(\'poção\', {\n' +
-        '    props: { nome: { type: \'string\', default: \'Poção\' },\n' +
-        '             forca: { type: \'number\', default: 1 } },\n' +
-        '    state() { return { doses: 0 } },\n' +
-        '    computed: { total() { return this.doses * this.forca } },\n' +
-        '    methods: { beber() { this.doses++ } },\n' +
-        '    template: `\n' +
-        '      <article class="frasco">\n' +
-        '        <h4>{ nome } <small>forca { forca }</small></h4>\n' +
-        '        <p><slot>Sem descricao.</slot></p>\n' +
-        '        <button v-click="beber">Beber</button>\n' +
-        '        <b>{ doses } doses, { total } de efeito</b>\n' +
-        '      </article>`\n' +
-        '  })\n' +
-        '<\/script>\n\n' +
-        '<poção nome="Elixir violeta" :forca="3">\n' +
-        '  Este conteudo entra pelo slot do componente.\n' +
-        '</poção>\n' +
-        '<poção nome="Xarope ambar" :forca="1"></poção>',
-    },
-    {
-      id: 'validation',
-      code:
-        '<form v-validate @submit.prevent="enviado = true" v-data="{ enviado: false }">\n' +
-        '  <label>Email\n' +
-        '    <input name="email" v-required v-email\n' +
-        '           v-error-message="Escreva um email de verdade.">\n' +
-        '  </label>\n' +
-        '  <label>CPF\n' +
-        '    <input name="cpf" v-required v-cpf v-mask="cpf">\n' +
-        '  </label>\n' +
-        '  <label>Senha\n' +
-        '    <input name="senha" type="password" v-required v-minlength="8">\n' +
-        '  </label>\n' +
-        '  <button type="submit">Enviar</button>\n' +
-        '  <p v-show="enviado">Formulario valido e enviado.</p>\n' +
-        '</form>',
-    },
-    {
-      id: 'mask',
-      code:
-        '<div v-data="{ cpf: \'\', tel: \'\', dinheiro: \'\', placa: \'\' }">\n' +
-        '  <label>CPF <input v-mask="cpf" v-model="cpf"></label>\n' +
-        '  <label>Telefone <input v-mask="phone" v-model="tel"></label>\n' +
-        '  <label>Dinheiro <input v-mask="currency" v-model="dinheiro"></label>\n' +
-        '  <label>Placa <input v-mask="plate" v-model="placa"></label>\n' +
-        '  <label>Padrao livre <input v-mask="AAA-9999"></label>\n\n' +
-        '  <pre v-text="JSON.stringify({ cpf, tel, dinheiro, placa }, null, 2)"></pre>\n' +
-        '</div>',
-    },
-    {
-      id: 'motion',
-      code:
-        '<div v-data="{ visivel: true }">\n' +
-        '  <h3 v-typewriter="JavaScript feels like magic." v-typewriter-speed="55"></h3>\n\n' +
-        '  <p>Visitas: <b v-count="128400" v-count-duration="2s"></b></p>\n\n' +
-        '  <div v-motion="fadeUp" class="caixa">v-motion="fadeUp"</div>\n' +
-        '  <div v-motion="pop" class="caixa">v-motion="pop"</div>\n' +
-        '  <div v-motion-hover="{ scale: 1.08, rotate: -3 }" class="caixa">\n' +
-        '    passe o mouse\n' +
-        '  </div>\n' +
-        '  <div v-motion-tap="{ scale: 0.9 }" class="caixa">segure aqui</div>\n\n' +
-        '  <button @click="visivel = !visivel">Alternar</button>\n' +
-        '  <div v-if="visivel" v-transition="fade" class="caixa">v-transition</div>\n' +
-        '</div>',
-    },
-    {
-      id: 'chart',
-      code:
-        '<div v-data="{\n' +
-        '  meses: [\'Jan\', \'Fev\', \'Mar\', \'Abr\', \'Mai\', \'Jun\'],\n' +
-        '  vendas: [12, 19, 9, 24, 31, 27]\n' +
-        '}">\n' +
-        '  <div v-chart="{ type: \'area\', data: vendas, labels: meses, smooth: true }"\n' +
-        '       style="height: 190px"></div>\n\n' +
-        '  <div v-chart="{ type: \'bar\', data: vendas, labels: meses }"\n' +
-        '       style="height: 170px"></div>\n\n' +
-        '  <div v-chart="{ type: \'donut\', data: [38, 24, 21, 17],\n' +
-        '                  labels: [\'Roxo\', \'Magenta\', \'Ambar\', \'Menta\'] }"\n' +
-        '       style="height: 200px"></div>\n\n' +
-        '  <button @click="vendas = vendas.map(() => Math.round(Math.random() * 40))">\n' +
-        '    Sortear numeros\n' +
-        '  </button>\n' +
-        '</div>',
-    },
-    {
-      id: 'dnd',
-      code:
-        '<div v-data="{ afazer: [\'Colher ervas\', \'Ferver agua\', \'Misturar\'],\n' +
-        '               pronto: [\'Acender a vela\'] }">\n' +
-        '  <h4>A fazer</h4>\n' +
-        '  <ul v-sortable v-sortable-group="tarefas" class="coluna">\n' +
-        '    <li v-for="t in afazer" :key="t">{ t }</li>\n' +
-        '  </ul>\n\n' +
-        '  <h4>Pronto</h4>\n' +
-        '  <ul v-sortable v-sortable-group="tarefas" class="coluna">\n' +
-        '    <li v-for="t in pronto" :key="t">{ t }</li>\n' +
-        '  </ul>\n\n' +
-        '  <p>Arraste com o mouse, com o dedo ou pelo teclado.</p>\n' +
-        '</div>',
-    },
-    {
-      id: 'toast',
-      code:
-        '<div v-data="{ texto: \'v-copy copia isto\' }">\n' +
-        '  <button @click="$toast.success(\'Feitico lancado!\')">Sucesso</button>\n' +
-        '  <button @click="$toast.error(\'O caldeirao virou.\')">Erro</button>\n' +
-        '  <button @click="$toast.info(\'Largura: \' + $screen.width + \'px\')">Tela</button>\n\n' +
-        '  <button v-theme-toggle>Alternar tema</button>\n' +
-        '  <p>Tema atual: <b>{ $theme.resolved }</b></p>\n\n' +
-        '  <input v-model="texto">\n' +
-        '  <button @click="$clipboard.copy(texto); $toast.success(\'Copiado\')">\n' +
-        '    Copiar\n' +
-        '  </button>\n\n' +
-        '  <p v-show="$screen.mobile">Voce esta em uma tela estreita.</p>\n' +
-        '  <p v-show="!$network.online">Voce esta offline.</p>\n' +
-        '</div>',
-    },
-    {
-      id: 'watch',
-      code:
-        '<div v-data="{ nota: \'\', salvo: 0 }" v-persist="rascunho">\n' +
-        '  <p>Escreva algo e recarregue o quadro. O texto volta.</p>\n' +
-        '  <textarea v-model="nota" rows="3"></textarea>\n\n' +
-        '  <p v-effect="salvo = nota.length">\n' +
-        '    Efeito reativo: <b>{ salvo }</b> caracteres.\n' +
-        '  </p>\n\n' +
-        '  <input v-model="nota" v-watch="$toast.info(\'mudou para: \' + $value)">\n' +
-        '  <p>v-watch avisa a cada mudanca deste campo.</p>\n' +
-        '</div>',
-    },
-  ];
-
-  // =====================================================================
-  // 5. Quadro de pre visualizacao
+  // 4. Quadro de pre visualizacao das aplicacoes completas
   // =====================================================================
 
   /** CSS minimo do quadro, para o exemplo nascer legivel sem esforco. */
@@ -546,7 +301,7 @@
   function frameDocument(html) {
     return (
       '<!doctype html><html lang="' +
-      V.i18n.locale +
+      V.getLocale() +
       '" data-theme="' +
       V.theme.resolved +
       '"><head><meta charset="utf-8">' +
@@ -582,7 +337,7 @@
   }
 
   // =====================================================================
-  // 6. Aplicacoes completas mostradas em quadro
+  // 5. Aplicacoes completas mostradas em quadro
   // =====================================================================
 
   var DEMOS = {
@@ -671,7 +426,7 @@
   };
 
   // =====================================================================
-  // 7. Comparativo
+  // 6. Comparativo
   // =====================================================================
 
   /** Uma celula ou e texto literal, ou uma chave de traducao marcada com `t:`. */
@@ -685,7 +440,8 @@
     rows: [
       {
         key: 'size',
-        cells: ['85 KB', '34 KB', '45 KB', '16 KB', '14 KB', '30 KB'],
+        // O primeiro numero e o build completo. O essencial fica em 76 KB.
+        cells: ['120 KB', '34 KB', '45 KB', '16 KB', '14 KB', '30 KB'],
         tone: ['warn', 'yes', 'no', 'yes', 'yes', 'warn'],
       },
       {
@@ -800,7 +556,7 @@
   };
 
   // =====================================================================
-  // 8. Minigames
+  // 7. Minigames
   // =====================================================================
 
   var MEM_ICONS = ['🔮', '🕯️', '🧪', '🪄', '🌙', '🦇', '🍄', '⭐'];
@@ -999,7 +755,7 @@
   }
 
   // =====================================================================
-  // 9. Auxiliares gerais chamados pelo HTML
+  // 8. Auxiliares gerais chamados pelo HTML
   // =====================================================================
 
   /** Copia texto e devolve um aviso visual pelo proprio botao. */
@@ -1033,7 +789,7 @@
   /** Troca `?lang=` na URL sem recarregar, para o compartilhamento ficar certo. */
   function syncUrlLocale() {
     V.effect(function () {
-      var locale = V.i18n.locale;
+      var locale = V.getLocale();
       try {
         var url = new URL(location.href);
         if (locale === 'pt-BR') url.searchParams.delete('lang');
@@ -1046,7 +802,7 @@
   }
 
   // =====================================================================
-  // 10. Publicacao no escopo raiz
+  // 9. Publicacao no escopo raiz
   // =====================================================================
 
   V.data({
@@ -1054,14 +810,15 @@
     github: GITHUB,
     cdn: CDN,
     cdnTag: '<script src="' + CDN + '" defer><\/script>',
-    npmCmd: 'npm install voodoojs',
+    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js',
 
     // Numeros medidos por `node scripts/size.mjs` na raiz do repositorio.
+    // Refaca a medida sempre que a biblioteca mudar.
     stats: {
-      gzip: 85,
-      raw: 263,
-      brotli: 72,
-      essentialGzip: 58,
+      gzip: 120,
+      raw: 400,
+      brotli: 100,
+      essentialGzip: 76,
       directives: V.directives.size,
       components: V.components.size,
       deps: 0,
@@ -1071,7 +828,6 @@
     },
 
     locales: window.VOODOO_LOCALES,
-    examples: EXAMPLES,
     demos: DEMOS,
     compare: COMPARE,
     builderPieces: BUILDER_PIECES,
@@ -1095,33 +851,41 @@
     builderClear: builderClear,
     builderCheck: builderCheck,
 
-    /** Codigo do exemplo escolhido no playground. */
-    exampleCode: function (id) {
-      for (var i = 0; i < EXAMPLES.length; i++) {
-        if (EXAMPLES[i].id === id) return EXAMPLES[i].code;
+
+    /** Dados de um idioma pelo codigo, usado pelo seletor do cabecalho. */
+    localeInfo: function (code) {
+      var list = window.VOODOO_LOCALES || [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].code === code) return list[i];
       }
-      return '';
+      return list[0];
     },
   });
 
   // =====================================================================
-  // 11. Depois que a pagina esta viva
+  // 10. Inicio manual
   // =====================================================================
 
   document.addEventListener('voodoo:ready', function () {
     watchHeader();
     syncUrlLocale();
-
-    // O tema do quadro de pre visualizacao acompanha o tema da pagina.
-    document.addEventListener('voodoo:theme', function () {
-      var frames = document.querySelectorAll('iframe[data-live]');
-      for (var i = 0; i < frames.length; i++) {
-        var frame = frames[i];
-        var doc = frame.contentDocument;
-        if (doc && doc.documentElement) {
-          doc.documentElement.setAttribute('data-theme', V.theme.resolved);
-        }
-      }
-    });
   });
+
+  // O tema do quadro de pre visualizacao acompanha o tema da pagina.
+  document.addEventListener('voodoo:theme', function () {
+    var frames = document.querySelectorAll('iframe[data-live]');
+    for (var i = 0; i < frames.length; i++) {
+      var doc = frames[i].contentDocument;
+      if (doc && doc.documentElement) {
+        doc.documentElement.setAttribute('data-theme', V.theme.resolved);
+      }
+    }
+  });
+
+  // A tag da biblioteca carrega com `data-manual`, entao nada foi percorrido
+  // ainda. Isso e proposital: com `defer` o `document.readyState` ja e
+  // `interactive` quando a biblioteca avalia, e o inicio automatico
+  // aconteceria antes deste arquivo publicar os dados no escopo raiz.
+  V.theme.init();
+  V.start();
 })();

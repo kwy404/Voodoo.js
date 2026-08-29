@@ -27,6 +27,7 @@
 
 import { ensureTokens, injectStyle } from '../dom/style';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
+import { readAttr } from '../runtime/walker';
 import { magic } from '../runtime/scope';
 import { uid } from '../utils';
 import { ensurePalette } from './palette';
@@ -1107,9 +1108,10 @@ defineDirective(
       event.stopImmediatePropagation();
 
       const origin = (event.target instanceof HTMLElement ? event.target : el) as HTMLElement;
-      const title = el.getAttribute(`${config.prefix}confirm-title`) ?? undefined;
-      const confirmLabel = el.getAttribute(`${config.prefix}confirm-label`) ?? undefined;
-      const cancelLabel = el.getAttribute(`${config.prefix}confirm-cancel`) ?? undefined;
+      // Lidos pelo cache, porque o clique acontece depois da limpeza do HTML.
+      const title = readAttr(el, `${config.prefix}confirm-title`) ?? undefined;
+      const confirmLabel = readAttr(el, `${config.prefix}confirm-label`) ?? undefined;
+      const cancelLabel = readAttr(el, `${config.prefix}confirm-cancel`) ?? undefined;
 
       void confirm(message, {
         title,

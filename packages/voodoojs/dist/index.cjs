@@ -1815,6 +1815,9 @@ var nodeEffectScopes = /* @__PURE__ */ new WeakMap();
 function isInitialized(node) {
   return initialized.has(node);
 }
+function markInitialized(node) {
+  initialized.add(node);
+}
 function getScope(node) {
   return nodeScopes.get(node);
 }
@@ -1901,12 +1904,23 @@ function parseAttribute(name, value) {
 }
 function collectDirectives(el) {
   const out = [];
-  const attrs = el.attributes;
-  for (let i = 0; i < attrs.length; i++) {
-    const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-    if (parsed) {
-      out.push(parsed);
-      indexDirective(el, parsed.name);
+  const cache3 = attributeCache.get(el);
+  if (cache3 && cache3.size) {
+    for (const [name, value] of cache3) {
+      const parsed = parseAttribute(name, value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
+    }
+  } else {
+    const attrs = el.attributes;
+    for (let i = 0; i < attrs.length; i++) {
+      const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
     }
   }
   if (out.length < 2) return out;
@@ -1997,7 +2011,11 @@ function restoreAttributes(el) {
   const map = attributeCache.get(el);
   if (!map) return;
   for (const [name, value] of map) {
-    if (!el.hasAttribute(name)) el.setAttribute(name, value);
+    if (el.hasAttribute(name)) continue;
+    try {
+      el.setAttribute(name, value);
+    } catch {
+    }
   }
 }
 function hasDirectives(el) {
@@ -2134,8 +2152,14 @@ function bindTextNode(node, scope) {
   const raw = node.textContent;
   if (!raw || raw.indexOf("{") === -1) return;
   if (initialized.has(node)) return;
-  const parentTag = node.parentElement?.tagName;
-  if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+  let ancestral = node.parentElement;
+  while (ancestral) {
+    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+    if (ancestral.hasAttribute(`${exports.config.prefix}ignore`) || ancestral.hasAttribute(`${exports.config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+      return;
+    }
+    ancestral = ancestral.parentElement;
+  }
   const segments = [];
   let lastIndex = 0;
   MUSTACHE.lastIndex = 0;
@@ -4187,6 +4211,8 @@ function transitionOptions(el) {
 defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
   effect2(() => {
     el.textContent = stringify(ev());
+    const primeiro = el.firstChild;
+    if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
   });
 });
 defineDirective("html", (ctx) => {
@@ -4252,6 +4278,7 @@ defineDirective(
       branch.template.removeAttribute(`${p2}if`);
       branch.template.removeAttribute(`${p2}else-if`);
       branch.template.removeAttribute(`${p2}else`);
+      markInitialized(branch.template);
     }
     const options = transitionOptions(el);
     let activeIndex = -1;
@@ -5111,7 +5138,8 @@ var inFlight = /* @__PURE__ */ new WeakMap();
 async function runRequest(options) {
   const { el, scope, method } = options;
   const settings4 = readSettings(el, scope);
-  if (settings4.confirmMessage) {
+  const dialogoCuidaDaPergunta = directives.has(`confirm`);
+  if (settings4.confirmMessage && !dialogoCuidaDaPergunta) {
     const confirmed = await askConfirmation(settings4.confirmMessage);
     if (!confirmed) return;
   }
@@ -7423,7 +7451,7 @@ function configureI18n(options = {}) {
   }
   return i18n;
 }
-var i18n = Object.assign(configureI18n, {
+var i18nDinamicos = {
   get locale() {
     return state.locale;
   },
@@ -7445,7 +7473,11 @@ var i18n = Object.assign(configureI18n, {
   loadMessages,
   messagesOf,
   detectLocale
-});
+};
+var i18n = Object.defineProperties(
+  configureI18n,
+  Object.getOwnPropertyDescriptors(i18nDinamicos)
+);
 magic("$t", () => t);
 magic("$locale", () => state.locale);
 magic("$i18n", () => i18n);
@@ -7462,7 +7494,7 @@ function resolveKey(expression, evaluate2) {
   return typeof value === "string" ? value : raw;
 }
 function readParams(el, evaluate2) {
-  const attr2 = el.getAttribute(`${exports.config.prefix}t-params`) ?? el.getAttribute("data-v-t-params");
+  const attr2 = readAttr(el, `${exports.config.prefix}t-params`) ?? readAttr(el, "data-v-t-params");
   if (!attr2) return {};
   const value = evaluate2(attr2);
   return value && typeof value === "object" ? value : {};
@@ -13878,8 +13910,8 @@ function renderChart(el, options) {
     }
   };
 }
-function readAttr3(el, name) {
-  return el.getAttribute(`${exports.config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
+function readOption3(el, name) {
+  return readAttr(el, `${exports.config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 function parseBool(raw, fallback) {
   if (raw === null) return fallback;
@@ -13890,32 +13922,32 @@ function parseBool(raw, fallback) {
 function directiveOptions(el, value) {
   const isOptionsObject = !!value && typeof value === "object" && !Array.isArray(value) && "data" in value;
   const options = isOptionsObject ? { ...value } : { data: value ?? [] };
-  const type = readAttr3(el, "chart-type");
+  const type = readOption3(el, "chart-type");
   if (type) options.type = type;
   if (!options.type) options.type = "line";
-  const height = readAttr3(el, "chart-height");
+  const height = readOption3(el, "chart-height");
   if (height) options.height = parseFloat(height) || options.height;
-  const format = readAttr3(el, "chart-format");
+  const format = readOption3(el, "chart-format");
   if (format) options.format = format;
-  const colors = readAttr3(el, "chart-colors");
+  const colors = readOption3(el, "chart-colors");
   if (colors) {
     options.colors = colors.split(",").map((color) => color.trim()).filter(Boolean);
   }
-  const max = readAttr3(el, "chart-max");
+  const max = readOption3(el, "chart-max");
   if (max !== null && max !== "") options.max = parseFloat(max);
-  const min = readAttr3(el, "chart-min");
+  const min = readOption3(el, "chart-min");
   if (min !== null && min !== "") options.min = parseFloat(min);
-  const smooth = readAttr3(el, "chart-smooth");
+  const smooth = readOption3(el, "chart-smooth");
   if (smooth !== null) options.smooth = parseBool(smooth, true);
-  const grid = readAttr3(el, "chart-grid");
+  const grid = readOption3(el, "chart-grid");
   if (grid !== null) options.showGrid = parseBool(grid, true);
-  const legend = readAttr3(el, "chart-legend");
+  const legend = readOption3(el, "chart-legend");
   if (legend !== null) options.showLegend = parseBool(legend, true);
-  const values = readAttr3(el, "chart-values");
+  const values = readOption3(el, "chart-values");
   if (values !== null) options.showValues = parseBool(values, true);
-  const tooltip = readAttr3(el, "chart-tooltip");
+  const tooltip = readOption3(el, "chart-tooltip");
   if (tooltip !== null) options.tooltip = parseBool(tooltip, true);
-  const animateAttr = readAttr3(el, "chart-animate");
+  const animateAttr = readOption3(el, "chart-animate");
   if (animateAttr !== null) options.animate = parseBool(animateAttr, true);
   return options;
 }
@@ -17322,9 +17354,9 @@ defineDirective(
       event.preventDefault();
       event.stopImmediatePropagation();
       const origin = event.target instanceof HTMLElement ? event.target : el;
-      const title = el.getAttribute(`${exports.config.prefix}confirm-title`) ?? void 0;
-      const confirmLabel = el.getAttribute(`${exports.config.prefix}confirm-label`) ?? void 0;
-      const cancelLabel = el.getAttribute(`${exports.config.prefix}confirm-cancel`) ?? void 0;
+      const title = readAttr(el, `${exports.config.prefix}confirm-title`) ?? void 0;
+      const confirmLabel = readAttr(el, `${exports.config.prefix}confirm-label`) ?? void 0;
+      const cancelLabel = readAttr(el, `${exports.config.prefix}confirm-cancel`) ?? void 0;
       void confirm(message, {
         title,
         confirmLabel,

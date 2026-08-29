@@ -242,7 +242,10 @@
     </article>
   </div>
 
-  <div class="pk-rodape-lista" v-show="!erro && itens.length">
+  <!-- A rolagem infinita e a propria directive da Voodoo: ela insere uma
+       sentinela aqui e chama `carregarMais` quando ela entra na tela. -->
+  <div class="pk-rodape-lista" v-show="!erro && itens.length"
+       v-infinite-scroll="carregarMais" v-infinite-distance="700px">
     <span v-show="carregandoMais">Carregando mais...</span>
     <button class="v-btn v-btn--secondary" v-show="temMais && !carregandoMais" v-click="carregarMais">
       Carregar mais
@@ -470,7 +473,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var geracao = this.geracao;
         this.carregandoMais = true;
 
-        Promise.all(fatia.map(function (p) {
+        // Devolve a promessa: assim `v-infinite-scroll` so libera o proximo
+        // disparo depois que o lote inteiro chegou.
+        return Promise.all(fatia.map(function (p) {
           return V.http.get(p.url, { cache: 900000, timeout: 15000 }).catch(function () { return null; });
         })).then(function (detalhes) {
           // Um filtro pode ter mudado enquanto a rede respondia.
@@ -481,14 +486,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }).catch(function () {
           if (self.geracao === geracao) self.carregandoMais = false;
         });
-      },
-
-      /* Rolagem infinita: quando falta pouco para o fim, pede o proximo lote. */
-      aoRolar: function () {
-        if (this.carregando || this.carregandoMais || !this.temMais) return;
-        var altura = document.documentElement.scrollHeight;
-        var restante = altura - (window.innerHeight + window.scrollY);
-        if (restante < 700) this.carregarMais();
       },
 
       /* Transforma a resposta crua da PokeAPI no formato que a tela usa. */
@@ -590,14 +587,7 @@ document.addEventListener('DOMContentLoaded', function () {
     },
 
     mounted: function () {
-      var self = this;
       this.iniciar();
-      this.aoRolarComEspera = V.throttle(function () { self.aoRolar(); }, 200);
-      window.addEventListener('scroll', this.aoRolarComEspera, { passive: true });
-    },
-
-    unmounted: function () {
-      if (this.aoRolarComEspera) window.removeEventListener('scroll', this.aoRolarComEspera);
     }
   });
 

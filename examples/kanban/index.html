@@ -12,7 +12,7 @@
      Regra da casa: nada de CSS baseado em atributo v-*, porque a Voodoo
      limpa esses atributos do HTML depois de processar. Aqui so entram
      classes normais, atributos data-* e as classes que a propria
-     biblioteca aplica no arrastar e soltar.
+     biblioteca aplica durante o arrastar e soltar.
      ------------------------------------------------------------------ */
 
   body {
@@ -84,7 +84,7 @@
   .kb-chips { display: flex; flex-wrap: wrap; gap: var(--v-space-2); }
 
   .kb-chip {
-    --kb-cor: var(--v-text-muted);
+    --kb-cor: var(--v-border-strong);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -114,7 +114,6 @@
     background: color-mix(in srgb, var(--kb-cor) 16%, var(--v-surface));
     border-color: color-mix(in srgb, var(--kb-cor) 44%, transparent);
   }
-  .kb-chip--todas::before { background: var(--v-border-strong); }
 
   .kb-resumo {
     font-size: var(--v-text-sm);
@@ -130,6 +129,7 @@
   }
 
   .kb-coluna {
+    --kb-coluna-cor: var(--v-border-strong);
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
@@ -137,9 +137,14 @@
     max-height: min(68vh, 640px);
     background: color-mix(in srgb, var(--v-surface) 62%, transparent);
     border: var(--v-border-width) solid var(--v-border);
+    border-top: 3px solid var(--kb-coluna-cor);
     border-radius: var(--v-radius-lg);
     box-shadow: var(--v-shadow-sm);
   }
+  .kb-coluna--fazer      { --kb-coluna-cor: #7B52F7; }
+  .kb-coluna--andamento  { --kb-coluna-cor: #FF3D8B; }
+  .kb-coluna--revisao    { --kb-coluna-cor: #FFB35C; }
+  .kb-coluna--concluido  { --kb-coluna-cor: #2ED9A5; }
 
   .kb-coluna__topo {
     display: flex;
@@ -151,7 +156,8 @@
   .kb-ponto {
     width: 10px; height: 10px; flex: none;
     border-radius: 50%;
-    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+    background: var(--kb-coluna-cor);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--kb-coluna-cor) 22%, transparent);
   }
   .kb-coluna__nome {
     margin: 0;
@@ -177,9 +183,6 @@
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: var(--v-radius-sm);
     color: var(--v-text-muted);
-    background: transparent;
-    border: var(--v-border-width) solid transparent;
-    cursor: pointer;
     transition:
       background-color var(--v-duration-fast) var(--v-ease-out),
       color var(--v-duration-fast) var(--v-ease-out);
@@ -187,8 +190,8 @@
   .kb-add:hover { background: var(--v-surface-3); color: var(--v-primary); }
   .kb-add svg { width: 16px; height: 16px; }
 
-  /* O corpo e quem rola. A lista ocupa toda a altura para que a coluna
-     inteira seja area de soltura, mesmo quando esta vazia. */
+  /* O corpo e quem rola. A lista ocupa toda a altura livre para que a
+     coluna inteira seja area de soltura, mesmo quando esta vazia. */
   .kb-coluna__corpo {
     position: relative;
     display: flex;
@@ -213,7 +216,7 @@
   }
 
   /* Aviso de coluna vazia. Precisa ficar sem pointer-events, senao o
-     arraste nao enxerga a lista embaixo dele. */
+     arraste nao enxerga a lista que esta embaixo dele. */
   .kb-vazio {
     position: absolute;
     inset: var(--v-space-3);
@@ -262,8 +265,8 @@
   .kb-cartao[data-prioridade="media"] { --kb-prio: var(--v-warning); }
   .kb-cartao[data-prioridade="baixa"] { --kb-prio: var(--v-success); }
 
-  /* Alca de arraste: mantem o resto do cartao livre para clicar e para
-     rolar a coluna com o dedo. */
+  /* Alca de arraste. Deixar so ela com touch-action none mantem o resto do
+     cartao clicavel e permite rolar a coluna com o dedo. */
   .kb-alca {
     flex: none;
     width: 14px;
@@ -325,7 +328,7 @@
     display: flex;
     gap: var(--v-space-1);
     margin-top: var(--v-space-2);
-    opacity: 0.75;
+    opacity: 0.72;
     transition: opacity var(--v-duration-fast) var(--v-ease-out);
   }
   .kb-cartao:hover .kb-cartao__acoes,
@@ -334,7 +337,7 @@
 
   /* ---------------- feedback do arrastar e soltar ----------------
      A biblioteca injeta o CSS dela no <head> em tempo de execucao, ou
-     seja, depois deste bloco. Por isso cada regra aqui usa duas classes,
+     seja, depois deste bloco. Por isso cada regra daqui usa duas classes,
      para vencer no peso do seletor. */
   .kb-lista .kb-cartao.v-dragging {
     opacity: 0.35;
@@ -347,9 +350,11 @@
     box-shadow: var(--v-shadow-glow);
   }
   .kb-cartao.v-drag-ghost {
+    position: fixed;
+    margin: 0;
+    opacity: 0.96;
     border-color: var(--v-primary);
     box-shadow: var(--v-shadow-lg);
-    opacity: 0.96;
   }
   .kb-coluna .kb-lista.v-drop-active {
     outline: 1px dashed var(--v-border-strong);
@@ -363,17 +368,29 @@
   }
 
   /* ---------------- modal ---------------- */
-  .kb-modal { max-width: 34rem; }
+  .kb-modal {
+    max-width: 34rem;
+    animation: kb-entrar var(--v-duration-base) var(--v-ease-spring) both;
+  }
+  @keyframes kb-entrar {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* O formulario e quem carrega corpo e rodape, entao precisa repetir a
+     coluna flexivel do painel para que so o corpo role. */
+  .kb-modal form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  .kb-modal__corpo { color: var(--v-text); }
   .kb-modal__grade {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--v-space-4);
   }
-  .kb-modal__corpo { color: var(--v-text); }
-  .kb-fechar {
-    font-size: var(--v-text-xl);
-    line-height: 1;
-  }
+  .kb-fechar { font-size: var(--v-text-xl); line-height: 1; }
 
   .kb-dica {
     margin: var(--v-space-6) 0 0;
@@ -405,6 +422,7 @@
     .kb-alca,
     .kb-add,
     .kb-cartao__acoes { transition: none; }
+    .kb-modal { animation: none; }
   }
 </style>
 </head>
@@ -434,7 +452,7 @@
     </div>
 
     <div class="kb-chips" role="group" aria-label="Filtrar por etiqueta">
-      <button class="kb-chip kb-chip--todas" v-click="filtrarEtiqueta('')"
+      <button class="kb-chip" v-click="filtrarEtiqueta('')"
               v-class="{ 'is-ativo': !filtroEtiqueta }"
               :aria-pressed="!filtroEtiqueta ? 'true' : 'false'">
         Todas
@@ -455,55 +473,166 @@
     </button>
   </section>
 
-  <!-- Todas as listas do quadro pertencem ao mesmo grupo, entao o cartao
-       viaja livremente de uma coluna para a outra. -->
+  <!-- As quatro colunas estao escritas na mao, e nao geradas por v-for.
+       Assim todas as listas de cartoes sao percorridas na carga inicial da
+       pagina, que e quando a Voodoo liga a reatividade do v-for.
+
+       Todas as listas compartilham o grupo "quadro", entao o cartao viaja
+       livremente de uma coluna para a outra. -->
   <div class="kb-quadro" v-dnd-group="quadro">
 
-    <section class="kb-coluna" v-for="coluna in colunas" :key="coluna.id">
+    <!-- ---------- A fazer ---------- -->
+    <section class="kb-coluna kb-coluna--fazer">
       <header class="kb-coluna__topo">
-        <span class="kb-ponto" :style="{ background: coluna.cor, color: coluna.cor }" aria-hidden="true"></span>
-        <h2 class="kb-coluna__nome">{ coluna.nome }</h2>
-        <span class="v-badge kb-conta">{ contagens[coluna.id].visiveis }</span>
+        <span class="kb-ponto" aria-hidden="true"></span>
+        <h2 class="kb-coluna__nome">A fazer</h2>
+        <span class="v-badge kb-conta">{ contagens.fazer.visiveis }</span>
         <span class="kb-espaco"></span>
-        <button class="kb-add" v-click="abrirNovo(coluna.id)" :aria-label="'Novo cartao em ' + coluna.nome">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
+        <button class="kb-add" v-click="abrirNovo('fazer')" aria-label="Novo cartao em A fazer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </header>
-
       <div class="kb-coluna__corpo">
-        <ul class="kb-lista"
-            v-sortable
-            v-sortable-group="quadro"
-            v-sortable-handle=".kb-alca"
-            :data-coluna="coluna.id"
-            :aria-label="'Cartoes em ' + coluna.nome"
+        <ul class="kb-lista" v-sortable v-sortable-group="quadro" v-sortable-handle=".kb-alca"
+            data-coluna="fazer" aria-label="Cartoes em A fazer"
             @voodoo:sorted="aoOrdenar($event)">
-          <li class="kb-cartao" v-for="cartao in porColuna[coluna.id]" :key="cartao.id"
-              :data-id="cartao.id"
-              :data-prioridade="cartao.prioridade"
+          <li class="kb-cartao" v-for="cartao in porColuna.fazer" :key="cartao.id"
+              :data-id="cartao.id" :data-prioridade="cartao.prioridade"
               v-show="cartaoVisivel(cartao)">
             <span class="kb-alca" aria-hidden="true"></span>
             <div class="kb-cartao__corpo">
               <div class="kb-cartao__linha">
-                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">
-                  { nomeEtiqueta(cartao.etiqueta) }
-                </span>
+                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">{ nomeEtiqueta(cartao.etiqueta) }</span>
                 <span class="kb-prioridade">Prioridade { nomePrioridade(cartao.prioridade) }</span>
               </div>
               <h3 class="kb-cartao__titulo">{ cartao.titulo }</h3>
               <p class="kb-cartao__descricao" v-show="cartao.descricao">{ cartao.descricao }</p>
-              <div class="kb-cartao__acoes">
+              <div class="kb-cartao__acoes" @keydown.space.stop="semAcao()">
                 <button class="v-btn v-btn--ghost v-btn--sm" v-click.stop="abrirEdicao(cartao)">Editar</button>
                 <button class="v-btn v-btn--ghost v-btn--sm kb-perigo" v-click.stop="excluir(cartao)">Excluir</button>
               </div>
             </div>
           </li>
         </ul>
+        <p class="kb-vazio" v-show="contagens.fazer.visiveis === 0">
+          { contagens.fazer.total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
+        </p>
+      </div>
+    </section>
 
-        <p class="kb-vazio" v-show="contagens[coluna.id].visiveis === 0">
-          { contagens[coluna.id].total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
+    <!-- ---------- Em andamento ---------- -->
+    <section class="kb-coluna kb-coluna--andamento">
+      <header class="kb-coluna__topo">
+        <span class="kb-ponto" aria-hidden="true"></span>
+        <h2 class="kb-coluna__nome">Em andamento</h2>
+        <span class="v-badge kb-conta">{ contagens.andamento.visiveis }</span>
+        <span class="kb-espaco"></span>
+        <button class="kb-add" v-click="abrirNovo('andamento')" aria-label="Novo cartao em Em andamento">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-coluna__corpo">
+        <ul class="kb-lista" v-sortable v-sortable-group="quadro" v-sortable-handle=".kb-alca"
+            data-coluna="andamento" aria-label="Cartoes em Em andamento"
+            @voodoo:sorted="aoOrdenar($event)">
+          <li class="kb-cartao" v-for="cartao in porColuna.andamento" :key="cartao.id"
+              :data-id="cartao.id" :data-prioridade="cartao.prioridade"
+              v-show="cartaoVisivel(cartao)">
+            <span class="kb-alca" aria-hidden="true"></span>
+            <div class="kb-cartao__corpo">
+              <div class="kb-cartao__linha">
+                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">{ nomeEtiqueta(cartao.etiqueta) }</span>
+                <span class="kb-prioridade">Prioridade { nomePrioridade(cartao.prioridade) }</span>
+              </div>
+              <h3 class="kb-cartao__titulo">{ cartao.titulo }</h3>
+              <p class="kb-cartao__descricao" v-show="cartao.descricao">{ cartao.descricao }</p>
+              <div class="kb-cartao__acoes" @keydown.space.stop="semAcao()">
+                <button class="v-btn v-btn--ghost v-btn--sm" v-click.stop="abrirEdicao(cartao)">Editar</button>
+                <button class="v-btn v-btn--ghost v-btn--sm kb-perigo" v-click.stop="excluir(cartao)">Excluir</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-vazio" v-show="contagens.andamento.visiveis === 0">
+          { contagens.andamento.total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Em revisao ---------- -->
+    <section class="kb-coluna kb-coluna--revisao">
+      <header class="kb-coluna__topo">
+        <span class="kb-ponto" aria-hidden="true"></span>
+        <h2 class="kb-coluna__nome">Em revisao</h2>
+        <span class="v-badge kb-conta">{ contagens.revisao.visiveis }</span>
+        <span class="kb-espaco"></span>
+        <button class="kb-add" v-click="abrirNovo('revisao')" aria-label="Novo cartao em Em revisao">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-coluna__corpo">
+        <ul class="kb-lista" v-sortable v-sortable-group="quadro" v-sortable-handle=".kb-alca"
+            data-coluna="revisao" aria-label="Cartoes em Em revisao"
+            @voodoo:sorted="aoOrdenar($event)">
+          <li class="kb-cartao" v-for="cartao in porColuna.revisao" :key="cartao.id"
+              :data-id="cartao.id" :data-prioridade="cartao.prioridade"
+              v-show="cartaoVisivel(cartao)">
+            <span class="kb-alca" aria-hidden="true"></span>
+            <div class="kb-cartao__corpo">
+              <div class="kb-cartao__linha">
+                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">{ nomeEtiqueta(cartao.etiqueta) }</span>
+                <span class="kb-prioridade">Prioridade { nomePrioridade(cartao.prioridade) }</span>
+              </div>
+              <h3 class="kb-cartao__titulo">{ cartao.titulo }</h3>
+              <p class="kb-cartao__descricao" v-show="cartao.descricao">{ cartao.descricao }</p>
+              <div class="kb-cartao__acoes" @keydown.space.stop="semAcao()">
+                <button class="v-btn v-btn--ghost v-btn--sm" v-click.stop="abrirEdicao(cartao)">Editar</button>
+                <button class="v-btn v-btn--ghost v-btn--sm kb-perigo" v-click.stop="excluir(cartao)">Excluir</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-vazio" v-show="contagens.revisao.visiveis === 0">
+          { contagens.revisao.total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Concluido ---------- -->
+    <section class="kb-coluna kb-coluna--concluido">
+      <header class="kb-coluna__topo">
+        <span class="kb-ponto" aria-hidden="true"></span>
+        <h2 class="kb-coluna__nome">Concluido</h2>
+        <span class="v-badge kb-conta">{ contagens.concluido.visiveis }</span>
+        <span class="kb-espaco"></span>
+        <button class="kb-add" v-click="abrirNovo('concluido')" aria-label="Novo cartao em Concluido">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-coluna__corpo">
+        <ul class="kb-lista" v-sortable v-sortable-group="quadro" v-sortable-handle=".kb-alca"
+            data-coluna="concluido" aria-label="Cartoes em Concluido"
+            @voodoo:sorted="aoOrdenar($event)">
+          <li class="kb-cartao" v-for="cartao in porColuna.concluido" :key="cartao.id"
+              :data-id="cartao.id" :data-prioridade="cartao.prioridade"
+              v-show="cartaoVisivel(cartao)">
+            <span class="kb-alca" aria-hidden="true"></span>
+            <div class="kb-cartao__corpo">
+              <div class="kb-cartao__linha">
+                <span class="kb-etiqueta" :style="{ '--kb-cor': corEtiqueta(cartao.etiqueta) }">{ nomeEtiqueta(cartao.etiqueta) }</span>
+                <span class="kb-prioridade">Prioridade { nomePrioridade(cartao.prioridade) }</span>
+              </div>
+              <h3 class="kb-cartao__titulo">{ cartao.titulo }</h3>
+              <p class="kb-cartao__descricao" v-show="cartao.descricao">{ cartao.descricao }</p>
+              <div class="kb-cartao__acoes" @keydown.space.stop="semAcao()">
+                <button class="v-btn v-btn--ghost v-btn--sm" v-click.stop="abrirEdicao(cartao)">Editar</button>
+                <button class="v-btn v-btn--ghost v-btn--sm kb-perigo" v-click.stop="excluir(cartao)">Excluir</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-vazio" v-show="contagens.concluido.visiveis === 0">
+          { contagens.concluido.total ? 'Nenhum cartao passa pelo filtro atual.' : 'Nada por aqui. Solte um cartao nesta coluna.' }
         </p>
       </div>
     </section>
@@ -511,20 +640,20 @@
   </div>
 
   <p class="kb-dica">
-    Pelo teclado: navegue ate um cartao com <kbd class="v-kbd">Tab</kbd>,
-    pegue com <kbd class="v-kbd">Espaco</kbd>, mova com as setas e solte com
-    <kbd class="v-kbd">Espaco</kbd>. <kbd class="v-kbd">Esc</kbd> cancela.
+    Pelo teclado: chegue ate um cartao com <kbd class="v-kbd">Tab</kbd>,
+    pegue com <kbd class="v-kbd">Espaco</kbd>, mova com as setas e solte de novo com
+    <kbd class="v-kbd">Espaco</kbd>. <kbd class="v-kbd">Esc</kbd> cancela o arraste.
   </p>
 
   <!-- Modal de criar e editar, montado com v-if e as classes do design system. -->
   <div class="v-modal-root" v-if="modalAberto" v-transition="fade" v-escape="fecharModal()">
     <div class="v-backdrop" v-click="fecharModal()"></div>
 
-    <div class="v-modal kb-modal" v-transition="scale" v-focus-trap
+    <div class="v-modal kb-modal" v-focus-trap
          role="dialog" aria-modal="true" aria-labelledby="kb-modal-titulo">
       <div class="v-modal__header">
         <h2 class="v-modal__title" id="kb-modal-titulo">{ tituloDoModal }</h2>
-        <button class="v-modal__close kb-fechar" v-click="fecharModal()" aria-label="Fechar">
+        <button class="v-modal__close kb-fechar" type="button" v-click="fecharModal()" aria-label="Fechar">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -541,8 +670,7 @@
           <div class="v-field v-mt-4">
             <label class="v-label" for="kb-campo-descricao">Descricao</label>
             <textarea id="kb-campo-descricao" class="v-textarea" rows="3" maxlength="240"
-                      placeholder="Detalhes, criterios de aceite, links..."
-                      v-model="rascunho.descricao"></textarea>
+                      placeholder="Detalhes, criterios de aceite, links" v-model="rascunho.descricao"></textarea>
           </div>
 
           <div class="kb-modal__grade v-mt-4">
@@ -555,7 +683,7 @@
             <div class="v-field">
               <label class="v-label" for="kb-campo-prioridade">Prioridade</label>
               <select id="kb-campo-prioridade" class="v-select" v-model="rascunho.prioridade">
-                <option v-for="p in prioridades" :key="p.id" :value="p.id">{ p.nome }</option>
+                <option v-for="pri in prioridades" :key="pri.id" :value="pri.id">{ pri.nome }</option>
               </select>
             </div>
           </div>
@@ -581,22 +709,24 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-  /* Chave unica deste quadro no localStorage. */
+  /* Chave deste quadro no localStorage. */
   var CHAVE = 'voodoo:kanban:quadro';
 
+  /* Os ids abaixo tambem aparecem no HTML, em data-coluna e nas classes
+     kb-coluna--*. Mexer aqui pede mexer la. */
   var COLUNAS = [
-    { id: 'fazer',      nome: 'A fazer',      cor: '#7B52F7' },
-    { id: 'andamento',  nome: 'Em andamento', cor: '#FF3D8B' },
-    { id: 'revisao',    nome: 'Em revisao',   cor: '#FFB35C' },
-    { id: 'concluido',  nome: 'Concluido',    cor: '#2ED9A5' }
+    { id: 'fazer',     nome: 'A fazer' },
+    { id: 'andamento', nome: 'Em andamento' },
+    { id: 'revisao',   nome: 'Em revisao' },
+    { id: 'concluido', nome: 'Concluido' }
   ];
 
   var ETIQUETAS = [
-    { id: 'bug',           nome: 'Bug',           cor: '#FF4D4D' },
-    { id: 'melhoria',      nome: 'Melhoria',      cor: '#2ED9A5' },
-    { id: 'urgente',       nome: 'Urgente',       cor: '#FF3D8B' },
-    { id: 'design',        nome: 'Design',        cor: '#7B52F7' },
-    { id: 'documentacao',  nome: 'Documentacao',  cor: '#3E9BE0' }
+    { id: 'bug',          nome: 'Bug',          cor: '#FF4D4D' },
+    { id: 'melhoria',     nome: 'Melhoria',     cor: '#2ED9A5' },
+    { id: 'urgente',      nome: 'Urgente',      cor: '#FF3D8B' },
+    { id: 'design',       nome: 'Design',       cor: '#7B52F7' },
+    { id: 'documentacao', nome: 'Documentacao', cor: '#3E9BE0' }
   ];
 
   var PRIORIDADES = [
@@ -624,13 +754,13 @@ document.addEventListener('DOMContentLoaded', function () {
     return [
       cartao('c-01', 'Desenhar a pagina de precos', 'Tres planos, com destaque no plano do meio.', 'design', 'alta', 'fazer'),
       cartao('c-02', 'Escrever o guia de instalacao', 'Passo a passo com CDN e com npm.', 'documentacao', 'media', 'fazer'),
-      cartao('c-03', 'Filtro por etiqueta no quadro', 'Deve funcionar junto com a busca por texto.', 'melhoria', 'baixa', 'fazer'),
+      cartao('c-03', 'Filtrar o quadro por etiqueta', 'Precisa funcionar junto com a busca por texto.', 'melhoria', 'baixa', 'fazer'),
       cartao('c-04', 'Arrastar cartao no celular', 'Conferir o toque e a rolagem automatica da coluna.', 'urgente', 'alta', 'andamento'),
       cartao('c-05', 'Modal fecha no Esc', 'Tambem precisa fechar no clique fora e no botao.', 'melhoria', 'media', 'andamento'),
       cartao('c-06', 'Contraste dos botoes no tema escuro', 'O texto some sobre o roxo claro.', 'bug', 'alta', 'revisao'),
       cartao('c-07', 'Revisar os textos da interface', 'Sem gerundio solto e sem abreviacao.', 'documentacao', 'baixa', 'revisao'),
       cartao('c-08', 'Salvar o quadro no navegador', 'Recarregar a pagina precisa devolver tudo igual.', 'melhoria', 'media', 'concluido'),
-      cartao('c-09', 'Tema claro e escuro', 'Tudo saindo dos tokens do design system.', 'design', 'baixa', 'concluido')
+      cartao('c-09', 'Tema claro e escuro', 'Todas as cores saindo dos tokens do design system.', 'design', 'baixa', 'concluido')
     ];
   }
 
@@ -647,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /* Le o quadro salvo. Devolve null quando nunca houve nada gravado, e um
-     array (que pode estar vazio) quando existe um quadro valido. */
+     array, que pode ate estar vazio, quando existe um quadro valido. */
   function carregar() {
     var salvo = V.storage.get(CHAVE, null);
     if (!salvo || !Array.isArray(salvo.cartoes)) return null;
@@ -683,6 +813,8 @@ document.addEventListener('DOMContentLoaded', function () {
         etiquetas: ETIQUETAS,
         prioridades: PRIORIDADES,
 
+        /* Uma lista unica com todos os cartoes. A coluna de cada cartao e
+           um campo, e a posicao dentro da coluna e a ordem no array. */
         cartoes: salvos === null ? exemplo() : salvos,
 
         busca: '',
@@ -705,7 +837,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     computed: {
 
-      /* Os cartoes agrupados por coluna, na ordem do proprio array. E daqui
+      /* Cartoes agrupados por coluna, na ordem do proprio array. E daqui
          que cada lista do quadro tira o seu v-for. */
       porColuna: function () {
         var mapa = {};
@@ -740,10 +872,11 @@ document.addEventListener('DOMContentLoaded', function () {
       },
 
       resumo: function () {
+        var total = this.cartoes.length;
         if (!this.temFiltro) {
-          return this.cartoes.length + (this.cartoes.length === 1 ? ' cartao no quadro' : ' cartoes no quadro');
+          return total + (total === 1 ? ' cartao no quadro' : ' cartoes no quadro');
         }
-        return this.totalVisiveis + ' de ' + this.cartoes.length + ' cartoes';
+        return this.totalVisiveis + ' de ' + total + ' cartoes';
       },
 
       tituloDoModal: function () {
@@ -783,6 +916,14 @@ document.addEventListener('DOMContentLoaded', function () {
         return 'media';
       },
 
+      /* A lista ordenavel usa a barra de espaco para pegar e soltar o
+         cartao. Nos botoes do cartao a mesma tecla precisa continuar
+         acionando o botao, entao o evento para antes de subir ate a
+         lista. Este metodo existe so para dar corpo a esse @keydown. */
+      semAcao: function () {
+        return undefined;
+      },
+
       /* ---------- filtros ---------- */
 
       filtrarEtiqueta: function (id) {
@@ -796,19 +937,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
       /* ---------- arrastar e soltar ----------
 
-         O v-sortable ja moveu o no no DOM quando este metodo roda. O
+         Quando este metodo roda, o v-sortable ja moveu o no no DOM. O
          trabalho aqui e remontar o array para que ele conte exatamente a
-         mesma historia, senao o proximo v-for desfaz o movimento.
+         mesma historia, senao a proxima renderizacao desfaz o movimento.
 
-         O detalhe do evento traz { item, oldIndex, newIndex, from, to,
-         order }. O campo `order` e a lista de data-id daquela lista na
-         nova ordem. Quando o cartao troca de coluna, o evento acontece
-         duas vezes, uma em cada lista, sempre com a ordem da lista que
-         disparou. Por isso o alvo do evento, e nao `detalhe.to`, e quem
-         diz qual coluna precisa ser remontada.
+         O evento traz em detail: { item, oldIndex, newIndex, from, to,
+         order }. O campo order e a lista dos data-id daquela lista na
+         nova ordem, por isso todo cartao carrega :data-id. Quando o
+         cartao troca de coluna, o evento acontece duas vezes, uma em
+         cada lista, sempre com a ordem da lista que disparou. Entao quem
+         diz qual coluna remontar e a lista que recebeu o evento, e nao
+         detail.to.
 
          Detalhe importante: o filtro esconde cartao com v-show, nunca
-         tirando do v-for. Assim `order` sempre lista a coluna inteira e
+         tirando do v-for. Assim order sempre lista a coluna inteira e
          nenhum cartao escondido se perde na remontagem. */
       aoOrdenar: function (evento) {
         var detalhe = evento.detail || {};
@@ -822,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.aplicarOrdem(idColuna, ordem);
       },
 
-      /* Remonta o array inteiro a partir da nova ordem de uma coluna. */
+      /* Remonta a lista inteira a partir da nova ordem de uma coluna. */
       aplicarOrdem: function (idColuna, ordem) {
         var mapa = {};
         this.cartoes.forEach(function (c) { mapa[c.id] = c; });
@@ -939,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.fecharModal();
       },
 
-      /* ---------- excluir ---------- */
+      /* ---------- excluir e restaurar ---------- */
 
       excluir: function (c) {
         var self = this;
@@ -989,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', function () {
   V.theme.init();
   V.start();
 
-  /* O quadro ja esta montado, pode aparecer. */
+  /* O quadro ja esta montado, agora pode aparecer. */
   var app = document.querySelector('.kb-app');
   if (app) app.classList.remove('is-oculto');
 });

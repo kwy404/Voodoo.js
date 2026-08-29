@@ -27,6 +27,7 @@
 
 import { handleError, reactive } from '../reactivity';
 import { config, defineDirective } from '../runtime/registry';
+import { readAttr } from '../runtime/walker';
 import { magic } from '../runtime/scope';
 import { http } from '../http';
 import { storage } from '../storage';
@@ -459,7 +460,12 @@ export interface I18nApi {
  * V.i18n.t('ola')
  * ```
  */
-export const i18n: I18nApi = Object.assign(configureI18n, {
+/**
+ * Os acessos dinamicos entram por `defineProperties`, e nao por
+ * `Object.assign`, porque `Object.assign` executaria cada getter uma unica vez
+ * e copiaria o valor, deixando `V.i18n.locale` preso no idioma inicial.
+ */
+const i18nDinamicos = {
   get locale(): string {
     return state.locale;
   },
@@ -481,7 +487,18 @@ export const i18n: I18nApi = Object.assign(configureI18n, {
   loadMessages,
   messagesOf,
   detectLocale,
-}) as I18nApi;
+};
+
+/**
+ * O objeto i18n e uma funcao chamavel que tambem carrega a API. Os acessos
+ * dinamicos sao copiados com getOwnPropertyDescriptors, o que mantem cada
+ * getter vivo. Com Object.assign eles seriam executados uma unica vez e o
+ * idioma ficaria congelado no valor inicial.
+ */
+export const i18n: I18nApi = Object.defineProperties(
+  configureI18n,
+  Object.getOwnPropertyDescriptors(i18nDinamicos)
+) as unknown as I18nApi;
 
 // ---------------------------------------------------------------------------
 // Variaveis magicas
@@ -517,7 +534,7 @@ function resolveKey(expression: string, evaluate: <T>(expr?: string) => T): stri
 /** Le `v-t-params` do proprio elemento, mantendo a leitura reativa. */
 function readParams(el: HTMLElement, evaluate: <T>(expr?: string) => T): Record<string, unknown> {
   const attr =
-    el.getAttribute(`${config.prefix}t-params`) ?? el.getAttribute('data-v-t-params');
+    readAttr(el, `${config.prefix}t-params`) ?? readAttr(el, 'data-v-t-params');
   if (!attr) return {};
   const value = evaluate<unknown>(attr);
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};

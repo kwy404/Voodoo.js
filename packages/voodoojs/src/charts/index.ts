@@ -19,6 +19,7 @@
 
 import { ensureTokens, injectStyle } from '../dom/style';
 import { config, defineDirective } from '../runtime/registry';
+import { readAttr } from '../runtime/walker';
 import { device, escapeHtml } from '../utils';
 
 /**
@@ -1530,8 +1531,10 @@ export function renderChart(el: HTMLElement, options: ChartOptions): ChartInstan
 // Directive v-chart
 // ---------------------------------------------------------------------------
 
-function readAttr(el: Element, name: string): string | null {
-  return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
+function readOption(el: Element, name: string): string | null {
+  // Le pelo cache do runtime: esta funcao roda dentro do efeito reativo, ou
+  // seja, depois de os atributos sairem do HTML.
+  return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 
 function parseBool(raw: string | null, fallback: boolean): boolean {
@@ -1556,17 +1559,17 @@ function directiveOptions(el: HTMLElement, value: unknown): ChartOptions {
     ? { ...(value as ChartOptions) }
     : { data: (value ?? []) as ChartData };
 
-  const type = readAttr(el, 'chart-type');
+  const type = readOption(el, 'chart-type');
   if (type) options.type = type as ChartType;
   if (!options.type) options.type = 'line';
 
-  const height = readAttr(el, 'chart-height');
+  const height = readOption(el, 'chart-height');
   if (height) options.height = parseFloat(height) || options.height;
 
-  const format = readAttr(el, 'chart-format');
+  const format = readOption(el, 'chart-format');
   if (format) options.format = format as ChartFormat;
 
-  const colors = readAttr(el, 'chart-colors');
+  const colors = readOption(el, 'chart-colors');
   if (colors) {
     options.colors = colors
       .split(',')
@@ -1574,22 +1577,22 @@ function directiveOptions(el: HTMLElement, value: unknown): ChartOptions {
       .filter(Boolean);
   }
 
-  const max = readAttr(el, 'chart-max');
+  const max = readOption(el, 'chart-max');
   if (max !== null && max !== '') options.max = parseFloat(max);
-  const min = readAttr(el, 'chart-min');
+  const min = readOption(el, 'chart-min');
   if (min !== null && min !== '') options.min = parseFloat(min);
 
-  const smooth = readAttr(el, 'chart-smooth');
+  const smooth = readOption(el, 'chart-smooth');
   if (smooth !== null) options.smooth = parseBool(smooth, true);
-  const grid = readAttr(el, 'chart-grid');
+  const grid = readOption(el, 'chart-grid');
   if (grid !== null) options.showGrid = parseBool(grid, true);
-  const legend = readAttr(el, 'chart-legend');
+  const legend = readOption(el, 'chart-legend');
   if (legend !== null) options.showLegend = parseBool(legend, true);
-  const values = readAttr(el, 'chart-values');
+  const values = readOption(el, 'chart-values');
   if (values !== null) options.showValues = parseBool(values, true);
-  const tooltip = readAttr(el, 'chart-tooltip');
+  const tooltip = readOption(el, 'chart-tooltip');
   if (tooltip !== null) options.tooltip = parseBool(tooltip, true);
-  const animateAttr = readAttr(el, 'chart-animate');
+  const animateAttr = readOption(el, 'chart-animate');
   if (animateAttr !== null) options.animate = parseBool(animateAttr, true);
 
   return options;

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Os mapas de origem sao grandes e nao interessam a busca.
+Disallow: /*.map$
+
+Sitemap: https://voodoojs.dev/sitemap.xml

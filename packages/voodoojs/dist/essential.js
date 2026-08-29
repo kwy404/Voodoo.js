@@ -1,4 +1,4 @@
-import { core, magic, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query } from './chunk-JZMUENER.js';
+import { core, magic, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query } from './chunk-JIAMJPVM.js';
 import './chunk-ABAHVFPX.js';
 import './chunk-7U443GSF.js';
 import './chunk-45K3USNK.js';

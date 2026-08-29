@@ -1068,14 +1068,10 @@ interface I18nApi {
     detectLocale: typeof detectLocale;
 }
 /**
- * Modulo de internacionalizacao. Chamado como funcao configura o idioma e as
- * mensagens, e tambem carrega os utilitarios como metodos.
- *
- * ```js
- * V.i18n({ locale: 'pt-BR', messages: { 'pt-BR': { ola: 'Ola' } } })
- * V.i18n.setLocale('en')
- * V.i18n.t('ola')
- * ```
+ * O objeto i18n e uma funcao chamavel que tambem carrega a API. Os acessos
+ * dinamicos sao copiados com getOwnPropertyDescriptors, o que mantem cada
+ * getter vivo. Com Object.assign eles seriam executados uma unica vez e o
+ * idioma ficaria congelado no valor inicial.
  */
 declare const i18n: I18nApi;
 

@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loja com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  body { background: var(--v-color-bg); min-height: 100vh; }
+
+  .lj-shell { max-width: 1240px; margin: 0 auto; padding: var(--v-space-5) var(--v-space-4) var(--v-space-16); }
+
+  /* ---------- barra do topo ---------- */
+  .lj-topo {
+    position: sticky; top: 0; z-index: var(--v-z-sticky);
+    display: flex; align-items: center; gap: var(--v-space-4); flex-wrap: wrap;
+    padding: var(--v-space-3) 0; margin-bottom: var(--v-space-5);
+    background: color-mix(in srgb, var(--v-color-bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--v-border);
+  }
+  .lj-marca { font-family: var(--v-font-display); font-size: var(--v-text-xl); font-weight: 700; letter-spacing: var(--v-tracking-tight); }
+  .lj-marca span { color: var(--v-primary); }
+
+  .lj-carrinho-botao { position: relative; }
+  .lj-contador {
+    position: absolute; top: -7px; right: -7px; min-width: 20px; height: 20px;
+    padding: 0 5px; border-radius: var(--v-radius-full);
+    background: var(--v-accent); color: #fff;
+    font: var(--v-weight-bold) 11px/20px var(--v-font-sans); text-align: center;
+  }
+
+  /* ---------- layout ---------- */
+  .lj-corpo { display: grid; grid-template-columns: 232px 1fr; gap: var(--v-space-6); align-items: start; }
+
+  .lj-filtros {
+    position: sticky; top: 84px;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); padding: var(--v-space-5);
+  }
+  .lj-filtro-titulo {
+    font-size: var(--v-text-xs); text-transform: uppercase; letter-spacing: var(--v-tracking-wide);
+    color: var(--v-text-subtle); font-weight: var(--v-weight-semibold);
+    margin: 0 0 var(--v-space-3);
+  }
+  .lj-filtro-grupo + .lj-filtro-grupo { margin-top: var(--v-space-6); }
+  .lj-opcao { display: flex; align-items: center; gap: 8px; padding: 5px 0; cursor: pointer; font-size: var(--v-text-sm); }
+  .lj-faixa { width: 100%; }
+
+  /* ---------- catalogo ---------- */
+  .lj-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: var(--v-space-4); }
+
+  .lj-produto {
+    display: flex; flex-direction: column; overflow: hidden;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); box-shadow: var(--v-shadow-sm);
+    transition: transform var(--v-duration-base) var(--v-ease-out), box-shadow var(--v-duration-base);
+  }
+  .lj-produto:hover { transform: translateY(-3px); box-shadow: var(--v-shadow-lg); }
+
+  .lj-capa {
+    position: relative; aspect-ratio: 4 / 3; display: grid; place-items: center;
+    font-size: 46px; background: var(--lj-cor, var(--v-surface-2));
+  }
+  .lj-etiqueta {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--v-accent); color: #fff; border-radius: var(--v-radius-full);
+    padding: 3px 10px; font: var(--v-weight-bold) 11px/1.5 var(--v-font-sans);
+  }
+  .lj-info { padding: var(--v-space-4); display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .lj-nome { font-weight: var(--v-weight-semibold); line-height: var(--v-leading-snug); }
+  .lj-preco { font-family: var(--v-font-display); font-size: var(--v-text-lg); }
+  .lj-preco-antigo { color: var(--v-text-subtle); text-decoration: line-through; font-size: var(--v-text-sm); margin-left: 6px; }
+  .lj-estrelas { color: var(--v-warning); font-size: var(--v-text-sm); letter-spacing: 1px; }
+
+  /* ---------- gaveta do carrinho ---------- */
+  .lj-fundo { position: fixed; inset: 0; z-index: var(--v-z-backdrop); background: var(--v-overlay); }
+  .lj-gaveta {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: var(--v-z-drawer);
+    width: min(420px, 100%); display: flex; flex-direction: column;
+    background: var(--v-surface); border-left: 1px solid var(--v-border);
+    box-shadow: var(--v-shadow-lg);
+  }
+  .lj-gaveta-topo { display: flex; align-items: center; gap: var(--v-space-3); padding: var(--v-space-5); border-bottom: 1px solid var(--v-border); }
+  .lj-gaveta-corpo { flex: 1; overflow-y: auto; padding: var(--v-space-4) var(--v-space-5); }
+  .lj-gaveta-base { padding: var(--v-space-5); border-top: 1px solid var(--v-border); background: var(--v-surface-2); }
+
+  .lj-item { display: grid; grid-template-columns: 52px 1fr auto; gap: var(--v-space-3); align-items: center; padding: var(--v-space-3) 0; border-bottom: 1px solid var(--v-border); }
+  .lj-item-capa { width: 52px; height: 52px; border-radius: var(--v-radius-md); display: grid; place-items: center; font-size: 24px; background: var(--lj-cor, var(--v-surface-3)); }
+  .lj-qtd { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--v-border); border-radius: var(--v-radius-full); padding: 2px; }
+  .lj-qtd button { width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: var(--v-text); cursor: pointer; font-size: 15px; line-height: 1; }
+  .lj-qtd button:hover { background: var(--v-surface-3); }
+  .lj-qtd span { min-width: 24px; text-align: center; font-variant-numeric: tabular-nums; font-size: var(--v-text-sm); }
+
+  .lj-conta { display: flex; justify-content: space-between; padding: 4px 0; font-size: var(--v-text-sm); }
+  .lj-conta--total { font-size: var(--v-text-lg); font-family: var(--v-font-display); padding-top: 10px; margin-top: 6px; border-top: 1px dashed var(--v-border); }
+
+  /* ---------- etapas ---------- */
+  .lj-passos { display: flex; gap: 6px; margin-bottom: var(--v-space-5); }
+  .lj-passo { flex: 1; height: 4px; border-radius: var(--v-radius-full); background: var(--v-surface-3); }
+  .lj-passo-ativo { background: var(--v-primary); }
+  .lj-sucesso { text-align: center; padding: var(--v-space-8) var(--v-space-4); }
+  .lj-selo {
+    width: 62px; height: 62px; margin: 0 auto var(--v-space-4);
+    border-radius: 50%; display: grid; place-items: center; font-size: 30px;
+    background: var(--v-success-soft); color: var(--v-success);
+  }
+
+  .lj-vazio { text-align: center; color: var(--v-text-muted); padding: var(--v-space-12) var(--v-space-4); }
+
+  @media (max-width: 860px) {
+    .lj-corpo { grid-template-columns: 1fr; }
+    .lj-filtros { position: static; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lj-produto { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lj-shell" v-component="loja" v-cloak>
+
+  <header class="lj-topo">
+    <div class="lj-marca">Feiti<span>çaria</span></div>
+    <div class="v-push"></div>
+
+    <input class="v-input" type="search" placeholder="Buscar produto"
+           v-model="busca" v-debounce="250" style="max-width: 240px" aria-label="Buscar produto">
+
+    <button class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle aria-label="Alternar tema">
+      <span aria-hidden="true">◐</span>
+    </button>
+
+    <button class="v-btn v-btn--primary lj-carrinho-botao" v-click="abrirCarrinho">
+      Carrinho
+      <span class="lj-contador" v-show="$store.carrinho.quantidade">{ $store.carrinho.quantidade }</span>
+    </button>
+  </header>
+
+  <div class="lj-corpo">
+
+    <!-- Filtros -->
+    <aside class="lj-filtros">
+      <div class="lj-filtro-grupo">
+        <p class="lj-filtro-titulo">Categoria</p>
+        <label class="lj-opcao" v-for="c in categorias" :key="c">
+          <input type="radio" class="v-radio" name="categoria" :value="c" v-model="categoria">
+          <span>{ c }</span>
+        </label>
+      </div>
+
+      <div class="lj-filtro-grupo">
+        <p class="lj-filtro-titulo">Preco ate { precoFormatado }</p>
+        <input class="lj-faixa" type="range" min="50" max="1200" step="50"
+               v-model.number="precoMaximo" aria-label="Preco maximo">
+      </div>
+
+      <div class="lj-filtro-grupo">
+        <p class="lj-filtro-titulo">Ordenar por</p>
+        <select class="v-select" v-model="ordem" aria-label="Ordenar">
+          <option value="relevancia">Mais relevantes</option>
+          <option value="menor">Menor preco</option>
+          <option value="maior">Maior preco</option>
+          <option value="nota">Melhor avaliados</option>
+        </select>
+      </div>
+
+      <button class="v-btn v-btn--secondary v-btn--block v-mt-6" v-click="limparFiltros">Limpar filtros</button>
+    </aside>
+
+    <!-- Catalogo -->
+    <main>
+      <p class="v-text-sm v-text-muted v-mb-4">{ produtos.length } produtos encontrados</p>
+
+      <div class="lj-grade" v-show="produtos.length">
+        <article class="lj-produto" v-for="p in produtos" :key="p.id">
+          <div class="lj-capa" :style="{ '--lj-cor': p.cor }">
+            <span aria-hidden="true">{ p.icone }</span>
+            <span class="lj-etiqueta" v-show="p.desconto">-{ p.desconto }%</span>
+          </div>
+          <div class="lj-info">
+            <div class="lj-nome">{ p.nome }</div>
+            <div class="lj-estrelas" :aria-label="'Nota ' + p.nota + ' de 5'">
+              <span aria-hidden="true">{ estrelas(p.nota) }</span>
+              <span class="v-text-muted v-text-xs">{ p.avaliacoes }</span>
+            </div>
+            <div class="lj-preco">
+              { moeda(p.preco) }
+              <span class="lj-preco-antigo" v-show="p.desconto">{ moeda(p.precoCheio) }</span>
+            </div>
+            <div class="v-push"></div>
+            <button class="v-btn v-btn--primary v-btn--sm v-btn--block v-mt-3"
+                    v-click="$store.carrinho.adicionar(p)">Adicionar</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="lj-vazio" v-if="!produtos.length">
+        <p class="v-text-lg v-weight-semibold">Nada encontrado</p>
+        <p>Tente outra categoria ou aumente o preco maximo.</p>
+        <button class="v-btn v-btn--secondary v-mt-4" v-click="limparFiltros">Limpar filtros</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Gaveta do carrinho -->
+  <div class="lj-fundo" v-show="carrinhoAberto" v-transition="fade" v-click="fecharCarrinho"></div>
+
+  <aside class="lj-gaveta" v-show="carrinhoAberto" v-transition="slide-right"
+         @keyup.esc.window="fecharCarrinho" role="dialog" aria-label="Carrinho">
+
+    <div class="lj-gaveta-topo">
+      <strong class="v-text-lg">{ tituloDaEtapa }</strong>
+      <div class="v-push"></div>
+      <button class="v-btn v-btn--ghost v-btn--icon" v-click="fecharCarrinho" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="lj-gaveta-corpo">
+      <div class="lj-passos" v-show="etapa > 0 && etapa < 4">
+        <span class="lj-passo" v-for="n in 3" :key="n" :class="etapa >= n ? 'lj-passo-ativo' : ''"></span>
+      </div>
+
+      <!-- Etapa 0: itens -->
+      <div v-show="etapa === 0">
+        <div class="lj-item" v-for="item in $store.carrinho.itens" :key="item.id">
+          <div class="lj-item-capa" :style="{ '--lj-cor': item.cor }" aria-hidden="true">{ item.icone }</div>
+          <div>
+            <div class="v-text-sm v-weight-semibold">{ item.nome }</div>
+            <div class="v-text-sm v-text-muted">{ moeda(item.preco) } cada</div>
+            <div class="lj-qtd v-mt-2">
+              <button v-click="$store.carrinho.diminuir(item.id)" aria-label="Diminuir">−</button>
+              <span>{ item.quantidade }</span>
+              <button v-click="$store.carrinho.aumentar(item.id)" aria-label="Aumentar">+</button>
+            </div>
+          </div>
+          <div style="text-align: right">
+            <div class="v-weight-semibold">{ moeda(item.preco * item.quantidade) }</div>
+            <button class="v-btn v-btn--ghost v-btn--sm v-text-danger v-mt-2"
+                    v-click="$store.carrinho.remover(item.id)">Remover</button>
+          </div>
+        </div>
+
+        <div class="lj-vazio" v-if="!$store.carrinho.itens.length">
+          <p class="v-text-lg v-weight-semibold">Carrinho vazio</p>
+          <p>Adicione alguma coisa do catalogo.</p>
+        </div>
+
+        <div class="v-mt-6" v-show="$store.carrinho.itens.length">
+          <p class="lj-filtro-titulo">Cupom de desconto</p>
+          <div class="v-row v-gap-2">
+            <input class="v-input" placeholder="Digite o cupom" v-model="cupomDigitado"
+                   @keyup.enter="aplicarCupom" aria-label="Cupom">
+            <button class="v-btn v-btn--secondary" v-click="aplicarCupom">Aplicar</button>
+          </div>
+          <p class="v-text-sm v-text-success v-mt-2" v-show="$store.carrinho.cupom">
+            Cupom { $store.carrinho.cupom } aplicado, { $store.carrinho.percentualCupom }% de desconto.
+            <button class="v-btn v-btn--ghost v-btn--sm" v-click="$store.carrinho.limparCupom()">remover</button>
+          </p>
+          <p class="v-text-sm v-text-muted v-mt-2" v-show="!$store.carrinho.cupom">
+            Experimente <code class="v-code">VOODOO10</code> ou <code class="v-code">MAGIA20</code>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Etapa 1: identificacao -->
+      <form id="lj-form-identificacao" v-validate @submit.prevent="avancarEtapa" v-show="etapa === 1">
+        <label class="v-label" for="lj-nome">Nome completo</label>
+        <input id="lj-nome" class="v-input v-mb-4" v-model="pedido.nome" v-required
+               v-error-message="Informe o seu nome.">
+
+        <label class="v-label" for="lj-email">E-mail</label>
+        <input id="lj-email" class="v-input v-mb-4" type="email" v-model="pedido.email" v-required v-email>
+
+        <label class="v-label" for="lj-tel">Telefone</label>
+        <input id="lj-tel" class="v-input" v-model="pedido.telefone" v-mask="phone" v-required v-phone>
+      </form>
+
+      <!-- Etapa 2: entrega -->
+      <form id="lj-form-entrega" v-validate @submit.prevent="avancarEtapa" v-show="etapa === 2">
+        <label class="v-label" for="lj-cep">CEP</label>
+        <input id="lj-cep" class="v-input v-mb-4" v-model="pedido.cep" v-mask="cep" v-required v-cep>
+
+        <label class="v-label" for="lj-endereco">Endereco e numero</label>
+        <input id="lj-endereco" class="v-input v-mb-4" v-model="pedido.endereco" v-required>
+
+        <label class="v-label" for="lj-cidade">Cidade</label>
+        <input id="lj-cidade" class="v-input" v-model="pedido.cidade" v-required>
+      </form>
+
+      <!-- Etapa 3: pagamento -->
+      <form id="lj-form-pagamento" v-validate @submit.prevent="avancarEtapa" v-show="etapa === 3">
+        <label class="v-label" for="lj-cartao">Numero do cartao</label>
+        <input id="lj-cartao" class="v-input v-mb-4" v-model="pedido.cartao" v-mask="card"
+               v-required v-creditcard inputmode="numeric">
+
+        <label class="v-label" for="lj-validade">Validade</label>
+        <input id="lj-validade" class="v-input v-mb-4" v-model="pedido.validade" v-mask="99/99" v-required>
+
+        <label class="v-label" for="lj-cvv">Codigo de seguranca</label>
+        <input id="lj-cvv" class="v-input" v-model="pedido.cvv" v-mask="cvv" v-required inputmode="numeric">
+
+        <p class="v-text-xs v-text-muted v-mt-4">
+          Demonstracao sem servidor. Nenhum dado sai do seu navegador.
+        </p>
+      </form>
+
+      <!-- Etapa 4: pronto -->
+      <div class="lj-sucesso" v-show="etapa === 4">
+        <div class="lj-selo" aria-hidden="true">✓</div>
+        <h3 class="v-text-xl">Pedido confirmado</h3>
+        <p class="v-text-muted">Numero { numeroDoPedido }. Enviamos os detalhes para { pedido.email }.</p>
+        <button class="v-btn v-btn--primary v-mt-6" v-click="fecharCarrinho">Continuar comprando</button>
+      </div>
+    </div>
+
+    <div class="lj-gaveta-base" v-show="etapa < 4 && $store.carrinho.itens.length">
+      <div class="lj-conta">
+        <span class="v-text-muted">Subtotal</span>
+        <span>{ moeda($store.carrinho.subtotal) }</span>
+      </div>
+      <div class="lj-conta" v-show="$store.carrinho.desconto > 0">
+        <span class="v-text-success">Desconto</span>
+        <span class="v-text-success">- { moeda($store.carrinho.desconto) }</span>
+      </div>
+      <div class="lj-conta">
+        <span class="v-text-muted">Frete</span>
+        <span>{ $store.carrinho.frete > 0 ? moeda($store.carrinho.frete) : 'gratis' }</span>
+      </div>
+      <div class="lj-conta lj-conta--total">
+        <span>Total</span>
+        <span>{ moeda($store.carrinho.total) }</span>
+      </div>
+
+      <div class="v-row v-gap-2 v-mt-4">
+        <button class="v-btn v-btn--secondary" v-show="etapa > 0" v-click="voltarEtapa">Voltar</button>
+        <button class="v-btn v-btn--primary v-btn--block" v-click="avancarEtapa">{ rotuloAvancar }</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  var CUPONS = { VOODOO10: 10, MAGIA20: 20, VUDU5: 5 };
+  var FRETE_BASE = 24.9;
+  var FRETE_GRATIS_A_PARTIR_DE = 399;
+
+  var CATALOGO = [
+    { id: 1, nome: 'Fone sem fio Aurora', categoria: 'Eletronicos', precoCheio: 549, desconto: 20, nota: 5, avaliacoes: 412, icone: '🎧', cor: '#E8DEFF' },
+    { id: 2, nome: 'Teclado mecanico Runa', categoria: 'Eletronicos', precoCheio: 699, desconto: 0, nota: 5, avaliacoes: 187, icone: '⌨️', cor: '#DCE9FF' },
+    { id: 3, nome: 'Monitor 27 polegadas', categoria: 'Eletronicos', precoCheio: 1190, desconto: 10, nota: 4, avaliacoes: 96, icone: '🖥️', cor: '#E0F4FF' },
+    { id: 4, nome: 'Caneca de ceramica', categoria: 'Casa', precoCheio: 79, desconto: 0, nota: 4, avaliacoes: 233, icone: '☕', cor: '#FFE8D6' },
+    { id: 5, nome: 'Luminaria de mesa', categoria: 'Casa', precoCheio: 189, desconto: 15, nota: 5, avaliacoes: 154, icone: '💡', cor: '#FFF3D0' },
+    { id: 6, nome: 'Panela de ferro', categoria: 'Casa', precoCheio: 329, desconto: 0, nota: 5, avaliacoes: 88, icone: '🍲', cor: '#F1E4D4' },
+    { id: 7, nome: 'Tenis de corrida', categoria: 'Esporte', precoCheio: 459, desconto: 25, nota: 4, avaliacoes: 621, icone: '👟', cor: '#DDF6EA' },
+    { id: 8, nome: 'Mochila urbana', categoria: 'Esporte', precoCheio: 269, desconto: 0, nota: 4, avaliacoes: 143, icone: '🎒', cor: '#E6F0E0' },
+    { id: 9, nome: 'Garrafa termica', categoria: 'Esporte', precoCheio: 129, desconto: 10, nota: 5, avaliacoes: 302, icone: '🧴', cor: '#E3F7F3' },
+    { id: 10, nome: 'Livro de fotografia', categoria: 'Livros', precoCheio: 149, desconto: 0, nota: 5, avaliacoes: 71, icone: '📕', cor: '#FFE0E8' },
+    { id: 11, nome: 'Caderno pontilhado', categoria: 'Livros', precoCheio: 59, desconto: 0, nota: 4, avaliacoes: 190, icone: '📔', cor: '#FFEAF0' },
+    { id: 12, nome: 'Jogo de tabuleiro', categoria: 'Livros', precoCheio: 239, desconto: 15, nota: 5, avaliacoes: 118, icone: '🎲', cor: '#F0E4FF' }
+  ].map(function (p) {
+    p.preco = Math.round(p.precoCheio * (1 - p.desconto / 100) * 100) / 100;
+    return p;
+  });
+
+  /**
+   * Carrinho global. Fica em um store para que qualquer pedaco da pagina possa
+   * ler e escrever direto do HTML por `$store.carrinho`, e ele se salva sozinho
+   * no localStorage.
+   */
+  V.store('carrinho', {
+    itens: [],
+    cupom: '',
+    percentualCupom: 0,
+    subtotal: 0,
+    desconto: 0,
+    frete: 0,
+    total: 0,
+    quantidade: 0,
+
+    adicionar: function (produto) {
+      var achado = null;
+      for (var i = 0; i < this.itens.length; i++) {
+        if (this.itens[i].id === produto.id) achado = this.itens[i];
+      }
+      if (achado) achado.quantidade = achado.quantidade + 1;
+      else this.itens.push({
+        id: produto.id, nome: produto.nome, preco: produto.preco,
+        icone: produto.icone, cor: produto.cor, quantidade: 1
+      });
+      this.recalcular();
+      V.toast.success(produto.nome + ' foi para o carrinho.');
+    },
+
+    aumentar: function (id) {
+      for (var i = 0; i < this.itens.length; i++) {
+        if (this.itens[i].id === id) this.itens[i].quantidade = this.itens[i].quantidade + 1;
+      }
+      this.recalcular();
+    },
+
+    diminuir: function (id) {
+      for (var i = 0; i < this.itens.length; i++) {
+        if (this.itens[i].id !== id) continue;
+        if (this.itens[i].quantidade > 1) this.itens[i].quantidade = this.itens[i].quantidade - 1;
+        else { this.itens.splice(i, 1); break; }
+      }
+      this.recalcular();
+    },
+
+    remover: function (id) {
+      for (var i = this.itens.length - 1; i >= 0; i--) {
+        if (this.itens[i].id === id) this.itens.splice(i, 1);
+      }
+      this.recalcular();
+    },
+
+    aplicarCupom: function (codigo) {
+      var chave = String(codigo || '').trim().toUpperCase();
+      if (!CUPONS[chave]) return false;
+      this.cupom = chave;
+      this.percentualCupom = CUPONS[chave];
+      this.recalcular();
+      return true;
+    },
+
+    limparCupom: function () {
+      this.cupom = '';
+      this.percentualCupom = 0;
+      this.recalcular();
+    },
+
+    esvaziar: function () {
+      this.itens.splice(0, this.itens.length);
+      this.limparCupom();
+    },
+
+    /** Recalcula os totais. Guardar o resultado no store deixa o HTML simples. */
+    recalcular: function () {
+      var subtotal = 0;
+      var quantidade = 0;
+      for (var i = 0; i < this.itens.length; i++) {
+        subtotal = subtotal + this.itens[i].preco * this.itens[i].quantidade;
+        quantidade = quantidade + this.itens[i].quantidade;
+      }
+      var desconto = Math.round(subtotal * (this.percentualCupom / 100) * 100) / 100;
+      var comDesconto = subtotal - desconto;
+      var frete = 0;
+      if (quantidade > 0 && comDesconto < FRETE_GRATIS_A_PARTIR_DE) frete = FRETE_BASE;
+
+      this.subtotal = Math.round(subtotal * 100) / 100;
+      this.desconto = desconto;
+      this.frete = frete;
+      this.total = Math.round((comDesconto + frete) * 100) / 100;
+      this.quantidade = quantidade;
+    }
+  }, { persist: true });
+
+  // Os totais podem ter vindo do localStorage com o carrinho antigo.
+  V.stores.carrinho.recalcular();
+
+  V.component('loja', {
+    state: function () {
+      return {
+        catalogo: CATALOGO,
+        categorias: ['Todas', 'Eletronicos', 'Casa', 'Esporte', 'Livros'],
+        categoria: 'Todas',
+        precoMaximo: 1200,
+        ordem: 'relevancia',
+        busca: '',
+        carrinhoAberto: false,
+        etapa: 0,
+        cupomDigitado: '',
+        numeroDoPedido: '',
+        pedido: {
+          nome: '', email: '', telefone: '',
+          cep: '', endereco: '', cidade: '',
+          cartao: '', validade: '', cvv: ''
+        }
+      };
+    },
+
+    computed: {
+      produtos: function () {
+        var termo = String(this.busca || '').trim().toLowerCase();
+        var categoria = this.categoria;
+        var teto = this.precoMaximo;
+
+        var lista = this.catalogo.filter(function (p) {
+          if (categoria !== 'Todas' && p.categoria !== categoria) return false;
+          if (p.preco > teto) return false;
+          if (!termo) return true;
+          return p.nome.toLowerCase().indexOf(termo) !== -1 ||
+            p.categoria.toLowerCase().indexOf(termo) !== -1;
+        });
+
+        if (this.ordem === 'menor') return V.sortBy(lista, 'preco', 'asc');
+        if (this.ordem === 'maior') return V.sortBy(lista, 'preco', 'desc');
+        if (this.ordem === 'nota') return V.sortBy(lista, 'avaliacoes', 'desc');
+        return lista;
+      },
+
+      precoFormatado: function () { return V.formatCurrency(this.precoMaximo); },
+
+      tituloDaEtapa: function () {
+        return ['Seu carrinho', 'Identificacao', 'Entrega', 'Pagamento', 'Tudo certo'][this.etapa];
+      },
+
+      rotuloAvancar: function () {
+        return ['Ir para a identificacao', 'Continuar', 'Ir para o pagamento', 'Finalizar pedido'][this.etapa] || '';
+      }
+    },
+
+    methods: {
+      moeda: function (valor) { return V.formatCurrency(valor); },
+
+      estrelas: function (nota) {
+        var texto = '';
+        for (var i = 1; i <= 5; i++) texto = texto + (i <= nota ? '★' : '☆');
+        return texto;
+      },
+
+      limparFiltros: function () {
+        this.categoria = 'Todas';
+        this.precoMaximo = 1200;
+        this.ordem = 'relevancia';
+        this.busca = '';
+      },
+
+      abrirCarrinho: function () { this.carrinhoAberto = true; },
+
+      fecharCarrinho: function () {
+        this.carrinhoAberto = false;
+        if (this.etapa === 4) this.etapa = 0;
+      },
+
+      aplicarCupom: function () {
+        if (V.stores.carrinho.aplicarCupom(this.cupomDigitado)) {
+          this.cupomDigitado = '';
+          V.toast.success('Cupom aplicado.');
+        } else {
+          V.toast.error('Cupom invalido.');
+        }
+      },
+
+      voltarEtapa: function () { if (this.etapa > 0) this.etapa = this.etapa - 1; },
+
+      /**
+       * Cada etapa e um formulario proprio. `V.validateForm` devolve uma
+       * promessa com `valid` e com os erros ja desenhados abaixo dos campos.
+       */
+      avancarEtapa: function () {
+        var self = this;
+        var seletor = {
+          1: '#lj-form-identificacao',
+          2: '#lj-form-entrega',
+          3: '#lj-form-pagamento'
+        }[this.etapa];
+
+        if (!seletor) {
+          if (!V.stores.carrinho.itens.length) {
+            V.toast.error('Adicione um produto antes de continuar.');
+            return;
+          }
+          this.etapa = this.etapa + 1;
+          return;
+        }
+
+        V.validateForm(document.querySelector(seletor)).then(function (resultado) {
+          if (!resultado.valid) {
+            V.toast.error('Confira os campos destacados.');
+            return;
+          }
+          if (self.etapa < 3) {
+            self.etapa = self.etapa + 1;
+            return;
+          }
+          self.concluir();
+        });
+      },
+
+      concluir: function () {
+        var self = this;
+        var espera = V.toast.loading('Processando o pagamento...');
+        V.sleep(900).then(function () {
+          espera.close();
+          self.numeroDoPedido = String(V.random(100000, 999999));
+          self.etapa = 4;
+          V.stores.carrinho.esvaziar();
+          V.toast.success('Pedido confirmado.');
+        });
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+});
+</script>
+</body>
+</html>

@@ -992,8 +992,18 @@ textarea {
 }
 
 .vd-lang-flag {
-  font-size: 15px;
-  line-height: 1;
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  flex: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.vd-lang-caret {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  opacity: 0.6;
 }
 
 .vd-lang-menu {
@@ -2175,6 +2185,20 @@ textarea {
     overflow-y: hidden;
   }
   .vd-clicker { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 700px) {
+  /* O cabecalho precisa caber em 375px sem empurrar a pagina. Sai o atalho do
+     GitHub, que se repete no heroi e no rodape, e a sigla do idioma, que a
+     bandeira ja comunica. */
+  .vd-gh { display: none; }
+  .vd-headbar { gap: 10px; }
+  .vd-headtools { gap: 6px; }
+  .vd-logo img { height: 24px; }
+  .vd-iconbtn { width: 38px; height: 38px; }
+  .vd-lang-btn { height: 38px; padding: 0 9px; gap: 6px; }
+  .vd-lang-btn > span { display: none; }
+  .vd-lang-menu { min-width: 190px; }
 }
 
 @media (max-width: 620px) {

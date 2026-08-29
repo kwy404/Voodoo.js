@@ -1,10 +1,10 @@
-import { magic, markSkipChildren, core, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query, viewTransition, destroy, storage, defineComponent, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-JZMUENER.js';
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, defineComponent, destroy, dialog, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk } from './chunk-JZMUENER.js';
+import { magic, markSkipChildren, core, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-JIAMJPVM.js';
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, defineComponent, destroy, dialog, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk } from './chunk-JIAMJPVM.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-ABAHVFPX.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-ABAHVFPX.js';
 import { http } from './chunk-7U443GSF.js';
 export { HttpError, http, request } from './chunk-7U443GSF.js';
-import { parseDuration, uid, setFormatDefaults, merge, relativeTime, formatDate, formatCurrency, formatNumber, device, escapeHtml, truncate, get, titleCase } from './chunk-45K3USNK.js';
+import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-45K3USNK.js';
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-45K3USNK.js';
 import { defineDirective, PRIORITY, config, ensureTokens, injectStyle } from './chunk-KQAVZ2II.js';
 export { PRIORITY, config, defineDirective, ensureTokens, injectStyle } from './chunk-KQAVZ2II.js';
@@ -833,7 +833,7 @@ function configureI18n(options = {}) {
   }
   return i18n;
 }
-var i18n = Object.assign(configureI18n, {
+var i18nDinamicos = {
   get locale() {
     return state.locale;
   },
@@ -855,7 +855,11 @@ var i18n = Object.assign(configureI18n, {
   loadMessages,
   messagesOf,
   detectLocale
-});
+};
+var i18n = Object.defineProperties(
+  configureI18n,
+  Object.getOwnPropertyDescriptors(i18nDinamicos)
+);
 magic("$t", () => t);
 magic("$locale", () => state.locale);
 magic("$i18n", () => i18n);
@@ -872,7 +876,7 @@ function resolveKey(expression, evaluate2) {
   return typeof value === "string" ? value : raw;
 }
 function readParams(el, evaluate2) {
-  const attr = el.getAttribute(`${config.prefix}t-params`) ?? el.getAttribute("data-v-t-params");
+  const attr = readAttr(el, `${config.prefix}t-params`) ?? readAttr(el, "data-v-t-params");
   if (!attr) return {};
   const value = evaluate2(attr);
   return value && typeof value === "object" ? value : {};
@@ -1686,7 +1690,7 @@ function resolveVariant(expression, evaluate2) {
   if (value && typeof value === "object") return value;
   return null;
 }
-function readAttr(el, name) {
+function readAttr2(el, name) {
   return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
 }
 function hasAttr(el, name) {
@@ -1694,7 +1698,7 @@ function hasAttr(el, name) {
 }
 var staggerSetups = /* @__PURE__ */ new WeakMap();
 function readStaggerFrom(el) {
-  const raw = readAttr(el, "motion-stagger-from");
+  const raw = readAttr2(el, "motion-stagger-from");
   if (raw === "last" || raw === "center") return raw;
   return "first";
 }
@@ -1706,7 +1710,7 @@ function inheritedStaggerDelay(el) {
   if (!parent) return 0;
   let setup = staggerSetups.get(parent);
   if (!setup) {
-    const raw = readAttr(parent, "motion-stagger");
+    const raw = readAttr2(parent, "motion-stagger");
     if (raw === null) return 0;
     setup = { step: parseDuration(raw, 60), from: readStaggerFrom(parent) };
   }
@@ -1737,7 +1741,7 @@ defineDirective("motion-scroll", ({ el, expression, evaluate: evaluate2, modifie
   const extra = inheritedStaggerDelay(el);
   if (extra > 0) options.delay = (options.delay ?? 0) + extra;
   const once2 = !modifiers.repeat;
-  const amountAttr = readAttr(el, "motion-scroll-amount");
+  const amountAttr = readAttr2(el, "motion-scroll-amount");
   const amount = amountAttr === null ? 0.25 : parseFloat(amountAttr) || 0;
   if (!prefersReducedMotion()) applyInitial(el, keyframes);
   let control = null;
@@ -1752,7 +1756,7 @@ defineDirective("motion-scroll", ({ el, expression, evaluate: evaluate2, modifie
         if (!prefersReducedMotion()) applyInitial(el, keyframes);
       };
     },
-    { once: once2, amount, margin: readAttr(el, "motion-scroll-margin") ?? "0px" }
+    { once: once2, amount, margin: readAttr2(el, "motion-scroll-margin") ?? "0px" }
   );
   cleanup(() => {
     stopWatching();
@@ -1930,11 +1934,11 @@ function countFormatter(format, decimals) {
   return (value) => formatter.format(value);
 }
 defineDirective("count", ({ el, evaluate: evaluate2, effect: effect2, cleanup }) => {
-  const duration = parseDuration(readAttr(el, "count-duration") ?? void 0, 1400);
-  const decimals = Math.max(0, Math.min(6, parseInt(readAttr(el, "count-decimals") ?? "0", 10) || 0));
-  const format = readAttr(el, "count-format") ?? "number";
-  const prefix = readAttr(el, "count-prefix") ?? "";
-  const suffix = readAttr(el, "count-suffix") ?? "";
+  const duration = parseDuration(readAttr2(el, "count-duration") ?? void 0, 1400);
+  const decimals = Math.max(0, Math.min(6, parseInt(readAttr2(el, "count-decimals") ?? "0", 10) || 0));
+  const format = readAttr2(el, "count-format") ?? "number";
+  const prefix = readAttr2(el, "count-prefix") ?? "";
+  const suffix = readAttr2(el, "count-suffix") ?? "";
   const formatter = countFormatter(format, decimals);
   let current = 0;
   let control = null;
@@ -1959,7 +1963,7 @@ defineDirective("count", ({ el, evaluate: evaluate2, effect: effect2, cleanup })
   cleanup(() => control?.stop());
 });
 defineDirective("typewriter", ({ el, expression, evaluate: evaluate2, effect: effect2, cleanup }) => {
-  const speed = parseDuration(readAttr(el, "typewriter-speed") ?? void 0, 45);
+  const speed = parseDuration(readAttr2(el, "typewriter-speed") ?? void 0, 45);
   const dynamic = looksLikeExpression(expression);
   let control = null;
   effect2(() => {
@@ -3003,8 +3007,8 @@ function renderChart(el, options) {
     }
   };
 }
-function readAttr2(el, name) {
-  return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
+function readOption(el, name) {
+  return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 function parseBool(raw, fallback) {
   if (raw === null) return fallback;
@@ -3015,32 +3019,32 @@ function parseBool(raw, fallback) {
 function directiveOptions(el, value) {
   const isOptionsObject = !!value && typeof value === "object" && !Array.isArray(value) && "data" in value;
   const options = isOptionsObject ? { ...value } : { data: value ?? [] };
-  const type = readAttr2(el, "chart-type");
+  const type = readOption(el, "chart-type");
   if (type) options.type = type;
   if (!options.type) options.type = "line";
-  const height = readAttr2(el, "chart-height");
+  const height = readOption(el, "chart-height");
   if (height) options.height = parseFloat(height) || options.height;
-  const format = readAttr2(el, "chart-format");
+  const format = readOption(el, "chart-format");
   if (format) options.format = format;
-  const colors = readAttr2(el, "chart-colors");
+  const colors = readOption(el, "chart-colors");
   if (colors) {
     options.colors = colors.split(",").map((color) => color.trim()).filter(Boolean);
   }
-  const max = readAttr2(el, "chart-max");
+  const max = readOption(el, "chart-max");
   if (max !== null && max !== "") options.max = parseFloat(max);
-  const min = readAttr2(el, "chart-min");
+  const min = readOption(el, "chart-min");
   if (min !== null && min !== "") options.min = parseFloat(min);
-  const smooth = readAttr2(el, "chart-smooth");
+  const smooth = readOption(el, "chart-smooth");
   if (smooth !== null) options.smooth = parseBool(smooth, true);
-  const grid = readAttr2(el, "chart-grid");
+  const grid = readOption(el, "chart-grid");
   if (grid !== null) options.showGrid = parseBool(grid, true);
-  const legend = readAttr2(el, "chart-legend");
+  const legend = readOption(el, "chart-legend");
   if (legend !== null) options.showLegend = parseBool(legend, true);
-  const values = readAttr2(el, "chart-values");
+  const values = readOption(el, "chart-values");
   if (values !== null) options.showValues = parseBool(values, true);
-  const tooltip = readAttr2(el, "chart-tooltip");
+  const tooltip = readOption(el, "chart-tooltip");
   if (tooltip !== null) options.tooltip = parseBool(tooltip, true);
-  const animateAttr = readAttr2(el, "chart-animate");
+  const animateAttr = readOption(el, "chart-animate");
   if (animateAttr !== null) options.animate = parseBool(animateAttr, true);
   return options;
 }

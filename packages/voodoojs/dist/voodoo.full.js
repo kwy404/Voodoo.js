@@ -1840,6 +1840,9 @@ Expressao: ${expression}` : message);
   function isInitialized(node) {
     return initialized.has(node);
   }
+  function markInitialized(node) {
+    initialized.add(node);
+  }
   function getScope(node) {
     return nodeScopes.get(node);
   }
@@ -1927,12 +1930,23 @@ Expressao: ${expression}` : message);
   }
   function collectDirectives(el) {
     const out = [];
-    const attrs = el.attributes;
-    for (let i = 0; i < attrs.length; i++) {
-      const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-      if (parsed) {
-        out.push(parsed);
-        indexDirective(el, parsed.name);
+    const cache3 = attributeCache.get(el);
+    if (cache3 && cache3.size) {
+      for (const [name, value] of cache3) {
+        const parsed = parseAttribute(name, value);
+        if (parsed) {
+          out.push(parsed);
+          indexDirective(el, parsed.name);
+        }
+      }
+    } else {
+      const attrs = el.attributes;
+      for (let i = 0; i < attrs.length; i++) {
+        const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+        if (parsed) {
+          out.push(parsed);
+          indexDirective(el, parsed.name);
+        }
       }
     }
     if (out.length < 2) return out;
@@ -2026,7 +2040,11 @@ Expressao: ${expression}` : message);
     const map = attributeCache.get(el);
     if (!map) return;
     for (const [name, value] of map) {
-      if (!el.hasAttribute(name)) el.setAttribute(name, value);
+      if (el.hasAttribute(name)) continue;
+      try {
+        el.setAttribute(name, value);
+      } catch (e) {
+      }
     }
   }
   function hasDirectives(el) {
@@ -2161,19 +2179,25 @@ Expressao: ${expression}` : message);
   var MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
   var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
   function bindTextNode(node, scope) {
-    var _a, _b, _c;
+    var _a, _b;
     const raw = node.textContent;
     if (!raw || raw.indexOf("{") === -1) return;
     if (initialized.has(node)) return;
-    const parentTag = (_a = node.parentElement) == null ? void 0 : _a.tagName;
-    if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+    let ancestral = node.parentElement;
+    while (ancestral) {
+      if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+      if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+        return;
+      }
+      ancestral = ancestral.parentElement;
+    }
     const segments = [];
     let lastIndex = 0;
     MUSTACHE.lastIndex = 0;
     let match;
     while ((match = MUSTACHE.exec(raw)) !== null) {
       if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
-      const expression = ((_c = (_b = match[1]) != null ? _b : match[2]) != null ? _c : "").trim();
+      const expression = ((_b = (_a = match[1]) != null ? _a : match[2]) != null ? _b : "").trim();
       if (expression) segments.push({ expression });
       lastIndex = match.index + match[0].length;
     }
@@ -4263,6 +4287,8 @@ Expressao: ${expression}` : message);
   defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
     effect2(() => {
       el.textContent = stringify(ev());
+      const primeiro = el.firstChild;
+      if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
     });
   });
   defineDirective("html", (ctx) => {
@@ -4329,6 +4355,7 @@ Expressao: ${expression}` : message);
         branch.template.removeAttribute(`${p2}if`);
         branch.template.removeAttribute(`${p2}else-if`);
         branch.template.removeAttribute(`${p2}else`);
+        markInitialized(branch.template);
       }
       const options = transitionOptions(el);
       let activeIndex = -1;
@@ -5201,7 +5228,8 @@ Expressao: ${expression}` : message);
     var _a, _b, _c, _d, _e;
     const { el, scope, method } = options;
     const settings4 = readSettings(el, scope);
-    if (settings4.confirmMessage) {
+    const dialogoCuidaDaPergunta = directives.has(`confirm`);
+    if (settings4.confirmMessage && !dialogoCuidaDaPergunta) {
       const confirmed = await askConfirmation(settings4.confirmMessage);
       if (!confirmed) return;
     }
@@ -7560,7 +7588,7 @@ Expressao: ${expression}` : message);
     }
     return i18n;
   }
-  var i18n = Object.assign(configureI18n, {
+  var i18nDinamicos = {
     get locale() {
       return state.locale;
     },
@@ -7582,7 +7610,11 @@ Expressao: ${expression}` : message);
     loadMessages,
     messagesOf,
     detectLocale
-  });
+  };
+  var i18n = Object.defineProperties(
+    configureI18n,
+    Object.getOwnPropertyDescriptors(i18nDinamicos)
+  );
   magic("$t", () => t);
   magic("$locale", () => state.locale);
   magic("$i18n", () => i18n);
@@ -7600,7 +7632,7 @@ Expressao: ${expression}` : message);
   }
   function readParams(el, evaluate2) {
     var _a;
-    const attr2 = (_a = el.getAttribute(`${config.prefix}t-params`)) != null ? _a : el.getAttribute("data-v-t-params");
+    const attr2 = (_a = readAttr(el, `${config.prefix}t-params`)) != null ? _a : readAttr(el, "data-v-t-params");
     if (!attr2) return {};
     const value = evaluate2(attr2);
     return value && typeof value === "object" ? value : {};
@@ -14116,9 +14148,9 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
       }
     };
   }
-  function readAttr3(el, name) {
+  function readOption3(el, name) {
     var _a;
-    return (_a = el.getAttribute(`${config.prefix}${name}`)) != null ? _a : el.getAttribute(`data-v-${name}`);
+    return (_a = readAttr(el, `${config.prefix}${name}`)) != null ? _a : readAttr(el, `data-v-${name}`);
   }
   function parseBool(raw, fallback) {
     if (raw === null) return fallback;
@@ -14129,32 +14161,32 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
   function directiveOptions(el, value) {
     const isOptionsObject = !!value && typeof value === "object" && !Array.isArray(value) && "data" in value;
     const options = isOptionsObject ? { ...value } : { data: value != null ? value : [] };
-    const type = readAttr3(el, "chart-type");
+    const type = readOption3(el, "chart-type");
     if (type) options.type = type;
     if (!options.type) options.type = "line";
-    const height = readAttr3(el, "chart-height");
+    const height = readOption3(el, "chart-height");
     if (height) options.height = parseFloat(height) || options.height;
-    const format = readAttr3(el, "chart-format");
+    const format = readOption3(el, "chart-format");
     if (format) options.format = format;
-    const colors = readAttr3(el, "chart-colors");
+    const colors = readOption3(el, "chart-colors");
     if (colors) {
       options.colors = colors.split(",").map((color) => color.trim()).filter(Boolean);
     }
-    const max = readAttr3(el, "chart-max");
+    const max = readOption3(el, "chart-max");
     if (max !== null && max !== "") options.max = parseFloat(max);
-    const min = readAttr3(el, "chart-min");
+    const min = readOption3(el, "chart-min");
     if (min !== null && min !== "") options.min = parseFloat(min);
-    const smooth = readAttr3(el, "chart-smooth");
+    const smooth = readOption3(el, "chart-smooth");
     if (smooth !== null) options.smooth = parseBool(smooth, true);
-    const grid = readAttr3(el, "chart-grid");
+    const grid = readOption3(el, "chart-grid");
     if (grid !== null) options.showGrid = parseBool(grid, true);
-    const legend = readAttr3(el, "chart-legend");
+    const legend = readOption3(el, "chart-legend");
     if (legend !== null) options.showLegend = parseBool(legend, true);
-    const values = readAttr3(el, "chart-values");
+    const values = readOption3(el, "chart-values");
     if (values !== null) options.showValues = parseBool(values, true);
-    const tooltip = readAttr3(el, "chart-tooltip");
+    const tooltip = readOption3(el, "chart-tooltip");
     if (tooltip !== null) options.tooltip = parseBool(tooltip, true);
-    const animateAttr = readAttr3(el, "chart-animate");
+    const animateAttr = readOption3(el, "chart-animate");
     if (animateAttr !== null) options.animate = parseBool(animateAttr, true);
     return options;
   }
@@ -17609,9 +17641,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
         event.preventDefault();
         event.stopImmediatePropagation();
         const origin = event.target instanceof HTMLElement ? event.target : el;
-        const title = (_a = el.getAttribute(`${config.prefix}confirm-title`)) != null ? _a : void 0;
-        const confirmLabel = (_b = el.getAttribute(`${config.prefix}confirm-label`)) != null ? _b : void 0;
-        const cancelLabel = (_c = el.getAttribute(`${config.prefix}confirm-cancel`)) != null ? _c : void 0;
+        const title = (_a = readAttr(el, `${config.prefix}confirm-title`)) != null ? _a : void 0;
+        const confirmLabel = (_b = readAttr(el, `${config.prefix}confirm-label`)) != null ? _b : void 0;
+        const cancelLabel = (_c = readAttr(el, `${config.prefix}confirm-cancel`)) != null ? _c : void 0;
         void confirm(message, {
           title,
           confirmLabel,
@@ -19306,6 +19338,8 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const globalScope = window;
     globalScope.V = V2;
     globalScope.Voodoo = V2;
+    allowedGlobals.V = V2;
+    allowedGlobals.Voodoo = V2;
     if (config.baseURL && ((_a = V2.http) == null ? void 0 : _a.setBaseURL)) V2.http.setBaseURL(config.baseURL);
     if (options.manual || !config.autoStart) return;
     const boot = () => {
@@ -19313,10 +19347,10 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       applySavedPalette();
       V2.start();
     };
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot, { once: true });
-    } else {
+    if (document.readyState === "complete") {
       boot();
+    } else {
+      document.addEventListener("DOMContentLoaded", boot, { once: true });
     }
   }
 

@@ -21,6 +21,7 @@
  */
 
 import { config } from './runtime/registry';
+import { allowedGlobals } from './parser/interpreter';
 import { theme } from './storage';
 import { applySavedPalette } from './ui/palette';
 
@@ -63,6 +64,12 @@ export function bootstrap(V: any): void {
   globalScope.V = V;
   globalScope.Voodoo = V;
 
+  // Deixa o proprio objeto alcancavel de dentro das expressoes. Sem isto,
+  // escrever @click="V.palette({ preset: 1 })" falharia, porque o avaliador so
+  // enxerga a lista fechada de globais.
+  allowedGlobals.V = V;
+  allowedGlobals.Voodoo = V;
+
   if (config.baseURL && V.http?.setBaseURL) V.http.setBaseURL(config.baseURL);
 
   if (options.manual || !config.autoStart) return;
@@ -74,9 +81,13 @@ export function bootstrap(V: any): void {
     V.start();
   };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
+  // Com `<script defer>` o documento ja esta em "interactive" quando a
+  // biblioteca executa, e os outros scripts com defer ainda nao rodaram.
+  // Iniciar agora atropelaria quem registra componentes e estado depois,
+  // entao so o estado "complete" permite comecar na hora.
+  if (document.readyState === 'complete') {
     boot();
+  } else {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
   }
 }

@@ -1815,6 +1815,9 @@ var nodeEffectScopes = /* @__PURE__ */ new WeakMap();
 function isInitialized(node) {
   return initialized.has(node);
 }
+function markInitialized(node) {
+  initialized.add(node);
+}
 function getScope(node) {
   return nodeScopes.get(node);
 }
@@ -1898,12 +1901,23 @@ function parseAttribute(name, value) {
 }
 function collectDirectives(el) {
   const out = [];
-  const attrs = el.attributes;
-  for (let i = 0; i < attrs.length; i++) {
-    const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-    if (parsed) {
-      out.push(parsed);
-      indexDirective(el, parsed.name);
+  const cache3 = attributeCache.get(el);
+  if (cache3 && cache3.size) {
+    for (const [name, value] of cache3) {
+      const parsed = parseAttribute(name, value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
+    }
+  } else {
+    const attrs = el.attributes;
+    for (let i = 0; i < attrs.length; i++) {
+      const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+      if (parsed) {
+        out.push(parsed);
+        indexDirective(el, parsed.name);
+      }
     }
   }
   if (out.length < 2) return out;
@@ -1994,7 +2008,11 @@ function restoreAttributes(el) {
   const map = attributeCache.get(el);
   if (!map) return;
   for (const [name, value] of map) {
-    if (!el.hasAttribute(name)) el.setAttribute(name, value);
+    if (el.hasAttribute(name)) continue;
+    try {
+      el.setAttribute(name, value);
+    } catch {
+    }
   }
 }
 function evaluateIn(expression, scope, context) {
@@ -2121,8 +2139,14 @@ function bindTextNode(node, scope) {
   const raw = node.textContent;
   if (!raw || raw.indexOf("{") === -1) return;
   if (initialized.has(node)) return;
-  const parentTag = node.parentElement?.tagName;
-  if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+  let ancestral = node.parentElement;
+  while (ancestral) {
+    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+    if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+      return;
+    }
+    ancestral = ancestral.parentElement;
+  }
   const segments = [];
   let lastIndex = 0;
   MUSTACHE.lastIndex = 0;
@@ -4174,6 +4198,8 @@ function transitionOptions(el) {
 defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
   effect2(() => {
     el.textContent = stringify(ev());
+    const primeiro = el.firstChild;
+    if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
   });
 });
 defineDirective("html", (ctx) => {
@@ -4239,6 +4265,7 @@ defineDirective(
       branch.template.removeAttribute(`${p2}if`);
       branch.template.removeAttribute(`${p2}else-if`);
       branch.template.removeAttribute(`${p2}else`);
+      markInitialized(branch.template);
     }
     const options = transitionOptions(el);
     let activeIndex = -1;
@@ -5098,7 +5125,8 @@ var inFlight = /* @__PURE__ */ new WeakMap();
 async function runRequest(options) {
   const { el, scope, method } = options;
   const settings3 = readSettings(el, scope);
-  if (settings3.confirmMessage) {
+  const dialogoCuidaDaPergunta = directives.has(`confirm`);
+  if (settings3.confirmMessage && !dialogoCuidaDaPergunta) {
     const confirmed = await askConfirmation(settings3.confirmMessage);
     if (!confirmed) return;
   }
@@ -12051,9 +12079,9 @@ defineDirective(
       event.preventDefault();
       event.stopImmediatePropagation();
       const origin = event.target instanceof HTMLElement ? event.target : el;
-      const title = el.getAttribute(`${config.prefix}confirm-title`) ?? void 0;
-      const confirmLabel = el.getAttribute(`${config.prefix}confirm-label`) ?? void 0;
-      const cancelLabel = el.getAttribute(`${config.prefix}confirm-cancel`) ?? void 0;
+      const title = readAttr(el, `${config.prefix}confirm-title`) ?? void 0;
+      const confirmLabel = readAttr(el, `${config.prefix}confirm-label`) ?? void 0;
+      const cancelLabel = readAttr(el, `${config.prefix}confirm-cancel`) ?? void 0;
       void confirm(message, {
         title,
         confirmLabel,

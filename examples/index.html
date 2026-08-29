@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demos da Voodoo.js</title>
+<link rel="icon" href="../brand/logo/favicon.svg">
+<link rel="stylesheet" href="../design-system/voodoo-ui.css">
+<script src="../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  body {
+    background:
+      radial-gradient(1200px 620px at 12% -10%, color-mix(in srgb, var(--v-primary) 22%, transparent), transparent 62%),
+      radial-gradient(1000px 520px at 92% 2%, color-mix(in srgb, var(--v-accent) 18%, transparent), transparent 60%),
+      var(--v-color-bg);
+    min-height: 100vh;
+  }
+
+  .ix-shell { max-width: 1180px; margin: 0 auto; padding: var(--v-space-8) var(--v-space-4) var(--v-space-16); }
+
+  /* ---------- topo ---------- */
+  .ix-topo { display: flex; align-items: flex-start; gap: var(--v-space-4); margin-bottom: var(--v-space-10); }
+  .ix-logo { width: 46px; height: 46px; flex: none; }
+  .ix-titulo {
+    font-family: var(--v-font-display); font-size: var(--v-text-4xl); line-height: 1;
+    letter-spacing: var(--v-tracking-tight); margin: 0 0 8px;
+  }
+  .ix-titulo span {
+    background: linear-gradient(100deg, var(--v-primary), var(--v-accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .ix-lema { color: var(--v-text-muted); font-size: var(--v-text-lg); margin: 0; max-width: 58ch; }
+
+  .ix-aviso {
+    display: flex; align-items: flex-start; gap: 10px;
+    border: 1px solid var(--v-border); border-left: 3px solid var(--v-primary);
+    border-radius: var(--v-radius-md); background: var(--v-surface);
+    padding: var(--v-space-4); margin-bottom: var(--v-space-8);
+    font-size: var(--v-text-sm); color: var(--v-text-muted);
+  }
+  .ix-aviso code { font-size: 12.5px; }
+
+  /* ---------- grade de demos ---------- */
+  .ix-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--v-space-5); }
+
+  .ix-cartao {
+    display: flex; flex-direction: column; position: relative; overflow: hidden;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); text-decoration: none; color: inherit;
+    box-shadow: var(--v-shadow-sm);
+    transition: transform var(--v-duration-base) var(--v-ease-out), box-shadow var(--v-duration-base), border-color var(--v-duration-base);
+  }
+  .ix-cartao:hover { transform: translateY(-4px); box-shadow: var(--v-shadow-lg); border-color: var(--ix-cor, var(--v-primary)); }
+  .ix-cartao:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: var(--v-focus-offset); }
+
+  .ix-capa {
+    position: relative; height: 108px; display: flex; align-items: center; gap: 12px;
+    padding: 0 var(--v-space-5); overflow: hidden;
+    background: linear-gradient(120deg, color-mix(in srgb, var(--ix-cor) 28%, var(--v-surface)), var(--v-surface));
+    border-bottom: 1px solid var(--v-border);
+  }
+  .ix-capa::after {
+    content: ""; position: absolute; inset: auto -30px -60px auto;
+    width: 170px; height: 130px; border-radius: 50%;
+    background: var(--ix-cor); opacity: .22; filter: blur(20px);
+  }
+  .ix-simbolo {
+    position: relative; width: 50px; height: 50px; flex: none; border-radius: var(--v-radius-md);
+    display: grid; place-items: center; font-size: 24px;
+    background: color-mix(in srgb, var(--ix-cor) 22%, var(--v-surface));
+    color: var(--ix-cor); border: 1px solid color-mix(in srgb, var(--ix-cor) 40%, transparent);
+  }
+  .ix-capa-nome { position: relative; font-family: var(--v-font-display); font-size: var(--v-text-xl); }
+
+  .ix-corpo { padding: var(--v-space-5); display: flex; flex-direction: column; gap: var(--v-space-3); flex: 1; }
+  .ix-frase { color: var(--v-text-muted); font-size: var(--v-text-sm); line-height: var(--v-leading-normal); margin: 0; }
+
+  .ix-directives { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ix-directive {
+    font-family: var(--v-font-mono); font-size: 11.5px;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-sm);
+    padding: 2px 7px; color: var(--v-text-muted); background: var(--v-surface-2);
+  }
+
+  .ix-rodape-cartao {
+    display: flex; align-items: center; gap: 8px; margin-top: auto;
+    padding-top: var(--v-space-3); border-top: 1px dashed var(--v-border);
+    font-size: var(--v-text-sm); font-weight: var(--v-weight-semibold); color: var(--ix-cor);
+  }
+  .ix-pacote {
+    margin-left: auto; font: var(--v-weight-medium) 11px/1.6 var(--v-font-mono);
+    color: var(--v-text-subtle); border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-full); padding: 1px 9px;
+  }
+
+  .ix-rodape { margin-top: var(--v-space-12); color: var(--v-text-subtle); font-size: var(--v-text-sm); text-align: center; }
+
+  @media (max-width: 640px) {
+    .ix-titulo { font-size: var(--v-text-3xl); }
+    .ix-topo { flex-direction: column; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ix-cartao { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ix-shell">
+
+  <header class="ix-topo">
+    <img class="ix-logo" src="../brand/logo/voodoo-mark.svg" alt="" aria-hidden="true">
+    <div>
+      <h1 class="ix-titulo">Demos da <span>Voodoo.js</span></h1>
+      <p class="ix-lema">
+        Sete aplicacoes completas, escritas quase inteiras no proprio HTML.
+        Cada uma existe para provar um pedaco diferente da biblioteca, e todas
+        funcionam de verdade, sem framework por baixo e sem passo de compilacao.
+      </p>
+    </div>
+    <div class="v-push"></div>
+    <button class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle aria-label="Alternar entre tema claro e escuro">
+      <span aria-hidden="true">◐</span>
+    </button>
+  </header>
+
+  <p class="ix-aviso">
+    <span aria-hidden="true">▸</span>
+    <span>
+      Abra pelo servidor local, e nao por <code class="v-code">file://</code>, porque
+      algumas demos fazem requisicoes. Rode <code class="v-code">node scripts/serve.mjs 5180</code>
+      na raiz do projeto e acesse <code class="v-code">http://localhost:5180/examples/</code>.
+      Antes disso, gere os bundles com <code class="v-code">npm run build</code>.
+    </span>
+  </p>
+
+  <main class="ix-grade">
+
+    <a class="ix-cartao" href="pokedex/" style="--ix-cor: #FF6D3E">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">◉</span>
+        <span class="ix-capa-nome">Pokedex</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Consome a PokeAPI de verdade: mais de mil e trezentas especies com busca,
+          filtro por tipo, rolagem infinita, favoritos que persistem e um grafico de
+          radar dos atributos dentro do modal de detalhe.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-resource</span>
+          <span class="ix-directive">v-chart</span>
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-motion</span>
+          <span class="ix-directive">v-transition</span>
+          <span class="ix-directive">v-debounce</span>
+          <span class="ix-directive">$store</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">completo</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="dashboard/" style="--ix-cor: #6D3BF5">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">▤</span>
+        <span class="ix-capa-nome">Painel</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Painel administrativo com metricas animadas, grafico de area, de barras e
+          de rosca. Um unico seletor de periodo recalcula os quatro cartoes, os tres
+          graficos e a tabela ao mesmo tempo.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-chart</span>
+          <span class="ix-directive">v-count</span>
+          <span class="ix-directive">v-theme-toggle</span>
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-model</span>
+          <span class="ix-directive">computed</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">completo</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="todo/" style="--ix-cor: #2ED9A5">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">✓</span>
+        <span class="ix-capa-nome">Tarefas</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          A lista de tarefas classica, levada a serio: edicao em linha com duplo
+          clique, filtros, contador de pendentes, reordenacao por arrastar,
+          animacao de entrada e saida e persistencia local.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-model</span>
+          <span class="ix-directive">v-sortable</span>
+          <span class="ix-directive">v-dblclick</span>
+          <span class="ix-directive">v-show</span>
+          <span class="ix-directive">$store</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="crud/" style="--ix-cor: #9B7BFF">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">☰</span>
+        <span class="ix-capa-nome">CRUD</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Cadastro de usuarios com formulario validado de verdade: CPF e telefone
+          com mascara e validacao, confirmacao de senha, mensagens por campo,
+          confirmacao antes de excluir e busca com espera.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-validate</span>
+          <span class="ix-directive">v-mask</span>
+          <span class="ix-directive">v-cpf</span>
+          <span class="ix-directive">v-match</span>
+          <span class="ix-directive">V.toast</span>
+          <span class="ix-directive">V.confirm</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="ecommerce/" style="--ix-cor: #FF3D8B">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">▣</span>
+        <span class="ix-capa-nome">Loja</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Catalogo com filtros e ordenacao, carrinho lateral com cupom, frete e
+          totais em reais, contador no botao e finalizacao em quatro etapas. O
+          carrinho vive em um store global lido direto do HTML.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">$store</span>
+          <span class="ix-directive">v-mask</span>
+          <span class="ix-directive">v-validate</span>
+          <span class="ix-directive">v-transition</span>
+          <span class="ix-directive">v-show</span>
+          <span class="ix-directive">v-model.number</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="kanban/" style="--ix-cor: #FFB35C">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">▥</span>
+        <span class="ix-capa-nome">Kanban</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Quadro com quatro colunas e cartoes que se movem entre elas arrastando,
+          com mouse, toque ou teclado. Criacao e edicao em modal, etiquetas
+          coloridas, contador por coluna e persistencia local.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-sortable</span>
+          <span class="ix-directive">v-dnd-group</span>
+          <span class="ix-directive">voodoo:sorted</span>
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-model</span>
+          <span class="ix-directive">v-if</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="chat/" style="--ix-cor: #4A90DA">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">◔</span>
+        <span class="ix-capa-nome">Chat</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Conversas em tempo real simuladas: bolhas de mensagem, indicador de
+          digitando, respostas automaticas com atraso, estados de enviado e lido,
+          rolagem automatica e seletor de emojis.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-transition</span>
+          <span class="ix-directive">nextTick</span>
+          <span class="ix-directive">@keyup.enter</span>
+          <span class="ix-directive">@outside</span>
+          <span class="ix-directive">v-show</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+  </main>
+
+  <p class="ix-rodape">
+    Voodoo.js, JavaScript feels like magic. Cada demo tem um
+    <code class="v-code">README.md</code> ao lado explicando o que ela exercita.
+  </p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // A pagina abre no escuro por padrao, mas respeita a escolha ja salva pelo
+  // usuario em qualquer uma das demos.
+  if (!V.storage.has('voodoo:theme')) V.theme.set('dark');
+  V.theme.init();
+  V.start();
+});
+</script>
+</body>
+</html>

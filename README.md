@@ -9,22 +9,22 @@
 Reatividade de verdade, componentes, requisições, formulários, gráficos e interface,
 em uma tag `<script>`. Sem build, sem npm, sem configuração.
 
-[![npm](https://img.shields.io/npm/v/voodoojs?color=6D3BF5&label=npm)](https://www.npmjs.com/package/voodoojs)
+[![download](https://img.shields.io/badge/download-voodoo.min.js-6D3BF5)](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js)
 [![gzip](https://img.shields.io/badge/gzip-36%20KB-2ED9A5)](#tamanho-real)
 [![dependencias](https://img.shields.io/badge/depend%C3%AAncias-0-9B7BFF)](#zero-dependencias)
-[![testes](https://img.shields.io/badge/testes-177%20passando-2ED9A5)](#testes)
+[![testes](https://img.shields.io/badge/testes-190%20passando-2ED9A5)](#testes)
 [![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6)](#typescript)
 [![licenca](https://img.shields.io/badge/licen%C3%A7a-MIT-FFB35C)](LICENSE)
 
 <img src="brand/mascot/vudu-wave.svg" alt="Vudu, o mascote da Voodoo.js" width="140">
 
-[Documentação](docs/) · [Demos](examples/) · [Início rápido](#inicio-rapido) · [Directives](#referencia-de-directives) · [English](README.en.md)
+[Início rápido](#inicio-rapido) · [Directives](#referencia-de-directives) · [Componentes](#componentes) · [HTTP](#http-declarativo) · [Demos](examples/)
 
 </div>
 
 ---
 
-> **Voodoo.js in one line:** a zero dependency, no build step JavaScript micro framework that turns plain HTML into a reactive application through `v-*` attributes. A modern alternative to jQuery, a lighter alternative to Vue and React, and a batteries included alternative to Alpine.js and HTMX. [Read this in English](README.en.md).
+> **Voodoo.js in one line:** a zero dependency, no build step, single file JavaScript micro framework that turns plain HTML into a reactive application through `v-*` attributes. Download one file, add one script tag, done. A modern alternative to jQuery, a lighter alternative to Vue and React, and a batteries included alternative to Alpine.js and HTMX.
 
 ## O gancho
 
@@ -32,7 +32,7 @@ Este arquivo HTML funciona. Não tem build, não tem npm, não tem passo de conf
 
 ```html
 <!doctype html>
-<script src="https://cdn.jsdelivr.net/npm/voodoojs" defer></script>
+<script src="voodoo.min.js" defer></script>
 
 <div v-data="{ nome: '', tarefas: [] }">
 
@@ -130,8 +130,8 @@ bundler ou import map.
 <br>
 
 **4 linhas.**
-Só a tag do CDN no topo
-da página.
+Só uma tag `<script>`
+com o arquivo baixado.
 
 </td>
 </tr>
@@ -190,48 +190,54 @@ Em destaque:
 - **HTML limpo no final.** Depois de processados, os atributos `v-*` saem do DOM. O inspetor do navegador mostra HTML normal, sem sujeira de framework.
 - **Atualizações granulares.** Rastreamento de dependência por chave. Mudou `count`, só quem leu `count` é reexecutado.
 - <a id="typescript"></a>**TypeScript completo**, com autocompletar em todo o objeto `V`.
-- <a id="testes"></a>**177 testes automatizados** cobrindo reatividade, analisador, DOM, componentes, HTTP e utilitários.
+- <a id="testes"></a>**190 testes automatizados** cobrindo reatividade, analisador, DOM, componentes, HTTP e utilitários.
 
 ## Instalação
 
-### CDN, o caminho mais curto
+A Voodoo.js é um arquivo só. Baixe, coloque ao lado do seu HTML e pronto.
+Sem gerenciador de pacotes, sem CDN de terceiros, sem passo de build.
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs" defer></script>
-```
+### 1. Baixe o arquivo
 
-A biblioteca inicializa sozinha. Não precisa chamar `V.init()`.
+| Pacote | O que vem dentro | Tamanho | Download |
+| --- | --- | --- | --- |
+| **Essencial** | Reatividade, directives, componentes, DOM, HTTP, formulários, validação, máscaras, interface, arrastar e soltar, avisos | 75 KB gzip | [voodoo.min.js](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js) |
+| **Completo** | Tudo do essencial, mais gráficos, animações com física, roteador, idiomas, inspetor e 29 componentes prontos | 120 KB gzip | [voodoo.full.min.js](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js) |
 
-Escolha o pacote conforme o que a página usa:
+Comece pelo essencial. Troque pelo completo quando precisar de gráfico, animação ou dos componentes prontos.
 
-```html
-<!-- Essencial: reatividade, directives, componentes, DOM, HTTP,
-     formularios, validacao, mascaras, interface, arrastar e soltar -->
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
-
-<!-- Completo: soma graficos, animacoes com fisica, roteador,
-     idiomas, inspetor de reatividade e 29 componentes prontos -->
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js" defer></script>
-```
-
-### npm
+Pela linha de comando:
 
 ```bash
-npm install voodoojs
+curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js
 ```
 
-```js
-import V from 'voodoojs';
-V.start();
+Ou clone o repositório e pegue de `packages/voodoojs/dist/`:
+
+```bash
+git clone https://github.com/kwy404/Voodoo.js.git
 ```
 
-Ou importando só o que usa, com tree shaking:
+### 2. Coloque a tag na página
 
-```js
-import { reactive, computed, http, toast } from 'voodoojs';
+```html
+<script src="voodoo.min.js" defer></script>
+```
+
+Só isso. A biblioteca inicializa sozinha quando o documento fica pronto.
+Não existe `V.init()` para chamar.
+
+### 3. Escreva HTML
+
+```html
+<div v-data="{ n: 0 }">
+  <button @click="n++">Clicou { n } vezes</button>
+</div>
 ```
 
 ### Configuração pela própria tag
+
+Dá para ajustar tudo sem escrever JavaScript:
 
 ```html
 <script src="voodoo.min.js"
@@ -242,7 +248,42 @@ import { reactive, computed, http, toast } from 'voodoojs';
         defer></script>
 ```
 
-Para configurar antes de iniciar, use `data-manual` e chame `V.start()` você mesmo.
+| Atributo | O que faz |
+| --- | --- |
+| `data-prefix` | Troca `v-` por outro prefixo, útil para HTML estritamente validado |
+| `data-base-url` | URL base das requisições feitas por atributo |
+| `data-locale` | Idioma dos formatadores de data, número e moeda |
+| `data-devtools` | Liga avisos detalhados e o atalho do inspetor |
+| `data-no-styles` | Não injeta o CSS dos componentes de interface |
+| `data-keep-attributes` | Mantém os atributos `v-*` no HTML depois de processados |
+| `data-manual` | Não inicia sozinho. Você chama `V.start()` quando quiser |
+
+Com `data-manual` você configura antes de começar:
+
+```html
+<script src="voodoo.min.js" data-manual></script>
+<script>
+  V.config.prefix = 'data-v-';
+  V.palette({ primary: '#0F766E' });
+  V.start();
+</script>
+```
+
+### Monte um pacote só com o que você usa
+
+Se 75 KB ainda for mais do que você precisa, o repositório traz uma ferramenta que
+monta um arquivo sob medida. Escolhendo apenas núcleo, directives e DOM, o resultado
+fica em **36 KB gzip**:
+
+```bash
+git clone https://github.com/kwy404/Voodoo.js.git
+cd Voodoo.js
+npm install
+node packages/cli/bin/voodoo.mjs build --modules=core,directives,dom --out=voodoo.custom.min.js
+```
+
+Rodando `node packages/cli/bin/voodoo.mjs build` sem argumentos, aparece um menu com os
+17 módulos disponíveis.
 
 ## Início rápido
 
@@ -253,7 +294,7 @@ Um arquivo, do zero ao funcionando:
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs" defer></script>
+  <script src="voodoo.min.js" defer></script>
 </head>
 <body>
 
@@ -329,7 +370,7 @@ await V.nextTick();  // o DOM ja refletiu
 ## Referência de directives
 
 São **253 atributos** registrados. Os principais, por categoria.
-A referência completa está em [docs/directives.md](docs/directives.md).
+A lista completa sai com `V.directives` no console do navegador.
 
 ### Estado e renderização
 
@@ -890,18 +931,18 @@ Ainda não implementado, sem data marcada:
 
 ```bash
 npm install
-npm test          # 177 testes
+npm test          # 190 testes
 npm run typecheck
 npm run build
 node scripts/size.mjs
 ```
 
-Leia [CONTRIBUTING.md](CONTRIBUTING.md). Toda contribuição é bem-vinda: código, documentação,
-tradução, exemplo, reporte de erro.
+Toda contribuição é bem-vinda: código, exemplo, tradução, reporte de erro.
+Abra uma issue antes de mudanças grandes, para combinarmos o caminho.
 
 ## Licença
 
-MIT. Veja [LICENSE](LICENSE).
+MIT.
 
 <div align="center">
 <br>

@@ -1840,6 +1840,9 @@ Expressao: ${expression}` : message);
   function isInitialized(node) {
     return initialized.has(node);
   }
+  function markInitialized(node) {
+    initialized.add(node);
+  }
   function getScope(node) {
     return nodeScopes.get(node);
   }
@@ -1923,12 +1926,23 @@ Expressao: ${expression}` : message);
   }
   function collectDirectives(el) {
     const out = [];
-    const attrs = el.attributes;
-    for (let i = 0; i < attrs.length; i++) {
-      const parsed = parseAttribute(attrs[i].name, attrs[i].value);
-      if (parsed) {
-        out.push(parsed);
-        indexDirective(el, parsed.name);
+    const cache3 = attributeCache.get(el);
+    if (cache3 && cache3.size) {
+      for (const [name, value] of cache3) {
+        const parsed = parseAttribute(name, value);
+        if (parsed) {
+          out.push(parsed);
+          indexDirective(el, parsed.name);
+        }
+      }
+    } else {
+      const attrs = el.attributes;
+      for (let i = 0; i < attrs.length; i++) {
+        const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+        if (parsed) {
+          out.push(parsed);
+          indexDirective(el, parsed.name);
+        }
       }
     }
     if (out.length < 2) return out;
@@ -2022,7 +2036,11 @@ Expressao: ${expression}` : message);
     const map = attributeCache.get(el);
     if (!map) return;
     for (const [name, value] of map) {
-      if (!el.hasAttribute(name)) el.setAttribute(name, value);
+      if (el.hasAttribute(name)) continue;
+      try {
+        el.setAttribute(name, value);
+      } catch (e) {
+      }
     }
   }
   function evaluateIn(expression, scope, context) {
@@ -2147,19 +2165,25 @@ Expressao: ${expression}` : message);
   var MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
   var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
   function bindTextNode(node, scope) {
-    var _a, _b, _c;
+    var _a, _b;
     const raw = node.textContent;
     if (!raw || raw.indexOf("{") === -1) return;
     if (initialized.has(node)) return;
-    const parentTag = (_a = node.parentElement) == null ? void 0 : _a.tagName;
-    if (parentTag && NO_INTERPOLATION.has(parentTag)) return;
+    let ancestral = node.parentElement;
+    while (ancestral) {
+      if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+      if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+        return;
+      }
+      ancestral = ancestral.parentElement;
+    }
     const segments = [];
     let lastIndex = 0;
     MUSTACHE.lastIndex = 0;
     let match;
     while ((match = MUSTACHE.exec(raw)) !== null) {
       if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
-      const expression = ((_c = (_b = match[1]) != null ? _b : match[2]) != null ? _c : "").trim();
+      const expression = ((_b = (_a = match[1]) != null ? _a : match[2]) != null ? _b : "").trim();
       if (expression) segments.push({ expression });
       lastIndex = match.index + match[0].length;
     }
@@ -4249,6 +4273,8 @@ Expressao: ${expression}` : message);
   defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
     effect2(() => {
       el.textContent = stringify(ev());
+      const primeiro = el.firstChild;
+      if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
     });
   });
   defineDirective("html", (ctx) => {
@@ -4315,6 +4341,7 @@ Expressao: ${expression}` : message);
         branch.template.removeAttribute(`${p2}if`);
         branch.template.removeAttribute(`${p2}else-if`);
         branch.template.removeAttribute(`${p2}else`);
+        markInitialized(branch.template);
       }
       const options = transitionOptions(el);
       let activeIndex = -1;
@@ -5187,7 +5214,8 @@ Expressao: ${expression}` : message);
     var _a, _b, _c, _d, _e;
     const { el, scope, method } = options;
     const settings3 = readSettings(el, scope);
-    if (settings3.confirmMessage) {
+    const dialogoCuidaDaPergunta = directives.has(`confirm`);
+    if (settings3.confirmMessage && !dialogoCuidaDaPergunta) {
       const confirmed = await askConfirmation(settings3.confirmMessage);
       if (!confirmed) return;
     }
@@ -12264,9 +12292,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
         event.preventDefault();
         event.stopImmediatePropagation();
         const origin = event.target instanceof HTMLElement ? event.target : el;
-        const title = (_a = el.getAttribute(`${config.prefix}confirm-title`)) != null ? _a : void 0;
-        const confirmLabel = (_b = el.getAttribute(`${config.prefix}confirm-label`)) != null ? _b : void 0;
-        const cancelLabel = (_c = el.getAttribute(`${config.prefix}confirm-cancel`)) != null ? _c : void 0;
+        const title = (_a = readAttr(el, `${config.prefix}confirm-title`)) != null ? _a : void 0;
+        const confirmLabel = (_b = readAttr(el, `${config.prefix}confirm-label`)) != null ? _b : void 0;
+        const cancelLabel = (_c = readAttr(el, `${config.prefix}confirm-cancel`)) != null ? _c : void 0;
         void confirm(message, {
           title,
           confirmLabel,
@@ -12670,6 +12698,8 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const globalScope = window;
     globalScope.V = V2;
     globalScope.Voodoo = V2;
+    allowedGlobals.V = V2;
+    allowedGlobals.Voodoo = V2;
     if (config.baseURL && ((_a = V2.http) == null ? void 0 : _a.setBaseURL)) V2.http.setBaseURL(config.baseURL);
     if (options.manual || !config.autoStart) return;
     const boot = () => {
@@ -12677,10 +12707,10 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       applySavedPalette();
       V2.start();
     };
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", boot, { once: true });
-    } else {
+    if (document.readyState === "complete") {
       boot();
+    } else {
+      document.addEventListener("DOMContentLoaded", boot, { once: true });
     }
   }
 

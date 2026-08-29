@@ -132,8 +132,14 @@
     <link rel="stylesheet" href="assets/voodoo-ui.css" />
     <link rel="stylesheet" href="assets/styles.css" />
 
-    <script src="voodoo.full.min.js" defer></script>
+    <!-- `data-manual` deixa o inicio para o fim de `app.js`. Com `defer` o
+         documento ja esta em `interactive` quando a biblioteca avalia, entao o
+         inicio automatico aconteceria antes de os dados da pagina existirem. -->
+    <script src="voodoo.full.min.js" data-manual defer></script>
     <script src="assets/i18n.js" defer></script>
+    <!-- O playground registra o componente `vd-playground`. Ele precisa vir
+         antes de `app.js`, que e quem chama `V.start()` no fim. -->
+    <script src="assets/playground.js" defer></script>
     <script src="assets/app.js" defer></script>
 
     <script type="application/ld+json">
@@ -149,7 +155,7 @@
             "applicationSubCategory": "JavaScript Framework",
             "operatingSystem": "Any browser with Proxy and MutationObserver",
             "softwareVersion": "0.1.0",
-            "fileSize": "85KB",
+            "fileSize": "120KB",
             "programmingLanguage": "TypeScript",
             "license": "https://opensource.org/licenses/MIT",
             "description": "Micro framework JavaScript vanilla sem passo de build e sem dependencias. Reatividade real, componentes, HTTP declarativo, formularios, validacao, mascaras, animacoes, graficos e interface pronta, tudo escrito nos atributos do HTML.",
@@ -230,7 +236,7 @@
                 "name": "Qual e o tamanho real do arquivo?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "O build essencial tem cerca de 58 KB servido com gzip. O build completo, com graficos, animacoes, roteador, idiomas e os componentes prontos, tem cerca de 85 KB com gzip. Nao existe pedaco carregado depois."
+                  "text": "Existem dois arquivos. O essencial, com reatividade, directives, HTTP, formularios e interface, tem cerca de 76 KB servido com gzip. O completo, que roda nesta pagina, soma graficos, animacao com fisica de mola, roteador, idiomas e os 29 componentes prontos, e fica em cerca de 120 KB com gzip. Nao existe pedaco carregado depois."
                 }
               },
               {
@@ -349,20 +355,30 @@
         </nav>
 
         <div class="vd-headtools">
-          <!-- Seletor de idioma -->
+          <!-- Seletor de idioma. Fechado mostra so a bandeira e a sigla do
+               idioma ativo. A lista inteira vive dentro do v-if. -->
           <div class="vd-lang" @outside="lang = false">
             <button
               class="vd-lang-btn"
               type="button"
               :aria-expanded="lang ? 'true' : 'false'"
-              aria-haspopup="true"
+              aria-haspopup="menu"
               :aria-label="$t('nav.language')"
               @click="lang = !lang"
             >
-              <span class="vd-lang-flag" aria-hidden="true" v-text="
-                locales.filter(l => l.code === $locale)[0].flag
-              ">🇧🇷</span>
-              <span v-text="locales.filter(l => l.code === $locale)[0].short">PT</span>
+              <img
+                class="vd-lang-flag"
+                :src="localeInfo($locale).flag"
+                :alt="localeInfo($locale).name"
+                src="assets/flags/br.svg"
+                alt="Portugues do Brasil"
+                width="20"
+                height="14"
+              />
+              <span v-text="localeInfo($locale).short">PT</span>
+              <svg class="vd-lang-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </button>
 
             <div class="vd-lang-menu" v-if="lang" role="menu" v-motion="fadeDown">
@@ -376,9 +392,9 @@
                 :lang="l.code"
                 @click="$i18n.setLocale(l.code); lang = false"
               >
-                <span class="vd-lang-flag" aria-hidden="true" v-text="l.flag"></span>
+                <img class="vd-lang-flag" :src="l.flag" alt="" width="20" height="14" aria-hidden="true" />
                 <span v-text="l.name"></span>
-                <span class="vd-lang-code" v-text="l.code"></span>
+                <span class="vd-lang-code" v-text="l.short"></span>
               </button>
             </div>
           </div>
@@ -402,7 +418,7 @@
           </button>
 
           <a
-            class="vd-iconbtn"
+            class="vd-iconbtn vd-gh"
             :href="github"
             target="_blank"
             rel="noopener"
@@ -538,8 +554,11 @@
                         <button class="vd-mini" type="button" @click="n = 0" v-t="hero.reset">Zerar</button>
                       </div>
                       <p class="vd-counter-meta">
-                        { $t('hero.clicks', { n: n }) } <span aria-hidden="true">|</span>
-                        { $t('hero.double') }: <b>{ n * 2 }</b>
+                        <!-- A interpolacao nao aceita chaves aninhadas, entao a
+                             chamada com parametros vive em um v-text. -->
+                        <span v-text="$t('hero.clicks', { n: n })"></span>
+                        <span aria-hidden="true">|</span>
+                        <span v-text="$t('hero.double')"></span>: <b>{ n * 2 }</b>
                       </p>
                     </div>
                   </div>
@@ -795,71 +814,113 @@
             </p>
           </div>
 
-          <div v-data="{ modo: 'cdn' }">
-            <div class="vd-tabs" role="tablist">
-              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'cdn'" :class="{ 'is-on': modo === 'cdn' }" @click="modo = 'cdn'" v-t="install.tabCdn">CDN</button>
-              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'npm'" :class="{ 'is-on': modo === 'npm' }" @click="modo = 'npm'" v-t="install.tabNpm">npm</button>
-              <button class="vd-tab" type="button" role="tab" :aria-selected="modo === 'dl'" :class="{ 'is-on': modo === 'dl' }" @click="modo = 'dl'" v-t="install.tabDownload">Download</button>
-            </div>
+          <div class="vd-inst" v-data="{ pacote: 'essencial' }">
 
-            <div class="vd-mt" v-show="modo === 'cdn'">
-              <div class="vd-cmd">
-                <code v-text="cdnTag"></code>
-                <button class="vd-copy" type="button" data-done="false" @click="copyText(cdnTag, $el)">
-                  <span v-t="hero.copy">Copiar</span>
-                </button>
-              </div>
-              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;!doctype html&gt;
+            <ol class="vd-passos">
+
+              <li class="vd-passo">
+                <span class="vd-passo-num">1</span>
+                <div class="vd-passo-corpo">
+                  <h3 class="vd-passo-titulo" v-t="install.step1">Baixe o arquivo</h3>
+                  <p class="vd-passo-texto" v-t="install.step1Note">A Voodoo.js e um arquivo so.</p>
+
+                  <div class="vd-pacotes">
+                    <button type="button" class="vd-pacote" :class="{ 'is-on': pacote === 'essencial' }" @click="pacote = 'essencial'">
+                      <strong>voodoo.min.js</strong>
+                      <span class="vd-pacote-tag" v-t="install.essential">Essencial</span>
+                      <small v-t="install.essentialWhat">Reatividade, directives, componentes, DOM, HTTP, formularios, validacao, mascaras, interface e arrastar e soltar.</small>
+                      <em>75 KB gzip</em>
+                    </button>
+
+                    <button type="button" class="vd-pacote" :class="{ 'is-on': pacote === 'completo' }" @click="pacote = 'completo'">
+                      <strong>voodoo.full.min.js</strong>
+                      <span class="vd-pacote-tag" v-t="install.full">Completo</span>
+                      <small v-t="install.fullWhat">Tudo do essencial, mais graficos, animacoes com fisica, roteador, idiomas, inspetor e 29 componentes prontos.</small>
+                      <em>120 KB gzip</em>
+                    </button>
+                  </div>
+
+                  <div class="vd-row vd-mt">
+                    <a class="vd-btn vd-btn-primary" download :href="pacote === 'completo' ? 'https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js' : 'https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js'">
+                      <span v-t="install.download">Baixar do GitHub</span>
+                    </a>
+                    <a class="vd-btn vd-btn-quiet" href="https://github.com/kwy404/Voodoo.js" target="_blank" rel="noopener">
+                      <span v-t="install.repo">Ver o repositorio</span>
+                    </a>
+                  </div>
+
+                  <div class="vd-cmd vd-mt">
+                    <code v-text="'curl -L -o ' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js') + ' https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js')"></code>
+                    <button class="vd-copy" type="button" data-done="false" @click="copyText('curl -L -o ' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js') + ' https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js'), $el)">
+                      <span v-t="hero.copy">Copiar</span>
+                    </button>
+                  </div>
+                </div>
+              </li>
+
+              <li class="vd-passo">
+                <span class="vd-passo-num">2</span>
+                <div class="vd-passo-corpo">
+                  <h3 class="vd-passo-titulo" v-t="install.step2">Aponte uma tag para ele</h3>
+                  <p class="vd-passo-texto" v-t="install.step2Note">Nao existe nada para chamar depois.</p>
+                  <div class="vd-cmd">
+                    <code v-text="'&lt;script src=&quot;' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js') + '&quot; defer&gt;&lt;/script&gt;'"></code>
+                    <button class="vd-copy" type="button" data-done="false" @click="copyText('&lt;script src=&quot;' + (pacote === 'completo' ? 'voodoo.full.min.js' : 'voodoo.min.js') + '&quot; defer&gt;&lt;/script&gt;', $el)">
+                      <span v-t="hero.copy">Copiar</span>
+                    </button>
+                  </div>
+                </div>
+              </li>
+
+              <li class="vd-passo">
+                <span class="vd-passo-num">3</span>
+                <div class="vd-passo-corpo">
+                  <h3 class="vd-passo-titulo" v-t="install.step3">Escreva HTML</h3>
+                  <p class="vd-passo-texto" v-t="install.step3Note">Daqui em diante e so atributo.</p>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;!doctype html&gt;
 &lt;html lang="pt-BR"&gt;
   &lt;head&gt;
     &lt;meta charset="utf-8"&gt;
-    &lt;script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;
+    &lt;script src="voodoo.min.js" defer&gt;&lt;/script&gt;
   &lt;/head&gt;
   &lt;body&gt;
-    &lt;div v-data="{ nome: 'mundo' }"&gt;
+
+    &lt;div v-data="{ nome: 'mundo', n: 0 }"&gt;
       &lt;h1&gt;Ola, { nome }!&lt;/h1&gt;
       &lt;input v-model="nome"&gt;
+
+      &lt;button @click="n++"&gt;Clicou { n } vezes&lt;/button&gt;
     &lt;/div&gt;
+
   &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-              <p class="vd-pg-desc" v-t="install.cdnNote">
-                O caminho mais rapido. Cole a tag no final do head, com defer.
-              </p>
-            </div>
+                </div>
+              </li>
 
-            <div class="vd-mt" v-show="modo === 'npm'">
-              <div class="vd-cmd">
-                <code v-text="npmCmd">npm install voodoojs</code>
-                <button class="vd-copy" type="button" data-done="false" @click="copyText(npmCmd, $el)">
-                  <span v-t="hero.copy">Copiar</span>
-                </button>
-              </div>
-              <pre class="vd-code vd-mt" v-ignore><code data-hl="js">import V from 'voodoojs';
+            </ol>
 
-// Directives e componentes registrados, DOM ainda intacto.
-V.config.prefix = 'v-';
-V.start();
+            <div class="vd-config">
+              <h3 class="vd-passo-titulo" v-t="install.configTitle">Configuracao pela propria tag</h3>
+              <p class="vd-passo-texto" v-t="install.configNote">Da para ajustar tudo sem escrever uma linha de JavaScript.</p>
+              <pre class="vd-code" v-ignore><code data-hl="html">&lt;script src="voodoo.min.js"
+        data-prefix="data-v-"
+        data-base-url="https://api.exemplo.com"
+        data-locale="pt-BR"
+        data-devtools
+        defer&gt;&lt;/script&gt;</code></pre>
 
-// Ou apenas o que voce usa, com tree shaking:
-import { reactive, http, toast } from 'voodoojs';</code></pre>
-              <p class="vd-pg-desc" v-t="install.npmNote">
-                Para quem ja usa um bundler. O pacote exporta modulos ESM e CJS.
-              </p>
-            </div>
-
-            <div class="vd-mt" v-show="modo === 'dl'">
-              <div class="vd-row">
-                <a class="vd-btn vd-btn-primary vd-btn-sm" href="voodoo.full.min.js" download>
-                  voodoo.full.min.js
-                </a>
-                <span class="vd-chip">{ stats.raw } KB</span>
-                <span class="vd-chip vd-chip-mint">{ stats.gzip } KB gzip</span>
-                <span class="vd-chip vd-chip-magenta">{ stats.brotli } KB brotli</span>
-              </div>
-              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script src="/js/voodoo.full.min.js" defer&gt;&lt;/script&gt;</code></pre>
-              <p class="vd-pg-desc" v-t="install.downloadNote">
-                Baixe o arquivo, coloque ao lado do seu HTML e sirva do seu proprio dominio.
-              </p>
+              <table class="vd-tabela vd-mt">
+                <thead><tr><th v-t="install.attr">Atributo</th><th v-t="install.what">O que faz</th></tr></thead>
+                <tbody>
+                  <tr><td><code>data-prefix</code></td><td v-t="install.optPrefix">Troca o prefixo v- por outro</td></tr>
+                  <tr><td><code>data-base-url</code></td><td v-t="install.optBase">URL base das requisicoes por atributo</td></tr>
+                  <tr><td><code>data-locale</code></td><td v-t="install.optLocale">Idioma de data, numero e moeda</td></tr>
+                  <tr><td><code>data-devtools</code></td><td v-t="install.optDev">Liga o inspetor e os avisos detalhados</td></tr>
+                  <tr><td><code>data-no-styles</code></td><td v-t="install.optStyles">Nao injeta o CSS da interface</td></tr>
+                  <tr><td><code>data-keep-attributes</code></td><td v-t="install.optKeep">Mantem os atributos v- no HTML</td></tr>
+                  <tr><td><code>data-manual</code></td><td v-t="install.optManual">Nao comeca sozinho, voce chama V.start()</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -950,59 +1011,7 @@ V.setLocale('en');</code></pre>
             </p>
           </div>
 
-          <div class="vd-pg" v-data="{ id: 'state', code: exampleCode('state') }">
-            <div class="vd-pg-list" role="tablist" :aria-label="$t('playground.examples')">
-              <button
-                class="vd-pg-item"
-                type="button"
-                role="tab"
-                v-for="ex in examples"
-                :key="ex.id"
-                :aria-selected="id === ex.id"
-                :class="{ 'is-on': id === ex.id }"
-                @click="id = ex.id; code = exampleCode(ex.id)"
-                v-text="$t('playground.ex.' + ex.id)"
-              ></button>
-            </div>
-
-            <div>
-              <div class="vd-pg-main">
-                <div class="vd-pg-box">
-                  <div class="vd-pg-boxhead">
-                    <span v-t="playground.editor">Editor de HTML</span>
-                    <button class="vd-btn vd-btn-quiet vd-btn-sm" type="button" @click="code = exampleCode(id)" v-t="playground.reset">Restaurar exemplo</button>
-                  </div>
-                  <textarea
-                    class="vd-pg-editor"
-                    v-model="code"
-                    spellcheck="false"
-                    autocapitalize="off"
-                    autocorrect="off"
-                    :aria-label="$t('playground.editor')"
-                  ></textarea>
-                </div>
-
-                <div class="vd-pg-box">
-                  <div class="vd-pg-boxhead">
-                    <span v-t="playground.preview">Resultado ao vivo</span>
-                    <span class="vd-dot" aria-hidden="true"></span>
-                  </div>
-                  <iframe
-                    class="vd-pg-frame"
-                    id="pgFrame"
-                    data-live="true"
-                    :title="$t('playground.preview')"
-                    sandbox="allow-scripts allow-same-origin allow-popups"
-                  ></iframe>
-                </div>
-              </div>
-
-              <p class="vd-pg-desc" v-effect="preview('pgFrame', code)" v-text="$t('playground.exDesc.' + id)"></p>
-              <p class="vd-soft" v-t="playground.hint">
-                A atualizacao acontece pouco depois de voce parar de digitar.
-              </p>
-            </div>
-          </div>
+          <vd-playground></vd-playground>
         </div>
       </section>
 
@@ -1054,10 +1063,10 @@ V.setLocale('en');</code></pre>
                   <span class="vd-dname">v-init</span>
                   <p class="vd-ddesc" v-t="directives.d.init">Executa uma expressao assim que o elemento entra na pagina.</p>
                   <pre class="vd-code" v-ignore><code data-hl="html">&lt;p v-data="{ hora: '' }"
-   v-init="hora = $d(new Date(), 'time')"&gt;
+   v-init="hora = $d(Date.now(), 'time')"&gt;
   { hora }
 &lt;/p&gt;</code></pre>
-                  <div class="vd-ddemo" v-data="{ hora: '' }" v-init="hora = $d(new Date(), 'time')">
+                  <div class="vd-ddemo" v-data="{ hora: '' }" v-init="hora = $d(Date.now(), 'time')">
                     <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
                     <span class="vd-out">{ hora }</span>
                   </div>
@@ -1380,7 +1389,7 @@ V.setLocale('en');</code></pre>
                     <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
                     <span class="vd-out" v-if="user.loading">carregando</span>
                     <span class="vd-out" v-else-if="user.error">offline</span>
-                    <span class="vd-out" v-else>{ user.data.name }</span>
+                    <span class="vd-out" v-else v-text="user.data ? user.data.name : '...'"></span>
                     <button class="vd-mini" type="button" @click="user.reload()">reload()</button>
                   </div>
                 </article>
@@ -1463,10 +1472,10 @@ V.setLocale('en');</code></pre>
                   <p class="vd-ddesc">
                     Copia um texto para a area de transferencia e avisa quem clicou.
                   </p>
-                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-copy="npm install voodoojs"&gt;Copiar&lt;/button&gt;</code></pre>
+                  <pre class="vd-code" v-ignore><code data-hl="html">&lt;button v-copy="PROMO10"&gt;Copiar&lt;/button&gt;</code></pre>
                   <div class="vd-ddemo">
                     <span class="vd-ddemo-tag" v-t="directives.demo">Demonstracao</span>
-                    <button class="vd-mini" type="button" v-copy="npm install voodoojs">v-copy</button>
+                    <button class="vd-mini" type="button" v-copy="PROMO10">v-copy</button>
                   </div>
                 </article>
 
@@ -1752,17 +1761,17 @@ V.setLocale('en');</code></pre>
 
           <div class="vd-grid vd-grid-2">
             <!-- Memoria -->
-            <section class="vd-game" v-data="{ deck: makeDeck(), moves: 0, pairs: 0, time: 0, started: 0, won: false, locked: false, code: false }">
+            <section class="vd-game" v-data="{ g: { deck: makeDeck(), moves: 0, pairs: 0, time: 0, started: 0, won: false, locked: false }, code: false }">
               <div class="vd-game-head">
                 <h3 class="vd-card-title" v-t="games.memory.title">Jogo da memoria</h3>
                 <p class="vd-card-text" v-t="games.memory.desc">Vire as cartas e ache os pares.</p>
               </div>
               <div class="vd-game-body">
                 <div class="vd-scoreboard">
-                  <span class="vd-score"><b>{ moves }</b> <span v-t="games.memory.moves">jogadas</span></span>
-                  <span class="vd-score"><b>{ pairs }</b>/8 <span v-t="games.memory.pairs">pares</span></span>
-                  <span class="vd-score"><b>{ time }</b>s <span v-t="games.memory.time">tempo</span></span>
-                  <button class="vd-mini" type="button" @click="memReset($data)" v-t="games.memory.restart">Reiniciar</button>
+                  <span class="vd-score"><b>{ g.moves }</b> <span v-t="games.memory.moves">jogadas</span></span>
+                  <span class="vd-score"><b>{ g.pairs }</b>/8 <span v-t="games.memory.pairs">pares</span></span>
+                  <span class="vd-score"><b>{ g.time }</b>s <span v-t="games.memory.time">tempo</span></span>
+                  <button class="vd-mini" type="button" @click="memReset(g)" v-t="games.memory.restart">Reiniciar</button>
                   <button class="vd-mini" type="button" @click="code = !code" v-text="code ? $t('games.hideCode') : $t('games.showCode')"></button>
                 </div>
 
@@ -1770,23 +1779,22 @@ V.setLocale('en');</code></pre>
                   <button
                     class="vd-mem-card"
                     type="button"
-                    v-for="(card, i) in deck"
+                    v-for="(card, i) in g.deck"
                     :key="card.id"
                     :class="{ 'is-up': card.up, 'is-done': card.done }"
                     :aria-label="$t('games.memory.cardLabel', { n: i + 1 })"
-                    @click="memFlip($data, card)"
+                    :data-face="card.face"
+                    @click="memFlip(g, card)"
                     v-text="card.up || card.done ? card.face : ''"
                   ></button>
                 </div>
 
-                <p class="vd-verdict-box is-right" v-show="won">
-                  { $t('games.memory.won', { moves: moves, time: time }) }
-                </p>
+                <p class="vd-verdict-box is-right" v-show="g.won" v-text="$t('games.memory.won', { moves: g.moves, time: g.time })"></p>
 
-                <pre class="vd-code vd-mt" v-show="code" v-ignore><code data-hl="html">&lt;div v-data="{ deck: makeDeck(), moves: 0, pairs: 0 }"&gt;
-  &lt;button v-for="card in deck" :key="card.id"
+                <pre class="vd-code vd-mt" v-show="code" v-ignore><code data-hl="html">&lt;div v-data="{ g: { deck: makeDeck(), moves: 0, pairs: 0 } }"&gt;
+  &lt;button v-for="card in g.deck" :key="card.id"
           :class="{ 'is-up': card.up, 'is-done': card.done }"
-          @click="memFlip($data, card)"
+          @click="memFlip(g, card)"
           v-text="card.up || card.done ? card.face : ''"&gt;&lt;/button&gt;
 &lt;/div&gt;</code></pre>
               </div>
@@ -1852,50 +1860,51 @@ V.setLocale('en');</code></pre>
             </section>
 
             <!-- Caca ao bug -->
-            <section class="vd-game" v-data="{ step: 0, score: 0, answered: false, picked: -1, right: false, finished: false }">
+            <section class="vd-game" v-data="{ g: { step: 0, score: 0, answered: false, picked: -1, right: false, finished: false } }">
               <div class="vd-game-head">
                 <h3 class="vd-card-title" v-t="games.bug.title">Caca ao bug</h3>
                 <p class="vd-card-text" v-t="games.bug.desc">Cada trecho tem exatamente um erro.</p>
               </div>
               <div class="vd-game-body">
                 <div class="vd-scoreboard">
-                  <span class="vd-score"><b>{ score }</b> <span v-t="games.bug.score">acertos</span> <span v-t="games.bug.of">de</span> { bugs.length }</span>
-                  <span class="vd-score">{ step + 1 } / { bugs.length }</span>
+                  <span class="vd-score"><b>{ g.score }</b> <span v-t="games.bug.score">acertos</span> <span v-t="games.bug.of">de</span> { bugs.length }</span>
+                  <span class="vd-score">{ g.step + 1 } / { bugs.length }</span>
                 </div>
 
-                <div v-if="!finished">
-                  <p class="vd-soft">{ $t('games.bug.q' + bugs[step].id) }</p>
+                <div v-if="!g.finished">
+                  <p class="vd-soft">{ $t('games.bug.q' + bugs[g.step].id) }</p>
                   <p class="vd-card-text" v-t="games.bug.question">Qual linha esta errada?</p>
 
                   <div class="vd-buglines">
                     <button
                       class="vd-bugline"
                       type="button"
-                      v-for="(line, i) in bugs[step].lines"
+                      v-for="(line, i) in bugs[g.step].lines"
                       :key="i"
-                      :class="{ 'is-right': answered && i === bugs[step].wrong, 'is-wrong': answered && i === picked && !right }"
-                      @click="bugAnswer($data, i)"
+                      :class="{ 'is-right': g.answered && i === bugs[g.step].wrong, 'is-wrong': g.answered && i === g.picked && !g.right }"
+                      @click="bugAnswer(g, i)"
                     >
                       <span class="vd-bugnum" aria-hidden="true">{ i + 1 }</span>
-                      <span v-text="line"></span>
+                      <!-- O texto vai dentro de `code` de proposito: a Voodoo.js
+                           nao interpola chaves dentro de `code` e `pre`, e as
+                           linhas do jogo sao codigo com chaves. -->
+                      <code v-text="line"></code>
                     </button>
                   </div>
 
-                  <div class="vd-verdict-box" :class="{ 'is-right': right, 'is-wrong': !right }" v-show="answered">
-                    <b v-text="right ? $t('games.bug.correct') : $t('games.bug.wrong')"></b>
-                    { $t('games.bug.e' + bugs[step].id) }
+                  <div class="vd-verdict-box" :class="{ 'is-right': g.right, 'is-wrong': !g.right }" v-show="g.answered">
+                    <b v-text="g.right ? $t('games.bug.correct') : $t('games.bug.wrong')"></b>
+                    { $t('games.bug.e' + bugs[g.step].id) }
                   </div>
 
-                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" v-show="answered" @click="bugNext($data)" v-t="games.bug.next">
+                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" v-show="g.answered" @click="bugNext(g)" v-t="games.bug.next">
                     Proximo trecho
                   </button>
                 </div>
 
                 <div v-else>
-                  <p class="vd-verdict-box is-right">
-                    { $t('games.bug.finished', { score: score, total: bugs.length }) }
-                  </p>
-                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" @click="bugReset($data)" v-t="games.bug.again">
+                  <p class="vd-verdict-box is-right" v-text="$t('games.bug.finished', { score: g.score, total: bugs.length })"></p>
+                  <button class="vd-btn vd-btn-primary vd-btn-sm vd-mt" type="button" @click="bugReset(g)" v-t="games.bug.again">
                     Jogar de novo
                   </button>
                 </div>
@@ -1903,7 +1912,7 @@ V.setLocale('en');</code></pre>
             </section>
 
             <!-- Montar a directive -->
-            <section class="vd-game" v-data="{ slots: ['', '', '', ''], status: '', solved: false }">
+            <section class="vd-game" v-data="{ g: { slots: ['', '', '', ''], status: '', solved: false } }">
               <div class="vd-game-head">
                 <h3 class="vd-card-title" v-t="games.builder.title">Monte a directive</h3>
                 <p class="vd-card-text" v-t="games.builder.desc">
@@ -1919,43 +1928,43 @@ V.setLocale('en');</code></pre>
                     draggable="true"
                     v-for="p in builderPieces"
                     :key="p"
-                    :class="{ 'is-used': slots.indexOf(p) > -1 }"
+                    :class="{ 'is-used': g.slots.indexOf(p) > -1 }"
                     @dragstart="$event.dataTransfer.setData('text/plain', p)"
-                    @click="builderPlace($data, p)"
+                    @click="builderPlace(g, p)"
                     v-text="p"
                   ></button>
                 </div>
 
                 <p class="vd-live-label" v-t="games.builder.line">Sua linha</p>
                 <div class="vd-slots">
-                  <span>&lt;li</span>
+                  <code>&lt;li</code>
                   <span
                     class="vd-slot"
-                    v-for="(s, i) in slots"
+                    v-for="(s, i) in g.slots"
                     :key="i"
                     :class="{ 'is-filled': s }"
                     @dragover.prevent="0"
-                    @drop.prevent="builderPlace($data, $event.dataTransfer.getData('text/plain'), i)"
-                    @click="slots[i] = ''"
+                    @drop.prevent="builderPlace(g, $event.dataTransfer.getData('text/plain'), i)"
+                    @click="g.slots[i] = ''"
                     v-text="s || $t('games.builder.drop')"
                   ></span>
-                  <span>&gt;{ item.nome }&lt;/li&gt;</span>
+                  <code>&gt;{ item.nome }&lt;/li&gt;</code>
                 </div>
 
                 <div class="vd-row vd-mt">
-                  <button class="vd-btn vd-btn-primary vd-btn-sm" type="button" @click="builderCheck($data)" v-t="games.builder.check">Conferir</button>
-                  <button class="vd-btn vd-btn-quiet vd-btn-sm" type="button" @click="builderClear($data)" v-t="games.builder.clear">Limpar</button>
+                  <button class="vd-btn vd-btn-primary vd-btn-sm" type="button" @click="builderCheck(g)" v-t="games.builder.check">Conferir</button>
+                  <button class="vd-btn vd-btn-quiet vd-btn-sm" type="button" @click="builderClear(g)" v-t="games.builder.clear">Limpar</button>
                 </div>
 
                 <p class="vd-soft vd-mt" v-t="games.builder.keyboard">
                   Use Tab para escolher uma peca e Enter para coloca-la na linha.
                 </p>
 
-                <div class="vd-verdict-box" :class="{ 'is-right': status === 'correct', 'is-wrong': status === 'wrong' }" v-show="status">
-                  { status === 'correct' ? $t('games.builder.correct') : status === 'incomplete' ? $t('games.builder.incomplete') : $t('games.builder.wrong') }
+                <div class="vd-verdict-box" :class="{ 'is-right': g.status === 'correct', 'is-wrong': g.status === 'wrong' }" v-show="g.status">
+                  { g.status === 'correct' ? $t('games.builder.correct') : g.status === 'incomplete' ? $t('games.builder.incomplete') : $t('games.builder.wrong') }
                 </div>
 
-                <div v-show="solved" v-data="{ itens: [{ id: 1, nome: 'Raiz de mandragora' }, { id: 2, nome: 'Po de estrela' }, { id: 3, nome: 'Pena de corvo' }] }">
+                <div v-show="g.solved" v-data="{ itens: [{ id: 1, nome: 'Raiz de mandragora' }, { id: 2, nome: 'Po de estrela' }, { id: 3, nome: 'Pena de corvo' }] }">
                   <p class="vd-live-label vd-mt" v-t="games.builder.result">Resultado</p>
                   <ul class="vd-list-demo">
                     <li v-for="item in itens" :key="item.id">{ item.nome }</li>
@@ -2008,7 +2017,6 @@ V.setLocale('en');</code></pre>
                   id="demoFrame"
                   data-live="true"
                   :title="$t('demos.' + app)"
-                  sandbox="allow-scripts allow-same-origin allow-popups"
                   :style="{ maxWidth: larg === 'phone' ? '375px' : larg === 'tablet' ? '768px' : '100%' }"
                 ></iframe>
               </div>
@@ -2051,6 +2059,11 @@ V.setLocale('en');</code></pre>
             </table>
           </div>
 
+          <p class="vd-soft vd-mt">
+            <span class="vd-chip">{ stats.gzip } KB</span>
+            <span v-text="$t('faq.a3')"></span>
+          </p>
+
           <div class="vd-card vd-mt-l">
             <h3 class="vd-h3" v-t="compare.honestTitle">Quando a Voodoo.js nao e a melhor escolha</h3>
             <ul class="vd-stack vd-mt">
@@ -2082,16 +2095,133 @@ V.setLocale('en');</code></pre>
             </p>
           </div>
 
-          <div v-accordion>
-            <div class="vd-acc" v-accordion-item v-for="n in 12" :key="n">
+          <!-- As perguntas ficam escritas no HTML, e nao geradas por v-for.
+               Dois motivos: o buscador le o texto real, e a directive
+               v-accordion procura os itens no momento em que e montada, antes
+               de um v-for do mesmo bloco ter criado qualquer filho. -->
+          <div v-accordion v-accordion-single>
+
+            <div class="vd-acc" v-accordion-item>
               <div class="vd-acc-btn">
-                <span v-text="$t('faq.q' + n)"></span>
+                <span v-t="faq.q1">O que e a Voodoo.js?</span>
                 <span class="vd-acc-mark" aria-hidden="true">+</span>
               </div>
               <div class="vd-acc-body">
-                <p v-text="$t('faq.a' + n)"></p>
+                <p v-t="faq.a1">Um micro framework JavaScript vanilla que coloca reatividade, componentes, requisicoes HTTP, formularios, animacoes e interface direto nos atributos do HTML. Voce carrega uma tag script e escreve o comportamento no proprio markup, sem passo de build e sem dependencias.</p>
               </div>
             </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q2">Preciso de Node, npm ou de um passo de build?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a2">Nao. Uma tag script apontando para o arquivo ja resolve. Node e npm existem apenas para quem prefere instalar pelo gerenciador de pacotes e importar modulos em um bundler que ja usa.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q3">Qual e o tamanho real do arquivo?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a3">Existem dois arquivos. O essencial, com reatividade, directives, HTTP, formularios e interface, tem cerca de 76 KB servido com gzip. O completo, que esta nesta pagina, soma graficos, animacao com fisica de mola, roteador, idiomas e os 29 componentes prontos, e fica em cerca de 120 KB com gzip. Nao existe pedaco carregado depois.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q4">A Voodoo.js e uma alternativa ao jQuery?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a4">Sim, e uma alternativa direta. O jQuery deixa o DOM como fonte da verdade e voce sincroniza tudo na mao. A Voodoo.js inverte isso: o estado e a fonte da verdade e a tela acompanha sozinha. Ainda assim ela oferece uma colecao encadeavel parecida, chamando V como funcao.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q5">Vale a pena trocar Vue ou React pela Voodoo.js?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a5">Depende do tamanho do projeto. Para paginas, paineis, sites institucionais e telas de administracao a Voodoo.js entrega o mesmo resultado com muito menos cerimonia. Para aplicacoes enormes, com centenas de componentes e um time grande, Vue e React continuam melhores.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q6">Como a reatividade funciona sem DOM virtual?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a6">Cada expressao do HTML vira um efeito que registra exatamente quais propriedades ele leu. Quando uma dessas propriedades muda, apenas os efeitos que dependem dela rodam de novo e escrevem no no de texto ou no atributo correspondente. Nao existe arvore intermediaria nem comparacao de arvores.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q7">Da para usar junto com Rails, Laravel, Django ou WordPress?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a7">Da, e este e um dos melhores usos. O servidor continua entregando HTML e a Voodoo.js apenas acrescenta comportamento. As directives de HTTP inclusive aceitam fragmentos de HTML vindos do servidor e trocam o conteudo no lugar certo.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q8">A biblioteca usa eval ou new Function?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a8">Nunca. As expressoes dos atributos passam por um analisador lexico e sintatico proprio e sao avaliadas por um interpretador de arvore, com uma lista fechada de globais liberados. Isso mantem a biblioteca compativel com politicas de seguranca de conteudo estritas.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q9">Em quais navegadores funciona?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a9">Em qualquer navegador moderno com suporte a Proxy e a MutationObserver, o que cobre Chrome, Edge, Firefox e Safari nas versoes atuais e em varias versoes anteriores. O bundle e compilado para ES2018.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q10">Tem TypeScript?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a10">A biblioteca inteira e escrita em TypeScript estrito e o pacote publica os arquivos de tipos. Quem importa pelo npm recebe tipagem completa da API em JavaScript. As expressoes escritas nos atributos continuam sendo avaliadas em tempo de execucao.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q11">Como faco uma requisicao sem escrever fetch?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a11">Escreva o verbo como atributo. A directive v-get busca a URL e coloca a resposta onde v-target apontar. A directive v-resource cria um objeto reativo com data, loading, error e um metodo reload, pronto para usar no template. Ha ainda v-post, v-put, v-patch, v-delete, v-search e v-poll.</p>
+              </div>
+            </div>
+
+            <div class="vd-acc" v-accordion-item>
+              <div class="vd-acc-btn">
+                <span v-t="faq.q12">Como contribuo ou reporto um problema?</span>
+                <span class="vd-acc-mark" aria-hidden="true">+</span>
+              </div>
+              <div class="vd-acc-body">
+                <p v-t="faq.a12">O repositorio esta no GitHub sob licenca MIT. Issues, discussoes e pedidos de merge sao bem vindos. Uma estrela ajuda outras pessoas a encontrarem o projeto.</p>
+              </div>
+            </div>
+
+
           </div>
         </div>
       </section>

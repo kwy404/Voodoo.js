@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação
+    url: https://github.com/voodoojs/voodoo/tree/main/docs
+    about: Guias, referência da API e perguntas frequentes. Comece por aqui.
+  - name: Perguntas frequentes
+    url: https://github.com/voodoojs/voodoo/blob/main/docs/perguntas-frequentes.md
+    about: Respostas para as dúvidas mais comuns, incluindo erros de configuração.
+  - name: Dúvidas e discussões
+    url: https://github.com/voodoojs/voodoo/discussions
+    about: Perguntas de uso, ideias em aberto e conversas com a comunidade.
+  - name: Vulnerabilidade de segurança
+    url: https://github.com/voodoojs/voodoo/security/advisories/new
+    about: Reporte de forma privada. Não abra uma issue pública.

@@ -19,7 +19,7 @@
  */
 
 import { handleError, reactive } from '../reactivity';
-import { config, defineDirective, PRIORITY } from '../runtime/registry';
+import { config, defineDirective, directives, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import {
   addCleanup,
@@ -303,7 +303,11 @@ export async function runRequest(options: RunOptions): Promise<void> {
   const { el, scope, method } = options;
   const settings = readSettings(el, scope);
 
-  if (settings.confirmMessage) {
+  // Quando o modulo de dialogos esta no pacote, a directive `v-confirm` ja
+  // intercepta o clique na fase de captura e pergunta por conta propria.
+  // Perguntar de novo aqui mostraria dois dialogos seguidos.
+  const dialogoCuidaDaPergunta = directives.has(`confirm`);
+  if (settings.confirmMessage && !dialogoCuidaDaPergunta) {
     const confirmed = await askConfirmation(settings.confirmMessage);
     if (!confirmed) return;
   }

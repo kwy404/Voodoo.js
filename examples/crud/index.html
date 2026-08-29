@@ -88,7 +88,12 @@
     background-color: var(--v-surface);
     box-shadow: var(--v-shadow-sm);
     padding: var(--v-space-4) var(--v-space-5);
+    transition:
+      transform var(--v-duration-base) var(--v-ease-out),
+      border-color var(--v-duration-base) var(--v-ease-out);
   }
+
+  .crud-metrica:hover { transform: translateY(-2px); border-color: var(--v-border-strong); }
 
   .crud-metrica__rotulo {
     display: block;
@@ -263,7 +268,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .crud-selo, .crud-metrica, .crud-avatar { transition: none; }
+    .crud-metrica { transition: none; }
+    .crud-metrica:hover { transform: none; }
   }
 </style>
 </head>
