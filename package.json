@@ -15,7 +15,8 @@
     "typecheck": "tsc -p packages/voodoojs/tsconfig.json --noEmit",
     "format": "prettier --write \"**/*.{ts,js,json,md,html,css}\"",
     "size": "node scripts/size.mjs",
-    "serve": "node scripts/serve.mjs"
+    "serve": "node scripts/serve.mjs",
+    "docs:index": "node scripts/docs-index.mjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

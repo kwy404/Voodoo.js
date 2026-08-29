@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Campos de formulário com v-model · Documentação da Voodoo.js</title>
 <meta name="description" content="O v-model nos dois sentidos: o que cada tipo de campo escreve no estado, os modificadores number, trim, lazy, debounce e single, e a ligação com caminhos aninhados.">
-<link rel="canonical" href="https://voodoojs.dev/docs/guia/campos-e-v-model.html">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/campos-e-v-model">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
@@ -47,7 +47,7 @@
     &lt;label&gt;&lt;input type="radio" value="cartao" v-model="pagamento"&gt; Cartão&lt;/label&gt;
   &lt;/div&gt;
 
-  &lt;p&gt;{ JSON.stringify({ nome, aceito, uf, tags, pagamento }) }&lt;/p&gt;
+  &lt;p v-text="JSON.stringify({ nome, aceito, uf, tags, pagamento })"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
@@ -121,7 +121,7 @@
     &lt;input v-model="form.endereco.cidade" placeholder="Cidade"&gt;
     &lt;input v-model="form.endereco.uf" placeholder="UF"&gt;
   &lt;/div&gt;
-  &lt;p&gt;{ JSON.stringify(form) }&lt;/p&gt;
+  &lt;p v-text="JSON.stringify(form)"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 

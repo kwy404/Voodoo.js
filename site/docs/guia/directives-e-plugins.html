@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Directives próprias e plugins · Documentação da Voodoo.js</title>
 <meta name="description" content="Registrar directives com ciclo de vida ou na forma curta, o objeto binding, variáveis mágicas próprias, defineDirective com controle fino, e empacotar tudo em um plugin com V.use.">
-<link rel="canonical" href="https://voodoojs.dev/docs/guia/directives-e-plugins.html">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/directives-e-plugins">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
@@ -184,8 +184,10 @@ defineDirective(
     V.magic('$altura', (scope) =&gt; scope.el.offsetHeight);
   &lt;/script&gt;
 
-  &lt;p&gt;Olá, { $usuario.nome } — plano { $usuario.plano }.&lt;/p&gt;
-  &lt;p&gt;A altura deste escopo é { $altura } pixels.&lt;/p&gt;
+  &lt;div v-data="{}"&gt;
+    &lt;p&gt;Olá, { $usuario.nome } — plano { $usuario.plano }.&lt;/p&gt;
+    &lt;p&gt;A altura deste escopo é { $altura } pixels.&lt;/p&gt;
+  &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Idiomas · Documentação da Voodoo.js</title>
 <meta name="description" content="Internacionalização reativa: configurar mensagens, v-t, interpolação, pluralização pelo CLDR, troca de idioma sem recarregar e os formatadores $n, $c, $d e $rt.">
-<link rel="canonical" href="https://voodoojs.dev/docs/guia/idiomas.html">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/idiomas">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
@@ -101,9 +101,10 @@
     &lt;/div&gt;
 
     &lt;h4 v-t="titulo"&gt;&lt;/h4&gt;
-    &lt;p&gt;{ $t('ola', { nome: 'Ana' }) }&lt;/p&gt;
+    &lt;p v-text="$t('ola', { nome: 'Ana' })"&gt;&lt;/p&gt;
     &lt;p&gt;{ $t('itens', quantos) }&lt;/p&gt;
-    &lt;p&gt;{ $c(1234.5) } · { $d('2026-08-29') } · { $n(0.75, { style: 'percent' }) }&lt;/p&gt;
+    &lt;p&gt;{ $c(1234.5) } · { $d('2026-08-29') }&lt;/p&gt;
+    &lt;p v-text="$n(0.75, { style: 'percent' })"&gt;&lt;/p&gt;
     &lt;button v-t="comum.salvar"&gt;&lt;/button&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>

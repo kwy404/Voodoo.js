@@ -36,7 +36,6 @@
     }
   ],
   "redirects": [
-    { "source": "/docs", "destination": "https://github.com/voodoojs/voodoo#readme", "permanent": false },
     { "source": "/github", "destination": "https://github.com/voodoojs/voodoo", "permanent": false },
     { "source": "/npm", "destination": "https://www.npmjs.com/package/voodoojs", "permanent": false }
   ]

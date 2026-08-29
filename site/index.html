@@ -346,6 +346,7 @@
         <nav class="vd-nav" aria-label="Principal">
           <a href="#guia" v-t="guide.eyebrow">Guia rapido</a>
           <a href="#instalacao" v-t="nav.install">Instalacao</a>
+          <a href="/docs/" v-t="nav.docs">Documentacao</a>
           <a href="#playground" v-t="nav.playground">Playground</a>
           <a href="#directives" v-t="nav.directives">Directives</a>
           <a href="#componentes" v-t="nav.components">Componentes</a>
@@ -468,6 +469,7 @@
         <a href="#problema" @click="menu = false" v-t="nav.problem">Por que</a>
         <a href="#guia" @click="menu = false" v-t="guide.eyebrow">Guia rapido</a>
         <a href="#instalacao" @click="menu = false" v-t="nav.install">Instalacao</a>
+        <a href="/docs/" @click="menu = false" v-t="nav.docs">Documentacao</a>
         <a href="#playground" @click="menu = false" v-t="nav.playground">Playground</a>
         <a href="#directives" @click="menu = false" v-t="nav.directives">Directives</a>
         <a href="#componentes" @click="menu = false" v-t="nav.components">Componentes</a>
@@ -2310,7 +2312,7 @@ V.setLocale('en');</code></pre>
             <h2 class="vd-foot-title" v-t="footer.resources">Recursos</h2>
             <ul class="vd-foot-list">
               <li><a href="/examples/" v-t="nav.examples">Exemplos</a></li>
-              <li><a :href="github + '#readme'" target="_blank" rel="noopener" v-t="nav.docs">Documentacao</a></li>
+              <li><a href="/docs/" v-t="nav.docs">Documentacao</a></li>
               <li><a href="https://www.npmjs.com/package/voodoojs" target="_blank" rel="noopener">npm</a></li>
               <li><a :href="github + '/blob/main/brand/README.md'" target="_blank" rel="noopener" v-t="footer.brand">Marca</a></li>
               <li><a :href="github + '/tree/main/design-system'" target="_blank" rel="noopener" v-t="footer.designSystem">Design system</a></li>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estado e escopo com v-data · Documentação da Voodoo.js</title>
 <meta name="description" content="Onde a página guarda o que precisa lembrar: o v-data, o que é escopo, como a leitura sobe a cadeia, para onde vai a escrita e o que exatamente é reativo.">
-<link rel="canonical" href="https://voodoojs.dev/docs/guia/estado-e-escopo.html">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/estado-e-escopo">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
@@ -111,23 +111,55 @@
   a limitação clássica de precisar trocar o array inteiro.
 </p>
 
-<h2 id="funcoes-no-estado">Funções dentro do estado</h2>
+<h2 id="funcoes-no-estado">Onde ficam as funções</h2>
 
 <p>
-  Uma chave do <code>v-data</code> pode ser uma função. Dentro dela, <code>this</code> é o próprio
-  escopo, o que evita repetir expressões longas em vários atributos.
+  O valor do <code>v-data</code> é uma expressão, não um bloco de JavaScript: ele aceita objetos,
+  listas, números e textos, mas <b>não</b> aceita métodos escritos ali dentro. Isto <i>não</i>
+  funciona:
+</p>
+
+<pre data-lang="html"><code>&lt;!-- não funciona: o parser de expressões não aceita corpo de função --&gt;
+&lt;div v-data="{ itens: [], total() { return this.itens.length } }"&gt;</code></pre>
+
+<p>
+  Lógica com mais de uma linha mora em um dos três lugares abaixo, e o HTML chama pelo nome:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{
-  itens: [{ nome: 'Caneca', preco: 39 }, { nome: 'Camiseta', preco: 89 }],
-  total() { return this.itens.reduce((s, i) =&gt; s + i.preco, 0) },
-  adicionar() { this.itens.push({ nome: 'Novo', preco: 10 }) }
-}"&gt;
-  &lt;button @click="adicionar()"&gt;Adicionar item&lt;/button&gt;
-  &lt;p&gt;{ itens.length } itens, R$ { total() }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div&gt;
+  &lt;script&gt;
+    V.data({
+      precos: { Caneca: 39, Camiseta: 89 },
+      total(itens) {
+        return itens.reduce((soma, nome) =&gt; soma + this.precos[nome], 0);
+      }
+    });
+  &lt;/script&gt;
+
+  &lt;div v-data="{ itens: ['Caneca'] }"&gt;
+    &lt;button @click="itens.push('Camiseta')"&gt;Adicionar camiseta&lt;/button&gt;
+    &lt;p&gt;{ itens.length } itens, R$ { total(itens) }&lt;/p&gt;
+  &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>A função é usada</th><th>Escreva em</th></tr></thead>
+<tbody>
+<tr><td>Por uma página inteira</td><td><code>V.data({ ... })</code>, o escopo raiz</td></tr>
+<tr><td>Junto de um estado compartilhado</td><td>Um <a href="stores.html">store</a>, onde <code>this</code> é o próprio store</td></tr>
+<tr><td>Só por um pedaço reaproveitável</td><td>Os <code>methods</code> de um <a href="componentes.html">componente</a></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Expressões curtas continuam cabendo no atributo — <code>@click="itens.push('x')"</code>,
+  <code>{ itens.filter(i =&gt; i.pago).length }</code>. O limite é o corpo de função, não o
+  tamanho.
+</p>
 
 <h2 id="v-init">Rodando algo assim que o escopo nasce</h2>
 
@@ -136,9 +168,24 @@
   Serve para preparar valores derivados, disparar uma primeira busca ou ler algo do documento.
 </p>
 
-<pre data-lang="html"><code>&lt;div v-data="{ agora: '' }" v-init="agora = new Date().toLocaleTimeString()"&gt;
-  &lt;p&gt;A página abriu às { agora }.&lt;/p&gt;
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div&gt;
+  &lt;script&gt;
+    V.config.globals.horaAgora = () =&gt; new Date().toLocaleTimeString();
+  &lt;/script&gt;
+
+  &lt;div v-data="{ agora: '' }" v-init="agora = horaAgora()"&gt;
+    &lt;p&gt;Este quadro abriu às { agora }.&lt;/p&gt;
+  &lt;/div&gt;
 &lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  O exemplo passa por <code>V.config.globals</code> porque a expressão de um atributo não aceita
+  <code>new</code>: ela é um subconjunto de JavaScript, e construtores ficam de fora. Tudo que
+  precisa de <code>new</code>, de <code>function</code> ou de mais de uma linha vive em um script
+  e entra na expressão pelo nome.
+</p>
 
 <h2 id="onde-guardar">Onde guardar cada coisa</h2>
 

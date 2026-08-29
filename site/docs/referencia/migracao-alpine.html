@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrando do Alpine · Documentação da Voodoo.js</title>
+<meta name="description" content="A conversão de x- para v- é quase mecânica: tabela de equivalência completa, modificadores, magias, stores, componentes, e o que se ganha e o que se perde na troca.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/migracao-alpine">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Qualidade e migração</p>
+<h1>Migrando do Alpine</h1>
+<p class="doc-resumo">
+  As duas partem da mesma ideia: comportamento declarado no HTML, sem passo de build. A conversão
+  costuma ser quase mecânica. As diferenças reais aparecem no que a Voodoo traz junto, que no
+  Alpine mora em plugins ou no seu próprio código.
+</p>
+
+<h2 id="equivalencia">Tabela de equivalência</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Alpine</th><th>Voodoo.js</th><th>Observação</th></tr></thead>
+<tbody>
+<tr><td><code>x-data="{ n: 0 }"</code></td><td><code>v-data="{ n: 0 }"</code></td><td></td></tr>
+<tr><td><code>x-text</code>, <code>x-html</code>, <code>x-show</code></td><td><code>v-text</code>, <code>v-html</code>, <code>v-show</code></td><td></td></tr>
+<tr><td><code>x-if</code> em <code>&lt;template&gt;</code></td><td><code>v-if</code> em qualquer elemento</td><td>Não precisa de <code>&lt;template&gt;</code></td></tr>
+<tr><td>não existe</td><td><code>v-else-if</code>, <code>v-else</code></td><td></td></tr>
+<tr><td><code>x-for</code> em <code>&lt;template&gt;</code></td><td><code>v-for</code> em qualquer elemento</td><td></td></tr>
+<tr><td><code>:key</code></td><td><code>:key</code></td><td></td></tr>
+<tr><td><code>x-bind:href</code>, <code>:href</code></td><td><code>v-bind:href</code>, <code>:href</code></td><td></td></tr>
+<tr><td><code>x-on:click</code>, <code>@click</code></td><td><code>v-on:click</code>, <code>@click</code> ou <code>v-click</code></td><td></td></tr>
+<tr><td><code>x-model</code>, <code>x-init</code>, <code>x-ref</code></td><td><code>v-model</code>, <code>v-init</code>, <code>v-ref</code></td><td></td></tr>
+<tr><td><code>x-effect</code>, <code>x-cloak</code>, <code>x-ignore</code></td><td><code>v-effect</code>, <code>v-cloak</code>, <code>v-ignore</code> ou <code>v-pre</code></td><td></td></tr>
+<tr><td><code>x-teleport="body"</code></td><td><code>v-teleport="body"</code></td><td></td></tr>
+<tr><td><code>x-transition</code></td><td><code>v-transition="fade"</code></td><td></td></tr>
+<tr><td><code>x-transition:enter="..."</code></td><td><code>v-enter-active-class="..."</code></td><td></td></tr>
+<tr><td><code>x-modelable</code></td><td>não existe</td><td>Use props e <code>emit</code> em um componente</td></tr>
+<tr><td><code>x-id</code> e <code>$id()</code></td><td><code>V.uid()</code></td><td></td></tr>
+<tr><td><code>{{ n }}</code></td><td><code>{ n }</code></td><td>A chave dupla também funciona</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="modificadores">Modificadores</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Alpine</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>.prevent</code>, <code>.stop</code>, <code>.self</code>, <code>.once</code>, <code>.capture</code>, <code>.passive</code></td><td>iguais</td></tr>
+<tr><td><code>.window</code>, <code>.document</code></td><td>iguais</td></tr>
+<tr><td><code>.outside</code></td><td><code>.outside</code>, ou o evento sintético <code>@outside</code></td></tr>
+<tr><td><code>.debounce</code>, <code>.throttle</code></td><td>iguais</td></tr>
+<tr><td>teclas e <code>.ctrl</code>, <code>.shift</code>, <code>.alt</code>, <code>.meta</code></td><td>iguais. <code>.cmd</code> vira <code>.meta</code></td></tr>
+<tr><td><code>.camel</code>, <code>.dot</code></td><td>não existem</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Em <code>v-model</code>: <code>.lazy</code>, <code>.number</code> e <code>.debounce</code>
+  existem nos dois — aqui o tempo do debounce vem do atributo <code>v-debounce</code>.
+  <code>.throttle</code> não existe; <code>.trim</code> e <code>.single</code>, para arquivo,
+  são novidades.
+</p>
+
+<h2 id="magias">Variáveis mágicas</h2>
+
+<p>
+  <code>$el</code>, <code>$refs</code>, <code>$store</code>, <code>$watch</code>,
+  <code>$dispatch</code>, <code>$nextTick</code>, <code>$root</code>, <code>$data</code> e
+  <code>$event</code> são iguais. <code>$id</code> vira <code>V.uid()</code>, e o
+  <code>$persist</code> do plugin vira a directive <code>v-persist</code>.
+</p>
+
+<p>
+  Não existem no Alpine: <code>$parent</code>, <code>$self</code>, <code>$detail</code>,
+  <code>$http</code>, <code>$toast</code>, <code>$modal</code>, <code>$form</code>,
+  <code>$storage</code>, <code>$cookie</code>, <code>$url</code>, <code>$cache</code>,
+  <code>$screen</code>, <code>$network</code>, <code>$device</code>, <code>$theme</code>,
+  <code>$clipboard</code>, <code>$route</code>, <code>$router</code>, <code>$t</code> e
+  <code>$locale</code>.
+</p>
+
+<h2 id="store">Store e dados globais</h2>
+
+<pre data-lang="js"><code>// Alpine
+Alpine.store('carrinho', { itens: [], adicionar(p) { this.itens.push(p) } });
+
+// Voodoo.js
+V.store('carrinho', { itens: [], adicionar(p) { this.itens.push(p) } });
+V.store('carrinho', { itens: [] }, { persist: true });   // persistência na criação</code></pre>
+
+<p>No HTML, os dois usam <code>$store.carrinho</code>.</p>
+
+<pre data-lang="js"><code>// Alpine: Alpine.data
+Alpine.data('dropdown', () =&gt; ({ aberto: false, alternar() { this.aberto = !this.aberto } }));
+
+// Voodoo.js: um componente
+V.component('dropdown', {
+  state: () =&gt; ({ aberto: false }),
+  methods: { alternar() { this.aberto = !this.aberto } }
+});</code></pre>
+
+<h2 id="extensoes">Directives, magias e plugins</h2>
+
+<pre data-lang="js"><code>// Alpine
+Alpine.directive('destaque', (el, { expression }, { evaluate }) =&gt; {
+  el.style.background = evaluate(expression);
+});
+Alpine.magic('agora', () =&gt; new Date());
+Alpine.plugin(meuPlugin);
+
+// Voodoo.js
+V.directive('destaque', (el, binding) =&gt; { el.style.background = binding.value });
+V.magic('$agora', () =&gt; new Date());
+V.use(meuPlugin, { opcao: true });</code></pre>
+
+<h2 id="inicializacao">Inicialização</h2>
+
+<pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-manual&gt;&lt;/script&gt;
+&lt;script&gt;
+  V.component('x', { /* ... */ });
+  V.start();
+&lt;/script&gt;</code></pre>
+
+<p>
+  Com a tag normal, <code>V.start()</code> é chamado sozinho — use <code>data-manual</code> quando
+  quiser registrar tudo antes. O evento equivalente ao <code>alpine:init</code> é
+  <code>voodoo:ready</code>, disparado depois da montagem.
+</p>
+
+<h2 id="diferencas">Três diferenças que valem atenção</h2>
+
+<h3 id="interpolacao">1. Interpolação com chave simples</h3>
+
+<pre data-lang="html"><code>&lt;!-- Alpine --&gt;
+&lt;span x-text="nome"&gt;&lt;/span&gt;
+
+&lt;!-- Voodoo --&gt;
+&lt;span&gt;{ nome }&lt;/span&gt;</code></pre>
+
+<h3 id="atributos">2. Os atributos somem do HTML</h3>
+
+<p>
+  Depois de processada, a directive sai do documento. Se você tem CSS ou scripts que dependem de
+  seletores como <code>[x-show]</code>, adapte para classes, ou desligue a limpeza com
+  <code>V.config.cleanAttributes = false</code>.
+</p>
+
+<h3 id="template">3. v-if não precisa de template</h3>
+
+<pre data-lang="html"><code>&lt;!-- Alpine --&gt;
+&lt;template x-if="logado"&gt;&lt;p&gt;Bem-vindo&lt;/p&gt;&lt;/template&gt;
+
+&lt;!-- Voodoo --&gt;
+&lt;p v-if="logado"&gt;Bem-vindo&lt;/p&gt;</code></pre>
+
+<h2 id="ganha">O que você ganha na troca</h2>
+
+<ul>
+  <li>requisições declarativas: <code>v-get</code>, <code>v-post</code>, <code>v-resource</code>, <code>v-poll</code>, <code>v-search</code>;</li>
+  <li>formulário AJAX completo com <code>v-submit</code>, validação, máscaras, upload e autosave;</li>
+  <li>interface: modal, gaveta, abas, dropdown, tooltip, acordeão, paleta de comandos;</li>
+  <li>notificações e diálogos com promessa;</li>
+  <li>arrastar e soltar acessível;</li>
+  <li>armazenamento, cookies, cache e query string;</li>
+  <li>no build completo: gráficos, animações com mola, roteador, idiomas e o inspetor.</li>
+</ul>
+
+<h2 id="perde">O que você perde</h2>
+
+<ul>
+  <li>o ecossistema de plugins do Alpine, que é maior e mais antigo;</li>
+  <li><code>x-modelable</code>, que aqui vira props com <code>emit</code>;</li>
+  <li>a sintaxe de classes utilitárias direto no <code>x-transition</code>;</li>
+  <li>os modificadores <code>.camel</code> e <code>.dot</code> do <code>x-bind</code>;</li>
+  <li>e alguns kilobytes: o Alpine é menor porque faz menos.</li>
+</ul>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Migração gradual</span>
+  <p>
+    As duas bibliotecas usam prefixos diferentes, então convivem sem colisão na mesma página.
+    Migre tela por tela, trocando <code>x-</code> por <code>v-</code>, e remova o Alpine quando não
+    sobrar nenhum.
+  </p>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

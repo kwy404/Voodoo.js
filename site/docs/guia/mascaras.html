@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Máscaras de campo · Documentação da Voodoo.js</title>
 <meta name="description" content="Máscaras de digitação que preservam a posição do cursor: as prontas, o padrão por caracteres, o valor limpo no estado, moeda e porcentagem, e como criar as suas.">
-<link rel="canonical" href="https://voodoojs.dev/docs/guia/mascaras.html">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/mascaras">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
@@ -115,7 +115,7 @@
 <pre data-lang="html"><code>&lt;div v-data="{ form: { cpf: '', preco: '' } }"&gt;
   &lt;div class="linha"&gt;&lt;input v-mask.unmask="cpf" v-model="form.cpf" placeholder="CPF"&gt;&lt;/div&gt;
   &lt;div class="linha"&gt;&lt;input v-mask-currency.unmask v-model="form.preco" placeholder="Preço"&gt;&lt;/div&gt;
-  &lt;p&gt;Vai para o servidor: { JSON.stringify(form) }&lt;/p&gt;
+  &lt;p v-text="'Vai para o servidor: ' + JSON.stringify(form)"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 

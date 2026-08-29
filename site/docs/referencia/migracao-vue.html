@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrando do Vue · Documentação da Voodoo.js</title>
+<meta name="description" content="A sintaxe é familiar de propósito: tabelas de equivalência de template, componentes, reatividade, store, roteador e i18n — e a lista honesta do que não existe sem compilação.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/migracao-vue">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Qualidade e migração</p>
+<h1>Migrando do Vue</h1>
+<p class="doc-resumo">
+  A sintaxe de template foi desenhada para ser familiar a quem vem do Vue: directives,
+  modificadores, <code>v-model</code> e o modelo de componentes seguem os mesmos nomes. A
+  diferença de fundo é que <b>não existe compilação</b> — a Voodoo interpreta o HTML que já está
+  na página. Isso muda o que é possível; vale ler a seção de limites antes de decidir.
+</p>
+
+<h2 id="template">Template</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Vue</th><th>Voodoo.js</th><th>Observação</th></tr></thead>
+<tbody>
+<tr><td><code>{{ nome }}</code></td><td><code>{ nome }</code></td><td>A chave dupla também funciona</td></tr>
+<tr><td><code>v-text</code>, <code>v-html</code>, <code>v-show</code></td><td>iguais</td><td></td></tr>
+<tr><td><code>v-if</code>, <code>v-else-if</code>, <code>v-else</code></td><td>iguais</td><td></td></tr>
+<tr><td><code>v-for</code>, em todas as formas</td><td>igual</td><td>Inclui <code>(item, i)</code> e <code>(valor, chave)</code></td></tr>
+<tr><td><code>:key</code>, <code>v-bind:x</code>, <code>:x</code>, <code>v-bind="objeto"</code></td><td>iguais</td><td></td></tr>
+<tr><td><code>.prop</code></td><td><code>.prop</code> e o atalho <code>.</code></td><td></td></tr>
+<tr><td><code>v-on:click</code>, <code>@click</code></td><td>iguais, mais o atalho <code>v-click</code></td><td></td></tr>
+<tr><td><code>v-model</code>, <code>v-once</code>, <code>v-cloak</code>, <code>v-pre</code></td><td>iguais</td><td></td></tr>
+<tr><td><code>v-memo</code></td><td>não existe</td><td></td></tr>
+<tr><td><code>v-slot</code></td><td>atributo <code>slot="nome"</code> no filho</td><td></td></tr>
+<tr><td><code>&lt;Teleport&gt;</code></td><td><code>v-teleport="#alvo"</code></td><td></td></tr>
+<tr><td><code>&lt;Transition&gt;</code></td><td><code>v-transition="fade"</code></td><td></td></tr>
+<tr><td><code>&lt;KeepAlive&gt;</code></td><td>não existe</td><td></td></tr>
+<tr><td><code>&lt;Suspense&gt;</code></td><td>não existe</td><td>Use <code>v-resource</code> com <code>loading</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="modificadores">Modificadores</h2>
+
+<p>
+  <code>.prevent</code>, <code>.stop</code>, <code>.self</code>, <code>.once</code>,
+  <code>.capture</code>, <code>.passive</code>, as teclas e <code>.ctrl</code>,
+  <code>.shift</code>, <code>.alt</code>, <code>.meta</code> são iguais. Do
+  <code>v-model</code>, <code>.lazy</code>, <code>.number</code> e <code>.trim</code> também.
+</p>
+
+<p>
+  Não existem: <code>.exact</code> e os modificadores de botão do mouse
+  (<code>.left</code>, <code>.right</code>, <code>.middle</code>). Existem só aqui:
+  <code>.window</code>, <code>.document</code>, <code>.outside</code>, <code>.debounce</code> e
+  <code>.throttle</code>.
+</p>
+
+<h2 id="componentes">Componentes</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Vue (Options API)</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>props: { x: { type: Number, default: 0 } }</code></td><td><code>props: { x: { type: 'number', default: 0 } }</code></td></tr>
+<tr><td><code>props: ['a', 'b']</code></td><td>igual</td></tr>
+<tr><td><code>data() { return {} }</code></td><td><code>state(props)</code> ou <code>data(props)</code></td></tr>
+<tr><td><code>computed</code>, <code>methods</code>, <code>watch</code>, <code>template</code></td><td>iguais</td></tr>
+<tr><td><code>emits: []</code></td><td>não existe</td></tr>
+<tr><td><code>this.$emit('x', d)</code></td><td><code>this.emit('x', d)</code> ou <code>this.$emit</code></td></tr>
+<tr><td><code>this.$refs</code>, <code>$el</code>, <code>$props</code>, <code>$parent</code>, <code>$nextTick()</code></td><td>iguais</td></tr>
+<tr><td><code>this.$watch(fonte, cb)</code></td><td><code>this.$watch('expressao', cb)</code></td></tr>
+<tr><td><code>provide</code> e <code>inject</code></td><td>não existem. Use um store</td></tr>
+<tr><td><code>&lt;slot&gt;</code>, <code>&lt;slot name="x"&gt;</code></td><td>iguais</td></tr>
+<tr><td><code>mounted</code>, <code>updated</code>, <code>beforeUnmount</code>, <code>unmounted</code></td><td>iguais</td></tr>
+<tr><td><code>created</code>, <code>beforeCreate</code></td><td>apenas <code>beforeMount</code></td></tr>
+<tr><td><code>&lt;style scoped&gt;</code></td><td><code>style: '...'</code>, sem isolamento por escopo</td></tr>
+</tbody>
+</table>
+</div>
+
+<pre data-lang="js"><code>// Vue
+app.component('user-card', { props: ['nome'], template: '&lt;p&gt;{{ nome }}&lt;/p&gt;' });
+
+// Voodoo.js
+V.component('user-card', { props: ['nome'], template: '&lt;p&gt;{ nome }&lt;/p&gt;' });</code></pre>
+
+<p>
+  As duas escritas da tag funcionam, como no Vue com compilação:
+  <code>&lt;user-card&gt;</code> e <code>&lt;UserCard&gt;</code>.
+</p>
+
+<h2 id="reatividade">Reatividade</h2>
+
+<p>
+  <code>reactive</code>, <code>ref</code>, <code>shallowRef</code>, <code>computed</code> (também
+  na forma <code>{ get, set }</code>), <code>watch</code>, <code>watchEffect</code>,
+  <code>effectScope</code>, <code>nextTick</code>, <code>toRaw</code>, <code>markRaw</code>,
+  <code>unref</code> e <code>isReactive</code> existem com o mesmo nome, em <code>V</code>. As
+  opções de <code>watch</code> são as mesmas: <code>immediate</code>, <code>deep</code> e
+  <code>flush</code> com <code>pre</code>, <code>post</code> e <code>sync</code>.
+</p>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Duas ausências que pegam de surpresa</span>
+  <p>
+    Não existem <code>readonly</code>, <code>shallowReactive</code>, <code>toRefs</code> e
+    <code>customRef</code>. E não existe desembrulho automático de <code>ref</code> no template:
+    dentro da expressão, use <code>.value</code>.
+  </p>
+</div>
+
+<h2 id="store">Estado global</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Vue</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td>Pinia: <code>defineStore('carrinho', { state, getters, actions })</code></td><td><code>V.store('carrinho', { ...estado, ...metodos })</code></td></tr>
+<tr><td><code>useCarrinho()</code></td><td><code>V.store('carrinho')</code></td></tr>
+<tr><td>no template: <code>carrinho.itens</code></td><td><code>$store.carrinho.itens</code></td></tr>
+<tr><td><code>provide</code> e <code>inject</code></td><td>um store, ou <code>V.data()</code> no escopo raiz</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Getters de Pinia viram métodos, porque um <code>get</code> não acompanha as mudanças:</p>
+
+<pre data-lang="js"><code>V.store('carrinho', {
+  itens: [],
+  total() { return this.itens.reduce((s, i) =&gt; s + i.preco, 0) }
+});</code></pre>
+
+<h2 id="roteador">Roteador</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Vue Router</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>createRouter({ history, routes })</code></td><td><code>V.router({ mode, routes })</code></td></tr>
+<tr><td><code>path: '/x', component: X</code></td><td><code>'/x': { component: 'x' }</code></td></tr>
+<tr><td><code>&lt;router-view&gt;</code></td><td><code>&lt;main v-router-view&gt;</code></td></tr>
+<tr><td><code>&lt;router-link to="/x"&gt;</code></td><td><code>&lt;a v-link href="/x"&gt;</code></td></tr>
+<tr><td><code>router.push('/x')</code></td><td><code>V.router.push('/x')</code> ou <code>V.navigate('/x')</code></td></tr>
+<tr><td><code>useRoute()</code></td><td><code>V.route</code>, e <code>$route</code> no HTML</td></tr>
+<tr><td><code>beforeEach</code>, <code>afterEach</code>, <code>beforeEnter</code></td><td>iguais</td></tr>
+<tr><td>rotas aninhadas</td><td>não existem</td></tr>
+<tr><td>lazy loading de componente</td><td>rota com <code>view</code>, que busca um HTML remoto</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="i18n">Internacionalização</h2>
+
+<p>
+  <code>createI18n({ locale, messages })</code> vira <code>V.i18n({ locale, messages })</code>;
+  <code>$t('chave')</code> e a pluralização com barra vertical funcionam igual;
+  <code>$n</code> e <code>$d</code> existem, mais <code>$c</code> e <code>$rt</code>; e
+  <code>locale.value = 'en'</code> vira <code>V.setLocale('en')</code>.
+</p>
+
+<h2 id="transicoes">Transições</h2>
+
+<pre data-lang="html"><code>&lt;!-- Vue --&gt;
+&lt;Transition name="fade"&gt;&lt;p v-if="visivel"&gt;Olá&lt;/p&gt;&lt;/Transition&gt;
+
+&lt;!-- Voodoo.js --&gt;
+&lt;p v-if="visivel" v-transition="fade"&gt;Olá&lt;/p&gt;</code></pre>
+
+<p>
+  As classes seguem o mesmo padrão: <code>v-fade-enter-from</code>,
+  <code>v-fade-enter-active</code>, <code>v-fade-enter-to</code>, e as três equivalentes de saída.
+</p>
+
+<h2 id="nao-existe">O que não existe, e por quê</h2>
+
+<p>
+  A Voodoo interpreta o HTML da página. Sem compilação, algumas coisas do Vue não têm como
+  existir:
+</p>
+
+<ul>
+  <li>componentes de arquivo único (<code>.vue</code>), que dependem de um compilador;</li>
+  <li>JSX e funções de render;</li>
+  <li><code>setup()</code>, a Composition API e <code>&lt;script setup&gt;</code>;</li>
+  <li>renderização no servidor com hidratação;</li>
+  <li>slots com escopo, que passam dados do filho para o conteúdo do pai;</li>
+  <li><code>provide</code> e <code>inject</code>, substituídos por stores;</li>
+  <li><code>&lt;KeepAlive&gt;</code>, <code>&lt;Suspense&gt;</code> e <code>v-memo</code>;</li>
+  <li>desembrulho automático de <code>ref</code> no template;</li>
+  <li>checagem de tipos no template.</li>
+</ul>
+
+<p>
+  As expressões também aceitam um subconjunto de JavaScript: sem <code>function</code>,
+  <code>class</code>, <code>new</code>, <code>delete</code>, <code>await</code>, laços e
+  desestruturação. A <a href="objeto-v.html#expressoes">referência de expressões</a> lista o que
+  entra.
+</p>
+
+<h2 id="ganha">O que você ganha</h2>
+
+<ul>
+  <li><b>Nenhum passo de build.</b> Nada de bundler, configuração ou <code>node_modules</code> para colocar uma página no ar.</li>
+  <li><b>Um arquivo só</b>, que você baixa e serve do seu próprio domínio.</li>
+  <li><b>Muita coisa embutida:</b> HTTP declarativo, formulários com validação e máscaras, interface, arrastar e soltar, armazenamento, notificações — e no build completo gráficos, animações, roteador e idiomas.</li>
+  <li><b>Funciona com CSP restritiva</b>, sem <code>unsafe-eval</code>.</li>
+  <li><b>Convive com HTML gerado no servidor</b>, sem precisar assumir a página inteira.</li>
+</ul>
+
+<h2 id="quando-nao">Quando não trocar</h2>
+
+<p>
+  Se o seu projeto tem dezenas de telas, um time grande, testes de componente e tipagem estrita
+  nos templates, o Vue continua sendo a escolha certa. A Voodoo foi feita para o outro lado da
+  balança: páginas geradas no servidor, painéis administrativos, protótipos e times pequenos.
+</p>
+
+<h2 id="convivendo">Convivendo</h2>
+
+<p>
+  As duas podem rodar na mesma página, em áreas diferentes. Marque a região do Vue com
+  <code>v-ignore</code> para que a Voodoo não toque nela:
+</p>
+
+<pre data-lang="html"><code>&lt;div id="app-vue" v-ignore&gt;&lt;/div&gt;
+
+&lt;div v-data="{ n: 0 }"&gt;
+  &lt;button @click="n++"&gt;{ n }&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

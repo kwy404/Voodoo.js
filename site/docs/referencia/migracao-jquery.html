@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Migrando do jQuery · Documentação da Voodoo.js</title>
+<meta name="description" content="A tabela de equivalência método a método, e o salto conceitual: parar de mandar o DOM mudar e passar a descrever o estado. As duas bibliotecas convivem na mesma página.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/migracao-jquery">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Qualidade e migração</p>
+<h1>Migrando do jQuery</h1>
+<p class="doc-resumo">
+  A Voodoo.js tem uma coleção encadeável com a mesma ergonomia do jQuery, então boa parte do seu
+  código continua parecido. A diferença de fundo é outra: no jQuery você <b>manda o DOM mudar</b>;
+  aqui você <b>descreve o estado</b>, e o DOM acompanha. Dá para migrar aos poucos — as duas
+  bibliotecas convivem na mesma página.
+</p>
+
+<h2 id="selecao">Seleção e percurso</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>jQuery</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>$('#app')</code></td><td><code>V('#app')</code></td></tr>
+<tr><td><code>$('.item', contexto)</code></td><td><code>V('.item', contexto)</code></td></tr>
+<tr><td><code>$('&lt;li&gt;novo&lt;/li&gt;')</code></td><td><code>V('&lt;li&gt;novo&lt;/li&gt;')</code> ou <code>V.fromHtml(...)</code></td></tr>
+<tr><td><code>$(function () {})</code></td><td><code>V(function () {})</code> ou <code>V.ready(fn)</code></td></tr>
+<tr><td><code>.find</code>, <code>.closest</code>, <code>.parent</code>, <code>.parents</code></td><td>iguais</td></tr>
+<tr><td><code>.children</code>, <code>.siblings</code>, <code>.next</code>, <code>.prev</code></td><td>iguais</td></tr>
+<tr><td><code>.first</code>, <code>.last</code>, <code>.eq</code>, <code>.filter</code>, <code>.not</code>, <code>.has</code>, <code>.is</code></td><td>iguais</td></tr>
+<tr><td><code>.each</code>, <code>.get</code>, <code>.toArray</code>, <code>.length</code></td><td>iguais</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>A coleção da Voodoo é iterável com <code>for...of</code> e com espalhamento:</p>
+
+<pre data-lang="js"><code>for (const el of V('.item')) console.log(el);
+const lista = [...V('.item')];</code></pre>
+
+<h2 id="conteudo">Conteúdo, classes e estilo</h2>
+
+<p>
+  <code>.text</code>, <code>.html</code>, <code>.val</code>, <code>.attr</code>,
+  <code>.removeAttr</code>, <code>.prop</code>, <code>.data</code>, <code>.addClass</code>,
+  <code>.removeClass</code>, <code>.toggleClass</code>, <code>.hasClass</code>,
+  <code>.css</code>, <code>.width</code>, <code>.height</code>, <code>.offset</code>,
+  <code>.position</code> e <code>.scrollTop</code> têm o mesmo nome e o mesmo comportamento,
+  inclusive nas formas com objeto.
+</p>
+
+<h2 id="estrutura">Estrutura</h2>
+
+<p>
+  <code>.append</code>, <code>.prepend</code>, <code>.before</code>, <code>.after</code>,
+  <code>.appendTo</code>, <code>.prependTo</code>, <code>.replaceWith</code>,
+  <code>.wrap</code>, <code>.unwrap</code>, <code>.remove</code>, <code>.empty</code> e
+  <code>.clone</code> são iguais.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Uma diferença a favor</span>
+  <p>
+    <code>.remove()</code> e <code>.empty()</code> também desmontam os efeitos reativos dos
+    elementos removidos, o que evita vazamento — algo que no jQuery ficava por sua conta.
+  </p>
+</div>
+
+<h2 id="eventos">Eventos</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>jQuery</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>.on('click', fn)</code></td><td>igual</td></tr>
+<tr><td><code>.on('click', '.botao', fn)</code></td><td>igual, com delegação</td></tr>
+<tr><td><code>.one('click', fn)</code></td><td><code>.once('click', fn)</code></td></tr>
+<tr><td><code>.off('click')</code>, <code>.trigger('click')</code></td><td>iguais</td></tr>
+<tr><td><code>.trigger('meu:evento', dados)</code></td><td><code>.emit('meu:evento', dados)</code></td></tr>
+<tr><td><code>.click()</code></td><td><code>.trigger('click')</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Dentro do handler, <code>this</code> é o elemento, como no jQuery.</p>
+
+<h2 id="ajax">AJAX</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>jQuery</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>$.get(url)</code></td><td><code>V.http.get(url)</code></td></tr>
+<tr><td><code>$.post(url, dados)</code></td><td><code>V.http.post(url, dados)</code></td></tr>
+<tr><td><code>$.getJSON(url)</code></td><td><code>V.http.get(url)</code></td></tr>
+<tr><td><code>$.ajax({ url, method, data })</code></td><td><code>V.http.request({ url, method, body })</code></td></tr>
+<tr><td><code>$('#form').serialize()</code></td><td><code>V('#form').serialize()</code></td></tr>
+<tr><td><code>$('#form').serializeArray()</code></td><td><code>V('#form').serializeObject()</code></td></tr>
+<tr><td><code>$.ajaxSetup({ headers })</code></td><td><code>V.http.setHeader(nome, valor)</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="utilitarios">Utilitários</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>jQuery</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>$.each</code>, <code>$.map</code>, <code>$.grep</code></td><td><code>forEach</code>, <code>map</code>, <code>filter</code> do próprio array</td></tr>
+<tr><td><code>$.extend(true, a, b)</code></td><td><code>V.merge(a, b)</code></td></tr>
+<tr><td><code>$.trim(s)</code></td><td><code>s.trim()</code></td></tr>
+<tr><td><code>$.isArray(x)</code></td><td><code>Array.isArray(x)</code></td></tr>
+<tr><td><code>$.param(obj)</code></td><td><code>new URLSearchParams(obj).toString()</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="salto">O salto: pare de mandar, comece a descrever</h2>
+
+<p>Um contador em jQuery:</p>
+
+<pre data-lang="js"><code>let valor = 0;
+$('#contador .mais').on('click', function () {
+  valor++;
+  $('#contador .valor').text(valor);
+  $('#contador .menos').prop('disabled', valor === 0);
+});
+$('#contador .menos').on('click', function () {
+  valor--;
+  $('#contador .valor').text(valor);
+  $('#contador .menos').prop('disabled', valor === 0);
+});</code></pre>
+
+<p>O mesmo em Voodoo.js:</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ valor: 0 }"&gt;
+  &lt;button @click="valor--" :disabled="valor === 0"&gt;-&lt;/button&gt;
+  &lt;span&gt;{ valor }&lt;/span&gt;
+  &lt;button @click="valor++"&gt;+&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  A regra "o botão de menos fica desabilitado no zero" aparece <b>uma vez</b>, no lugar onde ela
+  importa. No jQuery ela precisava ser repetida em todo lugar que mexia no valor, e esquecer uma
+  repetição era o bug clássico.
+</p>
+
+<h2 id="lista">Uma lista</h2>
+
+<pre data-lang="js"><code>// jQuery
+function renderizar(itens) {
+  const $ul = $('#lista').empty();
+  itens.forEach((item) =&gt; {
+    $ul.append('&lt;li data-id="' + item.id + '"&gt;' + item.nome + ' &lt;button class="x"&gt;remover&lt;/button&gt;&lt;/li&gt;');
+  });
+}
+$('#lista').on('click', '.x', function () {
+  const id = $(this).closest('li').data('id');
+  itens = itens.filter((i) =&gt; i.id !== id);
+  renderizar(itens);
+});</code></pre>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;ul v-data="{ itens: [{ id: 1, nome: 'Caneca' }, { id: 2, nome: 'Camiseta' }] }"&gt;
+  &lt;li v-for="item in itens" :key="item.id"&gt;
+    { item.nome }
+    &lt;button @click="itens.splice(itens.indexOf(item), 1)"&gt;remover&lt;/button&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+</div>
+
+<p>
+  Não existe função de renderizar. Não existe delegação. Não existe <code>data-id</code> só para
+  achar o item de volta.
+</p>
+
+<h2 id="formulario">Um formulário AJAX</h2>
+
+<pre data-lang="js"><code>// jQuery
+$('#form').on('submit', function (e) {
+  e.preventDefault();
+  const $btn = $(this).find('button').prop('disabled', true).text('Enviando...');
+  $.post('/api/contato', $(this).serialize())
+    .done(() =&gt; { alert('Enviado!'); this.reset(); })
+    .fail((xhr) =&gt; { $('#erro').text(xhr.responseJSON.message); })
+    .always(() =&gt; { $btn.prop('disabled', false).text('Enviar'); });
+});</code></pre>
+
+<pre data-lang="html"><code>&lt;form v-submit="/api/contato" v-validate v-reset-success v-disable-loading
+      v-toast-success="Enviado!"&gt;
+  &lt;input name="nome" v-required&gt;
+  &lt;input name="email" type="email" v-required v-email&gt;
+  &lt;button&gt;{ $form.loading ? 'Enviando...' : 'Enviar' }&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+
+<p>Validação, estado de carregamento, erros por campo e notificação vêm juntos.</p>
+
+<h2 id="plugins">Plugins do jQuery</h2>
+
+<p>Um plugin que precisa de um elemento vira uma directive:</p>
+
+<pre data-lang="js"><code>// jQuery
+$('.data').datepicker({ format: 'dd/mm/yyyy' });
+
+// Voodoo.js
+V.directive('datepicker', {
+  mounted(el, binding) {
+    el.__picker = new SeuDatepicker(el, { format: binding.value || 'dd/mm/yyyy' });
+  },
+  unmounted(el) { el.__picker.destroy(); }
+});</code></pre>
+
+<pre data-lang="html"><code>&lt;input v-datepicker="'dd/mm/yyyy'"&gt;</code></pre>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Por onde começar a migração</span>
+  <p>
+    Troque primeiro os trechos que mais sofrem com sincronização manual: listas que filtram,
+    formulários e qualquer estado que aparece em dois lugares. O resto do código jQuery continua
+    rodando ao lado, e você converte quando for mexer nele de qualquer jeito.
+  </p>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>
