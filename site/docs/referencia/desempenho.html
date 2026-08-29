@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desempenho · Documentação da Voodoo.js</title>
+<meta name="description" content="Como as atualizações granulares funcionam sem Virtual DOM, o tamanho real dos três arquivos, as boas práticas que rendem mais, e o que a biblioteca já otimiza sozinha.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/desempenho.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Qualidade e migração</p>
+<h1>Desempenho</h1>
+<p class="doc-resumo">
+  Não existe Virtual DOM, não existe comparação de árvores, não existe rerender de componente. O
+  modelo é um <code>Proxy</code> que rastreia leitura por chave, e um efeito por pedaço de DOM.
+</p>
+
+<h2 id="granular">Como as atualizações granulares funcionam</h2>
+
+<pre data-lang="html"><code>&lt;div v-data="{ nome: 'Ana', idade: 30 }"&gt;
+  &lt;p v-text="nome"&gt;&lt;/p&gt;         &lt;!-- efeito 1, depende de "nome" --&gt;
+  &lt;p v-text="idade"&gt;&lt;/p&gt;        &lt;!-- efeito 2, depende de "idade" --&gt;
+  &lt;p&gt;{ nome } tem { idade }&lt;/p&gt; &lt;!-- efeito 3, depende dos dois --&gt;
+&lt;/div&gt;</code></pre>
+
+<p>Quando <code>nome</code> muda:</p>
+
+<ol class="doc-passos">
+  <li>o <code>set</code> do proxy compara o valor novo com o antigo, e para ali se forem iguais;</li>
+  <li>os efeitos que leram a chave <code>nome</code> são colocados em uma fila;</li>
+  <li>a fila é processada em uma microtask, com cada efeito rodando uma vez só;</li>
+  <li>o efeito 1 escreve em um <code>textContent</code>, e o efeito 3 recompõe o texto dele.</li>
+</ol>
+
+<p>
+  O efeito 2 nunca é executado: o segundo parágrafo não é lido, não é comparado e não é tocado. O
+  caminho da mudança até o pixel é <code>set</code> no proxy, fila, <code>textContent</code>.
+  Nada mais.
+</p>
+
+<h3 id="lote">Lote e microtask</h3>
+
+<pre data-lang="js"><code>estado.a = 1;
+estado.b = 2;
+estado.c = 3;
+// os efeitos afetados rodam uma vez só, na microtask
+await V.nextTick();</code></pre>
+
+<p>
+  Efeitos duplicados são deduplicados dentro da rodada. Se um efeito reexecutar demais na mesma
+  rodada, o agendador percebe o laço e para com um aviso, em vez de travar a aba.
+</p>
+
+<h2 id="tamanho">Tamanho</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Arquivo</th><th>Cru</th><th>gzip</th><th>brotli</th></tr></thead>
+<tbody>
+<tr><td><code>voodoo.core.min.js</code></td><td>119 KB</td><td><b>41 KB</b></td><td>36 KB</td></tr>
+<tr><td><code>voodoo.min.js</code></td><td>241 KB</td><td><b>78 KB</b></td><td>66 KB</td></tr>
+<tr><td><code>voodoo.full.min.js</code></td><td>406 KB</td><td><b>122 KB</b></td><td>102 KB</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Os números mudam a cada versão. O script <code>npm run size</code> mede os arquivos reais e
+  falha quando algum estoura a meta declarada, então a regressão de tamanho é pega no CI e não em
+  produção.
+</p>
+
+<h2 id="praticas">Boas práticas, em ordem de retorno</h2>
+
+<h3 id="key">Use :key no v-for</h3>
+
+<p>
+  Sem chave, os blocos são identificados pela posição. Com chave, eles são reaproveitados quando a
+  lista muda de ordem, e o estado interno — foco, valor digitado, rolagem, animação — sobrevive.
+</p>
+
+<h3 id="show-if">Prefira v-show a v-if para alternância frequente</h3>
+
+<pre data-lang="html"><code>&lt;div v-show="abaAtiva === 'perfil'"&gt;...&lt;/div&gt;   &lt;!-- alterna muito --&gt;
+&lt;div v-if="usuario.admin"&gt;...&lt;/div&gt;              &lt;!-- decide uma vez --&gt;</code></pre>
+
+<h3 id="expressoes">Deixe as expressões curtas</h3>
+
+<p>
+  Toda expressão de atributo é reavaliada quando uma dependência muda. Cálculos caros ficam
+  melhores em um computado de componente ou em uma função do escopo.
+</p>
+
+<pre data-lang="html"><code>&lt;!-- reavalia a lista inteira a cada mudança --&gt;
+&lt;span&gt;{ pedidos.filter(p =&gt; p.pago).reduce((s, p) =&gt; s + p.total, 0) }&lt;/span&gt;
+
+&lt;!-- calcula uma vez e reaproveita --&gt;
+&lt;span&gt;{ totalPago }&lt;/span&gt;</code></pre>
+
+<h3 id="markraw">Marque o que não precisa ser reativo</h3>
+
+<pre data-lang="js"><code>V.data({
+  mapa: V.markRaw(new google.maps.Map(el)),
+  editor: V.markRaw(criarEditor())
+});</code></pre>
+
+<p>
+  Instâncias de bibliotecas externas, elementos de DOM e estruturas grandes que você substitui
+  inteiras não ganham nada em virar proxy — e custam a travessia.
+</p>
+
+<h3 id="debounce">Debounce, cache e carga sob demanda</h3>
+
+<pre data-lang="html"><code>&lt;input v-model.debounce="busca" v-debounce="300"&gt;
+&lt;div v-resource="paises: /api/paises" v-cache="1h"&gt;&lt;/div&gt;
+&lt;img v-lazy-src="/fotos/grande.jpg" alt=""&gt;
+&lt;section v-load-visible="/parciais/depoimentos.html"&gt;Carregando...&lt;/section&gt;</code></pre>
+
+<h3 id="listas">Prefira listas paginadas</h3>
+
+<p>
+  O <code>v-for</code> renderiza todos os itens da fonte, sem virtualização: uma lista com dez mil
+  linhas cria dez mil elementos. Pagine, ou use rolagem infinita com
+  <code>v-infinite-scroll</code>.
+</p>
+
+<h3 id="observador">Desligue o observador quando não precisar</h3>
+
+<pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-no-observer defer&gt;&lt;/script&gt;</code></pre>
+
+<pre data-lang="js"><code>V.walk(novoElemento);  // inicialize à mão quando precisar</code></pre>
+
+<h3 id="bundle">Escolha o arquivo certo</h3>
+
+<p>
+  Se a página não tem gráfico, rota, tradução nem componente pronto, use
+  <code>voodoo.min.js</code>. Se ela também não tem formulário validado, máscara nem componentes
+  de interface, <code>voodoo.core.min.js</code> resolve. São dezenas de kilobytes de diferença por
+  visita.
+</p>
+
+<h2 id="ja-feito">O que a biblioteca já faz por você</h2>
+
+<ul>
+  <li><b>Interpolação segmentada.</b> Um nó de texto com três expressões vira um único efeito que recompõe apenas aquele nó.</li>
+  <li><b>Reordenação por cursor.</b> O <code>v-for</code> move os blocos existentes em vez de recriar.</li>
+  <li><b>Cache do parser.</b> Cada expressão é analisada uma vez, e a árvore fica guardada.</li>
+  <li><b>CSS sob demanda.</b> O estilo de um componente de interface só entra no documento quando aquele recurso é usado.</li>
+  <li><b>Requisições canceladas.</b> Uma nova requisição do mesmo elemento aborta a anterior.</li>
+  <li><b>Um único laço de animação.</b> Todas as animações ativas compartilham o mesmo <code>requestAnimationFrame</code>.</li>
+  <li><b>Limpeza automática.</b> Remover um elemento para os efeitos dele, remove os ouvintes e encerra observadores. Não existe vazamento por esquecimento.</li>
+  <li><b>Redesenho barato dos gráficos.</b> O SVG é gerado como texto e entregue de uma vez.</li>
+</ul>
+
+<h2 id="medindo">Medindo</h2>
+
+<pre data-lang="js"><code>V.config.devtools = true;   // avisos e âncoras nomeadas
+V.xray();                   // aba de desempenho, com efeitos por elemento</code></pre>
+
+<p>
+  Na aba de desempenho do inspetor, cada elemento mostra quantos efeitos dependem dele e quantas
+  vezes cada um reexecutou. Um número alto em um lugar pequeno costuma ser expressão demais em um
+  bloco só. Para medir o tamanho no seu próprio projeto,
+  <code>npm run size</code> no repositório mede os arquivos reais.
+</p>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

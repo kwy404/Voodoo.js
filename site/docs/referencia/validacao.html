@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regras de validação · Documentação da Voodoo.js</title>
+<meta name="description" content="Todas as regras de validação por grupo, os atributos nativos que viram regra, as mensagens padrão e seus marcadores, a validação assíncrona e como escrever regras próprias.">
+<link rel="canonical" href="https://voodoojs.dev/docs/referencia/validacao.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Referência</p>
+<h1>Regras de validação</h1>
+<p class="doc-resumo">
+  Todas existem como directive curta (<code>v-nome</code>) e como
+  <code>v-validate-nome</code>. O guia de <a href="../guia/formularios.html">formulários</a>
+  mostra o conjunto funcionando; aqui está a lista completa.
+</p>
+
+<h2 id="como-funciona">Quando cada checagem acontece</h2>
+
+<p>
+  Cada campo é validado quando perde o foco. Depois do primeiro erro, ele passa a revalidar a cada
+  tecla, o que dá retorno imediato sem incomodar quem ainda está digitando. No envio por
+  <code>v-submit</code>, o formulário inteiro é validado: se algo reprovar, o envio para, o foco
+  vai para o primeiro campo com problema e o evento <code>voodoo:invalid</code> é disparado.
+</p>
+
+<p>
+  Um campo isolado, fora de um formulário validado, também funciona: basta declarar a regra, ou
+  usar <code>v-validate</code> no próprio campo.
+</p>
+
+<h2 id="na-tela">O que aparece na tela</h2>
+
+<ul>
+  <li>o campo ganha a classe <code>v-invalid</code> e <code>aria-invalid="true"</code>;</li>
+  <li>uma mensagem com <code>role="alert"</code> entra logo depois dele, com a classe <code>v-field-error</code>;</li>
+  <li><code>aria-describedby</code> aponta para a mensagem;</li>
+  <li>quando aprova, o campo ganha <code>v-valid</code> e a mensagem é removida.</li>
+</ul>
+
+<pre data-lang="html"><code>&lt;input name="email" v-required v-email v-error-target="#erro-do-email"&gt;
+&lt;span id="erro-do-email"&gt;&lt;/span&gt;</code></pre>
+
+<h2 id="presenca">Presença e formato</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>Aceita</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-required</code></td><td></td><td>Campo preenchido. Em checkbox e radio, marcado. Em arquivo, algum escolhido</td></tr>
+<tr><td><code>v-email</code></td><td></td><td>Formato de e-mail</td></tr>
+<tr><td><code>v-url</code></td><td></td><td>URL válida. Aceita sem protocolo</td></tr>
+<tr><td><code>v-number</code></td><td></td><td>Número, entendendo vírgula decimal e separador de milhar</td></tr>
+<tr><td><code>v-integer</code></td><td></td><td>Número inteiro</td></tr>
+<tr><td><code>v-validate-decimal</code></td><td>casas</td><td>Decimal, com no máximo N casas</td></tr>
+<tr><td><code>v-validate-alpha</code></td><td></td><td>Apenas letras, com acento</td></tr>
+<tr><td><code>v-validate-alphanumeric</code></td><td></td><td>Apenas letras e números</td></tr>
+<tr><td><code>v-regex</code></td><td>expressão</td><td>Casa com a expressão regular</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="tamanho">Tamanho e faixa</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>Aceita</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-minlength</code>, <code>v-maxlength</code></td><td>número</td><td>Mínimo e máximo de caracteres</td></tr>
+<tr><td><code>v-min</code>, <code>v-max</code></td><td>número ou data</td><td>Valor mínimo e máximo</td></tr>
+<tr><td><code>v-validate-between</code></td><td><code>min,max</code></td><td>Valor dentro da faixa</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="comparacao">Comparação</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>Aceita</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-match</code>, <code>v-validate-same</code></td><td>nome, id ou seletor</td><td>Igual a outro campo</td></tr>
+<tr><td><code>v-validate-different</code></td><td>nome, id ou seletor</td><td>Diferente de outro campo</td></tr>
+<tr><td><code>v-validate-in</code></td><td>lista</td><td>O valor está entre as opções</td></tr>
+<tr><td><code>v-validate-notin</code></td><td>lista</td><td>O valor não está entre as opções</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="datas">Datas</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>Aceita</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-date</code></td><td></td><td>Data válida em <code>dd/mm/aaaa</code>, <code>aaaa-mm-dd</code> ou o que o navegador entender</td></tr>
+<tr><td><code>v-validate-after</code></td><td>data, <code>hoje</code> ou outro campo</td><td>Posterior à referência</td></tr>
+<tr><td><code>v-validate-before</code></td><td>data, <code>hoje</code> ou outro campo</td><td>Anterior à referência</td></tr>
+</tbody>
+</table>
+</div>
+
+<pre data-lang="html"><code>&lt;input v-mask="date" v-date v-validate-before="hoje" v-label="Data de nascimento"&gt;
+&lt;input name="inicio" v-date&gt;
+&lt;input name="fim" v-date v-validate-after="inicio"&gt;</code></pre>
+
+<p>
+  <code>hoje</code>, <code>today</code>, <code>now</code> e <code>agora</code> são aceitos como
+  referência.
+</p>
+
+<h2 id="brasil">Brasil</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-cpf</code></td><td>CPF com cálculo real dos dígitos verificadores</td></tr>
+<tr><td><code>v-cnpj</code></td><td>CNPJ com cálculo real dos dígitos verificadores</td></tr>
+<tr><td><code>v-cep</code></td><td>CEP com oito dígitos</td></tr>
+<tr><td><code>v-phone</code></td><td>Telefone fixo ou celular, com DDD válido</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2 id="outras">Outras</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Regra</th><th>Aceita</th><th>O que valida</th></tr></thead>
+<tbody>
+<tr><td><code>v-accepted</code></td><td></td><td>Caixa marcada, ou valor <code>1</code>, <code>true</code>, <code>on</code>, <code>yes</code>, <code>sim</code></td></tr>
+<tr><td><code>v-validate-creditcard</code></td><td></td><td>Número de cartão pelo algoritmo de Luhn</td></tr>
+<tr><td><code>v-strong-password</code></td><td>mínimo de caracteres</td><td>Maiúscula, minúscula, número e símbolo. Padrão 8</td></tr>
+<tr><td><code>v-validate-unique</code></td><td>URL</td><td>Consulta o servidor para saber se o valor já existe</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  Apelidos aceitos: <code>strong-password</code>, <code>credit-card</code>,
+  <code>min-length</code>, <code>max-length</code>, <code>not-in</code>,
+  <code>obrigatorio</code> e <code>nao-vazio</code>.
+</p>
+
+<h2 id="nativos">Atributos nativos também valem</h2>
+
+<pre data-lang="html"><code>&lt;input required minlength="3" maxlength="20" pattern="[a-z]+"&gt;
+&lt;input type="email" required&gt;
+&lt;input type="number" min="1" max="10"&gt;
+&lt;input type="url"&gt;</code></pre>
+
+<p>
+  A biblioteca lê os atributos padrão do HTML e os transforma em regras, o que permite adotar a
+  validação em um formulário existente sem reescrever nada.
+</p>
+
+<h2 id="desligando">Desligando uma regra</h2>
+
+<pre data-lang="html"><code>&lt;input name="cnpj" v-cnpj v-required="false"&gt;</code></pre>
+
+<p>
+  O valor é lido do atributo original, então a decisão acontece na renderização e não muda depois.
+  Para uma regra que liga e desliga em tempo real, escreva uma regra própria que consulte o estado.
+</p>
+
+<h2 id="mensagens">Mensagens</h2>
+
+<pre data-lang="js"><code>Object.assign(V.messages, {
+  required: 'Campo obrigatório.',
+  email: 'Confira o e-mail digitado.',
+  minlength: 'Escreva pelo menos {param} caracteres.'
+});</code></pre>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Marcador</th><th>Vira</th></tr></thead>
+<tbody>
+<tr><td><code>{param}</code></td><td>O parâmetro da regra</td></tr>
+<tr><td><code>{field}</code></td><td>O rótulo do campo</td></tr>
+<tr><td><code>{value}</code></td><td>O valor digitado</td></tr>
+<tr><td><code>{min}</code>, <code>{max}</code></td><td>As duas partes de um parâmetro como <code>10,100</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  O rótulo do campo é descoberto nesta ordem: <code>v-label</code>, o
+  <code>&lt;label for&gt;</code> correspondente, o texto do <code>&lt;label&gt;</code> em volta,
+  <code>aria-label</code>, <code>placeholder</code> e por fim o <code>name</code>.
+</p>
+
+<p>
+  As chaves de <code>V.messages</code> são: <code>required</code>, <code>email</code>,
+  <code>url</code>, <code>number</code>, <code>integer</code>, <code>decimal</code>,
+  <code>alpha</code>, <code>alphanumeric</code>, <code>minlength</code>, <code>maxlength</code>,
+  <code>min</code>, <code>max</code>, <code>between</code>, <code>match</code>,
+  <code>regex</code>, <code>date</code>, <code>after</code>, <code>before</code>,
+  <code>accepted</code>, <code>same</code>, <code>different</code>, <code>in</code>,
+  <code>notin</code>, <code>phone</code>, <code>cpf</code>, <code>cnpj</code>, <code>cep</code>,
+  <code>creditcard</code>, <code>strongpassword</code>, <code>unique</code> e
+  <code>invalid</code>.
+</p>
+
+<h2 id="assincrona">Validação assíncrona</h2>
+
+<pre data-lang="html"><code>&lt;input name="email" type="email" v-required v-email v-validate-unique="/api/checar-email"&gt;
+&lt;input name="apelido" v-validate-unique v-unique-url="/api/checar-apelido"&gt;</code></pre>
+
+<p>
+  A biblioteca chama <code>GET /api/checar-email?value=...&amp;field=email</code> e espera:
+</p>
+
+<ul>
+  <li><code>{ "available": true }</code> para liberar;</li>
+  <li><code>{ "available": false }</code> para reprovar;</li>
+  <li>resposta vazia ou <code>null</code> para liberar;</li>
+  <li>qualquer outro corpo para reprovar, entendendo que o registro existe;</li>
+  <li>status 404 para liberar.</li>
+</ul>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Falha de rede não trava o envio</span>
+  <p>
+    Se a consulta não completa, a regra libera e deixa o servidor decidir na hora do POST. É a
+    escolha certa: um problema de rede não pode impedir alguém de tentar se cadastrar.
+  </p>
+</div>
+
+<h2 id="proprias">Regras próprias</h2>
+
+<pre data-lang="js"><code>V.validator('par', (valor) =&gt; Number(valor) % 2 === 0, 'Informe um número par.');</code></pre>
+
+<p>
+  A função recebe <code>(valor, parametro, elemento)</code> e pode devolver <code>true</code> para
+  aprovar, <code>false</code> para reprovar com a mensagem padrão, um texto para reprovar com
+  aquela mensagem, ou uma <code>Promise</code> de qualquer um dos três.
+</p>
+
+<pre data-lang="js"><code>V.validator('cnpjAtivo', async (valor) =&gt; {
+  if (!valor) return true;
+  const dados = await V.http.get('/api/cnpj/' + V.unmask(valor));
+  return dados.ativo ? true : 'Este CNPJ está inativo na Receita.';
+});
+
+V.validator('depoisDe', (valor, param, el) =&gt; {
+  const outro = document.querySelector('[name="' + param + '"]');
+  return !outro || valor &gt; outro.value || 'Precisa ser depois de ' + outro.value;
+});</code></pre>
+
+<p>Registrar uma regra cria automaticamente a directive <code>v-validate-&lt;nome&gt;</code>.</p>
+
+<h2 id="javascript">Por JavaScript</h2>
+
+<pre data-lang="js"><code>const resultado = await V.validate(document.forms[0]);
+// { valid: true, errors: {} }
+
+const campo = await V.validate(document.querySelector('#email'));
+// { valid: false, message: 'Informe um e-mail válido.', rule: 'email' }
+
+V.showFieldError(input, 'Mensagem específica');
+V.showFormErrors(form, { email: 'Já cadastrado' });
+V.clearErrors(form);</code></pre>
+
+<p>
+  <code>V.validateForm</code> é um apelido de <code>V.validate</code> para formulários. É o que
+  você chama quando o envio é tratado por conta própria, com
+  <code>@submit.prevent</code>, e ainda assim quer a conferência final antes de seguir.
+</p>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>
