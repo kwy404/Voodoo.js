@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Depurando problemas comuns · Documentação da Voodoo.js</title>
+<meta name="description" content="Os sintomas mais frequentes e o que cada um significa: nada acontece, o CSS parou, o valor não reage, a confirmação aparece duas vezes, e os detalhes conhecidos que dependem de correção.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/depurando.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Estendendo e depurando</p>
+<h1>Depurando problemas comuns</h1>
+<p class="doc-resumo">
+  Esta página é uma lista de sintomas. Cada um vem com o que ele costuma significar e o que fazer
+  a respeito — a maioria não é bug, e sim uma decisão de projeto encontrando alguém que ainda não
+  a conhecia.
+</p>
+
+<h2 id="nada-acontece">Nada acontece, o HTML aparece cru</h2>
+
+<p>
+  Confira, nesta ordem: o arquivo carregou (a aba de rede responde em um segundo); ele não está
+  com <code>data-manual</code> sem uma chamada a <code>V.start()</code>; e o console não tem erro
+  de sintaxe de expressão, que aparece com a posição exata.
+</p>
+
+<p>
+  Se a página usa componentes ou directives próprias registradas em outro arquivo, o registro
+  precisa acontecer <b>antes</b> do <code>V.start()</code>.
+</p>
+
+<h2 id="pisca">O conteúdo pisca antes de renderizar</h2>
+
+<pre data-lang="html"><code>&lt;style&gt;[v-cloak] { display: none !important; }&lt;/style&gt;
+&lt;div v-cloak v-data="{}"&gt;...&lt;/div&gt;</code></pre>
+
+<h2 id="css-parou">Meu CSS parou de funcionar</h2>
+
+<p>
+  Quase sempre é um seletor apoiado em atributo <code>v-*</code>. Depois que a biblioteca processa
+  o elemento, o atributo sai do documento, e <code>[v-tab] { ... }</code> deixa de casar com
+  qualquer coisa. Pelo mesmo motivo, <code>el.getAttribute('v-algo')</code> devolve
+  <code>null</code> e <code>querySelectorAll('[v-show]')</code> devolve vazio.
+</p>
+
+<p>
+  Use classes ou <code>data-*</code>. Se você precisa mesmo do comportamento antigo,
+  <code>V.config.cleanAttributes = false</code> — ou <code>data-keep-attributes</code> na tag do
+  script — mantém tudo no HTML.
+</p>
+
+<h2 id="nao-reage">O valor muda mas a tela não</h2>
+
+<p>Três causas, em ordem de frequência:</p>
+
+<ul>
+  <li>
+    <b>Erro de digitação no nome.</b> Escrever em uma chave que não existe cria a chave no escopo
+    local, sem erro nenhum. Ligue <code>data-devtools</code> para transformar esses casos em aviso.
+  </li>
+  <li>
+    <b>Você leu de uma fonte que não é reativa.</b> <code>$storage.get(...)</code>,
+    <code>$cookie.get(...)</code> e <code>$url.get(...)</code> leem no momento em que a expressão
+    roda, e nada avisa a tela depois. Guarde o valor no escopo, ou use um
+    <a href="stores.html#persistencia">store com <code>persist</code></a>.
+  </li>
+  <li>
+    <b>É um getter dentro de um store.</b> Uma propriedade declarada com <code>get</code> é
+    resolvida uma vez, na criação. Para valores derivados, use um método.
+  </li>
+</ul>
+
+<h2 id="laco">Maximum call stack, ou aviso de laço no console</h2>
+
+<p>
+  Algum efeito está escrevendo na mesma chave que lê. O agendador interrompe a repetição e avisa.
+  Reveja a expressão: costuma ser um <code>v-effect</code> que atribui a uma variável que ele
+  mesmo lê.
+</p>
+
+<h2 id="foco">O v-for perde o foco do campo quando a lista muda</h2>
+
+<p>
+  Falta <code>:key</code>. Sem chave, a biblioteca só conhece a posição, e reordenar recria os
+  elementos. Com <code>:key="item.id"</code>, eles são reaproveitados e movidos. A chave precisa
+  ser estável: o índice não serve, porque ele muda junto com a ordem.
+</p>
+
+<h2 id="for-if">v-if e v-for no mesmo elemento não funcionam</h2>
+
+<p>
+  Os dois assumem o controle do nó. Ponha a condição em um filho, ou filtre na própria expressão
+  do <code>v-for</code>. A página de <a href="listas.html#for-e-if">listas</a> mostra as duas
+  formas.
+</p>
+
+<h2 id="globais">window, document e fetch são undefined nas expressões</h2>
+
+<p>
+  É proposital: apenas uma lista fechada de globais é liberada, e é isso que permite rodar sob
+  Content Security Policy restritiva. Para chegar ao DOM e a serviços, use as magias —
+  <code>$el</code>, <code>$refs</code>, <code>$http</code>, <code>$storage</code>,
+  <code>$clipboard</code>. Para liberar algo seu:
+</p>
+
+<pre data-lang="js"><code>V.config.globals.minhaFuncao = minhaFuncao;</code></pre>
+
+<p>
+  O objeto <code>V</code> também não está disponível dentro das expressões, pelo mesmo motivo.
+</p>
+
+<h2 id="varias-linhas">Como escrevo uma função com várias linhas em um atributo?</h2>
+
+<p>
+  Não escreva. O parser aceita expressões, não blocos. Coloque a lógica em um método do
+  <code>v-data</code>, de um store ou do escopo raiz:
+</p>
+
+<pre data-lang="js"><code>V.data({ limpar() { this.itens = []; this.total = 0; } });</code></pre>
+
+<pre data-lang="html"><code>&lt;button @click="limpar()"&gt;Limpar&lt;/button&gt;</code></pre>
+
+<h2 id="componente-escopo">O componente não enxerga o v-data em volta</h2>
+
+<p>
+  É o comportamento padrão: componentes isolam o escopo, para não dependerem por acidente do lugar
+  onde foram colados. Passe o valor por prop, ou declare <code>inheritScope: true</code> na
+  definição.
+</p>
+
+<p>
+  O contrário também confunde: o conteúdo de um <code>&lt;slot&gt;</code> pertence ao escopo de
+  quem escreveu a tag, e não ao do componente. Slots com escopo não existem.
+</p>
+
+<h2 id="tag-propria">Um trecho da página some sem erro nenhum</h2>
+
+<p>
+  Se o trecho que sumiu vem logo depois de uma tag de componente, olhe o fechamento dela. O HTML
+  não aceita fechamento automático fora das tags conhecidas:
+  <code>&lt;VInput ... /&gt;</code> não fecha nada, e o navegador coloca todo o resto do bloco
+  dentro do componente. Escreva sempre
+  <code>&lt;VInput ...&gt;&lt;/VInput&gt;</code>.
+</p>
+
+<h2 id="chaves">A interpolação apareceu crua na tela</h2>
+
+<p>
+  Duas causas. A primeira: o trecho está dentro de <code>&lt;pre&gt;</code>,
+  <code>&lt;code&gt;</code>, <code>&lt;script&gt;</code>, <code>&lt;style&gt;</code>,
+  <code>&lt;textarea&gt;</code> ou de um <code>v-ignore</code>, onde a varredura não entra de
+  propósito.
+</p>
+
+<p>
+  A segunda: a expressão tem chaves dentro, como
+  <code>{ $t('itens', { n: total }) }</code>. A varredura fecha na primeira chave. Nesses casos,
+  use <code>v-text</code>, que recebe a expressão inteira no atributo.
+</p>
+
+<h2 id="conhecidos">Detalhes conhecidos, com contorno</h2>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Estes dependem de correção</span>
+  <ul>
+    <li>
+      <b>A confirmação aparece duas vezes.</b> Acontece quando <code>v-confirm</code> está no mesmo
+      elemento de um verbo HTTP ou de <code>v-submit</code>: as duas camadas leem o mesmo atributo.
+      Deixe a pergunta em um lugar só, usando <code>v-click</code> com <code>$http</code>, ou
+      <code>$confirm(...)</code> dentro da própria expressão.
+    </li>
+    <li>
+      <b>A tradução some ao trocar de idioma.</b> <code>v-t-params</code> é lido apenas na primeira
+      renderização. Use a interpolação reativa:
+      <code>{ $t('itens', { n: total }) }</code>.
+    </li>
+    <li>
+      <b>O gráfico volta a ser de linha quando os dados mudam.</b> Os atributos
+      <code>v-chart-*</code> são lidos na montagem. Com dados reativos, declare tudo no objeto:
+      <code>v-chart="{ type: 'bar', data: vendas }"</code>.
+    </li>
+    <li>
+      <b>Os textos extras do <code>v-confirm</code></b>, como <code>v-confirm-title</code>, só
+      funcionam com <code>V.config.cleanAttributes = false</code>.
+    </li>
+  </ul>
+</div>
+
+<h2 id="ferramentas">As ferramentas</h2>
+
+<p>
+  Quando o sintoma não está nesta lista, a página do
+  <a href="inspetor.html">inspetor de reatividade</a> mostra como ver os escopos, os efeitos e as
+  requisições acontecendo — e como instalar um tratador global de erros para o que escapa em
+  produção.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
+  &lt;button @click="n++; $log('n agora é', n, 'escopo:', $data)"&gt;
+    Somar e registrar no console
+  &lt;/button&gt;
+  &lt;p&gt;{ n }&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>

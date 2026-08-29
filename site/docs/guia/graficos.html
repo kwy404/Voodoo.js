@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gráficos · Documentação da Voodoo.js</title>
+<meta name="description" content="Gráficos em SVG puro, sem dependência: os onze tipos, os formatos de dados aceitos, as opções, a reatividade dos dados e a acessibilidade gerada a partir dos próprios números.">
+<link rel="canonical" href="https://voodoojs.dev/docs/guia/graficos.html">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css">
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Interface e efeitos</p>
+<h1>Gráficos</h1>
+<p class="doc-resumo">
+  Gráficos em SVG puro, sem nenhuma dependência externa. Todo o desenho é gerado como texto e
+  entregue de uma vez ao container, o que mantém o redesenho barato mesmo com dados mudando a cada
+  quadro.
+</p>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
+  <p>O módulo de gráficos existe apenas no build completo.</p>
+</div>
+
+<h2 id="v-chart">v-chart</h2>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  vendas: [12, 19, 8, 25, 30, 22],
+  meses: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun']
+}"&gt;
+  &lt;div v-chart="{ type: 'line', data: vendas, labels: meses, smooth: true }"&gt;&lt;/div&gt;
+  &lt;button @click="vendas.push(Math.round(Math.random() * 40)); meses.push('Jul')"&gt;
+    Acrescentar um mês
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  O gráfico é reativo: mudar um número dentro do array já redesenha, porque o efeito percorre a
+  estrutura inteira e assina cada valor.
+</p>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Com dados reativos, use a forma de objeto</span>
+  <p>
+    Os atributos <code>v-chart-*</code> são lidos na montagem e servem bem para gráficos
+    estáticos, mas o tipo declarado neles não sobrevive à primeira atualização dos dados. Com
+    <code>v-chart="{ type: 'bar', data: vendas }"</code> tudo continua certo a cada redesenho.
+  </p>
+</div>
+
+<h2 id="tipos">Os onze tipos</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Tipo</th><th>Para que serve</th></tr></thead>
+<tbody>
+<tr><td><code>line</code></td><td>Evolução ao longo do tempo. Padrão</td></tr>
+<tr><td><code>area</code></td><td>Igual à linha, com a área preenchida</td></tr>
+<tr><td><code>bar</code></td><td>Barras verticais</td></tr>
+<tr><td><code>column</code></td><td>Barras horizontais</td></tr>
+<tr><td><code>stacked</code></td><td>Barras empilhadas, para composição</td></tr>
+<tr><td><code>pie</code></td><td>Pizza, para participação</td></tr>
+<tr><td><code>donut</code></td><td>Rosca, com espaço no meio</td></tr>
+<tr><td><code>sparkline</code></td><td>Tendência miúda, sem eixos, para caber numa célula</td></tr>
+<tr><td><code>radar</code></td><td>Comparação de várias dimensões</td></tr>
+<tr><td><code>scatter</code></td><td>Dispersão, com <code>x</code> e <code>y</code></td></tr>
+<tr><td><code>progress</code></td><td>Progresso circular</td></tr>
+</tbody>
+</table>
+</div>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ tipo: 'bar', dados: [12, 19, 8, 25, 30] }"&gt;
+  &lt;select v-model="tipo"&gt;
+    &lt;option&gt;line&lt;/option&gt;&lt;option&gt;area&lt;/option&gt;&lt;option&gt;bar&lt;/option&gt;
+    &lt;option&gt;column&lt;/option&gt;&lt;option&gt;pie&lt;/option&gt;&lt;option&gt;donut&lt;/option&gt;
+    &lt;option&gt;radar&lt;/option&gt;&lt;option&gt;sparkline&lt;/option&gt;
+  &lt;/select&gt;
+  &lt;div v-chart="{ type: tipo, data: dados, labels: ['A', 'B', 'C', 'D', 'E'] }"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="formatos">Formatos de dados</h2>
+
+<p>Números soltos, com rótulos separados:</p>
+
+<pre data-lang="js"><code>{ type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Fev', 'Mar'] }</code></pre>
+
+<p>Pontos nomeados:</p>
+
+<pre data-lang="js"><code>{ type: 'pie', data: [
+  { label: 'Orgânico', value: 48 },
+  { label: 'Pago', value: 32 },
+  { label: 'Direto', value: 20 }
+] }</code></pre>
+
+<p>Séries nomeadas, para várias linhas ou barras:</p>
+
+<pre data-lang="js"><code>{ type: 'line', labels: ['Jan', 'Fev', 'Mar'], data: [
+  { name: '2025', data: [10, 14, 12] },
+  { name: '2026', data: [16, 18, 25], color: '#FF3D8B' }
+] }</code></pre>
+
+<p>Dispersão, com coordenadas, e um número só para <code>progress</code>:</p>
+
+<pre data-lang="js"><code>{ type: 'scatter', data: [{ x: 1, y: 4 }, { x: 2, y: 7 }, { x: 3, y: 3 }] }
+{ type: 'progress', data: 68 }</code></pre>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ canais: [
+  { label: 'Orgânico', value: 48 },
+  { label: 'Pago', value: 32 },
+  { label: 'Direto', value: 20 }
+] }"&gt;
+  &lt;div v-chart="{ type: 'donut', data: canais, showValues: true }"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="opcoes">Opções</h2>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<tbody>
+<tr><td><code>type</code></td><td><code>line</code></td><td>Tipo do gráfico</td></tr>
+<tr><td><code>data</code></td><td></td><td>Dados, em qualquer formato aceito</td></tr>
+<tr><td><code>labels</code></td><td></td><td>Rótulos do eixo de categorias</td></tr>
+<tr><td><code>name</code></td><td></td><td>Nome da série única, usado na legenda e no tooltip</td></tr>
+<tr><td><code>colors</code></td><td>paleta da marca</td><td>Cores das séries</td></tr>
+<tr><td><code>height</code></td><td>260, ou 56 em <code>sparkline</code></td><td>Altura em pixels</td></tr>
+<tr><td><code>width</code></td><td></td><td>Largura usada quando o container ainda não tem medida</td></tr>
+<tr><td><code>showGrid</code></td><td><code>true</code></td><td>Linhas de grade e rótulos do eixo de valores</td></tr>
+<tr><td><code>showLegend</code></td><td>automático</td><td>Legenda clicável</td></tr>
+<tr><td><code>showValues</code></td><td><code>false</code></td><td>Escreve o valor de cada ponto, barra ou fatia</td></tr>
+<tr><td><code>animate</code></td><td><code>true</code></td><td>Anima o desenho na entrada</td></tr>
+<tr><td><code>smooth</code></td><td><code>false</code></td><td>Curvas suaves em linhas e áreas</td></tr>
+<tr><td><code>max</code>, <code>min</code></td><td>automático</td><td>Teto e piso da escala</td></tr>
+<tr><td><code>format</code></td><td><code>number</code></td><td><code>number</code>, <code>currency</code> ou <code>percent</code></td></tr>
+<tr><td><code>tooltip</code></td><td><code>true</code></td><td>Tooltip ao passar o mouse</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Para gráficos estáticos, os mesmos ajustes cabem em atributos:</p>
+
+<pre data-lang="html"><code>&lt;div v-chart="[12, 19, 8, 25]" v-chart-type="bar" v-chart-height="200"&gt;&lt;/div&gt;
+&lt;div v-chart="dados" v-chart-format="currency" v-chart-colors="#6D3BF5,#2ED9A5"&gt;&lt;/div&gt;
+&lt;div v-chart="dados" v-chart-grid="false" v-chart-legend="false"&gt;&lt;/div&gt;</code></pre>
+
+<h2 id="cores">Cores</h2>
+
+<p>Sem <code>colors</code>, o gráfico usa a paleta da marca:</p>
+
+<pre data-lang="txt"><code>#6D3BF5  #FF3D8B  #2ED9A5  #FFB35C  #9B7BFF  #FF4D4D  #14111F  #3BB6F5</code></pre>
+
+<p>
+  Ela está em <code>V.chartColors</code> e em <code>V.charts.colors</code>. As cores de grade,
+  texto e fundo vêm das variáveis <code>--v-*</code>, então o gráfico acompanha o tema e a paleta
+  configurada — inclusive quando o visitante troca de tema com a página aberta.
+</p>
+
+<h2 id="javascript">Por JavaScript</h2>
+
+<pre data-lang="js"><code>const grafico = V.renderChart(document.querySelector('#vendas'), {
+  type: 'area',
+  data: [12, 19, 8, 25, 30],
+  labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'],
+  smooth: true
+});
+
+grafico.update({ data: novosDados });
+grafico.destroy();</code></pre>
+
+<p><code>V.chart</code> é um apelido de <code>V.renderChart</code>.</p>
+
+<h2 id="acessibilidade">Acessibilidade</h2>
+
+<p>
+  Cada gráfico recebe <code>role="img"</code> e um <code>aria-label</code> escrito a partir dos
+  dados, com o tipo, a quantidade de séries, mínimo, máximo e média. Cada forma tem um
+  <code>&lt;title&gt;</code> próprio, lido no foco. A animação de entrada respeita
+  <code>prefers-reduced-motion</code>.
+</p>
+
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Ofereça os números também</span>
+  <p>
+    Um rótulo bem escrito ajuda, mas não substitui os dados. Para conjuntos importantes, coloque
+    uma tabela ao lado — dentro de um <code>&lt;details&gt;</code>, se ocupar espaço demais.
+  </p>
+</div>
+
+<pre data-lang="html"><code>&lt;div v-chart="{ type: 'bar', data: vendas, labels: meses }"&gt;&lt;/div&gt;
+
+&lt;details&gt;
+  &lt;summary&gt;Ver os dados em tabela&lt;/summary&gt;
+  &lt;VTable columns="mes:Mês, valor:Valor:right" :rows="tabelaDeVendas"&gt;&lt;/VTable&gt;
+&lt;/details&gt;</code></pre>
+
+</article>
+
+<script src="../assets/docs.js"></script>
+</body>
+</html>
