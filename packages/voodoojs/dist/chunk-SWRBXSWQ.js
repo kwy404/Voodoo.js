@@ -1,7 +1,7 @@
 import { reactive, ref, handleError, nextTick, queuePostFlush, warn, watch, toRaw, EffectScope, effect, flushSync, effectScope, stop, unref, markRaw, watchEffect, computed, shallowRef, setErrorHandler } from './chunk-ABAHVFPX.js';
 import { http, HttpError, request } from './chunk-7U443GSF.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-45K3USNK.js';
-import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-KQAVZ2II.js';
+import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-NY5DITDF.js';
 import { __publicField } from './chunk-5V56KGIJ.js';
 
 /**
@@ -901,6 +901,8 @@ var Scope = class _Scope {
     __publicField(this, "refs", {});
     /** Instancia de componente, quando este escopo pertence a um. */
     __publicField(this, "component", null);
+    /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+    __publicField(this, "provides", null);
     __publicField(this, "magicCache", null);
     this.data = data2;
     this.parent = parent;
@@ -911,6 +913,15 @@ var Scope = class _Scope {
     let s = this;
     while (s.parent) s = s.parent;
     return s;
+  }
+  /** Procura um valor de `provide` subindo a cadeia de escopos. */
+  inject(key, fallback) {
+    let s = this;
+    while (s) {
+      if (s.provides && key in s.provides) return s.provides[key];
+      s = s.parent;
+    }
+    return fallback;
   }
   /** Escopo de componente mais proximo, subindo a cadeia. */
   get owner() {
@@ -1332,7 +1343,81 @@ function walkChildren(el, scope) {
   }
   for (const child of list) walk(child, nodeScopes.get(child) ?? scope);
 }
-var MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
+var LIMITE_EXPRESSAO = 500;
+var expressaoValida = /* @__PURE__ */ new Map();
+function pareceExpressao(texto) {
+  const limpo = texto.trim();
+  if (!limpo) return false;
+  const guardado = expressaoValida.get(limpo);
+  if (guardado !== void 0) return guardado;
+  let valida = true;
+  try {
+    valida = parse(limpo).t !== "seq";
+  } catch {
+    valida = false;
+  }
+  expressaoValida.set(limpo, valida);
+  return valida;
+}
+function fecharChave(fonte, inicio) {
+  let nivel = 0;
+  let aspas = null;
+  for (let i = inicio; i < fonte.length; i++) {
+    const c = fonte[i];
+    if (aspas) {
+      if (c === "\\") i++;
+      else if (c === aspas) aspas = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === "`") {
+      aspas = c;
+      continue;
+    }
+    if (c === "{") nivel++;
+    else if (c === "}") {
+      nivel--;
+      if (nivel === 0) return i;
+    }
+  }
+  return -1;
+}
+function fatiarTexto(raw) {
+  const segments = [];
+  let literal = "";
+  let i = 0;
+  const guardarLiteral = () => {
+    if (literal) segments.push({ text: literal });
+    literal = "";
+  };
+  while (i < raw.length) {
+    const abre = raw.indexOf("{", i);
+    if (abre === -1) {
+      literal += raw.slice(i);
+      break;
+    }
+    literal += raw.slice(i, abre);
+    const duplo = raw[abre + 1] === "{";
+    const fecha = duplo ? raw.indexOf("}}", abre + 2) : fecharChave(raw, abre);
+    if (fecha === -1) {
+      literal += raw[abre];
+      i = abre + 1;
+      continue;
+    }
+    const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
+    const fim = duplo ? fecha + 2 : fecha + 1;
+    const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
+    if (cabe && pareceExpressao(expressao)) {
+      guardarLiteral();
+      segments.push({ expression: expressao.trim() });
+      i = fim;
+      continue;
+    }
+    literal += raw[abre];
+    i = abre + 1;
+  }
+  guardarLiteral();
+  return segments;
+}
 var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
 function bindTextNode(node, scope) {
   const raw = node.textContent;
@@ -1346,18 +1431,8 @@ function bindTextNode(node, scope) {
     }
     ancestral = ancestral.parentElement;
   }
-  const segments = [];
-  let lastIndex = 0;
-  MUSTACHE.lastIndex = 0;
-  let match;
-  while ((match = MUSTACHE.exec(raw)) !== null) {
-    if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
-    const expression = (match[1] ?? match[2] ?? "").trim();
-    if (expression) segments.push({ expression });
-    lastIndex = match.index + match[0].length;
-  }
+  const segments = fatiarTexto(raw);
   if (!segments.some((s) => s.expression)) return;
-  if (lastIndex < raw.length) segments.push({ text: raw.slice(lastIndex) });
   initialized.add(node);
   const owner = new EffectScope(true);
   addCleanup(node, () => owner.stop());
@@ -1590,6 +1665,26 @@ function mountComponent(el, name, parentScope) {
     const extra = evaluateIn(dataAttr, parentScope, "v-data");
     if (extra && typeof extra === "object") Object.assign(stateRaw, extra);
   }
+  if (definition.provide) {
+    try {
+      const fornecidos = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
+      if (fornecidos && typeof fornecidos === "object") {
+        scope.provides = { ...fornecidos };
+      }
+    } catch (err) {
+      handleError(err, `provide() do componente "${name}"`);
+    }
+  }
+  if (definition.inject) {
+    const pedidos = Array.isArray(definition.inject) ? definition.inject.map((chave) => [chave, { from: chave }]) : Object.entries(definition.inject).map(
+      ([chave, opcoes]) => [chave, opcoes ?? {}]
+    );
+    for (const [chave, opcoes] of pedidos) {
+      const de = opcoes.from ?? chave;
+      const valor = parentScope.inject(de, opcoes.default);
+      if (!(chave in stateRaw)) stateRaw[chave] = valor;
+    }
+  }
   const state = reactive(stateRaw);
   const computedRefs = {};
   if (definition.computed) {
@@ -1730,6 +1825,274 @@ function callHook(def, instance, name) {
   } catch (err) {
     handleError(err, `hook ${name}`);
   }
+}
+
+// src/runtime/boot.ts
+var LIMITE_ESPERA = 1e4;
+var PASSOS_ESTAVEIS = 2;
+var fila = [];
+var observador = null;
+var versaoDoDom = 0;
+var versaoNoPassoAnterior = -1;
+var passosSemMudanca = 0;
+var agendado = false;
+function agora() {
+  return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+}
+function observarMudancas() {
+  if (observador || typeof MutationObserver === "undefined" || typeof document === "undefined") {
+    return;
+  }
+  const raiz = document.documentElement;
+  if (!raiz) return;
+  observador = new MutationObserver(() => {
+    versaoDoDom++;
+  });
+  observador.observe(raiz, { childList: true, subtree: true });
+}
+function agendarPasso() {
+  if (agendado) return;
+  agendado = true;
+  const executar = () => {
+    agendado = false;
+    passo();
+  };
+  if (typeof requestAnimationFrame === "function") {
+    let disparado = false;
+    const uma = () => {
+      if (disparado) return;
+      disparado = true;
+      executar();
+    };
+    requestAnimationFrame(uma);
+    setTimeout(uma, 32);
+    return;
+  }
+  setTimeout(executar, 0);
+}
+function passo() {
+  if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
+  else passosSemMudanca = 0;
+  versaoNoPassoAnterior = versaoDoDom;
+  const instante = agora();
+  for (let i = fila.length - 1; i >= 0; i--) {
+    const tarefa = fila[i];
+    let valor = null;
+    try {
+      valor = tarefa.pronto();
+    } catch {
+      valor = null;
+    }
+    if (valor) {
+      fila.splice(i, 1);
+      tarefa.acao(valor);
+      continue;
+    }
+    if (instante - tarefa.desde > LIMITE_ESPERA) {
+      fila.splice(i, 1);
+      tarefa.aoDesistir?.();
+    }
+  }
+  if (fila.length) agendarPasso();
+}
+function enfileirar(tarefa) {
+  let valor = null;
+  try {
+    valor = tarefa.pronto();
+  } catch {
+    valor = null;
+  }
+  if (valor) {
+    tarefa.acao(valor);
+    return;
+  }
+  observarMudancas();
+  fila.push({ ...tarefa, desde: agora() });
+  agendarPasso();
+}
+function documentoEstavel() {
+  if (typeof document === "undefined" || !document.body) return false;
+  return passosSemMudanca >= PASSOS_ESTAVEIS;
+}
+function documentoParado() {
+  if (typeof document === "undefined" || !document.body) return false;
+  return versaoDoDom === 0;
+}
+function whenReady(acao) {
+  if (typeof document === "undefined") return;
+  enfileirar({
+    pronto: () => documentoEstavel() ? document.body : null,
+    acao: () => acao(),
+    // Passado o limite, comeca assim mesmo: uma pagina que nunca para de mudar
+    // ainda merece ser inicializada.
+    aoDesistir: () => {
+      if (document.body) acao();
+    }
+  });
+}
+function whenBodyReady(acao) {
+  if (typeof document === "undefined") return;
+  if (documentoParado()) {
+    void Promise.resolve().then(acao);
+    return;
+  }
+  enfileirar({
+    pronto: () => documentoEstavel() ? document.body : null,
+    acao: () => acao(),
+    aoDesistir: () => {
+      if (document.body) acao();
+    }
+  });
+}
+function whenElement(alvo, acao, aoDesistir) {
+  if (typeof alvo !== "string") {
+    acao(alvo);
+    return;
+  }
+  if (typeof document === "undefined") return;
+  enfileirar({
+    pronto: () => document.querySelector(alvo),
+    acao: (el) => acao(el),
+    aoDesistir
+  });
+}
+function ready() {
+  return new Promise((resolve2) => whenReady(() => resolve2()));
+}
+
+// src/runtime/app.ts
+var contador = 0;
+var directiveRegistrar = null;
+function setDirectiveRegistrar(fn) {
+  directiveRegistrar = fn;
+}
+function createApp(options = {}) {
+  const name = `voodoo-app-${++contador}`;
+  const { components: locais, ...raiz } = options;
+  const config_ = { globalProperties: {} };
+  const providos = {};
+  const registradosPorEsteApp = [];
+  let container2 = null;
+  let htmlOriginal = "";
+  let instancia = null;
+  let esperando = [];
+  function registrarLocais() {
+    if (!locais) return;
+    for (const [nome, definicao] of Object.entries(locais)) {
+      const normalizado = normalizeComponentName(nome);
+      if (components.has(normalizado)) continue;
+      defineComponent(normalizado, definicao);
+      registradosPorEsteApp.push(normalizado);
+    }
+  }
+  function montarEm(el) {
+    if (instancia) return instancia;
+    container2 = el;
+    htmlOriginal = el.innerHTML;
+    Object.assign(allowedGlobals, config_.globalProperties);
+    registrarLocais();
+    const definicao = { ...raiz };
+    if (Object.keys(providos).length) {
+      const anterior = definicao.provide;
+      definicao.provide = () => ({
+        ...typeof anterior === "function" ? anterior() : anterior ?? {},
+        ...providos
+      });
+    }
+    defineComponent(name, definicao);
+    el.setAttribute(`${config.prefix}component`, name);
+    try {
+      walk(el, rootScope);
+    } catch (err) {
+      handleError(err, `montagem da aplicacao "${name}"`);
+      return null;
+    }
+    instancia = getScope(el)?.component ?? null;
+    if (instancia) {
+      const fila2 = esperando;
+      esperando = [];
+      for (const resolver of fila2) resolver(instancia);
+    }
+    return instancia;
+  }
+  const app = {
+    name,
+    config: config_,
+    get instance() {
+      return instancia;
+    },
+    get container() {
+      return container2;
+    },
+    get isMounted() {
+      return instancia !== null;
+    },
+    component(nome, definicao) {
+      const normalizado = normalizeComponentName(nome);
+      if (definicao === void 0) {
+        return (locais && locais[nome]) ?? components.get(normalizado);
+      }
+      if (locais) locais[nome] = definicao;
+      else options.components = { [nome]: definicao };
+      if (instancia && !components.has(normalizado)) {
+        defineComponent(normalizado, definicao);
+        registradosPorEsteApp.push(normalizado);
+      }
+      return app;
+    },
+    directive(nome, definicao) {
+      directiveRegistrar?.(nome, definicao);
+      return app;
+    },
+    use(plugin, opcoes) {
+      usePlugin(globalThis_V(), plugin, opcoes);
+      return app;
+    },
+    provide(chave, valor) {
+      providos[chave] = valor;
+      return app;
+    },
+    mount(alvo) {
+      if (instancia) return instancia;
+      if (typeof alvo !== "string") return montarEm(alvo);
+      let resultado = null;
+      whenElement(
+        alvo,
+        (el) => {
+          resultado = montarEm(el);
+        },
+        () => {
+          console.warn(
+            `[Voodoo] createApp().mount("${alvo}") nao encontrou o elemento. A aplicacao continua sem montar.`
+          );
+        }
+      );
+      return resultado;
+    },
+    whenMounted() {
+      if (instancia) return Promise.resolve(instancia);
+      return new Promise((resolve2) => esperando.push(resolve2));
+    },
+    unmount() {
+      if (!container2) return;
+      destroy(container2);
+      container2.removeAttribute(`${config.prefix}component`);
+      container2.innerHTML = htmlOriginal;
+      components.delete(name);
+      for (const nome of registradosPorEsteApp) components.delete(nome);
+      registradosPorEsteApp.length = 0;
+      instancia = null;
+      container2 = null;
+    }
+  };
+  return app;
+}
+var objetoV = null;
+function setAppHost(V) {
+  objetoV = V;
+}
+function globalThis_V() {
+  return objetoV;
 }
 
 // src/store/index.ts
@@ -3634,7 +3997,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-USM66Q5M.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-CT3W3LWO.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -3872,6 +4235,7 @@ for (const name of [
 // src/core.ts
 setComponentMounter(mountComponent);
 setScopeMarker(markNodeScope);
+setDirectiveRegistrar(directive);
 installMagics();
 var eventBus = /* @__PURE__ */ new Map();
 function on(name, handler) {
@@ -3987,8 +4351,12 @@ var core = {
   directives,
   magic,
   magics,
+  // Modo aplicacao
+  createApp,
   // Ciclo de vida do DOM
   start,
+  whenReady,
+  whenElement,
   walk,
   refresh,
   destroy,
@@ -4050,6 +4418,7 @@ var core = {
   VoodooSyntaxError,
   VoodooRuntimeError
 };
+setAppHost(core);
 
 // src/dom/query.ts
 var UNITLESS = /* @__PURE__ */ new Set([
@@ -4990,26 +5359,24 @@ var VoodooCollection = class _VoodooCollection {
 };
 function query(input, context) {
   if (typeof input === "function") {
-    ready(input);
+    ready2(input);
     const root = typeof document !== "undefined" ? document.documentElement : null;
     return new VoodooCollection(root ? [root] : []);
   }
   return new VoodooCollection(resolve(input, context));
 }
-function ready(fn) {
-  if (typeof document === "undefined") return;
-  const run = () => {
-    try {
-      fn();
-    } catch (err) {
-      handleError(err, "V.ready");
-    }
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", run, { once: true });
-    return;
-  }
-  void Promise.resolve().then(run);
+function ready2(fn) {
+  if (typeof document === "undefined") return Promise.resolve();
+  return new Promise((resolve2) => {
+    whenBodyReady(() => {
+      try {
+        fn?.();
+      } catch (err) {
+        handleError(err, "V.ready");
+      }
+      resolve2();
+    });
+  });
 }
 function fromHtml(html) {
   return new VoodooCollection(parseHtml(html));
@@ -11198,6 +11565,6 @@ defineDirective(
   { priority: PRIORITY.MODEL + 5 }
 );
 
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache2 as cache, clearErrors, clearParseCache, clipboard, collectDirectives, confirm, cookie, core, defineComponent, destroy, dialog, efeitos, ensurePalette, enter, evaluate, evaluateIn, fadeIn, fadeOut, findScope, fromHtml, getEffectScopes, getScope, hasDirectives, hotkey, instances, leave, magic, magics, markSkipChildren, mask, masks, messages, modal, mountComponent, network, palette, parse, prompt, query, readAttr, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk };
-//# sourceMappingURL=chunk-W4LUTZE7.js.map
-//# sourceMappingURL=chunk-W4LUTZE7.js.map
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache2 as cache, clearErrors, clearParseCache, clipboard, collectDirectives, confirm, cookie, core, createApp, defineComponent, destroy, dialog, efeitos, ensurePalette, enter, evaluate, evaluateIn, fadeIn, fadeOut, findScope, fromHtml, getEffectScopes, getScope, hasDirectives, hotkey, instances, leave, magic, magics, markSkipChildren, mask, masks, messages, modal, mountComponent, network, palette, parse, prompt, query, readAttr, ready, ready2, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady };
+//# sourceMappingURL=chunk-SWRBXSWQ.js.map
+//# sourceMappingURL=chunk-SWRBXSWQ.js.map

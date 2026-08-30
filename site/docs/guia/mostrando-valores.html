@@ -65,12 +65,14 @@
   Este bloco fica exatamente como está, chaves e tudo: { não avaliado }
 &lt;/div&gt;</code></pre>
 
-<div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Chave dentro de chave não funciona</span>
+<div class="doc-aviso doc-aviso--dica">
+  <span class="doc-aviso__rotulo">Objeto dentro da expressão, e quebra de linha</span>
   <p>
-    A varredura fecha na primeira chave que encontra. Uma expressão que tenha um objeto dentro,
-    como <code>{ $t('itens', { n: total }) }</code>, quebra no meio. Nesses casos use
-    <code>v-text</code>, que recebe a expressão inteira em um atributo.
+    As duas coisas funcionam: <code>{ $t('itens', { n: total }) }</code> conta as chaves e acha o
+    fechamento certo, e uma expressão longa pode ser quebrada em várias linhas. O critério é
+    analisar: o que a biblioteca consegue ler como expressão vira valor, e o que não consegue
+    continua sendo texto exatamente como você escreveu — um trecho de CSS colado no parágrafo, por
+    exemplo, fica intacto.
   </p>
 </div>
 

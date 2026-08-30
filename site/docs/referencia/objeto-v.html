@@ -33,6 +33,10 @@ V.toast.success('Pronto');             // serviços</code></pre>
 <thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
 <tbody>
 <tr><td><code>V.version</code></td><td>Versão publicada</td></tr>
+<tr><td><code>V.createApp(opções)</code></td><td>Cria uma aplicação, no formato do Vue. Veja <a href="../guia/modo-aplicacao.html">os dois modos</a></td></tr>
+<tr><td><code>V.whenReady(fn)</code></td><td>Executa quando o documento tiver corpo e parar de mudar</td></tr>
+<tr><td><code>V.whenElement(seletor, fn)</code></td><td>Executa quando o elemento existir, mesmo que ele ainda não exista</td></tr>
+<tr><td><code>V.ready(fn?)</code></td><td>O mesmo, em forma de callback e de promessa</td></tr>
 <tr><td><code>V.config</code></td><td>Configuração global. Veja <a href="configuracao.html">configuração</a></td></tr>
 <tr><td><code>V.start(raiz?)</code></td><td>Percorre e inicializa. Chamado sozinho nos builds de navegador</td></tr>
 <tr><td><code>V.walk(no, escopo?)</code></td><td>Inicializa um trecho de DOM</td></tr>

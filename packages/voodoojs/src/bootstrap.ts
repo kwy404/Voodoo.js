@@ -24,6 +24,7 @@ import { config } from './runtime/registry';
 import { allowedGlobals } from './parser/interpreter';
 import { theme } from './storage';
 import { applySavedPalette } from './ui/palette';
+import { whenReady } from './runtime/boot';
 
 /** Le a configuracao declarada nos atributos da tag `<script>`. */
 function readScriptOptions(): { manual: boolean } {
@@ -81,13 +82,11 @@ export function bootstrap(V: any): void {
     V.start();
   };
 
-  // Com `<script defer>` o documento ja esta em "interactive" quando a
-  // biblioteca executa, e os outros scripts com defer ainda nao rodaram.
-  // Iniciar agora atropelaria quem registra componentes e estado depois,
-  // entao so o estado "complete" permite comecar na hora.
-  if (document.readyState === 'complete') {
-    boot();
-  } else {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  }
+  // Quem decide a hora e o agendador da propria Voodoo, e nao os eventos de
+  // carregamento do navegador. Ele espera duas condicoes: o corpo existir e a
+  // arvore parar de crescer. Isso cobre sozinho os casos que o `readyState`
+  // cobria mal: um script sem `defer` no `<head>`, outros scripts com `defer`
+  // que ainda vao registrar componentes, e uma pagina montada por terceiros
+  // depois que o evento ja passou.
+  whenReady(boot);
 }

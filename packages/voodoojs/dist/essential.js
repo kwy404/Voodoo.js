@@ -1,8 +1,8 @@
-import { core, magic, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query } from './chunk-W4LUTZE7.js';
+import { core, magic, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-SWRBXSWQ.js';
 import './chunk-ABAHVFPX.js';
 import './chunk-7U443GSF.js';
 import './chunk-45K3USNK.js';
-import './chunk-KQAVZ2II.js';
+import './chunk-NY5DITDF.js';
 import './chunk-5V56KGIJ.js';
 
 /**
@@ -15,7 +15,7 @@ import './chunk-5V56KGIJ.js';
 var V = ((input, context) => query(input, context));
 Object.assign(V, core, {
   query,
-  ready,
+  ready: ready2,
   fromHtml,
   Collection: VoodooCollection,
   modal,

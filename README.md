@@ -159,6 +159,7 @@ com o arquivo baixado.
 - [Falando com um servidor](#falando-com-um-servidor)
 - [Um formulário que valida e envia sozinho](#um-formulário-que-valida-e-envia-sozinho)
 - [Reaproveitando pedaços com componentes](#reaproveitando-pedaços-com-componentes)
+- [Modo aplicação: createApp](#modo-aplicação-createapp)
 - [Componentes prontos](#componentes-prontos)
 - [Compartilhando estado entre partes da página](#compartilhando-estado-entre-partes-da-página)
 - [Coisas que só a Voodoo faz](#coisas-que-só-a-voodoo-faz)
@@ -227,9 +228,9 @@ A Voodoo.js é um arquivo pronto. Você baixa, coloca junto do seu HTML, e acabo
 
 | Arquivo | O que vem dentro | Gzip | Download |
 | --- | --- | --- | --- |
-| **voodoo.core.min.js** | Reatividade, expressões, componentes, DOM encadeável, directives de estado, renderização, eventos e requisições por atributo | **41 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.core.min.js) |
-| **voodoo.min.js** | O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som | **78 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js) |
-| **voodoo.full.min.js** | Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos | **122 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js) |
+| **voodoo.core.min.js** | Reatividade, expressões, componentes, DOM encadeável, directives de estado, renderização, eventos e requisições por atributo | **42 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.core.min.js) |
+| **voodoo.min.js** | O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som | **79 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js) |
+| **voodoo.full.min.js** | Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos | **124 KB** | [baixar](https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js) |
 
 Na dúvida, comece pelo **voodoo.min.js**. Ele cobre a maioria das páginas.
 Troque pelo completo quando precisar de gráfico, animação, roteador ou dos componentes prontos.
@@ -1142,6 +1143,110 @@ V.component('relogio', {
 proposital, para o componente não depender de onde foi colocado. Quando você quer o contrário,
 declare `inheritScope: true` na definição.
 
+## Modo aplicação: createApp
+
+**O problema.** Até aqui a Voodoo ligou atributos a um HTML que já existia. Só que nem toda tela
+começa assim: às vezes a página é uma casca vazia e a interface inteira nasce no cliente, com
+dezenas de componentes. É o terreno do Vue e do React.
+
+Para esse caso existe o segundo modo, com o mesmo formato do Vue:
+
+```html
+<div id="app"></div>
+
+<script>
+  V.createApp({
+    data: () => ({ n: 0 }),
+    computed: { dobro() { return this.n * 2 } },
+    methods: { somar() { this.n++ } },
+    template: `
+      <button @click="somar()">Cliques: { n }</button>
+      <p>Dobro: { dobro }</p>
+    `
+  }).mount('#app');
+</script>
+```
+
+Estado, computados, métodos, watchers, ciclo de vida, slots e props: os nomes são os mesmos que
+você já usa no Vue. O que muda é que não existe compilação, nem arquivo `.vue`, nem passo de
+build. O template é uma string de HTML comum, lida em tempo de execução.
+
+### Componentes, provide e inject
+
+```js
+const app = V.createApp({
+  provide: { usuario: 'Ana' },
+  components: {
+    cartao: {
+      props: ['titulo'],
+      template: '<article><b>{ titulo }</b> <slot></slot></article>'
+    },
+    rodape: {
+      inject: ['usuario'],
+      template: '<small>Logado como { usuario }</small>'
+    }
+  },
+  template: `
+    <cartao titulo="Receita">R$ 128.400</cartao>
+    <rodape></rodape>
+  `
+});
+
+app.mount('#painel');
+```
+
+Os componentes de `components` valem só dentro daquela aplicação, e saem do registro no
+`unmount`. Duas aplicações na mesma página podem ter um `cartao` cada uma.
+
+### A instância
+
+| Membro | O que faz |
+| --- | --- |
+| `app.mount(alvo)` | Monta em um seletor ou elemento. Devolve a instância raiz |
+| `app.unmount()` | Desmonta e devolve o container ao HTML original |
+| `app.component(nome, def)` | Registra um componente |
+| `app.directive(nome, def)` | Registra uma directive |
+| `app.use(plugin, opções)` | Instala um plugin |
+| `app.provide(chave, valor)` | Entrega um valor à árvore inteira |
+| `app.config.globalProperties` | Valores liberados dentro das expressões |
+| `app.instance`, `app.container`, `app.isMounted` | Estado da montagem |
+| `app.whenMounted()` | Promessa resolvida com a instância |
+
+### O agendador é da Voodoo, não do navegador
+
+A biblioteca não usa `DOMContentLoaded` nem `document.readyState` para decidir quando começar.
+Ela tem o próprio laço, que pergunta se o que ela precisa já existe e parou de mudar. A
+consequência prática aparece no `mount`:
+
+```html
+<script>
+  // O container ainda não existe nesta linha. A montagem espera por ele.
+  V.createApp({ template: '<p>montei quando deu</p>' }).mount('#tela-2');
+</script>
+```
+
+| Situação | Vue e React | Voodoo.js |
+| --- | --- | --- |
+| Script no `<head>`, sem `defer` | Falha: o container não existe | Monta quando o container aparece |
+| Container criado por outro script | Falha, ou exige orquestração | Monta sozinho |
+| Página carregada faz tempo | Monta na hora | Monta na hora |
+
+As três funções do agendador são públicas: `V.whenReady(fn)`, `V.whenElement(seletor, fn)` e
+`V.ready(fn?)`, que também devolve promessa.
+
+### Os dois modos convivem
+
+```html
+<div v-data="{ fora: 'atributos' }">
+  <p>Este pedaço é o modo { fora }.</p>
+</div>
+
+<div id="parte-app"></div>
+```
+
+Mesma reatividade, mesmos stores, mesmas directives. A escolha é por tela, e não pelo projeto
+inteiro.
+
 ## Componentes prontos
 
 O build completo registra **29 componentes** com aparência própria, acessíveis e alinhados ao
@@ -1771,7 +1876,7 @@ Tudo fora dessa lista devolve `undefined`. `window`, `document`, `fetch`, `eval`
 
 | | Voodoo.js | Alpine.js | HTMX | Vue 3 | React 19 | jQuery |
 | --- | --- | --- | --- | --- | --- | --- |
-| Tamanho gzip | 41 a 122 KB | 15 KB | 14 KB | 34 KB | 45 KB | 30 KB |
+| Tamanho gzip | 42 a 124 KB | 15 KB | 14 KB | 34 KB | 45 KB | 30 KB |
 | Precisa de build | Não | Não | Não | Recomendado | Sim | Não |
 | Reatividade | Sim | Sim | Não | Sim | Sim | Não |
 | Componentes | Sim | Limitado | Não | Sim | Sim | Não |
@@ -1833,12 +1938,17 @@ HTTP, validação, máscaras, gráficos e componentes prontos embutidos, e não 
 ### Do Vue
 
 `v-if`, `v-for`, `v-model`, `v-bind`, `v-on`, `:atalho` e `@atalho` funcionam igual.
-Componentes têm `props`, `computed`, `methods`, `watch`, slots nomeados e os ganchos de ciclo
-de vida com os mesmos nomes.
+Componentes têm `props`, `computed`, `methods`, `watch`, slots nomeados, `provide`, `inject` e
+os ganchos de ciclo de vida com os mesmos nomes. A montagem também:
+
+```js
+V.createApp({ data: () => ({ n: 0 }), template: '<b>{ n }</b>' }).mount('#app');
+```
 
 As diferenças: não existe passo de build nem arquivo `.vue`, a interpolação padrão é `{ x }` em
 vez de `{{ x }}`, embora as duas sejam aceitas, e a expressão dentro do atributo aceita um
-subconjunto de JavaScript em vez da linguagem inteira.
+subconjunto de JavaScript em vez da linguagem inteira. Não existem Composition API,
+`<script setup>`, slots com escopo nem hidratação no servidor.
 
 ## Segurança
 
@@ -1874,9 +1984,9 @@ Medido com `node scripts/size.mjs` neste repositório:
 
 | Arquivo | Cru | Gzip | Brotli | O que inclui |
 | --- | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 119 KB | **41 KB** | 36 KB | Reatividade, expressões, componentes, DOM, directives e requisições |
-| `voodoo.min.js` | 241 KB | **78 KB** | 66 KB | O anterior, mais formulários, validação, máscaras, interface, arrastar e soltar, som |
-| `voodoo.full.min.js` | 406 KB | **122 KB** | 102 KB | Tudo, mais gráficos, animações, roteador, idiomas, inspetor e 29 componentes |
+| `voodoo.core.min.js` | 123 KB | **42 KB** | 37 KB | Reatividade, expressões, componentes, DOM, directives e requisições |
+| `voodoo.min.js` | 245 KB | **79 KB** | 67 KB | O anterior, mais formulários, validação, máscaras, interface, arrastar e soltar, som |
+| `voodoo.full.min.js` | 410 KB | **124 KB** | 103 KB | Tudo, mais gráficos, animações, roteador, idiomas, inspetor e 29 componentes |
 
 Os três arquivos são gerados a partir do mesmo código fonte. A diferença entre eles é apenas
 quanta coisa vem junto.

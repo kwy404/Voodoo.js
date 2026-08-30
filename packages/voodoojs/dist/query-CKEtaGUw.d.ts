@@ -206,10 +206,14 @@ declare class Scope implements EvalScope {
     refs: Record<string, Element>;
     /** Instancia de componente, quando este escopo pertence a um. */
     component: any;
+    /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+    provides: Record<string, unknown> | null;
     private magicCache;
     constructor(data?: Record<string, any>, parent?: Scope | null, el?: Element | null);
     /** Escopo raiz da cadeia. */
     get root(): Scope;
+    /** Procura um valor de `provide` subindo a cadeia de escopos. */
+    inject<T = unknown>(key: string, fallback?: T): T | undefined;
     /** Escopo de componente mais proximo, subindo a cadeia. */
     get owner(): Scope | null;
     /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
@@ -356,6 +360,13 @@ interface ComponentDefinition {
     style?: string;
     /** Herda o escopo do pai em vez de isolar. Padrao `false`. */
     inheritScope?: boolean;
+    /** Valores entregues aos descendentes, lidos com `inject`. */
+    provide?: Record<string, unknown> | ((this: any) => Record<string, unknown>);
+    /** Valores buscados em um `provide` acima, disponiveis como estado. */
+    inject?: string[] | Record<string, {
+        from?: string;
+        default?: unknown;
+    }>;
     beforeMount?(this: any): void;
     mounted?(this: any): void;
     updated?(this: any): void;
@@ -636,6 +647,120 @@ declare function stopObserving(): void;
 declare function refresh(root?: Element): void;
 
 /**
+ * @module runtime/app
+ *
+ * Modo aplicacao: `createApp(...).mount('#app')`.
+ *
+ * O modo de sempre da Voodoo e ligar atributos a um HTML que ja existe. Este
+ * modulo acrescenta o outro caminho, o do Vue e do React: a aplicacao inteira e
+ * descrita em JavaScript, tem uma raiz propria e o HTML dela vem do template.
+ *
+ * ```js
+ * const app = V.createApp({
+ *   data: () => ({ n: 0 }),
+ *   computed: { dobro() { return this.n * 2 } },
+ *   methods: { somar() { this.n++ } },
+ *   template: `
+ *     <button @click="somar()">Cliques: { n }</button>
+ *     <p>Dobro: { dobro }</p>
+ *   `
+ * })
+ *
+ * app.mount('#app')
+ * ```
+ *
+ * Duas diferencas propositais em relacao ao Vue:
+ *
+ * 1. `mount` aceita um alvo que ainda nao existe. Nao existe corrida com o
+ *    carregamento da pagina, porque quem espera e o agendador da propria
+ *    Voodoo, e nao `DOMContentLoaded`.
+ * 2. `unmount` devolve o container ao HTML original, em vez de deixa-lo vazio.
+ */
+
+interface AppOptions extends ComponentDefinition {
+    /** Componentes visiveis apenas dentro desta aplicacao. */
+    components?: Record<string, ComponentDefinition>;
+    /** Valores entregues a arvore inteira, lidos com `inject`. */
+    provide?: Record<string, unknown> | (() => Record<string, unknown>);
+}
+interface AppConfig {
+    /** Valores liberados dentro das expressoes desta aplicacao. */
+    globalProperties: Record<string, unknown>;
+}
+interface App {
+    /** Nome interno do componente raiz, util em mensagens e no inspetor. */
+    readonly name: string;
+    readonly config: AppConfig;
+    /** Instancia raiz, ou `null` enquanto a aplicacao nao montou. */
+    readonly instance: ComponentInstance | null;
+    /** Elemento que recebeu a aplicacao, ou `null`. */
+    readonly container: Element | null;
+    readonly isMounted: boolean;
+    component(name: string): ComponentDefinition | undefined;
+    component(name: string, definition: ComponentDefinition): App;
+    directive(name: string, definition: unknown): App;
+    use(plugin: VoodooPlugin | Function, options?: Record<string, unknown>): App;
+    provide(key: string, value: unknown): App;
+    /**
+     * Monta a aplicacao. O alvo pode ser um seletor ou um elemento, e pode ainda
+     * nao existir: nesse caso a montagem acontece assim que ele aparecer.
+     */
+    mount(target: string | Element): ComponentInstance | null;
+    /** Promessa resolvida com a instancia raiz quando a montagem acontecer. */
+    whenMounted(): Promise<ComponentInstance>;
+    /** Desmonta e devolve o container ao conteudo original. */
+    unmount(): void;
+}
+/**
+ * Cria uma aplicacao. As opcoes sao as mesmas de um componente, mais
+ * `components` e `provide`.
+ */
+declare function createApp(options?: AppOptions): App;
+
+/**
+ * @module runtime/boot
+ *
+ * Agendador de inicializacao proprio da Voodoo.
+ *
+ * A biblioteca nao usa `DOMContentLoaded` nem `document.readyState` para saber
+ * quando comecar. Em vez disso ela mantem o proprio laco: a cada passo pergunta
+ * se a condicao daquela tarefa ja vale, e executa as que valem.
+ *
+ * O motivo e simples. Os eventos de carregamento do navegador respondem a
+ * pergunta errada. `DOMContentLoaded` diz que o parser terminou, e nao que a
+ * arvore que interessa existe. Uma pagina renderizada por outro script, um
+ * fragmento inserido depois, um container que so aparece na segunda tela: em
+ * todos esses casos o evento ja passou, ou vai passar cedo demais.
+ *
+ * O laco daqui responde a pergunta certa: "o que eu preciso ja esta no
+ * documento e parou de mudar?". Isso vale tanto para o inicio automatico quanto
+ * para `app.mount('#app')` chamado antes de `#app` existir.
+ *
+ * ```js
+ * whenReady(() => V.start())                    // documento estavel
+ * whenElement('#app', (el) => montar(el))       // elemento, exista ele ou nao
+ * ```
+ */
+/**
+ * Executa quando o documento tiver corpo e parar de mudar.
+ *
+ * Substitui `DOMContentLoaded`. A diferenca pratica aparece em dois casos:
+ * um script sem `defer` no `<head>`, onde o corpo ainda nao existe, e uma
+ * pagina montada por outro script, onde o evento ja passou.
+ */
+declare function whenReady(acao: () => void): void;
+/**
+ * Resolve um elemento que pode ainda nao existir.
+ *
+ * ```js
+ * whenElement('#app', (el) => app.mount(el))
+ * ```
+ */
+declare function whenElement(alvo: string | Element, acao: (el: Element) => void, aoDesistir?: () => void): void;
+/** Promessa resolvida quando o documento estiver pronto pelo criterio acima. */
+declare function ready$1(): Promise<void>;
+
+/**
  * @module store
  *
  * Estado global reativo. Um store e um objeto reativo nomeado, acessivel de
@@ -797,7 +922,10 @@ declare const core: {
     directives: Map<string, DirectiveDefinition>;
     magic: typeof magic;
     magics: Map<string, MagicGetter>;
+    createApp: typeof createApp;
     start: typeof start;
+    whenReady: typeof whenReady;
+    whenElement: typeof whenElement;
     walk: typeof walk;
     refresh: typeof refresh;
     destroy: typeof destroy;
@@ -1337,11 +1465,19 @@ declare class VoodooCollection implements Iterable<HTMLElement> {
  */
 declare function query(input?: QueryInput, context?: QueryInput): VoodooCollection;
 /**
- * Executa a funcao quando o DOM estiver pronto. Se ja estiver, roda no proximo
- * microtask, para que a ordem das chamadas seja sempre previsivel.
+ * Executa a funcao quando a Voodoo considerar o documento pronto, e devolve uma
+ * promessa do mesmo momento. As duas escritas valem:
+ *
+ * ```js
+ * V.ready(() => console.log('pronto'))
+ * await V.ready()
+ * ```
+ *
+ * Quem decide a hora e o agendador da propria biblioteca, que espera o corpo
+ * existir e a arvore parar de crescer. Nada aqui escuta `DOMContentLoaded`.
  */
-declare function ready(fn: ReadyCallback): void;
+declare function ready(fn?: ReadyCallback): Promise<void>;
 /** Cria elementos a partir de uma string de HTML, sem inseri-los no documento. */
 declare function fromHtml(html: string): VoodooCollection;
 
-export { viewTransition as $, leave as A, magic as B, type ComponentDefinition as C, type DirectiveBinding as D, magics as E, mountComponent as F, parse as G, query as H, ready as I, refresh as J, removeStore as K, rootScope as L, session as M, slideDown as N, slideUp as O, PRIORITY as P, start as Q, storage as R, Scope as S, store as T, storeNames as U, VoodooCollection as V, stringify as W, theme as X, toast as Y, tokenize as Z, url as _, type DirectiveHooks as a, walk as a0, type VoodooConfig as b, core as c, type VoodooPlugin as d, VoodooRuntimeError as e, VoodooSyntaxError as f, addCleanup as g, allStores as h, allowedGlobals as i, cache as j, clearParseCache as k, config as l, cookie as m, defineComponent as n, defineDirective as o, destroy as p, ensureTokens as q, enter as r, evaluate as s, fadeIn as t, fadeOut as u, findScope as v, fromHtml as w, getScope as x, injectStyle as y, instances as z };
+export { theme as $, type App as A, getScope as B, type ComponentDefinition as C, type DirectiveBinding as D, injectStyle as E, instances as F, leave as G, magic as H, magics as I, mountComponent as J, parse as K, query as L, ready as M, refresh as N, removeStore as O, PRIORITY as P, rootScope as Q, session as R, Scope as S, slideDown as T, slideUp as U, VoodooCollection as V, start as W, storage as X, store as Y, storeNames as Z, stringify as _, type AppOptions as a, toast as a0, tokenize as a1, url as a2, viewTransition as a3, walk as a4, whenElement as a5, whenReady as a6, type DirectiveHooks as b, core as c, type VoodooConfig as d, type VoodooPlugin as e, VoodooRuntimeError as f, VoodooSyntaxError as g, addCleanup as h, allStores as i, allowedGlobals as j, cache as k, clearParseCache as l, config as m, cookie as n, createApp as o, defineComponent as p, defineDirective as q, destroy as r, ready$1 as s, ensureTokens as t, enter as u, evaluate as v, fadeIn as w, fadeOut as x, findScope as y, fromHtml as z };

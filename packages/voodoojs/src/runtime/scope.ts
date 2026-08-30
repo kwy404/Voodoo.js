@@ -29,6 +29,8 @@ export class Scope implements EvalScope {
   refs: Record<string, Element> = {};
   /** Instancia de componente, quando este escopo pertence a um. */
   component: any = null;
+  /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+  provides: Record<string, unknown> | null = null;
 
   private magicCache: Map<string, Record<string, unknown>> | null = null;
 
@@ -43,6 +45,16 @@ export class Scope implements EvalScope {
     let s: Scope = this;
     while (s.parent) s = s.parent;
     return s;
+  }
+
+  /** Procura um valor de `provide` subindo a cadeia de escopos. */
+  inject<T = unknown>(key: string, fallback?: T): T | undefined {
+    let s: Scope | null = this;
+    while (s) {
+      if (s.provides && key in s.provides) return s.provides[key] as T;
+      s = s.parent;
+    }
+    return fallback;
   }
 
   /** Escopo de componente mais proximo, subindo a cadeia. */

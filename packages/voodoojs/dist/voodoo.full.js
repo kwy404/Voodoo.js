@@ -1738,6 +1738,8 @@ Expressao: ${expression}` : message);
       __publicField(this, "refs", {});
       /** Instancia de componente, quando este escopo pertence a um. */
       __publicField(this, "component", null);
+      /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+      __publicField(this, "provides", null);
       __publicField(this, "magicCache", null);
       this.data = data2;
       this.parent = parent;
@@ -1748,6 +1750,15 @@ Expressao: ${expression}` : message);
       let s = this;
       while (s.parent) s = s.parent;
       return s;
+    }
+    /** Procura um valor de `provide` subindo a cadeia de escopos. */
+    inject(key, fallback) {
+      let s = this;
+      while (s) {
+        if (s.provides && key in s.provides) return s.provides[key];
+        s = s.parent;
+      }
+      return fallback;
     }
     /** Escopo de componente mais proximo, subindo a cadeia. */
     get owner() {
@@ -2176,10 +2187,83 @@ Expressao: ${expression}` : message);
     }
     for (const child of list) walk(child, (_a = nodeScopes.get(child)) != null ? _a : scope);
   }
-  var MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
+  var LIMITE_EXPRESSAO = 500;
+  var expressaoValida = /* @__PURE__ */ new Map();
+  function pareceExpressao(texto) {
+    const limpo = texto.trim();
+    if (!limpo) return false;
+    const guardado = expressaoValida.get(limpo);
+    if (guardado !== void 0) return guardado;
+    let valida = true;
+    try {
+      valida = parse(limpo).t !== "seq";
+    } catch (e) {
+      valida = false;
+    }
+    expressaoValida.set(limpo, valida);
+    return valida;
+  }
+  function fecharChave(fonte, inicio) {
+    let nivel = 0;
+    let aspas = null;
+    for (let i = inicio; i < fonte.length; i++) {
+      const c2 = fonte[i];
+      if (aspas) {
+        if (c2 === "\\") i++;
+        else if (c2 === aspas) aspas = null;
+        continue;
+      }
+      if (c2 === '"' || c2 === "'" || c2 === "`") {
+        aspas = c2;
+        continue;
+      }
+      if (c2 === "{") nivel++;
+      else if (c2 === "}") {
+        nivel--;
+        if (nivel === 0) return i;
+      }
+    }
+    return -1;
+  }
+  function fatiarTexto(raw) {
+    const segments = [];
+    let literal = "";
+    let i = 0;
+    const guardarLiteral = () => {
+      if (literal) segments.push({ text: literal });
+      literal = "";
+    };
+    while (i < raw.length) {
+      const abre = raw.indexOf("{", i);
+      if (abre === -1) {
+        literal += raw.slice(i);
+        break;
+      }
+      literal += raw.slice(i, abre);
+      const duplo = raw[abre + 1] === "{";
+      const fecha = duplo ? raw.indexOf("}}", abre + 2) : fecharChave(raw, abre);
+      if (fecha === -1) {
+        literal += raw[abre];
+        i = abre + 1;
+        continue;
+      }
+      const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
+      const fim = duplo ? fecha + 2 : fecha + 1;
+      const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
+      if (cabe && pareceExpressao(expressao)) {
+        guardarLiteral();
+        segments.push({ expression: expressao.trim() });
+        i = fim;
+        continue;
+      }
+      literal += raw[abre];
+      i = abre + 1;
+    }
+    guardarLiteral();
+    return segments;
+  }
   var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
   function bindTextNode(node, scope) {
-    var _a, _b;
     const raw = node.textContent;
     if (!raw || raw.indexOf("{") === -1) return;
     if (initialized.has(node)) return;
@@ -2191,28 +2275,18 @@ Expressao: ${expression}` : message);
       }
       ancestral = ancestral.parentElement;
     }
-    const segments = [];
-    let lastIndex = 0;
-    MUSTACHE.lastIndex = 0;
-    let match;
-    while ((match = MUSTACHE.exec(raw)) !== null) {
-      if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
-      const expression = ((_b = (_a = match[1]) != null ? _a : match[2]) != null ? _b : "").trim();
-      if (expression) segments.push({ expression });
-      lastIndex = match.index + match[0].length;
-    }
+    const segments = fatiarTexto(raw);
     if (!segments.some((s) => s.expression)) return;
-    if (lastIndex < raw.length) segments.push({ text: raw.slice(lastIndex) });
     initialized.add(node);
     const owner = new EffectScope(true);
     addCleanup(node, () => owner.stop());
     trackEffectScope(node, owner);
     owner.run(
       () => effect(() => {
-        var _a2;
+        var _a;
         let out = "";
         for (const segment of segments) {
-          out += (_a2 = segment.text) != null ? _a2 : stringify(evaluateIn(segment.expression, scope, "interpolacao"));
+          out += (_a = segment.text) != null ? _a : stringify(evaluateIn(segment.expression, scope, "interpolacao"));
         }
         if (node.textContent !== out) node.textContent = out;
       }, { scope: owner })
@@ -2417,7 +2491,7 @@ Expressao: ${expression}` : message);
     scopeMarker == null ? void 0 : scopeMarker(node, scope);
   }
   function mountComponent(el, name, parentScope) {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const normalized = name ? normalizeComponentName(name) : "";
     const definition = normalized ? (_c = (_b = components.get(normalized)) != null ? _b : components.get((_a = componentAliases.get(normalized)) != null ? _a : "")) != null ? _c : {} : {};
     if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
@@ -2443,6 +2517,26 @@ Expressao: ${expression}` : message);
     if (dataAttr) {
       const extra = evaluateIn(dataAttr, parentScope, "v-data");
       if (extra && typeof extra === "object") Object.assign(stateRaw, extra);
+    }
+    if (definition.provide) {
+      try {
+        const fornecidos = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
+        if (fornecidos && typeof fornecidos === "object") {
+          scope.provides = { ...fornecidos };
+        }
+      } catch (err) {
+        handleError(err, `provide() do componente "${name}"`);
+      }
+    }
+    if (definition.inject) {
+      const pedidos = Array.isArray(definition.inject) ? definition.inject.map((chave) => [chave, { from: chave }]) : Object.entries(definition.inject).map(
+        ([chave, opcoes]) => [chave, opcoes != null ? opcoes : {}]
+      );
+      for (const [chave, opcoes] of pedidos) {
+        const de = (_f = opcoes.from) != null ? _f : chave;
+        const valor = parentScope.inject(de, opcoes.default);
+        if (!(chave in stateRaw)) stateRaw[chave] = valor;
+      }
     }
     const state2 = reactive(stateRaw);
     const computedRefs = {};
@@ -2472,7 +2566,7 @@ Expressao: ${expression}` : message);
       $props: props,
       $name: normalized || "inline",
       $scope: scope,
-      $parent: (_g = (_f = parentScope.owner) == null ? void 0 : _f.component) != null ? _g : null,
+      $parent: (_h = (_g = parentScope.owner) == null ? void 0 : _g.component) != null ? _h : null,
       emit: emit3,
       $emit: emit3,
       $nextTick: (fn) => Promise.resolve().then(() => (init_reactivity(), reactivity_exports)).then((m) => m.nextTick(fn)),
@@ -2584,6 +2678,278 @@ Expressao: ${expression}` : message);
     } catch (err) {
       handleError(err, `hook ${name}`);
     }
+  }
+
+  // src/runtime/app.ts
+  init_reactivity();
+  init_registry();
+
+  // src/runtime/boot.ts
+  var LIMITE_ESPERA = 1e4;
+  var PASSOS_ESTAVEIS = 2;
+  var fila = [];
+  var observador = null;
+  var versaoDoDom = 0;
+  var versaoNoPassoAnterior = -1;
+  var passosSemMudanca = 0;
+  var agendado = false;
+  function agora() {
+    return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+  }
+  function observarMudancas() {
+    if (observador || typeof MutationObserver === "undefined" || typeof document === "undefined") {
+      return;
+    }
+    const raiz = document.documentElement;
+    if (!raiz) return;
+    observador = new MutationObserver(() => {
+      versaoDoDom++;
+    });
+    observador.observe(raiz, { childList: true, subtree: true });
+  }
+  function agendarPasso() {
+    if (agendado) return;
+    agendado = true;
+    const executar = () => {
+      agendado = false;
+      passo();
+    };
+    if (typeof requestAnimationFrame === "function") {
+      let disparado = false;
+      const uma = () => {
+        if (disparado) return;
+        disparado = true;
+        executar();
+      };
+      requestAnimationFrame(uma);
+      setTimeout(uma, 32);
+      return;
+    }
+    setTimeout(executar, 0);
+  }
+  function passo() {
+    var _a;
+    if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
+    else passosSemMudanca = 0;
+    versaoNoPassoAnterior = versaoDoDom;
+    const instante = agora();
+    for (let i = fila.length - 1; i >= 0; i--) {
+      const tarefa = fila[i];
+      let valor = null;
+      try {
+        valor = tarefa.pronto();
+      } catch (e) {
+        valor = null;
+      }
+      if (valor) {
+        fila.splice(i, 1);
+        tarefa.acao(valor);
+        continue;
+      }
+      if (instante - tarefa.desde > LIMITE_ESPERA) {
+        fila.splice(i, 1);
+        (_a = tarefa.aoDesistir) == null ? void 0 : _a.call(tarefa);
+      }
+    }
+    if (fila.length) agendarPasso();
+  }
+  function enfileirar(tarefa) {
+    let valor = null;
+    try {
+      valor = tarefa.pronto();
+    } catch (e) {
+      valor = null;
+    }
+    if (valor) {
+      tarefa.acao(valor);
+      return;
+    }
+    observarMudancas();
+    fila.push({ ...tarefa, desde: agora() });
+    agendarPasso();
+  }
+  function documentoEstavel() {
+    if (typeof document === "undefined" || !document.body) return false;
+    return passosSemMudanca >= PASSOS_ESTAVEIS;
+  }
+  function documentoParado() {
+    if (typeof document === "undefined" || !document.body) return false;
+    return versaoDoDom === 0;
+  }
+  function whenReady(acao) {
+    if (typeof document === "undefined") return;
+    enfileirar({
+      pronto: () => documentoEstavel() ? document.body : null,
+      acao: () => acao(),
+      // Passado o limite, comeca assim mesmo: uma pagina que nunca para de mudar
+      // ainda merece ser inicializada.
+      aoDesistir: () => {
+        if (document.body) acao();
+      }
+    });
+  }
+  function whenBodyReady(acao) {
+    if (typeof document === "undefined") return;
+    if (documentoParado()) {
+      void Promise.resolve().then(acao);
+      return;
+    }
+    enfileirar({
+      pronto: () => documentoEstavel() ? document.body : null,
+      acao: () => acao(),
+      aoDesistir: () => {
+        if (document.body) acao();
+      }
+    });
+  }
+  function whenElement(alvo, acao, aoDesistir) {
+    if (typeof alvo !== "string") {
+      acao(alvo);
+      return;
+    }
+    if (typeof document === "undefined") return;
+    enfileirar({
+      pronto: () => document.querySelector(alvo),
+      acao: (el) => acao(el),
+      aoDesistir
+    });
+  }
+
+  // src/runtime/app.ts
+  var contador = 0;
+  var directiveRegistrar = null;
+  function setDirectiveRegistrar(fn) {
+    directiveRegistrar = fn;
+  }
+  function createApp(options = {}) {
+    const name = `voodoo-app-${++contador}`;
+    const { components: locais, ...raiz } = options;
+    const config_ = { globalProperties: {} };
+    const providos = {};
+    const registradosPorEsteApp = [];
+    let container2 = null;
+    let htmlOriginal = "";
+    let instancia = null;
+    let esperando = [];
+    function registrarLocais() {
+      if (!locais) return;
+      for (const [nome, definicao] of Object.entries(locais)) {
+        const normalizado = normalizeComponentName(nome);
+        if (components.has(normalizado)) continue;
+        defineComponent(normalizado, definicao);
+        registradosPorEsteApp.push(normalizado);
+      }
+    }
+    function montarEm(el) {
+      var _a, _b;
+      if (instancia) return instancia;
+      container2 = el;
+      htmlOriginal = el.innerHTML;
+      Object.assign(allowedGlobals, config_.globalProperties);
+      registrarLocais();
+      const definicao = { ...raiz };
+      if (Object.keys(providos).length) {
+        const anterior = definicao.provide;
+        definicao.provide = () => ({
+          ...typeof anterior === "function" ? anterior() : anterior != null ? anterior : {},
+          ...providos
+        });
+      }
+      defineComponent(name, definicao);
+      el.setAttribute(`${config.prefix}component`, name);
+      try {
+        walk(el, rootScope);
+      } catch (err) {
+        handleError(err, `montagem da aplicacao "${name}"`);
+        return null;
+      }
+      instancia = (_b = (_a = getScope(el)) == null ? void 0 : _a.component) != null ? _b : null;
+      if (instancia) {
+        const fila2 = esperando;
+        esperando = [];
+        for (const resolver of fila2) resolver(instancia);
+      }
+      return instancia;
+    }
+    const app = {
+      name,
+      config: config_,
+      get instance() {
+        return instancia;
+      },
+      get container() {
+        return container2;
+      },
+      get isMounted() {
+        return instancia !== null;
+      },
+      component(nome, definicao) {
+        var _a;
+        const normalizado = normalizeComponentName(nome);
+        if (definicao === void 0) {
+          return (_a = locais && locais[nome]) != null ? _a : components.get(normalizado);
+        }
+        if (locais) locais[nome] = definicao;
+        else options.components = { [nome]: definicao };
+        if (instancia && !components.has(normalizado)) {
+          defineComponent(normalizado, definicao);
+          registradosPorEsteApp.push(normalizado);
+        }
+        return app;
+      },
+      directive(nome, definicao) {
+        directiveRegistrar == null ? void 0 : directiveRegistrar(nome, definicao);
+        return app;
+      },
+      use(plugin, opcoes) {
+        usePlugin(globalThis_V(), plugin, opcoes);
+        return app;
+      },
+      provide(chave, valor) {
+        providos[chave] = valor;
+        return app;
+      },
+      mount(alvo) {
+        if (instancia) return instancia;
+        if (typeof alvo !== "string") return montarEm(alvo);
+        let resultado = null;
+        whenElement(
+          alvo,
+          (el) => {
+            resultado = montarEm(el);
+          },
+          () => {
+            console.warn(
+              `[Voodoo] createApp().mount("${alvo}") nao encontrou o elemento. A aplicacao continua sem montar.`
+            );
+          }
+        );
+        return resultado;
+      },
+      whenMounted() {
+        if (instancia) return Promise.resolve(instancia);
+        return new Promise((resolve3) => esperando.push(resolve3));
+      },
+      unmount() {
+        if (!container2) return;
+        destroy(container2);
+        container2.removeAttribute(`${config.prefix}component`);
+        container2.innerHTML = htmlOriginal;
+        components.delete(name);
+        for (const nome of registradosPorEsteApp) components.delete(nome);
+        registradosPorEsteApp.length = 0;
+        instancia = null;
+        container2 = null;
+      }
+    };
+    return app;
+  }
+  var objetoV = null;
+  function setAppHost(V2) {
+    objetoV = V2;
+  }
+  function globalThis_V() {
+    return objetoV;
   }
 
   // src/runtime/magics.ts
@@ -5580,6 +5946,7 @@ Expressao: ${expression}` : message);
   // src/core.ts
   setComponentMounter(mountComponent);
   setScopeMarker(markNodeScope);
+  setDirectiveRegistrar(directive);
   installMagics();
   var eventBus = /* @__PURE__ */ new Map();
   function on(name, handler) {
@@ -5703,8 +6070,12 @@ Expressao: ${expression}` : message);
     directives,
     magic,
     magics,
+    // Modo aplicacao
+    createApp,
     // Ciclo de vida do DOM
     start,
+    whenReady,
+    whenElement,
     walk,
     refresh,
     destroy,
@@ -5766,6 +6137,7 @@ Expressao: ${expression}` : message);
     VoodooSyntaxError,
     VoodooRuntimeError
   };
+  setAppHost(core);
 
   // src/dom/query.ts
   init_reactivity();
@@ -6730,19 +7102,17 @@ Expressao: ${expression}` : message);
     return new VoodooCollection(resolve(input, context));
   }
   function ready(fn) {
-    if (typeof document === "undefined") return;
-    const run = () => {
-      try {
-        fn();
-      } catch (err) {
-        handleError(err, "V.ready");
-      }
-    };
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", run, { once: true });
-      return;
-    }
-    void Promise.resolve().then(run);
+    if (typeof document === "undefined") return Promise.resolve();
+    return new Promise((resolve3) => {
+      whenBodyReady(() => {
+        try {
+          fn == null ? void 0 : fn();
+        } catch (err) {
+          handleError(err, "V.ready");
+        }
+        resolve3();
+      });
+    });
   }
   function fromHtml(html) {
     return new VoodooCollection(parseHtml(html));
@@ -19763,11 +20133,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       applySavedPalette();
       V2.start();
     };
-    if (document.readyState === "complete") {
-      boot();
-    } else {
-      document.addEventListener("DOMContentLoaded", boot, { once: true });
-    }
+    whenReady(boot);
   }
 
   // src/browser.ts

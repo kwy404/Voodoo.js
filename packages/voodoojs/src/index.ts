@@ -185,6 +185,9 @@ export { toast } from './ui/toast';
 export { modal, alert, confirm, prompt, dialog } from './ui/dialog';
 export { palette } from './ui/palette';
 export { query, ready, VoodooCollection, fromHtml } from './dom/query';
+export { createApp } from './runtime/app';
+export { whenReady, whenElement, ready as documentReady } from './runtime/boot';
+export type { App, AppOptions } from './runtime/app';
 export { injectStyle, ensureTokens } from './dom/style';
 export {
   enter,

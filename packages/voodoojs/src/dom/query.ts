@@ -15,6 +15,7 @@
  */
 
 import { handleError } from '../reactivity';
+import { whenBodyReady } from '../runtime/boot';
 import { destroy as destroyNode, findScope, walk as walkNode } from '../runtime/walker';
 import {
   fadeIn as fadeInElement,
@@ -1274,23 +1275,30 @@ export function query(input?: QueryInput, context?: QueryInput): VoodooCollectio
 }
 
 /**
- * Executa a funcao quando o DOM estiver pronto. Se ja estiver, roda no proximo
- * microtask, para que a ordem das chamadas seja sempre previsivel.
+ * Executa a funcao quando a Voodoo considerar o documento pronto, e devolve uma
+ * promessa do mesmo momento. As duas escritas valem:
+ *
+ * ```js
+ * V.ready(() => console.log('pronto'))
+ * await V.ready()
+ * ```
+ *
+ * Quem decide a hora e o agendador da propria biblioteca, que espera o corpo
+ * existir e a arvore parar de crescer. Nada aqui escuta `DOMContentLoaded`.
  */
-export function ready(fn: ReadyCallback): void {
-  if (typeof document === 'undefined') return;
-  const run = (): void => {
-    try {
-      fn();
-    } catch (err) {
-      handleError(err, 'V.ready');
-    }
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run, { once: true });
-    return;
-  }
-  void Promise.resolve().then(run);
+export function ready(fn?: ReadyCallback): Promise<void> {
+  if (typeof document === 'undefined') return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    whenBodyReady(() => {
+      try {
+        fn?.();
+      } catch (err) {
+        handleError(err, 'V.ready');
+      }
+      resolve();
+    });
+  });
 }
 
 /** Cria elementos a partir de uma string de HTML, sem inseri-los no documento. */

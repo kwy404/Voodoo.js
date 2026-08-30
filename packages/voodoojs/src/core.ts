@@ -63,6 +63,8 @@ import {
   walk,
 } from './runtime/walker';
 import { defineComponent, instances, mountComponent, setScopeMarker } from './runtime/component';
+import { createApp, setAppHost, setDirectiveRegistrar, type App } from './runtime/app';
+import { whenElement, whenReady } from './runtime/boot';
 import { installMagics, clipboard, network, screen } from './runtime/magics';
 
 import { http, HttpError, request } from './http';
@@ -91,6 +93,7 @@ import './directives/http';
 
 setComponentMounter(mountComponent);
 setScopeMarker(markNodeScope);
+setDirectiveRegistrar(directive);
 installMagics();
 
 // ---------------------------------------------------------------------------
@@ -287,8 +290,13 @@ export const core = {
   magic,
   magics,
 
+  // Modo aplicacao
+  createApp,
+
   // Ciclo de vida do DOM
   start,
+  whenReady,
+  whenElement,
   walk,
   refresh,
   destroy,
@@ -360,8 +368,13 @@ export const core = {
   VoodooRuntimeError,
 };
 
+// A aplicacao criada por `createApp` precisa alcancar o proprio `V` para
+// instalar plugins com `app.use(...)`.
+setAppHost(core);
+
 export type Core = typeof core;
 export type {
+  App,
   ComponentDefinition,
   DirectiveHooks,
   DirectiveBinding,

@@ -17,7 +17,8 @@
       paginas: [
         { id: '', titulo: 'Documentação', curto: 'Início' },
         { id: 'guia/o-que-e', titulo: 'O que é a Voodoo.js e quando usar' },
-        { id: 'guia/instalacao', titulo: 'Instalação e primeiro arquivo' }
+        { id: 'guia/instalacao', titulo: 'Instalação e primeiro arquivo' },
+        { id: 'guia/modo-aplicacao', titulo: 'Os dois modos: atributos e createApp' }
       ]
     },
     {

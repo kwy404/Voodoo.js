@@ -13,8 +13,10 @@
  *
  * Ordem de execucao: o navegador carrega `voodoo.full.min.js` e depois este
  * arquivo, os dois com `defer`. Quando este codigo roda, `window.V` ja existe
- * e a biblioteca ainda nao inicializou a pagina, porque ela espera o evento
- * `DOMContentLoaded`. Essa janela e o lugar certo para configurar tudo.
+ * e a biblioteca ainda nao inicializou a pagina: ela usa o agendador proprio,
+ * que so comeca quando o documento tem corpo e para de mudar. Essa janela e o
+ * lugar certo para configurar tudo. Aqui a landing chama `V.start()` na mao,
+ * por causa do `data-manual` na tag do script.
  *
  * Regra de escrita do repositorio: nunca usar travessao.
  */
@@ -441,7 +443,7 @@
       {
         key: 'size',
         // O primeiro numero e o build completo. O essencial fica em 76 KB.
-        cells: ['120 KB', '34 KB', '45 KB', '16 KB', '14 KB', '30 KB'],
+        cells: ['124 KB', '34 KB', '45 KB', '16 KB', '14 KB', '30 KB'],
         tone: ['warn', 'yes', 'no', 'yes', 'yes', 'warn'],
       },
       {

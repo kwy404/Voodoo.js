@@ -52,8 +52,12 @@
     <em>Passo 2</em><b>Instalação e primeiro arquivo</b>
     <span>Baixar um arquivo, apontar uma tag, escrever HTML. Do zero até algo funcionando na tela.</span>
   </a></li>
+  <li><a class="doc-cartao" href="guia/modo-aplicacao.html">
+    <em>Passo 3</em><b>Os dois modos</b>
+    <span>Atributos sobre o HTML que já existe, ou <code>createApp().mount('#app')</code>, no formato do Vue.</span>
+  </a></li>
   <li><a class="doc-cartao" href="guia/estado-e-escopo.html">
-    <em>Passo 3</em><b>Estado e escopo</b>
+    <em>Passo 4</em><b>Estado e escopo</b>
     <span>O <code>v-data</code>, o que é escopo, como um escopo enxerga o outro e onde guardar cada coisa.</span>
   </a></li>
 </ul>
@@ -108,17 +112,17 @@
 <tr>
   <td><code>voodoo.core.min.js</code></td>
   <td>Reatividade, expressões, componentes, DOM encadeável, estado, renderização, eventos e requisições por atributo</td>
-  <td><b>41 KB</b></td>
+  <td><b>42 KB</b></td>
 </tr>
 <tr>
   <td><code>voodoo.min.js</code></td>
   <td>O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som</td>
-  <td><b>78 KB</b></td>
+  <td><b>79 KB</b></td>
 </tr>
 <tr>
   <td><code>voodoo.full.min.js</code></td>
   <td>Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos</td>
-  <td><b>122 KB</b></td>
+  <td><b>124 KB</b></td>
 </tr>
 </tbody>
 </table>
@@ -146,8 +150,8 @@
   <li>
     <b>Interpolação usa uma chave só.</b>
     <code>{ nome }</code> é a forma padrão. <code>{{ nome }}</code> também é aceita, para quem vem
-    do Vue. A varredura fecha na primeira chave, então expressões com objeto dentro
-    (<code>{ $t('x', { n: 1 }) }</code>) precisam de <code>v-text</code>.
+    do Vue. As duas aceitam objeto dentro da expressão e quebra de linha; o que não for uma
+    expressão válida continua sendo texto.
   </li>
   <li>
     <b>Não existe <code>eval</code>.</b>

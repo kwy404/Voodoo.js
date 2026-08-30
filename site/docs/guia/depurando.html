@@ -159,9 +159,12 @@
 </p>
 
 <p>
-  A segunda: a expressão tem chaves dentro, como
-  <code>{ $t('itens', { n: total }) }</code>. A varredura fecha na primeira chave. Nesses casos,
-  use <code>v-text</code>, que recebe a expressão inteira no atributo.
+  A segunda: o texto entre as chaves não é uma expressão que a biblioteca consiga ler. Quando a
+  análise falha, o trecho fica como está, de propósito — é o que impede um <code>{</code> solto
+  em um parágrafo de virar erro na tela. Objeto dentro da expressão
+  (<code>{ $t('itens', { n: total }) }</code>) e expressão em várias linhas funcionam; o que não
+  funciona é o que também não funcionaria em um atributo, como <code>function</code> e
+  <code>new</code>.
 </p>
 
 <h2 id="conhecidos">Detalhes conhecidos, com contorno</h2>

@@ -619,11 +619,134 @@ function walkChildren(el: Element, scope: Scope): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Aceita as duas formas de interpolacao. A forma curta `{ nome }` e a padrao da
- * Voodoo. A forma dupla `{{ nome }}` existe para quem vem do Vue e para textos
- * que precisam conter chaves literais ao redor.
+ * Tamanho maximo de uma interpolacao de chave simples.
+ *
+ * Existe para o caso patologico: uma pagina com uma chave solta no texto e
+ * outra chave muito depois. Sem o teto, a varredura tentaria interpretar o
+ * paragrafo inteiro como expressao.
  */
-const MUSTACHE = /\{\{([\s\S]+?)\}\}|\{([^{}\n]+?)\}/g;
+const LIMITE_EXPRESSAO = 500;
+
+/** Cache de "isto e uma expressao valida?", por texto. */
+const expressaoValida = new Map<string, boolean>();
+
+/**
+ * Decide se o texto entre chaves e mesmo uma expressao.
+ *
+ * A chave simples convive com texto escrito por gente, entao ela nao pode
+ * engolir qualquer coisa entre `{` e `}`. O criterio e o unico honesto: tentar
+ * analisar. O que o parser aceita vira interpolacao, o resto continua sendo
+ * texto, exatamente como foi escrito.
+ */
+function pareceExpressao(texto: string): boolean {
+  const limpo = texto.trim();
+  if (!limpo) return false;
+
+  const guardado = expressaoValida.get(limpo);
+  if (guardado !== undefined) return guardado;
+
+  let valida = true;
+  try {
+    // Uma interpolacao rende um valor so. O parser aceita varias instrucoes
+    // seguidas, e e justamente esse caso que separa expressao de prosa:
+    // `{ um texto qualquer }` analisa como tres identificadores em sequencia,
+    // e continua sendo texto que alguem escreveu.
+    valida = parse(limpo).t !== 'seq';
+  } catch {
+    valida = false;
+  }
+  expressaoValida.set(limpo, valida);
+  return valida;
+}
+
+/**
+ * Acha o `}` que fecha a chave aberta em `inicio`, contando os niveis e
+ * pulando o conteudo de textos entre aspas.
+ *
+ * E o que permite `{ $t('itens', { n: total }) }`, com objeto dentro da
+ * expressao, e tambem uma expressao quebrada em varias linhas.
+ */
+function fecharChave(fonte: string, inicio: number): number {
+  let nivel = 0;
+  let aspas: string | null = null;
+
+  for (let i = inicio; i < fonte.length; i++) {
+    const c = fonte[i];
+
+    if (aspas) {
+      if (c === '\\') i++;
+      else if (c === aspas) aspas = null;
+      continue;
+    }
+
+    if (c === '"' || c === "'" || c === '`') {
+      aspas = c;
+      continue;
+    }
+    if (c === '{') nivel++;
+    else if (c === '}') {
+      nivel--;
+      if (nivel === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Quebra o texto em pedacos literais e expressoes.
+ *
+ * Aceita as duas formas. A curta, `{ nome }`, e a padrao da Voodoo. A dupla,
+ * `{{ nome }}`, existe para quem vem do Vue e para textos que precisam conter
+ * chaves literais ao redor. As duas aceitam quebra de linha e objeto dentro da
+ * expressao; o que nao analisa como expressao fica no texto, intacto.
+ */
+function fatiarTexto(raw: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let literal = '';
+  let i = 0;
+
+  const guardarLiteral = (): void => {
+    if (literal) segments.push({ text: literal });
+    literal = '';
+  };
+
+  while (i < raw.length) {
+    const abre = raw.indexOf('{', i);
+    if (abre === -1) {
+      literal += raw.slice(i);
+      break;
+    }
+
+    literal += raw.slice(i, abre);
+
+    const duplo = raw[abre + 1] === '{';
+    const fecha = duplo ? raw.indexOf('}}', abre + 2) : fecharChave(raw, abre);
+
+    if (fecha === -1) {
+      literal += raw[abre];
+      i = abre + 1;
+      continue;
+    }
+
+    const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
+    const fim = duplo ? fecha + 2 : fecha + 1;
+
+    const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
+    if (cabe && pareceExpressao(expressao)) {
+      guardarLiteral();
+      segments.push({ expression: expressao.trim() });
+      i = fim;
+      continue;
+    }
+
+    // Nao era expressao: a chave volta a ser um caractere qualquer.
+    literal += raw[abre];
+    i = abre + 1;
+  }
+
+  guardarLiteral();
+  return segments;
+}
 
 /** Elementos onde chaves quase sempre sao codigo, nao interpolacao. */
 const NO_INTERPOLATION = new Set(['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
@@ -664,19 +787,8 @@ export function bindTextNode(node: Text, scope: Scope): void {
     ancestral = ancestral.parentElement;
   }
 
-  const segments: TextSegment[] = [];
-  let lastIndex = 0;
-  MUSTACHE.lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = MUSTACHE.exec(raw)) !== null) {
-    if (match.index > lastIndex) segments.push({ text: raw.slice(lastIndex, match.index) });
-    const expression = (match[1] ?? match[2] ?? '').trim();
-    if (expression) segments.push({ expression });
-    lastIndex = match.index + match[0].length;
-  }
+  const segments = fatiarTexto(raw);
   if (!segments.some((s) => s.expression)) return;
-  if (lastIndex < raw.length) segments.push({ text: raw.slice(lastIndex) });
 
   initialized.add(node);
 

@@ -318,6 +318,36 @@ export function mountComponent(
     if (extra && typeof extra === 'object') Object.assign(stateRaw, extra);
   }
 
+  // provide: fica no escopo, e os descendentes acham subindo a cadeia.
+  if (definition.provide) {
+    try {
+      const fornecidos =
+        typeof definition.provide === 'function'
+          ? definition.provide.call(instance)
+          : definition.provide;
+      if (fornecidos && typeof fornecidos === 'object') {
+        scope.provides = { ...fornecidos };
+      }
+    } catch (err) {
+      handleError(err, `provide() do componente "${name}"`);
+    }
+  }
+
+  // inject: le o que algum ancestral forneceu e entrega como estado inicial.
+  if (definition.inject) {
+    const pedidos = Array.isArray(definition.inject)
+      ? definition.inject.map((chave) => [chave, { from: chave }] as const)
+      : Object.entries(definition.inject).map(
+          ([chave, opcoes]) => [chave, opcoes ?? {}] as const
+        );
+
+    for (const [chave, opcoes] of pedidos) {
+      const de = (opcoes as { from?: string }).from ?? chave;
+      const valor = parentScope.inject(de, (opcoes as { default?: unknown }).default);
+      if (!(chave in stateRaw)) stateRaw[chave] = valor;
+    }
+  }
+
   const state = reactive(stateRaw);
 
   // Computados.

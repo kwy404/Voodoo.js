@@ -173,6 +173,10 @@ export interface ComponentDefinition {
   style?: string;
   /** Herda o escopo do pai em vez de isolar. Padrao `false`. */
   inheritScope?: boolean;
+  /** Valores entregues aos descendentes, lidos com `inject`. */
+  provide?: Record<string, unknown> | ((this: any) => Record<string, unknown>);
+  /** Valores buscados em um `provide` acima, disponiveis como estado. */
+  inject?: string[] | Record<string, { from?: string; default?: unknown }>;
   beforeMount?(this: any): void;
   mounted?(this: any): void;
   updated?(this: any): void;

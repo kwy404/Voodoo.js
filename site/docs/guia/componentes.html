@@ -195,6 +195,53 @@
   </p>
 </div>
 
+<h2 id="provide-inject">provide e inject</h2>
+
+<p>
+  Passar a mesma prop por três níveis cansa. <code>provide</code> entrega um valor à árvore
+  inteira, e <code>inject</code> pega esse valor em qualquer profundidade — os nomes e o
+  comportamento são os do Vue.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div&gt;
+  &lt;script&gt;
+    V.component('cracha-usuario', {
+      inject: { usuario: { default: 'visitante' }, plano: { default: 'Grátis' } },
+      template: '&lt;b&gt;{ usuario } — plano { plano }&lt;/b&gt;'
+    });
+
+    V.component('painel-usuario', {
+      provide: { usuario: 'Ana', plano: 'Pro' },
+      template: '&lt;section&gt;&lt;cracha-usuario&gt;&lt;/cracha-usuario&gt;&lt;/section&gt;'
+    });
+  &lt;/script&gt;
+
+  &lt;painel-usuario&gt;&lt;/painel-usuario&gt;
+
+  &lt;p&gt;Fora do painel, o padrão vale:&lt;/p&gt;
+  &lt;cracha-usuario&gt;&lt;/cracha-usuario&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  <code>inject</code> aceita a lista curta de nomes — <code>inject: ['usuario']</code> — ou o
+  objeto com <code>from</code> e <code>default</code>, como acima. O valor entra no estado do
+  componente, então o template usa como qualquer outra variável. Uma aplicação criada com
+  <code>createApp</code> também fornece, pelas opções ou por
+  <code>app.provide(chave, valor)</code>.
+</p>
+
+<div class="doc-aviso doc-aviso--atencao">
+  <span class="doc-aviso__rotulo">Vale para a árvore do template, não para o slot</span>
+  <p>
+    O valor desce para os componentes que o próprio template monta. Um componente que chega pelo
+    <code>&lt;slot&gt;</code> pertence a quem escreveu a tag, e por isso enxerga o
+    <code>provide</code> de lá, não o do componente que o recebeu. É o mesmo comportamento do Vue,
+    e ele decorre da regra de escopo do slot, explicada acima.
+  </p>
+</div>
+
 <h2 id="quando-usar">Quando vale a pena</h2>
 
 <div class="doc-tabela">

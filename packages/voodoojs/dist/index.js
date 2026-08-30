@@ -1,13 +1,13 @@
-import { magic, markSkipChildren, core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-W4LUTZE7.js';
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, defineComponent, destroy, dialog, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk } from './chunk-W4LUTZE7.js';
+import { magic, markSkipChildren, core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-SWRBXSWQ.js';
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, createApp, defineComponent, destroy, dialog, ready as documentReady, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready2 as ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady } from './chunk-SWRBXSWQ.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-ABAHVFPX.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-ABAHVFPX.js';
 import { http } from './chunk-7U443GSF.js';
 export { HttpError, http, request } from './chunk-7U443GSF.js';
 import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-45K3USNK.js';
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-45K3USNK.js';
-import { defineDirective, PRIORITY, config, ensureTokens, injectStyle } from './chunk-KQAVZ2II.js';
-export { PRIORITY, config, defineDirective, ensureTokens, injectStyle } from './chunk-KQAVZ2II.js';
+import { defineDirective, PRIORITY, config, ensureTokens, injectStyle } from './chunk-NY5DITDF.js';
+export { PRIORITY, config, defineDirective, ensureTokens, injectStyle } from './chunk-NY5DITDF.js';
 import './chunk-5V56KGIJ.js';
 
 /**
@@ -6519,7 +6519,7 @@ var V = ((input, context) => query(input, context));
 Object.assign(V, core, {
   // DOM encadeavel
   query,
-  ready,
+  ready: ready2,
   fromHtml,
   Collection: VoodooCollection,
   // Rotas

@@ -236,7 +236,7 @@
                 "name": "Qual e o tamanho real do arquivo?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Existem dois arquivos. O essencial, com reatividade, directives, HTTP, formularios e interface, tem cerca de 76 KB servido com gzip. O completo, que roda nesta pagina, soma graficos, animacao com fisica de mola, roteador, idiomas e os 29 componentes prontos, e fica em cerca de 120 KB com gzip. Nao existe pedaco carregado depois."
+                  "text": "Sao tres arquivos. O nucleo, com reatividade, directives, eventos, componentes e DOM, tem cerca de 42 KB servido com gzip. O essencial acrescenta HTTP, formularios, validacao, mascaras e interface, e fica em 79 KB. O completo, que roda nesta pagina, soma graficos, animacao com fisica de mola, som, roteador, idiomas e os 29 componentes prontos, e chega a 124 KB. Nao existe pedaco carregado depois."
                 }
               },
               {
@@ -346,6 +346,7 @@
         <nav class="vd-nav" aria-label="Principal">
           <a href="#guia" v-t="guide.eyebrow">Guia rapido</a>
           <a href="#instalacao" v-t="nav.install">Instalacao</a>
+          <a href="#modos" v-t="modos.eyebrow">Dois modos</a>
           <a href="/docs/" v-t="nav.docs">Documentacao</a>
           <a href="#playground" v-t="nav.playground">Playground</a>
           <a href="#directives" v-t="nav.directives">Directives</a>
@@ -469,6 +470,7 @@
         <a href="#problema" @click="menu = false" v-t="nav.problem">Por que</a>
         <a href="#guia" @click="menu = false" v-t="guide.eyebrow">Guia rapido</a>
         <a href="#instalacao" @click="menu = false" v-t="nav.install">Instalacao</a>
+        <a href="#modos" @click="menu = false" v-t="modos.eyebrow">Dois modos</a>
         <a href="/docs/" @click="menu = false" v-t="nav.docs">Documentacao</a>
         <a href="#playground" @click="menu = false" v-t="nav.playground">Playground</a>
         <a href="#directives" @click="menu = false" v-t="nav.directives">Directives</a>
@@ -853,14 +855,14 @@
                       <strong>voodoo.min.js</strong>
                       <span class="vd-pacote-tag" v-t="install.essential">Essencial</span>
                       <small v-t="install.essentialWhat">Reatividade, directives, componentes, DOM, HTTP, formularios, validacao, mascaras, interface e arrastar e soltar.</small>
-                      <em>75 KB gzip</em>
+                      <em>79 KB gzip</em>
                     </button>
 
                     <button type="button" class="vd-pacote" :class="{ 'is-on': pacote === 'completo' }" @click="pacote = 'completo'">
                       <strong>voodoo.full.min.js</strong>
                       <span class="vd-pacote-tag" v-t="install.full">Completo</span>
                       <small v-t="install.fullWhat">Tudo do essencial, mais graficos, animacoes com fisica, roteador, idiomas, inspetor e 29 componentes prontos.</small>
-                      <em>120 KB gzip</em>
+                      <em>124 KB gzip</em>
                     </button>
                   </div>
 
@@ -1017,6 +1019,70 @@ V.setLocale('en');</code></pre>
   V.config.devtools = true;
   V.start();
 &lt;/script&gt;</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <!-- =================================================================
+           5B. OS DOIS MODOS
+           ================================================================= -->
+      <section class="vd-section" id="modos">
+        <div class="vd-shell">
+          <div class="vd-head">
+            <span class="vd-eyebrow" v-t="modos.eyebrow">Dois modos</span>
+            <h2 class="vd-h2" v-t="modos.title">Atributos no HTML que existe, ou createApp como no Vue</h2>
+            <p class="vd-lead" v-t="modos.lead">
+              A Voodoo assume a pagina dos dois jeitos. Voce escolhe por tela, e os dois convivem no
+              mesmo arquivo.
+            </p>
+          </div>
+
+          <div class="vd-grid vd-grid-2">
+            <article class="vd-card">
+              <h3 class="vd-card-title" v-t="modos.attrTitle">Modo atributos</h3>
+              <p class="vd-card-text" v-t="modos.attrText">
+                O HTML ja vem do servidor e so falta comportamento.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;div v-data="{ n: 0 }"&gt;
+  &lt;button @click="n++"&gt;Cliques: { n }&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </article>
+
+            <article class="vd-card">
+              <h3 class="vd-card-title" v-t="modos.appTitle">Modo aplicacao</h3>
+              <p class="vd-card-text" v-t="modos.appText">
+                A tela nasce no cliente, com os nomes do Vue.
+              </p>
+              <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;div id="app"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+  V.createApp({
+    data: () =&gt; ({ n: 0 }),
+    computed: { dobro() { return this.n * 2 } },
+    methods: { somar() { this.n++ } },
+    template: `
+      &lt;button @click="somar()"&gt;Cliques: { n }&lt;/button&gt;
+      &lt;p&gt;Dobro: { dobro }&lt;/p&gt;
+    `
+  }).mount('#app');
+&lt;/script&gt;</code></pre>
+            </article>
+          </div>
+
+          <article class="vd-card vd-mt">
+            <h3 class="vd-card-title" v-t="modos.schedulerTitle">O agendador e da Voodoo</h3>
+            <p class="vd-card-text" v-t="modos.schedulerText">
+              Nada aqui escuta DOMContentLoaded.
+            </p>
+            <pre class="vd-code vd-mt" v-ignore><code data-hl="html">&lt;script&gt;
+  // O container ainda nao existe nesta linha. A montagem espera por ele.
+  V.createApp({ template: '&lt;p&gt;montei quando deu&lt;/p&gt;' }).mount('#tela-2');
+&lt;/script&gt;</code></pre>
+            <p class="vd-mt">
+              <a class="vd-btn vd-btn-ghost" href="/docs/guia/modo-aplicacao.html" v-t="modos.docs">
+                Ver os dois modos na documentacao
+              </a>
+            </p>
           </article>
         </div>
       </section>
@@ -2151,7 +2217,7 @@ V.setLocale('en');</code></pre>
                 <span class="vd-acc-mark" aria-hidden="true">+</span>
               </div>
               <div class="vd-acc-body">
-                <p v-t="faq.a3">Existem dois arquivos. O essencial, com reatividade, directives, HTTP, formularios e interface, tem cerca de 76 KB servido com gzip. O completo, que esta nesta pagina, soma graficos, animacao com fisica de mola, roteador, idiomas e os 29 componentes prontos, e fica em cerca de 120 KB com gzip. Nao existe pedaco carregado depois.</p>
+                <p v-t="faq.a3">Sao tres arquivos. O nucleo, com reatividade, directives, eventos, componentes e DOM, tem cerca de 42 KB servido com gzip. O essencial acrescenta HTTP, formularios, validacao, mascaras e interface, e fica em 79 KB. O completo, que roda nesta pagina, soma graficos, animacao com fisica de mola, som, roteador, idiomas e os 29 componentes prontos, e chega a 124 KB. Nao existe pedaco carregado depois.</p>
               </div>
             </div>
 

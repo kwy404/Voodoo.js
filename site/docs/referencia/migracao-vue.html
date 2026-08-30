@@ -23,6 +23,39 @@
   na página. Isso muda o que é possível; vale ler a seção de limites antes de decidir.
 </p>
 
+<h2 id="createapp">createApp</h2>
+
+<p>
+  A montagem tem o mesmo formato, e as mesmas opções de componente na raiz:
+</p>
+
+<pre data-lang="js"><code>// Vue
+createApp({ data: () =&gt; ({ n: 0 }), template: '&lt;b&gt;{{ n }}&lt;/b&gt;' }).mount('#app');
+
+// Voodoo.js
+V.createApp({ data: () =&gt; ({ n: 0 }), template: '&lt;b&gt;{ n }&lt;/b&gt;' }).mount('#app');</code></pre>
+
+<div class="doc-tabela">
+<table>
+<thead><tr><th>Vue</th><th>Voodoo.js</th></tr></thead>
+<tbody>
+<tr><td><code>app.component(nome, def)</code></td><td>igual</td></tr>
+<tr><td><code>app.directive(nome, def)</code></td><td>igual</td></tr>
+<tr><td><code>app.use(plugin, opções)</code></td><td>igual</td></tr>
+<tr><td><code>app.provide(chave, valor)</code></td><td>igual</td></tr>
+<tr><td><code>app.config.globalProperties</code></td><td>igual</td></tr>
+<tr><td><code>app.mount()</code>, <code>app.unmount()</code></td><td>iguais. O <code>unmount</code> devolve o HTML original do container</td></tr>
+<tr><td><code>app.mixin()</code></td><td>não existe</td></tr>
+<tr><td>alvo do <code>mount</code> precisa existir</td><td>pode ainda não existir: a montagem espera por ele</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+  O guia de <a href="../guia/modo-aplicacao.html">os dois modos</a> explica quando usar
+  <code>createApp</code> e quando ficar nos atributos.
+</p>
+
 <h2 id="template">Template</h2>
 
 <div class="doc-tabela">
@@ -77,7 +110,7 @@
 <tr><td><code>this.$emit('x', d)</code></td><td><code>this.emit('x', d)</code> ou <code>this.$emit</code></td></tr>
 <tr><td><code>this.$refs</code>, <code>$el</code>, <code>$props</code>, <code>$parent</code>, <code>$nextTick()</code></td><td>iguais</td></tr>
 <tr><td><code>this.$watch(fonte, cb)</code></td><td><code>this.$watch('expressao', cb)</code></td></tr>
-<tr><td><code>provide</code> e <code>inject</code></td><td>não existem. Use um store</td></tr>
+<tr><td><code>provide</code> e <code>inject</code></td><td>iguais, na definição do componente ou do app</td></tr>
 <tr><td><code>&lt;slot&gt;</code>, <code>&lt;slot name="x"&gt;</code></td><td>iguais</td></tr>
 <tr><td><code>mounted</code>, <code>updated</code>, <code>beforeUnmount</code>, <code>unmounted</code></td><td>iguais</td></tr>
 <tr><td><code>created</code>, <code>beforeCreate</code></td><td>apenas <code>beforeMount</code></td></tr>
@@ -126,7 +159,7 @@ V.component('user-card', { props: ['nome'], template: '&lt;p&gt;{ nome }&lt;/p&g
 <tr><td>Pinia: <code>defineStore('carrinho', { state, getters, actions })</code></td><td><code>V.store('carrinho', { ...estado, ...metodos })</code></td></tr>
 <tr><td><code>useCarrinho()</code></td><td><code>V.store('carrinho')</code></td></tr>
 <tr><td>no template: <code>carrinho.itens</code></td><td><code>$store.carrinho.itens</code></td></tr>
-<tr><td><code>provide</code> e <code>inject</code></td><td>um store, ou <code>V.data()</code> no escopo raiz</td></tr>
+<tr><td><code>provide</code> e <code>inject</code></td><td>iguais, ou um store para estado compartilhado</td></tr>
 </tbody>
 </table>
 </div>
@@ -192,7 +225,6 @@ V.component('user-card', { props: ['nome'], template: '&lt;p&gt;{ nome }&lt;/p&g
   <li><code>setup()</code>, a Composition API e <code>&lt;script setup&gt;</code>;</li>
   <li>renderização no servidor com hidratação;</li>
   <li>slots com escopo, que passam dados do filho para o conteúdo do pai;</li>
-  <li><code>provide</code> e <code>inject</code>, substituídos por stores;</li>
   <li><code>&lt;KeepAlive&gt;</code>, <code>&lt;Suspense&gt;</code> e <code>v-memo</code>;</li>
   <li>desembrulho automático de <code>ref</code> no template;</li>
   <li>checagem de tipos no template.</li>
