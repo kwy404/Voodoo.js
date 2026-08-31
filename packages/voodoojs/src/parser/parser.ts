@@ -86,8 +86,33 @@ const LITERALS: Record<string, string | number | boolean | null | undefined> =
     undefined: undefined,
   });
 
+/**
+ * Limite de aninhamento de expressoes.
+ *
+ * O parser e recursivo. Sem teto, uma entrada como `((((...))))` com alguns
+ * milhares de niveis estoura a pilha e vaza um `RangeError` cru
+ * ("Maximum call stack size exceeded") para quem escreveu o atributo. O
+ * contrato aqui e o contrario: entrada absurda tem que virar VoodooSyntaxError
+ * com mensagem clara. Cada nivel de aninhamento consome tres passos do contador
+ * (`parseAssignment`, `parseBinary` e `parseUnary`), entao 1200 equivale a ~400
+ * parenteses aninhados, muito acima de qualquer expressao de atributo real e
+ * muito abaixo do ponto em que a pilha nativa acaba (~2500 niveis).
+ */
+const MAX_DEPTH = 1200;
+
+/**
+ * Limite de templates aninhados (`` `${`${...}`}` ``).
+ *
+ * Cada interpolacao chama `parse` de novo, criando um Parser novo com o
+ * contador zerado. Sem um contador de modulo, o aninhamento de templates
+ * escapava do limite acima e voltava a estourar a pilha.
+ */
+const MAX_TEMPLATE_DEPTH = 32;
+let templateDepth = 0;
+
 class Parser {
   private pos = 0;
+  private depth = 0;
 
   constructor(
     private readonly tokens: Token[],
@@ -140,7 +165,26 @@ class Parser {
     return this.parseAssignment();
   }
 
+  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
+  private entrar(): void {
+    if (++this.depth > MAX_DEPTH) {
+      const t = this.peek();
+      throw new VoodooSyntaxError(
+        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        this.source,
+        t.start
+      );
+    }
+  }
+
   private parseAssignment(): Node {
+    this.entrar();
+    const node = this.parseAssignmentInterno();
+    this.depth--;
+    return node;
+  }
+
+  private parseAssignmentInterno(): Node {
     // Arrow function com um unico parametro sem parenteses: `x => x * 2`
     if (this.peek().type === 'ident' && this.isPunct('=>', 1)) {
       const param = this.next().value;
@@ -215,6 +259,13 @@ class Parser {
   }
 
   private parseBinary(minPrec: number): Node {
+    this.entrar();
+    const node = this.parseBinarioInterno(minPrec);
+    this.depth--;
+    return node;
+  }
+
+  private parseBinarioInterno(minPrec: number): Node {
     let left = this.parseUnary();
 
     for (;;) {
@@ -238,6 +289,13 @@ class Parser {
   }
 
   private parseUnary(): Node {
+    this.entrar();
+    const node = this.parseUnarioInterno();
+    this.depth--;
+    return node;
+  }
+
+  private parseUnarioInterno(): Node {
     const t = this.peek();
 
     if ((t.type === 'punct' || t.type === 'ident') && UNARY_OPS.has(t.value)) {
@@ -336,11 +394,23 @@ class Parser {
     if (t.type === 'tpl') {
       this.next();
       const part = t.tpl!;
-      return {
-        t: 'tpl',
-        quasis: part.quasis,
-        exprs: part.exprs.map((src) => parse(src)),
-      };
+      if (templateDepth >= MAX_TEMPLATE_DEPTH) {
+        throw new VoodooSyntaxError(
+          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          this.source,
+          t.start
+        );
+      }
+      templateDepth++;
+      try {
+        return {
+          t: 'tpl',
+          quasis: part.quasis,
+          exprs: part.exprs.map((src) => parse(src)),
+        };
+      } finally {
+        templateDepth--;
+      }
     }
 
     if (t.type === 'ident') {

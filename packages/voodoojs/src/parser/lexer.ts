@@ -190,15 +190,44 @@ export function tokenize(source: string): Token[] {
           const esc = source[i];
           if (esc === 'u') {
             if (source[i + 1] === '{') {
+              // Sem o `}` o `indexOf` devolve -1, e o codigo antigo fazia
+              // `i = close + 1`, ou seja, voltava o cursor para o inicio da
+              // fonte e reanalisava tudo com posicoes erradas.
               const close = source.indexOf('}', i);
-              out += String.fromCodePoint(parseInt(source.slice(i + 2, close), 16));
+              if (close === -1)
+                throw new VoodooSyntaxError('Escape unicode nao fechado', source, start);
+              const digitos = source.slice(i + 2, close);
+              // `String.fromCodePoint` lanca RangeError cru para NaN e para
+              // valores acima de 0x10FFFF. Validar aqui mantem o contrato de
+              // que toda entrada invalida vira VoodooSyntaxError.
+              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 0x10ffff)
+                throw new VoodooSyntaxError(
+                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  source,
+                  i - 1
+                );
+              out += String.fromCodePoint(parseInt(digitos, 16));
               i = close + 1;
             } else {
-              out += String.fromCharCode(parseInt(source.slice(i + 1, i + 5), 16));
+              const digitos = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+                throw new VoodooSyntaxError(
+                  'Escape unicode invalido: \\u precisa de 4 digitos hexadecimais',
+                  source,
+                  i - 1
+                );
+              out += String.fromCharCode(parseInt(digitos, 16));
               i += 5;
             }
           } else if (esc === 'x') {
-            out += String.fromCharCode(parseInt(source.slice(i + 1, i + 3), 16));
+            const digitos = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+              throw new VoodooSyntaxError(
+                'Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais',
+                source,
+                i - 1
+              );
+            out += String.fromCharCode(parseInt(digitos, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
