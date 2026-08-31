@@ -153,8 +153,8 @@ var Voodoo = (() => {
     shouldTrack = true;
   }
   function resetTracking() {
-    var _a;
-    shouldTrack = (_a = trackStack.pop()) != null ? _a : true;
+    var _a2;
+    shouldTrack = (_a2 = trackStack.pop()) != null ? _a2 : true;
   }
   function getActiveEffect() {
     return activeEffect;
@@ -254,7 +254,7 @@ var Voodoo = (() => {
     if (!canObserve(target)) return target;
     const existing = reactiveMap.get(target);
     if (existing) return existing;
-    const isMapOrSet = target instanceof Map || target instanceof Set || target instanceof WeakMap || target instanceof WeakSet;
+    const isMapOrSet = target instanceof Map || target instanceof Set;
     const proxy = new Proxy(
       target,
       isMapOrSet ? collectionHandlers : baseHandlers
@@ -385,10 +385,10 @@ var Voodoo = (() => {
           __publicField(this, "onStop");
           /** Callbacks de limpeza registrados pelo proprio efeito. */
           __publicField(this, "cleanups", []);
-          var _a;
+          var _a2;
           this.scheduler = options == null ? void 0 : options.scheduler;
           this.onStop = options == null ? void 0 : options.onStop;
-          const scope = (_a = options == null ? void 0 : options.scope) != null ? _a : activeScope;
+          const scope = (_a2 = options == null ? void 0 : options.scope) != null ? _a2 : activeScope;
           if (scope) scope.effects.push(this);
         }
         run() {
@@ -428,12 +428,12 @@ var Voodoo = (() => {
           }
         }
         stop() {
-          var _a;
+          var _a2;
           if (!this.active) return;
           cleanupDeps(this);
           this.runCleanups();
           this.active = false;
-          (_a = this.onStop) == null ? void 0 : _a.call(this);
+          (_a2 = this.onStop) == null ? void 0 : _a2.call(this);
         }
       };
       EffectScope = class {
@@ -704,11 +704,11 @@ var Voodoo = (() => {
 
   // src/runtime/registry.ts
   function defineDirective(name, setup, options = {}) {
-    var _a, _b;
+    var _a2, _b;
     directives.set(name, {
       name,
       setup,
-      priority: (_a = options.priority) != null ? _a : PRIORITY.DEFAULT,
+      priority: (_a2 = options.priority) != null ? _a2 : PRIORITY.DEFAULT,
       terminal: (_b = options.terminal) != null ? _b : false
     });
   }
@@ -930,7 +930,7 @@ ${pointer}`);
     "0": "\0"
   };
   function tokenize(source) {
-    var _a, _b;
+    var _a2, _b;
     const tokens = [];
     let i = 0;
     const len = source.length;
@@ -988,17 +988,40 @@ ${pointer}`);
             if (esc === "u") {
               if (source[i + 1] === "{") {
                 const close = source.indexOf("}", i);
-                out += String.fromCodePoint(parseInt(source.slice(i + 2, close), 16));
+                if (close === -1)
+                  throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
+                const digitos = source.slice(i + 2, close);
+                if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                  throw new VoodooSyntaxError(
+                    `Escape unicode invalido "\\u{${digitos}}"`,
+                    source,
+                    i - 1
+                  );
+                out += String.fromCodePoint(parseInt(digitos, 16));
                 i = close + 1;
               } else {
-                out += String.fromCharCode(parseInt(source.slice(i + 1, i + 5), 16));
+                const digitos = source.slice(i + 1, i + 5);
+                if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+                  throw new VoodooSyntaxError(
+                    "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                    source,
+                    i - 1
+                  );
+                out += String.fromCharCode(parseInt(digitos, 16));
                 i += 5;
               }
             } else if (esc === "x") {
-              out += String.fromCharCode(parseInt(source.slice(i + 1, i + 3), 16));
+              const digitos = source.slice(i + 1, i + 3);
+              if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+                throw new VoodooSyntaxError(
+                  "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                  source,
+                  i - 1
+                );
+              out += String.fromCharCode(parseInt(digitos, 16));
               i += 3;
             } else {
-              out += (_a = ESCAPES[esc]) != null ? _a : esc;
+              out += (_a2 = ESCAPES[esc]) != null ? _a2 : esc;
               i++;
             }
           } else {
@@ -1119,11 +1142,15 @@ ${pointer}`);
     null: null,
     undefined: void 0
   });
+  var MAX_DEPTH = 1200;
+  var MAX_TEMPLATE_DEPTH = 32;
+  var templateDepth = 0;
   var Parser = class {
     constructor(tokens, source) {
       __publicField(this, "tokens", tokens);
       __publicField(this, "source", source);
       __publicField(this, "pos", 0);
+      __publicField(this, "depth", 0);
     }
     peek(offset = 0) {
       return this.tokens[Math.min(this.pos + offset, this.tokens.length - 1)];
@@ -1164,7 +1191,24 @@ ${pointer}`);
     parseExpression() {
       return this.parseAssignment();
     }
+    /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
+    entrar() {
+      if (++this.depth > MAX_DEPTH) {
+        const t = this.peek();
+        throw new VoodooSyntaxError(
+          `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+          this.source,
+          t.start
+        );
+      }
+    }
     parseAssignment() {
+      this.entrar();
+      const node = this.parseAssignmentInterno();
+      this.depth--;
+      return node;
+    }
+    parseAssignmentInterno() {
       if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
         const param = this.next().value;
         this.next();
@@ -1231,6 +1275,12 @@ ${pointer}`);
       return test;
     }
     parseBinary(minPrec) {
+      this.entrar();
+      const node = this.parseBinarioInterno(minPrec);
+      this.depth--;
+      return node;
+    }
+    parseBinarioInterno(minPrec) {
       let left = this.parseUnary();
       for (; ; ) {
         const t = this.peek();
@@ -1247,6 +1297,12 @@ ${pointer}`);
       return left;
     }
     parseUnary() {
+      this.entrar();
+      const node = this.parseUnarioInterno();
+      this.depth--;
+      return node;
+    }
+    parseUnarioInterno() {
       const t = this.peek();
       if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
         this.next();
@@ -1334,11 +1390,23 @@ ${pointer}`);
       if (t.type === "tpl") {
         this.next();
         const part = t.tpl;
-        return {
-          t: "tpl",
-          quasis: part.quasis,
-          exprs: part.exprs.map((src) => parse(src))
-        };
+        if (templateDepth >= MAX_TEMPLATE_DEPTH) {
+          throw new VoodooSyntaxError(
+            `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+            this.source,
+            t.start
+          );
+        }
+        templateDepth++;
+        try {
+          return {
+            t: "tpl",
+            quasis: part.quasis,
+            exprs: part.exprs.map((src) => parse(src))
+          };
+        } finally {
+          templateDepth--;
+        }
       }
       if (t.type === "ident") {
         if (t.value in LITERALS) {
@@ -1381,7 +1449,7 @@ ${pointer}`);
       return { t: "arr", els };
     }
     parseObjectLiteral() {
-      var _a;
+      var _a2;
       this.expect("{");
       const props = [];
       while (!this.isPunct("}")) {
@@ -1399,7 +1467,7 @@ ${pointer}`);
           if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
             throw new VoodooSyntaxError("Chave de objeto invalida", this.source, keyToken.start);
           }
-          const key = String((_a = keyToken.parsed) != null ? _a : keyToken.value);
+          const key = String((_a2 = keyToken.parsed) != null ? _a2 : keyToken.value);
           if (this.isPunct(":")) {
             this.next();
             props.push({ key, value: this.parseAssignment() });
@@ -1429,6 +1497,16 @@ ${pointer}`);
   }
 
   // src/parser/interpreter.ts
+  var _a;
+  var SafeObject = /* @__PURE__ */ Object.freeze({
+    keys: Object.keys,
+    values: Object.values,
+    entries: Object.entries,
+    fromEntries: Object.fromEntries,
+    assign: Object.assign,
+    is: Object.is,
+    hasOwn: (_a = Object.hasOwn) != null ? _a : ((o, k) => Object.prototype.hasOwnProperty.call(o, k))
+  });
   var allowedGlobals = {
     Math,
     JSON,
@@ -1437,7 +1515,7 @@ ${pointer}`);
     String,
     Boolean,
     Array,
-    Object,
+    Object: SafeObject,
     Intl,
     RegExp,
     Promise,
@@ -1473,12 +1551,12 @@ Expressao: ${expression}` : message);
     return key;
   }
   function evaluate(node, scope) {
-    var _a, _b;
+    var _a2, _b;
     switch (node.t) {
       case "lit":
         return node.v;
       case "tpl": {
-        let out = (_a = node.quasis[0]) != null ? _a : "";
+        let out = (_a2 = node.quasis[0]) != null ? _a2 : "";
         for (let i = 0; i < node.exprs.length; i++) {
           out += stringify(evaluate(node.exprs[i], scope));
           out += (_b = node.quasis[i + 1]) != null ? _b : "";
@@ -2066,8 +2144,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return out.sort((a, b) => priorityOf(b) - priorityOf(a));
   }
   function priorityOf(attr2) {
-    var _a, _b;
-    return (_b = (_a = directives.get(attr2.name)) == null ? void 0 : _a.priority) != null ? _b : 0;
+    var _a2, _b;
+    return (_b = (_a2 = directives.get(attr2.name)) == null ? void 0 : _a2.priority) != null ? _b : 0;
   }
   var directiveIndex = /* @__PURE__ */ new Map();
   function indexDirective(el, name) {
@@ -2083,8 +2161,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return name.startsWith(config.prefix) || name.startsWith("data-v-") || name.charCodeAt(0) === 64 || name.charCodeAt(0) === 58 && name.length > 1;
   }
   function readAttr(el, name) {
-    var _a;
-    const cached = (_a = attributeCache.get(el)) == null ? void 0 : _a.get(name);
+    var _a2;
+    const cached = (_a2 = attributeCache.get(el)) == null ? void 0 : _a2.get(name);
     if (cached !== void 0) return cached;
     return el.getAttribute(name);
   }
@@ -2244,7 +2322,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (!skipChildren.has(el)) walkChildren(el, current2);
   }
   function walkChildren(el, scope) {
-    var _a;
+    var _a2;
     const children = el.childNodes;
     const list = [];
     for (let i = 0; i < children.length; i++) {
@@ -2252,7 +2330,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       if (child.nodeType === 1) list.push(child);
       else if (child.nodeType === 3) bindTextNode(child, scope);
     }
-    for (const child of list) walk(child, (_a = nodeScopes.get(child)) != null ? _a : scope);
+    for (const child of list) walk(child, (_a2 = nodeScopes.get(child)) != null ? _a2 : scope);
   }
   var LIMITE_EXPRESSAO = 500;
   var expressaoValida = /* @__PURE__ */ new Map();
@@ -2350,10 +2428,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     trackEffectScope(node, owner);
     owner.run(
       () => effect(() => {
-        var _a;
+        var _a2;
         let out = "";
         for (const segment of segments) {
-          out += (_a = segment.text) != null ? _a : stringify(evaluateIn(segment.expression, scope, "interpolacao"));
+          out += (_a2 = segment.text) != null ? _a2 : stringify(evaluateIn(segment.expression, scope, "interpolacao"));
         }
         if (node.textContent !== out) node.textContent = out;
       }, { scope: owner })
@@ -2372,9 +2450,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var started = false;
   var observer = null;
   function start(root) {
-    var _a;
+    var _a2;
     if (typeof document === "undefined") return;
-    const target = (_a = root != null ? root : config.root) != null ? _a : document.body;
+    const target = (_a2 = root != null ? root : config.root) != null ? _a2 : document.body;
     if (!target) return;
     Object.assign(allowedGlobals, config.globals);
     walk(target, rootScope);
@@ -2427,7 +2505,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     mountPending(normalized);
   }
   function mountPending(normalized) {
-    var _a;
+    var _a2;
     if (typeof document === "undefined" || !document.body) return;
     const semHifen = normalized.replace(/-/g, "");
     const seletores = [normalized, semHifen, `[${config.prefix}component="${normalized}"]`];
@@ -2439,7 +2517,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         continue;
       }
       for (const el of encontrados) {
-        if ((_a = getScope(el)) == null ? void 0 : _a.component) continue;
+        if ((_a2 = getScope(el)) == null ? void 0 : _a2.component) continue;
         if (temAncestralPendente(el)) continue;
         const escopo = findScope(el.parentNode);
         if (isInitialized(el)) {
@@ -2459,9 +2537,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return false;
   }
   function coerce(value, def) {
-    var _a, _b;
+    var _a2, _b;
     if (!def || !def.type || def.type === "any") return value;
-    if (value == null || value === "") return (_a = def.default) != null ? _a : value;
+    if (value == null || value === "") return (_a2 = def.default) != null ? _a2 : value;
     switch (def.type) {
       case "number": {
         const n = Number(value);
@@ -2490,7 +2568,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
   }
   function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
-    var _a;
+    var _a2;
     const props = reactive({});
     const known = Object.keys(defs);
     const lookup = /* @__PURE__ */ new Map();
@@ -2506,7 +2584,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     for (const attr2 of attrs) {
       const parsed = parseAttribute(attr2.name, attr2.value);
       if (parsed && parsed.name === "bind" && parsed.arg) {
-        const target2 = (_a = lookup.get(parsed.arg.toLowerCase())) != null ? _a : camelize(parsed.arg);
+        const target2 = (_a2 = lookup.get(parsed.arg.toLowerCase())) != null ? _a2 : camelize(parsed.arg);
         if (known.length && !lookup.has(parsed.arg.toLowerCase())) continue;
         owner.run(
           () => effect(() => {
@@ -2533,8 +2611,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const named = /* @__PURE__ */ new Map();
     const fallback = [];
     Array.from(original.childNodes).forEach((node) => {
-      var _a, _b;
-      const slotName = node.nodeType === 1 ? (_a = node.getAttribute("slot")) != null ? _a : null : null;
+      var _a2, _b;
+      const slotName = node.nodeType === 1 ? (_a2 = node.getAttribute("slot")) != null ? _a2 : null : null;
       if (slotName) {
         node.removeAttribute("slot");
         const list = (_b = named.get(slotName)) != null ? _b : [];
@@ -2567,9 +2645,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     scopeMarker == null ? void 0 : scopeMarker(node, scope);
   }
   function mountComponent(el, name, parentScope) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a2, _b, _c, _d, _e, _f, _g, _h;
     const normalized = name ? normalizeComponentName(name) : "";
-    const definition = normalized ? (_c = (_b = components.get(normalized)) != null ? _b : components.get((_a = componentAliases.get(normalized)) != null ? _a : "")) != null ? _c : {} : {};
+    const definition = normalized ? (_c = (_b = components.get(normalized)) != null ? _b : components.get((_a2 = componentAliases.get(normalized)) != null ? _a2 : "")) != null ? _c : {} : {};
     if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
       avisarComponenteDesconhecido(el, name);
     }
@@ -2804,7 +2882,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     setTimeout(executar, 0);
   }
   function passo() {
-    var _a;
+    var _a2;
     if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
     else passosSemMudanca = 0;
     versaoNoPassoAnterior = versaoDoDom;
@@ -2824,7 +2902,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       if (instante - tarefa.desde > LIMITE_ESPERA) {
         fila.splice(i, 1);
-        (_a = tarefa.aoDesistir) == null ? void 0 : _a.call(tarefa);
+        (_a2 = tarefa.aoDesistir) == null ? void 0 : _a2.call(tarefa);
       }
     }
     if (fila.length) agendarPasso();
@@ -2917,7 +2995,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
     }
     function montarEm(el) {
-      var _a, _b;
+      var _a2, _b;
       if (instancia) return instancia;
       container2 = el;
       htmlOriginal = el.innerHTML;
@@ -2939,7 +3017,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         handleError(err, `montagem da aplicacao "${name}"`);
         return null;
       }
-      instancia = (_b = (_a = getScope(el)) == null ? void 0 : _a.component) != null ? _b : null;
+      instancia = (_b = (_a2 = getScope(el)) == null ? void 0 : _a2.component) != null ? _b : null;
       if (instancia) {
         const fila2 = esperando;
         esperando = [];
@@ -2960,10 +3038,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         return instancia !== null;
       },
       component(nome, definicao) {
-        var _a;
+        var _a2;
         const normalizado = normalizeComponentName(nome);
         if (definicao === void 0) {
-          return (_a = locais && locais[nome]) != null ? _a : components.get(normalizado);
+          return (_a2 = locais && locais[nome]) != null ? _a2 : components.get(normalizado);
         }
         if (locais) locais[nome] = definicao;
         else options.components = { [nome]: definicao };
@@ -3116,8 +3194,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
   );
   function removeStore(name) {
-    var _a;
-    (_a = persistHandles.get(name)) == null ? void 0 : _a();
+    var _a2;
+    (_a2 = persistHandles.get(name)) == null ? void 0 : _a2();
     persistHandles.delete(name);
     stores.delete(name);
   }
@@ -3417,10 +3495,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (currency) defaultCurrency = currency;
   }
   function formatCurrency(value, options = {}) {
-    var _a, _b;
+    var _a2, _b;
     const n = typeof value === "string" ? parseFloat(value) : value;
     if (n == null || Number.isNaN(n)) return "";
-    return new Intl.NumberFormat((_a = options.locale) != null ? _a : defaultLocale, {
+    return new Intl.NumberFormat((_a2 = options.locale) != null ? _a2 : defaultLocale, {
       style: "currency",
       currency: (_b = options.currency) != null ? _b : defaultCurrency
     }).format(n);
@@ -3526,8 +3604,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       this.name = "HttpError";
     }
     get status() {
-      var _a, _b;
-      return (_b = (_a = this.response) == null ? void 0 : _a.status) != null ? _b : 0;
+      var _a2, _b;
+      return (_b = (_a2 = this.response) == null ? void 0 : _a2.status) != null ? _b : 0;
     }
     /** `true` quando o erro foi de rede, timeout ou cancelamento. */
     get isNetworkError() {
@@ -3549,8 +3627,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var errorInterceptors = [];
   var responseCache = /* @__PURE__ */ new Map();
   function cacheKey(config2) {
-    var _a;
-    return `${(_a = config2.method) != null ? _a : "GET"} ${buildURL(config2)}`;
+    var _a2;
+    return `${(_a2 = config2.method) != null ? _a2 : "GET"} ${buildURL(config2)}`;
   }
   function clearCache(pattern) {
     if (!pattern) {
@@ -3575,12 +3653,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
   }
   function enqueueOffline(config2) {
-    var _a, _b;
+    var _a2, _b;
     if (typeof localStorage === "undefined") return;
     const list = readQueue();
     list.push({
       url: buildURL(config2),
-      method: (_a = config2.method) != null ? _a : "POST",
+      method: (_a2 = config2.method) != null ? _a2 : "POST",
       body: config2.body,
       headers: (_b = config2.headers) != null ? _b : {},
       at: Date.now()
@@ -3635,10 +3713,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return url2;
   }
   function csrfToken() {
-    var _a;
+    var _a2;
     if (typeof document === "undefined") return null;
     const meta = document.querySelector(`meta[name="${defaults.csrfMeta}"]`);
-    return (_a = meta == null ? void 0 : meta.getAttribute("content")) != null ? _a : null;
+    return (_a2 = meta == null ? void 0 : meta.getAttribute("content")) != null ? _a2 : null;
   }
   function prepareBody(body, headers) {
     if (body == null) return void 0;
@@ -3670,8 +3748,28 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         return response.text();
     }
   }
+  var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+  function temChaveDeIdempotencia(headers) {
+    for (const [nome, valor] of Object.entries(headers)) {
+      if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+    }
+    return false;
+  }
+  function podeRepetir(method, config2, headers, url2) {
+    var _a2;
+    if (METODOS_SEGUROS.has(method)) return true;
+    if (config2.retryUnsafe === true) return true;
+    if (temChaveDeIdempotencia(headers)) return true;
+    if (((_a2 = config2.retry) != null ? _a2 : 0) > 0) {
+      avisarUmaVez(
+        `http:retry-inseguro:${method} ${url2}`,
+        `retry ignorado em ${method} ${url2}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+      );
+    }
+    return false;
+  }
   async function request(input) {
-    var _a, _b, _c, _d, _e;
+    var _a2, _b, _c, _d, _e;
     let config2 = {
       method: "GET",
       timeout: defaults.timeout,
@@ -3685,7 +3783,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     for (const interceptor of requestInterceptors) {
       config2 = await interceptor(config2);
     }
-    const method = ((_a = config2.method) != null ? _a : "GET").toUpperCase();
+    const method = ((_a2 = config2.method) != null ? _a2 : "GET").toUpperCase();
     if (config2.cache && method === "GET") {
       const entry = responseCache.get(cacheKey(config2));
       if (entry && entry.expires > Date.now()) return entry.value;
@@ -3710,7 +3808,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
     const body = prepareBody(config2.body, headers);
     const url2 = buildURL(config2);
-    const attempts = ((_b = config2.retry) != null ? _b : 0) + 1;
+    const attempts = podeRepetir(method, config2, headers, url2) ? ((_b = config2.retry) != null ? _b : 0) + 1 : 1;
     let lastError;
     for (let attempt = 0; attempt < attempts; attempt++) {
       const controller = new AbortController();
@@ -3822,10 +3920,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     /** Envia arquivos com progresso real, usando XMLHttpRequest. */
     upload(url2, data2, options = {}) {
       return new Promise((resolve2, reject) => {
-        var _a, _b;
+        var _a2, _b;
         const xhr = new XMLHttpRequest();
         const finalUrl = buildURL({ url: url2 });
-        xhr.open((_a = options.method) != null ? _a : "POST", finalUrl);
+        xhr.open((_a2 = options.method) != null ? _a2 : "POST", finalUrl);
         for (const [key, value] of Object.entries({ ...defaults.headers, ...options.headers })) {
           if (key.toLowerCase() === "content-type") continue;
           xhr.setRequestHeader(key, value);
@@ -3833,9 +3931,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         const token = csrfToken();
         if (token) xhr.setRequestHeader(defaults.csrfHeader, token);
         xhr.upload.addEventListener("progress", (event) => {
-          var _a2;
+          var _a3;
           if (!event.lengthComputable) return;
-          (_a2 = options.onProgress) == null ? void 0 : _a2.call(
+          (_a3 = options.onProgress) == null ? void 0 : _a3.call(
             options,
             Math.round(event.loaded / event.total * 100),
             event.loaded,
@@ -3864,20 +3962,20 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     sse(url2, handlers = {}) {
       const source = new EventSource(buildURL({ url: url2 }));
       source.addEventListener("message", (event) => {
-        var _a;
+        var _a2;
         let data2 = event.data;
         try {
           data2 = JSON.parse(event.data);
         } catch (e) {
         }
-        (_a = handlers.message) == null ? void 0 : _a.call(handlers, data2, event);
+        (_a2 = handlers.message) == null ? void 0 : _a2.call(handlers, data2, event);
       });
       if (handlers.error) source.addEventListener("error", handlers.error);
       return source;
     },
     /** Le uma resposta em streaming, linha a linha (NDJSON). */
     async stream(url2, onLine, options = {}) {
-      var _a;
+      var _a2;
       const response = await fetch(buildURL({ url: url2, params: options.params }), {
         headers: { ...defaults.headers, ...options.headers },
         signal: options.signal
@@ -3891,7 +3989,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = (_a = lines.pop()) != null ? _a : "";
+        buffer = (_a2 = lines.pop()) != null ? _a2 : "";
         for (const line of lines) if (line.trim()) onLine(line);
       }
       if (buffer.trim()) onLine(buffer);
@@ -4019,8 +4117,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return element;
   }
   function render(options) {
-    var _a, _b, _c, _d;
-    const position = (_a = options.position) != null ? _a : settings.position;
+    var _a2, _b, _c, _d;
+    const position = (_a2 = options.position) != null ? _a2 : settings.position;
     const type = (_b = options.type) != null ? _b : "default";
     const duration = (_c = options.duration) != null ? _c : type === "loading" ? 0 : settings.duration;
     const parent = container(position);
@@ -4040,9 +4138,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       element.classList.add("v-out");
       element.classList.remove("v-in");
       setTimeout(() => {
-        var _a2;
+        var _a3;
         element.remove();
-        (_a2 = options.onClose) == null ? void 0 : _a2.call(options);
+        (_a3 = options.onClose) == null ? void 0 : _a3.call(options);
         if (!parent.children.length) {
           parent.remove();
           containers.delete(position);
@@ -4050,8 +4148,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }, 220);
     };
     const paint = (current2) => {
-      var _a2, _b2, _c2, _d2;
-      const currentType = (_a2 = current2.type) != null ? _a2 : type;
+      var _a3, _b2, _c2, _d2;
+      const currentType = (_a3 = current2.type) != null ? _a3 : type;
       element.setAttribute("data-type", currentType);
       if (current2.html) {
         element.innerHTML = current2.html;
@@ -4081,8 +4179,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           button.className = "v-toast-action";
           button.textContent = current2.action.label;
           button.addEventListener("click", () => {
-            var _a3;
-            (_a3 = current2.action) == null ? void 0 : _a3.onClick();
+            var _a4;
+            (_a4 = current2.action) == null ? void 0 : _a4.onClick();
             close();
           });
           element.appendChild(button);
@@ -4122,10 +4220,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       id,
       close,
       update(next) {
-        var _a2;
+        var _a3;
         paint({ ...options, ...next });
         if (next.duration !== void 0) schedule(next.duration);
-        else if (((_a2 = next.type) != null ? _a2 : type) !== "loading") schedule(settings.duration);
+        else if (((_a3 = next.type) != null ? _a3 : type) !== "loading") schedule(settings.duration);
       }
     };
   }
@@ -4153,8 +4251,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
        * ```
        */
       async promise(promise, messages = {}) {
-        var _a, _b, _c;
-        const handle = render({ title: (_a = messages.loading) != null ? _a : "Carregando...", type: "loading", duration: 0 });
+        var _a2, _b, _c;
+        const handle = render({ title: (_a2 = messages.loading) != null ? _a2 : "Carregando...", type: "loading", duration: 0 });
         try {
           const value = await promise;
           handle.update({
@@ -4192,9 +4290,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const full = (key) => prefix + key;
     return {
       get(key, fallback) {
-        var _a;
+        var _a2;
         try {
-          const raw = (_a = getStore()) == null ? void 0 : _a.getItem(full(key));
+          const raw = (_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key));
           if (raw === null || raw === void 0) return fallback;
           try {
             return JSON.parse(raw);
@@ -4206,18 +4304,18 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         }
       },
       set(key, value) {
-        var _a;
+        var _a2;
         try {
-          (_a = getStore()) == null ? void 0 : _a.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
+          (_a2 = getStore()) == null ? void 0 : _a2.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
           return true;
         } catch (e) {
           return false;
         }
       },
       remove(key) {
-        var _a;
+        var _a2;
         try {
-          (_a = getStore()) == null ? void 0 : _a.removeItem(full(key));
+          (_a2 = getStore()) == null ? void 0 : _a2.removeItem(full(key));
         } catch (e) {
         }
       },
@@ -4236,9 +4334,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         }
       },
       has(key) {
-        var _a;
+        var _a2;
         try {
-          return ((_a = getStore()) == null ? void 0 : _a.getItem(full(key))) !== null;
+          return ((_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key))) !== null;
         } catch (e) {
           return false;
         }
@@ -4270,14 +4368,14 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return void 0;
     },
     set(name, value, options = {}) {
-      var _a, _b;
+      var _a2, _b;
       if (typeof document === "undefined") return;
       let text = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
       if (options.expires !== void 0) {
         const date = typeof options.expires === "number" ? new Date(Date.now() + options.expires * 864e5) : options.expires;
         text += `; expires=${date.toUTCString()}`;
       }
-      text += `; path=${(_a = options.path) != null ? _a : "/"}`;
+      text += `; path=${(_a2 = options.path) != null ? _a2 : "/"}`;
       if (options.domain) text += `; domain=${options.domain}`;
       if (options.secure) text += "; secure";
       text += `; samesite=${(_b = options.sameSite) != null ? _b : "Lax"}`;
@@ -4293,9 +4391,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var url = {
     /** Le um parametro da URL atual. */
     get(key, fallback) {
-      var _a;
+      var _a2;
       if (typeof location === "undefined") return fallback;
-      return (_a = new URLSearchParams(location.search).get(key)) != null ? _a : fallback;
+      return (_a2 = new URLSearchParams(location.search).get(key)) != null ? _a2 : fallback;
     },
     /** Le todos os parametros como objeto. */
     all() {
@@ -4365,8 +4463,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var theme = {
     /** Tema escolhido pelo usuario, ou `system` quando nunca foi definido. */
     get current() {
-      var _a;
-      return (_a = storage.get(THEME_KEY)) != null ? _a : "system";
+      var _a2;
+      return (_a2 = storage.get(THEME_KEY)) != null ? _a2 : "system";
     },
     /** Tema efetivamente aplicado, resolvendo `system`. */
     get resolved() {
@@ -4439,12 +4537,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     slow: false
   });
   function updateNetwork() {
-    var _a;
+    var _a2;
     if (typeof navigator === "undefined") return;
     network.online = navigator.onLine;
     const connection = navigator.connection;
     if (connection) {
-      network.type = (_a = connection.effectiveType) != null ? _a : "unknown";
+      network.type = (_a2 = connection.effectiveType) != null ? _a2 : "unknown";
       network.saveData = !!connection.saveData;
       network.slow = connection.effectiveType === "slow-2g" || connection.effectiveType === "2g";
     }
@@ -4452,9 +4550,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var clipboard = {
     /** Copia texto, com fallback para navegadores sem a API moderna. */
     async copy(text) {
-      var _a;
+      var _a2;
       try {
-        if ((_a = navigator.clipboard) == null ? void 0 : _a.writeText) {
+        if ((_a2 = navigator.clipboard) == null ? void 0 : _a2.writeText) {
           await navigator.clipboard.writeText(text);
           return true;
         }
@@ -4485,7 +4583,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   };
   var installed = false;
   function installMagics() {
-    var _a, _b;
+    var _a2, _b;
     if (installed) return;
     installed = true;
     magic("$el", (scope) => scope.el);
@@ -4493,12 +4591,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     magic("$data", (scope) => scope.data);
     magic("$root", (scope) => scope.root.data);
     magic("$parent", (scope) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = scope.parent) == null ? void 0 : _a2.data) != null ? _b2 : null;
+      var _a3, _b2;
+      return (_b2 = (_a3 = scope.parent) == null ? void 0 : _a3.data) != null ? _b2 : null;
     });
     magic("$self", (scope) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = scope.owner) == null ? void 0 : _a2.component) != null ? _b2 : scope.data;
+      var _a3, _b2;
+      return (_b2 = (_a3 = scope.owner) == null ? void 0 : _a3.component) != null ? _b2 : scope.data;
     });
     magic("$store", () => allStores);
     magic("$http", () => http);
@@ -4519,8 +4617,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       (scope) => (expression, callback) => watch(() => evaluateIn(expression, scope, "$watch"), callback)
     );
     magic("$dispatch", (scope) => (name, detail) => {
-      var _a2;
-      const target = (_a2 = scope.el) != null ? _a2 : document;
+      var _a3;
+      const target = (_a3 = scope.el) != null ? _a3 : document;
       target.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
     });
     magic("$log", () => (...args) => {
@@ -4537,8 +4635,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     window.addEventListener("orientationchange", updateScreen);
     window.addEventListener("online", updateNetwork);
     window.addEventListener("offline", updateNetwork);
-    (_b = (_a = navigator.connection) == null ? void 0 : _a.addEventListener) == null ? void 0 : _b.call(
-      _a,
+    (_b = (_a2 = navigator.connection) == null ? void 0 : _a2.addEventListener) == null ? void 0 : _b.call(
+      _a2,
       "change",
       updateNetwork
     );
@@ -4556,8 +4654,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return current2;
   }
   function extractMessage(error) {
-    var _a;
-    const data2 = (_a = error.response) == null ? void 0 : _a.data;
+    var _a2;
+    const data2 = (_a2 = error.response) == null ? void 0 : _a2.data;
     if (!data2 || typeof data2 !== "object") return null;
     for (const key of ["message", "error", "detail", "msg"]) {
       const value = data2[key];
@@ -4576,7 +4674,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       error: null,
       loaded: false,
       async reload() {
-        var _a, _b, _c, _d, _e;
+        var _a2, _b, _c, _d, _e;
         const endereco = resolveUrl();
         if (!endereco) return;
         controller == null ? void 0 : controller.abort();
@@ -4590,7 +4688,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             params: resolveParams(),
             headers: options.headers,
             cache: options.cache || void 0,
-            retry: (_a = options.retry) != null ? _a : 0,
+            retry: (_a2 = options.retry) != null ? _a2 : 0,
             timeout: (_b = options.timeout) != null ? _b : http.defaults.timeout,
             signal: atual.signal
           });
@@ -4696,10 +4794,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       addClasses(el, c.enterFrom);
       addClasses(el, c.enterActive);
       nextFrame(() => {
-        var _a;
+        var _a2;
         removeClasses(el, c.enterFrom);
         addClasses(el, c.enterTo);
-        const duration = (_a = options.duration) != null ? _a : readDuration(el);
+        const duration = (_a2 = options.duration) != null ? _a2 : readDuration(el);
         const finish = () => {
           removeClasses(el, c.enterActive);
           removeClasses(el, c.enterTo);
@@ -4718,10 +4816,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       addClasses(el, c.leaveFrom);
       addClasses(el, c.leaveActive);
       nextFrame(() => {
-        var _a;
+        var _a2;
         removeClasses(el, c.leaveFrom);
         addClasses(el, c.leaveTo);
-        const duration = (_a = options.duration) != null ? _a : readDuration(el);
+        const duration = (_a2 = options.duration) != null ? _a2 : readDuration(el);
         const finish = () => {
           removeClasses(el, c.leaveActive);
           removeClasses(el, c.leaveTo);
@@ -4892,7 +4990,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   defineDirective(
     "if",
     ({ el, scope, expression, effect: effect2 }) => {
-      var _a;
+      var _a2;
       const p2 = config.prefix;
       const branches = [{ expression, template: el }];
       let sibling = el.nextElementSibling;
@@ -4912,7 +5010,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         }
       }
       const anchor = document.createComment(config.devtools ? ` v-if: ${expression} ` : "");
-      (_a = el.parentNode) == null ? void 0 : _a.insertBefore(anchor, el);
+      (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(anchor, el);
       for (const branch of branches) {
         removeQuietly(branch.template);
         branch.template.removeAttribute(`${p2}if`);
@@ -4991,7 +5089,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   defineDirective(
     "for",
     ({ el, scope, expression, effect: effect2 }) => {
-      var _a;
+      var _a2;
       const match = FOR_PATTERN.exec(expression);
       if (!match) {
         handleError(
@@ -5006,7 +5104,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const p2 = config.prefix;
       const keyExpression = el.getAttribute(":key") || el.getAttribute(`${p2}bind:key`) || el.getAttribute(`${p2}key`);
       const anchor = document.createComment(config.devtools ? ` v-for: ${expression} ` : "");
-      (_a = el.parentNode) == null ? void 0 : _a.insertBefore(anchor, el);
+      (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(anchor, el);
       const template = el.cloneNode(true);
       template.removeAttribute(`${p2}for`);
       removeQuietly(el);
@@ -5022,7 +5120,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       };
       addCleanup(anchor, clearAll);
       effect2(() => {
-        var _a2, _b;
+        var _a3, _b;
         const source = evaluateIn(sourceExpression, scope, "v-for");
         const entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
         const previous = /* @__PURE__ */ new Map();
@@ -5056,7 +5154,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           const block2 = next[i];
           const last = block2.nodes[block2.nodes.length - 1];
           if (last && last.nextSibling !== cursor) {
-            for (const node of block2.nodes) (_a2 = anchor.parentNode) == null ? void 0 : _a2.insertBefore(node, cursor);
+            for (const node of block2.nodes) (_a3 = anchor.parentNode) == null ? void 0 : _a3.insertBefore(node, cursor);
           }
           cursor = (_b = block2.nodes[0]) != null ? _b : cursor;
         }
@@ -5129,9 +5227,16 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
     return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
   }
-  function applyBinding(el, name, value, asProp = false) {
+  function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
     if (name === "class") return applyClass(el, value);
     if (name === "style") return applyStyle(el, value);
+    if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
+      avisar(
+        `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.`
+      );
+      el.removeAttribute(name);
+      return;
+    }
     if (config.sanitizeUrls && !asProp) {
       if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
         avisar(
@@ -5230,8 +5335,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       if (arg === "key") return;
       const asProp = !!modifiers.prop;
+      const perigoLiberado = !!modifiers.dangerous;
       effect2(() => {
-        applyBinding(el, arg, ev(), asProp);
+        applyBinding(el, arg, ev(), asProp, perigoLiberado);
       });
       void expression;
     },
@@ -5344,7 +5450,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     },
     /** Elemento entrou na area visivel. */
     visible(el, run, modifiers, cleanup) {
-      var _a, _b;
+      var _a2, _b;
       if (typeof IntersectionObserver === "undefined") {
         run(new CustomEvent("visible"));
         return;
@@ -5357,7 +5463,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             if (modifiers.repeat !== true) observer2.unobserve(el);
           }
         },
-        { threshold: Number((_a = modifiers.threshold) != null ? _a : 0.1), rootMargin: String((_b = modifiers.margin) != null ? _b : "0px") }
+        { threshold: Number((_a2 = modifiers.threshold) != null ? _a2 : 0.1), rootMargin: String((_b = modifiers.margin) != null ? _b : "0px") }
       );
       observer2.observe(el);
       cleanup(() => observer2.disconnect());
@@ -5391,8 +5497,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     };
   }
   function bindEvent(el, rawEventName, expression, scope, modifiers, cleanup) {
-    var _a;
-    const eventName = (_a = EVENT_ALIASES[rawEventName]) != null ? _a : rawEventName;
+    var _a2;
+    const eventName = (_a2 = EVENT_ALIASES[rawEventName]) != null ? _a2 : rawEventName;
     const custom = customEvents[rawEventName];
     if (custom) {
       custom(
@@ -5498,7 +5604,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const debounceMs = modifiers.debounce ? parseDuration(modifiers.debounce === true ? 250 : modifiers.debounce, 250) : el.getAttribute(`${config.prefix}debounce`) ? parseDuration(el.getAttribute(`${config.prefix}debounce`), 250) : 0;
       const eventName = lazy || isSelect || isCheckbox || isRadio || isFile ? "change" : "input";
       let onInput = () => {
-        var _a, _b;
+        var _a2, _b;
         let value;
         if (isCheckbox) {
           const current2 = evaluateIn(expression, scope, "v-model");
@@ -5520,7 +5626,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             (option) => option.value
           );
         } else if (isFile) {
-          value = modifiers.single ? (_b = (_a = input.files) == null ? void 0 : _a[0]) != null ? _b : null : input.files;
+          value = modifiers.single ? (_b = (_a2 = input.files) == null ? void 0 : _a2[0]) != null ? _b : null : input.files;
         } else {
           value = input.value;
           if (wantsTrim && typeof value === "string") value = value.trim();
@@ -5577,10 +5683,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   defineDirective(
     "ref",
     ({ el, expression, scope, cleanup }) => {
-      var _a;
+      var _a2;
       const name = expression.trim();
       if (!name) return;
-      const target = (_a = scope.owner) != null ? _a : scope;
+      const target = (_a2 = scope.owner) != null ? _a2 : scope;
       target.refs[name] = el;
       cleanup(() => {
         if (target.refs[name] === el) delete target.refs[name];
@@ -5625,7 +5731,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   defineDirective(
     "teleport",
     ({ el, expression, cleanup }) => {
-      var _a;
+      var _a2;
       const selector = expression.trim() || "body";
       const target = selector === "body" ? document.body : document.querySelector(selector);
       if (!target) {
@@ -5633,11 +5739,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         return;
       }
       const placeholder = document.createComment(" v-teleport ");
-      (_a = el.parentNode) == null ? void 0 : _a.insertBefore(placeholder, el);
+      (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(placeholder, el);
       target.appendChild(el);
       cleanup(() => {
-        var _a2;
-        (_a2 = placeholder.parentNode) == null ? void 0 : _a2.insertBefore(el, placeholder);
+        var _a3;
+        (_a3 = placeholder.parentNode) == null ? void 0 : _a3.insertBefore(el, placeholder);
         placeholder.remove();
       });
     },
@@ -5673,7 +5779,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return hasAttr(el, `${p()}${name}`);
   }
   function readSettings(el, scope) {
-    var _a, _b, _c;
+    var _a2, _b, _c;
     const targetSelector = attr(el, "target");
     const loadingSelector = attr(el, "loading");
     let headers = {};
@@ -5694,7 +5800,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       onSuccess: attr(el, "on-success"),
       onError: attr(el, "on-error"),
       onComplete: attr(el, "on-complete"),
-      cacheMs: parseDuration((_a = attr(el, "cache")) != null ? _a : void 0, 0),
+      cacheMs: parseDuration((_a2 = attr(el, "cache")) != null ? _a2 : void 0, 0),
       retry: Number((_b = attr(el, "retry")) != null ? _b : 0),
       timeout: parseDuration((_c = attr(el, "timeout")) != null ? _c : void 0, http.defaults.timeout),
       storeAs: attr(el, "as"),
@@ -5707,7 +5813,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     };
   }
   function swapContent(target, html, mode, scope) {
-    var _a, _b;
+    var _a2, _b;
     const initialize = (nodes) => {
       for (const node of Array.from(nodes)) if (node.nodeType === 1) walk(node, scope);
     };
@@ -5735,7 +5841,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       case "afterbegin":
       case "beforeend":
       case "afterend": {
-        const before = new Set(Array.from((_b = (_a = target.parentElement) == null ? void 0 : _a.childNodes) != null ? _b : []));
+        const before = new Set(Array.from((_b = (_a2 = target.parentElement) == null ? void 0 : _a2.childNodes) != null ? _b : []));
         target.insertAdjacentHTML(mode, html);
         const parent = mode === "afterbegin" || mode === "beforeend" ? target : target.parentElement;
         if (parent) {
@@ -5810,7 +5916,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   var inFlight = /* @__PURE__ */ new WeakMap();
   async function runRequest(options) {
-    var _a, _b, _c, _d, _e;
+    var _a2, _b, _c, _d, _e;
     const { el, scope, method } = options;
     const settings2 = readSettings(el, scope);
     const dialogoCuidaDaPergunta = directives.has(`confirm`);
@@ -5818,7 +5924,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const confirmed = await askConfirmation(settings2.confirmMessage);
       if (!confirmed) return;
     }
-    (_a = inFlight.get(el)) == null ? void 0 : _a.abort();
+    (_a2 = inFlight.get(el)) == null ? void 0 : _a2.abort();
     const controller = new AbortController();
     inFlight.set(el, controller);
     const target = (_b = settings2.target) != null ? _b : el;
@@ -5897,10 +6003,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
   }
   function callHandler(expression, scope, el, extra) {
-    var _a;
+    var _a2;
     const local = scope.child({ $el: el, ...extra });
     const value = evaluateIn(expression, local, "callback HTTP");
-    if (typeof value === "function") value.call(scope.data, (_a = extra.data) != null ? _a : extra.error);
+    if (typeof value === "function") value.call(scope.data, (_a2 = extra.data) != null ? _a2 : extra.error);
   }
   async function askConfirmation(message) {
     const global = globalThis.V;
@@ -5939,10 +6045,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return "click";
   }
   function installTrigger({ el, cleanup, run }) {
-    var _a, _b;
+    var _a2, _b;
     const declared = attr(el, "trigger") || defaultTrigger(el);
     const [name, ...modifiers] = declared.split(/[.\s]+/);
-    const pollEvery = parseDuration((_a = attr(el, "poll")) != null ? _a : void 0, 0);
+    const pollEvery = parseDuration((_a2 = attr(el, "poll")) != null ? _a2 : void 0, 0);
     if (pollEvery > 0) {
       run();
       const timer = setInterval(() => {
@@ -6038,11 +6144,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     cleanup(() => observer2.disconnect());
   });
   defineDirective("search", ({ el, scope, expression, cleanup }) => {
-    var _a, _b;
+    var _a2, _b;
     const input = el;
     const url2 = resolveURL(expression, scope);
     const paramName = attr(el, "param") || input.getAttribute("name") || "q";
-    const wait2 = parseDuration((_a = attr(el, "debounce")) != null ? _a : void 0, 300);
+    const wait2 = parseDuration((_a2 = attr(el, "debounce")) != null ? _a2 : void 0, 300);
     const minLength = Number((_b = attr(el, "min-length")) != null ? _b : 0);
     const run = debounce(() => {
       const value = input.value.trim();
@@ -6065,7 +6171,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   defineDirective(
     "resource",
     ({ el, scope, expression, cleanup }) => {
-      var _a, _b, _c, _d;
+      var _a2, _b, _c, _d;
       const separator = expression.indexOf(":");
       let name = attr(el, "as") || "resource";
       let urlExpression = expression.trim();
@@ -6079,7 +6185,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const resource = createResource(() => resolveURL(urlExpression, scope), {
         method: (attr(el, "method") || "GET").toUpperCase(),
         params: () => attr(el, "params") ? evaluateIn(attr(el, "params"), scope, "v-params") : void 0,
-        cache: parseDuration((_a = attr(el, "cache")) != null ? _a : void 0, 0) || void 0,
+        cache: parseDuration((_a2 = attr(el, "cache")) != null ? _a2 : void 0, 0) || void 0,
         retry: Number((_b = attr(el, "retry")) != null ? _b : 0),
         timeout: parseDuration((_c = attr(el, "timeout")) != null ? _c : void 0, http.defaults.timeout),
         jsonPath: attr(el, "json-path"),
@@ -6151,24 +6257,24 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
   }
   function off(name, handler) {
-    var _a;
+    var _a2;
     if (!handler) {
       eventBus.delete(name);
       return;
     }
-    (_a = eventBus.get(name)) == null ? void 0 : _a.delete(handler);
+    (_a2 = eventBus.get(name)) == null ? void 0 : _a2.delete(handler);
   }
   function directive(name, definition) {
-    var _a, _b;
+    var _a2, _b;
     const hooks = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
     defineDirective(
       name,
       (ctx) => {
-        var _a2, _b2;
+        var _a3, _b2;
         let oldValue;
         let mounted = false;
         const makeBinding = (value) => {
-          var _a3, _b3;
+          var _a4, _b3;
           return {
             el: ctx.el,
             value,
@@ -6177,19 +6283,19 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             modifiers: ctx.modifiers,
             expression: ctx.expression,
             scope: ctx.scope,
-            instance: (_b3 = (_a3 = ctx.scope.owner) == null ? void 0 : _a3.component) != null ? _b3 : null
+            instance: (_b3 = (_a4 = ctx.scope.owner) == null ? void 0 : _a4.component) != null ? _b3 : null
           };
         };
         const initial = hooks.raw ? ctx.expression : ctx.evaluate();
-        (_a2 = hooks.created) == null ? void 0 : _a2.call(hooks, ctx.el, makeBinding(initial));
+        (_a3 = hooks.created) == null ? void 0 : _a3.call(hooks, ctx.el, makeBinding(initial));
         (_b2 = hooks.beforeMount) == null ? void 0 : _b2.call(hooks, ctx.el, makeBinding(initial));
         ctx.effect(() => {
-          var _a3, _b3;
+          var _a4, _b3;
           const value = hooks.raw ? ctx.expression : ctx.evaluate();
           if (!mounted) {
             mounted = true;
             oldValue = value;
-            (_a3 = hooks.mounted) == null ? void 0 : _a3.call(hooks, ctx.el, makeBinding(value));
+            (_a4 = hooks.mounted) == null ? void 0 : _a4.call(hooks, ctx.el, makeBinding(value));
             return;
           }
           if (value === oldValue) return;
@@ -6198,13 +6304,13 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           oldValue = value;
         });
         ctx.cleanup(() => {
-          var _a3, _b3;
+          var _a4, _b3;
           const binding = makeBinding(oldValue);
-          (_a3 = hooks.beforeUnmount) == null ? void 0 : _a3.call(hooks, ctx.el, binding);
+          (_a4 = hooks.beforeUnmount) == null ? void 0 : _a4.call(hooks, ctx.el, binding);
           (_b3 = hooks.unmounted) == null ? void 0 : _b3.call(hooks, ctx.el, binding);
         });
       },
-      { priority: (_a = hooks.priority) != null ? _a : PRIORITY.DEFAULT, terminal: (_b = hooks.terminal) != null ? _b : false }
+      { priority: (_a2 = hooks.priority) != null ? _a2 : PRIORITY.DEFAULT, terminal: (_b = hooks.terminal) != null ? _b : false }
     );
   }
   function data(values) {
@@ -6672,8 +6778,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return new _VoodooCollection(this.elements.slice(start2, end));
     }
     text(...rest) {
-      var _a, _b;
-      if (!rest.length) return (_b = (_a = this.elements[0]) == null ? void 0 : _a.textContent) != null ? _b : "";
+      var _a2, _b;
+      if (!rest.length) return (_b = (_a2 = this.elements[0]) == null ? void 0 : _a2.textContent) != null ? _b : "";
       const value = rest[0];
       const text = value == null ? "" : String(value);
       for (const el of this.elements) {
@@ -6683,8 +6789,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     html(...rest) {
-      var _a, _b;
-      if (!rest.length) return (_b = (_a = this.elements[0]) == null ? void 0 : _a.innerHTML) != null ? _b : "";
+      var _a2, _b;
+      if (!rest.length) return (_b = (_a2 = this.elements[0]) == null ? void 0 : _a2.innerHTML) != null ? _b : "";
       const value = rest[0];
       const text = value == null ? "" : String(value);
       for (const el of this.elements) {
@@ -6694,7 +6800,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     val(...rest) {
-      var _a;
+      var _a2;
       if (!rest.length) {
         const field = this.elements[0];
         if (!field) return "";
@@ -6703,7 +6809,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           return Array.from(select.selectedOptions).map((option) => option.value);
         }
         if (field.type === "checkbox") return field.checked ? field.value || "on" : "";
-        return (_a = field.value) != null ? _a : "";
+        return (_a2 = field.value) != null ? _a2 : "";
       }
       const value = rest[0];
       for (const el of this.elements) {
@@ -6723,7 +6829,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     attr(...rest) {
-      var _a, _b;
+      var _a2, _b;
       const first = rest[0];
       if (first !== null && typeof first === "object") {
         for (const el of this.elements) {
@@ -6735,7 +6841,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         return this;
       }
       const name = String(first);
-      if (rest.length < 2) return (_b = (_a = this.elements[0]) == null ? void 0 : _a.getAttribute(name)) != null ? _b : void 0;
+      if (rest.length < 2) return (_b = (_a2 = this.elements[0]) == null ? void 0 : _a2.getAttribute(name)) != null ? _b : void 0;
       const value = rest[1];
       for (const el of this.elements) {
         if (value === null || value === false) el.removeAttribute(name);
@@ -6833,8 +6939,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return { top: el.offsetTop, left: el.offsetLeft };
     }
     scrollTop(...rest) {
-      var _a, _b;
-      if (!rest.length) return (_b = (_a = this.elements[0]) == null ? void 0 : _a.scrollTop) != null ? _b : 0;
+      var _a2, _b;
+      if (!rest.length) return (_b = (_a2 = this.elements[0]) == null ? void 0 : _a2.scrollTop) != null ? _b : 0;
       const value = Number(rest[0]) || 0;
       for (const el of this.elements) el.scrollTop = value;
       return this;
@@ -6900,15 +7006,15 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     /** Insere conteudo antes de cada elemento. */
     before(content) {
       return this.insert(content, (el, node) => {
-        var _a;
-        return (_a = el.parentNode) == null ? void 0 : _a.insertBefore(node, el);
+        var _a2;
+        return (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(node, el);
       });
     }
     /** Insere conteudo depois de cada elemento. */
     after(content) {
       return this.insert(content, (el, node) => {
-        var _a;
-        return (_a = el.parentNode) == null ? void 0 : _a.insertBefore(node, el.nextSibling);
+        var _a2;
+        return (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(node, el.nextSibling);
       });
     }
     /** Move os elementos da colecao para dentro do destino. */
@@ -6946,12 +7052,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     /** Envolve cada elemento com o HTML ou elemento informado. */
     wrap(wrapper) {
-      var _a;
+      var _a2;
       for (const el of this.elements) {
         const model = resolve(wrapper)[0];
         if (!model) continue;
         const clone2 = model.cloneNode(true);
-        (_a = el.parentNode) == null ? void 0 : _a.insertBefore(clone2, el);
+        (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(clone2, el);
         let deepest = clone2;
         while (deepest.firstElementChild) deepest = deepest.firstElementChild;
         deepest.appendChild(el);
@@ -6995,11 +7101,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return new _VoodooCollection(this.elements.map((el) => el.cloneNode(deep)));
     }
     on(types, ...rest) {
-      var _a;
+      var _a2;
       const delegated = typeof rest[0] === "string";
       const selector = delegated ? rest[0] : null;
       const handler = delegated ? rest[1] : rest[0];
-      const options = (_a = delegated ? rest[2] : rest[1]) != null ? _a : {};
+      const options = (_a2 = delegated ? rest[2] : rest[1]) != null ? _a2 : {};
       if (typeof handler !== "function") return this;
       for (const el of this.elements) {
         for (const type of names(types)) {
@@ -7154,8 +7260,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     /** Rola a pagina ate o primeiro elemento. */
     scrollIntoView(options = { behavior: "smooth", block: "start" }) {
-      var _a;
-      (_a = this.elements[0]) == null ? void 0 : _a.scrollIntoView(options);
+      var _a2;
+      (_a2 = this.elements[0]) == null ? void 0 : _a2.scrollIntoView(options);
       return this;
     }
     // -------------------------------------------------------------------------
@@ -7184,7 +7290,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
      * numero.
      */
     serializeObject() {
-      var _a, _b, _c, _d;
+      var _a2, _b, _c, _d;
       const el = this.elements[0];
       const out = {};
       if (!el) return out;
@@ -7199,7 +7305,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         let value;
         if (type === "checkbox") {
           if (!field.checked && !isList) {
-            out[key] = (_a = out[key]) != null ? _a : false;
+            out[key] = (_a2 = out[key]) != null ? _a2 : false;
             continue;
           }
           if (!field.checked) continue;
@@ -7235,8 +7341,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     /** Coloca o foco no primeiro elemento. */
     focus(options) {
-      var _a;
-      (_a = this.elements[0]) == null ? void 0 : _a.focus(options);
+      var _a2;
+      (_a2 = this.elements[0]) == null ? void 0 : _a2.focus(options);
       return this;
     }
     /** Tira o foco de todos os elementos. */
@@ -7482,8 +7588,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   var DARK_L = [0.244, 0.286, 0.343, 0.408, 0.484, 0.588, 0.668, 0.748, 0.836, 0.928];
   var DARK_C = [0.3, 0.42, 0.6, 0.78, 0.92, 1, 0.92, 0.78, 0.57, 0.33];
   function colorScale(color, dark = false) {
-    var _a;
-    const rgb = typeof color === "string" ? (_a = parseColor(color)) != null ? _a : BLACK : color;
+    var _a2;
+    const rgb = typeof color === "string" ? (_a2 = parseColor(color)) != null ? _a2 : BLACK : color;
     const base = rgbToOklch(rgb);
     const lightness = dark ? DARK_L : LIGHT_L;
     const chroma = dark ? DARK_C : LIGHT_C;
@@ -7576,12 +7682,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     };
   }
   function buildTheme(colors, dark) {
-    var _a, _b, _c, _d;
+    var _a2, _b, _c, _d;
     const vars = {};
     const scales = {};
     const contrast = {};
     for (const role of ROLES) {
-      const rgb = (_a = parseColor(colors[role])) != null ? _a : BLACK;
+      const rgb = (_a2 = parseColor(colors[role])) != null ? _a2 : BLACK;
       const base = rgbToOklch(rgb);
       const scale = colorScale(rgb, dark);
       scales[role] = scale;
@@ -7663,8 +7769,8 @@ ${body}
   var current = null;
   var currentOptions = null;
   function resolveOptions(options) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
-    const preset = (_a = presets[options.preset]) != null ? _a : presets.violeta;
+    var _a2, _b, _c, _d, _e, _f, _g, _h, _i;
+    const preset = (_a2 = presets[options.preset]) != null ? _a2 : presets.violeta;
     const colors = {
       primary: (_b = options.primary) != null ? _b : preset.primary,
       accent: (_c = options.accent) != null ? _c : preset.accent,
@@ -7808,9 +7914,9 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     return false;
   }
   function readScriptOptions() {
-    var _a;
+    var _a2;
     if (typeof document === "undefined") return { manual: false };
-    const script = (_a = document.currentScript) != null ? _a : document.querySelector('script[src*="voodoo"]');
+    const script = (_a2 = document.currentScript) != null ? _a2 : document.querySelector('script[src*="voodoo"]');
     if (!script) return { manual: false };
     const manual = script.hasAttribute("data-manual") || script.hasAttribute("data-defer-init");
     const prefix = script.getAttribute("data-prefix");
@@ -7835,7 +7941,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     );
   }
   function bootstrap(V2) {
-    var _a;
+    var _a2;
     if (typeof window === "undefined") return;
     const options = readScriptOptions();
     const globalScope = window;
@@ -7843,7 +7949,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     globalScope.Voodoo = V2;
     allowedGlobals.V = V2;
     allowedGlobals.Voodoo = V2;
-    if (config.baseURL && ((_a = V2.http) == null ? void 0 : _a.setBaseURL)) V2.http.setBaseURL(config.baseURL);
+    if (config.baseURL && ((_a2 = V2.http) == null ? void 0 : _a2.setBaseURL)) V2.http.setBaseURL(config.baseURL);
     if (options.manual || !config.autoStart) return;
     const boot = () => {
       theme.init();

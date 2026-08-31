@@ -244,7 +244,7 @@ function reactive(target) {
   if (!canObserve(target)) return target;
   const existing = reactiveMap.get(target);
   if (existing) return existing;
-  const isMapOrSet = target instanceof Map || target instanceof Set || target instanceof WeakMap || target instanceof WeakSet;
+  const isMapOrSet = target instanceof Map || target instanceof Set;
   const proxy = new Proxy(
     target,
     isMapOrSet ? collectionHandlers : baseHandlers
@@ -965,14 +965,37 @@ function tokenize(source) {
           if (esc === "u") {
             if (source[i + 1] === "{") {
               const close = source.indexOf("}", i);
-              out += String.fromCodePoint(parseInt(source.slice(i + 2, close), 16));
+              if (close === -1)
+                throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
+              const digitos = source.slice(i + 2, close);
+              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                throw new VoodooSyntaxError(
+                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  source,
+                  i - 1
+                );
+              out += String.fromCodePoint(parseInt(digitos, 16));
               i = close + 1;
             } else {
-              out += String.fromCharCode(parseInt(source.slice(i + 1, i + 5), 16));
+              const digitos = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+                throw new VoodooSyntaxError(
+                  "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                  source,
+                  i - 1
+                );
+              out += String.fromCharCode(parseInt(digitos, 16));
               i += 5;
             }
           } else if (esc === "x") {
-            out += String.fromCharCode(parseInt(source.slice(i + 1, i + 3), 16));
+            const digitos = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+              throw new VoodooSyntaxError(
+                "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                source,
+                i - 1
+              );
+            out += String.fromCharCode(parseInt(digitos, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -1096,11 +1119,15 @@ var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null)
   null: null,
   undefined: void 0
 });
+var MAX_DEPTH = 1200;
+var MAX_TEMPLATE_DEPTH = 32;
+var templateDepth = 0;
 var Parser = class {
   constructor(tokens, source) {
     __publicField(this, "tokens", tokens);
     __publicField(this, "source", source);
     __publicField(this, "pos", 0);
+    __publicField(this, "depth", 0);
   }
   peek(offset = 0) {
     return this.tokens[Math.min(this.pos + offset, this.tokens.length - 1)];
@@ -1141,7 +1168,24 @@ var Parser = class {
   parseExpression() {
     return this.parseAssignment();
   }
+  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
+  entrar() {
+    if (++this.depth > MAX_DEPTH) {
+      const t = this.peek();
+      throw new VoodooSyntaxError(
+        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        this.source,
+        t.start
+      );
+    }
+  }
   parseAssignment() {
+    this.entrar();
+    const node = this.parseAssignmentInterno();
+    this.depth--;
+    return node;
+  }
+  parseAssignmentInterno() {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
@@ -1208,6 +1252,12 @@ var Parser = class {
     return test;
   }
   parseBinary(minPrec) {
+    this.entrar();
+    const node = this.parseBinarioInterno(minPrec);
+    this.depth--;
+    return node;
+  }
+  parseBinarioInterno(minPrec) {
     let left = this.parseUnary();
     for (; ; ) {
       const t = this.peek();
@@ -1224,6 +1274,12 @@ var Parser = class {
     return left;
   }
   parseUnary() {
+    this.entrar();
+    const node = this.parseUnarioInterno();
+    this.depth--;
+    return node;
+  }
+  parseUnarioInterno() {
     const t = this.peek();
     if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
       this.next();
@@ -1311,11 +1367,23 @@ var Parser = class {
     if (t.type === "tpl") {
       this.next();
       const part = t.tpl;
-      return {
-        t: "tpl",
-        quasis: part.quasis,
-        exprs: part.exprs.map((src) => parse(src))
-      };
+      if (templateDepth >= MAX_TEMPLATE_DEPTH) {
+        throw new VoodooSyntaxError(
+          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          this.source,
+          t.start
+        );
+      }
+      templateDepth++;
+      try {
+        return {
+          t: "tpl",
+          quasis: part.quasis,
+          exprs: part.exprs.map((src) => parse(src))
+        };
+      } finally {
+        templateDepth--;
+      }
     }
     if (t.type === "ident") {
       if (t.value in LITERALS) {
@@ -1405,6 +1473,15 @@ function clearParseCache() {
 }
 
 // src/parser/interpreter.ts
+var SafeObject = /* @__PURE__ */ Object.freeze({
+  keys: Object.keys,
+  values: Object.values,
+  entries: Object.entries,
+  fromEntries: Object.fromEntries,
+  assign: Object.assign,
+  is: Object.is,
+  hasOwn: Object.hasOwn ?? ((o, k) => Object.prototype.hasOwnProperty.call(o, k))
+});
 var allowedGlobals = {
   Math,
   JSON,
@@ -1413,7 +1490,7 @@ var allowedGlobals = {
   String,
   Boolean,
   Array,
-  Object,
+  Object: SafeObject,
   Intl,
   RegExp,
   Promise,
@@ -3668,6 +3745,25 @@ async function parseResponse(response, type) {
       return response.text();
   }
 }
+var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+function temChaveDeIdempotencia(headers) {
+  for (const [nome, valor] of Object.entries(headers)) {
+    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  }
+  return false;
+}
+function podeRepetir(method, config2, headers, url2) {
+  if (METODOS_SEGUROS.has(method)) return true;
+  if (config2.retryUnsafe === true) return true;
+  if (temChaveDeIdempotencia(headers)) return true;
+  if ((config2.retry ?? 0) > 0) {
+    avisarUmaVez(
+      `http:retry-inseguro:${method} ${url2}`,
+      `retry ignorado em ${method} ${url2}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+    );
+  }
+  return false;
+}
 async function request(input) {
   let config2 = {
     method: "GET",
@@ -3707,7 +3803,7 @@ async function request(input) {
   headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
   const body = prepareBody(config2.body, headers);
   const url2 = buildURL(config2);
-  const attempts = (config2.retry ?? 0) + 1;
+  const attempts = podeRepetir(method, config2, headers, url2) ? (config2.retry ?? 0) + 1 : 1;
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
@@ -5090,9 +5186,16 @@ function urlPerigosa(valor) {
   const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
   return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
 }
-function applyBinding(el, name, value, asProp = false) {
+function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
   if (name === "class") return applyClass(el, value);
   if (name === "style") return applyStyle(el, value);
+  if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
+    avisar(
+      `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.`
+    );
+    el.removeAttribute(name);
+    return;
+  }
   if (config.sanitizeUrls && !asProp) {
     if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
       avisar(
@@ -5191,8 +5294,9 @@ defineDirective(
     }
     if (arg === "key") return;
     const asProp = !!modifiers.prop;
+    const perigoLiberado = !!modifiers.dangerous;
     effect2(() => {
-      applyBinding(el, arg, ev(), asProp);
+      applyBinding(el, arg, ev(), asProp, perigoLiberado);
     });
   },
   { priority: PRIORITY.BIND }

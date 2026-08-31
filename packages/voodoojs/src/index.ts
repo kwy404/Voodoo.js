@@ -197,6 +197,18 @@ export { createResource, createResource as resource } from './http/resource';
 export type { Resource, ResourceOptions } from './http/resource';
 export type { HttpResponse, RequestConfig, HttpMethod } from './http';
 
+export { socket, createSocket, socketSupported } from './socket';
+export type {
+  VoodooSocket,
+  SocketOptions,
+  SocketRoom,
+  SocketState,
+  SocketTransport,
+  SocketMessage,
+  RoomOptions,
+  RoomState,
+} from './socket';
+
 export { store, allStores, removeStore, storeNames } from './store';
 export { storage, session, cookie, cache, url, theme } from './storage';
 export { toast } from './ui/toast';

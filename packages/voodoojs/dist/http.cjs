@@ -30,10 +30,10 @@ function parseDuration(value, fallback = 0) {
 
 // src/http/index.ts
 var HttpError = class extends Error {
-  constructor(message, response, config, cause) {
+  constructor(message, response, config2, cause) {
     super(message);
     __publicField(this, "response", response);
-    __publicField(this, "config", config);
+    __publicField(this, "config", config2);
     __publicField(this, "cause", cause);
     this.name = "HttpError";
   }
@@ -59,8 +59,8 @@ var requestInterceptors = [];
 var responseInterceptors = [];
 var errorInterceptors = [];
 var responseCache = /* @__PURE__ */ new Map();
-function cacheKey(config) {
-  return `${config.method ?? "GET"} ${buildURL(config)}`;
+function cacheKey(config2) {
+  return `${config2.method ?? "GET"} ${buildURL(config2)}`;
 }
 function clearCache(pattern) {
   if (!pattern) {
@@ -84,14 +84,14 @@ function writeQueue(list) {
   } catch {
   }
 }
-function enqueueOffline(config) {
+function enqueueOffline(config2) {
   if (typeof localStorage === "undefined") return;
   const list = readQueue();
   list.push({
-    url: buildURL(config),
-    method: config.method ?? "POST",
-    body: config.body,
-    headers: config.headers ?? {},
+    url: buildURL(config2),
+    method: config2.method ?? "POST",
+    body: config2.body,
+    headers: config2.headers ?? {},
     at: Date.now()
   });
   writeQueue(list);
@@ -126,15 +126,15 @@ if (typeof window !== "undefined") {
     void flushOfflineQueue();
   });
 }
-function buildURL(config) {
-  let url = config.url;
+function buildURL(config2) {
+  let url = config2.url;
   const base = defaults.baseURL;
   if (base && !/^https?:\/\//i.test(url) && !url.startsWith("//")) {
     url = `${base.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
   }
-  if (config.params) {
+  if (config2.params) {
     const search = new URLSearchParams();
-    for (const [key, value] of Object.entries(config.params)) {
+    for (const [key, value] of Object.entries(config2.params)) {
       if (value == null || value === "") continue;
       search.append(key, String(value));
     }
@@ -178,8 +178,22 @@ async function parseResponse(response, type) {
       return response.text();
   }
 }
+var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+function temChaveDeIdempotencia(headers) {
+  for (const [nome, valor] of Object.entries(headers)) {
+    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  }
+  return false;
+}
+function podeRepetir(method, config2, headers, url) {
+  if (METODOS_SEGUROS.has(method)) return true;
+  if (config2.retryUnsafe === true) return true;
+  if (temChaveDeIdempotencia(headers)) return true;
+  if ((config2.retry ?? 0) > 0) ;
+  return false;
+}
 async function request(input) {
-  let config = {
+  let config2 = {
     method: "GET",
     timeout: defaults.timeout,
     retry: defaults.retry,
@@ -190,15 +204,15 @@ async function request(input) {
     headers: { ...defaults.headers, ...input.headers }
   };
   for (const interceptor of requestInterceptors) {
-    config = await interceptor(config);
+    config2 = await interceptor(config2);
   }
-  const method = (config.method ?? "GET").toUpperCase();
-  if (config.cache && method === "GET") {
-    const entry = responseCache.get(cacheKey(config));
+  const method = (config2.method ?? "GET").toUpperCase();
+  if (config2.cache && method === "GET") {
+    const entry = responseCache.get(cacheKey(config2));
     if (entry && entry.expires > Date.now()) return entry.value;
   }
-  if (config.offlineQueue && typeof navigator !== "undefined" && navigator.onLine === false && method !== "GET") {
-    enqueueOffline(config);
+  if (config2.offlineQueue && typeof navigator !== "undefined" && navigator.onLine === false && method !== "GET") {
+    enqueueOffline(config2);
     return {
       data: null,
       status: 0,
@@ -206,22 +220,22 @@ async function request(input) {
       headers: new Headers(),
       ok: true,
       raw: new Response(null, { status: 202 }),
-      config
+      config: config2
     };
   }
-  const headers = { ...config.headers };
+  const headers = { ...config2.headers };
   if (method !== "GET" && method !== "HEAD") {
     const token = csrfToken();
     if (token && !headers[defaults.csrfHeader]) headers[defaults.csrfHeader] = token;
   }
   headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
-  const body = prepareBody(config.body, headers);
-  const url = buildURL(config);
-  const attempts = (config.retry ?? 0) + 1;
+  const body = prepareBody(config2.body, headers);
+  const url = buildURL(config2);
+  const attempts = podeRepetir(method, config2, headers) ? (config2.retry ?? 0) + 1 : 1;
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
-    const externo = config.signal;
+    const externo = config2.signal;
     let repassarAborto = null;
     if (externo) {
       if (externo.aborted) {
@@ -235,18 +249,18 @@ async function request(input) {
       if (repassarAborto && externo) externo.removeEventListener("abort", repassarAborto);
       repassarAborto = null;
     };
-    const timeoutId = config.timeout && config.timeout > 0 ? setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), config.timeout) : null;
+    const timeoutId = config2.timeout && config2.timeout > 0 ? setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), config2.timeout) : null;
     try {
       const response = await fetch(url, {
         method,
         headers,
         body: method === "GET" || method === "HEAD" ? void 0 : body,
-        credentials: config.credentials,
+        credentials: config2.credentials,
         signal: controller.signal
       });
       if (timeoutId) clearTimeout(timeoutId);
       soltarSinal();
-      const data = await parseResponse(response, config.responseType);
+      const data = await parseResponse(response, config2.responseType);
       let result = {
         data,
         status: response.status,
@@ -254,17 +268,17 @@ async function request(input) {
         headers: response.headers,
         ok: response.ok,
         raw: response,
-        config
+        config: config2
       };
       if (!response.ok) {
         if (response.status >= 500 && attempt < attempts - 1) {
-          await wait((config.retryDelay ?? 500) * 2 ** attempt);
+          await wait((config2.retryDelay ?? 500) * 2 ** attempt);
           continue;
         }
         const error2 = new HttpError(
           `Requisicao falhou com status ${response.status}`,
           result,
-          config
+          config2
         );
         for (const interceptor of errorInterceptors) interceptor(error2);
         throw error2;
@@ -272,9 +286,9 @@ async function request(input) {
       for (const interceptor of responseInterceptors) {
         result = await interceptor(result);
       }
-      if (config.cache && method === "GET") {
-        responseCache.set(cacheKey(config), {
-          expires: Date.now() + config.cache,
+      if (config2.cache && method === "GET") {
+        responseCache.set(cacheKey(config2), {
+          expires: Date.now() + config2.cache,
           value: result
         });
       }
@@ -284,24 +298,24 @@ async function request(input) {
       soltarSinal();
       if (err instanceof HttpError) throw err;
       lastError = err;
-      const aborted = err?.name === "AbortError" && config.signal?.aborted;
+      const aborted = err?.name === "AbortError" && config2.signal?.aborted;
       if (aborted) break;
       if (attempt < attempts - 1) {
-        await wait((config.retryDelay ?? 500) * 2 ** attempt);
+        await wait((config2.retryDelay ?? 500) * 2 ** attempt);
         continue;
       }
     }
   }
-  const message = lastError?.name === "TimeoutError" ? `Tempo esgotado apos ${config.timeout}ms` : `Falha de rede ao acessar ${url}`;
-  const error = new HttpError(message, void 0, config, lastError);
+  const message = lastError?.name === "TimeoutError" ? `Tempo esgotado apos ${config2.timeout}ms` : `Falha de rede ao acessar ${url}`;
+  const error = new HttpError(message, void 0, config2, lastError);
   for (const interceptor of errorInterceptors) interceptor(error);
   throw error;
 }
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-async function shortcut(config) {
-  const response = await request(config);
+async function shortcut(config2) {
+  const response = await request(config2);
   return response.data;
 }
 var http = {

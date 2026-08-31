@@ -162,11 +162,6 @@ interface EvalScope {
     /** Cria um escopo filho com variaveis locais, usado por arrow functions e `v-for`. */
     child(vars: Record<string, unknown>): EvalScope;
 }
-/**
- * Globais liberados dentro de expressoes de template.
- *
- * Estende com `V.config.globals.Minha = valor`.
- */
 declare const allowedGlobals: Record<string, unknown>;
 /** Erro em tempo de execucao de uma expressao, com o texto original anexado. */
 declare class VoodooRuntimeError extends Error {
@@ -1031,6 +1026,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1044,6 +1040,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1057,6 +1054,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1070,6 +1068,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1083,6 +1082,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1096,6 +1096,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
@@ -1120,6 +1121,7 @@ declare const core: {
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
+            retryUnsafe?: boolean | undefined;
             cache?: number | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;

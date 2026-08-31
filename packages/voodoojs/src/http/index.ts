@@ -5,6 +5,9 @@
  * dependencia. Suporta interceptadores, timeout, retry com espera progressiva,
  * cache de resposta, cancelamento, progresso de upload e fila offline.
  *
+ * O retry automatico so vale para `GET`, `HEAD` e `OPTIONS`. Nos metodos que
+ * mudam estado ele exige opt-in explicito. Veja {@link podeRepetir}.
+ *
  * ```ts
  * const users = await V.http.get<User[]>('/api/users')
  * await V.http.post('/api/users', { name: 'Ana' })
@@ -12,6 +15,7 @@
  */
 
 import { parseDuration } from '../utils';
+import { avisarUmaVez } from '../runtime/avisos';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
@@ -25,10 +29,23 @@ export interface RequestConfig {
   headers?: Record<string, string>;
   /** Milissegundos ate abortar. `0` desliga o timeout. */
   timeout?: number;
-  /** Tentativas extras em caso de falha de rede ou erro 5xx. */
+  /**
+   * Tentativas extras em caso de falha de rede ou erro 5xx.
+   *
+   * Vale sozinho apenas para `GET`, `HEAD` e `OPTIONS`. Nos demais metodos e
+   * preciso liberar a repeticao com `retryUnsafe` ou com um cabecalho
+   * `Idempotency-Key`. Veja {@link podeRepetir}.
+   */
   retry?: number;
   /** Espera entre tentativas, dobrada a cada rodada. */
   retryDelay?: number;
+  /**
+   * Libera o `retry` em metodos que mudam estado (`POST`, `PATCH`, `PUT`,
+   * `DELETE`). Use somente quando o servidor tratar a repeticao com seguranca,
+   * seja porque a operacao e naturalmente idempotente, seja porque ela e
+   * desduplicada por uma chave. Enviar `Idempotency-Key` tem o mesmo efeito.
+   */
+  retryUnsafe?: boolean;
   /** Tempo de cache da resposta, em ms. Somente para GET. */
   cache?: number;
   signal?: AbortSignal;
@@ -283,6 +300,60 @@ async function parseResponse(response: Response, type: RequestConfig['responseTy
 }
 
 /**
+ * Metodos que a especificacao define como idempotentes e sem efeito de escrita:
+ * repetir um deles chega ao mesmo estado de repetir zero vezes.
+ */
+const METODOS_SEGUROS = new Set<HttpMethod>(['GET', 'HEAD', 'OPTIONS']);
+
+/** `true` quando a requisicao carrega uma chave de desduplicacao. */
+function temChaveDeIdempotencia(headers: Record<string, string>): boolean {
+  for (const [nome, valor] of Object.entries(headers)) {
+    if (nome.toLowerCase() === 'idempotency-key' && String(valor).trim() !== '') return true;
+  }
+  return false;
+}
+
+/**
+ * Decide se a requisicao pode ser repetida sozinha.
+ *
+ * Ate a versao 0.2.1 o `retry` valia para qualquer metodo. Isso e perigoso de
+ * um jeito silencioso: numa falha de rede o cliente nao sabe se o servidor
+ * processou a requisicao e so a resposta se perdeu. Repetir um `POST /pagamento`
+ * nessa situacao cobra duas vezes. O prejuizo de repetir demais e maior que o de
+ * repetir de menos, entao a repeticao automatica ficou restrita aos metodos que
+ * a especificacao garante idempotentes.
+ *
+ * `PUT` e `DELETE` sao idempotentes no papel, mas na pratica muita API os
+ * implementa com contador, log de auditoria ou efeito colateral em cada
+ * chamada. Por isso eles tambem exigem opt-in, ainda que por uma margem menor
+ * de risco.
+ *
+ * O opt-in tem duas formas: `retryUnsafe: true`, que e quem chama assumindo a
+ * responsabilidade, ou um cabecalho `Idempotency-Key`, que e o servidor
+ * prometendo desduplicar. Quem depende do comportamento antigo passa
+ * `retryUnsafe: true` e volta a ter exatamente o que tinha.
+ */
+function podeRepetir(
+  method: HttpMethod,
+  config: RequestConfig,
+  headers: Record<string, string>,
+  url: string
+): boolean {
+  if (METODOS_SEGUROS.has(method)) return true;
+  if (config.retryUnsafe === true) return true;
+  if (temChaveDeIdempotencia(headers)) return true;
+  if ((config.retry ?? 0) > 0) {
+    avisarUmaVez(
+      `http:retry-inseguro:${method} ${url}`,
+      `retry ignorado em ${method} ${url}: repetir um metodo que muda estado pode ` +
+        'aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. ' +
+        'Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.'
+    );
+  }
+  return false;
+}
+
+/**
  * Executa uma requisicao com toda a pipeline: interceptadores, timeout, retry,
  * cache e tratamento de erro.
  */
@@ -338,7 +409,7 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
 
   const body = prepareBody(config.body, headers);
   const url = buildURL(config);
-  const attempts = (config.retry ?? 0) + 1;
+  const attempts = podeRepetir(method, config, headers, url) ? (config.retry ?? 0) + 1 : 1;
   let lastError: unknown;
 
   for (let attempt = 0; attempt < attempts; attempt++) {

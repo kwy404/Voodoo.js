@@ -42,20 +42,36 @@
     "./src/router/*.ts",
     "./src/i18n/*.ts",
     "./src/runtime/magics.ts",
-    "./dist/*.js",
-    "./dist/*.cjs"
+    "./dist/index.js",
+    "./dist/index.cjs",
+    "./dist/essential.js",
+    "./dist/essential.cjs",
+    "./dist/gpu.js",
+    "./dist/gpu.cjs",
+    "./dist/socket.js",
+    "./dist/socket.cjs",
+    "./dist/voodoo.js",
+    "./dist/voodoo.min.js",
+    "./dist/voodoo.core.js",
+    "./dist/voodoo.core.min.js",
+    "./dist/voodoo.full.js",
+    "./dist/voodoo.full.min.js"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "unpkg": "./dist/voodoo.min.js",
   "jsdelivr": "./dist/voodoo.min.js",
-  "browser": "./dist/voodoo.min.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./essential": {
+      "types": "./dist/essential.d.ts",
+      "import": "./dist/essential.js",
+      "require": "./dist/essential.cjs"
     },
     "./reactivity": {
       "types": "./dist/reactivity.d.ts",
@@ -71,6 +87,16 @@
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.js",
       "require": "./dist/utils.cjs"
+    },
+    "./gpu": {
+      "types": "./dist/gpu.d.ts",
+      "import": "./dist/gpu.js",
+      "require": "./dist/gpu.cjs"
+    },
+    "./socket": {
+      "types": "./dist/socket.d.ts",
+      "import": "./dist/socket.js",
+      "require": "./dist/socket.cjs"
     },
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"

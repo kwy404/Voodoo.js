@@ -24,6 +24,10 @@ export default defineConfig([
       // build completo nao tem essa folga no orcamento. Em ESM as partes comuns
       // saem em chunks compartilhados, entao o runtime continua sendo um so.
       gpu: 'src/gpu/plugin.ts',
+      // Camada de tempo real. Mesma historia da GPU: dentro do build completo
+      // ela levava o arquivo de 127.58 para 134.22 KB gzip, com teto de 133.
+      // Entrada propria em vez de meta inflada.
+      socket: 'src/socket/plugin.ts',
     },
     format: ['esm', 'cjs'],
     dts: true,

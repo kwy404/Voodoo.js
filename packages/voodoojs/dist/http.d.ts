@@ -7,6 +7,9 @@ import { parseDuration } from './utils.js';
  * dependencia. Suporta interceptadores, timeout, retry com espera progressiva,
  * cache de resposta, cancelamento, progresso de upload e fila offline.
  *
+ * O retry automatico so vale para `GET`, `HEAD` e `OPTIONS`. Nos metodos que
+ * mudam estado ele exige opt-in explicito. Veja {@link podeRepetir}.
+ *
  * ```ts
  * const users = await V.http.get<User[]>('/api/users')
  * await V.http.post('/api/users', { name: 'Ana' })
@@ -24,10 +27,23 @@ interface RequestConfig {
     headers?: Record<string, string>;
     /** Milissegundos ate abortar. `0` desliga o timeout. */
     timeout?: number;
-    /** Tentativas extras em caso de falha de rede ou erro 5xx. */
+    /**
+     * Tentativas extras em caso de falha de rede ou erro 5xx.
+     *
+     * Vale sozinho apenas para `GET`, `HEAD` e `OPTIONS`. Nos demais metodos e
+     * preciso liberar a repeticao com `retryUnsafe` ou com um cabecalho
+     * `Idempotency-Key`. Veja {@link podeRepetir}.
+     */
     retry?: number;
     /** Espera entre tentativas, dobrada a cada rodada. */
     retryDelay?: number;
+    /**
+     * Libera o `retry` em metodos que mudam estado (`POST`, `PATCH`, `PUT`,
+     * `DELETE`). Use somente quando o servidor tratar a repeticao com seguranca,
+     * seja porque a operacao e naturalmente idempotente, seja porque ela e
+     * desduplicada por uma chave. Enviar `Idempotency-Key` tem o mesmo efeito.
+     */
+    retryUnsafe?: boolean;
     /** Tempo de cache da resposta, em ms. Somente para GET. */
     cache?: number;
     signal?: AbortSignal;

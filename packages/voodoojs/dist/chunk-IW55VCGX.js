@@ -1,4 +1,5 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-PWTGMP63.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-VJA45L6K.js';
+import { emDesenvolvimento, avisarExpressaoInvalida, avisarDirectiveDesconhecida } from './chunk-F3SPSSE3.js';
 import { config, directives, components } from './chunk-UNICRHSA.js';
 import { __publicField } from './chunk-LUEWHAC4.js';
 
@@ -148,14 +149,37 @@ function tokenize(source) {
           if (esc === "u") {
             if (source[i + 1] === "{") {
               const close = source.indexOf("}", i);
-              out += String.fromCodePoint(parseInt(source.slice(i + 2, close), 16));
+              if (close === -1)
+                throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
+              const digitos = source.slice(i + 2, close);
+              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                throw new VoodooSyntaxError(
+                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  source,
+                  i - 1
+                );
+              out += String.fromCodePoint(parseInt(digitos, 16));
               i = close + 1;
             } else {
-              out += String.fromCharCode(parseInt(source.slice(i + 1, i + 5), 16));
+              const digitos = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+                throw new VoodooSyntaxError(
+                  "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                  source,
+                  i - 1
+                );
+              out += String.fromCharCode(parseInt(digitos, 16));
               i += 5;
             }
           } else if (esc === "x") {
-            out += String.fromCharCode(parseInt(source.slice(i + 1, i + 3), 16));
+            const digitos = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+              throw new VoodooSyntaxError(
+                "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                source,
+                i - 1
+              );
+            out += String.fromCharCode(parseInt(digitos, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -279,11 +303,15 @@ var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null)
   null: null,
   undefined: void 0
 });
+var MAX_DEPTH = 1200;
+var MAX_TEMPLATE_DEPTH = 32;
+var templateDepth = 0;
 var Parser = class {
   constructor(tokens, source) {
     __publicField(this, "tokens", tokens);
     __publicField(this, "source", source);
     __publicField(this, "pos", 0);
+    __publicField(this, "depth", 0);
   }
   peek(offset = 0) {
     return this.tokens[Math.min(this.pos + offset, this.tokens.length - 1)];
@@ -324,7 +352,24 @@ var Parser = class {
   parseExpression() {
     return this.parseAssignment();
   }
+  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
+  entrar() {
+    if (++this.depth > MAX_DEPTH) {
+      const t = this.peek();
+      throw new VoodooSyntaxError(
+        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        this.source,
+        t.start
+      );
+    }
+  }
   parseAssignment() {
+    this.entrar();
+    const node = this.parseAssignmentInterno();
+    this.depth--;
+    return node;
+  }
+  parseAssignmentInterno() {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
@@ -391,6 +436,12 @@ var Parser = class {
     return test;
   }
   parseBinary(minPrec) {
+    this.entrar();
+    const node = this.parseBinarioInterno(minPrec);
+    this.depth--;
+    return node;
+  }
+  parseBinarioInterno(minPrec) {
     let left = this.parseUnary();
     for (; ; ) {
       const t = this.peek();
@@ -407,6 +458,12 @@ var Parser = class {
     return left;
   }
   parseUnary() {
+    this.entrar();
+    const node = this.parseUnarioInterno();
+    this.depth--;
+    return node;
+  }
+  parseUnarioInterno() {
     const t = this.peek();
     if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
       this.next();
@@ -494,11 +551,23 @@ var Parser = class {
     if (t.type === "tpl") {
       this.next();
       const part = t.tpl;
-      return {
-        t: "tpl",
-        quasis: part.quasis,
-        exprs: part.exprs.map((src) => parse(src))
-      };
+      if (templateDepth >= MAX_TEMPLATE_DEPTH) {
+        throw new VoodooSyntaxError(
+          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          this.source,
+          t.start
+        );
+      }
+      templateDepth++;
+      try {
+        return {
+          t: "tpl",
+          quasis: part.quasis,
+          exprs: part.exprs.map((src) => parse(src))
+        };
+      } finally {
+        templateDepth--;
+      }
     }
     if (t.type === "ident") {
       if (t.value in LITERALS) {
@@ -588,6 +657,15 @@ function clearParseCache() {
 }
 
 // src/parser/interpreter.ts
+var SafeObject = /* @__PURE__ */ Object.freeze({
+  keys: Object.keys,
+  values: Object.values,
+  entries: Object.entries,
+  fromEntries: Object.fromEntries,
+  assign: Object.assign,
+  is: Object.is,
+  hasOwn: Object.hasOwn ?? ((o, k) => Object.prototype.hasOwnProperty.call(o, k))
+});
 var allowedGlobals = {
   Math,
   JSON,
@@ -596,7 +674,7 @@ var allowedGlobals = {
   String,
   Boolean,
   Array,
-  Object,
+  Object: SafeObject,
   Intl,
   RegExp,
   Promise,
@@ -1026,77 +1104,6 @@ var Scope = class _Scope {
   }
 };
 var rootScope = new Scope(reactive({}));
-
-// src/runtime/avisos.ts
-function emDesenvolvimento() {
-  return config.devtools === true;
-}
-function descreverElemento(el) {
-  if (!el) return "(sem elemento)";
-  let out = el.tagName.toLowerCase();
-  if (el.id) out += `#${el.id}`;
-  const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
-  if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
-  return `<${out}>`;
-}
-function avisar(mensagem) {
-  if (!emDesenvolvimento()) return;
-  console.warn(`[Voodoo] ${mensagem}`);
-}
-var jaAvisado = /* @__PURE__ */ new Set();
-function avisarUmaVez(chave, mensagem) {
-  if (!emDesenvolvimento()) return;
-  if (jaAvisado.has(chave)) return;
-  jaAvisado.add(chave);
-  console.warn(`[Voodoo] ${mensagem}`);
-}
-var ATRIBUTOS_AUXILIARES = /* @__PURE__ */ new Set([
-  "confirm-title",
-  "confirm-label",
-  "confirm-cancel",
-  "hold-duration"
-]);
-function avisarDirectiveDesconhecida(el, raw, nome) {
-  if (!emDesenvolvimento()) return;
-  if (ATRIBUTOS_AUXILIARES.has(nome)) return;
-  avisarUmaVez(
-    `directive-desconhecida:${nome}`,
-    `directive desconhecida "${raw}" em ${descreverElemento(el)}. Nenhuma directive chamada "${nome}" foi registrada. Verifique a grafia ou registre com V.directive("${nome}", ...).`
-  );
-}
-function avisarComponenteDesconhecido(el, nome) {
-  avisarUmaVez(
-    `componente-desconhecido:${nome}`,
-    `componente "${nome}" nao registrado em ${descreverElemento(el)}. Registre com V.component("${nome}", { ... }) antes de usar a tag, ou remova o atributo para deixar o elemento como HTML comum.`
-  );
-}
-function avisarExpressaoInvalida(el, raw, expressao, err) {
-  if (!emDesenvolvimento()) return;
-  const motivo = err instanceof Error ? err.message.split("\n")[0] : String(err);
-  avisar(
-    `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.
-Motivo: ${motivo}
-Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que uma linha, mova para um metodo do componente e chame o metodo aqui.`
-  );
-}
-function avisarChaveDuplicada(el, chave, expressao) {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.`
-  );
-}
-function avisarPropObrigatoria(el, componente, prop) {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `prop obrigatoria "${prop}" ausente no componente "${componente}" em ${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um texto fixo ou :${prop}="expressao" para um valor do estado.`
-  );
-}
-function avisarAlias(alias, canonico) {
-  avisarUmaVez(
-    `alias:${alias}`,
-    `"${alias}" e um apelido de "${canonico}" e continua funcionando, mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
-  );
-}
 
 // src/runtime/walker.ts
 var nodeScopes = /* @__PURE__ */ new WeakMap();
@@ -1609,6 +1616,6 @@ function refresh(root) {
   walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
 }
 
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, avisar, avisarAlias, avisarChaveDuplicada, avisarComponenteDesconhecido, avisarPropObrigatoria, clearParseCache, closestDirective, collectDirectives, componentAliases, descreverElemento, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-MPNHZNQD.js.map
-//# sourceMappingURL=chunk-MPNHZNQD.js.map
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
+//# sourceMappingURL=chunk-IW55VCGX.js.map
+//# sourceMappingURL=chunk-IW55VCGX.js.map

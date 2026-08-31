@@ -257,6 +257,20 @@ async function parseResponse(response, type) {
       return response.text();
   }
 }
+var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+function temChaveDeIdempotencia(headers) {
+  for (const [nome, valor] of Object.entries(headers)) {
+    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  }
+  return false;
+}
+function podeRepetir(method, config2, headers, url) {
+  if (METODOS_SEGUROS.has(method)) return true;
+  if (config2.retryUnsafe === true) return true;
+  if (temChaveDeIdempotencia(headers)) return true;
+  if ((config2.retry ?? 0) > 0) ;
+  return false;
+}
 async function request(input) {
   let config2 = {
     method: "GET",
@@ -296,7 +310,7 @@ async function request(input) {
   headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
   const body = prepareBody(config2.body, headers);
   const url = buildURL(config2);
-  const attempts = (config2.retry ?? 0) + 1;
+  const attempts = podeRepetir(method, config2, headers) ? (config2.retry ?? 0) + 1 : 1;
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();

@@ -547,8 +547,13 @@ export function reactive<T extends object>(target: T): T {
   const existing = reactiveMap.get(target);
   if (existing) return existing;
 
-  const isMapOrSet =
-    target instanceof Map || target instanceof Set || target instanceof WeakMap || target instanceof WeakSet;
+  // `WeakMap` e `WeakSet` ficaram de fora de proposito. Eles nao expoem `size`,
+  // iteracao nem `forEach`, entao nao existe leitura de conjunto para rastrear:
+  // um efeito so poderia depender de uma chave que ele ja tem em maos. Alem
+  // disso `canObserve()` nem deixa esses alvos chegarem aqui, o que fazia o
+  // teste antigo por `instanceof WeakMap` ser codigo morto. Continua valendo o
+  // contrato geral: o que nao da para observar volta como esta.
+  const isMapOrSet = target instanceof Map || target instanceof Set;
 
   const proxy = new Proxy(
     target,

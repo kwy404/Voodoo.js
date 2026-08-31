@@ -1,3 +1,4 @@
+import { avisarUmaVez } from './chunk-F3SPSSE3.js';
 import { parseDuration } from './chunk-BTORMWLO.js';
 import { __publicField } from './chunk-LUEWHAC4.js';
 
@@ -157,6 +158,25 @@ async function parseResponse(response, type) {
       return response.text();
   }
 }
+var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
+function temChaveDeIdempotencia(headers) {
+  for (const [nome, valor] of Object.entries(headers)) {
+    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  }
+  return false;
+}
+function podeRepetir(method, config, headers, url) {
+  if (METODOS_SEGUROS.has(method)) return true;
+  if (config.retryUnsafe === true) return true;
+  if (temChaveDeIdempotencia(headers)) return true;
+  if ((config.retry ?? 0) > 0) {
+    avisarUmaVez(
+      `http:retry-inseguro:${method} ${url}`,
+      `retry ignorado em ${method} ${url}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+    );
+  }
+  return false;
+}
 async function request(input) {
   let config = {
     method: "GET",
@@ -196,7 +216,7 @@ async function request(input) {
   headers["X-Requested-With"] || (headers["X-Requested-With"] = "XMLHttpRequest");
   const body = prepareBody(config.body, headers);
   const url = buildURL(config);
-  const attempts = (config.retry ?? 0) + 1;
+  const attempts = podeRepetir(method, config, headers, url) ? (config.retry ?? 0) + 1 : 1;
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
@@ -424,5 +444,5 @@ var http = {
 };
 
 export { HttpError, clearCache, flushOfflineQueue, http, request };
-//# sourceMappingURL=chunk-F375ULFK.js.map
-//# sourceMappingURL=chunk-F375ULFK.js.map
+//# sourceMappingURL=chunk-OVMWXFAQ.js.map
+//# sourceMappingURL=chunk-OVMWXFAQ.js.map

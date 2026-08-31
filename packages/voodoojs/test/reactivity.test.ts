@@ -116,6 +116,18 @@ describe('reactive', () => {
     await nextTick();
     expect(sizes).toEqual([0, 1]);
   });
+
+  // WeakMap e WeakSet nao sao observaveis: sem `size`, sem iteracao e sem
+  // `forEach`, nao ha leitura de conjunto para rastrear. O contrato e devolver
+  // o proprio alvo, sem proxy, em vez de fingir reatividade.
+  it('devolve WeakMap e WeakSet sem proxy', () => {
+    const wm = new WeakMap<object, number>();
+    const ws = new WeakSet<object>();
+    expect(reactive(wm)).toBe(wm);
+    expect(reactive(ws)).toBe(ws);
+    expect(isReactive(reactive(wm))).toBe(false);
+    expect(isReactive(reactive(ws))).toBe(false);
+  });
 });
 
 describe('ref', () => {

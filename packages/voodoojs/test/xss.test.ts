@@ -222,13 +222,54 @@ describe('atributos de evento nao podem ser ligados por :atributo', () => {
   });
 });
 
-describe(':srcdoc mantem o comportamento nativo', () => {
-  // Documentado de proposito: `srcdoc` escreve um documento inteiro, do mesmo
-  // jeito que `v-html` escreve markup. Nao ha bloqueio, e quem usa precisa
-  // tratar o conteudo com o mesmo cuidado que trataria em `v-html`.
-  it('o valor chega ao atributo como escrito', () => {
+describe(':srcdoc exige forma explicita', () => {
+  // `srcdoc` escreve um documento inteiro com script ativo, do mesmo jeito que
+  // `v-html` escreve markup. A diferenca e que ele parecia um bind comum, sem
+  // nada no template denunciando o perigo. Agora o perigo tem nome.
+  it('recusa o bind comum', () => {
     const { root } = montar('<iframe :srcdoc="c"></iframe>', { c: '<p>ola</p>' });
+    expect(root.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(false);
+  });
+
+  it('recusa tambem pelo caminho de propriedade', () => {
+    const { root } = montar('<iframe :srcdoc.prop="c"></iframe>', { c: '<p>ola</p>' });
+    expect((root.querySelector('iframe') as HTMLIFrameElement).srcdoc || '').toBe('');
+  });
+
+  it('recusa dentro do v-bind com objeto', () => {
+    const { root } = montar('<iframe v-bind="attrs"></iframe>', {
+      attrs: { srcdoc: '<p>ola</p>' },
+    });
+    expect(root.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(false);
+  });
+
+  it('aceita com o modificador .dangerous', () => {
+    const { root } = montar('<iframe :srcdoc.dangerous="c"></iframe>', { c: '<p>ola</p>' });
     expect(root.querySelector('iframe')!.getAttribute('srcdoc')).toBe('<p>ola</p>');
+  });
+
+  it('aceita quando sanitizeUrls esta desligado', () => {
+    config.sanitizeUrls = false;
+    try {
+      const { root } = montar('<iframe :srcdoc="c"></iframe>', { c: '<p>ola</p>' });
+      expect(root.querySelector('iframe')!.getAttribute('srcdoc')).toBe('<p>ola</p>');
+    } finally {
+      config.sanitizeUrls = true;
+    }
+  });
+
+  it('explica no console por que recusou', () => {
+    config.devtools = true;
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      montar('<iframe :srcdoc="c"></iframe>', { c: '<p>ola</p>' });
+      const texto = aviso.mock.calls.map((c) => String(c[0])).join('\n');
+      expect(texto).toContain('srcdoc');
+      expect(texto).toContain('dangerous');
+    } finally {
+      aviso.mockRestore();
+      config.devtools = false;
+    }
   });
 });
 

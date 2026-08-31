@@ -369,7 +369,7 @@ function reactive(target) {
   if (!canObserve(target)) return target;
   const existing = reactiveMap.get(target);
   if (existing) return existing;
-  const isMapOrSet = target instanceof Map || target instanceof Set || target instanceof WeakMap || target instanceof WeakSet;
+  const isMapOrSet = target instanceof Map || target instanceof Set;
   const proxy = new Proxy(
     target,
     isMapOrSet ? collectionHandlers : baseHandlers

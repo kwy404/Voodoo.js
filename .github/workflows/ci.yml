@@ -41,6 +41,11 @@ jobs:
       - name: Roda os testes
         run: npm test
 
+      # Portao de cobertura. Os limites estao em `vitest.config.ts` e valem
+      # somente para o nucleo: parser, reatividade, runtime, DOM e HTTP.
+      - name: Confere a cobertura do nucleo
+        run: npm run coverage
+
       - name: Gera os bundles
         run: npm run build
 

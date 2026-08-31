@@ -487,10 +487,37 @@ export function urlPerigosa(valor: string): boolean {
   );
 }
 
-/** Aplica um valor a um atributo, tratando casos especiais. */
-export function applyBinding(el: HTMLElement, name: string, value: unknown, asProp = false): void {
+/**
+ * Aplica um valor a um atributo, tratando casos especiais.
+ *
+ * `perigoLiberado` vem do modificador `.dangerous` e libera os bindings que
+ * escrevem markup executavel, hoje apenas `srcdoc`.
+ */
+export function applyBinding(
+  el: HTMLElement,
+  name: string,
+  value: unknown,
+  asProp = false,
+  perigoLiberado = false
+): void {
   if (name === 'class') return applyClass(el, value);
   if (name === 'style') return applyStyle(el, value);
+
+  // `srcdoc` escreve um documento inteiro dentro do iframe, com script ativo.
+  // E o `v-html` do iframe, mas escrito como se fosse um bind qualquer, entao o
+  // perigo nao aparece na leitura do HTML. Aqui ele precisa ser dito em voz
+  // alta: `:srcdoc.dangerous="..."` no ponto de uso, ou
+  // `V.config.sanitizeUrls = false` para a aplicacao toda.
+  if (config.sanitizeUrls && !perigoLiberado && name === 'srcdoc') {
+    avisar(
+      `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento ` +
+        'com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. ' +
+        'Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar ' +
+        'esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.'
+    );
+    el.removeAttribute(name);
+    return;
+  }
 
   if (config.sanitizeUrls && !asProp) {
     // Endereco com esquema executavel: o atributo nao chega ao DOM.
@@ -608,8 +635,11 @@ defineDirective(
     }
     if (arg === 'key') return; // consumido por v-for
     const asProp = !!modifiers.prop;
+    // `.dangerous` e a forma explicita de pedir um binding que escreve markup
+    // executavel. Sem ele, `:srcdoc` e recusado.
+    const perigoLiberado = !!modifiers.dangerous;
     effect(() => {
-      applyBinding(el, arg, ev(), asProp);
+      applyBinding(el, arg, ev(), asProp, perigoLiberado);
     });
     void expression;
   },

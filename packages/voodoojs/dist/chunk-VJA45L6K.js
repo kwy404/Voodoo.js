@@ -366,7 +366,7 @@ function reactive(target) {
   if (!canObserve(target)) return target;
   const existing = reactiveMap.get(target);
   if (existing) return existing;
-  const isMapOrSet = target instanceof Map || target instanceof Set || target instanceof WeakMap || target instanceof WeakSet;
+  const isMapOrSet = target instanceof Map || target instanceof Set;
   const proxy = new Proxy(
     target,
     isMapOrSet ? collectionHandlers : baseHandlers
@@ -638,5 +638,5 @@ function traverse(value, seen = /* @__PURE__ */ new Set()) {
 }
 
 export { EffectScope, ITERATE_KEY, ReactiveEffect, TriggerType, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };
-//# sourceMappingURL=chunk-PWTGMP63.js.map
-//# sourceMappingURL=chunk-PWTGMP63.js.map
+//# sourceMappingURL=chunk-VJA45L6K.js.map
+//# sourceMappingURL=chunk-VJA45L6K.js.map

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { http, request, HttpError } from '../src/http';
+import { config } from '../src/runtime/registry';
+import { limparAvisos } from '../src/runtime/avisos';
 
 /** Cria uma resposta falsa de fetch. */
 function jsonResponse(body: unknown, status = 200): Response {
@@ -131,6 +133,139 @@ describe('erros', () => {
     } catch (err) {
       expect((err as HttpError).isNetworkError).toBe(true);
     }
+  });
+});
+
+describe('retry so repete o que e seguro repetir', () => {
+  beforeEach(() => {
+    config.devtools = false;
+    limparAvisos();
+  });
+
+  afterEach(() => {
+    config.devtools = false;
+  });
+
+  it('GET repete em 5xx', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
+    await expect(
+      request({ url: '/leitura', method: 'GET', retry: 2, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('HEAD e OPTIONS tambem repetem', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
+    await expect(
+      request({ url: '/h', method: 'HEAD', retry: 1, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    await expect(
+      request({ url: '/o', method: 'OPTIONS', retry: 1, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('POST nao repete em falha de rede, mesmo com retry pedido', async () => {
+    fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+    await expect(
+      request({ url: '/pagamento', method: 'POST', body: { valor: 10 }, retry: 2, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST nao repete em 5xx', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 503)));
+    await expect(
+      request({ url: '/pagamento', method: 'POST', body: {}, retry: 2, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('PATCH, PUT e DELETE tambem exigem opt-in', async () => {
+    for (const method of ['PATCH', 'PUT', 'DELETE'] as const) {
+      fetchMock.mockClear();
+      fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+      await expect(
+        request({ url: `/r/${method}`, method, retry: 2, retryDelay: 1 })
+      ).rejects.toBeInstanceOf(HttpError);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('POST com retryUnsafe repete', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('falha de rede'))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+    const resposta = await request({
+      url: '/pagamento',
+      method: 'POST',
+      body: {},
+      retry: 1,
+      retryDelay: 1,
+      retryUnsafe: true,
+    });
+    expect(resposta.data).toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('POST com Idempotency-Key repete', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('falha de rede'))
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+    const resposta = await request({
+      url: '/pagamento',
+      method: 'POST',
+      body: {},
+      retry: 1,
+      retryDelay: 1,
+      headers: { 'Idempotency-Key': 'abc-123' },
+    });
+    expect(resposta.data).toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('Idempotency-Key vazio nao vale como opt-in', async () => {
+    fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+    await expect(
+      request({
+        url: '/pagamento',
+        method: 'POST',
+        retry: 2,
+        retryDelay: 1,
+        headers: { 'idempotency-key': '  ' },
+      })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('avisa em modo dev quando o retry e ignorado', async () => {
+    config.devtools = true;
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+    await expect(
+      request({ url: '/aviso-dev', method: 'POST', retry: 2, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    const texto = aviso.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(texto).toContain('retry ignorado em POST');
+    expect(texto).toContain('retryUnsafe');
+    expect(texto).toContain('Idempotency-Key');
+  });
+
+  it('fora do modo dev nao imprime nada', async () => {
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+    await expect(
+      request({ url: '/sem-aviso', method: 'POST', retry: 2, retryDelay: 1 })
+    ).rejects.toBeInstanceOf(HttpError);
+    expect(aviso).not.toHaveBeenCalled();
+  });
+
+  it('nao avisa quando o retry nem foi pedido', async () => {
+    config.devtools = true;
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    fetchMock.mockRejectedValue(new TypeError('falha de rede'));
+    await expect(request({ url: '/quieto', method: 'POST' })).rejects.toBeInstanceOf(HttpError);
+    expect(aviso).not.toHaveBeenCalled();
   });
 });
 

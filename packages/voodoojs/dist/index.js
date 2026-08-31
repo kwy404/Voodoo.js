@@ -1,12 +1,15 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-JZ5ESRSP.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-JZ5ESRSP.js';
-export { gpu, reflectWgsl } from './chunk-WUX6AS3T.js';
-import { magic, markSkipChildren, destroy, readAttr, avisarAlias, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-MPNHZNQD.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-MPNHZNQD.js';
-import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-PWTGMP63.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-PWTGMP63.js';
-import { http } from './chunk-F375ULFK.js';
-export { HttpError, http, request } from './chunk-F375ULFK.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-G7EXZWZI.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-G7EXZWZI.js';
+export { gpu, reflectWgsl } from './chunk-42TN47HQ.js';
+import { http } from './chunk-OVMWXFAQ.js';
+export { HttpError, http, request } from './chunk-OVMWXFAQ.js';
+import { devtoolsBus } from './chunk-2SDBGISE.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-2SDBGISE.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-IW55VCGX.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-IW55VCGX.js';
+import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-VJA45L6K.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-VJA45L6K.js';
+import { avisarAlias } from './chunk-F3SPSSE3.js';
 import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-BTORMWLO.js';
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-BTORMWLO.js';
 import { ensureTokens, injectStyle } from './chunk-XICVH2QO.js';
@@ -20,45 +23,6 @@ import './chunk-LUEWHAC4.js';
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
-
-// src/devtools/bus.ts
-var listeners = /* @__PURE__ */ new Map();
-var devtoolsBus = {
-  /** Publica um evento. Sem ouvintes, a chamada e praticamente gratuita. */
-  emit(type, data) {
-    const set2 = listeners.get(type);
-    if (!set2 || set2.size === 0) return;
-    for (const listener of [...set2]) {
-      try {
-        listener(data);
-      } catch (err) {
-        console.error("[Voodoo] erro em ouvinte de devtools:", err);
-      }
-    }
-  },
-  /** Assina um tipo de evento. Devolve a funcao que cancela a assinatura. */
-  on(type, callback) {
-    let set2 = listeners.get(type);
-    if (!set2) listeners.set(type, set2 = /* @__PURE__ */ new Set());
-    set2.add(callback);
-    return () => {
-      set2?.delete(callback);
-    };
-  },
-  /** Cancela uma assinatura especifica. */
-  off(type, callback) {
-    listeners.get(type)?.delete(callback);
-  },
-  /** Remove todos os ouvintes, de um tipo ou de todos. */
-  clear(type) {
-    if (type) listeners.delete(type);
-    else listeners.clear();
-  },
-  /** Quantidade de ouvintes registrados em um tipo. */
-  count(type) {
-    return listeners.get(type)?.size ?? 0;
-  }
-};
 
 // src/router/index.ts
 var settings = {
@@ -6951,6 +6915,6 @@ Object.assign(V, core, {
 });
 var src_default = V;
 
-export { V, animate, charts, src_default as default, devtoolsBus, devtoolsWidget, disableXray, easings, enableXray, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, motionPresets, mountDevtoolsWidget, navigate, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };
+export { V, animate, charts, src_default as default, devtoolsWidget, disableXray, easings, enableXray, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, motionPresets, mountDevtoolsWidget, navigate, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
