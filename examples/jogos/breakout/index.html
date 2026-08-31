@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breakout com Voodoo.js</title>
+<link rel="icon" href="../../../brand/logo/favicon.svg">
+<link rel="stylesheet" href="../../../design-system/voodoo-ui.css">
+<!-- Bundle completo: reatividade, directives, componentes, stores e som. -->
+<script src="../../../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Demo: Breakout
+
+     A ideia desta demo e mostrar o casamento que a Voodoo permite:
+
+       - TUDO que e interface  -> HTML declarativo com v-data, v-show,
+         v-for, @click e interpolacao. Placar, vidas, nivel, menus,
+         pausa, telas de fim de jogo e lista de power-ups ativos sao
+         apenas marcacao lendo o estado do componente.
+
+       - TUDO que precisa de pixel -> um unico <canvas> desenhado por
+         um loop de requestAnimationFrame que a Voodoo nem toca.
+
+     A regra que amarra os dois: o loop guarda a fisica em objetos
+     comuns (fora do proxy reativo) e so escreve no estado do
+     componente quando algo que a interface mostra realmente muda.
+     Assim o HUD e reativo sem pagar reatividade 60 vezes por segundo.
+     ================================================================== */
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 520px at 15% -12%, color-mix(in srgb, var(--v-primary) 22%, transparent), transparent 60%),
+      radial-gradient(760px 420px at 88% 4%, color-mix(in srgb, var(--v-accent) 18%, transparent), transparent 60%),
+      var(--v-color-bg);
+  }
+
+  .bk-pagina {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: var(--v-space-6) var(--v-space-4) var(--v-space-12);
+  }
+
+  /* A pagina so aparece depois que a Voodoo montou tudo, para nao
+     piscar as chaves de interpolacao. A classe entra via JavaScript. */
+  .bk-app { opacity: 0; }
+  body.bk-pronto .bk-app {
+    opacity: 1;
+    transition: opacity var(--v-duration-slow) var(--v-ease-out);
+  }
+
+  /* ---------- topo ---------- */
+  .bk-topo {
+    display: flex;
+    align-items: center;
+    gap: var(--v-space-3);
+    margin-bottom: var(--v-space-5);
+  }
+
+  .bk-voltar {
+    color: var(--v-text-muted);
+    text-decoration: none;
+    font-size: var(--v-text-sm);
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-full);
+    padding: 4px 12px;
+    transition: color var(--v-duration-fast), border-color var(--v-duration-fast);
+  }
+  .bk-voltar:hover { color: var(--v-text); border-color: var(--v-border-strong); }
+  .bk-voltar:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+
+  .bk-titulo {
+    margin: 0;
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-xl);
+    letter-spacing: var(--v-tracking-tight);
+  }
+
+  /* ---------- HUD ---------- */
+  .bk-hud {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--v-space-2);
+    margin-bottom: var(--v-space-3);
+  }
+
+  .bk-stat {
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-md);
+    background: var(--v-surface);
+    padding: 8px 10px;
+    min-width: 0;
+  }
+
+  .bk-stat__rotulo {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: var(--v-tracking-wide);
+    color: var(--v-text-subtle);
+  }
+
+  .bk-stat__valor {
+    display: block;
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-lg);
+    font-weight: var(--v-weight-bold);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bk-stat--recorde .bk-stat__valor { color: var(--v-accent); }
+  .bk-stat--vidas .bk-stat__valor { color: var(--v-danger); letter-spacing: 1px; }
+
+  /* ---------- palco ---------- */
+  /* O palco nunca passa da altura util da janela: a largura sai da
+     menor entre a coluna e a altura disponivel, e o aspect-ratio faz o
+     resto. Assim o jogo cabe inteiro na tela sem rolagem, do celular
+     ao monitor grande. */
+  .bk-palco {
+    position: relative;
+    width: min(100%, calc(66svh * 3 / 4));
+    aspect-ratio: 3 / 4;
+    margin: 0 auto;
+    border: 1px solid var(--v-border-strong);
+    border-radius: var(--v-radius-lg);
+    background: #05060f;
+    overflow: hidden;
+    box-shadow: var(--v-shadow-lg);
+    touch-action: none; /* o dedo controla a raquete, nao rola a pagina */
+  }
+
+  .bk-tela { display: block; width: 100%; height: 100%; }
+
+  /* Sacode a moldura quando a bola escapa. */
+  .bk-palco--tremor { animation: bk-tremor 260ms var(--v-ease-out); }
+  @keyframes bk-tremor {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    20% { transform: translate3d(-6px, 3px, 0); }
+    45% { transform: translate3d(5px, -4px, 0); }
+    70% { transform: translate3d(-3px, 2px, 0); }
+  }
+
+  /* ---------- telas sobrepostas ---------- */
+  /* Todas usam v-show: o canvas nunca sai do DOM, entao o contexto 2D
+     e a textura viva do jogo continuam intactos por tras do menu. */
+  .bk-tela-cheia {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--v-space-3);
+    padding: var(--v-space-6) var(--v-space-5);
+    text-align: center;
+    background: color-mix(in srgb, #05060f 82%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #f4f5ff;
+  }
+
+  .bk-tela-cheia h2 {
+    margin: 0;
+    font-family: var(--v-font-display);
+    font-size: clamp(24px, 6vw, 38px);
+    letter-spacing: var(--v-tracking-tight);
+    line-height: 1.1;
+    background: linear-gradient(100deg, var(--v-primary), var(--v-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bk-tela-cheia p { margin: 0; color: #b9bcd8; font-size: var(--v-text-sm); max-width: 42ch; }
+  .bk-tela-cheia .v-kbd { background: #1a1c30; color: #dfe1ff; border-color: #33365a; }
+
+  .bk-placar-fim {
+    display: flex;
+    gap: var(--v-space-5);
+    margin: var(--v-space-1) 0 var(--v-space-2);
+  }
+  .bk-placar-fim div { text-align: center; }
+  .bk-placar-fim span { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: var(--v-tracking-wide); color: #8f93b8; }
+  .bk-placar-fim strong { font-family: var(--v-font-mono); font-size: var(--v-text-2xl); }
+
+  .bk-novo-recorde {
+    border: 1px solid var(--v-accent);
+    border-radius: var(--v-radius-full);
+    padding: 3px 14px;
+    font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-semibold);
+    color: var(--v-accent);
+  }
+
+  .bk-legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: var(--v-text-sm); color: #9498bd; }
+
+  /* ---------- faixa de power-ups ---------- */
+  .bk-poderes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 30px;
+    align-items: center;
+    margin-top: var(--v-space-3);
+  }
+
+  .bk-poder {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--v-radius-full);
+    padding: 3px 11px;
+    font-size: 12px;
+    font-weight: var(--v-weight-semibold);
+    border: 1px solid currentColor;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    animation: bk-entra 220ms var(--v-ease-out) both;
+  }
+  .bk-poder__tempo { font-family: var(--v-font-mono); opacity: .75; font-weight: var(--v-weight-regular); }
+
+  @keyframes bk-entra {
+    from { opacity: 0; transform: translateY(6px) scale(.94); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .bk-poderes__vazio { font-size: 12px; color: var(--v-text-subtle); }
+
+  /* ---------- controles ---------- */
+  .bk-barra {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--v-space-2);
+    align-items: center;
+    margin-top: var(--v-space-4);
+  }
+
+  .bk-toque {
+    display: none;
+    gap: var(--v-space-2);
+    margin-top: var(--v-space-3);
+  }
+  .bk-toque .v-btn { flex: 1; height: 54px; font-size: var(--v-text-lg); }
+
+  /* Botoes grandes so aparecem onde o ponteiro e grosso (dedo). */
+  @media (pointer: coarse) {
+    .bk-toque { display: flex; }
+  }
+
+  .bk-ajuda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: var(--v-space-4);
+    font-size: var(--v-text-sm);
+    color: var(--v-text-subtle);
+  }
+
+  .bk-nota {
+    margin-top: var(--v-space-5);
+    padding: var(--v-space-4);
+    border: 1px solid var(--v-border);
+    border-left: 3px solid var(--v-primary);
+    border-radius: var(--v-radius-md);
+    background: var(--v-surface);
+    font-size: var(--v-text-sm);
+    color: var(--v-text-muted);
+    line-height: var(--v-leading-relaxed);
+  }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 560px) {
+    .bk-pagina { padding: var(--v-space-4) var(--v-space-3) var(--v-space-10); }
+    .bk-hud { grid-template-columns: repeat(2, 1fr); }
+    .bk-titulo { font-size: var(--v-text-lg); }
+    .bk-palco { width: 100%; }
+  }
+
+  /* ---------- movimento reduzido ----------
+     Vale para a interface. O jogo em si continua animando, senao nao
+     existe jogo, mas o tremor de tela e as entradas somem. */
+  @media (prefers-reduced-motion: reduce) {
+    .bk-app, .bk-poder, .bk-palco--tremor { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main class="bk-pagina">
+  <section class="bk-app" v-component="jogo-breakout">
+
+    <header class="bk-topo">
+      <a class="bk-voltar" href="../../">&larr; Demos</a>
+      <h1 class="bk-titulo">Breakout</h1>
+      <div class="v-push"></div>
+
+      <!-- v-mute vem do modulo de som: alterna o silencio e ja marca
+           aria-pressed sozinho. Zero JavaScript nosso aqui. -->
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon" v-mute
+              aria-label="Ligar ou desligar o som">
+        <span aria-hidden="true">♪</span>
+      </button>
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle
+              aria-label="Alternar entre tema claro e escuro">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <!-- =============================================================
+         HUD: interface pura. Nada aqui sabe que existe um canvas.
+         ============================================================= -->
+    <div class="bk-hud">
+      <div class="bk-stat">
+        <span class="bk-stat__rotulo">Pontos</span>
+        <strong class="bk-stat__valor" aria-live="polite">{ pontos }</strong>
+      </div>
+      <div class="bk-stat bk-stat--recorde">
+        <span class="bk-stat__rotulo">Recorde</span>
+        <strong class="bk-stat__valor">{ recorde }</strong>
+      </div>
+      <div class="bk-stat">
+        <span class="bk-stat__rotulo">Nivel</span>
+        <strong class="bk-stat__valor">{ nivel } / { totalNiveis }</strong>
+      </div>
+      <div class="bk-stat bk-stat--vidas">
+        <span class="bk-stat__rotulo">Vidas</span>
+        <strong class="bk-stat__valor" :aria-label="vidas + ' vidas restantes'">{ coracoes }</strong>
+      </div>
+    </div>
+
+    <!-- =============================================================
+         Palco: o canvas e as telas de menu vivem no mesmo lugar.
+         ============================================================= -->
+    <div class="bk-palco" :class="{ 'bk-palco--tremor': tremendo }">
+      <canvas class="bk-tela" v-ref="tela" role="img"
+              :aria-label="descricaoTela"></canvas>
+
+      <!-- Tela inicial -->
+      <div class="bk-tela-cheia" v-show="estado === 'inicio'">
+        <h2>Breakout</h2>
+        <p>
+          Quebre todos os tijolos dos { totalNiveis } niveis. Pegue as capsulas
+          que caem: elas alargam a raquete, multiplicam a bola, devolvem vida
+          ou deixam tudo mais lento.
+        </p>
+        <div class="bk-legenda">
+          <span><kbd class="v-kbd">&larr;</kbd> <kbd class="v-kbd">&rarr;</kbd> mover</span>
+          <span><kbd class="v-kbd">Espaco</kbd> lancar</span>
+          <span><kbd class="v-kbd">P</kbd> pausar</span>
+        </div>
+        <button type="button" class="v-btn v-btn--primary v-btn--lg" @click="comecar">
+          Jogar
+        </button>
+        <p v-show="recorde > 0">Seu recorde atual: <strong>{ recorde }</strong> pontos.</p>
+      </div>
+
+      <!-- Pausa -->
+      <div class="bk-tela-cheia" v-show="estado === 'pausado'">
+        <h2>Pausado</h2>
+        <p>Respire. A bola espera.</p>
+        <button type="button" class="v-btn v-btn--primary" @click="retomar">Continuar</button>
+        <button type="button" class="v-btn v-btn--ghost" @click="voltarAoMenu">Sair para o menu</button>
+      </div>
+
+      <!-- Aviso entre niveis -->
+      <div class="bk-tela-cheia" v-show="estado === 'nivel'">
+        <h2>Nivel { nivel }</h2>
+        <p>{ mensagemNivel }</p>
+        <button type="button" class="v-btn v-btn--primary" @click="iniciarNivel">Continuar</button>
+      </div>
+
+      <!-- Fim de jogo, derrota ou vitoria: mesma estrutura, texto diferente -->
+      <div class="bk-tela-cheia" v-show="estado === 'fim'">
+        <h2>{ venceu ? 'Voce zerou!' : 'Fim de jogo' }</h2>
+        <div class="bk-placar-fim">
+          <div>
+            <span>Pontos</span>
+            <strong>{ pontos }</strong>
+          </div>
+          <div>
+            <span>Recorde</span>
+            <strong>{ recorde }</strong>
+          </div>
+        </div>
+        <p class="bk-novo-recorde" v-show="novoRecorde">Novo recorde!</p>
+        <p v-show="!novoRecorde">{ venceu ? 'Todos os tijolos viraram poeira.' : 'A bola escapou pela ultima vez.' }</p>
+        <button type="button" class="v-btn v-btn--primary v-btn--lg" @click="comecar">Jogar de novo</button>
+        <button type="button" class="v-btn v-btn--ghost" @click="voltarAoMenu">Menu</button>
+      </div>
+    </div>
+
+    <!-- =============================================================
+         Power-ups ativos: um v-for sobre uma lista reativa que o loop
+         alimenta. E o exemplo mais direto de estado do jogo virando
+         interface sem nenhuma linha de manipulacao de DOM.
+         ============================================================= -->
+    <div class="bk-poderes" aria-live="polite" aria-label="Power-ups ativos">
+      <span class="bk-poder" v-for="p in poderes" :key="p.tipo" :style="{ color: p.cor }">
+        <span aria-hidden="true">{ p.icone }</span>
+        <span>{ p.nome }</span>
+        <span class="bk-poder__tempo">{ p.segundos }s</span>
+      </span>
+      <span class="bk-poderes__vazio" v-show="poderes.length === 0">Nenhum power-up ativo.</span>
+    </div>
+
+    <!-- Controles de mesa -->
+    <div class="bk-barra">
+      <button type="button" class="v-btn v-btn--primary"
+              v-show="estado === 'inicio' || estado === 'fim'"
+              @click="comecar">Jogar</button>
+
+      <button type="button" class="v-btn v-btn--secondary"
+              v-show="estado === 'jogando'"
+              @click="pausar">Pausar</button>
+
+      <button type="button" class="v-btn v-btn--secondary"
+              v-show="estado === 'pausado'"
+              @click="retomar">Continuar</button>
+
+      <button type="button" class="v-btn v-btn--ghost"
+              v-show="estado !== 'inicio'"
+              @click="comecar">Reiniciar</button>
+
+      <div class="v-push"></div>
+      <span class="v-badge" v-show="combo > 1">Combo x{ combo }</span>
+    </div>
+
+    <!-- Controles de toque: aparecem apenas em telas de dedo. -->
+    <div class="bk-toque">
+      <button type="button" class="v-btn v-btn--secondary" aria-label="Mover para a esquerda"
+              @pointerdown="segurar('esq', $event)" @pointerup="soltar('esq')"
+              @pointercancel="soltar('esq')" @pointerleave="soltar('esq')">&larr;</button>
+      <button type="button" class="v-btn v-btn--primary" aria-label="Lancar a bola ou pausar"
+              @click="acaoPrincipal">&#9679;</button>
+      <button type="button" class="v-btn v-btn--secondary" aria-label="Mover para a direita"
+              @pointerdown="segurar('dir', $event)" @pointerup="soltar('dir')"
+              @pointercancel="soltar('dir')" @pointerleave="soltar('dir')">&rarr;</button>
+    </div>
+
+    <p class="bk-ajuda">
+      <span><kbd class="v-kbd">&larr;</kbd> <kbd class="v-kbd">&rarr;</kbd> ou <kbd class="v-kbd">A</kbd> <kbd class="v-kbd">D</kbd> movem</span>
+      <span><kbd class="v-kbd">Espaco</kbd> lanca</span>
+      <span><kbd class="v-kbd">P</kbd> ou <kbd class="v-kbd">Esc</kbd> pausa</span>
+      <span><kbd class="v-kbd">R</kbd> reinicia</span>
+      <span>No celular, arraste o dedo sobre o palco.</span>
+    </p>
+
+    <p class="bk-nota">
+      <strong>O que esta demo mostra.</strong> O placar, as vidas, o nivel, a
+      lista de power-ups, os menus e as telas de pausa e de fim de jogo sao
+      HTML declarativo lendo o estado do componente. O loop do jogo nunca
+      escreve no DOM: ele desenha no canvas e, quando alguma coisa que a
+      interface exibe muda, apenas atribui a uma propriedade do componente.
+      O recorde vai para o <code class="v-code">V.storage</code> e todo o som
+      sai sintetizado do <code class="v-code">V.sound</code>, sem nenhum
+      arquivo de audio.
+    </p>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ====================================================================
+  // Constantes do mundo do jogo.
+  //
+  // A fisica roda sempre em um espaco logico de 480 x 640, independente
+  // do tamanho real do canvas na tela. O contexto e escalado uma vez por
+  // redimensionamento, entao a jogabilidade e identica no celular e no
+  // monitor grande.
+  // ====================================================================
+  var LARGURA = 480;
+  var ALTURA = 640;
+  var CHAVE_RECORDE = 'voodoo:demo:breakout:recorde';
+
+  var COLS = 10;
+  var MARGEM_X = 24;
+  var TOPO = 74;
+  var LARG_TIJOLO = (LARGURA - MARGEM_X * 2) / COLS;
+  var ALT_TIJOLO = 22;
+
+  // Mapas dos niveis. Cada caractere e um tijolo:
+  //   .  vazio      1  comum       2  duplo
+  //   3  triplo     X  indestrutivel
+  var NIVEIS = [
+    [
+      '..111111..',
+      '.11111111.',
+      '1111111111',
+      '.11111111.',
+      '..111111..'
+    ],
+    [
+      '2222222222',
+      '1111111111',
+      '..1....1..',
+      '1111111111',
+      '2222222222',
+      '..111111..'
+    ],
+    [
+      '1.1.1.1.1.',
+      '.2.2.2.2.2',
+      '1.1.1.1.1.',
+      '.2.2.2.2.2',
+      '3333333333',
+      '..1....1..'
+    ],
+    [
+      '..X....X..',
+      '.33333333.',
+      '3222222223',
+      '.21111112.',
+      '..111111..',
+      '...1111...'
+    ],
+    [
+      '3X3X3X3X3X',
+      '2222222222',
+      '.33333333.',
+      '..222222..',
+      '1111111111',
+      '.X......X.'
+    ]
+  ];
+
+  var CORES_TIJOLO = {
+    1: ['#6D3BF5', '#9B7BFF'],
+    2: ['#2ED9A5', '#7ff0cc'],
+    3: ['#FF6D3E', '#ffb08a'],
+    X: ['#3a3f63', '#5b628f']
+  };
+
+  // Catalogo de power-ups. `duracao` em segundos; 0 significa efeito
+  // instantaneo, que nao entra na lista de ativos.
+  var PODERES = {
+    largo:  { nome: 'Raquete larga', icone: '▬', cor: '#6D3BF5', duracao: 14 },
+    multi:  { nome: 'Multi bola',    icone: '◉', cor: '#FF6D3E', duracao: 0 },
+    lento:  { nome: 'Bola lenta',    icone: '❄', cor: '#38bdf8', duracao: 10 },
+    vida:   { nome: 'Vida extra',    icone: '♥', cor: '#f43f5e', duracao: 0 },
+    pontos: { nome: 'Bonus',         icone: '★', cor: '#facc15', duracao: 0 }
+  };
+
+  var SORTEIO = ['largo', 'multi', 'lento', 'pontos', 'largo', 'multi', 'vida', 'lento'];
+
+  // Efeitos de som proprios, sintetizados na hora pelo V.sound.
+  V.sound.define('bkRaquete', {
+    volume: 0.32,
+    camadas: [{ frequencia: 220, ate: 340, duracao: 0.07, forma: 'square' }]
+  });
+  V.sound.define('bkTijolo', {
+    volume: 0.28,
+    camadas: [{ frequencia: 520, ate: 760, duracao: 0.06, forma: 'triangle' }]
+  });
+  V.sound.define('bkDuro', {
+    volume: 0.3,
+    camadas: [{ frequencia: 170, ate: 120, duracao: 0.09, forma: 'sawtooth' }]
+  });
+  V.sound.define('bkPerdeu', {
+    volume: 0.4,
+    camadas: [
+      { frequencia: 300, ate: 90, duracao: 0.36, forma: 'sawtooth' },
+      { frequencia: 150, ate: 60, duracao: 0.42, forma: 'sine', atraso: 0.04 }
+    ]
+  });
+
+  function limitar(v, min, max) { return v < min ? min : (v > max ? max : v); }
+
+  // ====================================================================
+  // O componente.
+  //
+  // O `state` guarda somente o que a interface precisa ver. A fisica
+  // inteira mora em `this.mundo`, um objeto comum criado no mounted e
+  // guardado fora do estado reativo justamente para nao gerar
+  // atualizacao de DOM a cada quadro.
+  // ====================================================================
+  V.component('jogo-breakout', {
+
+    state: function () {
+      return {
+        estado: 'inicio',     // inicio | jogando | pausado | nivel | fim
+        pontos: 0,
+        recorde: Number(V.storage.get(CHAVE_RECORDE, 0)) || 0,
+        vidas: 3,
+        nivel: 1,
+        totalNiveis: NIVEIS.length,
+        combo: 1,
+        poderes: [],
+        venceu: false,
+        novoRecorde: false,
+        tremendo: false,
+        mensagemNivel: ''
+      };
+    },
+
+    computed: {
+      coracoes: function () {
+        var s = '';
+        for (var i = 0; i < this.vidas; i++) s += '♥';
+        return s || '—';
+      },
+
+      // O canvas e opaco para quem usa leitor de tela, entao o estado do
+      // jogo vira texto aqui e entra no aria-label do proprio canvas.
+      descricaoTela: function () {
+        if (this.estado === 'inicio') return 'Tela inicial do jogo Breakout.';
+        if (this.estado === 'pausado') return 'Jogo pausado.';
+        if (this.estado === 'fim') return 'Fim de jogo com ' + this.pontos + ' pontos.';
+        return 'Partida em andamento. Nivel ' + this.nivel + ', ' + this.pontos +
+               ' pontos, ' + this.vidas + ' vidas.';
+      }
+    },
+
+    methods: {
+
+      // ---------------- ciclo de vida da partida ----------------
+
+      comecar: function () {
+        this.pontos = 0;
+        this.vidas = 3;
+        this.nivel = 1;
+        this.combo = 1;
+        this.venceu = false;
+        this.novoRecorde = false;
+        this.poderes = [];
+        this.montarNivel();
+        this.estado = 'jogando';
+        V.sound.play('levelup');
+        this.focarPalco();
+      },
+
+      // Monta os tijolos do nivel atual e recoloca a bola na raquete.
+      montarNivel: function () {
+        var m = this.mundo;
+        var mapa = NIVEIS[this.nivel - 1] || NIVEIS[0];
+
+        m.tijolos = [];
+        for (var l = 0; l < mapa.length; l++) {
+          for (var c = 0; c < COLS; c++) {
+            var ch = mapa[l].charAt(c);
+            if (!ch || ch === '.') continue;
+            m.tijolos.push({
+              x: MARGEM_X + c * LARG_TIJOLO,
+              y: TOPO + l * (ALT_TIJOLO + 6),
+              w: LARG_TIJOLO - 4,
+              h: ALT_TIJOLO,
+              tipo: ch,
+              vida: ch === 'X' ? Infinity : Number(ch),
+              vidaMax: ch === 'X' ? 1 : Number(ch),
+              brilho: 0
+            });
+          }
+        }
+
+        m.capsulas = [];
+        m.particulas = [];
+        m.efeitos = {};
+        m.raquete.w = 96;
+        m.raquete.x = LARGURA / 2 - 48;
+        m.velocidadeBase = 300 + (this.nivel - 1) * 26;
+        this.resetarBola();
+        this.sincronizarPoderes();
+      },
+
+      iniciarNivel: function () {
+        this.montarNivel();
+        this.estado = 'jogando';
+        this.focarPalco();
+      },
+
+      resetarBola: function () {
+        var m = this.mundo;
+        m.bolas = [{
+          x: LARGURA / 2,
+          y: ALTURA - 92,
+          vx: 0,
+          vy: 0,
+          r: 7,
+          presa: true,
+          rastro: []
+        }];
+      },
+
+      lancar: function () {
+        var m = this.mundo;
+        var lancou = false;
+        for (var i = 0; i < m.bolas.length; i++) {
+          var b = m.bolas[i];
+          if (!b.presa) continue;
+          var angulo = (-Math.PI / 2) + (Math.random() * 0.5 - 0.25);
+          var v = m.velocidadeBase;
+          b.vx = Math.cos(angulo) * v;
+          b.vy = Math.sin(angulo) * v;
+          b.presa = false;
+          lancou = true;
+        }
+        if (lancou) V.sound.play('pop', { volume: 0.5 });
+      },
+
+      pausar: function () {
+        if (this.estado !== 'jogando') return;
+        this.estado = 'pausado';
+        V.sound.play('close');
+      },
+
+      retomar: function () {
+        if (this.estado !== 'pausado') return;
+        this.estado = 'jogando';
+        this.mundo.ultimo = 0; // zera o delta para nao dar um salto gigante
+        V.sound.play('open');
+        this.focarPalco();
+      },
+
+      alternarPausa: function () {
+        if (this.estado === 'jogando') this.pausar();
+        else if (this.estado === 'pausado') this.retomar();
+      },
+
+      voltarAoMenu: function () {
+        this.estado = 'inicio';
+        this.poderes = [];
+      },
+
+      // Botao unico do controle de toque: lanca a bola, ou pausa se ela
+      // ja estiver em jogo.
+      acaoPrincipal: function () {
+        if (this.estado === 'inicio' || this.estado === 'fim') { this.comecar(); return; }
+        if (this.estado === 'nivel') { this.iniciarNivel(); return; }
+        if (this.estado === 'pausado') { this.retomar(); return; }
+
+        var presa = false;
+        for (var i = 0; i < this.mundo.bolas.length; i++) {
+          if (this.mundo.bolas[i].presa) presa = true;
+        }
+        if (presa) this.lancar();
+        else this.pausar();
+      },
+
+      focarPalco: function () {
+        // Devolve o foco ao corpo para que as setas voltem a mover a
+        // raquete depois de um clique em botao.
+        var alvo = document.activeElement;
+        if (alvo && alvo.blur && alvo !== document.body) alvo.blur();
+      },
+
+      // ---------------- entrada ----------------
+
+      segurar: function (lado, evento) {
+        if (evento && evento.preventDefault) evento.preventDefault();
+        this.mundo.teclas[lado] = true;
+      },
+
+      soltar: function (lado) {
+        this.mundo.teclas[lado] = false;
+      },
+
+      // ---------------- pontuacao e poderes ----------------
+
+      somarPontos: function (base) {
+        this.pontos = this.pontos + Math.round(base * this.combo);
+      },
+
+      sincronizarPoderes: function () {
+        // Traduz o objeto de efeitos do mundo (mutavel, cru) na lista
+        // que o v-for renderiza. Roda no maximo uma vez por segundo.
+        var m = this.mundo;
+        var lista = [];
+        for (var tipo in m.efeitos) {
+          if (!Object.prototype.hasOwnProperty.call(m.efeitos, tipo)) continue;
+          var restante = m.efeitos[tipo];
+          if (restante <= 0) continue;
+          var def = PODERES[tipo];
+          lista.push({
+            tipo: tipo,
+            nome: def.nome,
+            icone: def.icone,
+            cor: def.cor,
+            segundos: Math.ceil(restante)
+          });
+        }
+        this.poderes = lista;
+      },
+
+      aplicarPoder: function (tipo) {
+        var m = this.mundo;
+        var def = PODERES[tipo];
+
+        if (tipo === 'vida') {
+          this.vidas = Math.min(this.vidas + 1, 6);
+          V.sound.play('levelup', { volume: 0.5 });
+        } else if (tipo === 'pontos') {
+          this.somarPontos(250);
+          V.sound.play('coin');
+        } else if (tipo === 'multi') {
+          this.multiplicarBolas();
+          V.sound.play('notify');
+        } else {
+          m.efeitos[tipo] = def.duracao;
+          if (tipo === 'largo') m.raquete.w = 152;
+          V.sound.play('success', { volume: 0.45 });
+        }
+
+        this.sincronizarPoderes();
+      },
+
+      multiplicarBolas: function () {
+        var m = this.mundo;
+        var novas = [];
+        for (var i = 0; i < m.bolas.length && m.bolas.length + novas.length < 6; i++) {
+          var b = m.bolas[i];
+          if (b.presa) continue;
+          for (var k = -1; k <= 1; k += 2) {
+            var ang = Math.atan2(b.vy, b.vx) + k * 0.45;
+            var vel = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+            novas.push({
+              x: b.x, y: b.y,
+              vx: Math.cos(ang) * vel,
+              vy: Math.sin(ang) * vel,
+              r: b.r, presa: false, rastro: []
+            });
+          }
+        }
+        for (var j = 0; j < novas.length; j++) m.bolas.push(novas[j]);
+      },
+
+      tremer: function () {
+        var self = this;
+        var reduzido = window.matchMedia &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduzido) return;
+        this.tremendo = false;
+        V.nextTick(function () {
+          self.tremendo = true;
+          setTimeout(function () { self.tremendo = false; }, 280);
+        });
+      },
+
+      perderVida: function () {
+        this.combo = 1;
+        this.vidas = this.vidas - 1;
+        V.sound.play('bkPerdeu');
+        this.tremer();
+
+        var m = this.mundo;
+        m.capsulas = [];
+        m.efeitos = {};
+        m.raquete.w = 96;
+        this.sincronizarPoderes();
+
+        if (this.vidas <= 0) {
+          this.encerrar(false);
+          return;
+        }
+        this.resetarBola();
+      },
+
+      concluirNivel: function () {
+        this.somarPontos(500 + this.nivel * 120);
+        if (this.nivel >= NIVEIS.length) {
+          this.encerrar(true);
+          return;
+        }
+        this.nivel = this.nivel + 1;
+        this.mensagemNivel = 'A bola fica um pouco mais rapida. Bom nivel.';
+        this.estado = 'nivel';
+        V.sound.play('levelup');
+      },
+
+      encerrar: function (venceu) {
+        this.venceu = venceu;
+        this.estado = 'fim';
+        this.poderes = [];
+
+        if (this.pontos > this.recorde) {
+          this.recorde = this.pontos;
+          this.novoRecorde = true;
+          V.storage.set(CHAVE_RECORDE, this.pontos);
+        } else {
+          this.novoRecorde = false;
+        }
+
+        V.sound.play(venceu ? 'complete' : 'error');
+      },
+
+      // ================================================================
+      // O loop. Roda sempre; quando o estado nao e 'jogando' ele apenas
+      // redesenha o quadro parado, o que mantem o menu com o cenario ao
+      // fundo sem custo de fisica.
+      // ================================================================
+      passo: function (agora) {
+        var m = this.mundo;
+        if (!m || m.morto) return;
+
+        m.raf = requestAnimationFrame(m.tick);
+
+        if (!m.ultimo) m.ultimo = agora;
+        var dt = (agora - m.ultimo) / 1000;
+        m.ultimo = agora;
+        if (dt > 0.05) dt = 0.05; // trava o passo depois de uma aba oculta
+
+        if (this.estado === 'jogando') {
+          this.atualizar(dt);
+          m.relogio = m.relogio + dt;
+          if (m.relogio >= 1) {
+            m.relogio = 0;
+            this.contarEfeitos();
+          }
+        }
+
+        this.desenhar();
+      },
+
+      contarEfeitos: function () {
+        var m = this.mundo;
+        var mudou = false;
+        for (var tipo in m.efeitos) {
+          if (!Object.prototype.hasOwnProperty.call(m.efeitos, tipo)) continue;
+          m.efeitos[tipo] = m.efeitos[tipo] - 1;
+          if (m.efeitos[tipo] <= 0) {
+            delete m.efeitos[tipo];
+            if (tipo === 'largo') m.raquete.w = 96;
+          }
+          mudou = true;
+        }
+        if (mudou) this.sincronizarPoderes();
+      },
+
+      atualizar: function (dt) {
+        var m = this.mundo;
+        var r = m.raquete;
+
+        // ---- raquete ----
+        var passo = 520 * dt;
+        if (m.teclas.esq) r.x = r.x - passo;
+        if (m.teclas.dir) r.x = r.x + passo;
+        if (m.alvoPonteiro !== null) {
+          // O dedo ou o mouse puxa a raquete suavemente, sem teleporte.
+          r.x = r.x + (m.alvoPonteiro - r.w / 2 - r.x) * Math.min(1, dt * 22);
+        }
+        r.x = limitar(r.x, 8, LARGURA - r.w - 8);
+
+        // ---- bolas ----
+        var fator = m.efeitos.lento ? 0.62 : 1;
+        var sobreviventes = [];
+
+        for (var i = 0; i < m.bolas.length; i++) {
+          var b = m.bolas[i];
+
+          if (b.presa) {
+            b.x = r.x + r.w / 2;
+            b.y = ALTURA - 78;
+            sobreviventes.push(b);
+            continue;
+          }
+
+          // Passos menores evitam a bola atravessar tijolo em alta velocidade.
+          var sub = 3;
+          for (var s = 0; s < sub; s++) {
+            b.x = b.x + b.vx * dt * fator / sub;
+            b.y = b.y + b.vy * dt * fator / sub;
+
+            if (b.x - b.r < 6) { b.x = 6 + b.r; b.vx = Math.abs(b.vx); this.tocarParede(); }
+            if (b.x + b.r > LARGURA - 6) { b.x = LARGURA - 6 - b.r; b.vx = -Math.abs(b.vx); this.tocarParede(); }
+            if (b.y - b.r < 40) { b.y = 40 + b.r; b.vy = Math.abs(b.vy); this.tocarParede(); }
+
+            this.colidirRaquete(b, r);
+            this.colidirTijolos(b);
+          }
+
+          // rastro curto, so visual
+          b.rastro.push({ x: b.x, y: b.y });
+          if (b.rastro.length > 9) b.rastro.shift();
+
+          if (b.y - b.r < ALTURA + 30) sobreviventes.push(b);
+        }
+
+        m.bolas = sobreviventes.filter(function (b) { return b.y - b.r < ALTURA; });
+
+        if (m.bolas.length === 0) {
+          this.perderVida();
+          return;
+        }
+
+        // ---- capsulas caindo ----
+        var restam = [];
+        for (var c = 0; c < m.capsulas.length; c++) {
+          var cap = m.capsulas[c];
+          cap.y = cap.y + 168 * dt;
+          cap.giro = cap.giro + dt * 3;
+
+          var pegou = cap.y + 9 > ALTURA - 34 && cap.y - 9 < ALTURA - 18 &&
+                      cap.x > r.x - 10 && cap.x < r.x + r.w + 10;
+
+          if (pegou) {
+            this.aplicarPoder(cap.tipo);
+            this.explodir(cap.x, cap.y, PODERES[cap.tipo].cor, 14);
+            continue;
+          }
+          if (cap.y < ALTURA + 20) restam.push(cap);
+        }
+        m.capsulas = restam;
+
+        // ---- particulas ----
+        var vivas = [];
+        for (var p = 0; p < m.particulas.length; p++) {
+          var pt = m.particulas[p];
+          pt.x = pt.x + pt.vx * dt;
+          pt.y = pt.y + pt.vy * dt;
+          pt.vy = pt.vy + 420 * dt;
+          pt.vida = pt.vida - dt;
+          if (pt.vida > 0) vivas.push(pt);
+        }
+        m.particulas = vivas;
+
+        // ---- brilho dos tijolos ----
+        for (var t = 0; t < m.tijolos.length; t++) {
+          if (m.tijolos[t].brilho > 0) m.tijolos[t].brilho -= dt * 4;
+        }
+
+        // ---- fim de nivel ----
+        var restantes = 0;
+        for (var q = 0; q < m.tijolos.length; q++) {
+          if (m.tijolos[q].tipo !== 'X') restantes++;
+        }
+        if (restantes === 0) this.concluirNivel();
+      },
+
+      tocarParede: function () {
+        var m = this.mundo;
+        if (m.relogioSom > 0) return;
+        m.relogioSom = 0.03;
+        V.sound.play('click', { volume: 0.14 });
+      },
+
+      colidirRaquete: function (b, r) {
+        var topo = ALTURA - 34;
+        if (b.vy <= 0) return;
+        if (b.y + b.r < topo || b.y - b.r > topo + 14) return;
+        if (b.x < r.x - b.r || b.x > r.x + r.w + b.r) return;
+
+        // O ponto de contato decide o angulo: canto da raquete abre mais.
+        var rel = (b.x - (r.x + r.w / 2)) / (r.w / 2);
+        rel = limitar(rel, -1, 1);
+        var ang = rel * (Math.PI / 3);
+        var vel = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+        vel = Math.min(vel * 1.012, 620);
+
+        b.vx = Math.sin(ang) * vel;
+        b.vy = -Math.abs(Math.cos(ang) * vel);
+        b.y = topo - b.r - 1;
+
+        this.combo = 1; // tocar na raquete zera o combo de tijolos
+        V.sound.play('bkRaquete');
+      },
+
+      colidirTijolos: function (b) {
+        var m = this.mundo;
+
+        for (var i = 0; i < m.tijolos.length; i++) {
+          var t = m.tijolos[i];
+          if (b.x + b.r < t.x || b.x - b.r > t.x + t.w) continue;
+          if (b.y + b.r < t.y || b.y - b.r > t.y + t.h) continue;
+
+          // Descobre por qual lado a bola entrou comparando as folgas.
+          var folgaX = Math.min(Math.abs(b.x - t.x), Math.abs(b.x - (t.x + t.w)));
+          var folgaY = Math.min(Math.abs(b.y - t.y), Math.abs(b.y - (t.y + t.h)));
+          if (folgaX < folgaY) b.vx = -b.vx; else b.vy = -b.vy;
+
+          t.brilho = 1;
+
+          if (t.tipo === 'X') {
+            V.sound.play('bkDuro');
+            this.explodir(b.x, b.y, CORES_TIJOLO.X[1], 5);
+            return;
+          }
+
+          t.vida = t.vida - 1;
+
+          if (t.vida > 0) {
+            V.sound.play('bkDuro', { volume: 0.5 });
+            this.somarPontos(10);
+            this.explodir(b.x, b.y, CORES_TIJOLO[t.tipo][0], 6);
+            return;
+          }
+
+          // Tijolo destruido: pontos, combo, particulas e sorteio de capsula.
+          m.tijolos.splice(i, 1);
+          this.somarPontos(50 * t.vidaMax);
+          this.combo = Math.min(this.combo + 1, 9);
+          V.sound.play('bkTijolo', { tom: 1 + this.combo * 0.06 });
+          this.explodir(t.x + t.w / 2, t.y + t.h / 2, CORES_TIJOLO[t.tipo][0], 16);
+
+          if (Math.random() < 0.16) {
+            var tipo = SORTEIO[Math.floor(Math.random() * SORTEIO.length)];
+            m.capsulas.push({
+              x: t.x + t.w / 2,
+              y: t.y + t.h / 2,
+              tipo: tipo,
+              giro: 0
+            });
+          }
+          return;
+        }
+      },
+
+      explodir: function (x, y, cor, quantidade) {
+        var m = this.mundo;
+        if (m.particulas.length > 260) return;
+        for (var i = 0; i < quantidade; i++) {
+          var a = Math.random() * Math.PI * 2;
+          var v = 60 + Math.random() * 190;
+          m.particulas.push({
+            x: x, y: y,
+            vx: Math.cos(a) * v,
+            vy: Math.sin(a) * v - 60,
+            vida: 0.3 + Math.random() * 0.45,
+            total: 0.75,
+            cor: cor,
+            tam: 1.5 + Math.random() * 2.5
+          });
+        }
+      },
+
+      // ================================================================
+      // Desenho. Nada aqui toca no DOM: e so canvas.
+      // ================================================================
+      desenhar: function () {
+        var m = this.mundo;
+        var ctx = m.ctx;
+        if (!ctx) return;
+
+        if (m.relogioSom > 0) m.relogioSom -= 0.016;
+
+        ctx.setTransform(m.escala, 0, 0, m.escala, 0, 0);
+        ctx.clearRect(0, 0, LARGURA, ALTURA);
+
+        // fundo
+        var g = ctx.createLinearGradient(0, 0, 0, ALTURA);
+        g.addColorStop(0, '#0b0d1f');
+        g.addColorStop(1, '#05060f');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, LARGURA, ALTURA);
+
+        // grade sutil
+        ctx.strokeStyle = 'rgba(109,59,245,0.08)';
+        ctx.lineWidth = 1;
+        for (var gx = 0; gx <= LARGURA; gx += 40) {
+          ctx.beginPath(); ctx.moveTo(gx, 40); ctx.lineTo(gx, ALTURA); ctx.stroke();
+        }
+        for (var gy = 40; gy <= ALTURA; gy += 40) {
+          ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(LARGURA, gy); ctx.stroke();
+        }
+
+        // moldura
+        ctx.strokeStyle = 'rgba(155,123,255,0.35)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(5, 39, LARGURA - 10, ALTURA - 44);
+
+        this.desenharTijolos(ctx);
+        this.desenharCapsulas(ctx);
+        this.desenharParticulas(ctx);
+        this.desenharRaquete(ctx);
+        this.desenharBolas(ctx);
+
+        // faixa de topo com o nivel, desenhada dentro do canvas para o
+        // jogo continuar legivel em tela cheia no celular
+        ctx.fillStyle = 'rgba(5,6,15,0.9)';
+        ctx.fillRect(0, 0, LARGURA, 38);
+        ctx.fillStyle = '#7c81ad';
+        ctx.font = '600 13px ui-monospace, monospace';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.fillText('NIVEL ' + this.nivel, 14, 20);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#e6e8ff';
+        ctx.fillText(String(this.pontos), LARGURA / 2, 20);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillText(this.coracoes === '—' ? '' : this.coracoes, LARGURA - 14, 20);
+
+        // dica de lancamento
+        var presa = false;
+        for (var i = 0; i < m.bolas.length; i++) if (m.bolas[i].presa) presa = true;
+        if (presa && this.estado === 'jogando') {
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(230,232,255,0.55)';
+          ctx.font = '500 13px system-ui, sans-serif';
+          ctx.fillText('Espaco ou toque para lancar', LARGURA / 2, ALTURA - 130);
+        }
+      },
+
+      desenharTijolos: function (ctx) {
+        var lista = this.mundo.tijolos;
+        for (var i = 0; i < lista.length; i++) {
+          var t = lista[i];
+          var cor = CORES_TIJOLO[t.tipo] || CORES_TIJOLO[1];
+          var claro = t.tipo !== 'X' && t.vida < t.vidaMax;
+
+          ctx.fillStyle = claro ? cor[1] : cor[0];
+          ctx.globalAlpha = t.tipo === 'X' ? 0.9 : 1;
+          this.retanguloArredondado(ctx, t.x, t.y, t.w, t.h, 5);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          // brilho do topo
+          ctx.fillStyle = 'rgba(255,255,255,0.18)';
+          this.retanguloArredondado(ctx, t.x + 2, t.y + 2, t.w - 4, 5, 3);
+          ctx.fill();
+
+          if (t.brilho > 0) {
+            ctx.fillStyle = 'rgba(255,255,255,' + (t.brilho * 0.5).toFixed(3) + ')';
+            this.retanguloArredondado(ctx, t.x, t.y, t.w, t.h, 5);
+            ctx.fill();
+          }
+        }
+      },
+
+      desenharRaquete: function (ctx) {
+        var r = this.mundo.raquete;
+        var y = ALTURA - 34;
+        var g = ctx.createLinearGradient(r.x, y, r.x + r.w, y);
+        g.addColorStop(0, '#6D3BF5');
+        g.addColorStop(0.5, '#9B7BFF');
+        g.addColorStop(1, '#2ED9A5');
+
+        ctx.shadowColor = 'rgba(155,123,255,0.75)';
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = g;
+        this.retanguloArredondado(ctx, r.x, y, r.w, 12, 6);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      },
+
+      desenharBolas: function (ctx) {
+        var bolas = this.mundo.bolas;
+        for (var i = 0; i < bolas.length; i++) {
+          var b = bolas[i];
+
+          for (var t = 0; t < b.rastro.length; t++) {
+            var p = b.rastro[t];
+            ctx.globalAlpha = (t / b.rastro.length) * 0.32;
+            ctx.fillStyle = '#9B7BFF';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, b.r * (0.4 + t / b.rastro.length * 0.6), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+
+          ctx.shadowColor = 'rgba(255,255,255,0.9)';
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      },
+
+      desenharCapsulas: function (ctx) {
+        var lista = this.mundo.capsulas;
+        for (var i = 0; i < lista.length; i++) {
+          var c = lista[i];
+          var def = PODERES[c.tipo];
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate(Math.sin(c.giro) * 0.35);
+          ctx.shadowColor = def.cor;
+          ctx.shadowBlur = 14;
+          ctx.fillStyle = def.cor;
+          this.retanguloArredondado(ctx, -16, -9, 32, 18, 9);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#05060f';
+          ctx.font = '700 12px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(def.icone, 0, 1);
+          ctx.restore();
+        }
+      },
+
+      desenharParticulas: function (ctx) {
+        var lista = this.mundo.particulas;
+        for (var i = 0; i < lista.length; i++) {
+          var p = lista[i];
+          ctx.globalAlpha = Math.max(0, p.vida / p.total);
+          ctx.fillStyle = p.cor;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.tam, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      },
+
+      retanguloArredondado: function (ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      },
+
+      // ---------------- ajuste do canvas ----------------
+
+      redimensionar: function () {
+        var m = this.mundo;
+        var canvas = m.canvas;
+        if (!canvas) return;
+        var caixa = canvas.getBoundingClientRect();
+        if (!caixa.width) return;
+
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(caixa.width * dpr);
+        canvas.height = Math.round(caixa.height * dpr);
+        // Uma unica escala converte o mundo logico 480x640 em pixels reais.
+        m.escala = canvas.width / LARGURA;
+      }
+    },
+
+    mounted: function () {
+      var self = this;
+      var canvas = this.$refs.tela;
+
+      // ----------------------------------------------------------------
+      // `mundo` fica fora do state de proposito: sao dezenas de numeros
+      // mudando 60 vezes por segundo, e nada disso precisa de reatividade.
+      // ----------------------------------------------------------------
+      this.mundo = {
+        canvas: canvas,
+        ctx: canvas.getContext('2d'),
+        escala: 1,
+        raf: 0,
+        ultimo: 0,
+        relogio: 0,
+        relogioSom: 0,
+        morto: false,
+        teclas: { esq: false, dir: false },
+        alvoPonteiro: null,
+        raquete: { x: LARGURA / 2 - 48, w: 96 },
+        bolas: [],
+        tijolos: [],
+        capsulas: [],
+        particulas: [],
+        efeitos: {},
+        velocidadeBase: 300,
+        tick: function (t) { self.passo(t); }
+      };
+
+      this.montarNivel();
+      this.redimensionar();
+
+      // ---- teclado ----
+      var aoPressionar = function (e) {
+        var k = e.key;
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') { self.mundo.teclas.esq = true; e.preventDefault(); }
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') { self.mundo.teclas.dir = true; e.preventDefault(); }
+
+        if (k === ' ' || k === 'Spacebar') {
+          e.preventDefault();
+          if (self.estado === 'inicio' || self.estado === 'fim') self.comecar();
+          else if (self.estado === 'nivel') self.iniciarNivel();
+          else if (self.estado === 'jogando') self.lancar();
+        }
+        if (k === 'Enter') {
+          if (self.estado === 'inicio' || self.estado === 'fim') self.comecar();
+          else if (self.estado === 'nivel') self.iniciarNivel();
+        }
+        if (k === 'p' || k === 'P' || k === 'Escape') self.alternarPausa();
+        if (k === 'r' || k === 'R') self.comecar();
+      };
+
+      var aoSoltar = function (e) {
+        var k = e.key;
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') self.mundo.teclas.esq = false;
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') self.mundo.teclas.dir = false;
+      };
+
+      window.addEventListener('keydown', aoPressionar);
+      window.addEventListener('keyup', aoSoltar);
+
+      // ---- ponteiro sobre o palco (mouse e dedo pelo mesmo caminho) ----
+      var palco = this.$el.querySelector('.bk-palco');
+
+      var posicao = function (e) {
+        var caixa = canvas.getBoundingClientRect();
+        if (!caixa.width) return;
+        self.mundo.alvoPonteiro = ((e.clientX - caixa.left) / caixa.width) * LARGURA;
+      };
+
+      var aoMover = function (e) {
+        if (self.estado !== 'jogando') return;
+        posicao(e);
+      };
+
+      var aoTocar = function (e) {
+        if (self.estado !== 'jogando') { return; }
+        posicao(e);
+        self.lancar();
+      };
+
+      var aoSair = function () { self.mundo.alvoPonteiro = null; };
+
+      palco.addEventListener('pointermove', aoMover);
+      palco.addEventListener('pointerdown', aoTocar);
+      palco.addEventListener('pointerleave', aoSair);
+
+      // ---- redimensionamento ----
+      var aoRedimensionar = function () { self.redimensionar(); };
+      window.addEventListener('resize', aoRedimensionar);
+
+      var observador = null;
+      if (window.ResizeObserver) {
+        observador = new ResizeObserver(aoRedimensionar);
+        observador.observe(palco);
+      }
+
+      // ---- pausa automatica quando a aba sai de vista ----
+      var aoTrocarVisibilidade = function () {
+        if (document.hidden && self.estado === 'jogando') self.pausar();
+      };
+      document.addEventListener('visibilitychange', aoTrocarVisibilidade);
+
+      this.mundo.raf = requestAnimationFrame(this.mundo.tick);
+
+      // ----------------------------------------------------------------
+      // Limpeza: sem isto o loop continuaria rodando depois que o
+      // componente sumisse. Nada de vazar requestAnimationFrame.
+      // ----------------------------------------------------------------
+      this.limpar = function () {
+        self.mundo.morto = true;
+        cancelAnimationFrame(self.mundo.raf);
+        window.removeEventListener('keydown', aoPressionar);
+        window.removeEventListener('keyup', aoSoltar);
+        window.removeEventListener('resize', aoRedimensionar);
+        document.removeEventListener('visibilitychange', aoTrocarVisibilidade);
+        palco.removeEventListener('pointermove', aoMover);
+        palco.removeEventListener('pointerdown', aoTocar);
+        palco.removeEventListener('pointerleave', aoSair);
+        if (observador) observador.disconnect();
+      };
+
+      window.addEventListener('pagehide', this.limpar);
+    },
+
+    beforeUnmount: function () {
+      if (this.limpar) this.limpar();
+    }
+  });
+
+  V.theme.init();
+  V.start();
+  document.body.classList.add('bk-pronto');
+});
+</script>
+
+</body>
+</html>

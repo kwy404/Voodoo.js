@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shaders 3D com Voodoo.js</title>
+<link rel="icon" href="../../brand/logo/favicon.svg">
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Bundle completo: reatividade, directives, componentes, stores e som. -->
+<script src="../../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Demo: galeria de shaders
+
+     Quatro cenas 3D em WebGL2 puro, sem Three.js e sem nenhuma outra
+     dependencia: a Voodoo tem zero dependencias de runtime e os
+     exemplos respeitam isso.
+
+     O ponto da demo e o painel de controle. Cada cena declara a sua
+     lista de uniforms, e o HTML monta os controles com um `v-for`. Os
+     sliders usam `v-model`, entao mexer no controle escreve direto no
+     estado; o loop de render le esse mesmo estado e manda para a GPU.
+     Nenhuma linha de "pegue o valor do input e atualize o uniform".
+     ================================================================== */
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1000px 560px at 10% -12%, color-mix(in srgb, var(--v-primary) 20%, transparent), transparent 60%),
+      radial-gradient(860px 460px at 92% 4%, color-mix(in srgb, var(--v-accent) 16%, transparent), transparent 60%),
+      var(--v-color-bg);
+  }
+
+  .sh-pagina { max-width: 1180px; margin: 0 auto; padding: var(--v-space-6) var(--v-space-4) var(--v-space-12); }
+
+  .sh-app { opacity: 0; }
+  body.sh-pronto .sh-app { opacity: 1; transition: opacity var(--v-duration-slow) var(--v-ease-out); }
+
+  /* ---------- topo ---------- */
+  .sh-topo { display: flex; align-items: center; gap: var(--v-space-3); margin-bottom: var(--v-space-4); flex-wrap: wrap; }
+
+  .sh-voltar {
+    color: var(--v-text-muted); text-decoration: none; font-size: var(--v-text-sm);
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-full); padding: 4px 12px;
+  }
+  .sh-voltar:hover { color: var(--v-text); border-color: var(--v-border-strong); }
+  .sh-voltar:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+
+  .sh-titulo { margin: 0; font-family: var(--v-font-display); font-size: var(--v-text-xl); letter-spacing: var(--v-tracking-tight); }
+
+  /* ---------- abas de cena ---------- */
+  .sh-abas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--v-space-4); }
+
+  .sh-aba {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-full);
+    background: var(--v-surface); color: var(--v-text-muted);
+    padding: 6px 14px; font-size: var(--v-text-sm); font-weight: var(--v-weight-medium);
+    cursor: pointer;
+    transition: color var(--v-duration-fast), border-color var(--v-duration-fast), background-color var(--v-duration-fast);
+  }
+  .sh-aba:hover { color: var(--v-text); border-color: var(--v-border-strong); }
+  .sh-aba:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+
+  .sh-aba--ativa {
+    color: var(--v-primary-soft-text);
+    background: var(--v-primary-soft);
+    border-color: color-mix(in srgb, var(--v-primary) 55%, transparent);
+  }
+  .sh-aba__ponto { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+
+  /* ---------- arranjo ---------- */
+  .sh-grade { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: var(--v-space-4); align-items: start; }
+
+  /* ---------- palco ---------- */
+  .sh-palco {
+    position: relative;
+    border: 1px solid var(--v-border-strong);
+    border-radius: var(--v-radius-lg);
+    overflow: hidden;
+    background: #04050f;
+    aspect-ratio: 16 / 10;
+    box-shadow: var(--v-shadow-lg);
+    touch-action: none;
+    cursor: grab;
+  }
+  .sh-palco:active { cursor: grabbing; }
+  .sh-lona { display: block; width: 100%; height: 100%; }
+
+  /* Legenda sobre a cena, com nome e descricao vindos do estado. */
+  .sh-etiqueta {
+    position: absolute; left: 12px; bottom: 12px; right: 12px;
+    display: flex; align-items: flex-end; gap: 10px; pointer-events: none;
+  }
+  .sh-etiqueta__caixa {
+    background: rgba(5,6,15,.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(155,123,255,.28); border-radius: var(--v-radius-md);
+    padding: 8px 12px; max-width: 46ch;
+  }
+  .sh-etiqueta__nome { font-family: var(--v-font-display); font-size: var(--v-text-base); color: #f2f3ff; }
+  .sh-etiqueta__texto { font-size: 12px; color: #a9aed4; margin-top: 2px; line-height: 1.45; }
+
+  .sh-fps {
+    position: absolute; top: 12px; right: 12px;
+    font-family: var(--v-font-mono); font-size: 11px; letter-spacing: 1px;
+    color: #9be6ff; background: rgba(5,6,15,.7); border: 1px solid rgba(0,229,255,.3);
+    border-radius: var(--v-radius-full); padding: 3px 10px; pointer-events: none;
+  }
+
+  /* ---------- fallback ---------- */
+  /* Sem WebGL2 nenhuma cena aparece, entao a demo diz isso em texto
+     claro em vez de deixar um retangulo preto na tela. */
+  .sh-sem-suporte {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px; text-align: center;
+    padding: var(--v-space-6); background: var(--v-surface);
+  }
+  .sh-sem-suporte__marca { font-size: 34px; opacity: .55; }
+  .sh-sem-suporte h2 { margin: 0; font-family: var(--v-font-display); font-size: var(--v-text-lg); }
+  .sh-sem-suporte p { margin: 0; color: var(--v-text-muted); font-size: var(--v-text-sm); max-width: 46ch; }
+  .sh-sem-suporte pre {
+    margin: 0; max-width: 100%; max-height: 160px; overflow: auto; text-align: left;
+    font-family: var(--v-font-mono); font-size: 11px; color: var(--v-danger);
+    background: var(--v-surface-2); border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-sm); padding: 10px; white-space: pre-wrap;
+  }
+
+  /* ---------- painel ---------- */
+  .sh-painel {
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
+    background: var(--v-surface); padding: var(--v-space-4);
+    display: flex; flex-direction: column; gap: var(--v-space-4);
+  }
+
+  .sh-secao__titulo {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: var(--v-tracking-wide);
+    color: var(--v-text-subtle); margin-bottom: 8px;
+  }
+
+  .sh-controle { margin-bottom: 12px; }
+  .sh-controle:last-child { margin-bottom: 0; }
+
+  .sh-controle__topo {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; margin-bottom: 4px;
+  }
+  .sh-controle__rotulo { font-size: var(--v-text-sm); color: var(--v-text); }
+  .sh-controle__valor { font-family: var(--v-font-mono); font-size: 12px; color: var(--v-primary); }
+
+  .sh-faixa {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 5px; border-radius: 3px; background: var(--v-surface-3);
+    outline: none; cursor: pointer;
+  }
+  .sh-faixa::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(140deg, var(--v-primary), var(--v-accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--v-primary) 22%, transparent);
+    cursor: pointer;
+  }
+  .sh-faixa::-moz-range-thumb {
+    width: 16px; height: 16px; border: none; border-radius: 50%;
+    background: linear-gradient(140deg, var(--v-primary), var(--v-accent));
+    cursor: pointer;
+  }
+  .sh-faixa:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 3px; }
+
+  .sh-acoes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sh-acoes .v-btn { flex: 1 1 auto; }
+
+  .sh-info { font-size: 12px; color: var(--v-text-muted); line-height: var(--v-leading-relaxed); }
+  .sh-info code { font-size: 11.5px; }
+
+  .sh-nota {
+    margin-top: var(--v-space-5); padding: var(--v-space-4);
+    border: 1px solid var(--v-border); border-left: 3px solid var(--v-accent);
+    border-radius: var(--v-radius-md); background: var(--v-surface);
+    font-size: var(--v-text-sm); color: var(--v-text-muted); line-height: var(--v-leading-relaxed);
+  }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 900px) {
+    .sh-grade { grid-template-columns: 1fr; }
+    .sh-palco { aspect-ratio: 4 / 3; }
+  }
+  @media (max-width: 560px) {
+    .sh-pagina { padding: var(--v-space-4) var(--v-space-3) var(--v-space-10); }
+    .sh-titulo { font-size: var(--v-text-lg); }
+    .sh-palco { aspect-ratio: 1 / 1; }
+    .sh-etiqueta__texto { display: none; }
+  }
+
+  /* ---------- movimento reduzido ---------- */
+  /* Vale para a interface. As cenas continuam animando, mas ha um botao
+     de pausa a um clique de distancia no painel. */
+  @media (prefers-reduced-motion: reduce) {
+    .sh-app, .sh-aba, .sh-palco { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main class="sh-pagina">
+  <section class="sh-app" v-component="galeria-shaders">
+
+    <header class="sh-topo">
+      <a class="sh-voltar" href="../">&larr; Demos</a>
+      <h1 class="sh-titulo">Shaders 3D</h1>
+      <div class="v-push"></div>
+      <span class="v-badge" v-show="suportado">WebGL2</span>
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle
+              aria-label="Alternar entre tema claro e escuro">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <!-- ============================================================
+         Abas das cenas: v-for sobre a lista de cenas, com o destaque
+         do :class saindo do estado.
+         ============================================================ -->
+    <div class="sh-abas" role="tablist" aria-label="Escolher a cena">
+      <button type="button" class="sh-aba"
+              v-for="c in cenas"
+              :key="c.id"
+              role="tab"
+              :class="{ 'sh-aba--ativa': c.id === cenaAtual }"
+              :aria-selected="c.id === cenaAtual ? 'true' : 'false'"
+              :style="{ '--cor': c.cor }"
+              @click="trocarCena(c.id)">
+        <span class="sh-aba__ponto" aria-hidden="true" :style="{ backgroundColor: c.cor }"></span>
+        <span>{ c.nome }</span>
+      </button>
+    </div>
+
+    <div class="sh-grade">
+
+      <!-- ========================================================
+           Palco: um unico canvas WebGL2 para as quatro cenas.
+           ======================================================== -->
+      <div class="sh-palco">
+        <canvas class="sh-lona" v-ref="lona" role="img" :aria-label="descricaoCena"></canvas>
+
+        <div class="sh-fps" v-show="suportado && !erro">{ fps } fps &middot; { larguraReal }&times;{ alturaReal }</div>
+
+        <div class="sh-etiqueta" v-show="suportado && !erro">
+          <div class="sh-etiqueta__caixa">
+            <div class="sh-etiqueta__nome">{ cena.nome }</div>
+            <div class="sh-etiqueta__texto">{ cena.descricao }</div>
+          </div>
+        </div>
+
+        <!-- Fallback: mensagem clara em vez de canvas preto. -->
+        <div class="sh-sem-suporte" v-show="!suportado || erro">
+          <span class="sh-sem-suporte__marca" aria-hidden="true">▲</span>
+          <h2>{ erro ? 'A cena nao pode ser compilada' : 'Este navegador nao tem WebGL2' }</h2>
+          <p v-show="!suportado">
+            As quatro cenas desta pagina sao shaders de fragmento em WebGL2.
+            Sem esse contexto nao ha o que desenhar. Tente um navegador atual,
+            ou verifique se a aceleracao por hardware esta ligada.
+          </p>
+          <p v-show="erro && suportado">
+            O contexto existe, mas o driver recusou este shader. O relatorio do
+            compilador esta abaixo.
+          </p>
+          <pre v-show="erro">{ erro }</pre>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           Painel: os controles saem de um v-for sobre a lista de
+           uniforms da cena atual. Cada slider usa v-model, entao
+           o valor escrito no estado ja e o valor que vai a GPU.
+           ======================================================== -->
+      <aside class="sh-painel">
+
+        <div>
+          <div class="sh-secao__titulo">Controles da cena</div>
+
+          <div class="sh-controle" v-for="ctl in cena.controles" :key="ctl.chave">
+            <div class="sh-controle__topo">
+              <label class="sh-controle__rotulo" :for="'ctl-' + ctl.chave">{ ctl.rotulo }</label>
+              <span class="sh-controle__valor">{ ctl.valor }{ ctl.sufixo }</span>
+            </div>
+            <input class="sh-faixa" type="range"
+                   :id="'ctl-' + ctl.chave"
+                   v-model="ctl.valor"
+                   :min="ctl.min" :max="ctl.max" :step="ctl.passo"
+                   :aria-label="ctl.rotulo">
+          </div>
+        </div>
+
+        <div>
+          <div class="sh-secao__titulo">Render</div>
+
+          <div class="sh-controle">
+            <div class="sh-controle__topo">
+              <label class="sh-controle__rotulo" for="ctl-escala">Resolucao</label>
+              <span class="sh-controle__valor">{ escalaRender }&times;</span>
+            </div>
+            <input class="sh-faixa" type="range" id="ctl-escala"
+                   v-model="escalaRender" min="0.35" max="1.4" step="0.05"
+                   aria-label="Escala de resolucao do render">
+          </div>
+
+          <div class="sh-controle">
+            <div class="sh-controle__topo">
+              <label class="sh-controle__rotulo" for="ctl-velocidade">Velocidade</label>
+              <span class="sh-controle__valor">{ velocidade }&times;</span>
+            </div>
+            <input class="sh-faixa" type="range" id="ctl-velocidade"
+                   v-model="velocidade" min="0" max="3" step="0.05"
+                   aria-label="Velocidade da animacao">
+          </div>
+        </div>
+
+        <div class="sh-acoes">
+          <button type="button" class="v-btn v-btn--secondary v-btn--sm"
+                  :aria-pressed="pausado ? 'true' : 'false'"
+                  @click="alternarPausa">{ pausado ? 'Retomar' : 'Pausar' }</button>
+          <button type="button" class="v-btn v-btn--ghost v-btn--sm" @click="restaurar">Restaurar</button>
+        </div>
+
+        <p class="sh-info">
+          Arraste sobre a cena para girar a camera. Os controles acima sao
+          <code class="v-code">v-model</code> ligados ao estado; o loop de render
+          le o mesmo estado e envia como uniform a cada quadro.
+        </p>
+      </aside>
+    </div>
+
+    <p class="sh-nota">
+      <strong>O que esta demo mostra.</strong> Quatro cenas de raymarching em
+      WebGL2 puro: sem Three.js, sem CDN, sem nenhuma dependencia. Cada cena
+      declara a sua propria lista de uniforms, e o painel inteiro nasce de um
+      <code class="v-code">v-for</code> sobre essa lista, com
+      <code class="v-code">v-model</code> em cada slider. Trocar de cena troca a
+      lista, e a interface se remonta sozinha. Se o navegador nao tiver WebGL2,
+      ou se o driver recusar um shader, a demo mostra a mensagem e o relatorio do
+      compilador em vez de um retangulo preto.
+    </p>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ====================================================================
+  // Shaders
+  //
+  // Um unico quad cobre a tela e todo o trabalho acontece no fragmento.
+  // As cenas compartilham o mesmo cabecalho de uniforms: resolucao,
+  // tempo, camera e cinco parametros genericos p1..p5, que cada cena
+  // interpreta do seu jeito. E o que permite o painel ser generico.
+  // ====================================================================
+
+  var VERTICE = [
+    '#version 300 es',
+    'in vec2 posicao;',
+    'void main() { gl_Position = vec4(posicao, 0.0, 1.0); }'
+  ].join('\n');
+
+  var CABECALHO = [
+    '#version 300 es',
+    'precision highp float;',
+    'out vec4 corFinal;',
+    'uniform vec2 resolucao;',
+    'uniform float tempo;',
+    'uniform vec2 camera;',   // giro horizontal e vertical vindos do arraste
+    'uniform float p1, p2, p3, p4, p5;',
+    '',
+    '#define PI 3.14159265359',
+    '',
+    // paleta de cosseno do Inigo Quilez: quatro vetores viram um degrade
+    'vec3 paleta(float t, vec3 a, vec3 b, vec3 c, vec3 d) {',
+    '  return a + b * cos(6.28318 * (c * t + d));',
+    '}',
+    '',
+    'mat2 giro(float a) { float s = sin(a), c = cos(a); return mat2(c, -s, s, c); }',
+    ''
+  ].join('\n');
+
+  // -------------------------------------------------------------------
+  // 1. Mandelbulb: o fractal 3D classico, marchado por distancia.
+  // -------------------------------------------------------------------
+  var MANDELBULB = CABECALHO + [
+    // A potencia respira: p5 abre uma pulsacao lenta em volta de p1, e a
+    // topologia inteira do solido muda continuamente junto com ela.
+    'float potencia() { return max(1.5, p1 + sin(tempo * 0.45) * p5); }',
+    '',
+    'float distancia(vec3 pos, out float trap) {',
+    '  float n = potencia();',
+    '  vec3 z = pos;',
+    '  float dr = 1.0;',
+    '  float r = 0.0;',
+    '  trap = 1e10;',
+    '  for (int i = 0; i < 9; i++) {',
+    '    r = length(z);',
+    '    if (r > 2.4) break;',
+    '    trap = min(trap, r);',
+    '    float theta = acos(clamp(z.z / r, -1.0, 1.0));',
+    '    float phi = atan(z.y, z.x);',
+    '    dr = pow(r, n - 1.0) * n * dr + 1.0;',
+    '    float zr = pow(r, n);',
+    '    theta *= n;',
+    '    phi *= n;',
+    '    z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta)) + pos;',
+    '  }',
+    '  return 0.5 * log(r) * r / dr;',
+    '}',
+    '',
+    'void main() {',
+    '  vec2 uv = (gl_FragCoord.xy * 2.0 - resolucao) / resolucao.y;',
+    '',
+    '  float giroH = tempo * 0.16 + camera.x;',
+    '  float giroV = clamp(camera.y, -1.1, 1.1);',
+    '  float dist = 2.6 - p4 * 0.8;',
+    '',
+    '  vec3 origem = vec3(sin(giroH) * cos(giroV), sin(giroV), cos(giroH) * cos(giroV)) * dist;',
+    '  vec3 frente = normalize(-origem);',
+    '  vec3 direita = normalize(cross(vec3(0.0, 1.0, 0.0), frente));',
+    '  vec3 cima = cross(frente, direita);',
+    '  vec3 raio = normalize(uv.x * direita + uv.y * cima + 1.7 * frente);',
+    '',
+    '  float t = 0.0;',
+    '  float trap = 1e10;',
+    '  float trapFinal = 1e10;',
+    '  float passos = 0.0;',
+    '  bool bateu = false;',
+    '',
+    '  for (int i = 0; i < 110; i++) {',
+    '    vec3 p = origem + raio * t;',
+    '    float d = distancia(p, trap);',
+    '    if (d < 0.0006 * t) { bateu = true; trapFinal = trap; break; }',
+    '    if (t > 6.0) break;',
+    '    t += d * 0.85;',
+    '    passos += 1.0;',
+    '  }',
+    '',
+    '  vec3 cor = vec3(0.02, 0.02, 0.06);',
+    '  float brilho = passos / 110.0;',
+    '',
+    '  if (bateu) {',
+    '    vec3 p = origem + raio * t;',
+    '    vec2 e = vec2(0.0012, 0.0);',
+    '    float lixo;',
+    '    vec3 n = normalize(vec3(',
+    '      distancia(p + e.xyy, lixo) - distancia(p - e.xyy, lixo),',
+    '      distancia(p + e.yxy, lixo) - distancia(p - e.yxy, lixo),',
+    '      distancia(p + e.yyx, lixo) - distancia(p - e.yyx, lixo)));',
+    '',
+    '    vec3 luz = normalize(vec3(0.7, 0.9, 0.5));',
+    '    float difusa = clamp(dot(n, luz), 0.0, 1.0);',
+    '    float borda = pow(1.0 - clamp(dot(n, -raio), 0.0, 1.0), 3.0);',
+    '    float oclusao = 1.0 - passos / 110.0;',
+    '',
+    '    vec3 base = paleta(trapFinal * 1.6 + p2,',
+    '      vec3(0.5), vec3(0.5), vec3(1.0, 0.9, 0.7), vec3(0.0, 0.15, 0.35));',
+    '',
+    '    cor = base * (0.16 + 0.9 * difusa) * (0.35 + 0.65 * oclusao);',
+    '    cor += borda * base * 1.3;',
+    '    cor += pow(clamp(dot(reflect(raio, n), luz), 0.0, 1.0), 26.0) * 0.6;',
+    '  }',
+    '',
+    // halo: quanto mais passos o raio gastou sem bater, mais nevoa
+    '  cor += paleta(brilho * 2.0 + p2, vec3(0.4), vec3(0.4), vec3(1.0, 0.8, 0.6), vec3(0.1, 0.3, 0.6))',
+    '         * brilho * brilho * p3;',
+    '',
+    '  cor = pow(clamp(cor, 0.0, 1.0), vec3(0.4545));',
+    '  corFinal = vec4(cor, 1.0);',
+    '}'
+  ].join('\n');
+
+  // -------------------------------------------------------------------
+  // 2. Tunel infinito: coordenadas polares e uma textura procedural.
+  // -------------------------------------------------------------------
+  var TUNEL = CABECALHO + [
+    'float ruido(vec2 p) {',
+    '  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);',
+    '}',
+    '',
+    'float suave(vec2 p) {',
+    '  vec2 i = floor(p);',
+    '  vec2 f = fract(p);',
+    '  f = f * f * (3.0 - 2.0 * f);',
+    '  return mix(mix(ruido(i), ruido(i + vec2(1.0, 0.0)), f.x),',
+    '             mix(ruido(i + vec2(0.0, 1.0)), ruido(i + vec2(1.0, 1.0)), f.x), f.y);',
+    '}',
+    '',
+    'float fbm(vec2 p) {',
+    '  float v = 0.0;',
+    '  float a = 0.5;',
+    '  for (int i = 0; i < 5; i++) { v += a * suave(p); p *= 2.02; a *= 0.5; }',
+    '  return v;',
+    '}',
+    '',
+    'void main() {',
+    '  vec2 uv = (gl_FragCoord.xy * 2.0 - resolucao) / resolucao.y;',
+    '',
+    // o arraste desloca o centro do tunel, como se a camera olhasse de lado
+    '  uv += vec2(camera.x, camera.y) * 0.3;',
+    '',
+    '  float r = length(uv);',
+    '  float a = atan(uv.y, uv.x);',
+    '',
+    // a deformacao poligonal transforma o cilindro em um duto de p4 lados
+    '  float lados = max(3.0, floor(p4));',
+    '  float poligono = cos(PI / lados) / cos(mod(a, 2.0 * PI / lados) - PI / lados);',
+    '  r *= mix(1.0, poligono, p5);',
+    '',
+    '  float profundidade = 1.0 / max(r, 0.0001);',
+    '  float z = profundidade * 0.34 + tempo * 0.9;',
+    '',
+    // O ruido e amostrado sobre um circulo do plano, e nao sobre o angulo
+    // cru: assim a textura fecha sozinha e o duto nao ganha uma costura
+    // visivel em a = PI. O circulo desliza para o fundo conforme z cresce.
+    '  vec2 tuv = vec2(cos(a), sin(a)) * p3 + vec2(0.0, z);',
+    '',
+    '  float padrao = fbm(tuv * p1);',
+    '  padrao = pow(clamp(padrao, 0.0, 1.0), 1.5);',
+    '',
+    // aneis luminosos correndo pelo duto
+    '  float aneis = smoothstep(0.76, 1.0, sin(profundidade * 4.0 - tempo * 3.0) * 0.5 + 0.5);',
+    '',
+    '  vec3 cor = paleta(padrao * 0.8 + profundidade * 0.05 + tempo * 0.04 + p2,',
+    '    vec3(0.28, 0.24, 0.38), vec3(0.42, 0.38, 0.5), vec3(1.0, 0.9, 0.72), vec3(0.08, 0.35, 0.62));',
+    '',
+    '  cor *= 0.28 + padrao * 1.7;',                 // contraste: o vazio fica escuro
+    '  cor += aneis * vec3(0.4, 0.82, 1.0) * 0.85;',
+    '  cor *= smoothstep(0.0, 0.3, r);',             // escurece a boca do tunel
+    '  cor *= 1.0 - smoothstep(1.0, 2.6, r) * 0.6;',
+    '  cor = cor / (1.0 + cor);',                    // compressao de faixa
+    '  cor = pow(clamp(cor, 0.0, 1.0), vec3(0.4545));',
+    '  corFinal = vec4(cor, 1.0);',
+    '}'
+  ].join('\n');
+
+  // -------------------------------------------------------------------
+  // 3. Metaballs: esferas fundidas por uniao suave, com reflexo.
+  // -------------------------------------------------------------------
+  var METABALLS = CABECALHO + [
+    'float uniaoSuave(float a, float b, float k) {',
+    '  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);',
+    '  return mix(b, a, h) - k * h * (1.0 - h);',
+    '}',
+    '',
+    'float cena(vec3 p) {',
+    '  float d = 1e10;',
+    '  int n = int(p4);',
+    '  for (int i = 0; i < 9; i++) {',
+    '    if (i >= n) break;',
+    '    float f = float(i);',
+    '    vec3 c = vec3(',
+    '      sin(tempo * 0.7 + f * 2.1) * 1.05,',
+    '      cos(tempo * 0.53 + f * 1.7) * 0.85,',
+    '      sin(tempo * 0.61 + f * 3.3) * 1.05);',
+    '    d = uniaoSuave(d, length(p - c) - p2, p1);',
+    '  }',
+    // o chao devolve um reflexo difuso por baixo
+    '  d = uniaoSuave(d, p.y + 1.55, 0.55);',
+    '  return d;',
+    '}',
+    '',
+    'vec3 normal(vec3 p) {',
+    '  vec2 e = vec2(0.0015, 0.0);',
+    '  return normalize(vec3(',
+    '    cena(p + e.xyy) - cena(p - e.xyy),',
+    '    cena(p + e.yxy) - cena(p - e.yxy),',
+    '    cena(p + e.yyx) - cena(p - e.yyx)));',
+    '}',
+    '',
+    'vec3 ceu(vec3 d) {',
+    '  float t = clamp(d.y * 0.5 + 0.5, 0.0, 1.0);',
+    '  vec3 c = mix(vec3(0.015, 0.015, 0.035), vec3(0.07, 0.11, 0.3), pow(t, 0.8));',
+    '  c += pow(clamp(dot(d, normalize(vec3(0.6, 0.8, 0.3))), 0.0, 1.0), 60.0) * vec3(1.0, 0.9, 0.72) * 2.2;',
+    '  return c;',
+    '}',
+    '',
+    'void main() {',
+    '  vec2 uv = (gl_FragCoord.xy * 2.0 - resolucao) / resolucao.y;',
+    '',
+    '  float giroH = tempo * 0.12 + camera.x;',
+    '  float giroV = clamp(camera.y * 0.7 + 0.12, -0.9, 1.0);',
+    '  vec3 origem = vec3(sin(giroH) * cos(giroV), sin(giroV), cos(giroH) * cos(giroV)) * 4.6;',
+    '  vec3 frente = normalize(-origem);',
+    '  vec3 direita = normalize(cross(vec3(0.0, 1.0, 0.0), frente));',
+    '  vec3 cima = cross(frente, direita);',
+    '  vec3 raio = normalize(uv.x * direita + uv.y * cima + 1.6 * frente);',
+    '',
+    '  float t = 0.0;',
+    '  bool bateu = false;',
+    '  for (int i = 0; i < 96; i++) {',
+    '    vec3 p = origem + raio * t;',
+    '    float d = cena(p);',
+    '    if (d < 0.001) { bateu = true; break; }',
+    '    if (t > 16.0) break;',
+    '    t += d;',
+    '  }',
+    '',
+    '  vec3 cor = ceu(raio);',
+    '',
+    '  if (bateu) {',
+    '    vec3 p = origem + raio * t;',
+    '    vec3 n = normal(p);',
+    '    vec3 luz = normalize(vec3(0.6, 0.8, 0.3));',
+    '',
+    '    float difusa = clamp(dot(n, luz), 0.0, 1.0);',
+    '    float fresnel = pow(1.0 - clamp(dot(n, -raio), 0.0, 1.0), 4.0);',
+    '    vec3 refletido = reflect(raio, n);',
+    '',
+    // O chao nao entra na paleta das esferas: ele fica escuro e espelhado,
+    // para as bolhas se destacarem em vez de sumirem em um arco-iris.
+    '    float ehChao = smoothstep(-1.05, -1.42, p.y);',
+    '    vec3 corEsfera = paleta(p.y * 0.24 + length(p.xz) * 0.14 + p3,',
+    '      vec3(0.5), vec3(0.5), vec3(1.0, 1.0, 0.6), vec3(0.0, 0.25, 0.55));',
+    '    vec3 base = mix(corEsfera, vec3(0.035, 0.04, 0.07), ehChao);',
+    '',
+    // sombra suave: uma segunda marcha curta na direcao da luz
+    '    float sombra = 1.0;',
+    '    float ts = 0.06;',
+    '    for (int i = 0; i < 22; i++) {',
+    '      float h = cena(p + luz * ts);',
+    '      sombra = min(sombra, 12.0 * h / ts);',
+    '      ts += clamp(h, 0.02, 0.28);',
+    '      if (sombra < 0.01 || ts > 5.0) break;',
+    '    }',
+    '    sombra = clamp(sombra, 0.0, 1.0);',
+    '',
+    '    cor = base * (0.12 + 0.95 * difusa * sombra);',
+    // o chao reflete mais do que as esferas, o que devolve as bolhas no piso
+    '    float forcaReflexo = p5 * mix(1.0, 2.6, ehChao);',
+    '    cor += ceu(refletido) * mix(fresnel, 0.5, ehChao) * forcaReflexo;',
+    '    cor += pow(clamp(dot(refletido, luz), 0.0, 1.0), 48.0) * sombra * 1.1;',
+    '    cor = mix(cor, ceu(raio), clamp(t / 16.0, 0.0, 1.0) * 0.6);',
+    '  }',
+    '',
+    '  cor = cor / (1.0 + cor);',
+    '  cor = pow(clamp(cor, 0.0, 1.0), vec3(0.4545));',
+    '  corFinal = vec4(cor, 1.0);',
+    '}'
+  ].join('\n');
+
+  // -------------------------------------------------------------------
+  // 4. Oceano: campo de altura somando ondas, com ceu e reflexo Fresnel.
+  // -------------------------------------------------------------------
+  var OCEANO = CABECALHO + [
+    'float onda(vec2 p) {',
+    '  float h = 0.0;',
+    '  float amplitude = p2;',
+    '  float frequencia = p1;',
+    '  vec2 dir = vec2(1.0, 0.6);',
+    '  for (int i = 0; i < 6; i++) {',
+    '    h += sin(dot(p, dir) * frequencia + tempo * (1.1 + float(i) * 0.27)) * amplitude;',
+    '    dir = giro(2.4) * dir;',
+    '    frequencia *= 1.72;',
+    '    amplitude *= 0.62;',
+    '  }',
+    '  return h;',
+    '}',
+    '',
+    'vec3 normalDaAgua(vec2 p) {',
+    '  float e = 0.06;',
+    '  float h = onda(p);',
+    '  return normalize(vec3(h - onda(p + vec2(e, 0.0)), e * 1.4, h - onda(p + vec2(0.0, e))));',
+    '}',
+    '',
+    'vec3 ceu(vec3 d, vec3 sol) {',
+    '  float alto = clamp(d.y, 0.0, 1.0);',
+    '  vec3 c = mix(vec3(0.42, 0.28, 0.26), vec3(0.05, 0.13, 0.4), pow(alto, 0.45));',
+    '  float cosSol = clamp(dot(d, sol), 0.0, 1.0);',
+    '  c += vec3(1.0, 0.78, 0.5) * (pow(cosSol, 900.0) * 22.0 + pow(cosSol, 14.0) * 0.5);',
+    '  return c;',
+    '}',
+    '',
+    // Altura assinada do raio em relacao a superficie: positiva acima da
+    // agua, negativa abaixo. E o que a busca por posicao falsa usa.
+    'float acima(vec3 origem, vec3 raio, float t) {',
+    '  vec3 p = origem + raio * t;',
+    '  return p.y - onda(p.xz);',
+    '}',
+    '',
+    'void main() {',
+    '  vec2 uv = (gl_FragCoord.xy * 2.0 - resolucao) / resolucao.y;',
+    '',
+    '  float giroH = camera.x * 0.7 + tempo * 0.02;',
+    '  float alturaOlho = 1.6 + p4;',
+    '  vec3 origem = vec3(0.0, alturaOlho, tempo * p3);',
+    '',
+    '  vec3 frente = normalize(vec3(sin(giroH), clamp(camera.y * 0.4 - 0.1, -0.55, 0.25), cos(giroH)));',
+    '  vec3 direita = normalize(cross(vec3(0.0, 1.0, 0.0), frente));',
+    '  vec3 cima = cross(frente, direita);',
+    '  vec3 raio = normalize(uv.x * direita + uv.y * cima + 1.5 * frente);',
+    '',
+    '  vec3 sol = normalize(vec3(0.32, 0.14, 0.94));',
+    '  float LONGE = 90.0;',
+    '',
+    '  float hLonge = acima(origem, raio, LONGE);',
+    '',
+    // Raio subindo, ou que nunca cruza a superficie: e ceu, e acabou.
+    '  if (raio.y > -0.005 || hLonge > 0.0) {',
+    '    vec3 c = ceu(raio, sol);',
+    '    c = c / (1.0 + c);',
+    '    corFinal = vec4(pow(clamp(c, 0.0, 1.0), vec3(0.4545)), 1.0);',
+    '    return;',
+    '  }',
+    '',
+    // Posicao falsa entre o olho e o ponto distante: converge em poucas
+    // passadas e nao deixa o campo de altura serrilhar como a marcha fixa.
+    '  float tPerto = 0.0;',
+    '  float tLonge = LONGE;',
+    '  float hPerto = acima(origem, raio, tPerto);',
+    '  float t = tLonge;',
+    '',
+    '  for (int i = 0; i < 12; i++) {',
+    '    t = mix(tPerto, tLonge, hPerto / max(1e-5, hPerto - hLonge));',
+    '    float h = acima(origem, raio, t);',
+    '    if (h < 0.0) { tLonge = t; hLonge = h; } else { tPerto = t; hPerto = h; }',
+    '  }',
+    '',
+    '  vec3 p = origem + raio * t;',
+    '  vec3 n = normalDaAgua(p.xz);',
+    // Longe, a onda vira menor que um pixel: achatar a normal com a
+    // distancia evita o formigueiro no horizonte.
+    '  n = normalize(mix(n, vec3(0.0, 1.0, 0.0), clamp(t / 45.0, 0.0, 1.0)));',
+    '',
+    '  vec3 refletido = reflect(raio, n);',
+    '  refletido.y = abs(refletido.y);',
+    '',
+    '  float fresnel = 0.02 + 0.98 * pow(1.0 - clamp(dot(n, -raio), 0.0, 1.0), 5.0);',
+    '  vec3 fundo = mix(vec3(0.006, 0.035, 0.075), vec3(0.02, 0.12, 0.22), clamp(n.y, 0.0, 1.0));',
+    '',
+    '  vec3 cor = mix(fundo, ceu(refletido, sol), clamp(fresnel * p5, 0.0, 1.0));',
+    '  cor += pow(clamp(dot(refletido, sol), 0.0, 1.0), 220.0) * vec3(1.0, 0.86, 0.6) * 3.0;',
+    '',
+    // espuma nas cristas, esmaecida com a distancia junto com a normal
+    '  float crista = smoothstep(p2 * 0.7, p2 * 1.08, onda(p.xz));',
+    '  cor = mix(cor, vec3(0.9, 0.94, 1.0), crista * 0.3 * (1.0 - clamp(t / 45.0, 0.0, 1.0)));',
+    '',
+    // nevoa ate o horizonte, para o mar fechar no ceu sem costura
+    '  cor = mix(cor, ceu(vec3(raio.x, 0.015, raio.z), sol), clamp(t / LONGE, 0.0, 1.0));',
+    '',
+    '  cor = cor / (1.0 + cor);',
+    '  cor = pow(clamp(cor, 0.0, 1.0), vec3(0.4545));',
+    '  corFinal = vec4(cor, 1.0);',
+    '}'
+  ].join('\n');
+
+  // ====================================================================
+  // Catalogo de cenas.
+  //
+  // Cada cena declara os seus controles. O painel do HTML nasce dessa
+  // lista com um v-for, entao adicionar um slider aqui e suficiente:
+  // nao existe nenhum codigo de interface para escrever.
+  // ====================================================================
+  function cenasPadrao() {
+    return [
+      {
+        id: 'mandelbulb',
+        nome: 'Mandelbulb',
+        cor: '#9B7BFF',
+        descricao: 'Fractal 3D marchado por distancia. A potencia muda a topologia inteira do solido.',
+        fonte: MANDELBULB,
+        controles: [
+          { chave: 'p1', rotulo: 'Potencia', min: 2, max: 12, passo: 0.05, valor: 8, sufixo: '' },
+          { chave: 'p2', rotulo: 'Matiz', min: 0, max: 1, passo: 0.01, valor: 0.12, sufixo: '' },
+          { chave: 'p3', rotulo: 'Halo', min: 0, max: 2, passo: 0.02, valor: 0.7, sufixo: '' },
+          { chave: 'p4', rotulo: 'Aproximacao', min: 0, max: 1.6, passo: 0.02, valor: 0.6, sufixo: '' },
+          { chave: 'p5', rotulo: 'Pulsacao', min: 0, max: 4, passo: 0.05, valor: 1.2, sufixo: '' }
+        ]
+      },
+      {
+        id: 'tunel',
+        nome: 'Tunel infinito',
+        cor: '#2ED9A5',
+        descricao: 'Coordenadas polares viram profundidade. O padrao e ruido fractal correndo pelo duto.',
+        fonte: TUNEL,
+        controles: [
+          { chave: 'p1', rotulo: 'Detalhe', min: 0.5, max: 6, passo: 0.05, valor: 2.4, sufixo: '' },
+          { chave: 'p2', rotulo: 'Matiz', min: 0, max: 1, passo: 0.01, valor: 0.35, sufixo: '' },
+          { chave: 'p3', rotulo: 'Enrolamento', min: 0.4, max: 5, passo: 0.05, valor: 1.6, sufixo: '' },
+          { chave: 'p4', rotulo: 'Lados', min: 3, max: 12, passo: 1, valor: 6, sufixo: '' },
+          { chave: 'p5', rotulo: 'Poligonal', min: 0, max: 1, passo: 0.01, valor: 0.55, sufixo: '' }
+        ]
+      },
+      {
+        id: 'metaballs',
+        nome: 'Metaballs',
+        cor: '#FF6D3E',
+        descricao: 'Esferas fundidas por uniao suave, com sombra macia, reflexo do ceu e Fresnel.',
+        fonte: METABALLS,
+        controles: [
+          { chave: 'p1', rotulo: 'Fusao', min: 0.05, max: 1.4, passo: 0.01, valor: 0.55, sufixo: '' },
+          { chave: 'p2', rotulo: 'Raio', min: 0.2, max: 1.1, passo: 0.01, valor: 0.55, sufixo: '' },
+          { chave: 'p3', rotulo: 'Matiz', min: 0, max: 1, passo: 0.01, valor: 0.55, sufixo: '' },
+          { chave: 'p4', rotulo: 'Quantidade', min: 1, max: 9, passo: 1, valor: 5, sufixo: '' },
+          { chave: 'p5', rotulo: 'Reflexo', min: 0, max: 1.4, passo: 0.02, valor: 0.8, sufixo: '' }
+        ]
+      },
+      {
+        id: 'oceano',
+        nome: 'Oceano',
+        cor: '#38bdf8',
+        descricao: 'Campo de altura somando seis ondas, com espuma nas cristas e sol refletido na agua.',
+        fonte: OCEANO,
+        controles: [
+          { chave: 'p1', rotulo: 'Frequencia', min: 0.2, max: 2.5, passo: 0.02, valor: 0.8, sufixo: '' },
+          { chave: 'p2', rotulo: 'Altura', min: 0.02, max: 0.5, passo: 0.01, valor: 0.2, sufixo: '' },
+          { chave: 'p3', rotulo: 'Avanco', min: 0, max: 6, passo: 0.1, valor: 2.2, sufixo: '' },
+          { chave: 'p4', rotulo: 'Altura do olho', min: 0, max: 6, passo: 0.1, valor: 1.2, sufixo: '' },
+          { chave: 'p5', rotulo: 'Reflexo', min: 0, max: 1.6, passo: 0.02, valor: 1, sufixo: '' }
+        ]
+      }
+    ];
+  }
+
+  V.component('galeria-shaders', {
+
+    state: function () {
+      return {
+        cenas: cenasPadrao(),
+        cenaAtual: 'mandelbulb',
+        escalaRender: 0.85,
+        velocidade: 1,
+        pausado: false,
+        suportado: true,
+        erro: '',
+        fps: 0,
+        larguraReal: 0,
+        alturaReal: 0
+      };
+    },
+
+    computed: {
+      // A cena ativa. Todo o painel de controles pende deste objeto,
+      // entao trocar de aba remonta a interface inteira sozinha.
+      cena: function () {
+        for (var i = 0; i < this.cenas.length; i++) {
+          if (this.cenas[i].id === this.cenaAtual) return this.cenas[i];
+        }
+        return this.cenas[0];
+      },
+
+      descricaoCena: function () {
+        if (!this.suportado) return 'Este navegador nao tem WebGL2.';
+        return 'Cena 3D: ' + this.cena.nome + '. ' + this.cena.descricao;
+      }
+    },
+
+    methods: {
+
+      trocarCena: function (id) {
+        if (id === this.cenaAtual) return;
+        this.cenaAtual = id;
+        this.erro = '';
+        this.prepararPrograma();
+      },
+
+      alternarPausa: function () {
+        this.pausado = !this.pausado;
+      },
+
+      restaurar: function () {
+        // Recria o catalogo inteiro com os valores originais. Como as
+        // cenas sao estado reativo, o painel se redesenha sozinho.
+        var atual = this.cenaAtual;
+        this.cenas = cenasPadrao();
+        this.cenaAtual = atual;
+        this.escalaRender = 0.85;
+        this.velocidade = 1;
+        this.pausado = false;
+      },
+
+      // ---------------- WebGL ----------------
+
+      compilar: function (gl, tipo, fonte) {
+        var s = gl.createShader(tipo);
+        gl.shaderSource(s, fonte);
+        gl.compileShader(s);
+        if (gl.getShaderParameter(s, gl.COMPILE_STATUS)) return s;
+        var log = gl.getShaderInfoLog(s) || 'falha desconhecida ao compilar';
+        gl.deleteShader(s);
+        throw new Error(log);
+      },
+
+      // Compila o programa da cena atual, ou guarda o erro do driver no
+      // estado para a tela de fallback mostrar o relatorio.
+      prepararPrograma: function () {
+        var g = this.gpu;
+        if (!g || !g.gl) return;
+
+        var id = this.cenaAtual;
+        if (g.programas[id]) { g.atual = g.programas[id]; return; }
+
+        var gl = g.gl;
+        try {
+          var vs = this.compilar(gl, gl.VERTEX_SHADER, VERTICE);
+          var fs = this.compilar(gl, gl.FRAGMENT_SHADER, this.cena.fonte);
+
+          var prog = gl.createProgram();
+          gl.attachShader(prog, vs);
+          gl.attachShader(prog, fs);
+          gl.bindAttribLocation(prog, 0, 'posicao');
+          gl.linkProgram(prog);
+          gl.deleteShader(vs);
+          gl.deleteShader(fs);
+
+          if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+            throw new Error(gl.getProgramInfoLog(prog) || 'falha ao ligar o programa');
+          }
+
+          var pacote = {
+            programa: prog,
+            uniformes: {
+              resolucao: gl.getUniformLocation(prog, 'resolucao'),
+              tempo: gl.getUniformLocation(prog, 'tempo'),
+              camera: gl.getUniformLocation(prog, 'camera'),
+              p1: gl.getUniformLocation(prog, 'p1'),
+              p2: gl.getUniformLocation(prog, 'p2'),
+              p3: gl.getUniformLocation(prog, 'p3'),
+              p4: gl.getUniformLocation(prog, 'p4'),
+              p5: gl.getUniformLocation(prog, 'p5')
+            }
+          };
+
+          g.programas[id] = pacote;
+          g.atual = pacote;
+          this.erro = '';
+        } catch (e) {
+          this.erro = String(e && e.message ? e.message : e).trim();
+          g.atual = null;
+        }
+      },
+
+      redimensionar: function () {
+        var g = this.gpu;
+        if (!g || !g.gl) return;
+        var canvas = g.canvas;
+        var caixa = canvas.getBoundingClientRect();
+        if (!caixa.width) return;
+
+        // A escala de resolucao vem do slider: e o controle honesto de
+        // desempenho em raymarching, onde o custo e por pixel.
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var escala = Number(this.escalaRender) || 1;
+        var larg = Math.max(64, Math.round(caixa.width * dpr * escala));
+        var alt = Math.max(64, Math.round(caixa.height * dpr * escala));
+
+        if (canvas.width === larg && canvas.height === alt) return;
+        canvas.width = larg;
+        canvas.height = alt;
+        this.larguraReal = larg;
+        this.alturaReal = alt;
+        g.gl.viewport(0, 0, larg, alt);
+      },
+
+      quadro: function (agora) {
+        var g = this.gpu;
+        if (!g || g.morto) return;
+        g.raf = requestAnimationFrame(g.tick);
+
+        if (!g.ultimo) g.ultimo = agora;
+        var dt = (agora - g.ultimo) / 1000;
+        g.ultimo = agora;
+        if (dt > 0.1) dt = 0.1;
+
+        if (!this.pausado) g.tempo += dt * (Number(this.velocidade) || 0);
+
+        // Contador de quadros: escreve no estado no maximo duas vezes
+        // por segundo, para o HUD nao virar gargalo.
+        g.quadros++;
+        g.acumulado += dt;
+        if (g.acumulado >= 0.5) {
+          this.fps = Math.round(g.quadros / g.acumulado);
+          g.quadros = 0;
+          g.acumulado = 0;
+        }
+
+        this.redimensionar();
+        this.desenhar();
+      },
+
+      desenhar: function () {
+        var g = this.gpu;
+        var gl = g.gl;
+        var pacote = g.atual;
+
+        if (!pacote) {
+          gl.clearColor(0.02, 0.02, 0.06, 1);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          return;
+        }
+
+        gl.useProgram(pacote.programa);
+        var u = pacote.uniformes;
+
+        gl.uniform2f(u.resolucao, g.canvas.width, g.canvas.height);
+        gl.uniform1f(u.tempo, g.tempo);
+        gl.uniform2f(u.camera, g.camera.x, g.camera.y);
+
+        // Os cinco parametros saem direto da lista de controles da cena,
+        // que e o mesmo objeto que os sliders escrevem via v-model.
+        var controles = this.cena.controles;
+        for (var i = 0; i < controles.length; i++) {
+          var c = controles[i];
+          var loc = u[c.chave];
+          if (loc) gl.uniform1f(loc, Number(c.valor) || 0);
+        }
+
+        gl.bindVertexArray(g.vao);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
+    },
+
+    mounted: function () {
+      var self = this;
+      var canvas = this.$refs.lona;
+
+      var gl = null;
+      try {
+        gl = canvas.getContext('webgl2', {
+          antialias: false,
+          alpha: false,
+          powerPreference: 'high-performance'
+        });
+      } catch (e) {
+        gl = null;
+      }
+
+      // ------------------------------------------------------------
+      // Fallback obrigatorio: sem WebGL2 a demo diz o que aconteceu em
+      // vez de deixar um canvas preto na tela.
+      // ------------------------------------------------------------
+      if (!gl) {
+        this.suportado = false;
+        return;
+      }
+
+      // Estado de GPU fora do proxy reativo: sao objetos nativos do
+      // WebGL, que nao devem ser embrulhados em proxy nem observados.
+      this.gpu = {
+        canvas: canvas,
+        gl: gl,
+        vao: null,
+        programas: {},
+        atual: null,
+        raf: 0,
+        ultimo: 0,
+        tempo: 0,
+        quadros: 0,
+        acumulado: 0,
+        morto: false,
+        camera: { x: 0, y: 0 },
+        tick: function (t) { self.quadro(t); }
+      };
+
+      // Um quad de tela cheia: dois triangulos em faixa, quatro vertices.
+      var vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      this.gpu.vao = vao;
+
+      this.prepararPrograma();
+      this.redimensionar();
+
+      // ---- arraste para girar a camera ----
+      var palco = this.$el.querySelector('.sh-palco');
+      var arrastando = null;
+
+      var comecou = function (e) {
+        arrastando = { x: e.clientX, y: e.clientY, cx: self.gpu.camera.x, cy: self.gpu.camera.y };
+        if (palco.setPointerCapture) {
+          try { palco.setPointerCapture(e.pointerId); } catch (err) { /* ignora */ }
+        }
+      };
+
+      var moveu = function (e) {
+        if (!arrastando) return;
+        var caixa = palco.getBoundingClientRect();
+        self.gpu.camera.x = arrastando.cx + (e.clientX - arrastando.x) / caixa.width * 4.0;
+        self.gpu.camera.y = arrastando.cy - (e.clientY - arrastando.y) / caixa.height * 2.4;
+      };
+
+      var terminou = function () { arrastando = null; };
+
+      palco.addEventListener('pointerdown', comecou);
+      palco.addEventListener('pointermove', moveu);
+      palco.addEventListener('pointerup', terminou);
+      palco.addEventListener('pointercancel', terminou);
+
+      // Teclado: as setas tambem giram, para nao depender do mouse.
+      var aoPressionar = function (e) {
+        if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+        var passo = 0.18;
+        if (e.key === 'ArrowLeft') { self.gpu.camera.x -= passo; e.preventDefault(); }
+        if (e.key === 'ArrowRight') { self.gpu.camera.x += passo; e.preventDefault(); }
+        if (e.key === 'ArrowUp') { self.gpu.camera.y += passo; e.preventDefault(); }
+        if (e.key === 'ArrowDown') { self.gpu.camera.y -= passo; e.preventDefault(); }
+        if (e.key === ' ' || e.key === 'Spacebar') { self.alternarPausa(); e.preventDefault(); }
+      };
+      window.addEventListener('keydown', aoPressionar);
+
+      // ---- redimensionamento e visibilidade ----
+      var aoRedimensionar = function () { self.redimensionar(); };
+      window.addEventListener('resize', aoRedimensionar);
+
+      var observador = null;
+      if (window.ResizeObserver) {
+        observador = new ResizeObserver(aoRedimensionar);
+        observador.observe(palco);
+      }
+
+      // Aba oculta: nada de queimar GPU de graca.
+      var aoTrocarVisibilidade = function () {
+        if (document.hidden) self.pausado = true;
+      };
+      document.addEventListener('visibilitychange', aoTrocarVisibilidade);
+
+      this.gpu.raf = requestAnimationFrame(this.gpu.tick);
+
+      // ---- limpeza: nada de vazar loop nem recurso de GPU ----
+      this.limpar = function () {
+        var g = self.gpu;
+        if (!g || g.morto) return;
+        g.morto = true;
+        cancelAnimationFrame(g.raf);
+        window.removeEventListener('keydown', aoPressionar);
+        window.removeEventListener('resize', aoRedimensionar);
+        document.removeEventListener('visibilitychange', aoTrocarVisibilidade);
+        palco.removeEventListener('pointerdown', comecou);
+        palco.removeEventListener('pointermove', moveu);
+        palco.removeEventListener('pointerup', terminou);
+        palco.removeEventListener('pointercancel', terminou);
+        if (observador) observador.disconnect();
+
+        for (var id in g.programas) {
+          if (Object.prototype.hasOwnProperty.call(g.programas, id)) {
+            g.gl.deleteProgram(g.programas[id].programa);
+          }
+        }
+        if (g.vao) g.gl.deleteVertexArray(g.vao);
+      };
+
+      window.addEventListener('pagehide', this.limpar);
+    },
+
+    beforeUnmount: function () {
+      if (this.limpar) this.limpar();
+    }
+  });
+
+  V.theme.init();
+  V.start();
+  document.body.classList.add('sh-pronto');
+});
+</script>
+
+</body>
+</html>

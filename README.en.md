@@ -451,8 +451,8 @@ The long version, including module boundaries and the scope model, is in
 
 The benchmarks are reproducible: pinned dependency versions, production builds, a published
 methodology and a recorded environment. The full write-up — including the cases where Voodoo
-*loses* — is in [`benchmarks/README.md`](benchmarks/README.md) and
-[`PERFORMANCE_REPORT.md`](PERFORMANCE_REPORT.md).
+*loses* — is in [`benchmarks/README.md`](benchmarks/README.md), along with the methodology, the
+environment and how to reproduce every measurement.
 
 Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
 buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.

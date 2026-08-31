@@ -1,0 +1,398 @@
+{
+  "env": {
+    "timestamp": "2026-08-31T18:14:21.329Z",
+    "voodooVersion": "0.1.0",
+    "commit": "623202178b3d137941f7a08ac246fe447a35701e",
+    "commitShort": "6232021",
+    "branch": "main",
+    "dirty": true,
+    "node": "v24.16.0",
+    "v8": "13.6.233.17-node.49",
+    "platform": "win32 10.0.19045",
+    "arch": "x64",
+    "cpuModel": "Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz",
+    "cpuCores": 4,
+    "cpuSpeedMHz": 3093,
+    "totalMemMB": 16268,
+    "freeMemMB": 6697,
+    "loadAvg": [
+      0,
+      0,
+      0
+    ],
+    "jsdom": "25.0.1",
+    "gcExposed": false,
+    "buildMode": "packages/voodoojs/dist (tsup output)",
+    "nodeFlags": [],
+    "monorepoVersion": "0.1.0"
+  },
+  "ran": true,
+  "browser": [
+    {
+      "name": "voodoo.core.js",
+      "raw": 270983,
+      "gzip": 65022,
+      "brotli": 54739,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.core.js"
+    },
+    {
+      "name": "voodoo.core.min.js",
+      "raw": 130395,
+      "gzip": 45182,
+      "brotli": 39694,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.core.min.js"
+    },
+    {
+      "name": "voodoo.js",
+      "raw": 495535,
+      "gzip": 115379,
+      "brotli": 93292,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.js"
+    },
+    {
+      "name": "voodoo.min.js",
+      "raw": 255688,
+      "gzip": 82745,
+      "brotli": 70264,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.min.js"
+    },
+    {
+      "name": "voodoo.full.js",
+      "raw": 767891,
+      "gzip": 174869,
+      "brotli": 138857,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.full.js"
+    },
+    {
+      "name": "voodoo.full.min.js",
+      "raw": 432058,
+      "gzip": 130540,
+      "brotli": 108842,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\voodoo.full.min.js"
+    }
+  ],
+  "modules": [
+    {
+      "name": "index.js",
+      "raw": 256860,
+      "gzip": 59442,
+      "brotli": 50292,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\index.js"
+    },
+    {
+      "name": "index.cjs",
+      "raw": 713985,
+      "gzip": 169946,
+      "brotli": 135849,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\index.cjs"
+    },
+    {
+      "name": "essential.js",
+      "raw": 1148,
+      "gzip": 570,
+      "brotli": 462,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\essential.js"
+    },
+    {
+      "name": "essential.cjs",
+      "raw": 453551,
+      "gzip": 110892,
+      "brotli": 90069,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\essential.cjs"
+    },
+    {
+      "name": "reactivity.js",
+      "raw": 516,
+      "gzip": 315,
+      "brotli": 263,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\reactivity.js"
+    },
+    {
+      "name": "reactivity.cjs",
+      "raw": 19778,
+      "gzip": 5275,
+      "brotli": 4749,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\reactivity.cjs"
+    },
+    {
+      "name": "http.js",
+      "raw": 220,
+      "gzip": 171,
+      "brotli": 128,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\http.js"
+    },
+    {
+      "name": "http.cjs",
+      "raw": 14602,
+      "gzip": 4524,
+      "brotli": 3992,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\http.cjs"
+    },
+    {
+      "name": "utils.js",
+      "raw": 479,
+      "gzip": 313,
+      "brotli": 273,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\utils.js"
+    },
+    {
+      "name": "utils.cjs",
+      "raw": 12772,
+      "gzip": 3982,
+      "brotli": 3540,
+      "file": "C:\\Users\\Hadouken Game Center\\Desktop\\Voodoo.js\\packages\\voodoojs\\dist\\utils.cjs"
+    }
+  ],
+  "missing": [],
+  "composition": {
+    "total": 744243,
+    "modules": [
+      {
+        "module": "directives",
+        "bytes": 175135,
+        "pct": 23.531964694326987
+      },
+      {
+        "module": "ui",
+        "bytes": 159141,
+        "pct": 21.38293541222423
+      },
+      {
+        "module": "devtools",
+        "bytes": 50068,
+        "pct": 6.7273726457622045
+      },
+      {
+        "module": "runtime",
+        "bytes": 48522,
+        "pct": 6.519644793434402
+      },
+      {
+        "module": "charts",
+        "bytes": 45916,
+        "pct": 6.169490341192326
+      },
+      {
+        "module": "forms",
+        "bytes": 45254,
+        "pct": 6.080540898604354
+      },
+      {
+        "module": "dom",
+        "bytes": 42767,
+        "pct": 5.746375847673408
+      },
+      {
+        "module": "motion",
+        "bytes": 37181,
+        "pct": 4.995814539068557
+      },
+      {
+        "module": "parser",
+        "bytes": 26893,
+        "pct": 3.6134703315986845
+      },
+      {
+        "module": "reactivity",
+        "bytes": 21908,
+        "pct": 2.94366221785089
+      },
+      {
+        "module": "router",
+        "bytes": 20640,
+        "pct": 2.773287756821361
+      },
+      {
+        "module": "http",
+        "bytes": 17612,
+        "pct": 2.3664313940473742
+      },
+      {
+        "module": "utils",
+        "bytes": 13343,
+        "pct": 1.7928284176001656
+      },
+      {
+        "module": "sound",
+        "bytes": 12378,
+        "pct": 1.6631664657914147
+      },
+      {
+        "module": "i18n",
+        "bytes": 9925,
+        "pct": 1.333569815235078
+      },
+      {
+        "module": "entradas (src/*.ts)",
+        "bytes": 8376,
+        "pct": 1.1254388687565755
+      },
+      {
+        "module": "storage",
+        "bytes": 6964,
+        "pct": 0.9357158884934087
+      },
+      {
+        "module": "store",
+        "bytes": 2220,
+        "pct": 0.2982896715185766
+      }
+    ],
+    "mappedSources": 45
+  },
+  "treeShaking": {
+    "ran": true,
+    "fixtures": [
+      {
+        "fixture": "main-entry",
+        "bytes": 419033,
+        "gzip": 126282,
+        "brotli": 105251,
+        "modules": [
+          {
+            "module": "charts",
+            "found": [
+              "sparkline",
+              "donut"
+            ]
+          },
+          {
+            "module": "router",
+            "found": [
+              "popstate",
+              "hashchange",
+              "pushState"
+            ]
+          },
+          {
+            "module": "ui (toast/modal/dialog)",
+            "found": [
+              "aria-modal"
+            ]
+          },
+          {
+            "module": "motion",
+            "found": [
+              "cubic-bezier"
+            ]
+          },
+          {
+            "module": "http",
+            "found": [
+              "XMLHttpRequest",
+              "application/json"
+            ]
+          },
+          {
+            "module": "directives",
+            "found": [
+              "v-cloak",
+              "else-if",
+              "prevent"
+            ]
+          },
+          {
+            "module": "parser",
+            "found": [
+              "Token inesperado",
+              "Chave de objeto invalida"
+            ]
+          },
+          {
+            "module": "i18n",
+            "found": [
+              "Intl.NumberFormat"
+            ]
+          },
+          {
+            "module": "forms/validation",
+            "found": [
+              "minlength",
+              "obrigatorio"
+            ]
+          },
+          {
+            "module": "devtools",
+            "found": [
+              "xray"
+            ]
+          }
+        ],
+        "excluded": [],
+        "included": [
+          "charts",
+          "router",
+          "ui (toast/modal/dialog)",
+          "motion",
+          "http",
+          "directives",
+          "parser",
+          "i18n",
+          "forms/validation",
+          "devtools"
+        ]
+      },
+      {
+        "fixture": "subpath",
+        "bytes": 5523,
+        "gzip": 2436,
+        "brotli": 2258,
+        "modules": [
+          {
+            "module": "charts",
+            "found": []
+          },
+          {
+            "module": "router",
+            "found": []
+          },
+          {
+            "module": "ui (toast/modal/dialog)",
+            "found": []
+          },
+          {
+            "module": "motion",
+            "found": []
+          },
+          {
+            "module": "http",
+            "found": []
+          },
+          {
+            "module": "directives",
+            "found": []
+          },
+          {
+            "module": "parser",
+            "found": []
+          },
+          {
+            "module": "i18n",
+            "found": []
+          },
+          {
+            "module": "forms/validation",
+            "found": []
+          },
+          {
+            "module": "devtools",
+            "found": []
+          }
+        ],
+        "excluded": [
+          "charts",
+          "router",
+          "ui (toast/modal/dialog)",
+          "motion",
+          "http",
+          "directives",
+          "parser",
+          "i18n",
+          "forms/validation",
+          "devtools"
+        ],
+        "included": []
+      }
+    ]
+  }
+}

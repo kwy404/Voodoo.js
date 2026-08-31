@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tetris com Voodoo.js</title>
+<link rel="icon" href="../../../brand/logo/favicon.svg">
+<link rel="stylesheet" href="../../../design-system/voodoo-ui.css">
+<!-- Bundle completo: reatividade, directives, componentes, stores e som. -->
+<script src="../../../packages/voodoojs/dist/voodoo.full.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Demo: Tetris
+
+     Aqui a divisao entre interface e canvas fica ainda mais nitida do
+     que no Breakout, porque o Tetris tem MUITA interface:
+
+       - placar, linhas, nivel, recorde, proximas quatro pecas, peca
+         guardada, contagem de tetris, menus, pausa e fim de jogo.
+
+     Tudo isso e HTML declarativo. As pecas de pre-visualizacao, por
+     exemplo, sao um `v-for` aninhado desenhando divs de 4x4 celulas,
+     nao um segundo canvas. Ou seja: e o proprio Voodoo redesenhando
+     grade quando o estado muda.
+
+     O tabuleiro em si e canvas, porque sao 200 celulas redesenhadas a
+     cada quadro com particula, fantasma e animacao de limpeza.
+     ================================================================== */
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 520px at 12% -10%, color-mix(in srgb, var(--v-accent) 20%, transparent), transparent 60%),
+      radial-gradient(820px 440px at 92% 6%, color-mix(in srgb, var(--v-primary) 20%, transparent), transparent 60%),
+      var(--v-color-bg);
+  }
+
+  .tt-pagina {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: var(--v-space-6) var(--v-space-4) var(--v-space-12);
+  }
+
+  .tt-app { opacity: 0; }
+  body.tt-pronto .tt-app { opacity: 1; transition: opacity var(--v-duration-slow) var(--v-ease-out); }
+
+  /* ---------- topo ---------- */
+  .tt-topo { display: flex; align-items: center; gap: var(--v-space-3); margin-bottom: var(--v-space-5); }
+
+  .tt-voltar {
+    color: var(--v-text-muted); text-decoration: none; font-size: var(--v-text-sm);
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-full); padding: 4px 12px;
+    transition: color var(--v-duration-fast), border-color var(--v-duration-fast);
+  }
+  .tt-voltar:hover { color: var(--v-text); border-color: var(--v-border-strong); }
+  .tt-voltar:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: 2px; }
+
+  .tt-titulo { margin: 0; font-family: var(--v-font-display); font-size: var(--v-text-xl); letter-spacing: var(--v-tracking-tight); }
+
+  /* ---------- arranjo geral ---------- */
+  .tt-mesa {
+    display: grid;
+    grid-template-columns: minmax(110px, 150px) auto minmax(110px, 150px);
+    gap: var(--v-space-4);
+    justify-content: center;
+    align-items: start;
+  }
+
+  .tt-coluna { display: flex; flex-direction: column; gap: var(--v-space-3); }
+
+  .tt-caixa {
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-md);
+    background: var(--v-surface);
+    padding: 10px;
+  }
+
+  .tt-caixa__rotulo {
+    display: block; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: var(--v-tracking-wide); color: var(--v-text-subtle); margin-bottom: 5px;
+  }
+
+  .tt-caixa__valor {
+    display: block; font-family: var(--v-font-mono); font-size: var(--v-text-xl);
+    font-weight: var(--v-weight-bold); line-height: 1.15;
+  }
+  .tt-caixa--recorde .tt-caixa__valor { color: var(--v-accent); }
+
+  /* ---------- mini pecas em HTML puro ---------- */
+  /* Cada peca de previsao e uma grade 4x4 de <span>. A Voodoo redesenha
+     essas 16 celulas quando a fila muda. Zero canvas aqui. */
+  .tt-mini {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 86px;
+    margin: 0 auto;
+  }
+
+  .tt-mini__celula {
+    border-radius: 2px;
+    background: transparent;
+    transition: background-color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .tt-mini__celula--cheia { box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+
+  .tt-fila { display: flex; flex-direction: column; gap: 8px; }
+  .tt-fila__item { position: relative; }
+  .tt-fila__item--proxima .tt-mini { max-width: 100px; }
+  .tt-fila__item--proxima::after {
+    content: "";
+    position: absolute; inset: -5px; border-radius: var(--v-radius-sm);
+    border: 1px dashed color-mix(in srgb, var(--v-primary) 55%, transparent);
+    pointer-events: none;
+  }
+
+  .tt-guardada--bloqueada { opacity: .35; }
+
+  /* ---------- tabuleiro ---------- */
+  /* O tabuleiro nunca passa da altura util da janela: a largura vem da
+     menor entre a coluna e a altura disponivel. */
+  .tt-palco {
+    position: relative;
+    width: min(100%, calc(66svh * 0.5));
+    margin: 0 auto;
+    aspect-ratio: 1 / 2;
+    border: 1px solid var(--v-border-strong);
+    border-radius: var(--v-radius-lg);
+    background: #05060f;
+    overflow: hidden;
+    box-shadow: var(--v-shadow-lg);
+    touch-action: none;
+  }
+  .tt-tela { display: block; width: 100%; height: 100%; }
+
+  .tt-palco--tremor { animation: tt-tremor 200ms var(--v-ease-out); }
+  @keyframes tt-tremor {
+    0%, 100% { transform: translate3d(0,0,0); }
+    35% { transform: translate3d(0, 5px, 0); }
+    70% { transform: translate3d(0, -3px, 0); }
+  }
+
+  /* ---------- telas sobrepostas ---------- */
+  .tt-tela-cheia {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--v-space-3); padding: var(--v-space-5) var(--v-space-4);
+    text-align: center; color: #f4f5ff;
+    background: color-mix(in srgb, #05060f 84%, transparent);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+
+  .tt-tela-cheia h2 {
+    margin: 0; font-family: var(--v-font-display);
+    font-size: clamp(22px, 5vw, 34px); line-height: 1.1;
+    letter-spacing: var(--v-tracking-tight);
+    background: linear-gradient(100deg, var(--v-accent), var(--v-primary));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tt-tela-cheia p { margin: 0; color: #b9bcd8; font-size: var(--v-text-sm); max-width: 34ch; }
+  .tt-tela-cheia .v-kbd { background: #1a1c30; color: #dfe1ff; border-color: #33365a; }
+
+  .tt-lista-teclas { display: grid; gap: 4px; font-size: 12.5px; color: #9498bd; text-align: left; }
+  .tt-lista-teclas b { color: #dfe1ff; font-weight: var(--v-weight-semibold); }
+
+  .tt-novo-recorde {
+    border: 1px solid var(--v-accent); border-radius: var(--v-radius-full);
+    padding: 3px 14px; font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-semibold); color: var(--v-accent);
+  }
+
+  /* ---------- controles de toque ---------- */
+  .tt-toque { display: none; gap: 6px; margin-top: var(--v-space-3); }
+  .tt-toque .v-btn { flex: 1; height: 52px; font-size: var(--v-text-lg); padding: 0; }
+  @media (pointer: coarse) { .tt-toque { display: flex; } }
+
+  .tt-barra { display: flex; flex-wrap: wrap; gap: var(--v-space-2); align-items: center; margin-top: var(--v-space-4); }
+
+  .tt-ajuda {
+    display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: var(--v-space-4);
+    font-size: var(--v-text-sm); color: var(--v-text-subtle);
+  }
+
+  .tt-nota {
+    margin-top: var(--v-space-5); padding: var(--v-space-4);
+    border: 1px solid var(--v-border); border-left: 3px solid var(--v-accent);
+    border-radius: var(--v-radius-md); background: var(--v-surface);
+    font-size: var(--v-text-sm); color: var(--v-text-muted); line-height: var(--v-leading-relaxed);
+  }
+
+  /* ---------- responsivo ---------- */
+  /* No celular as colunas laterais viram uma faixa horizontal em cima do
+     tabuleiro, e a fila de proximas encolhe de quatro para duas pecas
+     (o v-for corta a lista via computed). */
+  @media (max-width: 720px) {
+    .tt-pagina { padding: var(--v-space-4) var(--v-space-3) var(--v-space-10); }
+    .tt-mesa { grid-template-columns: 1fr; gap: var(--v-space-3); }
+
+    /* As duas colunas laterais viram faixas horizontais compactas, e a
+       fila de proximas sobe para antes do tabuleiro com `order`. */
+    .tt-coluna { flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 6px; }
+    .tt-coluna > * { flex: 1 1 84px; }
+    .tt-mesa > .tt-coluna:last-child { order: -1; }
+
+    .tt-caixa { padding: 6px 8px; }
+    .tt-caixa__rotulo { font-size: 9.5px; margin-bottom: 2px; }
+    .tt-caixa__valor { font-size: var(--v-text-base); }
+
+    .tt-fila { flex-direction: row; }
+    .tt-fila__item { flex: 1; }
+    .tt-mini, .tt-fila__item--proxima .tt-mini { max-width: 46px; }
+
+    .tt-palco { width: min(100%, calc(48svh * 0.5)); }
+    .tt-titulo { font-size: var(--v-text-lg); }
+    .tt-toque .v-btn { height: 46px; }
+    .tt-ajuda { display: none; } /* no celular quem manda sao os botoes */
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tt-app, .tt-palco--tremor, .tt-mini__celula { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<main class="tt-pagina">
+  <section class="tt-app" v-component="jogo-tetris">
+
+    <header class="tt-topo">
+      <a class="tt-voltar" href="../../">&larr; Demos</a>
+      <h1 class="tt-titulo">Tetris</h1>
+      <div class="v-push"></div>
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon" v-mute aria-label="Ligar ou desligar o som">
+        <span aria-hidden="true">♪</span>
+      </button>
+      <button type="button" class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle aria-label="Alternar entre tema claro e escuro">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <div class="tt-mesa">
+
+      <!-- =========================================================
+           Coluna esquerda: placar e peca guardada.
+           Interface pura, lendo o estado do componente.
+           ========================================================= -->
+      <div class="tt-coluna">
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Pontos</span>
+          <strong class="tt-caixa__valor" aria-live="polite">{ pontos }</strong>
+        </div>
+        <div class="tt-caixa tt-caixa--recorde">
+          <span class="tt-caixa__rotulo">Recorde</span>
+          <strong class="tt-caixa__valor">{ recorde }</strong>
+        </div>
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Linhas</span>
+          <strong class="tt-caixa__valor">{ linhas }</strong>
+        </div>
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Nivel</span>
+          <strong class="tt-caixa__valor">{ nivel }</strong>
+        </div>
+
+        <div class="tt-caixa tt-guardada" :class="{ 'tt-guardada--bloqueada': !podeGuardar }">
+          <span class="tt-caixa__rotulo">Guardada (C)</span>
+          <!-- Mini peca em HTML: 16 celulas com a cor vinda do estado. -->
+          <div class="tt-mini" role="img" :aria-label="guardada ? 'Peca guardada: ' + guardada.nome : 'Nenhuma peca guardada'">
+            <span class="tt-mini__celula"
+                  v-for="c in gradeGuardada"
+                  :key="c.i"
+                  :class="{ 'tt-mini__celula--cheia': c.cor }"
+                  :style="{ backgroundColor: c.cor || 'transparent' }"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- =========================================================
+           Centro: o tabuleiro em canvas, com as telas por cima.
+           ========================================================= -->
+      <div>
+        <div class="tt-palco" :class="{ 'tt-palco--tremor': tremendo }">
+          <canvas class="tt-tela" v-ref="tela" role="img" :aria-label="descricaoTela"></canvas>
+
+          <div class="tt-tela-cheia" v-show="estado === 'inicio'">
+            <h2>Tetris</h2>
+            <p>Encaixe as pecas, limpe as linhas e sobreviva a aceleracao.</p>
+            <div class="tt-lista-teclas">
+              <span><b>&larr; &rarr;</b> mover &nbsp; <b>&darr;</b> descer</span>
+              <span><b>&uarr; / X</b> girar &nbsp; <b>Z</b> girar ao contrario</span>
+              <span><b>Espaco</b> queda seca &nbsp; <b>C</b> guardar</span>
+              <span><b>P</b> pausar &nbsp; <b>R</b> reiniciar</span>
+            </div>
+            <button type="button" class="v-btn v-btn--primary v-btn--lg" @click="comecar">Jogar</button>
+            <p v-show="recorde > 0">Recorde atual: <strong>{ recorde }</strong>.</p>
+          </div>
+
+          <div class="tt-tela-cheia" v-show="estado === 'pausado'">
+            <h2>Pausado</h2>
+            <p>As pecas esperam.</p>
+            <button type="button" class="v-btn v-btn--primary" @click="retomar">Continuar</button>
+            <button type="button" class="v-btn v-btn--ghost" @click="voltarAoMenu">Sair para o menu</button>
+          </div>
+
+          <div class="tt-tela-cheia" v-show="estado === 'fim'">
+            <h2>Fim de jogo</h2>
+            <p>{ pontos } pontos, { linhas } linhas, nivel { nivel }.</p>
+            <p class="tt-novo-recorde" v-show="novoRecorde">Novo recorde!</p>
+            <p v-show="tetrises > 0">Voce fez { tetrises } { tetrises === 1 ? 'tetris' : 'tetrises' }.</p>
+            <button type="button" class="v-btn v-btn--primary v-btn--lg" @click="comecar">Jogar de novo</button>
+            <button type="button" class="v-btn v-btn--ghost" @click="voltarAoMenu">Menu</button>
+          </div>
+        </div>
+
+        <!-- Controles de toque, so em ponteiro grosso. -->
+        <div class="tt-toque">
+          <button type="button" class="v-btn v-btn--secondary" aria-label="Mover para a esquerda" @click="mover(-1)">&larr;</button>
+          <button type="button" class="v-btn v-btn--secondary" aria-label="Girar" @click="girar(1)">&#8635;</button>
+          <button type="button" class="v-btn v-btn--secondary" aria-label="Descer" @click="descerUmaLinha">&darr;</button>
+          <button type="button" class="v-btn v-btn--primary" aria-label="Queda seca" @click="quedaSeca">&#8681;</button>
+          <button type="button" class="v-btn v-btn--secondary" aria-label="Guardar peca" @click="guardar">C</button>
+          <button type="button" class="v-btn v-btn--secondary" aria-label="Mover para a direita" @click="mover(1)">&rarr;</button>
+        </div>
+      </div>
+
+      <!-- =========================================================
+           Coluna direita: fila de proximas pecas e estatisticas.
+           `proximasVisiveis` e um computed que corta a fila em telas
+           pequenas, entao o layout responsivo sai do estado, nao do CSS.
+           ========================================================= -->
+      <div class="tt-coluna">
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Proximas</span>
+          <div class="tt-fila">
+            <div class="tt-fila__item"
+                 v-for="peca in proximasVisiveis"
+                 :key="peca.chave"
+                 :class="{ 'tt-fila__item--proxima': peca.primeira }">
+              <div class="tt-mini" role="img" :aria-label="'Proxima peca: ' + peca.nome">
+                <span class="tt-mini__celula"
+                      v-for="c in peca.celulas"
+                      :key="c.i"
+                      :class="{ 'tt-mini__celula--cheia': c.cor }"
+                      :style="{ backgroundColor: c.cor || 'transparent' }"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Tetrises</span>
+          <strong class="tt-caixa__valor">{ tetrises }</strong>
+        </div>
+
+        <div class="tt-caixa">
+          <span class="tt-caixa__rotulo">Ultima jogada</span>
+          <strong class="tt-caixa__valor" style="font-size: var(--v-text-base)">{ ultimaJogada }</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="tt-barra">
+      <button type="button" class="v-btn v-btn--primary" v-show="estado === 'inicio' || estado === 'fim'" @click="comecar">Jogar</button>
+      <button type="button" class="v-btn v-btn--secondary" v-show="estado === 'jogando'" @click="pausar">Pausar</button>
+      <button type="button" class="v-btn v-btn--secondary" v-show="estado === 'pausado'" @click="retomar">Continuar</button>
+      <button type="button" class="v-btn v-btn--ghost" v-show="estado !== 'inicio'" @click="comecar">Reiniciar</button>
+      <div class="v-push"></div>
+      <span class="v-badge v-badge--success" v-show="sequencia > 1">Sequencia x{ sequencia }</span>
+    </div>
+
+    <p class="tt-ajuda">
+      <span><kbd class="v-kbd">&larr;</kbd> <kbd class="v-kbd">&rarr;</kbd> movem</span>
+      <span><kbd class="v-kbd">&uarr;</kbd> ou <kbd class="v-kbd">X</kbd> gira</span>
+      <span><kbd class="v-kbd">Z</kbd> gira ao contrario</span>
+      <span><kbd class="v-kbd">&darr;</kbd> desce</span>
+      <span><kbd class="v-kbd">Espaco</kbd> queda seca</span>
+      <span><kbd class="v-kbd">C</kbd> guarda</span>
+      <span><kbd class="v-kbd">P</kbd> pausa</span>
+      <span>No celular, deslize sobre o tabuleiro ou use os botoes.</span>
+    </p>
+
+    <p class="tt-nota">
+      <strong>O que esta demo mostra.</strong> As pecas guardada e da fila nao sao
+      canvas: sao grades de <code class="v-code">&lt;span&gt;</code> geradas por
+      <code class="v-code">v-for</code> aninhado, com a cor entrando por
+      <code class="v-code">:style</code>. O tabuleiro e canvas porque ali sao
+      duzentas celulas por quadro, com peca fantasma e animacao de limpeza. Entre
+      os dois mundos existe um contrato simples: a grade do jogo mora em um array
+      comum fora do estado reativo, e so o que a interface exibe vira propriedade
+      do componente. O saco de sete pecas, o recorde e o som saem de
+      <code class="v-code">V.storage</code> e <code class="v-code">V.sound</code>.
+    </p>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ====================================================================
+  // Regras do Tetris
+  // ====================================================================
+  var COLS = 10;
+  var LINHAS = 20;
+  var OCULTAS = 2;               // duas linhas acima do topo, onde a peca nasce
+  var TOTAL_LINHAS = LINHAS + OCULTAS;
+  var CHAVE_RECORDE = 'voodoo:demo:tetris:recorde';
+
+  // Cada peca em suas quatro rotacoes, em coordenadas dentro de 4x4.
+  var PECAS = {
+    I: { cor: '#38bdf8', celulas: [[[0,1],[1,1],[2,1],[3,1]], [[2,0],[2,1],[2,2],[2,3]], [[0,2],[1,2],[2,2],[3,2]], [[1,0],[1,1],[1,2],[1,3]]] },
+    J: { cor: '#6D3BF5', celulas: [[[0,0],[0,1],[1,1],[2,1]], [[1,0],[2,0],[1,1],[1,2]], [[0,1],[1,1],[2,1],[2,2]], [[1,0],[1,1],[0,2],[1,2]]] },
+    L: { cor: '#FF6D3E', celulas: [[[2,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[1,2],[2,2]], [[0,1],[1,1],[2,1],[0,2]], [[0,0],[1,0],[1,1],[1,2]]] },
+    O: { cor: '#facc15', celulas: [[[1,0],[2,0],[1,1],[2,1]], [[1,0],[2,0],[1,1],[2,1]], [[1,0],[2,0],[1,1],[2,1]], [[1,0],[2,0],[1,1],[2,1]]] },
+    S: { cor: '#2ED9A5', celulas: [[[1,0],[2,0],[0,1],[1,1]], [[1,0],[1,1],[2,1],[2,2]], [[1,1],[2,1],[0,2],[1,2]], [[0,0],[0,1],[1,1],[1,2]]] },
+    T: { cor: '#c084fc', celulas: [[[1,0],[0,1],[1,1],[2,1]], [[1,0],[1,1],[2,1],[1,2]], [[0,1],[1,1],[2,1],[1,2]], [[1,0],[0,1],[1,1],[1,2]]] },
+    Z: { cor: '#f43f5e', celulas: [[[0,0],[1,0],[1,1],[2,1]], [[2,0],[1,1],[2,1],[1,2]], [[0,1],[1,1],[1,2],[2,2]], [[1,0],[0,1],[1,1],[0,2]]] }
+  };
+
+  var NOMES = ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
+
+  // Deslocamentos tentados quando a rotacao encosta na parede ou no chao.
+  // Versao enxuta do wall kick: resolve os casos que aparecem de verdade.
+  var CHUTES = [[0,0], [-1,0], [1,0], [-2,0], [2,0], [0,-1], [-1,-1], [1,-1]];
+
+  var PONTOS_LINHA = [0, 100, 300, 500, 800];
+
+  // Velocidade de queda por nivel, em segundos por linha.
+  function intervaloDoNivel(nivel) {
+    return Math.max(0.055, 0.85 * Math.pow(0.82, nivel - 1));
+  }
+
+  V.sound.define('ttMover', { volume: 0.2, camadas: [{ frequencia: 240, duracao: 0.035, forma: 'square' }] });
+  V.sound.define('ttGirar', { volume: 0.24, camadas: [{ frequencia: 420, ate: 560, duracao: 0.05, forma: 'triangle' }] });
+  V.sound.define('ttPousar', { volume: 0.3, camadas: [{ frequencia: 160, ate: 100, duracao: 0.08, forma: 'sawtooth' }] });
+  V.sound.define('ttLinha', {
+    volume: 0.4,
+    camadas: [
+      { frequencia: 520, ate: 880, duracao: 0.16, forma: 'triangle' },
+      { frequencia: 780, ate: 1180, duracao: 0.2, forma: 'sine', atraso: 0.06 }
+    ]
+  });
+  V.sound.define('ttTetris', {
+    volume: 0.5,
+    camadas: [
+      { frequencia: 440, ate: 880, duracao: 0.18, forma: 'square' },
+      { frequencia: 660, ate: 1320, duracao: 0.22, forma: 'triangle', atraso: 0.08 },
+      { frequencia: 880, ate: 1760, duracao: 0.26, forma: 'sine', atraso: 0.16 }
+    ]
+  });
+
+  // Monta as 16 celulas de uma pre-visualizacao 4x4.
+  // Sai daqui uma lista simples, pronta para o v-for do HTML.
+  function gradeMini(nome) {
+    var celulas = [];
+    for (var i = 0; i < 16; i++) celulas.push({ i: i, cor: null });
+    if (!nome) return celulas;
+
+    var forma = PECAS[nome].celulas[0];
+    for (var k = 0; k < forma.length; k++) {
+      var x = forma[k][0];
+      var y = forma[k][1];
+      celulas[y * 4 + x].cor = PECAS[nome].cor;
+    }
+    return celulas;
+  }
+
+  V.component('jogo-tetris', {
+
+    state: function () {
+      return {
+        estado: 'inicio',   // inicio | jogando | pausado | fim
+        pontos: 0,
+        recorde: Number(V.storage.get(CHAVE_RECORDE, 0)) || 0,
+        linhas: 0,
+        nivel: 1,
+        tetrises: 0,
+        sequencia: 0,       // limpezas consecutivas
+        novoRecorde: false,
+        tremendo: false,
+        estreito: false,
+        ultimaJogada: '—',
+        // Espelhos reativos do que a interface desenha em HTML:
+        guardada: null,
+        podeGuardar: true,
+        proximas: []
+      };
+    },
+
+    computed: {
+      gradeGuardada: function () {
+        return gradeMini(this.guardada ? this.guardada.nome : null);
+      },
+
+      // A fila mostra quatro pecas no monitor e duas no celular. Quem
+      // decide e o estado, nao uma regra de CSS escondendo elemento.
+      proximasVisiveis: function () {
+        var limite = this.estreito ? 2 : 4;
+        var saida = [];
+        for (var i = 0; i < this.proximas.length && i < limite; i++) {
+          var nome = this.proximas[i];
+          saida.push({
+            chave: i + ':' + nome,
+            nome: nome,
+            primeira: i === 0,
+            celulas: gradeMini(nome)
+          });
+        }
+        return saida;
+      },
+
+      descricaoTela: function () {
+        if (this.estado === 'inicio') return 'Tela inicial do jogo Tetris.';
+        if (this.estado === 'pausado') return 'Jogo pausado.';
+        if (this.estado === 'fim') return 'Fim de jogo com ' + this.pontos + ' pontos.';
+        return 'Tabuleiro do Tetris. ' + this.pontos + ' pontos, ' +
+               this.linhas + ' linhas, nivel ' + this.nivel + '.';
+      }
+    },
+
+    methods: {
+
+      // ---------------- saco de sete ----------------
+      // O gerador oficial: embaralha os sete nomes e distribui, para nao
+      // existir sequencia de cinco pecas iguais nem seca de barra I.
+      encherSaco: function () {
+        var m = this.mundo;
+        var saco = NOMES.slice();
+        for (var i = saco.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = saco[i]; saco[i] = saco[j]; saco[j] = tmp;
+        }
+        for (var k = 0; k < saco.length; k++) m.fila.push(saco[k]);
+      },
+
+      proximaDaFila: function () {
+        var m = this.mundo;
+        while (m.fila.length < 8) this.encherSaco();
+        var nome = m.fila.shift();
+        this.proximas = m.fila.slice(0, 4);
+        return nome;
+      },
+
+      // ---------------- ciclo da partida ----------------
+
+      comecar: function () {
+        var m = this.mundo;
+
+        m.grade = [];
+        for (var l = 0; l < TOTAL_LINHAS; l++) {
+          var linha = [];
+          for (var c = 0; c < COLS; c++) linha.push(null);
+          m.grade.push(linha);
+        }
+
+        m.fila = [];
+        m.particulas = [];
+        m.limpando = null;
+        m.acumulado = 0;
+        m.ultimo = 0;
+        m.travando = 0;
+
+        this.pontos = 0;
+        this.linhas = 0;
+        this.nivel = 1;
+        this.tetrises = 0;
+        this.sequencia = 0;
+        this.guardada = null;
+        this.podeGuardar = true;
+        this.novoRecorde = false;
+        this.ultimaJogada = '—';
+
+        this.nascer();
+        this.estado = 'jogando';
+        V.sound.play('levelup');
+        this.tirarFoco();
+      },
+
+      nascer: function (nome) {
+        var m = this.mundo;
+        m.peca = {
+          nome: nome || this.proximaDaFila(),
+          rot: 0,
+          x: 3,
+          y: 0
+        };
+
+        // Se ja nasce colidindo, o poco encheu.
+        if (this.colide(m.peca.x, m.peca.y, m.peca.rot)) {
+          this.encerrar();
+        }
+      },
+
+      pausar: function () {
+        if (this.estado !== 'jogando') return;
+        this.estado = 'pausado';
+        V.sound.play('close');
+      },
+
+      retomar: function () {
+        if (this.estado !== 'pausado') return;
+        this.estado = 'jogando';
+        this.mundo.ultimo = 0;
+        V.sound.play('open');
+        this.tirarFoco();
+      },
+
+      alternarPausa: function () {
+        if (this.estado === 'jogando') this.pausar();
+        else if (this.estado === 'pausado') this.retomar();
+      },
+
+      voltarAoMenu: function () { this.estado = 'inicio'; },
+
+      tirarFoco: function () {
+        var alvo = document.activeElement;
+        if (alvo && alvo.blur && alvo !== document.body) alvo.blur();
+      },
+
+      encerrar: function () {
+        this.estado = 'fim';
+        if (this.pontos > this.recorde) {
+          this.recorde = this.pontos;
+          this.novoRecorde = true;
+          V.storage.set(CHAVE_RECORDE, this.pontos);
+        } else {
+          this.novoRecorde = false;
+        }
+        V.sound.play('error');
+        this.tremer();
+      },
+
+      tremer: function () {
+        var self = this;
+        var reduzido = window.matchMedia &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduzido) return;
+        this.tremendo = false;
+        V.nextTick(function () {
+          self.tremendo = true;
+          setTimeout(function () { self.tremendo = false; }, 220);
+        });
+      },
+
+      // ---------------- colisao e movimento ----------------
+
+      formaDe: function (nome, rot) {
+        return PECAS[nome].celulas[((rot % 4) + 4) % 4];
+      },
+
+      colide: function (x, y, rot) {
+        var m = this.mundo;
+        var forma = this.formaDe(m.peca.nome, rot);
+        for (var i = 0; i < forma.length; i++) {
+          var cx = x + forma[i][0];
+          var cy = y + forma[i][1];
+          if (cx < 0 || cx >= COLS) return true;
+          if (cy >= TOTAL_LINHAS) return true;
+          if (cy >= 0 && m.grade[cy][cx]) return true;
+        }
+        return false;
+      },
+
+      mover: function (dx) {
+        if (this.estado !== 'jogando') return;
+        var m = this.mundo;
+        if (!m.peca) return;
+        if (this.colide(m.peca.x + dx, m.peca.y, m.peca.rot)) return;
+        m.peca.x = m.peca.x + dx;
+        m.travando = 0;
+        V.sound.play('ttMover');
+      },
+
+      girar: function (sentido) {
+        if (this.estado !== 'jogando') return;
+        var m = this.mundo;
+        if (!m.peca) return;
+        var novo = m.peca.rot + sentido;
+
+        for (var i = 0; i < CHUTES.length; i++) {
+          var x = m.peca.x + CHUTES[i][0];
+          var y = m.peca.y + CHUTES[i][1];
+          if (!this.colide(x, y, novo)) {
+            m.peca.x = x;
+            m.peca.y = y;
+            m.peca.rot = ((novo % 4) + 4) % 4;
+            m.travando = 0;
+            V.sound.play('ttGirar');
+            return;
+          }
+        }
+      },
+
+      descerUmaLinha: function () {
+        if (this.estado !== 'jogando') return;
+        var m = this.mundo;
+        if (!m.peca) return;
+        if (this.colide(m.peca.x, m.peca.y + 1, m.peca.rot)) {
+          this.assentar();
+          return;
+        }
+        m.peca.y = m.peca.y + 1;
+        m.acumulado = 0;
+        this.pontos = this.pontos + 1; // ponto simbolico por descida manual
+      },
+
+      quedaSeca: function () {
+        if (this.estado !== 'jogando') return;
+        var m = this.mundo;
+        if (!m.peca) return;
+        var caiu = 0;
+        while (!this.colide(m.peca.x, m.peca.y + 1, m.peca.rot)) {
+          m.peca.y = m.peca.y + 1;
+          caiu++;
+        }
+        this.pontos = this.pontos + caiu * 2;
+        this.assentar();
+        this.tremer();
+      },
+
+      guardar: function () {
+        if (this.estado !== 'jogando') return;
+        if (!this.podeGuardar) { V.sound.play('deny', { volume: 0.4 }); return; }
+        var m = this.mundo;
+        var atual = m.peca.nome;
+
+        if (this.guardada) {
+          var trocada = this.guardada.nome;
+          this.guardada = { nome: atual };
+          this.nascer(trocada);
+        } else {
+          this.guardada = { nome: atual };
+          this.nascer();
+        }
+
+        this.podeGuardar = false; // so libera depois de assentar
+        V.sound.play('open', { volume: 0.4 });
+      },
+
+      // ---------------- assentar e limpar linhas ----------------
+
+      assentar: function () {
+        var m = this.mundo;
+        var peca = m.peca;
+        var forma = this.formaDe(peca.nome, peca.rot);
+        var cor = PECAS[peca.nome].cor;
+
+        for (var i = 0; i < forma.length; i++) {
+          var cx = peca.x + forma[i][0];
+          var cy = peca.y + forma[i][1];
+          if (cy >= 0 && cy < TOTAL_LINHAS) m.grade[cy][cx] = cor;
+        }
+
+        m.peca = null;
+        V.sound.play('ttPousar');
+
+        var cheias = [];
+        for (var l = 0; l < TOTAL_LINHAS; l++) {
+          var completa = true;
+          for (var c = 0; c < COLS; c++) {
+            if (!m.grade[l][c]) { completa = false; break; }
+          }
+          if (completa) cheias.push(l);
+        }
+
+        if (cheias.length === 0) {
+          this.sequencia = 0;
+          this.podeGuardar = true;
+          this.nascer();
+          return;
+        }
+
+        // Animacao curta de flash antes de tirar as linhas do tabuleiro.
+        m.limpando = { linhas: cheias, tempo: 0 };
+        for (var k = 0; k < cheias.length; k++) this.faiscar(cheias[k]);
+      },
+
+      concluirLimpeza: function () {
+        var m = this.mundo;
+        var cheias = m.limpando.linhas;
+        m.limpando = null;
+
+        for (var i = 0; i < cheias.length; i++) {
+          m.grade.splice(cheias[i], 1);
+          var nova = [];
+          for (var c = 0; c < COLS; c++) nova.push(null);
+          m.grade.unshift(nova);
+        }
+
+        var quantas = cheias.length;
+        this.sequencia = this.sequencia + 1;
+        this.linhas = this.linhas + quantas;
+
+        var base = PONTOS_LINHA[quantas] * this.nivel;
+        var bonusSequencia = this.sequencia > 1 ? Math.round(base * 0.5 * (this.sequencia - 1)) : 0;
+        this.pontos = this.pontos + base + bonusSequencia;
+
+        if (quantas === 4) {
+          this.tetrises = this.tetrises + 1;
+          this.ultimaJogada = 'Tetris!';
+          V.sound.play('ttTetris');
+          this.tremer();
+        } else {
+          this.ultimaJogada = quantas + (quantas === 1 ? ' linha' : ' linhas');
+          V.sound.play('ttLinha', { tom: 1 + (quantas - 1) * 0.12 });
+        }
+        if (this.sequencia > 1) this.ultimaJogada = this.ultimaJogada + ' x' + this.sequencia;
+
+        // Nivel sobe a cada dez linhas, e a queda acelera junto.
+        var novoNivel = Math.floor(this.linhas / 10) + 1;
+        if (novoNivel > this.nivel) {
+          this.nivel = novoNivel;
+          V.sound.play('levelup');
+        }
+
+        this.podeGuardar = true;
+        this.nascer();
+      },
+
+      faiscar: function (linha) {
+        var m = this.mundo;
+        for (var c = 0; c < COLS; c++) {
+          var cor = m.grade[linha][c] || '#ffffff';
+          for (var k = 0; k < 3; k++) {
+            m.particulas.push({
+              x: c + Math.random(),
+              y: linha + Math.random(),
+              vx: (Math.random() - 0.5) * 9,
+              vy: (Math.random() - 0.5) * 7 - 2,
+              vida: 0.4 + Math.random() * 0.4,
+              total: 0.8,
+              cor: cor
+            });
+          }
+        }
+      },
+
+      // ---------------- loop ----------------
+
+      passo: function (agora) {
+        var m = this.mundo;
+        if (!m || m.morto) return;
+        m.raf = requestAnimationFrame(m.tick);
+
+        if (!m.ultimo) m.ultimo = agora;
+        var dt = (agora - m.ultimo) / 1000;
+        m.ultimo = agora;
+        if (dt > 0.05) dt = 0.05;
+
+        if (this.estado === 'jogando') this.atualizar(dt);
+        this.desenhar();
+      },
+
+      atualizar: function (dt) {
+        var m = this.mundo;
+
+        // particulas rodam sempre, ate durante o flash de limpeza
+        var vivas = [];
+        for (var p = 0; p < m.particulas.length; p++) {
+          var pt = m.particulas[p];
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vy += 22 * dt;
+          pt.vida -= dt;
+          if (pt.vida > 0) vivas.push(pt);
+        }
+        m.particulas = vivas;
+
+        if (m.limpando) {
+          m.limpando.tempo += dt;
+          if (m.limpando.tempo >= 0.22) this.concluirLimpeza();
+          return;
+        }
+
+        if (!m.peca) return;
+
+        // Repeticao automatica das setas: primeiro atraso, depois rajada.
+        this.repetirTeclas(dt);
+
+        var intervalo = m.teclas.baixo ? 0.045 : intervaloDoNivel(this.nivel);
+        m.acumulado += dt;
+
+        while (m.acumulado >= intervalo) {
+          m.acumulado -= intervalo;
+
+          if (this.colide(m.peca.x, m.peca.y + 1, m.peca.rot)) {
+            // Meio segundo de folga para encaixar antes de travar.
+            m.travando += intervalo;
+            if (m.travando >= 0.45) {
+              m.travando = 0;
+              this.assentar();
+              return;
+            }
+          } else {
+            m.peca.y += 1;
+            m.travando = 0;
+            if (m.teclas.baixo) this.pontos = this.pontos + 1;
+          }
+        }
+      },
+
+      repetirTeclas: function (dt) {
+        var m = this.mundo;
+        var lado = m.teclas.esq ? -1 : (m.teclas.dir ? 1 : 0);
+        if (!lado) { m.repeticao = 0; return; }
+
+        m.repeticao += dt;
+        if (m.repeticao < 0.17) return;
+        if (m.repeticao - 0.17 < m.proximaRepeticao) return;
+
+        m.proximaRepeticao += 0.045;
+        this.mover(lado);
+      },
+
+      // ---------------- desenho ----------------
+
+      desenhar: function () {
+        var m = this.mundo;
+        var ctx = m.ctx;
+        if (!ctx) return;
+        var lado = m.lado;
+
+        ctx.setTransform(m.escala, 0, 0, m.escala, 0, 0);
+        var largura = COLS * lado;
+        var altura = LINHAS * lado;
+
+        var g = ctx.createLinearGradient(0, 0, 0, altura);
+        g.addColorStop(0, '#0a0c1e');
+        g.addColorStop(1, '#05060f');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, largura, altura);
+
+        // grade de fundo
+        ctx.strokeStyle = 'rgba(155,123,255,0.09)';
+        ctx.lineWidth = 1;
+        for (var c = 1; c < COLS; c++) {
+          ctx.beginPath(); ctx.moveTo(c * lado, 0); ctx.lineTo(c * lado, altura); ctx.stroke();
+        }
+        for (var l = 1; l < LINHAS; l++) {
+          ctx.beginPath(); ctx.moveTo(0, l * lado); ctx.lineTo(largura, l * lado); ctx.stroke();
+        }
+
+        // blocos ja assentados (as linhas ocultas ficam fora da vista)
+        for (var y = OCULTAS; y < TOTAL_LINHAS; y++) {
+          for (var x = 0; x < COLS; x++) {
+            var cor = m.grade[y] && m.grade[y][x];
+            if (!cor) continue;
+            var piscando = m.limpando && m.limpando.linhas.indexOf(y) > -1;
+            this.bloco(ctx, x, y - OCULTAS, piscando ? '#ffffff' : cor, 1);
+          }
+        }
+
+        if (m.peca) {
+          // Fantasma: onde a peca vai parar se cair agora.
+          var gy = m.peca.y;
+          while (!this.colide(m.peca.x, gy + 1, m.peca.rot)) gy++;
+
+          var forma = this.formaDe(m.peca.nome, m.peca.rot);
+          var corPeca = PECAS[m.peca.nome].cor;
+
+          for (var i = 0; i < forma.length; i++) {
+            var fy = gy + forma[i][1] - OCULTAS;
+            if (fy >= 0) this.bloco(ctx, m.peca.x + forma[i][0], fy, corPeca, 0.16);
+          }
+          for (var j = 0; j < forma.length; j++) {
+            var py = m.peca.y + forma[j][1] - OCULTAS;
+            if (py >= 0) this.bloco(ctx, m.peca.x + forma[j][0], py, corPeca, 1);
+          }
+        }
+
+        // particulas
+        for (var p = 0; p < m.particulas.length; p++) {
+          var pt = m.particulas[p];
+          ctx.globalAlpha = Math.max(0, pt.vida / pt.total);
+          ctx.fillStyle = pt.cor;
+          ctx.fillRect((pt.x) * lado - 2, (pt.y - OCULTAS) * lado - 2, 4, 4);
+        }
+        ctx.globalAlpha = 1;
+
+        // linha de perigo: mostra que o poco esta quase cheio
+        var alturaPilha = this.alturaDaPilha();
+        if (alturaPilha >= LINHAS - 4 && this.estado === 'jogando') {
+          ctx.strokeStyle = 'rgba(244,63,94,0.55)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 4 * lado);
+          ctx.lineTo(largura, 4 * lado);
+          ctx.stroke();
+        }
+      },
+
+      alturaDaPilha: function () {
+        var m = this.mundo;
+        for (var y = OCULTAS; y < TOTAL_LINHAS; y++) {
+          for (var x = 0; x < COLS; x++) {
+            if (m.grade[y] && m.grade[y][x]) return TOTAL_LINHAS - y;
+          }
+        }
+        return 0;
+      },
+
+      bloco: function (ctx, x, y, cor, alfa) {
+        var lado = this.mundo.lado;
+        var px = x * lado;
+        var py = y * lado;
+
+        ctx.globalAlpha = alfa;
+        ctx.fillStyle = cor;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(px + 1, py + 1, lado - 2, lado - 2, 3);
+        else ctx.rect(px + 1, py + 1, lado - 2, lado - 2);
+        ctx.fill();
+
+        if (alfa >= 1) {
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          ctx.fillRect(px + 3, py + 3, lado - 6, 3);
+          ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px + 1.5, py + 1.5, lado - 3, lado - 3);
+        }
+        ctx.globalAlpha = 1;
+      },
+
+      redimensionar: function () {
+        var m = this.mundo;
+        var canvas = m.canvas;
+        if (!canvas) return;
+        var caixa = canvas.getBoundingClientRect();
+        if (!caixa.width) return;
+
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(caixa.width * dpr);
+        canvas.height = Math.round(caixa.height * dpr);
+
+        // O lado da celula e fixo no espaco logico; a escala converte.
+        m.lado = 32;
+        m.escala = canvas.width / (COLS * m.lado);
+
+        // Abaixo de 720px a fila de proximas encolhe. O estado guarda
+        // isso, entao o computed proximasVisiveis reage sozinho.
+        this.estreito = window.innerWidth <= 720;
+      }
+    },
+
+    mounted: function () {
+      var self = this;
+      var canvas = this.$refs.tela;
+
+      this.mundo = {
+        canvas: canvas,
+        ctx: canvas.getContext('2d'),
+        escala: 1,
+        lado: 32,
+        raf: 0,
+        ultimo: 0,
+        acumulado: 0,
+        travando: 0,
+        repeticao: 0,
+        proximaRepeticao: 0,
+        morto: false,
+        grade: [],
+        peca: null,
+        fila: [],
+        particulas: [],
+        limpando: null,
+        teclas: { esq: false, dir: false, baixo: false },
+        tick: function (t) { self.passo(t); }
+      };
+
+      // grade vazia para o menu ter fundo
+      for (var l = 0; l < TOTAL_LINHAS; l++) {
+        var linha = [];
+        for (var c = 0; c < COLS; c++) linha.push(null);
+        this.mundo.grade.push(linha);
+      }
+      this.encherSaco();
+      this.proximas = this.mundo.fila.slice(0, 4);
+      this.redimensionar();
+
+      // ---- teclado ----
+      var aoPressionar = function (e) {
+        var k = e.key;
+        var jogando = self.estado === 'jogando';
+
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') {
+          e.preventDefault();
+          if (!self.mundo.teclas.esq) { self.mundo.teclas.esq = true; self.mundo.repeticao = 0; self.mundo.proximaRepeticao = 0; self.mover(-1); }
+        }
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') {
+          e.preventDefault();
+          if (!self.mundo.teclas.dir) { self.mundo.teclas.dir = true; self.mundo.repeticao = 0; self.mundo.proximaRepeticao = 0; self.mover(1); }
+        }
+        if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); self.mundo.teclas.baixo = true; }
+        if (k === 'ArrowUp' || k === 'x' || k === 'X') { e.preventDefault(); self.girar(1); }
+        if (k === 'z' || k === 'Z') { e.preventDefault(); self.girar(-1); }
+        if (k === 'c' || k === 'C' || k === 'Shift') { e.preventDefault(); self.guardar(); }
+
+        if (k === ' ' || k === 'Spacebar') {
+          e.preventDefault();
+          if (jogando) self.quedaSeca();
+          else if (self.estado === 'inicio' || self.estado === 'fim') self.comecar();
+        }
+        if (k === 'Enter' && (self.estado === 'inicio' || self.estado === 'fim')) self.comecar();
+        if (k === 'p' || k === 'P' || k === 'Escape') self.alternarPausa();
+        if (k === 'r' || k === 'R') self.comecar();
+      };
+
+      var aoSoltar = function (e) {
+        var k = e.key;
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') self.mundo.teclas.esq = false;
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') self.mundo.teclas.dir = false;
+        if (k === 'ArrowDown' || k === 's' || k === 'S') self.mundo.teclas.baixo = false;
+      };
+
+      window.addEventListener('keydown', aoPressionar);
+      window.addEventListener('keyup', aoSoltar);
+
+      // ---- gestos sobre o tabuleiro ----
+      // Deslizar na horizontal move, para baixo desce, para cima gira,
+      // e um toque curto tambem gira. Queda seca fica no botao.
+      var palco = this.$el.querySelector('.tt-palco');
+      var toque = null;
+
+      var comecou = function (e) {
+        if (self.estado !== 'jogando') return;
+        toque = { x: e.clientX, y: e.clientY, ux: e.clientX, uy: e.clientY, t: Date.now(), moveu: false };
+      };
+
+      var moveu = function (e) {
+        if (!toque) return;
+        var passo = palco.getBoundingClientRect().width / COLS;
+
+        var dx = e.clientX - toque.ux;
+        if (Math.abs(dx) >= passo) {
+          self.mover(dx > 0 ? 1 : -1);
+          toque.ux = e.clientX;
+          toque.moveu = true;
+        }
+
+        var dy = e.clientY - toque.uy;
+        if (dy >= passo) {
+          self.descerUmaLinha();
+          toque.uy = e.clientY;
+          toque.moveu = true;
+        }
+      };
+
+      var terminou = function () {
+        if (!toque) return;
+        if (!toque.moveu && Date.now() - toque.t < 260) self.girar(1);
+        toque = null;
+      };
+
+      palco.addEventListener('pointerdown', comecou);
+      palco.addEventListener('pointermove', moveu);
+      palco.addEventListener('pointerup', terminou);
+      palco.addEventListener('pointercancel', terminou);
+
+      // ---- redimensionamento e visibilidade ----
+      var aoRedimensionar = function () { self.redimensionar(); };
+      window.addEventListener('resize', aoRedimensionar);
+
+      var observador = null;
+      if (window.ResizeObserver) {
+        observador = new ResizeObserver(aoRedimensionar);
+        observador.observe(palco);
+      }
+
+      var aoTrocarVisibilidade = function () {
+        if (document.hidden && self.estado === 'jogando') self.pausar();
+      };
+      document.addEventListener('visibilitychange', aoTrocarVisibilidade);
+
+      this.mundo.raf = requestAnimationFrame(this.mundo.tick);
+
+      // Limpeza completa: o loop nao sobrevive ao componente.
+      this.limpar = function () {
+        self.mundo.morto = true;
+        cancelAnimationFrame(self.mundo.raf);
+        window.removeEventListener('keydown', aoPressionar);
+        window.removeEventListener('keyup', aoSoltar);
+        window.removeEventListener('resize', aoRedimensionar);
+        document.removeEventListener('visibilitychange', aoTrocarVisibilidade);
+        palco.removeEventListener('pointerdown', comecou);
+        palco.removeEventListener('pointermove', moveu);
+        palco.removeEventListener('pointerup', terminou);
+        palco.removeEventListener('pointercancel', terminou);
+        if (observador) observador.disconnect();
+      };
+
+      window.addEventListener('pagehide', this.limpar);
+    },
+
+    beforeUnmount: function () {
+      if (this.limpar) this.limpar();
+    }
+  });
+
+  V.theme.init();
+  V.start();
+  document.body.classList.add('tt-pronto');
+});
+</script>
+
+</body>
+</html>

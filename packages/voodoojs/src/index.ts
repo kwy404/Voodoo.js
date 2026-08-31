@@ -32,9 +32,6 @@ import './directives/state';
 import './sound';
 import './motion';
 import './charts';
-// Registra v-shader. So entra no build completo: nao existe no essencial nem no
-// minimo, porque WebGPU e um recurso de nicho e o modulo tem custo em bytes.
-import './directives/gpu';
 // Registra os componentes prontos: VButton, VCard, VInput, VSelect e os demais.
 import './ui/components';
 
@@ -54,7 +51,6 @@ import { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
 import { sound } from './sound';
 import { animate, spring, stagger, inView, scrollProgress, motionPresets, easings } from './motion';
 import { renderChart, charts, CHART_COLORS } from './charts';
-import { gpu } from './gpu';
 import { xray, enableXrayShortcut } from './devtools/xray';
 import { devtoolsWidget } from './devtools/launcher';
 
@@ -146,9 +142,6 @@ Object.assign(V, core, {
   charts,
   chartColors: CHART_COLORS,
 
-  // GPU
-  gpu,
-
   // Interface
   palette,
   hotkey,
@@ -230,7 +223,6 @@ export { animate, spring, stagger, inView, scrollProgress, easings, motionPreset
 export { renderChart, charts } from './charts';
 export { gpu, reflectWgsl } from './gpu';
 export type { GpuContext, GpuSurface, GpuEffect, GpuCompute, GpuUniforms, GpuClock } from './gpu';
-export { classifyShaderSource, resolveShaderSource } from './directives/gpu';
 export { validator, validate, serializeForm, showFormErrors, clearErrors } from './forms/validate';
 export { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
 export { hotkey } from './directives/ui';

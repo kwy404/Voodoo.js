@@ -196,8 +196,11 @@ defineDirective('shader', (ctx) => {
 
   const canvas = el;
   let cancelado = false;
+  // Registrada antes de tudo, e por isso a ultima a rodar: vale para o caminho
+  // com GPU, para o fallback e para o shader que nem chegou a compilar.
   cleanup(() => {
     cancelado = true;
+    canvas.removeAttribute('data-gpu');
   });
 
   if (!supported()) {
@@ -251,7 +254,6 @@ defineDirective('shader', (ctx) => {
     aplicar = null;
     restaurarFallback?.();
     restaurarFallback = null;
-    canvas.removeAttribute('data-gpu');
   });
 
   /** Entrega `time`, `delta`, `frame` e `resolution` aos shaders que pedirem. */

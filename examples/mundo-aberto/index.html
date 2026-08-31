@@ -1,0 +1,1152 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Mundo aberto 3D com Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+
+<!-- ====================================================================
+     DEMO: MINI MUNDO ABERTO EM 3D
+
+     A demo existe para provar uma divisao, e ela e literal aqui:
+
+       mundo.js    WebGL2 puro. Terreno, cidade, sombras, ceu, fisica.
+                   Nao conhece a Voodoo, nao toca no DOM da interface.
+                   So o que apenas o WebGL faz.
+
+       index.html  Voodoo declarativo. HUD, velocimetro, relogio, minimapa,
+                   painel de ajustes, menu de pausa, controles de toque.
+                   Nao escreve uma linha de GL. So o que o HTML faz melhor.
+
+     A ponte entre os dois cabe em tres linhas: um objeto `motor.opcoes` de
+     valores simples que a interface escreve, um `motor.controle` que os
+     botoes de toque empurram, e um callback `aoAtualizar` que devolve os
+     numeros para um store. Nenhuma reatividade atravessa o laco de render:
+     ler um proxy sessenta vezes por segundo seria desperdicio, entao o
+     motor avisa a interface dez vezes por segundo e pronto.
+
+     Tudo sem dependencia externa: nao ha Three.js, nao ha Babylon, nao ha
+     nada alem do que esta nestes dois arquivos e do proprio Voodoo.
+     ==================================================================== -->
+
+<script src="../../packages/voodoojs/dist/voodoo.min.js" data-manual defer></script>
+<script src="mundo.js" defer></script>
+
+<style>
+  /* ==================================================================
+     Nenhuma regra depende de atributo v-*, porque a Voodoo limpa esses
+     atributos do HTML depois de processar a pagina. So classes normais.
+
+     O HUD e sempre escuro, em qualquer tema: e a moldura de um jogo
+     noturno, e um painel claro por cima do mundo brigaria com ele.
+     Os tokens --v-* continuam sendo a fonte das cores de destaque.
+     ================================================================== */
+
+  :root {
+    --ma-vidro: rgba(9, 13, 21, 0.62);
+    --ma-vidro-forte: rgba(7, 10, 17, 0.88);
+    --ma-borda: rgba(255, 255, 255, 0.11);
+    --ma-borda-forte: rgba(255, 255, 255, 0.22);
+    --ma-tinta: #e9eff8;
+    --ma-tinta-fraca: #93a2b8;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    background: #05070c;
+    color: var(--ma-tinta);
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: var(--v-font-sans);
+  }
+
+  .ma-palco {
+    position: fixed;
+    inset: 0;
+    /* Enquanto a Voodoo nao montou, a tela fica preta em vez de piscar as
+       chaves de interpolacao. A classe sai logo depois de V.start(). */
+    visibility: hidden;
+  }
+  body.ma-pronto .ma-palco { visibility: visible; }
+
+  .ma-tela {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+
+  /* ------------------------------------------------------------------
+     Camada de interface: por padrao nao intercepta o mouse, para nao
+     roubar o clique do mundo. Cada painel reativa os ponteiros em si.
+     ------------------------------------------------------------------ */
+  .ma-hud {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    padding: max(var(--v-space-4), env(safe-area-inset-top))
+             max(var(--v-space-4), env(safe-area-inset-right))
+             max(var(--v-space-4), env(safe-area-inset-bottom))
+             max(var(--v-space-4), env(safe-area-inset-left));
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--v-space-3);
+  }
+  .ma-hud > * { pointer-events: auto; }
+
+  .ma-vidro {
+    background: var(--ma-vidro);
+    border: 1px solid var(--ma-borda);
+    border-radius: var(--v-radius-lg);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.45);
+  }
+
+  /* ---------------- canto superior esquerdo: relogio ---------------- */
+  .ma-relogio {
+    grid-column: 1; grid-row: 1;
+    display: flex; align-items: center; gap: var(--v-space-3);
+    padding: 10px 14px;
+    align-self: start;
+  }
+  .ma-relogio__disco {
+    width: 34px; height: 34px; flex: none;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 17px; line-height: 1;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.20), transparent 70%);
+    border: 1px solid var(--ma-borda-forte);
+  }
+  .ma-relogio__hora {
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-lg);
+    font-weight: var(--v-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .ma-relogio__fase {
+    font-size: var(--v-text-xs);
+    color: var(--ma-tinta-fraca);
+    letter-spacing: var(--v-tracking-wide);
+    text-transform: uppercase;
+  }
+
+  /* ---------------- canto superior direito: metricas ---------------- */
+  .ma-metricas {
+    grid-column: 3; grid-row: 1;
+    align-self: start;
+    display: flex; align-items: stretch; gap: 2px;
+    padding: 8px 6px;
+  }
+  .ma-metrica {
+    padding: 2px 10px;
+    text-align: right;
+    min-width: 62px;
+  }
+  .ma-metrica + .ma-metrica { border-left: 1px solid var(--ma-borda); }
+  .ma-metrica__valor {
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-base);
+    font-weight: var(--v-weight-semibold);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .ma-metrica__valor.is-bom   { color: #4ade80; }
+  .ma-metrica__valor.is-medio { color: #fbbf24; }
+  .ma-metrica__valor.is-ruim  { color: #f87171; }
+  .ma-metrica__rotulo {
+    font-size: 10px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ma-tinta-fraca);
+  }
+
+  /* ---------------- barra de acoes, no topo ao centro ---------------- */
+  .ma-acoes {
+    grid-column: 2; grid-row: 1;
+    align-self: start; justify-self: center;
+    display: flex; gap: var(--v-space-2);
+    padding: 6px;
+  }
+  .ma-botao {
+    appearance: none;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px;
+    font: inherit;
+    font-size: var(--v-text-sm);
+    font-weight: var(--v-weight-medium);
+    color: var(--ma-tinta);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ma-borda);
+    border-radius: var(--v-radius-md);
+    cursor: pointer;
+    transition: background-color var(--v-duration-fast) var(--v-ease-out),
+                border-color var(--v-duration-fast) var(--v-ease-out),
+                color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .ma-botao:hover { background: rgba(255, 255, 255, 0.13); border-color: var(--ma-borda-forte); }
+  .ma-botao:focus-visible { outline: 2px solid var(--v-primary); outline-offset: 2px; }
+  .ma-botao.is-ativo {
+    background: color-mix(in srgb, var(--v-primary) 34%, transparent);
+    border-color: color-mix(in srgb, var(--v-primary) 62%, transparent);
+    color: #fff;
+  }
+  .ma-botao--principal {
+    background: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+    border-color: transparent;
+    color: #fff;
+    font-weight: var(--v-weight-semibold);
+    box-shadow: var(--v-shadow-glow);
+  }
+  .ma-botao--principal:hover { filter: brightness(1.12); background: linear-gradient(135deg, var(--v-primary), var(--v-accent)); }
+  .ma-botao--grande { padding: 13px 26px; font-size: var(--v-text-base); }
+
+  /* ---------------- minimapa, canto inferior esquerdo ---------------- */
+  .ma-minimapa {
+    grid-column: 1; grid-row: 3;
+    align-self: end;
+    position: relative;
+    width: 168px; height: 168px;
+    border-radius: 50%;
+    padding: 0;
+    overflow: hidden;
+  }
+  .ma-minimapa canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }
+  .ma-minimapa__norte {
+    position: absolute; top: 5px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px; font-weight: var(--v-weight-bold);
+    color: var(--ma-tinta-fraca);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+  .ma-minimapa__coord {
+    position: absolute; bottom: 6px; left: 0; right: 0;
+    text-align: center;
+    font-family: var(--v-font-mono);
+    font-size: 10px;
+    color: var(--ma-tinta-fraca);
+    pointer-events: none;
+  }
+
+  /* ---------------- velocimetro, canto inferior direito ---------------- */
+  .ma-velocimetro {
+    grid-column: 3; grid-row: 3;
+    align-self: end; justify-self: end;
+    position: relative;
+    width: 152px; height: 152px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    padding: 0;
+  }
+  .ma-velocimetro svg { width: 100%; height: 100%; display: block; }
+  .ma-velocimetro__centro {
+    position: absolute; inset: 0;
+    display: grid; place-content: center; text-align: center;
+    pointer-events: none;
+  }
+  .ma-velocimetro__num {
+    font-family: var(--v-font-mono);
+    font-size: 30px;
+    font-weight: var(--v-weight-bold);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .ma-velocimetro__un {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    color: var(--ma-tinta-fraca);
+    margin-top: 3px;
+  }
+
+  /* ---------------- painel de ajustes, lateral direita ---------------- */
+  .ma-painel {
+    grid-column: 3; grid-row: 2;
+    align-self: center; justify-self: end;
+    width: min(310px, calc(100vw - 32px));
+    max-height: min(72vh, 560px);
+    overflow-y: auto;
+    padding: var(--v-space-4);
+    display: flex; flex-direction: column; gap: var(--v-space-4);
+  }
+  .ma-painel__titulo {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: var(--v-text-xs);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ma-tinta-fraca);
+    margin: 0;
+  }
+  .ma-campo { display: flex; flex-direction: column; gap: 6px; }
+  .ma-campo__topo {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: var(--v-text-sm);
+  }
+  .ma-campo__valor {
+    font-family: var(--v-font-mono);
+    font-size: var(--v-text-xs);
+    color: var(--v-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .ma-campo__dica {
+    font-size: 11px;
+    color: var(--ma-tinta-fraca);
+    line-height: 1.4;
+  }
+
+  .ma-range {
+    appearance: none;
+    width: 100%; height: 22px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .ma-range:focus-visible { outline: 2px solid var(--v-primary); outline-offset: 3px; border-radius: 4px; }
+  .ma-range::-webkit-slider-runnable-track {
+    height: 4px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  .ma-range::-webkit-slider-thumb {
+    appearance: none;
+    width: 15px; height: 15px; margin-top: -5.5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+    border: 2px solid #0a0e16;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.20);
+  }
+  .ma-range::-moz-range-track { height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); }
+  .ma-range::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; border: 2px solid #0a0e16;
+    background: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+  }
+
+  .ma-grupo { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ma-chip {
+    appearance: none;
+    flex: 1 1 auto;
+    padding: 6px 10px;
+    font: inherit; font-size: var(--v-text-xs);
+    color: var(--ma-tinta-fraca);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ma-borda);
+    border-radius: var(--v-radius-md);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--v-duration-fast) var(--v-ease-out),
+                color var(--v-duration-fast) var(--v-ease-out);
+  }
+  .ma-chip:hover { color: var(--ma-tinta); background: rgba(255, 255, 255, 0.11); }
+  .ma-chip:focus-visible { outline: 2px solid var(--v-primary); outline-offset: 2px; }
+  .ma-chip.is-ativo {
+    color: #fff;
+    background: color-mix(in srgb, var(--v-primary) 40%, transparent);
+    border-color: color-mix(in srgb, var(--v-primary) 68%, transparent);
+  }
+
+  .ma-troca {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--v-space-3);
+    font-size: var(--v-text-sm);
+    cursor: pointer;
+  }
+  .ma-troca input { accent-color: var(--v-primary); width: 17px; height: 17px; cursor: pointer; }
+
+  /* ---------------- controles de toque ---------------- */
+  .ma-toque {
+    grid-column: 1 / -1; grid-row: 3;
+    align-self: end;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    pointer-events: none;
+    padding: 0 4px 4px;
+  }
+  .ma-toque > * { pointer-events: auto; }
+  .ma-toque__lado { display: flex; gap: 12px; }
+  .ma-pedal {
+    appearance: none;
+    width: 66px; height: 66px;
+    display: grid; place-items: center;
+    font: inherit; font-size: 21px; font-weight: var(--v-weight-bold);
+    color: var(--ma-tinta);
+    background: var(--ma-vidro);
+    border: 1px solid var(--ma-borda-forte);
+    border-radius: 50%;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    cursor: pointer;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  .ma-pedal:active, .ma-pedal.is-pressionado {
+    background: color-mix(in srgb, var(--v-primary) 48%, var(--ma-vidro-forte));
+    transform: scale(0.94);
+  }
+  .ma-pedal--acelerar { background: color-mix(in srgb, var(--v-primary) 26%, var(--ma-vidro)); }
+
+  /* ---------------- telas cheias: inicio, pausa, sem suporte ---------------- */
+  .ma-cortina {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    padding: var(--v-space-6);
+    background:
+      radial-gradient(900px 520px at 50% 40%, rgba(109, 59, 245, 0.20), transparent 68%),
+      rgba(4, 6, 11, 0.74);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    z-index: 5;
+  }
+  .ma-caixa {
+    width: min(560px, 100%);
+    padding: var(--v-space-7);
+    text-align: center;
+  }
+  .ma-selo {
+    width: 54px; height: 54px; margin: 0 auto var(--v-space-4);
+    border-radius: var(--v-radius-lg);
+    background: linear-gradient(135deg, var(--v-primary), var(--v-accent));
+    box-shadow: var(--v-shadow-glow);
+    display: grid; place-items: center;
+    font-size: 26px;
+  }
+  .ma-titulo {
+    margin: 0 0 var(--v-space-2);
+    font-family: var(--v-font-display);
+    font-size: clamp(1.7rem, 5vw, var(--v-text-3xl));
+    font-weight: var(--v-weight-bold);
+    letter-spacing: var(--v-tracking-tight);
+  }
+  .ma-frase {
+    margin: 0 auto var(--v-space-5);
+    max-width: 42ch;
+    color: var(--ma-tinta-fraca);
+    font-size: var(--v-text-sm);
+    line-height: var(--v-leading-relaxed);
+  }
+  .ma-teclas {
+    display: flex; flex-wrap: wrap; gap: var(--v-space-2);
+    justify-content: center;
+    margin-top: var(--v-space-5);
+    font-size: var(--v-text-xs);
+    color: var(--ma-tinta-fraca);
+  }
+  .ma-teclas span { display: inline-flex; align-items: center; gap: 5px; }
+  .ma-tecla {
+    display: inline-block;
+    min-width: 22px; padding: 2px 6px;
+    font-family: var(--v-font-mono); font-size: 11px;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid var(--ma-borda);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    color: var(--ma-tinta);
+  }
+  .ma-linha-botoes {
+    display: flex; flex-wrap: wrap; gap: var(--v-space-3); justify-content: center;
+  }
+  .ma-nota {
+    margin: var(--v-space-5) 0 0;
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.6;
+  }
+
+  /* Ilustracao do fallback: uma skyline em CSS puro, para quem nao tem
+     WebGL2 ver alguma coisa em vez de um canvas preto sem explicacao. */
+  .ma-skyline {
+    position: relative;
+    height: 130px; margin-bottom: var(--v-space-5);
+    border-radius: var(--v-radius-lg);
+    overflow: hidden;
+    background: linear-gradient(180deg, #0b1a37 0%, #23375e 46%, #d4763c 82%, #f0a35c 100%);
+  }
+  .ma-skyline__predio {
+    position: absolute; bottom: 0;
+    background: #060a13;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  .ma-skyline__sol {
+    position: absolute; left: 50%; bottom: 14px;
+    width: 44px; height: 44px; margin-left: -22px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffd9a0, #ff9a4d 62%, transparent 72%);
+  }
+
+  /* ------------------------------------------------------------------
+     Responsivo: no celular o painel vira uma folha que sobe de baixo, o
+     minimapa encolhe e o velocimetro sai da frente dos pedais.
+     ------------------------------------------------------------------ */
+  @media (max-width: 860px) {
+    .ma-hud { gap: var(--v-space-2); }
+    .ma-minimapa { width: 108px; height: 108px; }
+    .ma-velocimetro { width: 108px; height: 108px; }
+    .ma-velocimetro__num { font-size: 21px; }
+    .ma-metrica { min-width: 50px; padding: 2px 7px; }
+    .ma-acoes { justify-self: end; grid-column: 2 / -1; }
+    .ma-painel {
+      grid-column: 1 / -1; grid-row: 3;
+      justify-self: stretch; align-self: end;
+      width: auto; max-height: 56vh;
+    }
+    .ma-toque { padding-bottom: 76px; }
+    .ma-caixa { padding: var(--v-space-5); }
+  }
+
+  @media (max-width: 560px) {
+    .ma-minimapa, .ma-velocimetro { width: 92px; height: 92px; }
+    .ma-relogio__hora { font-size: var(--v-text-base); }
+  }
+
+  /* Animacoes da interface respeitam a preferencia do sistema. O mundo em
+     si continua se movendo: ele e o conteudo, nao um enfeite. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="ma-palco" v-component="mundo-aberto">
+
+  <!-- O unico elemento que o WebGL toca na pagina inteira. -->
+  <canvas class="ma-tela" v-ref="tela" aria-label="Mundo 3D navegavel"></canvas>
+
+  <!-- ==================================================================
+       HUD. Cada numero aqui e uma interpolacao { } lendo um store global
+       que o motor alimenta dez vezes por segundo.
+       ================================================================== -->
+  <div class="ma-hud" v-show="suportado && $store.jogo.tela !== 'inicio'">
+
+    <!-- relogio: componente separado, so com computados de formatacao -->
+    <relogio-mundo class="ma-relogio ma-vidro"></relogio-mundo>
+
+    <div class="ma-acoes ma-vidro">
+      <button type="button" class="ma-botao"
+              :class="{ 'is-ativo': painel }"
+              v-click="painel = !painel"
+              :aria-pressed="painel ? 'true' : 'false'"
+              aria-label="Abrir ou fechar o painel de ajustes">
+        <span aria-hidden="true">⚙</span><span class="ma-so-largo">Ajustes</span>
+      </button>
+      <button type="button" class="ma-botao"
+              v-click="alternarPausa"
+              aria-label="Pausar o jogo">
+        <span aria-hidden="true">⏸</span><span class="ma-so-largo">Pausa</span>
+      </button>
+    </div>
+
+    <div class="ma-metricas ma-vidro">
+      <!-- A cor do FPS sai de um :class com condicao: nada de CSS extra. -->
+      <div class="ma-metrica">
+        <div class="ma-metrica__valor"
+             :class="{ 'is-bom': $store.jogo.fps >= 55, 'is-medio': $store.jogo.fps < 55 && $store.jogo.fps >= 35, 'is-ruim': $store.jogo.fps < 35 }">{ $store.jogo.fps }</div>
+        <div class="ma-metrica__rotulo">fps</div>
+      </div>
+      <div class="ma-metrica">
+        <div class="ma-metrica__valor">{ $store.jogo.instancias }</div>
+        <div class="ma-metrica__rotulo">objetos</div>
+      </div>
+      <div class="ma-metrica">
+        <div class="ma-metrica__valor">{ qualidadeCurta }</div>
+        <div class="ma-metrica__rotulo">qualidade</div>
+      </div>
+    </div>
+
+    <!-- minimapa: canvas 2D desenhado pelo motor, moldura em HTML -->
+    <div class="ma-minimapa ma-vidro" v-show="hudCompleto">
+      <canvas v-ref="minimapa" width="168" height="168" aria-label="Minimapa da cidade"></canvas>
+      <span class="ma-minimapa__norte" aria-hidden="true">N</span>
+      <span class="ma-minimapa__coord">{ coordenadas }</span>
+    </div>
+
+    <!-- velocimetro: outro componente, lendo o mesmo store -->
+    <velocimetro class="ma-velocimetro ma-vidro" v-show="hudCompleto"></velocimetro>
+
+    <!-- ============================================================
+         Painel ao vivo. Cada v-model aqui muda o mundo no mesmo frame:
+         nao ha botao de aplicar, o @input empurra o valor para o motor.
+         ============================================================ -->
+    <aside class="ma-painel ma-vidro" v-show="painel" aria-label="Ajustes do mundo">
+
+      <h2 class="ma-painel__titulo">
+        <span>Ajustes ao vivo</span>
+        <button type="button" class="ma-botao" v-click="painel = false" aria-label="Fechar o painel">✕</button>
+      </h2>
+
+      <div class="ma-campo">
+        <label class="ma-campo__topo" for="ma-hora">
+          <span>Hora do dia</span>
+          <span class="ma-campo__valor">{ horaFormatada }</span>
+        </label>
+        <input id="ma-hora" class="ma-range" type="range" min="0" max="24" step="0.05"
+               v-model.number="cfg.hora" @input="aplicar(true)">
+        <label class="ma-troca">
+          <span>Ciclo automatico</span>
+          <input type="checkbox" v-model="cfg.autoHora" @change="aplicar()">
+        </label>
+      </div>
+
+      <div class="ma-campo">
+        <label class="ma-campo__topo" for="ma-nevoa">
+          <span>Densidade da nevoa</span>
+          <span class="ma-campo__valor">{ Math.round(cfg.nevoa * 100) }%</span>
+        </label>
+        <input id="ma-nevoa" class="ma-range" type="range" min="0" max="2.5" step="0.05"
+               v-model.number="cfg.nevoa" @input="aplicar()">
+      </div>
+
+      <div class="ma-campo">
+        <label class="ma-campo__topo" for="ma-dist">
+          <span>Distancia de visao</span>
+          <span class="ma-campo__valor">{ cfg.distancia } m</span>
+        </label>
+        <input id="ma-dist" class="ma-range" type="range" min="120" max="460" step="10"
+               v-model.number="cfg.distancia" @input="aplicar()">
+        <p class="ma-campo__dica">A nevoa acompanha: ela sempre fecha o mundo pouco antes do plano distante.</p>
+      </div>
+
+      <div class="ma-campo">
+        <label class="ma-campo__topo" for="ma-sol">
+          <span>Intensidade do sol</span>
+          <span class="ma-campo__valor">{ cfg.sol.toFixed(2) }x</span>
+        </label>
+        <input id="ma-sol" class="ma-range" type="range" min="0" max="2.5" step="0.05"
+               v-model.number="cfg.sol" @input="aplicar()">
+      </div>
+
+      <div class="ma-campo">
+        <span class="ma-campo__topo"><span>Qualidade</span></span>
+        <div class="ma-grupo" role="group" aria-label="Nivel de qualidade">
+          <!-- v-for sobre a lista de niveis: um chip por item -->
+          <button type="button" class="ma-chip"
+                  v-for="q in qualidades" :key="q.id"
+                  :class="{ 'is-ativo': cfg.qualidade === q.id }"
+                  :aria-pressed="cfg.qualidade === q.id ? 'true' : 'false'"
+                  :title="q.dica"
+                  v-click="definirQualidade(q.id)">{ q.rotulo }</button>
+        </div>
+        <p class="ma-campo__dica">{ dicaQualidade }</p>
+      </div>
+
+      <div class="ma-campo">
+        <span class="ma-campo__topo"><span>Camera</span></span>
+        <div class="ma-grupo" role="group" aria-label="Modo de camera">
+          <button type="button" class="ma-chip"
+                  v-for="c in cameras" :key="c.id"
+                  :class="{ 'is-ativo': cfg.camera === c.id }"
+                  :aria-pressed="cfg.camera === c.id ? 'true' : 'false'"
+                  v-click="definirCamera(c.id)">{ c.rotulo }</button>
+        </div>
+      </div>
+
+      <div class="ma-campo">
+        <label class="ma-troca">
+          <span>Transito e pedestres</span>
+          <input type="checkbox" v-model="cfg.vida" @change="aplicar()">
+        </label>
+        <label class="ma-troca">
+          <span>Minimapa e velocimetro</span>
+          <input type="checkbox" v-model="hudCompleto">
+        </label>
+      </div>
+
+      <button type="button" class="ma-botao" v-click="restaurarPadroes">Restaurar padroes</button>
+      <p class="ma-campo__dica">
+        As preferencias ficam salvas em <code>V.storage</code> e voltam na proxima visita.
+      </p>
+    </aside>
+
+    <!-- ============================================================
+         Controles de toque. Aparecem em tela estreita ou em aparelho
+         com ponteiro grosseiro; no desktop somem sem ocupar espaco.
+         ============================================================ -->
+    <div class="ma-toque" v-show="usarToque">
+      <div class="ma-toque__lado">
+        <button type="button" class="ma-pedal" aria-label="Virar para a esquerda"
+                @pointerdown="segurar('direcao', -1, $event)"
+                @pointerup="soltar('direcao')"
+                @pointercancel="soltar('direcao')"
+                @pointerleave="soltar('direcao')">◀</button>
+        <button type="button" class="ma-pedal" aria-label="Virar para a direita"
+                @pointerdown="segurar('direcao', 1, $event)"
+                @pointerup="soltar('direcao')"
+                @pointercancel="soltar('direcao')"
+                @pointerleave="soltar('direcao')">▶</button>
+      </div>
+      <div class="ma-toque__lado">
+        <button type="button" class="ma-pedal" aria-label="Marcha a re e freio"
+                @pointerdown="segurar('acelerar', -1, $event)"
+                @pointerup="soltar('acelerar')"
+                @pointercancel="soltar('acelerar')"
+                @pointerleave="soltar('acelerar')">▼</button>
+        <button type="button" class="ma-pedal ma-pedal--acelerar" aria-label="Acelerar"
+                @pointerdown="segurar('acelerar', 1, $event)"
+                @pointerup="soltar('acelerar')"
+                @pointercancel="soltar('acelerar')"
+                @pointerleave="soltar('acelerar')">▲</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================
+       Tela inicial. O mundo ja esta renderizado atras dela: o motor
+       desenha um quadro parado assim que monta.
+       ================================================================== -->
+  <div class="ma-cortina" v-show="suportado && $store.jogo.tela === 'inicio'">
+    <div class="ma-caixa ma-vidro">
+      <div class="ma-selo" aria-hidden="true">◆</div>
+      <h1 class="ma-titulo">Mundo aberto</h1>
+      <p class="ma-frase">
+        Uma cidade inteira gerada por codigo, com ciclo de dia e noite, sombras
+        e nevoa, em WebGL2 puro. Toda a interface que voce ve por cima dela e
+        Voodoo declarativo: nem uma linha de <code>innerHTML</code>.
+      </p>
+      <div class="ma-linha-botoes">
+        <button type="button" class="ma-botao ma-botao--principal ma-botao--grande"
+                v-click="entrar" v-ref="botaoEntrar">Entrar no mundo</button>
+        <button type="button" class="ma-botao ma-botao--grande" v-click="entrarCinema">
+          So assistir
+        </button>
+      </div>
+      <div class="ma-teclas">
+        <span><kbd class="ma-tecla">W</kbd><kbd class="ma-tecla">A</kbd><kbd class="ma-tecla">S</kbd><kbd class="ma-tecla">D</kbd> dirigir</span>
+        <span><kbd class="ma-tecla">Shift</kbd> turbo</span>
+        <span><kbd class="ma-tecla">Espaco</kbd> freio</span>
+        <span><kbd class="ma-tecla">C</kbd> camera</span>
+        <span><kbd class="ma-tecla">Esc</kbd> pausa</span>
+      </div>
+      <p class="ma-nota">
+        { resumoMundo }
+      </p>
+    </div>
+  </div>
+
+  <!-- ================== menu de pausa ================== -->
+  <div class="ma-cortina" v-show="suportado && $store.jogo.tela === 'pausa'">
+    <div class="ma-caixa ma-vidro">
+      <h2 class="ma-titulo">Pausado</h2>
+      <p class="ma-frase">O laco de animacao esta parado de verdade, nao apenas escondido.</p>
+      <div class="ma-linha-botoes">
+        <button type="button" class="ma-botao ma-botao--principal ma-botao--grande" v-click="retomar">Continuar</button>
+        <button type="button" class="ma-botao ma-botao--grande" v-click="painel = true; retomar()">Ajustes</button>
+        <button type="button" class="ma-botao ma-botao--grande" v-click="voltarAoInicio">Recomecar</button>
+      </div>
+      <p class="ma-nota">
+        Distancia percorrida: <strong>{ distanciaFormatada }</strong> ·
+        Velocidade maxima nesta sessao: <strong>{ Math.round($store.jogo.recorde) } km/h</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ================== sem WebGL2 ================== -->
+  <div class="ma-cortina" v-show="!suportado">
+    <div class="ma-caixa ma-vidro">
+      <div class="ma-skyline" aria-hidden="true">
+        <span class="ma-skyline__sol"></span>
+        <!-- A skyline do fallback tambem e v-for: dados em JavaScript,
+             desenho em CSS. Nada de canvas. -->
+        <span class="ma-skyline__predio" v-for="p in skyline" :key="p.id"
+              :style="{ left: p.x + '%', width: p.l + '%', height: p.a + '%' }"></span>
+      </div>
+      <h2 class="ma-titulo">Este navegador nao tem WebGL2</h2>
+      <p class="ma-frase">
+        O mundo 3D precisa de WebGL2 para rodar, e ele nao esta disponivel aqui.
+        Todo o resto da pagina continua funcionando: o HUD, o painel de ajustes e
+        os componentes sao HTML comum movido pela Voodoo.
+      </p>
+      <p class="ma-nota">
+        Chrome, Edge, Firefox e Safari 15+ tem WebGL2 ligado por padrao. Em maquinas
+        antigas ele pode estar desativado na configuracao de aceleracao por hardware.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  var CHAVE_PREFS = 'voodoo:demo:mundo-aberto';
+
+  // ------------------------------------------------------------------
+  // Store global do jogo. Tudo que mais de um componente precisa ler mora
+  // aqui, e o HTML acessa direto por { $store.jogo.x }. O motor escreve os
+  // numeros dez vezes por segundo, nao a cada frame.
+  // ------------------------------------------------------------------
+  V.store('jogo', {
+    tela: 'inicio',        // inicio | jogo | pausa
+    fps: 0,
+    velocidade: 0,         // km/h
+    hora: 8.5,
+    noite: 0,
+    instancias: 0,
+    x: 0, z: 0,
+    recorde: 0,
+    percorrido: 0,
+
+    registrar: function (d) {
+      this.fps = d.fps;
+      this.velocidade = d.velocidade;
+      this.hora = d.hora;
+      this.noite = d.noite;
+      this.instancias = d.instancias;
+      this.x = d.x;
+      this.z = d.z;
+      if (d.velocidade > this.recorde) this.recorde = d.velocidade;
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // Componente 1: o relogio. So formatacao, so computados. Ele nao sabe
+  // que existe um motor 3D: le a hora do store e devolve texto.
+  // ------------------------------------------------------------------
+  V.component('relogio-mundo', {
+    computed: {
+      hora: function () { return V.store('jogo').hora; },
+      texto: function () {
+        var h = Math.floor(this.hora) % 24;
+        var m = Math.floor((this.hora - Math.floor(this.hora)) * 60);
+        return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+      },
+      fase: function () {
+        var h = this.hora;
+        if (h < 5) return 'Madrugada';
+        if (h < 7) return 'Amanhecer';
+        if (h < 12) return 'Manha';
+        if (h < 17) return 'Tarde';
+        if (h < 19.5) return 'Entardecer';
+        return 'Noite';
+      },
+      icone: function () {
+        var h = this.hora;
+        if (h < 5 || h >= 19.5) return '☾';
+        if (h < 7 || h >= 17) return '◐';
+        return '☀';
+      }
+    },
+    template:
+      '<span class="ma-relogio__disco" aria-hidden="true">{ icone }</span>' +
+      '<span>' +
+      '  <span class="ma-relogio__hora">{ texto }</span>' +
+      '  <span class="ma-relogio__fase" style="display:block">{ fase }</span>' +
+      '</span>'
+  });
+
+  // ------------------------------------------------------------------
+  // Componente 2: o velocimetro. Um arco SVG e um numero, ligados ao
+  // mesmo store. As marcas do mostrador saem de um v-for.
+  // ------------------------------------------------------------------
+  var RAIO = 52;
+  var CIRC = 2 * Math.PI * RAIO;
+  var VARRIDA = 0.72;            // 260 graus de um circulo completo
+  var MAX_KMH = 180;
+
+  V.component('velocimetro', {
+    state: function () {
+      var marcas = [];
+      for (var i = 0; i <= 6; i++) {
+        marcas.push({ id: i, ang: -220 + (260 / 6) * i, forte: i % 3 === 0 });
+      }
+      return { marcas: marcas };
+    },
+    computed: {
+      kmh: function () { return V.store('jogo').velocidade; },
+      fracao: function () { return Math.min(this.kmh / MAX_KMH, 1); },
+      compTotal: function () { return (CIRC * VARRIDA).toFixed(2); },
+      recuo: function () { return (CIRC * VARRIDA * (1 - this.fracao)).toFixed(2); },
+      cor: function () {
+        if (this.kmh > 130) return '#f87171';
+        if (this.kmh > 85) return '#fbbf24';
+        return '#8b5cf6';
+      }
+    },
+    template:
+      '<svg viewBox="0 0 130 130" role="img" aria-label="Velocimetro">' +
+      '  <g transform="rotate(-220 65 65)">' +
+      '    <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="7"' +
+      '            stroke-linecap="round" :stroke-dasharray="compTotal + \' 999\'"></circle>' +
+      '    <circle cx="65" cy="65" r="52" fill="none" :stroke="cor" stroke-width="7"' +
+      '            stroke-linecap="round" :stroke-dasharray="compTotal + \' 999\'"' +
+      '            :stroke-dashoffset="recuo"' +
+      '            style="transition: stroke-dashoffset 90ms linear"></circle>' +
+      '  </g>' +
+      '  <g v-for="m in marcas" :key="m.id">' +
+      '    <line x1="65" y1="7" x2="65" :y2="m.forte ? 15 : 12"' +
+      '          :stroke="m.forte ? \'rgba(255,255,255,0.55)\' : \'rgba(255,255,255,0.25)\'"' +
+      '          stroke-width="2" stroke-linecap="round"' +
+      '          :transform="\'rotate(\' + m.ang + \' 65 65)\'"></line>' +
+      '  </g>' +
+      '</svg>' +
+      '<div class="ma-velocimetro__centro">' +
+      '  <div class="ma-velocimetro__num">{ Math.round(kmh) }</div>' +
+      '  <div class="ma-velocimetro__un">KM/H</div>' +
+      '</div>'
+  });
+
+  // ------------------------------------------------------------------
+  // Componente 3: a demo em si. E o unico lugar que conhece o motor, e
+  // mesmo aqui a conversa e curta: escrever em `motor.opcoes`, empurrar
+  // `motor.controle` e receber numeros de volta.
+  // ------------------------------------------------------------------
+  V.component('mundo-aberto', {
+
+    state: function () {
+      // Preferencias salvas na visita anterior, com valores padrao para
+      // qualquer campo que falte ou tenha sido adulterado no storage.
+      var salvo = V.storage.get(CHAVE_PREFS, null) || {};
+      var padrao = {
+        hora: 9.6, autoHora: true, nevoa: 1, distancia: 320,
+        sol: 1, qualidade: 'alta', camera: 'perseguicao', vida: true
+      };
+      var cfg = {};
+      for (var k in padrao) {
+        var v = salvo[k];
+        cfg[k] = (typeof v === typeof padrao[k] && v !== null) ? v : padrao[k];
+      }
+
+      // Skyline decorativa do fallback, gerada uma vez.
+      var skyline = [];
+      var x = 0, i = 0;
+      while (x < 100) {
+        var l = 5 + (i * 37 % 9);
+        skyline.push({ id: i, x: x, l: l - 0.8, a: 26 + (i * 53 % 58) });
+        x += l; i++;
+      }
+
+      return {
+        suportado: true,
+        cfg: cfg,
+        painel: false,
+        hudCompleto: true,
+        usarToque: false,
+        skyline: skyline,
+        resumoMundo: 'Preparando o mundo...',
+        qualidades: [
+          { id: 'baixa', rotulo: 'Baixa', dica: 'Sem sombras, resolucao 1x' },
+          { id: 'media', rotulo: 'Media', dica: 'Sombras 1024, resolucao ate 1,4x' },
+          { id: 'alta',  rotulo: 'Alta',  dica: 'Sombras 2048, resolucao ate 2x' }
+        ],
+        cameras: [
+          { id: 'perseguicao', rotulo: 'Perseguicao' },
+          { id: 'capo',        rotulo: 'Capo' },
+          { id: 'cinema',      rotulo: 'Cinema' },
+          { id: 'aerea',       rotulo: 'Aerea' }
+        ]
+      };
+    },
+
+    computed: {
+      horaFormatada: function () {
+        var h = Math.floor(this.cfg.hora) % 24;
+        var m = Math.floor((this.cfg.hora - Math.floor(this.cfg.hora)) * 60);
+        return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+      },
+      qualidadeCurta: function () {
+        return this.cfg.qualidade.charAt(0).toUpperCase() + this.cfg.qualidade.slice(1, 3);
+      },
+      dicaQualidade: function () {
+        for (var i = 0; i < this.qualidades.length; i++) {
+          if (this.qualidades[i].id === this.cfg.qualidade) return this.qualidades[i].dica;
+        }
+        return '';
+      },
+      coordenadas: function () {
+        var j = V.store('jogo');
+        return Math.round(j.x) + ', ' + Math.round(j.z);
+      },
+      distanciaFormatada: function () {
+        var m = V.store('jogo').percorrido;
+        return m > 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m) + ' m';
+      }
+    },
+
+    // -----------------------------------------------------------------
+    // Ciclo de vida: cria o motor, liga os eventos e, no unmounted,
+    // desfaz tudo. Nada de listener orfao nem de rAF rodando sozinho.
+    // -----------------------------------------------------------------
+    mounted: function () {
+      var self = this;
+      this.motor = null;
+      this.ultimoPonto = null;
+
+      if (!window.MundoAberto || !window.MundoAberto.suportado()) {
+        this.suportado = false;
+        return;
+      }
+
+      try {
+        this.motor = window.MundoAberto.criar(this.$refs.tela, this.cfg);
+      } catch (erro) {
+        // Um driver pode ter WebGL2 e ainda assim falhar ao compilar.
+        console.warn('[mundo-aberto] motor indisponivel:', erro && erro.message);
+        this.suportado = false;
+        return;
+      }
+
+      this.motor.definirMinimapa(this.$refs.minimapa);
+
+      // Ponte motor -> interface. Uma unica funcao, dez chamadas por
+      // segundo, escrevendo num store: e todo o acoplamento que existe.
+      this.motor.aoAtualizar(function (d) {
+        var jogo = V.store('jogo');
+        if (self.ultimoPonto) {
+          var dx = d.x - self.ultimoPonto[0], dz = d.z - self.ultimoPonto[1];
+          jogo.percorrido += Math.sqrt(dx * dx + dz * dz);
+        }
+        self.ultimoPonto = [d.x, d.z];
+        jogo.registrar(d);
+      });
+
+      var e = this.motor.estatisticas();
+      this.resumoMundo =
+        e.predios + ' predios, ' + e.arvores + ' arvores e ' + e.postes +
+        ' postes gerados com uma seed fixa. ' +
+        Math.round(e.triangulosTerreno / 1000) + ' mil triangulos de terreno, ' +
+        'quatro chamadas de desenho por quadro.';
+
+      this.aplicar();
+      this.motor.quadroUnico();
+
+      // Atalhos de teclado da interface. Os de dirigir ficam no motor.
+      this.aoTecla = function (ev) {
+        if (ev.key === 'Escape') { self.alternarPausa(); }
+        else if (ev.key === 'c' || ev.key === 'C') { self.proximaCamera(); }
+        else if (ev.key === 'h' || ev.key === 'H') { self.hudCompleto = !self.hudCompleto; }
+      };
+      document.addEventListener('keydown', this.aoTecla);
+
+      // Controles de toque: aparecem em ponteiro grosseiro ou tela estreita.
+      this.consulta = window.matchMedia('(pointer: coarse), (max-width: 860px)');
+      this.aoConsulta = function () { self.usarToque = self.consulta.matches; };
+      this.aoConsulta();
+      if (this.consulta.addEventListener) this.consulta.addEventListener('change', this.aoConsulta);
+      else this.consulta.addListener(this.aoConsulta);
+    },
+
+    unmounted: function () {
+      if (this.aoTecla) document.removeEventListener('keydown', this.aoTecla);
+      if (this.consulta && this.aoConsulta) {
+        if (this.consulta.removeEventListener) this.consulta.removeEventListener('change', this.aoConsulta);
+        else this.consulta.removeListener(this.aoConsulta);
+      }
+      if (this.motor) this.motor.destruir();
+    },
+
+    methods: {
+
+      // ---- ponte interface -> motor -------------------------------
+      // Copia o estado reativo para o objeto simples que o motor le. Os
+      // sliders chamam isso no @input, entao a mudanca aparece no mesmo
+      // frame; nao existe botao de aplicar.
+      aplicar: function (mexeuNaHora) {
+        if (!this.motor) return;
+        var o = this.motor.opcoes;
+        o.hora = this.cfg.hora;
+        // Mexer no slider da hora desliga o ciclo: o usuario mandou.
+        if (mexeuNaHora === true) this.cfg.autoHora = false;
+        o.autoHora = this.cfg.autoHora;
+        o.nevoa = this.cfg.nevoa;
+        o.distancia = this.cfg.distancia;
+        o.sol = this.cfg.sol;
+        o.qualidade = this.cfg.qualidade;
+        o.camera = this.cfg.camera;
+        o.vida = this.cfg.vida;
+        this.salvar();
+        // Com o jogo pausado, ainda assim redesenha uma vez para o ajuste
+        // ser visivel na hora.
+        if (!this.motor.rodando) this.motor.quadroUnico();
+      },
+
+      salvar: function () {
+        var copia = {};
+        for (var k in this.cfg) copia[k] = this.cfg[k];
+        V.storage.set(CHAVE_PREFS, copia);
+      },
+
+      definirQualidade: function (id) { this.cfg.qualidade = id; this.aplicar(); },
+      definirCamera: function (id) { this.cfg.camera = id; this.aplicar(); },
+
+      proximaCamera: function () {
+        var i = 0;
+        for (var k = 0; k < this.cameras.length; k++) {
+          if (this.cameras[k].id === this.cfg.camera) i = k;
+        }
+        this.definirCamera(this.cameras[(i + 1) % this.cameras.length].id);
+      },
+
+      restaurarPadroes: function () {
+        this.cfg.hora = 9.6; this.cfg.autoHora = true;
+        this.cfg.nevoa = 1; this.cfg.distancia = 320; this.cfg.sol = 1;
+        this.cfg.qualidade = 'alta'; this.cfg.camera = 'perseguicao';
+        this.cfg.vida = true;
+        this.aplicar();
+      },
+
+      // ---- controles de toque -------------------------------------
+      segurar: function (eixo, valor, ev) {
+        if (ev && ev.currentTarget && ev.currentTarget.setPointerCapture && ev.pointerId != null) {
+          try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (x) {}
+        }
+        if (this.motor) this.motor.controle[eixo] = valor;
+      },
+      soltar: function (eixo) {
+        if (this.motor) this.motor.controle[eixo] = 0;
+      },
+
+      // ---- telas ---------------------------------------------------
+      entrar: function () {
+        if (!this.motor) return;
+        V.store('jogo').tela = 'jogo';
+        this.motor.iniciar();
+      },
+
+      entrarCinema: function () {
+        this.cfg.camera = 'cinema';
+        this.aplicar();
+        this.entrar();
+      },
+
+      alternarPausa: function () {
+        var jogo = V.store('jogo');
+        if (jogo.tela === 'jogo') {
+          jogo.tela = 'pausa';
+          if (this.motor) this.motor.pausar();
+        } else if (jogo.tela === 'pausa') {
+          this.retomar();
+        }
+      },
+
+      retomar: function () {
+        V.store('jogo').tela = 'jogo';
+        if (this.motor) this.motor.retomar();
+      },
+
+      voltarAoInicio: function () {
+        var jogo = V.store('jogo');
+        jogo.tela = 'inicio';
+        jogo.percorrido = 0;
+        jogo.recorde = 0;
+        this.ultimoPonto = null;
+        if (this.motor) {
+          this.motor.pausar();
+          this.motor.reposicionar();
+          this.motor.quadroUnico();
+        }
+      }
+    }
+  });
+
+  V.start();
+  document.body.classList.add('ma-pronto');
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Artefatos de compilacao do proprio benchmark: bundles temporarios do esbuild,
+# copias de commits materializadas por `--ref`, fixtures de tree-shaking e logs.
+.build/
+
+# O pacote de comparacao com concorrentes tem dependencias proprias e pesadas.
+# Nada na raiz depende delas, e elas nao entram no repositorio.
+competitors/node_modules/
+competitors/package-lock.json
+competitors/.build/
+
+# `latest.json` e o resultado da ultima execucao local — muda a cada rodada e
+# nao serve para ninguem alem de quem acabou de rodar. A baseline congelada e os
+# arquivos datados por commit FICAM versionados: sao eles que tornam o
+# BEFORE/AFTER auditavel depois.
+results/latest.json
+reports/latest.md

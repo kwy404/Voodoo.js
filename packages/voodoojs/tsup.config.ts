@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 const banner = `/**
- * Voodoo.js v0.1.0
+ * Voodoo.js v0.2.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */`;
@@ -20,6 +20,10 @@ export default defineConfig([
       reactivity: 'src/reactivity/index.ts',
       http: 'src/http/index.ts',
       utils: 'src/utils/index.ts',
+      // Camada WebGPU. Entrada propria porque ela custa cerca de 8 KB gzip e o
+      // build completo nao tem essa folga no orcamento. Em ESM as partes comuns
+      // saem em chunks compartilhados, entao o runtime continua sendo um so.
+      gpu: 'src/gpu/plugin.ts',
     },
     format: ['esm', 'cjs'],
     dts: true,

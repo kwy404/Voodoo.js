@@ -1,0 +1,25 @@
+{
+  "name": "voodoo-benchmarks-competitors",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated competitor comparison for the Voodoo.js benchmarks. Deliberately NOT part of the root workspace: installing it must never be required to run `npm test` or `npm run build` at the repo root.",
+  "scripts": {
+    "setup": "npm install --no-package-lock=false",
+    "bench": "node run-competitors.mjs",
+    "bench:gc": "node --expose-gc run-competitors.mjs"
+  },
+  "dependencies": {
+    "alpinejs": "3.17.1",
+    "preact": "10.29.8",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "solid-js": "1.9.15",
+    "svelte": "5.57.0",
+    "vue": "3.5.42"
+  },
+  "devDependencies": {
+    "esbuild": "0.27.7",
+    "jsdom": "25.0.1"
+  }
+}

@@ -462,8 +462,8 @@ A versão longa, com as fronteiras de cada módulo e o modelo de escopos, está 
 
 Os benchmarks são reproduzíveis: versões de dependência fixadas, builds de produção, metodologia
 publicada e ambiente registrado. O relatório completo — incluindo os casos em que a Voodoo *perde*
-— está em [`benchmarks/README.md`](benchmarks/README.md) e
-[`PERFORMANCE_REPORT.md`](PERFORMANCE_REPORT.md).
+— está em [`benchmarks/README.md`](benchmarks/README.md), com a metodologia, o ambiente e como
+reproduzir cada medição.
 
 O JavaScript puro é o teto aqui, e a Voodoo cobra um custo real pela produtividade que entrega. A
 função destes números é mostrar o tamanho desse custo, não fingir que ele é zero.
