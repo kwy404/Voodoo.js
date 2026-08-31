@@ -27,6 +27,39 @@ export interface EvalScope {
  *
  * Estende com `V.config.globals.Minha = valor`.
  */
+/**
+ * Subconjunto seguro de `Object`.
+ *
+ * O `Object` nativo nao pode ser liberado inteiro. O bloqueio de chaves cobre
+ * o acesso direto, como `x.constructor`, mas os metodos reflexivos do proprio
+ * `Object` recebem o alvo como ARGUMENTO, e argumento nao passa por aquele
+ * bloqueio. A cadeia abaixo devolvia `Function` e executava codigo arbitrario:
+ *
+ * ```js
+ * Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object), 'constructor')
+ *   .value('return this')()
+ * ```
+ *
+ * A regra que fecha isso de vez nao e uma lista de proibicoes cada vez maior:
+ * e inverter o padrao. Uma expressao de template pode CHAMAR funcionalidades;
+ * ela nao recebe ferramentas para inspecionar o runtime de JavaScript. Por
+ * isso ficam de fora `getPrototypeOf`, `setPrototypeOf`,
+ * `getOwnPropertyDescriptor`, `getOwnPropertyDescriptors`,
+ * `getOwnPropertyNames`, `getOwnPropertySymbols`, `defineProperty`,
+ * `defineProperties` e `create`.
+ */
+const SafeObject = /* @__PURE__ */ Object.freeze({
+  keys: Object.keys,
+  values: Object.values,
+  entries: Object.entries,
+  fromEntries: Object.fromEntries,
+  assign: Object.assign,
+  is: Object.is,
+  hasOwn:
+    (Object as unknown as { hasOwn?: (o: object, k: PropertyKey) => boolean }).hasOwn ??
+    ((o: object, k: PropertyKey): boolean => Object.prototype.hasOwnProperty.call(o, k)),
+});
+
 export const allowedGlobals: Record<string, unknown> = {
   Math,
   JSON,
@@ -35,7 +68,7 @@ export const allowedGlobals: Record<string, unknown> = {
   String,
   Boolean,
   Array,
-  Object,
+  Object: SafeObject,
   Intl,
   RegExp,
   Promise,
