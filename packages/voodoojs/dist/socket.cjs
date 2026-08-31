@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.2.1
+ * Voodoo.js v0.3.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2285,7 +2285,6 @@ function attr(el, nome) {
   return readAttr(el, `${config.prefix}${nome}`);
 }
 var conexoes = /* @__PURE__ */ new WeakMap();
-var salasPorElemento = /* @__PURE__ */ new WeakMap();
 function maisProximo(el, mapa) {
   let atual = el;
   while (atual) {
@@ -2401,7 +2400,6 @@ defineDirective(
       privada: !!modifiers.privada || !!modifiers.private,
       buffer: Number(attr(el, "room-buffer") ?? 50)
     });
-    salasPorElemento.set(el, sala);
     const vista = reactive({
       nome: nomeSala,
       privada: sala.privada,
@@ -2427,7 +2425,6 @@ defineDirective(
       for (const parar of cancelar) parar();
       sala.off();
       sala.leave();
-      salasPorElemento.delete(el);
     });
   },
   // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
@@ -2435,7 +2432,7 @@ defineDirective(
 );
 defineDirective("on-socket", ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo2 = maisProximo(el, salasPorElemento) ?? maisProximo(el, conexoes);
+  const alvo2 = maisProximo(el, conexoes);
   if (!alvo2) return;
   const cancelar = alvo2.on(arg, (dados, ack) => {
     const local = scope.child({ $event: dados, $ack: ack, $el: el });

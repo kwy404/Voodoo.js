@@ -152,6 +152,8 @@ Every row below is part of the shipped runtime.
 | **i18n** | Locale messages, `V.t`, `v-t`, pluralization, runtime locale switching |
 | **Motion** | Spring physics, stagger, `inView`, scroll progress, presets |
 | **Charts** | Rendered as plain SVG, no charting dependency |
+| **Realtime** | `V.socket` over native WebSocket and the Socket.IO protocol, public and private rooms, backoff reconnection, heartbeat and a send queue. Declarative via `v-socket`, `v-room` and `v-on-socket:` |
+| **GPU** | `V.gpu` over WebGPU with WGSL reflection, plus the `v-shader` directive. Without WebGPU it falls back to the canvas content |
 | **Devtools** | `V.xray` reactivity inspector and an event bus |
 | **CLI** | `@voodoo/cli`: `init`, `build --modules=…`, `add`, `info` |
 

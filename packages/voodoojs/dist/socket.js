@@ -1,14 +1,14 @@
-import { socketSupported, createSocket, socket } from './chunk-2SDBGISE.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-2SDBGISE.js';
-import { evaluateIn, readAttr } from './chunk-IW55VCGX.js';
-import { reactive } from './chunk-VJA45L6K.js';
-import './chunk-F3SPSSE3.js';
-import { parseDuration } from './chunk-BTORMWLO.js';
-import { defineDirective, PRIORITY, config } from './chunk-UNICRHSA.js';
-import './chunk-LUEWHAC4.js';
+import { socketSupported, createSocket, socket } from './chunk-WFFLLDYQ.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-WFFLLDYQ.js';
+import { evaluateIn, readAttr } from './chunk-2RPELI6L.js';
+import { reactive } from './chunk-QJCR6UKZ.js';
+import './chunk-S3U6BJNJ.js';
+import { parseDuration } from './chunk-KCG2YK55.js';
+import { defineDirective, PRIORITY, config } from './chunk-ZVXMGOYP.js';
+import './chunk-5I3A7PYT.js';
 
 /**
- * Voodoo.js v0.2.1
+ * Voodoo.js v0.3.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -18,7 +18,6 @@ function attr(el, nome) {
   return readAttr(el, `${config.prefix}${nome}`);
 }
 var conexoes = /* @__PURE__ */ new WeakMap();
-var salasPorElemento = /* @__PURE__ */ new WeakMap();
 function maisProximo(el, mapa) {
   let atual = el;
   while (atual) {
@@ -134,7 +133,6 @@ defineDirective(
       privada: !!modifiers.privada || !!modifiers.private,
       buffer: Number(attr(el, "room-buffer") ?? 50)
     });
-    salasPorElemento.set(el, sala);
     const vista = reactive({
       nome: nomeSala,
       privada: sala.privada,
@@ -160,7 +158,6 @@ defineDirective(
       for (const parar of cancelar) parar();
       sala.off();
       sala.leave();
-      salasPorElemento.delete(el);
     });
   },
   // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
@@ -168,7 +165,7 @@ defineDirective(
 );
 defineDirective("on-socket", ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo2 = maisProximo(el, salasPorElemento) ?? maisProximo(el, conexoes);
+  const alvo2 = maisProximo(el, conexoes);
   if (!alvo2) return;
   const cancelar = alvo2.on(arg, (dados, ack) => {
     const local = scope.child({ $event: dados, $ack: ack, $el: el });

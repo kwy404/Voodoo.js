@@ -34,7 +34,6 @@ import {
   createSocket,
   socketSupported,
   type SocketOptions,
-  type SocketRoom,
   type SocketTransport,
   type VoodooSocket,
 } from '../socket';
@@ -48,13 +47,12 @@ function attr(el: Element, nome: string): string | null {
 }
 
 /**
- * Conexoes e salas criadas pelas directives, indexadas pelo elemento.
+ * Conexoes criadas por `v-socket`, indexadas pelo elemento.
  *
  * `v-room` e `v-on-socket` sobem a arvore ate encontrar uma, que e o que faz o
  * exemplo do topo funcionar sem repetir a URL em cada filho.
  */
 const conexoes = new WeakMap<Element, VoodooSocket>();
-const salasPorElemento = new WeakMap<Element, SocketRoom>();
 
 function maisProximo<T>(el: Element, mapa: WeakMap<Element, T>): T | null {
   let atual: Element | null = el;
@@ -229,7 +227,6 @@ defineDirective(
       privada: !!modifiers.privada || !!modifiers.private,
       buffer: Number(attr(el, 'room-buffer') ?? 50),
     });
-    salasPorElemento.set(el, sala);
 
     const vista = reactive({
       nome: nomeSala,
@@ -260,7 +257,6 @@ defineDirective(
       for (const parar of cancelar) parar();
       sala.off();
       sala.leave();
-      salasPorElemento.delete(el);
     });
   },
   // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
@@ -274,13 +270,17 @@ defineDirective(
 /**
  * `v-on-socket:nova-mensagem="mensagens.push($event)"`.
  *
- * Mesmo espirito de `@evento`: a carga chega em `$event`. Havendo uma sala no
- * elemento ou acima dele, a assinatura e feita na sala, que ja filtra por
- * destino; senao, e feita na conexao, que ve tudo.
+ * Mesmo espirito de `@evento`: a carga chega em `$event`.
+ *
+ * A assinatura e sempre na **conexao**, mesmo dentro de um `v-room`. O nome diz
+ * `on-socket`, e a conexao ve tudo que chega, inclusive o que e de sala. Quem
+ * quer o recorte ja filtrado de uma sala tem `$room.mensagens` no HTML e
+ * `sala.on()` no JavaScript; misturar os dois aqui deixaria o mesmo atributo
+ * escutando alvos diferentes dependendo de onde ele foi escrito.
  */
 defineDirective('on-socket', ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo = maisProximo(el, salasPorElemento) ?? maisProximo(el, conexoes);
+  const alvo = maisProximo(el, conexoes);
   if (!alvo) return;
 
   const cancelar = alvo.on(arg, (dados: unknown, ack?: (r: unknown) => void) => {

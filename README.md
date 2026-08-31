@@ -157,6 +157,8 @@ Cada linha abaixo faz parte do runtime publicado.
 | **i18n** | Mensagens por idioma, `V.t`, `v-t`, pluralização, troca de idioma em tempo de execução |
 | **Animação** | Física de mola, stagger, `inView`, progresso de rolagem, presets |
 | **Gráficos** | Desenhados em SVG puro, sem dependência de biblioteca de gráficos |
+| **Tempo real** | `V.socket` com WebSocket nativo e protocolo Socket.IO, salas publicas e privadas, reconexao com espera progressiva, heartbeat e fila de envio. Declarativo com `v-socket`, `v-room` e `v-on-socket:` |
+| **GPU** | `V.gpu` sobre WebGPU com reflexao de WGSL, e a directive `v-shader`. Sem WebGPU, cai no conteudo alternativo do canvas |
 | **Devtools** | Inspetor de reatividade `V.xray` e um barramento de eventos |
 | **CLI** | `@voodoo/cli`: `init`, `build --modules=…`, `add`, `info` |
 

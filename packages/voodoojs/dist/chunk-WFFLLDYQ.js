@@ -1,8 +1,8 @@
-import { reactive } from './chunk-VJA45L6K.js';
-import { avisarUmaVez } from './chunk-F3SPSSE3.js';
+import { reactive } from './chunk-QJCR6UKZ.js';
+import { avisarUmaVez } from './chunk-S3U6BJNJ.js';
 
 /**
- * Voodoo.js v0.2.1
+ * Voodoo.js v0.3.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -942,5 +942,5 @@ Object.defineProperty(fabrica, "open", {
 var socket = fabrica;
 
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, devtoolsBus, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported };
-//# sourceMappingURL=chunk-2SDBGISE.js.map
-//# sourceMappingURL=chunk-2SDBGISE.js.map
+//# sourceMappingURL=chunk-WFFLLDYQ.js.map
+//# sourceMappingURL=chunk-WFFLLDYQ.js.map

@@ -1,7 +1,7 @@
-import { config } from './chunk-UNICRHSA.js';
+import { config } from './chunk-ZVXMGOYP.js';
 
 /**
- * Voodoo.js v0.2.1
+ * Voodoo.js v0.3.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -78,5 +78,5 @@ function avisarAlias(alias, canonico) {
 }
 
 export { avisar, avisarAlias, avisarChaveDuplicada, avisarComponenteDesconhecido, avisarDirectiveDesconhecida, avisarExpressaoInvalida, avisarPropObrigatoria, avisarUmaVez, descreverElemento, emDesenvolvimento };
-//# sourceMappingURL=chunk-F3SPSSE3.js.map
-//# sourceMappingURL=chunk-F3SPSSE3.js.map
+//# sourceMappingURL=chunk-S3U6BJNJ.js.map
+//# sourceMappingURL=chunk-S3U6BJNJ.js.map

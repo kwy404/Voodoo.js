@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat em tempo real de verdade — Voodoo.js</title>
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!--
+  A camada de tempo real tem entrada propria: `dist/socket.js`. Ela nao vem nos
+  bundles de CDN, e por isso esta demo carrega a Voodoo em ESM: assim os dois
+  lados compartilham os mesmos chunks e, com eles, o mesmo registro de
+  directives. Misturar o IIFE (`voodoo.min.js`) com o modulo daria dois runtimes
+  distintos, e `v-socket` ficaria registrada no que a pagina nao usa.
+-->
+<style>
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 480px at 10% -10%, color-mix(in srgb, var(--v-primary) 16%, transparent), transparent 60%),
+      var(--v-color-bg);
+  }
+
+  .rt-app { padding: var(--v-space-6) var(--v-space-4); }
+  .rt-app.is-cloaked { visibility: hidden; }
+
+  .rt-janela {
+    max-width: 1080px;
+    margin: 0 auto;
+    height: min(84vh, 780px);
+    min-height: 520px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    background: var(--v-surface);
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-xl);
+    box-shadow: var(--v-shadow-lg);
+    overflow: hidden;
+  }
+
+  .rt-lateral {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: var(--v-space-3);
+    padding: var(--v-space-4);
+    border-right: 1px solid var(--v-border);
+    background: var(--v-surface-2);
+  }
+
+  .rt-titulo { font-weight: 700; font-size: 1.05rem; }
+  .rt-legenda { color: var(--v-text-muted); font-size: .82rem; line-height: 1.5; }
+
+  .rt-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .8rem; color: var(--v-text-muted);
+  }
+  .rt-bolinha { width: 9px; height: 9px; border-radius: 50%; background: var(--v-danger, #d33); }
+  .rt-status[data-on="true"] .rt-bolinha { background: var(--v-success, #2a2); }
+
+  .rt-membros { list-style: none; margin: 0; padding: 0; overflow: auto; min-height: 0; }
+  .rt-membro {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border-radius: var(--v-radius-md); font-size: .88rem;
+  }
+  .rt-membro:hover { background: var(--v-surface); }
+  .rt-cochichar {
+    border: 1px solid var(--v-border); background: transparent; cursor: pointer;
+    border-radius: var(--v-radius-sm); font-size: .72rem; padding: 2px 7px;
+    color: var(--v-text-muted);
+  }
+
+  .rt-conversa { display: flex; flex-direction: column; min-height: 0; }
+  .rt-topo {
+    padding: var(--v-space-4);
+    border-bottom: 1px solid var(--v-border);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--v-space-3);
+  }
+  .rt-lista {
+    list-style: none; margin: 0; padding: var(--v-space-4);
+    overflow: auto; min-height: 0; flex: 1;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .rt-msg {
+    max-width: 74%; padding: 9px 13px;
+    border-radius: var(--v-radius-lg);
+    background: var(--v-surface-2); border: 1px solid var(--v-border);
+    font-size: .92rem; line-height: 1.45;
+  }
+  .rt-msg[data-privada="true"] {
+    border-color: color-mix(in srgb, var(--v-accent) 55%, var(--v-border));
+    background: color-mix(in srgb, var(--v-accent) 10%, var(--v-surface-2));
+  }
+  .rt-autor { font-size: .74rem; color: var(--v-text-muted); margin-bottom: 2px; }
+  .rt-selo {
+    font-size: .66rem; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--v-accent); margin-left: 6px;
+  }
+
+  .rt-form {
+    display: flex; gap: var(--v-space-2);
+    padding: var(--v-space-4); border-top: 1px solid var(--v-border);
+  }
+  .rt-form input { flex: 1; }
+
+  .rt-aviso {
+    margin: var(--v-space-4) auto 0; max-width: 1080px;
+    padding: var(--v-space-3) var(--v-space-4);
+    border-radius: var(--v-radius-lg);
+    border: 1px solid color-mix(in srgb, var(--v-warning, #c80) 45%, var(--v-border));
+    background: color-mix(in srgb, var(--v-warning, #c80) 8%, var(--v-surface));
+    font-size: .84rem; line-height: 1.55;
+  }
+
+  @media (max-width: 760px) {
+    .rt-janela { grid-template-columns: 1fr; height: auto; }
+    .rt-lateral { border-right: 0; border-bottom: 1px solid var(--v-border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="rt-app is-cloaked" v-data="{ rascunho: '', destino: '', eu: null }">
+
+  <!--
+    `v-socket` abre a conexao e publica `$socket`.
+    `v-room` entra na sala e publica `$room` com mensagens, membros e enviar().
+  -->
+  <div class="rt-janela"
+       v-socket="ws://localhost:5174/chat"
+       v-room="geral"
+       v-on-socket:voce="eu = $event">
+
+    <aside class="rt-lateral">
+      <div>
+        <div class="rt-titulo">Sala geral</div>
+        <div class="rt-status" :data-on="$socket.conectado">
+          <span class="rt-bolinha"></span>
+          <span v-text="$socket.conectado ? 'conectado' : ($socket.estado === 'reconnecting' ? 'reconectando...' : 'offline')"></span>
+        </div>
+      </div>
+
+      <div class="rt-legenda">
+        Voce e <b v-text="eu ? eu.nome : '...'"></b>.
+        <span v-text="$room.membros.length"></span> na sala.
+      </div>
+
+      <ul class="rt-membros">
+        <li class="rt-membro" v-for="m in $room.membros">
+          <span v-text="m.nome"></span>
+          <button class="rt-cochichar"
+                  v-show="!eu || m.id !== eu.id"
+                  @click="destino = (destino === m.id ? '' : m.id)"
+                  v-text="destino === m.id ? 'publico' : 'privado'"></button>
+        </li>
+      </ul>
+
+      <div class="rt-legenda">
+        Derrube o servidor com Ctrl+C e suba de novo: a conexao volta sozinha,
+        com espera progressiva, e a sala e refeita.
+      </div>
+    </aside>
+
+    <section class="rt-conversa">
+      <header class="rt-topo">
+        <div>
+          <div class="rt-titulo">Conversa</div>
+          <div class="rt-legenda"
+               v-text="destino ? 'Proxima mensagem vai so para quem voce escolheu.' : 'Mensagens vao para todos da sala.'"></div>
+        </div>
+        <button class="v-btn v-btn--ghost" v-show="destino" @click="destino = ''">Cancelar privado</button>
+      </header>
+
+      <ul class="rt-lista">
+        <li class="rt-msg" v-for="m in $room.mensagens" :data-privada="m.privada ? 'true' : 'false'">
+          <div class="rt-autor">
+            <span v-text="m.autor"></span>
+            <span class="rt-selo" v-show="m.privada">privado</span>
+          </div>
+          <div v-text="m.texto"></div>
+        </li>
+      </ul>
+
+      <form class="rt-form"
+            @submit.prevent="$room.enviar('mensagem', { texto: rascunho }, destino || undefined); rascunho = ''">
+        <input class="v-input" v-model="rascunho" placeholder="Escreva algo..." autocomplete="off">
+        <button class="v-btn v-btn--primary" type="submit">Enviar</button>
+      </form>
+    </section>
+  </div>
+
+  <p class="rt-aviso">
+    <b>Privado aqui e privado no servidor.</b> A etiqueta <code>privada</code> e o destinatario de
+    uma mensagem sao pedidos que o cliente faz; quem recusa a entrada numa sala e quem escolhe para
+    quem cada mensagem sai e <code>scripts/chat-servidor.mjs</code>. Um "privado" que dependesse so
+    desta pagina seria falso — qualquer pessoa com o console aberto entraria na sala que quisesse.
+  </p>
+</div>
+
+<script type="module">
+  // Em ESM os dois lados vem do mesmo build e compartilham os chunks, entao o
+  // registro de directives e um so. `V.use()` instala no nucleo, e nao neste
+  // objeto `V`, entao a pagina importa `socket` direto em vez de procurar por
+  // `V.socket` -- que so existe sozinho no bundle global do CDN.
+  import V, { socket } from '../../packages/voodoojs/dist/index.js';
+  // Importar registra v-socket, v-room e v-on-socket.
+  import '../../packages/voodoojs/dist/socket.js';
+
+  window.V = V;
+
+  // Um nome simpatico antes de comecar, so para a demo ter gente com cara.
+  const nome =
+    new URLSearchParams(location.search).get('nome') ||
+    ['ana', 'bia', 'caio', 'davi', 'ema'][Math.floor(Math.random() * 5)] +
+      '-' + Math.floor(Math.random() * 90 + 10);
+
+  V.start();
+  document.querySelector('.rt-app').classList.remove('is-cloaked');
+
+  // A conexao e criada pela directive; aqui a pagina so se apresenta ao
+  // servidor, de novo a cada reconexao.
+  const s = socket.open[0];
+  if (s) {
+    const apresentar = () => s.emit('apresentar', { nome });
+    s.on('open', apresentar);
+    if (s.connected) apresentar();
+  }
+</script>
+
+</body>
+</html>

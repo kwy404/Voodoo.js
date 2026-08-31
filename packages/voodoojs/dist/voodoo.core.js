@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.2.1
+ * Voodoo.js v0.3.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6317,7 +6317,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.2.1";
+  var version = "0.3.0";
   var core = {
     // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
     ...utils_exports,

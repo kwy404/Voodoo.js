@@ -51,6 +51,8 @@ Os recursos abaixo vêm apenas no `voodoo.full.min.js` ou em um build sob medida
 | [Gráficos](graficos.md) | `v-chart`, todos os tipos, opções, reatividade |
 | [Roteador](roteador.md) | Rotas, parâmetros, guards, `v-link`, `v-router-view` |
 | [Idiomas](idiomas.md) | i18n, `v-t`, pluralização, troca de idioma |
+| [WebSocket](websocket.md) | `V.socket`, salas publicas e privadas, Socket.IO, `v-socket` e `v-room` |
+| [GPU](gpu.md) | `V.gpu` sobre WebGPU e a directive `v-shader` |
 | [Devtools](devtools.md) | O inspetor `xray` e o barramento de eventos |
 
 ## Referência e apoio
