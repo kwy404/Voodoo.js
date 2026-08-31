@@ -10,10 +10,28 @@ import { join } from 'node:path';
 
 const DIST = 'packages/voodoojs/dist';
 
-/** Metas em kilobytes comprimidos com gzip. */
+/**
+ * Metas em kilobytes comprimidos com gzip.
+ *
+ * Os valores saem da medicao real, com cerca de 5% de folga por cima. A folga
+ * existe para o orcamento pegar crescimento de verdade em vez de disparar a
+ * cada linha nova: apertado demais, ele so ensina a gente a levantar o numero.
+ *
+ * Revisao de 2026-08-31. O build essencial estava a 78.83 KB com meta de 80, ou
+ * seja, 1.2 KB de folga, e o completo a 123.28 com meta de 125. Nessa faixa
+ * qualquer correcao estourava o teto. As correcoes de seguranca do avaliador de
+ * expressoes (fuga de sandbox, poluicao de prototipo, saneamento de URL), os
+ * avisos de desenvolvimento e o widget de devtools somaram +4.2% no minimo,
+ * +2.3% no essencial e +3.0% no completo. O crescimento foi aceito de proposito
+ * e as metas subiram junto.
+ *
+ * Ao mexer aqui, diga por que. Levantar a meta sem justificativa e o mesmo que
+ * nao ter meta nenhuma.
+ */
 const BUDGET = {
-  'voodoo.min.js': 80,
-  'voodoo.full.min.js': 125,
+  'voodoo.core.min.js': 46,
+  'voodoo.min.js': 85,
+  'voodoo.full.min.js': 133,
 };
 
 function kb(bytes) {
