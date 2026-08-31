@@ -1473,14 +1473,7 @@
 
     var larguraCss = 0, alturaCss = 0;
 
-    var tamForcado = null;
-
     function ajustarTamanho() {
-      if (tamForcado) {
-        canvas.width = tamForcado[0]; canvas.height = tamForcado[1];
-        larguraCss = tamForcado[0]; alturaCss = tamForcado[1];
-        return;
-      }
       var dprMax = opcoes.qualidade === 'baixa' ? 1 : (opcoes.qualidade === 'media' ? 1.4 : 2);
       var dpr = Math.min(global.devicePixelRatio || 1, dprMax);
       var l = canvas.clientWidth || 1;
@@ -1834,6 +1827,15 @@
 
     function aoPerderFoco() { teclas = Object.create(null); }
 
+    // Com o jogo parado (tela inicial ou pausa) nao ha laco para reagir a
+    // uma mudanca de tamanho, e o quadro congelado ficaria esticado. Um
+    // redesenho unico resolve, e so acontece quando nada esta rodando.
+    function aoRedimensionar() {
+      if (rodando) return;
+      var l = canvas.clientWidth || 1;
+      if (l !== larguraCss) quadroUnico();
+    }
+
     function aoPerderContexto(e) {
       e.preventDefault();
       pausar();
@@ -1843,6 +1845,7 @@
     document.addEventListener('keyup', aoTeclaCima);
     document.addEventListener('visibilitychange', aoVisibilidade);
     global.addEventListener('blur', aoPerderFoco);
+    global.addEventListener('resize', aoRedimensionar);
     canvas.addEventListener('webglcontextlost', aoPerderContexto);
 
     // ------------------------------------------------------- estado inicial
@@ -1890,6 +1893,7 @@
       document.removeEventListener('keyup', aoTeclaCima);
       document.removeEventListener('visibilitychange', aoVisibilidade);
       global.removeEventListener('blur', aoPerderFoco);
+      global.removeEventListener('resize', aoRedimensionar);
       canvas.removeEventListener('webglcontextlost', aoPerderContexto);
       [progCeu, progTerreno, progInst, progSombraTerreno, progSombraInst]
         .forEach(function (p) { gl.deleteProgram(p); });
@@ -1911,52 +1915,6 @@
       carro.vel = 0;
       carro.y = altura(carro.x, carro.z);
     }
-
-    global.__depuraMundo = {
-      gl: gl,
-      estadoFbo: function () {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fboSombra);
-        var st = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        return { status: st, completo: st === gl.FRAMEBUFFER_COMPLETE, erro: gl.getError(), tam: TAM_SOMBRA };
-      },
-      luz: function () { return { solDir: solDir.slice(), noite: noite, m: Array.from(mLuzViewProj) }; },
-      forcarTamanho: function (w, h) { tamForcado = w ? [w, h] : null; },
-      umQuadro: function (dt) {
-        tempoTotal += dt;
-        ajustarTamanho();
-        atualizarAmbiente(dt); atualizarCarro(dt); atualizarVida(dt); atualizarCamera(dt);
-        montarDinamicas();
-        desenhar(passeSombra());
-      },
-      passo: function (n, dt) {
-        dt = dt || 1 / 60;
-        for (var i = 0; i < n; i++) global.__depuraMundo.umQuadro(dt);
-        desenharMinimapa();
-        var jogo = { fps: 0, velocidade: Math.abs(carro.vel) * 3.6, hora: opcoes.hora, noite: noite,
-          x: carro.x, z: carro.z, instancias: estaticasCaixa.contagem + estaticasEsfera.contagem + contagemDin };
-        if (aoAtualizar) aoAtualizar(jogo);
-        return { x: carro.x, z: carro.z, guinada: carro.guinada, vel: carro.vel,
-          camera: camera.olho.slice(), hora: opcoes.hora };
-      },
-      medir: function (n) {
-        n = n || 200;
-        // gl.finish() nao sincroniza de verdade no Chrome: os comandos vao
-        // para o processo da GPU e voltam antes de terem sido executados.
-        // Ler um pixel forca a espera real pelo fim do trabalho enfileirado.
-        var pix = new Uint8Array(4);
-        var drenar = function () { gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pix); };
-        for (var a = 0; a < 30; a++) global.__depuraMundo.umQuadro(1 / 60);
-        drenar();
-        var t0 = performance.now();
-        for (var i = 0; i < n; i++) global.__depuraMundo.umQuadro(1 / 60);
-        drenar();
-        var ms = (performance.now() - t0) / n;
-        return { msPorQuadro: +ms.toFixed(3), fps: Math.round(1000 / ms),
-          resolucao: canvas.width + 'x' + canvas.height, qualidade: opcoes.qualidade,
-          instancias: estaticasCaixa.contagem + estaticasEsfera.contagem + contagemDin };
-      }
-    };
 
     return {
       opcoes: opcoes,
