@@ -1,11 +1,12 @@
 {
   "name": "voodoojs",
   "version": "0.1.0",
-  "description": "Voodoo.js: micro framework vanilla que faz quase tudo direto no HTML. Reatividade, directives, HTTP, forms, validacao, toast, modal e UI em menos de 30 KB gzip. JavaScript feels like magic.",
+  "description": "Voodoo.js: o framework JavaScript HTML-first. Construa aplicacoes reativas direto no HTML: reatividade granular, componentes, HTTP, formularios, validacao, roteador e UI. Sem build obrigatorio, sem dependencias, sem Virtual DOM, sem eval. JavaScript feels like magic.",
   "keywords": [
     "javascript",
     "framework",
-    "micro-framework",
+    "html-first-framework",
+    "reactive-framework",
     "vanilla",
     "html-first",
     "reactivity",
@@ -85,12 +86,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/voodoojs/voodoo.git",
+    "url": "git+https://github.com/kwy404/Voodoo.js.git",
     "directory": "packages/voodoojs"
   },
   "homepage": "https://voodoojs.dev",
   "bugs": {
-    "url": "https://github.com/voodoojs/voodoo/issues"
+    "url": "https://github.com/kwy404/Voodoo.js/issues"
   },
   "publishConfig": {
     "access": "public"

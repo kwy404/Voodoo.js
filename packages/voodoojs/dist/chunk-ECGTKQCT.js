@@ -16,7 +16,8 @@ var config = {
   locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",
   currency: "BRL",
   injectStyles: true,
-  cleanAttributes: true
+  cleanAttributes: true,
+  sanitizeUrls: true
 };
 var directives = /* @__PURE__ */ new Map();
 var PRIORITY = {
@@ -114,5 +115,5 @@ function ensureTokens() {
 }
 
 export { BASE_TOKENS, PRIORITY, components, config, defineDirective, directives, ensureTokens, injectStyle, normalizeComponentName, usePlugin };
-//# sourceMappingURL=chunk-NY5DITDF.js.map
-//# sourceMappingURL=chunk-NY5DITDF.js.map
+//# sourceMappingURL=chunk-ECGTKQCT.js.map
+//# sourceMappingURL=chunk-ECGTKQCT.js.map

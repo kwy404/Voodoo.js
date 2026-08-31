@@ -30,6 +30,7 @@ import {
   type ComponentDefinition,
   type PropDefinition,
 } from './registry';
+import { avisarAlias, avisarComponenteDesconhecido, avisarPropObrigatoria } from './avisos';
 import { Scope } from './scope';
 import {
   addCleanup,
@@ -38,6 +39,7 @@ import {
   evaluateIn,
   findScope,
   getScope,
+  hasDirectives,
   isInitialized,
   parseAttribute,
   restoreAttributes,
@@ -109,6 +111,16 @@ function mountPending(normalized: string): void {
       // Ja e um componente montado: nada a fazer.
       if (getScope(el)?.component) continue;
 
+      // Um ancestral que ainda nao foi processado significa que a caminhada
+      // principal ainda nao chegou aqui. Montar agora ligaria os atributos da
+      // tag ao escopo errado, porque o `v-data` de cima ainda nao existe: o
+      // `@evento` do componente gravaria na raiz em vez de gravar no escopo do
+      // pai. E como o elemento ficaria marcado como pronto, a caminhada
+      // seguinte passaria direto e o engano seria permanente. Deixar para
+      // depois nao custa nada, porque a caminhada vai montar este elemento
+      // sozinha, na ordem certa.
+      if (temAncestralPendente(el)) continue;
+
       const escopo = findScope(el.parentNode);
 
       // O elemento pode ter sido percorrido antes do componente existir, por
@@ -124,6 +136,24 @@ function mountPending(normalized: string): void {
       walkElement(el, escopo);
     }
   }
+}
+
+/**
+ * `true` quando algum ancestral ainda tem directives esperando processamento.
+ *
+ * O sinal e o proprio HTML: um elemento ja processado teve os atributos `v-*`
+ * retirados, entao continuar com eles quer dizer que a caminhada nao passou
+ * por ali. A checagem de `isInitialized` cobre o caso de
+ * `config.cleanAttributes` desligado, em que os atributos ficam no lugar
+ * mesmo depois de processados.
+ */
+function temAncestralPendente(el: Element): boolean {
+  let atual = el.parentElement;
+  while (atual && atual !== document.body) {
+    if (hasDirectives(atual) && !isInitialized(atual)) return true;
+    atual = atual.parentElement;
+  }
+  return false;
 }
 
 /** Converte o valor bruto de um atributo para o tipo declarado na prop. */
@@ -169,7 +199,8 @@ function resolveProps(
   el: HTMLElement,
   defs: Record<string, PropDefinition>,
   parentScope: Scope,
-  owner: EffectScope
+  owner: EffectScope,
+  nomeDoComponente: string
 ): Record<string, any> {
   const props = reactive<Record<string, any>>({});
   const known = Object.keys(defs);
@@ -209,8 +240,7 @@ function resolveProps(
 
   for (const key of known) {
     if (defs[key].required && props[key] === undefined) {
-      // eslint-disable-next-line no-console
-      console.warn(`[Voodoo] prop obrigatoria ausente: "${key}"`);
+      avisarPropObrigatoria(el, nomeDoComponente, key);
     }
   }
 
@@ -284,17 +314,19 @@ export function mountComponent(
 
   if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
     // Componente inline: sem registro, apenas escopo isolado.
-    if (config.devtools) {
-      // eslint-disable-next-line no-console
-      console.warn(`[Voodoo] componente "${name}" nao registrado, usando escopo inline.`);
-    }
+    avisarComponenteDesconhecido(el, name);
   }
 
   const owner = new EffectScope(true);
   const defs = propDefinitions(definition);
-  const props = resolveProps(el, defs, parentScope, owner);
+  const props = resolveProps(el, defs, parentScope, owner, normalized || 'inline');
 
   // Estado inicial.
+  // `data` e `destroyed` continuam funcionando; os nomes oficiais sao `state`
+  // e `unmounted`, e o aviso so aparece em desenvolvimento.
+  if (!definition.state && definition.data) avisarAlias('data()', 'state()');
+  if (definition.destroyed) avisarAlias('destroyed()', 'unmounted()');
+
   const stateFactory = definition.state ?? definition.data;
   let stateRaw: Record<string, any> = {};
 

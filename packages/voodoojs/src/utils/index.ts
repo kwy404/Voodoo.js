@@ -493,27 +493,45 @@ export function formatPercent(value: number, decimals = 0, locale?: string): str
 export const isBrowser =
   typeof window !== 'undefined' && typeof window.document !== 'undefined';
 
+/**
+ * Consulta uma media query com seguranca.
+ *
+ * `matchMedia` nao existe em todo lugar: falta no jsdom e em webviews antigas.
+ * Sem esta guarda, ler `device.reducedMotion` lancava TypeError, e como as
+ * directives de interface leem essa propriedade no meio de abrir e fechar
+ * paineis, a excecao interrompia o metodo e deixava `aria-expanded` e o foco
+ * no estado errado.
+ */
+export function matchesMedia(query: string): boolean {
+  if (!isBrowser || typeof window.matchMedia !== 'function') return false;
+  try {
+    return window.matchMedia(query).matches;
+  } catch {
+    return false;
+  }
+}
+
 /** Informacoes do dispositivo, calculadas sob demanda. */
 export const device = {
   get touch(): boolean {
     return isBrowser && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
   },
   get mobile(): boolean {
-    return isBrowser && window.matchMedia('(max-width: 767px)').matches;
+    return matchesMedia('(max-width: 767px)');
   },
   get tablet(): boolean {
-    return isBrowser && window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches;
+    return matchesMedia('(min-width: 768px) and (max-width: 1023px)');
   },
   get desktop(): boolean {
-    return isBrowser && window.matchMedia('(min-width: 1024px)').matches;
+    return matchesMedia('(min-width: 1024px)');
   },
   get online(): boolean {
     return !isBrowser || navigator.onLine;
   },
   get reducedMotion(): boolean {
-    return isBrowser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return matchesMedia('(prefers-reduced-motion: reduce)');
   },
   get darkMode(): boolean {
-    return isBrowser && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return matchesMedia('(prefers-color-scheme: dark)');
   },
 };

@@ -62,6 +62,35 @@ export class VoodooRuntimeError extends Error {
 const SPREAD = Symbol('spread');
 
 /**
+ * Chaves que abrem a cadeia de prototipos e por isso ficam fora do alcance das
+ * expressoes de template.
+ *
+ * Ler `constructor` bastava para escapar do interpretador: `({}).constructor`
+ * devolve `Object`, e `Object.constructor` devolve `Function`, ou seja
+ * `constructor.constructor("return this")()` era `eval` pela porta dos fundos,
+ * com acesso a `window`, `document` e `fetch`. Escrever em `__proto__` ou em
+ * `prototype` polui `Object.prototype` e contamina a pagina inteira.
+ */
+const CHAVES_BLOQUEADAS = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** `true` quando a chave alcanca a cadeia de prototipos. */
+export function chaveBloqueada(key: unknown): boolean {
+  return typeof key === 'string' && CHAVES_BLOQUEADAS.has(key);
+}
+
+/** Recusa a chave quando ela alcanca a cadeia de prototipos. */
+function checarChave(key: unknown, expressao?: string): PropertyKey {
+  if (chaveBloqueada(key)) {
+    throw new VoodooRuntimeError(
+      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a ` +
+        'cadeia de prototipos. Exponha um metodo no estado em vez disso.',
+      expressao
+    );
+  }
+  return key as PropertyKey;
+}
+
+/**
  * Avalia um no da AST.
  *
  * @param node no gerado por `parse()`
@@ -82,6 +111,9 @@ export function evaluate(node: Node, scope: EvalScope): any {
     }
 
     case 'id': {
+      // `constructor` e companhia existem em qualquer objeto por heranca, entao
+      // `name in data` os encontraria mesmo sem ninguem ter declarado nada.
+      checarChave(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -96,8 +128,10 @@ export function evaluate(node: Node, scope: EvalScope): any {
           `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? 'null' : 'undefined'}`
         );
       }
-      const key = node.computed ? evaluate(node.p, scope) : (node.p as { v: string }).v;
-      return (obj as any)[key as PropertyKey];
+      const key = checarChave(
+        node.computed ? evaluate(node.p, scope) : (node.p as { v: string }).v
+      );
+      return (obj as any)[key];
     }
 
     case 'call': {
@@ -114,12 +148,15 @@ export function evaluate(node: Node, scope: EvalScope): any {
             }`
           );
         }
-        const key = node.callee.computed
-          ? evaluate(node.callee.p, scope)
-          : (node.callee.p as { v: string }).v;
+        const key = checarChave(
+          node.callee.computed
+            ? evaluate(node.callee.p, scope)
+            : (node.callee.p as { v: string }).v
+        );
         thisArg = obj;
-        fn = (obj as any)[key as PropertyKey];
+        fn = (obj as any)[key];
       } else if (node.callee.t === 'id') {
+        checarChave(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -145,6 +182,8 @@ export function evaluate(node: Node, scope: EvalScope): any {
       if (node.op === 'typeof') {
         // typeof de identificador desconhecido nao pode lancar erro.
         if (node.a.t === 'id') {
+          // Chave bloqueada nunca vaza nem por `typeof`.
+          if (chaveBloqueada(node.a.n)) return 'undefined';
           const owner = scope.lookup(node.a.n);
           const value = owner ? owner[node.a.n] : allowedGlobals[node.a.n];
           return typeof value;
@@ -280,7 +319,10 @@ export function evaluate(node: Node, scope: EvalScope): any {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope) as object);
         } else {
-          const key = prop.key !== null ? prop.key : String(evaluate(prop.keyExpr!, scope));
+          // `{ __proto__: ... }` trocaria o prototipo do objeto criado aqui.
+          const key = checarChave(
+            prop.key !== null ? prop.key : String(evaluate(prop.keyExpr!, scope))
+          ) as string;
           out[key] = evaluate(prop.value!, scope);
         }
       }
@@ -325,6 +367,7 @@ function evalArgs(args: Node[], scope: EvalScope): unknown[] {
 /** Escreve em um identificador ou em um acesso a membro. */
 function assign(target: Node, value: unknown, scope: EvalScope): void {
   if (target.t === 'id') {
+    checarChave(target.n);
     scope.set(target.n, value);
     return;
   }
@@ -333,8 +376,11 @@ function assign(target: Node, value: unknown, scope: EvalScope): void {
     if (obj == null) {
       throw new VoodooRuntimeError('Nao foi possivel escrever em null ou undefined');
     }
-    const key = target.computed ? evaluate(target.p, scope) : (target.p as { v: string }).v;
-    (obj as any)[key as PropertyKey] = value;
+    // `x.__proto__.qualquer = 1` poluiria `Object.prototype` para a pagina toda.
+    const key = checarChave(
+      target.computed ? evaluate(target.p, scope) : (target.p as { v: string }).v
+    );
+    (obj as any)[key] = value;
     return;
   }
   throw new VoodooRuntimeError('Alvo de atribuicao invalido');

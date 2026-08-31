@@ -68,6 +68,7 @@ import { whenElement, whenReady } from './runtime/boot';
 import { installMagics, clipboard, network, screen } from './runtime/magics';
 
 import { http, HttpError, request } from './http';
+import { createResource } from './http/resource';
 import { store, allStores, removeStore, storeNames } from './store';
 import { cache, cookie, session, storage, theme, url } from './storage';
 import { toast } from './ui/toast';
@@ -319,6 +320,8 @@ export const core = {
   http,
   request,
   HttpError,
+  /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+  resource: createResource,
   toast,
   storage,
   session,

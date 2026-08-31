@@ -221,8 +221,20 @@ async function request(input) {
   let lastError;
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
-    const signals = [controller.signal];
-    if (config.signal) signals.push(config.signal);
+    const externo = config.signal;
+    let repassarAborto = null;
+    if (externo) {
+      if (externo.aborted) {
+        controller.abort(externo.reason);
+      } else {
+        repassarAborto = () => controller.abort(externo.reason);
+        externo.addEventListener("abort", repassarAborto, { once: true });
+      }
+    }
+    const soltarSinal = () => {
+      if (repassarAborto && externo) externo.removeEventListener("abort", repassarAborto);
+      repassarAborto = null;
+    };
     const timeoutId = config.timeout && config.timeout > 0 ? setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), config.timeout) : null;
     try {
       const response = await fetch(url, {
@@ -230,9 +242,10 @@ async function request(input) {
         headers,
         body: method === "GET" || method === "HEAD" ? void 0 : body,
         credentials: config.credentials,
-        signal: signals.length > 1 && "any" in AbortSignal ? AbortSignal.any(signals) : controller.signal
+        signal: controller.signal
       });
       if (timeoutId) clearTimeout(timeoutId);
+      soltarSinal();
       const data = await parseResponse(response, config.responseType);
       let result = {
         data,
@@ -268,6 +281,7 @@ async function request(input) {
       return result;
     } catch (err) {
       if (timeoutId) clearTimeout(timeoutId);
+      soltarSinal();
       if (err instanceof HttpError) throw err;
       lastError = err;
       const aborted = err?.name === "AbortError" && config.signal?.aborted;

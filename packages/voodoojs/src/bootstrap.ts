@@ -26,6 +26,26 @@ import { theme } from './storage';
 import { applySavedPalette } from './ui/palette';
 import { whenReady } from './runtime/boot';
 
+/**
+ * Decide se as devtools foram pedidas.
+ *
+ * Aceita as formas curtas porque este e o caso em que a pessoa esta com pressa:
+ * `devtools`, `devtools="true"`, `data-devtools`, ou a variavel global
+ * `window.VOODOO_DEVTOOLS` definida antes do carregamento. Um `devtools="false"`
+ * explicito desliga, para o atributo poder ser deixado no HTML e alternado.
+ */
+function readDevtoolsFlag(script: HTMLScriptElement): boolean {
+  if ((window as unknown as Record<string, unknown>).VOODOO_DEVTOOLS === true) return true;
+
+  for (const nome of ['devtools', 'data-devtools']) {
+    if (!script.hasAttribute(nome)) continue;
+    const valor = script.getAttribute(nome);
+    // Atributo vazio e atributo booleano contam como ligado.
+    return valor === null || valor === '' || valor.toLowerCase() !== 'false';
+  }
+  return false;
+}
+
 /** Le a configuracao declarada nos atributos da tag `<script>`. */
 function readScriptOptions(): { manual: boolean } {
   if (typeof document === 'undefined') return { manual: false };
@@ -47,12 +67,33 @@ function readScriptOptions(): { manual: boolean } {
   const locale = script.getAttribute('data-locale');
   if (locale) config.locale = locale;
 
-  if (script.hasAttribute('data-devtools')) config.devtools = true;
+  if (readDevtoolsFlag(script)) config.devtools = true;
   if (script.hasAttribute('data-no-styles')) config.injectStyles = false;
   if (script.hasAttribute('data-no-observer')) config.autoDiscover = false;
   if (script.hasAttribute('data-keep-attributes')) config.cleanAttributes = false;
 
   return { manual };
+}
+
+/**
+ * Coloca o widget das devtools na tela, quando o build carregado tiver um.
+ *
+ * A chamada e opcional de proposito. O widget e o inspetor vivem no build
+ * completo; nos builds menor e essencial `V.devtoolsWidget` simplesmente nao
+ * existe, e a pessoa recebe a instrucao no console em vez de um erro. E o que
+ * mantem `bootstrap.ts` compartilhado pelos tres builds sem arrastar o
+ * inspetor inteiro para dentro do menor deles.
+ */
+function mountDevtools(V: any): void {
+  if (typeof V.devtoolsWidget === 'function') {
+    V.devtoolsWidget(true);
+    return;
+  }
+  // eslint-disable-next-line no-console
+  console.info(
+    '[Voodoo] devtools pedidas, mas este build nao traz o inspetor. ' +
+      'Use voodoo.full.min.js para ganhar o widget e o painel completo.'
+  );
 }
 
 /** Publica o objeto global e agenda o inicio da Voodoo. */
@@ -80,6 +121,7 @@ export function bootstrap(V: any): void {
     theme.init();
     applySavedPalette();
     V.start();
+    if (config.devtools) mountDevtools(V);
   };
 
   // Quem decide a hora e o agendador da propria Voodoo, e nao os eventos de

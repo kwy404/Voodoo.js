@@ -22,6 +22,11 @@ import {
 import { evaluate, allowedGlobals, stringify as stringifyValue } from '../parser/interpreter';
 import { parse } from '../parser/parser';
 import { config, directives, components, type DirectiveContext } from './registry';
+import {
+  avisarDirectiveDesconhecida,
+  avisarExpressaoInvalida,
+  emDesenvolvimento,
+} from './avisos';
 import { Scope, rootScope } from './scope';
 
 // ---------------------------------------------------------------------------
@@ -396,6 +401,21 @@ export function restoreAttributes(el: Element): void {
     }
   }
 }
+/**
+ * `true` quando o elemento declarou alguma directive, mesmo depois de a limpeza
+ * ter retirado os atributos do HTML.
+ *
+ * `hasDirectives` olha apenas o DOM, entao com `config.cleanAttributes` ligado
+ * ela responde `false` para todo elemento ja processado. Quem precisa da
+ * resposta verdadeira depois da montagem, como o inspetor, deve usar esta aqui:
+ * a informacao continua no cache de atributos.
+ */
+export function hadDirectives(el: Element): boolean {
+  const cache = attributeCache.get(el);
+  if (cache && cache.size) return true;
+  return hasDirectives(el);
+}
+
 /** Verifica se o elemento tem qualquer atributo da Voodoo. */
 export function hasDirectives(el: Element): boolean {
   const attrs = el.attributes;
@@ -421,11 +441,21 @@ export function hasDirectives(el: Element): boolean {
  * Avalia uma expressao no escopo informado. Erros sao reportados sem quebrar a
  * pagina, porque um atributo com problema nao deve derrubar o resto do app.
  */
-export function evaluateIn<T = any>(expression: string, scope: Scope, context?: string): T {
+export function evaluateIn<T = any>(
+  expression: string,
+  scope: Scope,
+  context?: string,
+  el?: Element | null
+): T {
   if (!expression) return undefined as T;
   try {
     return evaluate(parse(expression), scope) as T;
   } catch (err) {
+    // Em desenvolvimento o aviso detalhado diz onde esta o problema; em
+    // producao o custo e a leitura de um booleano.
+    if (emDesenvolvimento()) {
+      avisarExpressaoInvalida(el ?? scope.el, context ?? 'expressao', expression, err);
+    }
     handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
     return undefined as T;
   }
@@ -449,7 +479,14 @@ export function markSkipChildren(el: Element): void {
 
 function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): void {
   const def = directives.get(attr.name);
-  if (!def) return;
+  if (!def) {
+    // Nome escrito errado nao pode falhar em silencio para quem esta montando
+    // a pagina. Em producao o aviso nem chega a ser formatado.
+    if (emDesenvolvimento() && attr.raw.startsWith(config.prefix)) {
+      avisarDirectiveDesconhecida(el, attr.raw, attr.name);
+    }
+    return;
+  }
 
   const scopeOwner = new EffectScope(true);
   addCleanup(el, () => scopeOwner.stop());
@@ -463,7 +500,7 @@ function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): voi
     modifiers: attr.modifiers,
     raw: attr.raw,
     evaluate<T = any>(expression?: string): T {
-      return evaluateIn<T>(expression ?? attr.expression, scope, attr.raw);
+      return evaluateIn<T>(expression ?? attr.expression, scope, attr.raw, el);
     },
     effect(fn: () => void): void {
       scopeOwner.run(() => createEffect(fn, { scope: scopeOwner }));

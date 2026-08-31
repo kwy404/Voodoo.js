@@ -2,7 +2,7 @@
   "name": "voodoo-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Voodoo.js: JavaScript feels like magic.",
+  "description": "Voodoo.js: the HTML-first JavaScript framework. Build reactive applications directly in HTML.",
   "workspaces": [
     "packages/*"
   ],

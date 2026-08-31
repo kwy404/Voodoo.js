@@ -1,6 +1,6 @@
-import { HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
 
 /**
  * @module parser/lexer
@@ -266,6 +266,12 @@ interface VoodooConfig {
      * limpo no inspetor. Os valores continuam acessiveis internamente.
      */
     cleanAttributes: boolean;
+    /**
+     * Recusa `javascript:`, `vbscript:` e `data:text/html` em atributos que o
+     * navegador navega, como `href`, `src`, `action` e `formaction`. Desligue
+     * somente se a aplicacao precisar mesmo gerar esses esquemas.
+     */
+    sanitizeUrls: boolean;
 }
 declare const config: VoodooConfig;
 interface DirectiveBinding<T = any> {
@@ -631,7 +637,7 @@ declare function parseAttribute(name: string, value: string): ParsedAttribute | 
  * Avalia uma expressao no escopo informado. Erros sao reportados sem quebrar a
  * pagina, porque um atributo com problema nao deve derrubar o resto do app.
  */
-declare function evaluateIn<T = any>(expression: string, scope: Scope, context?: string): T;
+declare function evaluateIn<T = any>(expression: string, scope: Scope, context?: string, el?: Element | null): T;
 /**
  * Percorre um no aplicando as directives encontradas.
  *
@@ -759,6 +765,73 @@ declare function whenReady(acao: () => void): void;
 declare function whenElement(alvo: string | Element, acao: (el: Element) => void, aoDesistir?: () => void): void;
 /** Promessa resolvida quando o documento estiver pronto pelo criterio acima. */
 declare function ready$1(): Promise<void>;
+
+/**
+ * @module http/resource
+ *
+ * Recurso reativo: uma requisicao com estado de carregamento, erro e dados
+ * prontos para serem lidos direto no HTML.
+ *
+ * E o mesmo nucleo usado por `v-resource`. A directive apenas le a configuracao
+ * dos atributos e chama esta funcao, entao o comportamento dos dois e sempre o
+ * mesmo, sem logica duplicada.
+ *
+ * ```js
+ * const produtos = V.resource('/api/produtos')
+ * V.effect(() => console.log(produtos.loading, produtos.data))
+ * await produtos.reload()
+ * ```
+ */
+
+interface ResourceOptions {
+    /** Verbo HTTP. Padrao `GET`. */
+    method?: HttpMethod;
+    /** Parametros de query. Uma funcao e reavaliada a cada requisicao. */
+    params?: Record<string, string | number | boolean | null | undefined> | (() => Record<string, string | number | boolean | null | undefined> | undefined);
+    /** Tempo de cache da resposta, em ms. */
+    cache?: number;
+    /** Tentativas extras em caso de falha. */
+    retry?: number;
+    /** Milissegundos ate abortar. */
+    timeout?: number;
+    headers?: Record<string, string>;
+    /** Caminho dentro do JSON da resposta, como `dados.itens`. */
+    jsonPath?: string | null;
+    /** Nao dispara a primeira requisicao sozinho. */
+    manual?: boolean;
+    /** Repete a requisicao a cada N ms enquanto a aba estiver visivel. */
+    poll?: number;
+    /** Chamado depois de cada resposta bem sucedida. */
+    onSuccess?(data: unknown): void;
+    /** Chamado quando a requisicao falha, com a mensagem ja extraida. */
+    onError?(err: unknown, message: string): void;
+}
+interface Resource<T = unknown> {
+    /** Corpo da resposta, ja recortado por `jsonPath` quando houver. */
+    data: T | null;
+    /** `true` enquanto a requisicao esta em andamento. */
+    loading: boolean;
+    /** Erro da ultima tentativa, ou `null`. */
+    error: (Error & {
+        message: string;
+    }) | null;
+    /** `true` depois da primeira resposta bem sucedida. */
+    loaded: boolean;
+    /** Refaz a requisicao. */
+    reload(): Promise<void>;
+    /** Troca os dados localmente, util para atualizacao otimista. */
+    set(value: T): void;
+    /** Cancela a requisicao em andamento e para a repeticao automatica. */
+    stop(): void;
+}
+/**
+ * Cria um recurso reativo.
+ *
+ * @param url endereco fixo, ou funcao que devolve o endereco a cada chamada.
+ *   Devolver vazio adia a requisicao, util enquanto um parametro nao existe.
+ * @param options configuracao da requisicao e do ciclo de vida
+ */
+declare function createResource<T = unknown>(url: string | (() => string), options?: ResourceOptions): Resource<T>;
 
 /**
  * @module store
@@ -944,80 +1017,80 @@ declare const core: {
     http: {
         defaults: HttpDefaults;
         get<T = unknown>(url: string, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         post<T = unknown>(url: string, body?: unknown, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         put<T = unknown>(url: string, body?: unknown, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         patch<T = unknown>(url: string, body?: unknown, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         delete<T = unknown>(url: string, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         head(url: string, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<unknown>;
@@ -1033,15 +1106,15 @@ declare const core: {
             error?: (e: Event) => void;
         }): EventSource;
         stream(url: string, onLine: (line: string) => void, options?: {
-            params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             headers?: Record<string, string> | undefined;
+            credentials?: RequestCredentials | undefined;
+            signal?: AbortSignal | undefined;
+            params?: Record<string, string | number | boolean | null | undefined> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
-            signal?: AbortSignal | undefined;
-            credentials?: RequestCredentials | undefined;
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<void>;
@@ -1065,6 +1138,8 @@ declare const core: {
     };
     request: typeof request;
     HttpError: typeof HttpError;
+    /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+    resource: typeof createResource;
     toast: ((message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle) & {
         success: (message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle;
         error: (message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle;
@@ -1206,6 +1281,7 @@ declare const core: {
     relativeTime(value: Date | string | number, locale?: string): string;
     formatFileSize(bytes: number, decimals?: number): string;
     formatPercent(value: number, decimals?: number, locale?: string): string;
+    matchesMedia(query: string): boolean;
     isBrowser: boolean;
     device: {
         readonly touch: boolean;
@@ -1480,4 +1556,4 @@ declare function ready(fn?: ReadyCallback): Promise<void>;
 /** Cria elementos a partir de uma string de HTML, sem inseri-los no documento. */
 declare function fromHtml(html: string): VoodooCollection;
 
-export { theme as $, type App as A, getScope as B, type ComponentDefinition as C, type DirectiveBinding as D, injectStyle as E, instances as F, leave as G, magic as H, magics as I, mountComponent as J, parse as K, query as L, ready as M, refresh as N, removeStore as O, PRIORITY as P, rootScope as Q, session as R, Scope as S, slideDown as T, slideUp as U, VoodooCollection as V, start as W, storage as X, store as Y, storeNames as Z, stringify as _, type AppOptions as a, toast as a0, tokenize as a1, url as a2, viewTransition as a3, walk as a4, whenElement as a5, whenReady as a6, type DirectiveHooks as b, core as c, type VoodooConfig as d, type VoodooPlugin as e, VoodooRuntimeError as f, VoodooSyntaxError as g, addCleanup as h, allStores as i, allowedGlobals as j, cache as k, clearParseCache as l, config as m, cookie as n, createApp as o, defineComponent as p, defineDirective as q, destroy as r, ready$1 as s, ensureTokens as t, enter as u, evaluate as v, fadeIn as w, fadeOut as x, findScope as y, fromHtml as z };
+export { store as $, type App as A, findScope as B, type ComponentDefinition as C, type DirectiveBinding as D, fromHtml as E, getScope as F, injectStyle as G, instances as H, leave as I, magic as J, magics as K, mountComponent as L, parse as M, query as N, ready as O, PRIORITY as P, refresh as Q, type Resource as R, Scope as S, removeStore as T, rootScope as U, VoodooCollection as V, session as W, slideDown as X, slideUp as Y, start as Z, storage as _, type AppOptions as a, storeNames as a0, stringify as a1, theme as a2, toast as a3, tokenize as a4, url as a5, viewTransition as a6, walk as a7, whenElement as a8, whenReady as a9, type DirectiveHooks as b, core as c, type ResourceOptions as d, type VoodooConfig as e, type VoodooPlugin as f, VoodooRuntimeError as g, VoodooSyntaxError as h, addCleanup as i, allStores as j, allowedGlobals as k, cache as l, clearParseCache as m, config as n, cookie as o, createApp as p, createResource as q, defineComponent as r, defineDirective as s, destroy as t, ready$1 as u, ensureTokens as v, enter as w, evaluate as x, fadeIn as y, fadeOut as z };

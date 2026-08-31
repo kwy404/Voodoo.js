@@ -13,12 +13,9 @@ dist/
 !packages/voodoojs/dist/
 !packages/voodoojs/dist/**
 
-# Documentos em markdown ficam apenas na maquina, com excecao do README
-# principal, que e a porta de entrada do repositorio.
-*.md
-!/README.md
-
-# Arquivos de trabalho interno.
+# Arquivos de trabalho interno. A documentacao publica (README, docs/,
+# CONTRIBUTING, ARCHITECTURE, ROADMAP e companhia) e versionada de proposito:
+# ela e parte do projeto, nao rascunho de maquina.
 CONTRACT.md
 lista-temp.mjs
 verifica-temp.mjs

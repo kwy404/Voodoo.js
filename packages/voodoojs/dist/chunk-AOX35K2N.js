@@ -1,7 +1,7 @@
 import { reactive, ref, handleError, nextTick, queuePostFlush, warn, watch, toRaw, EffectScope, effect, flushSync, effectScope, stop, unref, markRaw, watchEffect, computed, shallowRef, setErrorHandler } from './chunk-ABAHVFPX.js';
-import { http, HttpError, request } from './chunk-7U443GSF.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-45K3USNK.js';
-import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-NY5DITDF.js';
+import { http, HttpError, request } from './chunk-WCQZFFOE.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-UNO6H5ZW.js';
+import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-ECGTKQCT.js';
 import { __publicField } from './chunk-5V56KGIJ.js';
 
 /**
@@ -275,12 +275,12 @@ var BINARY_PRECEDENCE = {
 };
 var ASSIGN_OPS = /* @__PURE__ */ new Set(["=", "+=", "-=", "*=", "/=", "%=", "**=", "&&=", "||=", "??="]);
 var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "typeof", "void"]);
-var LITERALS = {
+var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null), {
   true: true,
   false: false,
   null: null,
   undefined: void 0
-};
+});
 var Parser = class {
   constructor(tokens, source) {
     __publicField(this, "tokens", tokens);
@@ -620,6 +620,19 @@ Expressao: ${expression}` : message);
   }
 };
 var SPREAD = /* @__PURE__ */ Symbol("spread");
+var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+function chaveBloqueada(key) {
+  return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+}
+function checarChave(key, expressao) {
+  if (chaveBloqueada(key)) {
+    throw new VoodooRuntimeError(
+      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
+      expressao
+    );
+  }
+  return key;
+}
 function evaluate(node, scope) {
   switch (node.t) {
     case "lit":
@@ -633,6 +646,7 @@ function evaluate(node, scope) {
       return out;
     }
     case "id": {
+      checarChave(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -646,7 +660,9 @@ function evaluate(node, scope) {
           `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
         );
       }
-      const key = node.computed ? evaluate(node.p, scope) : node.p.v;
+      const key = checarChave(
+        node.computed ? evaluate(node.p, scope) : node.p.v
+      );
       return obj[key];
     }
     case "call": {
@@ -660,10 +676,13 @@ function evaluate(node, scope) {
             `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v;
+        const key = checarChave(
+          node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
+        );
         thisArg = obj;
         fn = obj[key];
       } else if (node.callee.t === "id") {
+        checarChave(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -685,6 +704,7 @@ function evaluate(node, scope) {
       if (node.op === "...") return { [SPREAD]: evaluate(node.a, scope) };
       if (node.op === "typeof") {
         if (node.a.t === "id") {
+          if (chaveBloqueada(node.a.n)) return "undefined";
           const owner = scope.lookup(node.a.n);
           const value = owner ? owner[node.a.n] : allowedGlobals[node.a.n];
           return typeof value;
@@ -810,7 +830,9 @@ function evaluate(node, scope) {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope));
         } else {
-          const key = prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope));
+          const key = checarChave(
+            prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
+          );
           out[key] = evaluate(prop.value, scope);
         }
       }
@@ -849,6 +871,7 @@ function evalArgs(args, scope) {
 }
 function assign(target, value, scope) {
   if (target.t === "id") {
+    checarChave(target.n);
     scope.set(target.n, value);
     return;
   }
@@ -857,7 +880,9 @@ function assign(target, value, scope) {
     if (obj == null) {
       throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
     }
-    const key = target.computed ? evaluate(target.p, scope) : target.p.v;
+    const key = checarChave(
+      target.computed ? evaluate(target.p, scope) : target.p.v
+    );
     obj[key] = value;
     return;
   }
@@ -1003,6 +1028,77 @@ var Scope = class _Scope {
   }
 };
 var rootScope = new Scope(reactive({}));
+
+// src/runtime/avisos.ts
+function emDesenvolvimento() {
+  return config.devtools === true;
+}
+function descreverElemento(el) {
+  if (!el) return "(sem elemento)";
+  let out = el.tagName.toLowerCase();
+  if (el.id) out += `#${el.id}`;
+  const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
+  if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
+  return `<${out}>`;
+}
+function avisar(mensagem) {
+  if (!emDesenvolvimento()) return;
+  console.warn(`[Voodoo] ${mensagem}`);
+}
+var jaAvisado = /* @__PURE__ */ new Set();
+function avisarUmaVez(chave, mensagem) {
+  if (!emDesenvolvimento()) return;
+  if (jaAvisado.has(chave)) return;
+  jaAvisado.add(chave);
+  console.warn(`[Voodoo] ${mensagem}`);
+}
+var ATRIBUTOS_AUXILIARES = /* @__PURE__ */ new Set([
+  "confirm-title",
+  "confirm-label",
+  "confirm-cancel",
+  "hold-duration"
+]);
+function avisarDirectiveDesconhecida(el, raw, nome) {
+  if (!emDesenvolvimento()) return;
+  if (ATRIBUTOS_AUXILIARES.has(nome)) return;
+  avisarUmaVez(
+    `directive-desconhecida:${nome}`,
+    `directive desconhecida "${raw}" em ${descreverElemento(el)}. Nenhuma directive chamada "${nome}" foi registrada. Verifique a grafia ou registre com V.directive("${nome}", ...).`
+  );
+}
+function avisarComponenteDesconhecido(el, nome) {
+  avisarUmaVez(
+    `componente-desconhecido:${nome}`,
+    `componente "${nome}" nao registrado em ${descreverElemento(el)}. Registre com V.component("${nome}", { ... }) antes de usar a tag, ou remova o atributo para deixar o elemento como HTML comum.`
+  );
+}
+function avisarExpressaoInvalida(el, raw, expressao, err) {
+  if (!emDesenvolvimento()) return;
+  const motivo = err instanceof Error ? err.message.split("\n")[0] : String(err);
+  avisar(
+    `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.
+Motivo: ${motivo}
+Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que uma linha, mova para um metodo do componente e chame o metodo aqui.`
+  );
+}
+function avisarChaveDuplicada(el, chave, expressao) {
+  if (!emDesenvolvimento()) return;
+  avisar(
+    `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.`
+  );
+}
+function avisarPropObrigatoria(el, componente, prop) {
+  if (!emDesenvolvimento()) return;
+  avisar(
+    `prop obrigatoria "${prop}" ausente no componente "${componente}" em ${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um texto fixo ou :${prop}="expressao" para um valor do estado.`
+  );
+}
+function avisarAlias(alias, canonico) {
+  avisarUmaVez(
+    `alias:${alias}`,
+    `"${alias}" e um apelido de "${canonico}" e continua funcionando, mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
+  );
+}
 
 // src/runtime/walker.ts
 var nodeScopes = /* @__PURE__ */ new WeakMap();
@@ -1215,6 +1311,11 @@ function restoreAttributes(el) {
     }
   }
 }
+function hadDirectives(el) {
+  const cache3 = attributeCache.get(el);
+  if (cache3 && cache3.size) return true;
+  return hasDirectives(el);
+}
 function hasDirectives(el) {
   const attrs = el.attributes;
   for (let i = 0; i < attrs.length; i++) {
@@ -1225,11 +1326,14 @@ function hasDirectives(el) {
   }
   return false;
 }
-function evaluateIn(expression, scope, context) {
+function evaluateIn(expression, scope, context, el) {
   if (!expression) return void 0;
   try {
     return evaluate(parse(expression), scope);
   } catch (err) {
+    if (emDesenvolvimento()) {
+      avisarExpressaoInvalida(el ?? scope.el, context ?? "expressao", expression, err);
+    }
     handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
     return void 0;
   }
@@ -1240,7 +1344,12 @@ function markSkipChildren(el) {
 }
 function runDirective(el, attr2, scope) {
   const def = directives.get(attr2.name);
-  if (!def) return;
+  if (!def) {
+    if (emDesenvolvimento() && attr2.raw.startsWith(config.prefix)) {
+      avisarDirectiveDesconhecida(el, attr2.raw, attr2.name);
+    }
+    return;
+  }
   const scopeOwner = new EffectScope(true);
   addCleanup(el, () => scopeOwner.stop());
   trackEffectScope(el, scopeOwner);
@@ -1252,7 +1361,7 @@ function runDirective(el, attr2, scope) {
     modifiers: attr2.modifiers,
     raw: attr2.raw,
     evaluate(expression) {
-      return evaluateIn(expression ?? attr2.expression, scope, attr2.raw);
+      return evaluateIn(expression ?? attr2.expression, scope, attr2.raw, el);
     },
     effect(fn) {
       scopeOwner.run(() => effect(fn, { scope: scopeOwner }));
@@ -1524,6 +1633,7 @@ function mountPending(normalized) {
     }
     for (const el of encontrados) {
       if (getScope(el)?.component) continue;
+      if (temAncestralPendente(el)) continue;
       const escopo = findScope(el.parentNode);
       if (isInitialized(el)) {
         destroy(el);
@@ -1532,6 +1642,14 @@ function mountPending(normalized) {
       walk(el, escopo);
     }
   }
+}
+function temAncestralPendente(el) {
+  let atual = el.parentElement;
+  while (atual && atual !== document.body) {
+    if (hasDirectives(atual) && !isInitialized(atual)) return true;
+    atual = atual.parentElement;
+  }
+  return false;
 }
 function coerce(value, def) {
   if (!def || !def.type || def.type === "any") return value;
@@ -1563,7 +1681,7 @@ function propDefinitions(def) {
 function camelize(name) {
   return name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
 }
-function resolveProps(el, defs, parentScope, owner) {
+function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
   const props = reactive({});
   const known = Object.keys(defs);
   const lookup = /* @__PURE__ */ new Map();
@@ -1595,7 +1713,7 @@ function resolveProps(el, defs, parentScope, owner) {
   }
   for (const key of known) {
     if (defs[key].required && props[key] === void 0) {
-      console.warn(`[Voodoo] prop obrigatoria ausente: "${key}"`);
+      avisarPropObrigatoria(el, nomeDoComponente, key);
     }
   }
   return props;
@@ -1642,13 +1760,13 @@ function mountComponent(el, name, parentScope) {
   const normalized = name ? normalizeComponentName(name) : "";
   const definition = normalized ? components.get(normalized) ?? components.get(componentAliases.get(normalized) ?? "") ?? {} : {};
   if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
-    if (config.devtools) {
-      console.warn(`[Voodoo] componente "${name}" nao registrado, usando escopo inline.`);
-    }
+    avisarComponenteDesconhecido(el, name);
   }
   const owner = new EffectScope(true);
   const defs = propDefinitions(definition);
-  const props = resolveProps(el, defs, parentScope, owner);
+  const props = resolveProps(el, defs, parentScope, owner, normalized || "inline");
+  if (!definition.state && definition.data) avisarAlias("data()", "state()");
+  if (definition.destroyed) avisarAlias("destroyed()", "unmounted()");
   const stateFactory = definition.state ?? definition.data;
   let stateRaw = {};
   const instance = {};
@@ -2754,6 +2872,91 @@ function installMagics() {
   );
 }
 
+// src/http/resource.ts
+function pick(value, path) {
+  if (!path) return value;
+  let current2 = value;
+  for (const part of path.split(".")) {
+    if (current2 == null) return void 0;
+    current2 = current2[part];
+  }
+  return current2;
+}
+function extractMessage(error) {
+  const data2 = error.response?.data;
+  if (!data2 || typeof data2 !== "object") return null;
+  for (const key of ["message", "error", "detail", "msg"]) {
+    const value = data2[key];
+    if (typeof value === "string") return value;
+  }
+  return null;
+}
+function createResource(url2, options = {}) {
+  const resolveUrl2 = () => typeof url2 === "function" ? url2() : url2;
+  const resolveParams = () => typeof options.params === "function" ? options.params() : options.params;
+  let controller = null;
+  let timer = null;
+  const resource = reactive({
+    data: null,
+    loading: false,
+    error: null,
+    loaded: false,
+    async reload() {
+      const endereco = resolveUrl2();
+      if (!endereco) return;
+      controller?.abort();
+      const atual = controller = new AbortController();
+      resource.loading = true;
+      resource.error = null;
+      try {
+        const response = await http.request({
+          url: endereco,
+          method: (options.method || "GET").toUpperCase(),
+          params: resolveParams(),
+          headers: options.headers,
+          cache: options.cache || void 0,
+          retry: options.retry ?? 0,
+          timeout: options.timeout ?? http.defaults.timeout,
+          signal: atual.signal
+        });
+        if (atual.signal.aborted) return;
+        resource.data = pick(response.data, options.jsonPath);
+        resource.loaded = true;
+        options.onSuccess?.(resource.data);
+      } catch (err) {
+        if (atual.signal.aborted) return;
+        const message = err instanceof HttpError ? extractMessage(err) ?? err.message : err.message;
+        resource.error = { name: "ResourceError", message };
+        options.onError?.(err, message);
+      } finally {
+        if (!atual.signal.aborted) resource.loading = false;
+        if (controller === atual) controller = null;
+      }
+    },
+    set(value) {
+      resource.data = value;
+    },
+    stop() {
+      controller?.abort();
+      controller = null;
+      resource.loading = false;
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+  });
+  if (options.poll && options.poll > 0) {
+    timer = setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") {
+        void resource.reload();
+      }
+    }, options.poll);
+  }
+  if (!options.manual) void resource.reload();
+  return resource;
+}
+
 // src/dom/transition.ts
 var BUILT_IN_CSS = `
 .v-fade-enter-active,.v-fade-leave-active{transition:opacity .22s var(--v-ease,ease)}
@@ -3142,6 +3345,7 @@ defineDirective(
       const used = /* @__PURE__ */ new Set();
       entries.forEach((vars, index) => {
         const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
+        if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
         const existing = previous.get(key);
         if (existing && !used.has(key)) {
           used.add(key);
@@ -3225,9 +3429,39 @@ var BOOLEAN_ATTRIBUTES = /* @__PURE__ */ new Set([
   "novalidate",
   "inert"
 ]);
+var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "xlink:href",
+  "ping",
+  "poster"
+]);
+var RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
+function urlPerigosa(valor) {
+  const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
+  return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
+}
 function applyBinding(el, name, value, asProp = false) {
   if (name === "class") return applyClass(el, value);
   if (name === "style") return applyStyle(el, value);
+  if (config.sanitizeUrls && !asProp) {
+    if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
+      avisar(
+        `valor recusado em :${name} de ${descreverElemento(el)}: "${value.slice(0, 60)}" usa um esquema que executa codigo. Use um endereco http(s) ou relativo. Para desligar esta protecao, defina V.config.sanitizeUrls = false.`
+      );
+      el.removeAttribute(name);
+      return;
+    }
+    if (name.length > 2 && /^on[a-z]/.test(name)) {
+      avisar(
+        `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+      );
+      el.removeAttribute(name);
+      return;
+    }
+  }
   if (asProp) {
     el[name] = value;
     return;
@@ -3828,15 +4062,6 @@ function swapContent(target, html, mode, scope) {
     }
   }
 }
-function pick(value, path) {
-  if (!path) return value;
-  let current2 = value;
-  for (const part of path.split(".")) {
-    if (current2 == null) return void 0;
-    current2 = current2[part];
-  }
-  return current2;
-}
 function renderJSON(value, depth = 0) {
   if (value == null) return "";
   if (typeof value !== "object") return escapeHtml(String(value));
@@ -3969,15 +4194,6 @@ async function runRequest(options) {
     dispatch(el, "voodoo:complete", {});
   }
 }
-function extractMessage(error) {
-  const data2 = error.response?.data;
-  if (!data2 || typeof data2 !== "object") return null;
-  for (const key of ["message", "error", "detail", "msg"]) {
-    const value = data2[key];
-    if (typeof value === "string") return value;
-  }
-  return null;
-}
 function dispatch(el, type, detail) {
   el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
@@ -3997,7 +4213,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-CT3W3LWO.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-UJ5QAZRX.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -4157,51 +4373,20 @@ defineDirective(
         urlExpression = expression.slice(separator + 1).trim();
       }
     }
-    const resource = reactive({
-      data: null,
-      loading: false,
-      error: null,
-      loaded: false,
-      async reload() {
-        const url2 = resolveURL(urlExpression, scope);
-        if (!url2) return;
-        resource.loading = true;
-        resource.error = null;
-        try {
-          const params = attr(el, "params") ? evaluateIn(attr(el, "params"), scope, "v-params") : void 0;
-          const cacheMs = parseDuration(attr(el, "cache") ?? void 0, 0);
-          const response = await http.request({
-            url: url2,
-            method: (attr(el, "method") || "GET").toUpperCase(),
-            params,
-            cache: cacheMs || void 0,
-            retry: Number(attr(el, "retry") ?? 0),
-            timeout: parseDuration(attr(el, "timeout") ?? void 0, http.defaults.timeout)
-          });
-          resource.data = pick(response.data, attr(el, "json-path"));
-          resource.loaded = true;
-          dispatch(el, "voodoo:success", { data: resource.data });
-        } catch (err) {
-          const message = err instanceof HttpError ? extractMessage(err) ?? err.message : err.message;
-          resource.error = { name: "ResourceError", message };
-          dispatch(el, "voodoo:error", { error: err, message });
-        } finally {
-          resource.loading = false;
-        }
-      },
-      set(value) {
-        resource.data = value;
-      }
+    const resource = createResource(() => resolveURL(urlExpression, scope), {
+      method: (attr(el, "method") || "GET").toUpperCase(),
+      params: () => attr(el, "params") ? evaluateIn(attr(el, "params"), scope, "v-params") : void 0,
+      cache: parseDuration(attr(el, "cache") ?? void 0, 0) || void 0,
+      retry: Number(attr(el, "retry") ?? 0),
+      timeout: parseDuration(attr(el, "timeout") ?? void 0, http.defaults.timeout),
+      jsonPath: attr(el, "json-path"),
+      poll: parseDuration(attr(el, "poll") ?? void 0, 0),
+      manual: hasAttr2(el, "manual"),
+      onSuccess: (data2) => dispatch(el, "voodoo:success", { data: data2 }),
+      onError: (err, message) => dispatch(el, "voodoo:error", { error: err, message })
     });
     scope.set(name, resource);
-    const pollEvery = parseDuration(attr(el, "poll") ?? void 0, 0);
-    if (pollEvery > 0) {
-      const timer = setInterval(() => {
-        if (document.visibilityState === "visible") void resource.reload();
-      }, pollEvery);
-      cleanup(() => clearInterval(timer));
-    }
-    if (!hasAttr2(el, "manual")) void resource.reload();
+    cleanup(() => resource.stop());
   },
   { priority: PRIORITY.DATA }
 );
@@ -4377,6 +4562,8 @@ var core = {
   http,
   request,
   HttpError,
+  /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+  resource: createResource,
   toast,
   storage,
   session,
@@ -6418,17 +6605,24 @@ defineDirective("toggle", ({ el, expression, modifiers, cleanup }) => {
   const animated = !modifiers.instant;
   el.setAttribute("aria-controls", ensureId(target, "v-toggle"));
   makeInteractive(el, cleanup);
-  const isOpen = () => className ? target.classList.contains(className) : !isHidden(target);
+  let aberto = className ? target.classList.contains(className) : !isHidden(target);
   const sync = () => {
-    el.setAttribute("aria-expanded", String(isOpen()));
+    el.setAttribute("aria-expanded", String(aberto));
   };
   const onClick = (event) => {
     event.preventDefault();
-    if (className) target.classList.toggle(className);
-    else if (isHidden(target)) showElement2(target, animated);
-    else hideElement2(target, animated);
+    if (className) {
+      target.classList.toggle(className);
+      aberto = target.classList.contains(className);
+    } else if (aberto) {
+      hideElement2(target, animated);
+      aberto = false;
+    } else {
+      showElement2(target, animated);
+      aberto = true;
+    }
     sync();
-    dispatch2(el, "voodoo:toggle", { target, open: isOpen() });
+    dispatch2(el, "voodoo:toggle", { target, open: aberto });
   };
   sync();
   el.addEventListener("click", onClick);
@@ -11565,6 +11759,6 @@ defineDirective(
   { priority: PRIORITY.MODEL + 5 }
 );
 
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache2 as cache, clearErrors, clearParseCache, clipboard, collectDirectives, confirm, cookie, core, createApp, defineComponent, destroy, dialog, efeitos, ensurePalette, enter, evaluate, evaluateIn, fadeIn, fadeOut, findScope, fromHtml, getEffectScopes, getScope, hasDirectives, hotkey, instances, leave, magic, magics, markSkipChildren, mask, masks, messages, modal, mountComponent, network, palette, parse, prompt, query, readAttr, ready, ready2, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady };
-//# sourceMappingURL=chunk-SWRBXSWQ.js.map
-//# sourceMappingURL=chunk-SWRBXSWQ.js.map
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, avisarAlias, cache2 as cache, clearErrors, clearParseCache, clipboard, collectDirectives, confirm, cookie, core, createApp, createResource, defineComponent, destroy, dialog, efeitos, ensurePalette, enter, evaluate, evaluateIn, fadeIn, fadeOut, findScope, fromHtml, getEffectScopes, getScope, hadDirectives, hotkey, instances, leave, magic, magics, markSkipChildren, mask, masks, messages, modal, mountComponent, network, palette, parse, prompt, query, readAttr, ready, ready2, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady };
+//# sourceMappingURL=chunk-AOX35K2N.js.map
+//# sourceMappingURL=chunk-AOX35K2N.js.map

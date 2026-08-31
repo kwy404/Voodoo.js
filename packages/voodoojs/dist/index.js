@@ -1,13 +1,13 @@
-import { magic, markSkipChildren, core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, destroy, readAttr, defineComponent, storage, walk, ensurePalette, hasDirectives, instances, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-SWRBXSWQ.js';
-export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, createApp, defineComponent, destroy, dialog, ready as documentReady, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready2 as ready, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady } from './chunk-SWRBXSWQ.js';
+import { magic, markSkipChildren, core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, destroy, readAttr, defineComponent, storage, avisarAlias, walk, ensurePalette, instances, hadDirectives, getScope, collectDirectives, findScope, storeNames, allStores, getEffectScopes, evaluateIn } from './chunk-AOX35K2N.js';
+export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, cache, clearErrors, clearParseCache, clipboard, confirm, cookie, createApp, createResource, defineComponent, destroy, dialog, ready as documentReady, enter, evaluate, fadeIn, fadeOut, findScope, fromHtml, getScope, hotkey, instances, leave, magic, magics, mask, masks, modal, mountComponent, network, palette, parse, prompt, query, ready2 as ready, refresh, registerMask, removeStore, createResource as resource, rootScope, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady } from './chunk-AOX35K2N.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-ABAHVFPX.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-ABAHVFPX.js';
-import { http } from './chunk-7U443GSF.js';
-export { HttpError, http, request } from './chunk-7U443GSF.js';
-import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-45K3USNK.js';
-export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-45K3USNK.js';
-import { defineDirective, PRIORITY, config, ensureTokens, injectStyle } from './chunk-NY5DITDF.js';
-export { PRIORITY, config, defineDirective, ensureTokens, injectStyle } from './chunk-NY5DITDF.js';
+import { http } from './chunk-WCQZFFOE.js';
+export { HttpError, http, request } from './chunk-WCQZFFOE.js';
+import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-UNO6H5ZW.js';
+export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-UNO6H5ZW.js';
+import { defineDirective, PRIORITY, config, ensureTokens, injectStyle } from './chunk-ECGTKQCT.js';
+export { PRIORITY, config, defineDirective, ensureTokens, injectStyle } from './chunk-ECGTKQCT.js';
 import './chunk-5V56KGIJ.js';
 
 /**
@@ -5752,7 +5752,7 @@ function inspectableElements() {
   for (let i = 0; i < all.length && out.length < MAX_OUTLINES; i++) {
     const el = all[i];
     if (refs && refs.root.contains(el)) continue;
-    if (!hasDirectives(el)) continue;
+    if (!hadDirectives(el)) continue;
     out.push(el);
   }
   return out;
@@ -5890,7 +5890,7 @@ function onPointerMove(event) {
     return;
   }
   let candidate = target;
-  while (candidate && candidate !== document.body && !hasDirectives(candidate)) {
+  while (candidate && candidate !== document.body && !hadDirectives(candidate)) {
     candidate = candidate.parentElement;
   }
   if (!candidate || candidate === document.body) {
@@ -6496,6 +6496,9 @@ function disableXray() {
   refs?.root.remove();
   refs = null;
 }
+function isXrayEnabled() {
+  return enabled;
+}
 function enableXrayShortcut() {
   if (shortcutInstalled || typeof document === "undefined") return;
   shortcutInstalled = true;
@@ -6514,8 +6517,371 @@ function xray(force) {
   return enabled;
 }
 
+// src/devtools/launcher.ts
+var POSICAO_KEY = "voodoo:devtools:widget-position";
+var ESCONDIDO_KEY = "voodoo:devtools:widget-hidden";
+var LIMIAR_ARRASTO = 4;
+var refs2 = null;
+var montado = false;
+var timerContador = 0;
+var timerPulso = 0;
+var desligar = [];
+var WIDGET_CSS = `
+.v-devtools-widget{
+  all: initial;
+  --vw-accent:#6D3BF5;
+  --vw-accent-2:#FF3D8B;
+  --vw-bg:#ffffff;
+  --vw-text:#14111F;
+  --vw-muted:#6B6580;
+  --vw-border:#E6E0F0;
+  --vw-shadow:0 8px 28px rgba(20,17,31,.24);
+  position:fixed;
+  z-index:2147482900;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:12px;
+  line-height:1;
+  color:var(--vw-text);
+  -webkit-font-smoothing:antialiased;
+  touch-action:none;
+}
+@media (prefers-color-scheme: dark){
+  .v-devtools-widget:not([data-theme="light"]){
+    --vw-bg:#1C1830;
+    --vw-text:#F4F1FB;
+    --vw-muted:#A9A2C4;
+    --vw-border:#332C50;
+    --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+  }
+}
+.v-devtools-widget[data-theme="dark"]{
+  --vw-bg:#1C1830;
+  --vw-text:#F4F1FB;
+  --vw-muted:#A9A2C4;
+  --vw-border:#332C50;
+  --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+}
+.v-devtools-widget *,.v-devtools-widget *::before,.v-devtools-widget *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  font:inherit;
+  color:inherit;
+  list-style:none;
+  text-decoration:none;
+}
+.v-devtools-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  height:38px;
+  padding:0 12px 0 10px;
+  border:1px solid var(--vw-border);
+  border-radius:999px;
+  background:var(--vw-bg);
+  box-shadow:var(--vw-shadow);
+  cursor:grab;
+  user-select:none;
+  transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s;
+}
+.v-devtools-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 34px rgba(109,59,245,.3);
+}
+.v-devtools-btn:active{cursor:grabbing}
+.v-devtools-btn:focus-visible{
+  outline:2px solid var(--vw-accent);
+  outline-offset:2px;
+}
+.v-devtools-widget[data-active="true"] .v-devtools-btn{
+  border-color:var(--vw-accent);
+  box-shadow:0 0 0 3px rgba(109,59,245,.22), var(--vw-shadow);
+}
+.v-devtools-mark{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+  display:block;
+}
+.v-devtools-label{
+  font-weight:600;
+  letter-spacing:.2px;
+  white-space:nowrap;
+}
+.v-devtools-count{
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(109,59,245,.12);
+  color:var(--vw-accent);
+  font-variant-numeric:tabular-nums;
+  font-weight:600;
+  white-space:nowrap;
+}
+.v-devtools-pulse{
+  flex:0 0 auto;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--vw-border);
+  transition:background .2s, box-shadow .2s;
+}
+.v-devtools-pulse[data-on="true"]{
+  background:var(--vw-accent-2);
+  box-shadow:0 0 0 4px rgba(255,61,139,.18);
+}
+.v-devtools-close{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:1px solid var(--vw-border);
+  background:var(--vw-bg);
+  color:var(--vw-muted);
+  font-size:11px;
+  line-height:1;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .15s;
+}
+.v-devtools-widget:hover .v-devtools-close,
+.v-devtools-close:focus-visible{opacity:1}
+.v-devtools-close:focus-visible{
+  outline:2px solid var(--vw-accent);
+  outline-offset:1px;
+}
+@media (prefers-reduced-motion: reduce){
+  .v-devtools-btn,.v-devtools-pulse,.v-devtools-close{transition:none}
+  .v-devtools-btn:hover{transform:none}
+}
+`;
+var MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+<path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
+</svg>`;
+function lerPosicao() {
+  try {
+    const bruto = localStorage.getItem(POSICAO_KEY);
+    if (!bruto) return null;
+    const valor = JSON.parse(bruto);
+    if (typeof valor?.x !== "number" || typeof valor?.y !== "number") return null;
+    return valor;
+  } catch {
+    return null;
+  }
+}
+function gravarPosicao(pos) {
+  try {
+    localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
+  } catch {
+  }
+}
+function aplicarPosicao(raiz, pos) {
+  const largura = raiz.offsetWidth || 120;
+  const altura = raiz.offsetHeight || 38;
+  const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - largura - 8));
+  const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - altura - 8));
+  raiz.style.left = `${x}px`;
+  raiz.style.top = `${y}px`;
+  raiz.style.right = "auto";
+  raiz.style.bottom = "auto";
+}
+function construir() {
+  const raiz = document.createElement("div");
+  raiz.className = "v-devtools-widget";
+  raiz.setAttribute("data-voodoo-devtools", "widget");
+  const botao = document.createElement("button");
+  botao.type = "button";
+  botao.className = "v-devtools-btn";
+  botao.setAttribute("aria-label", "Abrir as devtools da Voodoo (Ctrl+Shift+X)");
+  botao.setAttribute("aria-pressed", "false");
+  botao.title = "Devtools da Voodoo \u2014 clique para inspecionar, arraste para mover (Ctrl+Shift+X)";
+  botao.innerHTML = MARCA;
+  const rotulo = document.createElement("span");
+  rotulo.className = "v-devtools-label";
+  rotulo.textContent = "Voodoo";
+  const contador = document.createElement("span");
+  contador.className = "v-devtools-count";
+  contador.textContent = "0";
+  const pulso = document.createElement("span");
+  pulso.className = "v-devtools-pulse";
+  pulso.setAttribute("data-on", "false");
+  botao.append(rotulo, contador, pulso);
+  const fechar = document.createElement("button");
+  fechar.type = "button";
+  fechar.className = "v-devtools-close";
+  fechar.setAttribute("aria-label", "Esconder o widget das devtools nesta aba");
+  fechar.title = "Esconder nesta aba";
+  fechar.textContent = "\xD7";
+  raiz.append(botao, fechar);
+  document.body.appendChild(raiz);
+  const salva = lerPosicao();
+  if (salva) {
+    aplicarPosicao(raiz, salva);
+  } else {
+    raiz.style.right = "16px";
+    raiz.style.bottom = "16px";
+  }
+  return { raiz, botao, pulso, contador, fechar };
+}
+function ligarArrasto(refs3, aoClicar) {
+  let arrastando = false;
+  let moveu = false;
+  let deslocX = 0;
+  let deslocY = 0;
+  let inicioX = 0;
+  let inicioY = 0;
+  const aoDescer = (evento) => {
+    if (evento.button !== 0) return;
+    const caixa = refs3.raiz.getBoundingClientRect();
+    arrastando = true;
+    moveu = false;
+    inicioX = evento.clientX;
+    inicioY = evento.clientY;
+    deslocX = evento.clientX - caixa.left;
+    deslocY = evento.clientY - caixa.top;
+    refs3.botao.setPointerCapture?.(evento.pointerId);
+  };
+  const aoMover = (evento) => {
+    if (!arrastando) return;
+    const distancia = Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY);
+    if (!moveu && distancia < LIMIAR_ARRASTO) return;
+    moveu = true;
+    evento.preventDefault();
+    aplicarPosicao(refs3.raiz, { x: evento.clientX - deslocX, y: evento.clientY - deslocY });
+  };
+  const aoSubir = (evento) => {
+    if (!arrastando) return;
+    arrastando = false;
+    refs3.botao.releasePointerCapture?.(evento.pointerId);
+    if (!moveu) {
+      aoClicar();
+      return;
+    }
+    const caixa = refs3.raiz.getBoundingClientRect();
+    gravarPosicao({ x: caixa.left, y: caixa.top });
+  };
+  const aoTeclar = (evento) => {
+    if (evento.key !== "Enter" && evento.key !== " ") return;
+    evento.preventDefault();
+    aoClicar();
+  };
+  const aoRedimensionar = () => {
+    const caixa = refs3.raiz.getBoundingClientRect();
+    if (refs3.raiz.style.left) aplicarPosicao(refs3.raiz, { x: caixa.left, y: caixa.top });
+  };
+  refs3.botao.addEventListener("pointerdown", aoDescer);
+  refs3.botao.addEventListener("pointermove", aoMover);
+  refs3.botao.addEventListener("pointerup", aoSubir);
+  refs3.botao.addEventListener("pointercancel", aoSubir);
+  refs3.botao.addEventListener("keydown", aoTeclar);
+  window.addEventListener("resize", aoRedimensionar);
+  return () => {
+    refs3.botao.removeEventListener("pointerdown", aoDescer);
+    refs3.botao.removeEventListener("pointermove", aoMover);
+    refs3.botao.removeEventListener("pointerup", aoSubir);
+    refs3.botao.removeEventListener("pointercancel", aoSubir);
+    refs3.botao.removeEventListener("keydown", aoTeclar);
+    window.removeEventListener("resize", aoRedimensionar);
+  };
+}
+function piscar() {
+  if (!refs2) return;
+  refs2.pulso.setAttribute("data-on", "true");
+  window.clearTimeout(timerPulso);
+  timerPulso = window.setTimeout(() => {
+    refs2?.pulso.setAttribute("data-on", "false");
+  }, 320);
+}
+function atualizarContador() {
+  if (!refs2) return;
+  const total = instances.size;
+  const texto = total === 1 ? "1 componente" : `${total} componentes`;
+  if (refs2.contador.textContent !== texto) refs2.contador.textContent = texto;
+}
+function mountDevtoolsWidget() {
+  if (montado || typeof document === "undefined" || !document.body) return;
+  try {
+    if (sessionStorage.getItem(ESCONDIDO_KEY) === "1") return;
+  } catch {
+  }
+  montado = true;
+  injectStyle("devtools-widget", WIDGET_CSS);
+  refs2 = construir();
+  const alternar = () => {
+    const ligado = xray();
+    refs2?.raiz.setAttribute("data-active", String(ligado));
+    refs2?.botao.setAttribute("aria-pressed", String(ligado));
+  };
+  desligar.push(ligarArrasto(refs2, alternar));
+  const aoFechar = (evento) => {
+    evento.stopPropagation();
+    try {
+      sessionStorage.setItem(ESCONDIDO_KEY, "1");
+    } catch {
+    }
+    unmountDevtoolsWidget();
+    console.info("[Voodoo] widget das devtools escondido. Use V.devtoolsWidget(true) para voltar.");
+  };
+  refs2.fechar.addEventListener("click", aoFechar);
+  desligar.push(() => refs2?.fechar.removeEventListener("click", aoFechar));
+  const aoTeclarGlobal = () => {
+    const ligado = isXrayEnabled();
+    refs2?.raiz.setAttribute("data-active", String(ligado));
+    refs2?.botao.setAttribute("aria-pressed", String(ligado));
+  };
+  document.addEventListener("keyup", aoTeclarGlobal);
+  desligar.push(() => document.removeEventListener("keyup", aoTeclarGlobal));
+  for (const tipo of ["network", "event", "navigation", "update"]) {
+    desligar.push(devtoolsBus.on(tipo, piscar));
+  }
+  atualizarContador();
+  timerContador = window.setInterval(atualizarContador, 1e3);
+}
+function unmountDevtoolsWidget() {
+  if (!montado) return;
+  montado = false;
+  for (const fn of desligar.splice(0)) {
+    try {
+      fn();
+    } catch {
+    }
+  }
+  window.clearInterval(timerContador);
+  window.clearTimeout(timerPulso);
+  timerContador = 0;
+  timerPulso = 0;
+  refs2?.raiz.remove();
+  refs2 = null;
+}
+function isDevtoolsWidgetMounted() {
+  return montado;
+}
+function devtoolsWidget(force) {
+  const alvo = force ?? !montado;
+  if (alvo) {
+    try {
+      sessionStorage.removeItem(ESCONDIDO_KEY);
+    } catch {
+    }
+    mountDevtoolsWidget();
+  } else {
+    unmountDevtoolsWidget();
+  }
+  return montado;
+}
+
 // src/index.ts
 var V = ((input, context) => query(input, context));
+function comAviso(alias, canonico, fn) {
+  return ((...args) => {
+    avisarAlias(alias, canonico);
+    return fn(...args);
+  });
+}
 Object.assign(V, core, {
   // DOM encadeavel
   query,
@@ -6541,7 +6907,8 @@ Object.assign(V, core, {
   // Formularios
   validator,
   validate,
-  validateForm: validate,
+  // Apelido antigo. O nome oficial e `V.validate`.
+  validateForm: comAviso("V.validateForm", "V.validate", validate),
   serializeForm,
   messages,
   showFormErrors,
@@ -6561,7 +6928,8 @@ Object.assign(V, core, {
   motion: motionPresets,
   easings,
   // Graficos
-  chart: renderChart,
+  // Apelido antigo. O nome oficial e `V.renderChart`.
+  chart: comAviso("V.chart", "V.renderChart", renderChart),
   renderChart,
   charts,
   chartColors: CHART_COLORS,
@@ -6572,11 +6940,12 @@ Object.assign(V, core, {
   // Ferramentas de inspecao
   xray,
   enableXrayShortcut,
+  devtoolsWidget,
   devtools: devtoolsBus,
   magic
 });
 var src_default = V;
 
-export { V, animate, charts, src_default as default, devtoolsBus, easings, getLocale, i18n, inView, motionPresets, navigate, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, xray };
+export { V, animate, charts, src_default as default, devtoolsBus, devtoolsWidget, disableXray, easings, enableXray, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, motionPresets, mountDevtoolsWidget, navigate, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

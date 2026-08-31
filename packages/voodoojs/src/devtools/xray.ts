@@ -28,7 +28,7 @@ import {
   findScope,
   getEffectScopes,
   getScope,
-  hasDirectives,
+  hadDirectives,
 } from '../runtime/walker';
 import { instances, type ComponentInstance } from '../runtime/component';
 import { allStores, storeNames } from '../store';
@@ -648,7 +648,9 @@ function inspectableElements(): Element[] {
   for (let i = 0; i < all.length && out.length < MAX_OUTLINES; i++) {
     const el = all[i];
     if (refs && refs.root.contains(el)) continue;
-    if (!hasDirectives(el)) continue;
+    // `hadDirectives` e nao `hasDirectives`: com a limpeza de atributos ligada
+    // o HTML ja nao tem mais os `v-*`, e so o cache sabe quem tinha.
+    if (!hadDirectives(el)) continue;
     out.push(el);
   }
   return out;
@@ -813,7 +815,7 @@ function onPointerMove(event: MouseEvent): void {
   }
 
   let candidate: Element | null = target;
-  while (candidate && candidate !== document.body && !hasDirectives(candidate)) {
+  while (candidate && candidate !== document.body && !hadDirectives(candidate)) {
     candidate = candidate.parentElement;
   }
   if (!candidate || candidate === document.body) {

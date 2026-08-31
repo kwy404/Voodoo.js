@@ -1,8 +1,8 @@
-import { c as core, V as VoodooCollection } from './query-CT4EuGa8.cjs';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, S as Scope, d as VoodooConfig, e as VoodooPlugin, f as VoodooRuntimeError, g as VoodooSyntaxError, h as addCleanup, i as allStores, j as allowedGlobals, k as cache, l as clearParseCache, m as config, n as cookie, o as createApp, p as defineComponent, q as defineDirective, r as destroy, s as documentReady, t as ensureTokens, u as enter, v as evaluate, w as fadeIn, x as fadeOut, y as findScope, z as fromHtml, B as getScope, E as injectStyle, F as instances, G as leave, H as magic, I as magics, J as mountComponent, K as parse, L as query, M as ready, N as refresh, O as removeStore, Q as rootScope, R as session, T as slideDown, U as slideUp, W as start, X as storage, Y as store, Z as storeNames, _ as stringify, $ as theme, a0 as toast, a1 as tokenize, a2 as url, a3 as viewTransition, a4 as walk, a5 as whenElement, a6 as whenReady } from './query-CT4EuGa8.cjs';
+import { c as core, V as VoodooCollection } from './query-Crg38fmj.cjs';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-Crg38fmj.cjs';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.cjs';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.cjs';
-export { DebouncedFunction, FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './utils.cjs';
+export { DebouncedFunction, FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './utils.cjs';
 
 /**
  * @module directives/ui
@@ -1509,6 +1509,12 @@ declare const devtoolsBus: {
  * nao custa nada em producao.
  */
 
+/** Liga o inspetor. Chamar duas vezes nao duplica nada. */
+declare function enableXray(): void;
+/** Desliga o inspetor e devolve a pagina ao estado original. */
+declare function disableXray(): void;
+/** `true` quando o inspetor esta ligado. */
+declare function isXrayEnabled(): boolean;
 /**
  * Liga e desliga o inspetor visual de reatividade.
  *
@@ -1524,6 +1530,56 @@ declare const devtoolsBus: {
  * @returns o estado depois da chamada.
  */
 declare function xray(force?: boolean): boolean;
+
+/**
+ * @module devtools/launcher
+ *
+ * Widget flutuante das devtools.
+ *
+ * O inspetor `xray` sempre existiu, mas so abria por chamada no console. Este
+ * modulo coloca um botao na propria pagina: ele aparece quando as devtools
+ * estao ligadas, mostra atividade em tempo real e abre o painel completo com um
+ * clique.
+ *
+ * Ligar pelo HTML, sem escrever JavaScript nenhum:
+ *
+ * ```html
+ * <script src="voodoo.full.min.js" devtools defer></script>
+ * ```
+ *
+ * As formas equivalentes tambem valem: `data-devtools`, `devtools="true"` e
+ * `window.VOODOO_DEVTOOLS = true` antes do carregamento.
+ *
+ * Ligar por JavaScript:
+ *
+ * ```js
+ * V.devtoolsWidget()       // alterna
+ * V.devtoolsWidget(true)   // mostra
+ * V.devtoolsWidget(false)  // esconde
+ * ```
+ *
+ * O modulo nao faz nada ao ser importado: nenhum listener, nenhum estilo e
+ * nenhum timer existe antes da primeira chamada de `mountDevtoolsWidget()`.
+ */
+/** Mostra o widget flutuante. Chamar duas vezes nao duplica nada. */
+declare function mountDevtoolsWidget(): void;
+/** Remove o widget e todos os listeners que ele criou. */
+declare function unmountDevtoolsWidget(): void;
+/** `true` quando o widget esta na tela. */
+declare function isDevtoolsWidgetMounted(): boolean;
+/**
+ * Mostra e esconde o widget flutuante das devtools.
+ *
+ * ```js
+ * V.devtoolsWidget()       // alterna
+ * V.devtoolsWidget(true)   // mostra
+ * V.devtoolsWidget(false)  // esconde
+ * ```
+ *
+ * @param force mostre ou esconda explicitamente. Sem argumento, alterna.
+ * @returns o estado depois da chamada.
+ */
+declare function devtoolsWidget(force?: boolean): boolean;
 
 /**
  * Voodoo.js
@@ -1556,4 +1612,4 @@ interface Voodoo extends Omit<typeof core, never> {
 }
 declare const V: Voodoo;
 
-export { V, type Voodoo, VoodooCollection, alert, animate, applyMask, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, dialog, easings, getLocale, hotkey, i18n, inView, mask, masks, modal, motionPresets, navigate, network, palette, prompt, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, validate, validator, xray };
+export { V, type Voodoo, VoodooCollection, alert, animate, applyMask, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, devtoolsWidget, dialog, disableXray, easings, enableXray, getLocale, hotkey, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, mask, masks, modal, motionPresets, mountDevtoolsWidget, navigate, network, palette, prompt, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, unmountDevtoolsWidget, validate, validator, xray };

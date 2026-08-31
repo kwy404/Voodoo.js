@@ -70,12 +70,21 @@ const BINARY_PRECEDENCE: Record<string, number> = {
 const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '**=', '&&=', '||=', '??=']);
 const UNARY_OPS = new Set(['!', '-', '+', 'typeof', 'void']);
 
-const LITERALS: Record<string, string | number | boolean | null | undefined> = {
-  true: true,
-  false: false,
-  null: null,
-  undefined: undefined,
-};
+/**
+ * Palavras que valem por si mesmas.
+ *
+ * O objeto nasce sem prototipo de proposito. Com um objeto comum, `"constructor"
+ * in LITERALS` seria verdadeiro por heranca, e o identificador `constructor`
+ * viraria um literal com o valor de `Object`, entregando `Function` a qualquer
+ * expressao. O mesmo valia para `toString`, `valueOf` e `__proto__`.
+ */
+const LITERALS: Record<string, string | number | boolean | null | undefined> =
+  /* @__PURE__ */ Object.assign(Object.create(null) as Record<string, never>, {
+    true: true,
+    false: false,
+    null: null,
+    undefined: undefined,
+  });
 
 class Parser {
   private pos = 0;

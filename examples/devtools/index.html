@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevTools da Voodoo.js</title>
+<link rel="icon" href="../../brand/logo/favicon.svg">
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+
+<!--
+  Toda a demonstracao esta nesta linha.
+
+  O atributo `devtools` liga o inspetor: um widget aparece no canto da pagina,
+  e um clique nele abre o painel com estado, componentes, stores, eventos,
+  rede e desempenho. Nenhuma extensao de navegador, nenhum servidor.
+
+  O build completo e necessario porque e ele que carrega o inspetor.
+-->
+<script src="../../packages/voodoojs/dist/voodoo.full.min.js" devtools defer></script>
+
+<style>
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 420px at 12% -10%, color-mix(in srgb, var(--v-primary) 18%, transparent), transparent 62%),
+      radial-gradient(760px 380px at 92% 2%, color-mix(in srgb, var(--v-accent) 14%, transparent), transparent 62%),
+      var(--v-color-bg);
+  }
+
+  .dt-pagina { max-width: 820px; margin: 0 auto; padding: var(--v-space-8) var(--v-space-4) var(--v-space-16); }
+
+  .dt-titulo {
+    font-family: var(--v-font-display);
+    font-size: var(--v-text-4xl);
+    line-height: 1.05;
+    letter-spacing: var(--v-tracking-tight);
+    margin: 0 0 12px;
+  }
+  .dt-titulo span {
+    background: linear-gradient(100deg, var(--v-primary), var(--v-accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .dt-lema { color: var(--v-text-muted); font-size: var(--v-text-lg); margin: 0 0 var(--v-space-8); max-width: 62ch; }
+
+  .dt-dica {
+    display: flex; align-items: flex-start; gap: 10px;
+    border: 1px solid var(--v-border); border-left: 3px solid var(--v-primary);
+    border-radius: var(--v-radius-md); background: var(--v-surface);
+    padding: var(--v-space-4); margin-bottom: var(--v-space-8);
+    font-size: var(--v-text-sm); color: var(--v-text-muted);
+  }
+  .dt-dica strong { color: var(--v-text); }
+
+  .dt-cartao {
+    border: 1px solid var(--v-border);
+    border-radius: var(--v-radius-lg);
+    background: var(--v-surface);
+    padding: var(--v-space-6);
+    margin-bottom: var(--v-space-6);
+  }
+  .dt-cartao h2 { font-size: var(--v-text-xl); margin: 0 0 4px; }
+  .dt-cartao p.dt-sub { color: var(--v-text-muted); font-size: var(--v-text-sm); margin: 0 0 var(--v-space-4); }
+
+  .dt-linha { display: flex; flex-wrap: wrap; align-items: center; gap: var(--v-space-3); }
+  .dt-numero { font-family: var(--v-font-display); font-size: var(--v-text-3xl); min-width: 3ch; }
+
+  .dt-lista { display: flex; flex-direction: column; gap: 8px; margin-top: var(--v-space-4); }
+  .dt-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    border: 1px solid var(--v-border); border-radius: var(--v-radius-md);
+    padding: 10px 12px; background: var(--v-color-bg);
+  }
+  .dt-vazio { color: var(--v-text-muted); font-size: var(--v-text-sm); }
+</style>
+</head>
+
+<body>
+<div class="dt-pagina">
+
+  <h1 class="dt-titulo">DevTools da <span>Voodoo</span></h1>
+  <p class="dt-lema">
+    Um atributo no <code>&lt;script&gt;</code> e o inspetor esta na pagina.
+    Mexa nos controles abaixo e veja a reatividade acontecendo em tempo real.
+  </p>
+
+  <div class="dt-dica">
+    <span aria-hidden="true">✦</span>
+    <div>
+      Procure o botao <strong>Voodoo</strong> no canto inferior direito. Clique nele para abrir
+      o painel, ou use <strong>Ctrl+Shift+X</strong>. Arraste o botao para onde preferir —
+      a posicao fica salva. O painel destaca cada elemento reativo e pisca quando
+      um efeito escreve nele.
+    </div>
+  </div>
+
+  <!-- ---------------------------------------------------------------
+       Contador: o caso mais simples de reatividade.
+       No painel, a aba Estado mostra `contador` mudando.
+       --------------------------------------------------------------- -->
+  <section class="dt-cartao" v-data="{ contador: 0 }">
+    <h2>Reatividade</h2>
+    <p class="dt-sub">Cada clique dispara um efeito que escreve em um unico no de texto.</p>
+    <div class="dt-linha">
+      <button class="v-btn" @click="contador--" aria-label="Diminuir">−</button>
+      <strong class="dt-numero">{ contador }</strong>
+      <button class="v-btn v-btn--primary" @click="contador++" aria-label="Aumentar">+</button>
+      <span class="dt-vazio">dobro: { contador * 2 }</span>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------
+       Lista: mostra o v-for e o reaproveitamento de blocos por chave.
+       --------------------------------------------------------------- -->
+  <section class="dt-cartao" v-data="{ tarefas: [{ id: 1, texto: 'Abrir o inspetor' }], proximo: 2, texto: '' }">
+    <h2>Listas</h2>
+    <p class="dt-sub">O painel mostra um escopo por item, e so o item alterado pisca.</p>
+
+    <form class="dt-linha" @submit.prevent="tarefas.push({ id: proximo++, texto: texto.trim() }); texto = ''">
+      <input class="v-input" v-model="texto" placeholder="Nova tarefa" aria-label="Nova tarefa">
+      <button class="v-btn v-btn--primary" type="submit" :disabled="!texto.trim()">Adicionar</button>
+    </form>
+
+    <div class="dt-lista">
+      <div class="dt-item" v-for="tarefa in tarefas" :key="tarefa.id">
+        <span>{ tarefa.texto }</span>
+        <button class="v-btn v-btn--ghost" @click="tarefas = tarefas.filter(t => t.id !== tarefa.id)">Remover</button>
+      </div>
+      <p class="dt-vazio" v-show="tarefas.length === 0">Nenhuma tarefa.</p>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------
+       Store global: aparece na aba Stores do painel.
+       --------------------------------------------------------------- -->
+  <section class="dt-cartao">
+    <h2>Store global</h2>
+    <p class="dt-sub">Estado compartilhado, visivel na aba Stores do inspetor.</p>
+    <div class="dt-linha">
+      <button class="v-btn" @click="$store.carrinho.itens.push({ id: Date.now() })">Adicionar ao carrinho</button>
+      <button class="v-btn v-btn--ghost" @click="$store.carrinho.itens = []">Esvaziar</button>
+      <span class="dt-vazio">no carrinho: <strong>{ $store.carrinho.itens.length }</strong></span>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------
+       Componente: aparece na aba Componentes, com props e estado.
+       --------------------------------------------------------------- -->
+  <section class="dt-cartao">
+    <h2>Componente</h2>
+    <p class="dt-sub">Props, estado local e evento subindo para o pai.</p>
+    <div v-data="{ ultimo: '—' }">
+      <contador-cartao titulo="Curtidas" :inicio="10" @mudou="ultimo = $event"></contador-cartao>
+      <p class="dt-vazio">ultimo valor emitido: <strong>{ ultimo }</strong></p>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------------------
+       Rede: cada requisicao aparece na aba Rede do painel.
+       --------------------------------------------------------------- -->
+  <section class="dt-cartao" v-data="{ carregando: false, resultado: '' }">
+    <h2>Rede</h2>
+    <p class="dt-sub">Requisicoes aparecem na aba Rede, com metodo, status e duracao.</p>
+    <div class="dt-linha">
+      <button
+        class="v-btn v-btn--primary"
+        @click="carregando = true; $http.get('https://jsonplaceholder.typicode.com/todos/1')
+          .then(d => resultado = d.title)
+          .catch(() => resultado = 'falhou (sem rede?)')
+          .finally(() => carregando = false)">
+        Buscar dados
+      </button>
+      <span class="dt-vazio" v-show="carregando">carregando…</span>
+      <span class="dt-vazio" v-show="!carregando && resultado">{ resultado }</span>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// A tag da Voodoo tem `defer`, entao ela executa depois deste bloco inline.
+// Scripts com defer rodam antes de DOMContentLoaded, e por isso e aqui que
+// `V` ja existe com certeza. O registro tardio nao e problema: a Voodoo monta
+// sozinha as tags que estavam esperando pelo componente.
+document.addEventListener('DOMContentLoaded', function () {
+  // O store e o componente sao registrados aqui para aparecerem no inspetor.
+  V.store('carrinho', { itens: [] });
+
+  V.component('contador-cartao', {
+    props: {
+      titulo: { type: 'string', default: 'Contador' },
+      inicio: { type: 'number', default: 0 },
+    },
+    state(props) {
+      return { valor: props.inicio };
+    },
+    computed: {
+      dobro() {
+        return this.valor * 2;
+      },
+    },
+    methods: {
+      somar() {
+        this.valor++;
+        this.emit('mudou', this.valor);
+      },
+    },
+    template: `
+      <div class="dt-linha">
+        <strong>{ titulo }</strong>
+        <span class="dt-numero">{ valor }</span>
+        <button class="v-btn" @click="somar()">+1</button>
+        <span class="dt-vazio">dobro: { dobro }</span>
+      </div>
+    `,
+  });
+});
+</script>
+</body>
+</html>

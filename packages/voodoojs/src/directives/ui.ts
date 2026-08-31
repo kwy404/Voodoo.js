@@ -579,20 +579,32 @@ defineDirective('toggle', ({ el, expression, modifiers, cleanup }) => {
   el.setAttribute('aria-controls', ensureId(target, 'v-toggle'));
   makeInteractive(el, cleanup);
 
-  const isOpen = (): boolean =>
-    className ? target.classList.contains(className) : !isHidden(target);
+  // Estado pretendido, guardado aqui em vez de relido do DOM.
+  //
+  // Com animacao, `hideElement` so aplica `display: none` quando o fade
+  // termina. Reler o DOM logo depois do clique devolvia o estado antigo, e o
+  // `aria-expanded` anunciava "expandido" para um painel que o usuario acabara
+  // de fechar. Dois cliques rapidos tambem se anulavam pelo mesmo motivo.
+  let aberto = className ? target.classList.contains(className) : !isHidden(target);
 
   const sync = (): void => {
-    el.setAttribute('aria-expanded', String(isOpen()));
+    el.setAttribute('aria-expanded', String(aberto));
   };
 
   const onClick = (event: Event): void => {
     event.preventDefault();
-    if (className) target.classList.toggle(className);
-    else if (isHidden(target)) showElement(target, animated);
-    else hideElement(target, animated);
+    if (className) {
+      target.classList.toggle(className);
+      aberto = target.classList.contains(className);
+    } else if (aberto) {
+      hideElement(target, animated);
+      aberto = false;
+    } else {
+      showElement(target, animated);
+      aberto = true;
+    }
     sync();
-    dispatch(el, 'voodoo:toggle', { target, open: isOpen() });
+    dispatch(el, 'voodoo:toggle', { target, open: aberto });
   };
 
   sync();

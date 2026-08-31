@@ -88,6 +88,16 @@ declare function formatFileSize(bytes: number, decimals?: number): string;
 declare function formatPercent(value: number, decimals?: number, locale?: string): string;
 /** `true` quando existe DOM disponivel. */
 declare const isBrowser: boolean;
+/**
+ * Consulta uma media query com seguranca.
+ *
+ * `matchMedia` nao existe em todo lugar: falta no jsdom e em webviews antigas.
+ * Sem esta guarda, ler `device.reducedMotion` lancava TypeError, e como as
+ * directives de interface leem essa propriedade no meio de abrir e fechar
+ * paineis, a excecao interrompia o metodo e deixava `aria-expanded` e o foco
+ * no estado errado.
+ */
+declare function matchesMedia(query: string): boolean;
 /** Informacoes do dispositivo, calculadas sob demanda. */
 declare const device: {
     readonly touch: boolean;
@@ -99,4 +109,4 @@ declare const device: {
     readonly darkMode: boolean;
 };
 
-export { type DebouncedFunction, type FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid };
+export { type DebouncedFunction, type FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid };

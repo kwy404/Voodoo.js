@@ -22,6 +22,7 @@ import { router, route, navigate, resolve as resolveRoute } from './router';
 import { i18n, t, setLocale, getLocale } from './i18n';
 import { devtoolsBus } from './devtools/bus';
 import { magic } from './runtime/scope';
+import { avisarAlias } from './runtime/avisos';
 
 // Efeitos colaterais: registram as directives de cada modulo.
 import './directives/ui';
@@ -51,6 +52,7 @@ import { sound } from './sound';
 import { animate, spring, stagger, inView, scrollProgress, motionPresets, easings } from './motion';
 import { renderChart, charts, CHART_COLORS } from './charts';
 import { xray, enableXrayShortcut } from './devtools/xray';
+import { devtoolsWidget } from './devtools/launcher';
 
 // ---------------------------------------------------------------------------
 // Montagem do objeto chamavel
@@ -70,6 +72,17 @@ export interface Voodoo extends Omit<typeof core, never> {
 
 const V = ((input?: unknown, context?: unknown) =>
   query(input as never, context as never)) as unknown as Voodoo;
+
+/**
+ * Embrulha um nome antigo que continua valendo. A funcao original e chamada sem
+ * mudanca nenhuma; em desenvolvimento o console diz qual e o nome oficial.
+ */
+function comAviso<T extends (...args: any[]) => any>(alias: string, canonico: string, fn: T): T {
+  return ((...args: Parameters<T>) => {
+    avisarAlias(alias, canonico);
+    return fn(...args);
+  }) as T;
+}
 
 Object.assign(V, core, {
   // DOM encadeavel
@@ -100,7 +113,8 @@ Object.assign(V, core, {
   // Formularios
   validator,
   validate,
-  validateForm: validate,
+  // Apelido antigo. O nome oficial e `V.validate`.
+  validateForm: comAviso('V.validateForm', 'V.validate', validate),
   serializeForm,
   messages,
   showFormErrors,
@@ -122,7 +136,8 @@ Object.assign(V, core, {
   easings,
 
   // Graficos
-  chart: renderChart,
+  // Apelido antigo. O nome oficial e `V.renderChart`.
+  chart: comAviso('V.chart', 'V.renderChart', renderChart),
   renderChart,
   charts,
   chartColors: CHART_COLORS,
@@ -135,6 +150,7 @@ Object.assign(V, core, {
   // Ferramentas de inspecao
   xray,
   enableXrayShortcut,
+  devtoolsWidget,
   devtools: devtoolsBus,
 
   magic,
@@ -177,6 +193,8 @@ export { defineComponent, mountComponent, instances } from './runtime/component'
 export { screen, network, clipboard } from './runtime/magics';
 
 export { http, request, HttpError } from './http';
+export { createResource, createResource as resource } from './http/resource';
+export type { Resource, ResourceOptions } from './http/resource';
 export type { HttpResponse, RequestConfig, HttpMethod } from './http';
 
 export { store, allStores, removeStore, storeNames } from './store';
@@ -207,7 +225,13 @@ export { validator, validate, serializeForm, showFormErrors, clearErrors } from 
 export { mask, masks, applyMask, unmask, registerMask } from './forms/mask';
 export { hotkey } from './directives/ui';
 export { sound, efeitos as soundEffects } from './sound';
-export { xray } from './devtools/xray';
+export { xray, enableXray, disableXray, isXrayEnabled } from './devtools/xray';
+export {
+  devtoolsWidget,
+  mountDevtoolsWidget,
+  unmountDevtoolsWidget,
+  isDevtoolsWidgetMounted,
+} from './devtools/launcher';
 export { devtoolsBus } from './devtools/bus';
 
 export * from './utils';

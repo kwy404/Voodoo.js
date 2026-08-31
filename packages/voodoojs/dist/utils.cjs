@@ -327,27 +327,35 @@ function formatPercent(value, decimals = 0, locale) {
   }).format(value);
 }
 var isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+function matchesMedia(query) {
+  if (!isBrowser || typeof window.matchMedia !== "function") return false;
+  try {
+    return window.matchMedia(query).matches;
+  } catch {
+    return false;
+  }
+}
 var device = {
   get touch() {
     return isBrowser && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
   },
   get mobile() {
-    return isBrowser && window.matchMedia("(max-width: 767px)").matches;
+    return matchesMedia("(max-width: 767px)");
   },
   get tablet() {
-    return isBrowser && window.matchMedia("(min-width: 768px) and (max-width: 1023px)").matches;
+    return matchesMedia("(min-width: 768px) and (max-width: 1023px)");
   },
   get desktop() {
-    return isBrowser && window.matchMedia("(min-width: 1024px)").matches;
+    return matchesMedia("(min-width: 1024px)");
   },
   get online() {
     return !isBrowser || navigator.onLine;
   },
   get reducedMotion() {
-    return isBrowser && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return matchesMedia("(prefers-reduced-motion: reduce)");
   },
   get darkMode() {
-    return isBrowser && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return matchesMedia("(prefers-color-scheme: dark)");
   }
 };
 
@@ -365,6 +373,7 @@ exports.formatPercent = formatPercent;
 exports.get = get;
 exports.groupBy = groupBy;
 exports.isBrowser = isBrowser;
+exports.matchesMedia = matchesMedia;
 exports.memoize = memoize;
 exports.merge = merge;
 exports.once = once;

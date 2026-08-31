@@ -10,6 +10,7 @@ import { evaluate, stringify } from '../parser/interpreter';
 // `AstNode` evita conflito com o `Node` do DOM, usado em todo este arquivo.
 import { parse, type Node as AstNode } from '../parser/parser';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
+import { avisar, avisarChaveDuplicada, descreverElemento } from '../runtime/avisos';
 import { Scope } from '../runtime/scope';
 import {
   addCleanup,
@@ -334,6 +335,9 @@ defineDirective(
           ? evaluateIn(keyExpression, scope.child(vars), ':key')
           : `__index_${index}`;
 
+        // Chave repetida faz a lista reaproveitar o bloco errado ao reordenar.
+        if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
+
         const existing = previous.get(key);
         if (existing && !used.has(key)) {
           used.add(key);
@@ -448,10 +452,69 @@ const BOOLEAN_ATTRIBUTES = new Set([
   'inert',
 ]);
 
+/**
+ * Atributos que o navegador trata como endereco a seguir. Um valor vindo do
+ * estado pode ter nascido de dado externo, entao o esquema precisa ser checado
+ * antes de virar `href` ou `src`.
+ */
+const ATRIBUTOS_DE_URL = new Set([
+  'href',
+  'src',
+  'action',
+  'formaction',
+  'xlink:href',
+  'ping',
+  'poster',
+]);
+
+/** Espacos e caracteres de controle que o navegador descarta ao ler o esquema. */
+const RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
+
+/**
+ * `true` quando o endereco usa um esquema que executa codigo. `data:text/html`
+ * entra na lista porque abre um documento com origem propria e script ativo.
+ */
+export function urlPerigosa(valor: string): boolean {
+  // Um endereco pode trazer quebra de linha no meio de `javascript:` e o
+  // navegador ainda assim o executa, entao a checagem limpa o ruido antes de
+  // comparar, do mesmo jeito que ele faz.
+  const limpo = valor.replace(RUIDO_DE_ESQUEMA, '').toLowerCase();
+  return (
+    limpo.startsWith('javascript:') ||
+    limpo.startsWith('vbscript:') ||
+    limpo.startsWith('data:text/html') ||
+    limpo.startsWith('data:application/xhtml')
+  );
+}
+
 /** Aplica um valor a um atributo, tratando casos especiais. */
 export function applyBinding(el: HTMLElement, name: string, value: unknown, asProp = false): void {
   if (name === 'class') return applyClass(el, value);
   if (name === 'style') return applyStyle(el, value);
+
+  if (config.sanitizeUrls && !asProp) {
+    // Endereco com esquema executavel: o atributo nao chega ao DOM.
+    if (ATRIBUTOS_DE_URL.has(name) && typeof value === 'string' && urlPerigosa(value)) {
+      avisar(
+        `valor recusado em :${name} de ${descreverElemento(el)}: ` +
+          `"${value.slice(0, 60)}" usa um esquema que executa codigo. ` +
+          'Use um endereco http(s) ou relativo. Para desligar esta protecao, ' +
+          'defina V.config.sanitizeUrls = false.'
+      );
+      el.removeAttribute(name);
+      return;
+    }
+    // `:onerror="..."` viraria um manipulador embutido, que roda como script.
+    // Eventos se declaram com `@evento`, que nunca passa por este caminho.
+    if (name.length > 2 && /^on[a-z]/.test(name)) {
+      avisar(
+        `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por ` +
+          `atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+      );
+      el.removeAttribute(name);
+      return;
+    }
+  }
 
   if (asProp) {
     (el as any)[name] = value;

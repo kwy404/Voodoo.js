@@ -36,6 +36,12 @@ export interface VoodooConfig {
    * limpo no inspetor. Os valores continuam acessiveis internamente.
    */
   cleanAttributes: boolean;
+  /**
+   * Recusa `javascript:`, `vbscript:` e `data:text/html` em atributos que o
+   * navegador navega, como `href`, `src`, `action` e `formaction`. Desligue
+   * somente se a aplicacao precisar mesmo gerar esses esquemas.
+   */
+  sanitizeUrls: boolean;
 }
 
 export const config: VoodooConfig = {
@@ -50,6 +56,7 @@ export const config: VoodooConfig = {
   currency: 'BRL',
   injectStyles: true,
   cleanAttributes: true,
+  sanitizeUrls: true,
 };
 
 // ---------------------------------------------------------------------------

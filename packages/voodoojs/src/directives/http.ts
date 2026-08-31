@@ -18,7 +18,7 @@
  * ```
  */
 
-import { handleError, reactive } from '../reactivity';
+import { handleError } from '../reactivity';
 import { config, defineDirective, directives, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import {
@@ -30,6 +30,7 @@ import {
   walk,
 } from '../runtime/walker';
 import { http, HttpError, type HttpMethod, type HttpResponse } from '../http';
+import { createResource, extractMessage, pick } from '../http/resource';
 import { escapeHtml, parseDuration, debounce } from '../utils';
 import { toast } from '../ui/toast';
 
@@ -199,15 +200,6 @@ export function swapContent(
 }
 
 /** Le um caminho dentro do JSON, como `data.items.0.nome`. */
-function pick(value: unknown, path: string | null): unknown {
-  if (!path) return value;
-  let current: any = value;
-  for (const part of path.split('.')) {
-    if (current == null) return undefined;
-    current = current[part];
-  }
-  return current;
-}
 
 /**
  * Converte JSON em HTML legivel quando nao existe template.
@@ -411,15 +403,6 @@ export async function runRequest(options: RunOptions): Promise<void> {
 }
 
 /** Procura a mensagem de erro dentro do corpo da resposta. */
-function extractMessage(error: HttpError): string | null {
-  const data = error.response?.data as Record<string, unknown> | undefined;
-  if (!data || typeof data !== 'object') return null;
-  for (const key of ['message', 'error', 'detail', 'msg']) {
-    const value = data[key];
-    if (typeof value === 'string') return value;
-  }
-  return null;
-}
 
 function dispatch(el: HTMLElement, type: string, detail: unknown): void {
   el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
@@ -657,22 +640,14 @@ defineDirective('search', ({ el, scope, expression, cleanup }) => {
 // v-resource: estado completo de uma requisicao
 // ---------------------------------------------------------------------------
 
-export interface Resource<T = unknown> {
-  data: T | null;
-  loading: boolean;
-  error: (Error & { message: string }) | null;
-  loaded: boolean;
-  /** Refaz a requisicao. */
-  reload(): Promise<void>;
-  /** Troca os dados localmente, util para atualizacao otimista. */
-  set(value: T): void;
-}
-
 /**
  * Cria um recurso reativo e o publica no escopo.
  *
  * Sintaxe: `v-resource="nome: /url"` ou `v-resource="/url"` com `v-as="nome"`.
  * O padrao do nome, quando nada e informado, e `resource`.
+ *
+ * O nucleo esta em `createResource`, o mesmo que `V.resource()` usa. Aqui so
+ * acontece a leitura da configuracao escrita nos atributos.
  */
 defineDirective(
   'resource',
@@ -690,57 +665,25 @@ defineDirective(
       }
     }
 
-    const resource = reactive({
-      data: null,
-      loading: false,
-      error: null,
-      loaded: false,
-      async reload() {
-        const url = resolveURL(urlExpression, scope);
-        if (!url) return;
-        resource.loading = true;
-        resource.error = null;
-        try {
-          const params = attr(el, 'params')
-            ? (evaluateIn(attr(el, 'params')!, scope, 'v-params') as Record<string, string>)
-            : undefined;
-          const cacheMs = parseDuration(attr(el, 'cache') ?? undefined, 0);
-          const response = await http.request({
-            url,
-            method: (attr(el, 'method') || 'GET').toUpperCase() as HttpMethod,
-            params,
-            cache: cacheMs || undefined,
-            retry: Number(attr(el, 'retry') ?? 0),
-            timeout: parseDuration(attr(el, 'timeout') ?? undefined, http.defaults.timeout),
-          });
-          resource.data = pick(response.data, attr(el, 'json-path')) as never;
-          resource.loaded = true;
-          dispatch(el, 'voodoo:success', { data: resource.data });
-        } catch (err) {
-          const message =
-            err instanceof HttpError ? extractMessage(err) ?? err.message : (err as Error).message;
-          resource.error = { name: 'ResourceError', message } as never;
-          dispatch(el, 'voodoo:error', { error: err, message });
-        } finally {
-          resource.loading = false;
-        }
-      },
-      set(value: unknown) {
-        resource.data = value as never;
-      },
-    }) as Resource;
+    const resource = createResource(() => resolveURL(urlExpression, scope), {
+      method: (attr(el, 'method') || 'GET').toUpperCase() as HttpMethod,
+      params: () =>
+        attr(el, 'params')
+          ? (evaluateIn(attr(el, 'params')!, scope, 'v-params') as Record<string, string>)
+          : undefined,
+      cache: parseDuration(attr(el, 'cache') ?? undefined, 0) || undefined,
+      retry: Number(attr(el, 'retry') ?? 0),
+      timeout: parseDuration(attr(el, 'timeout') ?? undefined, http.defaults.timeout),
+      jsonPath: attr(el, 'json-path'),
+      poll: parseDuration(attr(el, 'poll') ?? undefined, 0),
+      manual: hasAttr(el, 'manual'),
+      onSuccess: (data) => dispatch(el, 'voodoo:success', { data }),
+      onError: (err, message) => dispatch(el, 'voodoo:error', { error: err, message }),
+    });
 
     scope.set(name, resource);
-
-    const pollEvery = parseDuration(attr(el, 'poll') ?? undefined, 0);
-    if (pollEvery > 0) {
-      const timer = setInterval(() => {
-        if (document.visibilityState === 'visible') void resource.reload();
-      }, pollEvery);
-      cleanup(() => clearInterval(timer));
-    }
-
-    if (!hasAttr(el, 'manual')) void resource.reload();
+    // Sair do DOM cancela a requisicao pendente e a repeticao automatica.
+    cleanup(() => resource.stop());
   },
   { priority: PRIORITY.DATA }
 );

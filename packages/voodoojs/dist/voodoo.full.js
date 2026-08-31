@@ -736,7 +736,8 @@ var Voodoo = (() => {
         locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",
         currency: "BRL",
         injectStyles: true,
-        cleanAttributes: true
+        cleanAttributes: true,
+        sanitizeUrls: true
       };
       directives = /* @__PURE__ */ new Map();
       PRIORITY = {
@@ -1106,12 +1107,12 @@ ${pointer}`);
   };
   var ASSIGN_OPS = /* @__PURE__ */ new Set(["=", "+=", "-=", "*=", "/=", "%=", "**=", "&&=", "||=", "??="]);
   var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "typeof", "void"]);
-  var LITERALS = {
+  var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null), {
     true: true,
     false: false,
     null: null,
     undefined: void 0
-  };
+  });
   var Parser = class {
     constructor(tokens, source) {
       __publicField(this, "tokens", tokens);
@@ -1452,6 +1453,19 @@ Expressao: ${expression}` : message);
     }
   };
   var SPREAD = /* @__PURE__ */ Symbol("spread");
+  var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+  function chaveBloqueada(key) {
+    return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+  }
+  function checarChave(key, expressao) {
+    if (chaveBloqueada(key)) {
+      throw new VoodooRuntimeError(
+        `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
+        expressao
+      );
+    }
+    return key;
+  }
   function evaluate(node, scope) {
     var _a, _b;
     switch (node.t) {
@@ -1466,6 +1480,7 @@ Expressao: ${expression}` : message);
         return out;
       }
       case "id": {
+        checarChave(node.n);
         const owner = scope.lookup(node.n);
         if (owner) return owner[node.n];
         if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -1479,7 +1494,9 @@ Expressao: ${expression}` : message);
             `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = node.computed ? evaluate(node.p, scope) : node.p.v;
+        const key = checarChave(
+          node.computed ? evaluate(node.p, scope) : node.p.v
+        );
         return obj[key];
       }
       case "call": {
@@ -1493,10 +1510,13 @@ Expressao: ${expression}` : message);
               `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
             );
           }
-          const key = node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v;
+          const key = checarChave(
+            node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
+          );
           thisArg = obj;
           fn = obj[key];
         } else if (node.callee.t === "id") {
+          checarChave(node.callee.n);
           const owner = scope.lookup(node.callee.n);
           if (owner) {
             thisArg = owner;
@@ -1518,6 +1538,7 @@ Expressao: ${expression}` : message);
         if (node.op === "...") return { [SPREAD]: evaluate(node.a, scope) };
         if (node.op === "typeof") {
           if (node.a.t === "id") {
+            if (chaveBloqueada(node.a.n)) return "undefined";
             const owner = scope.lookup(node.a.n);
             const value = owner ? owner[node.a.n] : allowedGlobals[node.a.n];
             return typeof value;
@@ -1643,7 +1664,9 @@ Expressao: ${expression}` : message);
           if (prop.spread) {
             Object.assign(out, evaluate(prop.spread, scope));
           } else {
-            const key = prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope));
+            const key = checarChave(
+              prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
+            );
             out[key] = evaluate(prop.value, scope);
           }
         }
@@ -1682,6 +1705,7 @@ Expressao: ${expression}` : message);
   }
   function assign(target, value, scope) {
     if (target.t === "id") {
+      checarChave(target.n);
       scope.set(target.n, value);
       return;
     }
@@ -1690,7 +1714,9 @@ Expressao: ${expression}` : message);
       if (obj == null) {
         throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
       }
-      const key = target.computed ? evaluate(target.p, scope) : target.p.v;
+      const key = checarChave(
+        target.computed ? evaluate(target.p, scope) : target.p.v
+      );
       obj[key] = value;
       return;
     }
@@ -1844,6 +1870,80 @@ Expressao: ${expression}` : message);
   // src/runtime/walker.ts
   init_reactivity();
   init_registry();
+
+  // src/runtime/avisos.ts
+  init_registry();
+  function emDesenvolvimento() {
+    return config.devtools === true;
+  }
+  function descreverElemento(el) {
+    if (!el) return "(sem elemento)";
+    let out = el.tagName.toLowerCase();
+    if (el.id) out += `#${el.id}`;
+    const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
+    if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
+    return `<${out}>`;
+  }
+  function avisar(mensagem) {
+    if (!emDesenvolvimento()) return;
+    console.warn(`[Voodoo] ${mensagem}`);
+  }
+  var jaAvisado = /* @__PURE__ */ new Set();
+  function avisarUmaVez(chave, mensagem) {
+    if (!emDesenvolvimento()) return;
+    if (jaAvisado.has(chave)) return;
+    jaAvisado.add(chave);
+    console.warn(`[Voodoo] ${mensagem}`);
+  }
+  var ATRIBUTOS_AUXILIARES = /* @__PURE__ */ new Set([
+    "confirm-title",
+    "confirm-label",
+    "confirm-cancel",
+    "hold-duration"
+  ]);
+  function avisarDirectiveDesconhecida(el, raw, nome) {
+    if (!emDesenvolvimento()) return;
+    if (ATRIBUTOS_AUXILIARES.has(nome)) return;
+    avisarUmaVez(
+      `directive-desconhecida:${nome}`,
+      `directive desconhecida "${raw}" em ${descreverElemento(el)}. Nenhuma directive chamada "${nome}" foi registrada. Verifique a grafia ou registre com V.directive("${nome}", ...).`
+    );
+  }
+  function avisarComponenteDesconhecido(el, nome) {
+    avisarUmaVez(
+      `componente-desconhecido:${nome}`,
+      `componente "${nome}" nao registrado em ${descreverElemento(el)}. Registre com V.component("${nome}", { ... }) antes de usar a tag, ou remova o atributo para deixar o elemento como HTML comum.`
+    );
+  }
+  function avisarExpressaoInvalida(el, raw, expressao, err) {
+    if (!emDesenvolvimento()) return;
+    const motivo = err instanceof Error ? err.message.split("\n")[0] : String(err);
+    avisar(
+      `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.
+Motivo: ${motivo}
+Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que uma linha, mova para um metodo do componente e chame o metodo aqui.`
+    );
+  }
+  function avisarChaveDuplicada(el, chave, expressao) {
+    if (!emDesenvolvimento()) return;
+    avisar(
+      `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.`
+    );
+  }
+  function avisarPropObrigatoria(el, componente, prop) {
+    if (!emDesenvolvimento()) return;
+    avisar(
+      `prop obrigatoria "${prop}" ausente no componente "${componente}" em ${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um texto fixo ou :${prop}="expressao" para um valor do estado.`
+    );
+  }
+  function avisarAlias(alias, canonico) {
+    avisarUmaVez(
+      `alias:${alias}`,
+      `"${alias}" e um apelido de "${canonico}" e continua funcionando, mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
+    );
+  }
+
+  // src/runtime/walker.ts
   var nodeScopes = /* @__PURE__ */ new WeakMap();
   var nodeCleanups = /* @__PURE__ */ new WeakMap();
   var initialized = /* @__PURE__ */ new WeakSet();
@@ -2058,6 +2158,11 @@ Expressao: ${expression}` : message);
       }
     }
   }
+  function hadDirectives(el) {
+    const cache3 = attributeCache.get(el);
+    if (cache3 && cache3.size) return true;
+    return hasDirectives(el);
+  }
   function hasDirectives(el) {
     const attrs = el.attributes;
     for (let i = 0; i < attrs.length; i++) {
@@ -2068,11 +2173,14 @@ Expressao: ${expression}` : message);
     }
     return false;
   }
-  function evaluateIn(expression, scope, context) {
+  function evaluateIn(expression, scope, context, el) {
     if (!expression) return void 0;
     try {
       return evaluate(parse(expression), scope);
     } catch (err) {
+      if (emDesenvolvimento()) {
+        avisarExpressaoInvalida(el != null ? el : scope.el, context != null ? context : "expressao", expression, err);
+      }
       handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
       return void 0;
     }
@@ -2083,7 +2191,12 @@ Expressao: ${expression}` : message);
   }
   function runDirective(el, attr2, scope) {
     const def = directives.get(attr2.name);
-    if (!def) return;
+    if (!def) {
+      if (emDesenvolvimento() && attr2.raw.startsWith(config.prefix)) {
+        avisarDirectiveDesconhecida(el, attr2.raw, attr2.name);
+      }
+      return;
+    }
     const scopeOwner = new EffectScope(true);
     addCleanup(el, () => scopeOwner.stop());
     trackEffectScope(el, scopeOwner);
@@ -2095,7 +2208,7 @@ Expressao: ${expression}` : message);
       modifiers: attr2.modifiers,
       raw: attr2.raw,
       evaluate(expression) {
-        return evaluateIn(expression != null ? expression : attr2.expression, scope, attr2.raw);
+        return evaluateIn(expression != null ? expression : attr2.expression, scope, attr2.raw, el);
       },
       effect(fn) {
         scopeOwner.run(() => effect(fn, { scope: scopeOwner }));
@@ -2373,6 +2486,7 @@ Expressao: ${expression}` : message);
       }
       for (const el of encontrados) {
         if ((_a = getScope(el)) == null ? void 0 : _a.component) continue;
+        if (temAncestralPendente(el)) continue;
         const escopo = findScope(el.parentNode);
         if (isInitialized(el)) {
           destroy(el);
@@ -2381,6 +2495,14 @@ Expressao: ${expression}` : message);
         walk(el, escopo);
       }
     }
+  }
+  function temAncestralPendente(el) {
+    let atual = el.parentElement;
+    while (atual && atual !== document.body) {
+      if (hasDirectives(atual) && !isInitialized(atual)) return true;
+      atual = atual.parentElement;
+    }
+    return false;
   }
   function coerce(value, def) {
     var _a, _b;
@@ -2413,7 +2535,7 @@ Expressao: ${expression}` : message);
   function camelize(name) {
     return name.replace(/-(\w)/g, (_, c2) => c2.toUpperCase());
   }
-  function resolveProps(el, defs, parentScope, owner) {
+  function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
     var _a;
     const props = reactive({});
     const known = Object.keys(defs);
@@ -2446,7 +2568,7 @@ Expressao: ${expression}` : message);
     }
     for (const key of known) {
       if (defs[key].required && props[key] === void 0) {
-        console.warn(`[Voodoo] prop obrigatoria ausente: "${key}"`);
+        avisarPropObrigatoria(el, nomeDoComponente, key);
       }
     }
     return props;
@@ -2495,13 +2617,13 @@ Expressao: ${expression}` : message);
     const normalized = name ? normalizeComponentName(name) : "";
     const definition = normalized ? (_c = (_b = components.get(normalized)) != null ? _b : components.get((_a = componentAliases.get(normalized)) != null ? _a : "")) != null ? _c : {} : {};
     if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
-      if (config.devtools) {
-        console.warn(`[Voodoo] componente "${name}" nao registrado, usando escopo inline.`);
-      }
+      avisarComponenteDesconhecido(el, name);
     }
     const owner = new EffectScope(true);
     const defs = propDefinitions(definition);
-    const props = resolveProps(el, defs, parentScope, owner);
+    const props = resolveProps(el, defs, parentScope, owner, normalized || "inline");
+    if (!definition.state && definition.data) avisarAlias("data()", "state()");
+    if (definition.destroyed) avisarAlias("destroyed()", "unmounted()");
     const stateFactory = (_d = definition.state) != null ? _d : definition.data;
     let stateRaw = {};
     const instance = {};
@@ -3056,6 +3178,7 @@ Expressao: ${expression}` : message);
     get: () => get,
     groupBy: () => groupBy,
     isBrowser: () => isBrowser,
+    matchesMedia: () => matchesMedia,
     memoize: () => memoize,
     merge: () => merge,
     once: () => once,
@@ -3397,27 +3520,35 @@ Expressao: ${expression}` : message);
     }).format(value);
   }
   var isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+  function matchesMedia(query2) {
+    if (!isBrowser || typeof window.matchMedia !== "function") return false;
+    try {
+      return window.matchMedia(query2).matches;
+    } catch (e) {
+      return false;
+    }
+  }
   var device = {
     get touch() {
       return isBrowser && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
     },
     get mobile() {
-      return isBrowser && window.matchMedia("(max-width: 767px)").matches;
+      return matchesMedia("(max-width: 767px)");
     },
     get tablet() {
-      return isBrowser && window.matchMedia("(min-width: 768px) and (max-width: 1023px)").matches;
+      return matchesMedia("(min-width: 768px) and (max-width: 1023px)");
     },
     get desktop() {
-      return isBrowser && window.matchMedia("(min-width: 1024px)").matches;
+      return matchesMedia("(min-width: 1024px)");
     },
     get online() {
       return !isBrowser || navigator.onLine;
     },
     get reducedMotion() {
-      return isBrowser && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      return matchesMedia("(prefers-reduced-motion: reduce)");
     },
     get darkMode() {
-      return isBrowser && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return matchesMedia("(prefers-color-scheme: dark)");
     }
   };
 
@@ -3619,8 +3750,20 @@ Expressao: ${expression}` : message);
     let lastError;
     for (let attempt = 0; attempt < attempts; attempt++) {
       const controller = new AbortController();
-      const signals = [controller.signal];
-      if (config2.signal) signals.push(config2.signal);
+      const externo = config2.signal;
+      let repassarAborto = null;
+      if (externo) {
+        if (externo.aborted) {
+          controller.abort(externo.reason);
+        } else {
+          repassarAborto = () => controller.abort(externo.reason);
+          externo.addEventListener("abort", repassarAborto, { once: true });
+        }
+      }
+      const soltarSinal = () => {
+        if (repassarAborto && externo) externo.removeEventListener("abort", repassarAborto);
+        repassarAborto = null;
+      };
       const timeoutId = config2.timeout && config2.timeout > 0 ? setTimeout(() => controller.abort(new DOMException("timeout", "TimeoutError")), config2.timeout) : null;
       try {
         const response = await fetch(url2, {
@@ -3628,9 +3771,10 @@ Expressao: ${expression}` : message);
           headers,
           body: method === "GET" || method === "HEAD" ? void 0 : body,
           credentials: config2.credentials,
-          signal: signals.length > 1 && "any" in AbortSignal ? AbortSignal.any(signals) : controller.signal
+          signal: controller.signal
         });
         if (timeoutId) clearTimeout(timeoutId);
+        soltarSinal();
         const data2 = await parseResponse(response, config2.responseType);
         let result = {
           data: data2,
@@ -3666,6 +3810,7 @@ Expressao: ${expression}` : message);
         return result;
       } catch (err) {
         if (timeoutId) clearTimeout(timeoutId);
+        soltarSinal();
         if (err instanceof HttpError) throw err;
         lastError = err;
         const aborted = (err == null ? void 0 : err.name) === "AbortError" && ((_d = config2.signal) == null ? void 0 : _d.aborted);
@@ -4435,6 +4580,94 @@ Expressao: ${expression}` : message);
     );
   }
 
+  // src/http/resource.ts
+  init_reactivity();
+  function pick(value, path) {
+    if (!path) return value;
+    let current2 = value;
+    for (const part of path.split(".")) {
+      if (current2 == null) return void 0;
+      current2 = current2[part];
+    }
+    return current2;
+  }
+  function extractMessage(error) {
+    var _a;
+    const data2 = (_a = error.response) == null ? void 0 : _a.data;
+    if (!data2 || typeof data2 !== "object") return null;
+    for (const key of ["message", "error", "detail", "msg"]) {
+      const value = data2[key];
+      if (typeof value === "string") return value;
+    }
+    return null;
+  }
+  function createResource(url2, options = {}) {
+    const resolveUrl2 = () => typeof url2 === "function" ? url2() : url2;
+    const resolveParams = () => typeof options.params === "function" ? options.params() : options.params;
+    let controller = null;
+    let timer = null;
+    const resource = reactive({
+      data: null,
+      loading: false,
+      error: null,
+      loaded: false,
+      async reload() {
+        var _a, _b, _c, _d, _e;
+        const endereco = resolveUrl2();
+        if (!endereco) return;
+        controller == null ? void 0 : controller.abort();
+        const atual = controller = new AbortController();
+        resource.loading = true;
+        resource.error = null;
+        try {
+          const response = await http.request({
+            url: endereco,
+            method: (options.method || "GET").toUpperCase(),
+            params: resolveParams(),
+            headers: options.headers,
+            cache: options.cache || void 0,
+            retry: (_a = options.retry) != null ? _a : 0,
+            timeout: (_b = options.timeout) != null ? _b : http.defaults.timeout,
+            signal: atual.signal
+          });
+          if (atual.signal.aborted) return;
+          resource.data = pick(response.data, options.jsonPath);
+          resource.loaded = true;
+          (_c = options.onSuccess) == null ? void 0 : _c.call(options, resource.data);
+        } catch (err) {
+          if (atual.signal.aborted) return;
+          const message = err instanceof HttpError ? (_d = extractMessage(err)) != null ? _d : err.message : err.message;
+          resource.error = { name: "ResourceError", message };
+          (_e = options.onError) == null ? void 0 : _e.call(options, err, message);
+        } finally {
+          if (!atual.signal.aborted) resource.loading = false;
+          if (controller === atual) controller = null;
+        }
+      },
+      set(value) {
+        resource.data = value;
+      },
+      stop() {
+        controller == null ? void 0 : controller.abort();
+        controller = null;
+        resource.loading = false;
+        if (timer !== null) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+    });
+    if (options.poll && options.poll > 0) {
+      timer = setInterval(() => {
+        if (typeof document === "undefined" || document.visibilityState === "visible") {
+          void resource.reload();
+        }
+      }, options.poll);
+    }
+    if (!options.manual) void resource.reload();
+    return resource;
+  }
+
   // src/core.ts
   init_style();
 
@@ -4834,6 +5067,7 @@ Expressao: ${expression}` : message);
         const used = /* @__PURE__ */ new Set();
         entries.forEach((vars, index) => {
           const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
+          if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
           const existing = previous.get(key);
           if (existing && !used.has(key)) {
             used.add(key);
@@ -4917,9 +5151,39 @@ Expressao: ${expression}` : message);
     "novalidate",
     "inert"
   ]);
+  var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
+    "href",
+    "src",
+    "action",
+    "formaction",
+    "xlink:href",
+    "ping",
+    "poster"
+  ]);
+  var RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
+  function urlPerigosa(valor) {
+    const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
+    return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
+  }
   function applyBinding(el, name, value, asProp = false) {
     if (name === "class") return applyClass(el, value);
     if (name === "style") return applyStyle(el, value);
+    if (config.sanitizeUrls && !asProp) {
+      if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
+        avisar(
+          `valor recusado em :${name} de ${descreverElemento(el)}: "${value.slice(0, 60)}" usa um esquema que executa codigo. Use um endereco http(s) ou relativo. Para desligar esta protecao, defina V.config.sanitizeUrls = false.`
+        );
+        el.removeAttribute(name);
+        return;
+      }
+      if (name.length > 2 && /^on[a-z]/.test(name)) {
+        avisar(
+          `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+        );
+        el.removeAttribute(name);
+        return;
+      }
+    }
     if (asProp) {
       el[name] = value;
       return;
@@ -5532,15 +5796,6 @@ Expressao: ${expression}` : message);
       }
     }
   }
-  function pick(value, path) {
-    if (!path) return value;
-    let current2 = value;
-    for (const part of path.split(".")) {
-      if (current2 == null) return void 0;
-      current2 = current2[part];
-    }
-    return current2;
-  }
   function renderJSON(value, depth = 0) {
     if (value == null) return "";
     if (typeof value !== "object") return escapeHtml(String(value));
@@ -5673,16 +5928,6 @@ Expressao: ${expression}` : message);
       if (settings4.onComplete) callHandler(settings4.onComplete, scope, el, {});
       dispatch(el, "voodoo:complete", {});
     }
-  }
-  function extractMessage(error) {
-    var _a;
-    const data2 = (_a = error.response) == null ? void 0 : _a.data;
-    if (!data2 || typeof data2 !== "object") return null;
-    for (const key of ["message", "error", "detail", "msg"]) {
-      const value = data2[key];
-      if (typeof value === "string") return value;
-    }
-    return null;
   }
   function dispatch(el, type, detail) {
     el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
@@ -5856,7 +6101,7 @@ Expressao: ${expression}` : message);
   defineDirective(
     "resource",
     ({ el, scope, expression, cleanup }) => {
-      var _a;
+      var _a, _b, _c, _d;
       const separator = expression.indexOf(":");
       let name = attr(el, "as") || "resource";
       let urlExpression = expression.trim();
@@ -5867,52 +6112,20 @@ Expressao: ${expression}` : message);
           urlExpression = expression.slice(separator + 1).trim();
         }
       }
-      const resource = reactive({
-        data: null,
-        loading: false,
-        error: null,
-        loaded: false,
-        async reload() {
-          var _a2, _b, _c, _d;
-          const url2 = resolveURL(urlExpression, scope);
-          if (!url2) return;
-          resource.loading = true;
-          resource.error = null;
-          try {
-            const params = attr(el, "params") ? evaluateIn(attr(el, "params"), scope, "v-params") : void 0;
-            const cacheMs = parseDuration((_a2 = attr(el, "cache")) != null ? _a2 : void 0, 0);
-            const response = await http.request({
-              url: url2,
-              method: (attr(el, "method") || "GET").toUpperCase(),
-              params,
-              cache: cacheMs || void 0,
-              retry: Number((_b = attr(el, "retry")) != null ? _b : 0),
-              timeout: parseDuration((_c = attr(el, "timeout")) != null ? _c : void 0, http.defaults.timeout)
-            });
-            resource.data = pick(response.data, attr(el, "json-path"));
-            resource.loaded = true;
-            dispatch(el, "voodoo:success", { data: resource.data });
-          } catch (err) {
-            const message = err instanceof HttpError ? (_d = extractMessage(err)) != null ? _d : err.message : err.message;
-            resource.error = { name: "ResourceError", message };
-            dispatch(el, "voodoo:error", { error: err, message });
-          } finally {
-            resource.loading = false;
-          }
-        },
-        set(value) {
-          resource.data = value;
-        }
+      const resource = createResource(() => resolveURL(urlExpression, scope), {
+        method: (attr(el, "method") || "GET").toUpperCase(),
+        params: () => attr(el, "params") ? evaluateIn(attr(el, "params"), scope, "v-params") : void 0,
+        cache: parseDuration((_a = attr(el, "cache")) != null ? _a : void 0, 0) || void 0,
+        retry: Number((_b = attr(el, "retry")) != null ? _b : 0),
+        timeout: parseDuration((_c = attr(el, "timeout")) != null ? _c : void 0, http.defaults.timeout),
+        jsonPath: attr(el, "json-path"),
+        poll: parseDuration((_d = attr(el, "poll")) != null ? _d : void 0, 0),
+        manual: hasAttr2(el, "manual"),
+        onSuccess: (data2) => dispatch(el, "voodoo:success", { data: data2 }),
+        onError: (err, message) => dispatch(el, "voodoo:error", { error: err, message })
       });
       scope.set(name, resource);
-      const pollEvery = parseDuration((_a = attr(el, "poll")) != null ? _a : void 0, 0);
-      if (pollEvery > 0) {
-        const timer = setInterval(() => {
-          if (document.visibilityState === "visible") void resource.reload();
-        }, pollEvery);
-        cleanup(() => clearInterval(timer));
-      }
-      if (!hasAttr2(el, "manual")) void resource.reload();
+      cleanup(() => resource.stop());
     },
     { priority: PRIORITY.DATA }
   );
@@ -6096,6 +6309,8 @@ Expressao: ${expression}` : message);
     http,
     request,
     HttpError,
+    /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+    resource: createResource,
     toast,
     storage,
     session,
@@ -9091,17 +9306,24 @@ Expressao: ${expression}` : message);
     const animated = !modifiers.instant;
     el.setAttribute("aria-controls", ensureId(target, "v-toggle"));
     makeInteractive(el, cleanup);
-    const isOpen = () => className ? target.classList.contains(className) : !isHidden(target);
+    let aberto = className ? target.classList.contains(className) : !isHidden(target);
     const sync = () => {
-      el.setAttribute("aria-expanded", String(isOpen()));
+      el.setAttribute("aria-expanded", String(aberto));
     };
     const onClick = (event) => {
       event.preventDefault();
-      if (className) target.classList.toggle(className);
-      else if (isHidden(target)) showElement2(target, animated);
-      else hideElement2(target, animated);
+      if (className) {
+        target.classList.toggle(className);
+        aberto = target.classList.contains(className);
+      } else if (aberto) {
+        hideElement2(target, animated);
+        aberto = false;
+      } else {
+        showElement2(target, animated);
+        aberto = true;
+      }
       sync();
-      dispatch2(el, "voodoo:toggle", { target, open: isOpen() });
+      dispatch2(el, "voodoo:toggle", { target, open: aberto });
     };
     sync();
     el.addEventListener("click", onClick);
@@ -19265,7 +19487,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     for (let i = 0; i < all.length && out.length < MAX_OUTLINES; i++) {
       const el = all[i];
       if (refs && refs.root.contains(el)) continue;
-      if (!hasDirectives(el)) continue;
+      if (!hadDirectives(el)) continue;
       out.push(el);
     }
     return out;
@@ -19405,7 +19627,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       return;
     }
     let candidate = target;
-    while (candidate && candidate !== document.body && !hasDirectives(candidate)) {
+    while (candidate && candidate !== document.body && !hadDirectives(candidate)) {
       candidate = candidate.parentElement;
     }
     if (!candidate || candidate === document.body) {
@@ -20016,6 +20238,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     refs == null ? void 0 : refs.root.remove();
     refs = null;
   }
+  function isXrayEnabled() {
+    return enabled;
+  }
   function enableXrayShortcut() {
     if (shortcutInstalled || typeof document === "undefined") return;
     shortcutInstalled = true;
@@ -20034,8 +20259,371 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     return enabled;
   }
 
+  // src/devtools/launcher.ts
+  init_style();
+  var POSICAO_KEY = "voodoo:devtools:widget-position";
+  var ESCONDIDO_KEY = "voodoo:devtools:widget-hidden";
+  var LIMIAR_ARRASTO = 4;
+  var refs2 = null;
+  var montado = false;
+  var timerContador = 0;
+  var timerPulso = 0;
+  var desligar = [];
+  var WIDGET_CSS = `
+.v-devtools-widget{
+  all: initial;
+  --vw-accent:#6D3BF5;
+  --vw-accent-2:#FF3D8B;
+  --vw-bg:#ffffff;
+  --vw-text:#14111F;
+  --vw-muted:#6B6580;
+  --vw-border:#E6E0F0;
+  --vw-shadow:0 8px 28px rgba(20,17,31,.24);
+  position:fixed;
+  z-index:2147482900;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:12px;
+  line-height:1;
+  color:var(--vw-text);
+  -webkit-font-smoothing:antialiased;
+  touch-action:none;
+}
+@media (prefers-color-scheme: dark){
+  .v-devtools-widget:not([data-theme="light"]){
+    --vw-bg:#1C1830;
+    --vw-text:#F4F1FB;
+    --vw-muted:#A9A2C4;
+    --vw-border:#332C50;
+    --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+  }
+}
+.v-devtools-widget[data-theme="dark"]{
+  --vw-bg:#1C1830;
+  --vw-text:#F4F1FB;
+  --vw-muted:#A9A2C4;
+  --vw-border:#332C50;
+  --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+}
+.v-devtools-widget *,.v-devtools-widget *::before,.v-devtools-widget *::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  font:inherit;
+  color:inherit;
+  list-style:none;
+  text-decoration:none;
+}
+.v-devtools-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  height:38px;
+  padding:0 12px 0 10px;
+  border:1px solid var(--vw-border);
+  border-radius:999px;
+  background:var(--vw-bg);
+  box-shadow:var(--vw-shadow);
+  cursor:grab;
+  user-select:none;
+  transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s;
+}
+.v-devtools-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 34px rgba(109,59,245,.3);
+}
+.v-devtools-btn:active{cursor:grabbing}
+.v-devtools-btn:focus-visible{
+  outline:2px solid var(--vw-accent);
+  outline-offset:2px;
+}
+.v-devtools-widget[data-active="true"] .v-devtools-btn{
+  border-color:var(--vw-accent);
+  box-shadow:0 0 0 3px rgba(109,59,245,.22), var(--vw-shadow);
+}
+.v-devtools-mark{
+  flex:0 0 auto;
+  width:20px;
+  height:20px;
+  display:block;
+}
+.v-devtools-label{
+  font-weight:600;
+  letter-spacing:.2px;
+  white-space:nowrap;
+}
+.v-devtools-count{
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(109,59,245,.12);
+  color:var(--vw-accent);
+  font-variant-numeric:tabular-nums;
+  font-weight:600;
+  white-space:nowrap;
+}
+.v-devtools-pulse{
+  flex:0 0 auto;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--vw-border);
+  transition:background .2s, box-shadow .2s;
+}
+.v-devtools-pulse[data-on="true"]{
+  background:var(--vw-accent-2);
+  box-shadow:0 0 0 4px rgba(255,61,139,.18);
+}
+.v-devtools-close{
+  position:absolute;
+  top:-7px;
+  right:-7px;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  border:1px solid var(--vw-border);
+  background:var(--vw-bg);
+  color:var(--vw-muted);
+  font-size:11px;
+  line-height:1;
+  cursor:pointer;
+  opacity:0;
+  transition:opacity .15s;
+}
+.v-devtools-widget:hover .v-devtools-close,
+.v-devtools-close:focus-visible{opacity:1}
+.v-devtools-close:focus-visible{
+  outline:2px solid var(--vw-accent);
+  outline-offset:1px;
+}
+@media (prefers-reduced-motion: reduce){
+  .v-devtools-btn,.v-devtools-pulse,.v-devtools-close{transition:none}
+  .v-devtools-btn:hover{transform:none}
+}
+`;
+  var MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+<path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
+</svg>`;
+  function lerPosicao() {
+    try {
+      const bruto = localStorage.getItem(POSICAO_KEY);
+      if (!bruto) return null;
+      const valor = JSON.parse(bruto);
+      if (typeof (valor == null ? void 0 : valor.x) !== "number" || typeof (valor == null ? void 0 : valor.y) !== "number") return null;
+      return valor;
+    } catch (e) {
+      return null;
+    }
+  }
+  function gravarPosicao(pos) {
+    try {
+      localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
+    } catch (e) {
+    }
+  }
+  function aplicarPosicao(raiz, pos) {
+    const largura = raiz.offsetWidth || 120;
+    const altura = raiz.offsetHeight || 38;
+    const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - largura - 8));
+    const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - altura - 8));
+    raiz.style.left = `${x}px`;
+    raiz.style.top = `${y}px`;
+    raiz.style.right = "auto";
+    raiz.style.bottom = "auto";
+  }
+  function construir() {
+    const raiz = document.createElement("div");
+    raiz.className = "v-devtools-widget";
+    raiz.setAttribute("data-voodoo-devtools", "widget");
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "v-devtools-btn";
+    botao.setAttribute("aria-label", "Abrir as devtools da Voodoo (Ctrl+Shift+X)");
+    botao.setAttribute("aria-pressed", "false");
+    botao.title = "Devtools da Voodoo \u2014 clique para inspecionar, arraste para mover (Ctrl+Shift+X)";
+    botao.innerHTML = MARCA;
+    const rotulo = document.createElement("span");
+    rotulo.className = "v-devtools-label";
+    rotulo.textContent = "Voodoo";
+    const contador2 = document.createElement("span");
+    contador2.className = "v-devtools-count";
+    contador2.textContent = "0";
+    const pulso = document.createElement("span");
+    pulso.className = "v-devtools-pulse";
+    pulso.setAttribute("data-on", "false");
+    botao.append(rotulo, contador2, pulso);
+    const fechar = document.createElement("button");
+    fechar.type = "button";
+    fechar.className = "v-devtools-close";
+    fechar.setAttribute("aria-label", "Esconder o widget das devtools nesta aba");
+    fechar.title = "Esconder nesta aba";
+    fechar.textContent = "\xD7";
+    raiz.append(botao, fechar);
+    document.body.appendChild(raiz);
+    const salva = lerPosicao();
+    if (salva) {
+      aplicarPosicao(raiz, salva);
+    } else {
+      raiz.style.right = "16px";
+      raiz.style.bottom = "16px";
+    }
+    return { raiz, botao, pulso, contador: contador2, fechar };
+  }
+  function ligarArrasto(refs3, aoClicar) {
+    let arrastando = false;
+    let moveu = false;
+    let deslocX = 0;
+    let deslocY = 0;
+    let inicioX = 0;
+    let inicioY = 0;
+    const aoDescer = (evento) => {
+      var _a, _b;
+      if (evento.button !== 0) return;
+      const caixa = refs3.raiz.getBoundingClientRect();
+      arrastando = true;
+      moveu = false;
+      inicioX = evento.clientX;
+      inicioY = evento.clientY;
+      deslocX = evento.clientX - caixa.left;
+      deslocY = evento.clientY - caixa.top;
+      (_b = (_a = refs3.botao).setPointerCapture) == null ? void 0 : _b.call(_a, evento.pointerId);
+    };
+    const aoMover = (evento) => {
+      if (!arrastando) return;
+      const distancia = Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY);
+      if (!moveu && distancia < LIMIAR_ARRASTO) return;
+      moveu = true;
+      evento.preventDefault();
+      aplicarPosicao(refs3.raiz, { x: evento.clientX - deslocX, y: evento.clientY - deslocY });
+    };
+    const aoSubir = (evento) => {
+      var _a, _b;
+      if (!arrastando) return;
+      arrastando = false;
+      (_b = (_a = refs3.botao).releasePointerCapture) == null ? void 0 : _b.call(_a, evento.pointerId);
+      if (!moveu) {
+        aoClicar();
+        return;
+      }
+      const caixa = refs3.raiz.getBoundingClientRect();
+      gravarPosicao({ x: caixa.left, y: caixa.top });
+    };
+    const aoTeclar = (evento) => {
+      if (evento.key !== "Enter" && evento.key !== " ") return;
+      evento.preventDefault();
+      aoClicar();
+    };
+    const aoRedimensionar = () => {
+      const caixa = refs3.raiz.getBoundingClientRect();
+      if (refs3.raiz.style.left) aplicarPosicao(refs3.raiz, { x: caixa.left, y: caixa.top });
+    };
+    refs3.botao.addEventListener("pointerdown", aoDescer);
+    refs3.botao.addEventListener("pointermove", aoMover);
+    refs3.botao.addEventListener("pointerup", aoSubir);
+    refs3.botao.addEventListener("pointercancel", aoSubir);
+    refs3.botao.addEventListener("keydown", aoTeclar);
+    window.addEventListener("resize", aoRedimensionar);
+    return () => {
+      refs3.botao.removeEventListener("pointerdown", aoDescer);
+      refs3.botao.removeEventListener("pointermove", aoMover);
+      refs3.botao.removeEventListener("pointerup", aoSubir);
+      refs3.botao.removeEventListener("pointercancel", aoSubir);
+      refs3.botao.removeEventListener("keydown", aoTeclar);
+      window.removeEventListener("resize", aoRedimensionar);
+    };
+  }
+  function piscar() {
+    if (!refs2) return;
+    refs2.pulso.setAttribute("data-on", "true");
+    window.clearTimeout(timerPulso);
+    timerPulso = window.setTimeout(() => {
+      refs2 == null ? void 0 : refs2.pulso.setAttribute("data-on", "false");
+    }, 320);
+  }
+  function atualizarContador() {
+    if (!refs2) return;
+    const total = instances.size;
+    const texto = total === 1 ? "1 componente" : `${total} componentes`;
+    if (refs2.contador.textContent !== texto) refs2.contador.textContent = texto;
+  }
+  function mountDevtoolsWidget() {
+    if (montado || typeof document === "undefined" || !document.body) return;
+    try {
+      if (sessionStorage.getItem(ESCONDIDO_KEY) === "1") return;
+    } catch (e) {
+    }
+    montado = true;
+    injectStyle("devtools-widget", WIDGET_CSS);
+    refs2 = construir();
+    const alternar = () => {
+      const ligado = xray();
+      refs2 == null ? void 0 : refs2.raiz.setAttribute("data-active", String(ligado));
+      refs2 == null ? void 0 : refs2.botao.setAttribute("aria-pressed", String(ligado));
+    };
+    desligar.push(ligarArrasto(refs2, alternar));
+    const aoFechar = (evento) => {
+      evento.stopPropagation();
+      try {
+        sessionStorage.setItem(ESCONDIDO_KEY, "1");
+      } catch (e) {
+      }
+      unmountDevtoolsWidget();
+      console.info("[Voodoo] widget das devtools escondido. Use V.devtoolsWidget(true) para voltar.");
+    };
+    refs2.fechar.addEventListener("click", aoFechar);
+    desligar.push(() => refs2 == null ? void 0 : refs2.fechar.removeEventListener("click", aoFechar));
+    const aoTeclarGlobal = () => {
+      const ligado = isXrayEnabled();
+      refs2 == null ? void 0 : refs2.raiz.setAttribute("data-active", String(ligado));
+      refs2 == null ? void 0 : refs2.botao.setAttribute("aria-pressed", String(ligado));
+    };
+    document.addEventListener("keyup", aoTeclarGlobal);
+    desligar.push(() => document.removeEventListener("keyup", aoTeclarGlobal));
+    for (const tipo of ["network", "event", "navigation", "update"]) {
+      desligar.push(devtoolsBus.on(tipo, piscar));
+    }
+    atualizarContador();
+    timerContador = window.setInterval(atualizarContador, 1e3);
+  }
+  function unmountDevtoolsWidget() {
+    if (!montado) return;
+    montado = false;
+    for (const fn of desligar.splice(0)) {
+      try {
+        fn();
+      } catch (e) {
+      }
+    }
+    window.clearInterval(timerContador);
+    window.clearTimeout(timerPulso);
+    timerContador = 0;
+    timerPulso = 0;
+    refs2 == null ? void 0 : refs2.raiz.remove();
+    refs2 = null;
+  }
+  function devtoolsWidget(force) {
+    const alvo = force != null ? force : !montado;
+    if (alvo) {
+      try {
+        sessionStorage.removeItem(ESCONDIDO_KEY);
+      } catch (e) {
+      }
+      mountDevtoolsWidget();
+    } else {
+      unmountDevtoolsWidget();
+    }
+    return montado;
+  }
+
   // src/index.ts
   var V = ((input, context) => query(input, context));
+  function comAviso(alias, canonico, fn) {
+    return ((...args) => {
+      avisarAlias(alias, canonico);
+      return fn(...args);
+    });
+  }
   Object.assign(V, core, {
     // DOM encadeavel
     query,
@@ -20061,7 +20649,8 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     // Formularios
     validator,
     validate,
-    validateForm: validate,
+    // Apelido antigo. O nome oficial e `V.validate`.
+    validateForm: comAviso("V.validateForm", "V.validate", validate),
     serializeForm,
     messages,
     showFormErrors,
@@ -20081,7 +20670,8 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     motion: motionPresets,
     easings,
     // Graficos
-    chart: renderChart,
+    // Apelido antigo. O nome oficial e `V.renderChart`.
+    chart: comAviso("V.chart", "V.renderChart", renderChart),
     renderChart,
     charts,
     chartColors: CHART_COLORS,
@@ -20092,6 +20682,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     // Ferramentas de inspecao
     xray,
     enableXrayShortcut,
+    devtoolsWidget,
     devtools: devtoolsBus,
     magic
   });
@@ -20099,6 +20690,15 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
 
   // src/bootstrap.ts
   init_registry();
+  function readDevtoolsFlag(script) {
+    if (window.VOODOO_DEVTOOLS === true) return true;
+    for (const nome of ["devtools", "data-devtools"]) {
+      if (!script.hasAttribute(nome)) continue;
+      const valor = script.getAttribute(nome);
+      return valor === null || valor === "" || valor.toLowerCase() !== "false";
+    }
+    return false;
+  }
   function readScriptOptions() {
     var _a;
     if (typeof document === "undefined") return { manual: false };
@@ -20111,11 +20711,20 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     if (baseURL) config.baseURL = baseURL;
     const locale = script.getAttribute("data-locale");
     if (locale) config.locale = locale;
-    if (script.hasAttribute("data-devtools")) config.devtools = true;
+    if (readDevtoolsFlag(script)) config.devtools = true;
     if (script.hasAttribute("data-no-styles")) config.injectStyles = false;
     if (script.hasAttribute("data-no-observer")) config.autoDiscover = false;
     if (script.hasAttribute("data-keep-attributes")) config.cleanAttributes = false;
     return { manual };
+  }
+  function mountDevtools(V2) {
+    if (typeof V2.devtoolsWidget === "function") {
+      V2.devtoolsWidget(true);
+      return;
+    }
+    console.info(
+      "[Voodoo] devtools pedidas, mas este build nao traz o inspetor. Use voodoo.full.min.js para ganhar o widget e o painel completo."
+    );
   }
   function bootstrap(V2) {
     var _a;
@@ -20132,6 +20741,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       theme.init();
       applySavedPalette();
       V2.start();
+      if (config.devtools) mountDevtools(V2);
     };
     whenReady(boot);
   }

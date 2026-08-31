@@ -343,8 +343,25 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
-    const signals: AbortSignal[] = [controller.signal];
-    if (config.signal) signals.push(config.signal);
+
+    // Sinal vindo de quem chamou. `AbortSignal.any` nao existe em todo motor,
+    // e o caminho de reserva antigo simplesmente ignorava o sinal externo, ou
+    // seja, cancelar a requisicao nao cancelava nada. Repassar o aborto a mao
+    // funciona em qualquer lugar.
+    const externo = config.signal;
+    let repassarAborto: (() => void) | null = null;
+    if (externo) {
+      if (externo.aborted) {
+        controller.abort((externo as { reason?: unknown }).reason);
+      } else {
+        repassarAborto = () => controller.abort((externo as { reason?: unknown }).reason);
+        externo.addEventListener('abort', repassarAborto, { once: true });
+      }
+    }
+    const soltarSinal = (): void => {
+      if (repassarAborto && externo) externo.removeEventListener('abort', repassarAborto);
+      repassarAborto = null;
+    };
 
     const timeoutId =
       config.timeout && config.timeout > 0
@@ -357,12 +374,11 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
         headers,
         body: method === 'GET' || method === 'HEAD' ? undefined : body,
         credentials: config.credentials,
-        signal: signals.length > 1 && 'any' in AbortSignal
-          ? (AbortSignal as unknown as { any(list: AbortSignal[]): AbortSignal }).any(signals)
-          : controller.signal,
+        signal: controller.signal,
       });
 
       if (timeoutId) clearTimeout(timeoutId);
+      soltarSinal();
 
       const data = (await parseResponse(response, config.responseType)) as T;
       let result: HttpResponse<T> = {
@@ -404,6 +420,7 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
       return result;
     } catch (err) {
       if (timeoutId) clearTimeout(timeoutId);
+      soltarSinal();
       if (err instanceof HttpError) throw err;
       lastError = err;
 
