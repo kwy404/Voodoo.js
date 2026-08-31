@@ -277,15 +277,22 @@
         <div>
           <div class="sh-secao__titulo">Controles da cena</div>
 
-          <div class="sh-controle" v-for="ctl in cena.controles" :key="ctl.chave">
+          <!-- A chave inclui o id da cena de proposito. Sem isso o v-for
+               reaproveitaria o mesmo <input> entre cenas, e o navegador
+               grampearia o valor novo no min/max ainda antigo do elemento. -->
+          <div class="sh-controle" v-for="ctl in cena.controles" :key="cena.id + '-' + ctl.chave">
             <div class="sh-controle__topo">
               <label class="sh-controle__rotulo" :for="'ctl-' + ctl.chave">{ ctl.rotulo }</label>
               <span class="sh-controle__valor">{ ctl.valor }{ ctl.sufixo }</span>
             </div>
+            <!-- v-faixa e uma directive nossa, registrada mais abaixo com
+                 prioridade acima do v-model. Ela escreve min, max e step
+                 ANTES de o v-model gravar o valor; na ordem contraria o
+                 navegador arredondaria 0.12 para 0 pelo step padrao 1. -->
             <input class="sh-faixa" type="range"
                    :id="'ctl-' + ctl.chave"
+                   v-faixa="ctl"
                    v-model="ctl.valor"
-                   :min="ctl.min" :max="ctl.max" :step="ctl.passo"
                    :aria-label="ctl.rotulo">
           </div>
         </div>
@@ -509,26 +516,33 @@ document.addEventListener('DOMContentLoaded', function () {
     '  r *= mix(1.0, poligono, p5);',
     '',
     '  float profundidade = 1.0 / max(r, 0.0001);',
-    '  float z = profundidade * 0.34 + tempo * 0.9;',
+    // A escala da profundidade importa: se z variar pouco ao longo do raio,
+    // o ruido vira uma unica faixa esticada. Aqui z anda varias celulas do
+    // ruido entre a borda e o centro, o que da o corredor.
+    '  float z = profundidade * 1.5 + tempo * 0.9;',
     '',
     // O ruido e amostrado sobre um circulo do plano, e nao sobre o angulo
     // cru: assim a textura fecha sozinha e o duto nao ganha uma costura
-    // visivel em a = PI. O circulo desliza para o fundo conforme z cresce.
-    '  vec2 tuv = vec2(cos(a), sin(a)) * p3 + vec2(0.0, z);',
+    // visivel em a = PI. O circulo ainda gira e desliza junto com z, o que
+    // da variacao tambem ao longo do comprimento do duto.
+    '  float ang = a + z * 0.12;',
+    '  vec2 tuv = vec2(cos(ang), sin(ang)) * p3 + vec2(z * 0.35, z);',
     '',
     '  float padrao = fbm(tuv * p1);',
-    '  padrao = pow(clamp(padrao, 0.0, 1.0), 1.5);',
+    '  padrao = pow(clamp(padrao, 0.0, 1.0), 1.8);',
     '',
     // aneis luminosos correndo pelo duto
-    '  float aneis = smoothstep(0.76, 1.0, sin(profundidade * 4.0 - tempo * 3.0) * 0.5 + 0.5);',
+    '  float aneis = smoothstep(0.86, 1.0, sin(profundidade * 2.4 - tempo * 3.0) * 0.5 + 0.5);',
     '',
-    '  vec3 cor = paleta(padrao * 0.8 + profundidade * 0.05 + tempo * 0.04 + p2,',
-    '    vec3(0.28, 0.24, 0.38), vec3(0.42, 0.38, 0.5), vec3(1.0, 0.9, 0.72), vec3(0.08, 0.35, 0.62));',
+    '  vec3 cor = paleta(padrao * 0.9 + profundidade * 0.04 + tempo * 0.04 + p2,',
+    '    vec3(0.2, 0.16, 0.3), vec3(0.38, 0.34, 0.46), vec3(1.0, 0.9, 0.72), vec3(0.08, 0.35, 0.62));',
     '',
-    '  cor *= 0.28 + padrao * 1.7;',                 // contraste: o vazio fica escuro
-    '  cor += aneis * vec3(0.4, 0.82, 1.0) * 0.85;',
+    '  cor *= 0.05 + padrao * 0.95;',                // contraste: o vazio fica escuro
+    '  cor += aneis * vec3(0.3, 0.7, 1.0) * 0.3;',
     '  cor *= smoothstep(0.0, 0.3, r);',             // escurece a boca do tunel
-    '  cor *= 1.0 - smoothstep(1.0, 2.6, r) * 0.6;',
+    // A parede perto da camera some no escuro: e o que da a sensacao de
+    // estar dentro do duto, em vez de olhar um disco de textura.
+    '  cor *= 1.0 - smoothstep(0.42, 1.5, r) * 0.97;',
     '  cor = cor / (1.0 + cor);',                    // compressao de faixa
     '  cor = pow(clamp(cor, 0.0, 1.0), vec3(0.4545));',
     '  corFinal = vec4(cor, 1.0);',
@@ -613,7 +627,11 @@ document.addEventListener('DOMContentLoaded', function () {
     '    float ehChao = smoothstep(-1.05, -1.42, p.y);',
     '    vec3 corEsfera = paleta(p.y * 0.24 + length(p.xz) * 0.14 + p3,',
     '      vec3(0.5), vec3(0.5), vec3(1.0, 1.0, 0.6), vec3(0.0, 0.25, 0.55));',
-    '    vec3 base = mix(corEsfera, vec3(0.035, 0.04, 0.07), ehChao);',
+    // uma grade discreta no piso da a nocao de escala e de profundidade
+    '    vec2 celula = abs(fract(p.xz * 0.5) - 0.5);',
+    '    float grade = smoothstep(0.035, 0.0, min(celula.x, celula.y)) * ehChao;',
+    '    vec3 base = mix(corEsfera, vec3(0.028, 0.032, 0.06), ehChao);',
+    '    base += grade * vec3(0.05, 0.11, 0.2) * (1.0 - clamp(t / 14.0, 0.0, 1.0));',
     '',
     // sombra suave: uma segunda marcha curta na direcao da luz
     '    float sombra = 1.0;',
@@ -629,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function () {
     '    cor = base * (0.12 + 0.95 * difusa * sombra);',
     // o chao reflete mais do que as esferas, o que devolve as bolhas no piso
     '    float forcaReflexo = p5 * mix(1.0, 2.6, ehChao);',
-    '    cor += ceu(refletido) * mix(fresnel, 0.5, ehChao) * forcaReflexo;',
+    '    cor += ceu(refletido) * mix(fresnel, fresnel * 1.5 + 0.04, ehChao) * forcaReflexo;',
     '    cor += pow(clamp(dot(refletido, luz), 0.0, 1.0), 48.0) * sombra * 1.1;',
     '    cor = mix(cor, ceu(raio), clamp(t / 16.0, 0.0, 1.0) * 0.6);',
     '  }',
@@ -775,8 +793,8 @@ document.addEventListener('DOMContentLoaded', function () {
         descricao: 'Coordenadas polares viram profundidade. O padrao e ruido fractal correndo pelo duto.',
         fonte: TUNEL,
         controles: [
-          { chave: 'p1', rotulo: 'Detalhe', min: 0.5, max: 6, passo: 0.05, valor: 2.4, sufixo: '' },
-          { chave: 'p2', rotulo: 'Matiz', min: 0, max: 1, passo: 0.01, valor: 0.35, sufixo: '' },
+          { chave: 'p1', rotulo: 'Detalhe', min: 0.5, max: 6, passo: 0.05, valor: 3.4, sufixo: '' },
+          { chave: 'p2', rotulo: 'Matiz', min: 0, max: 1, passo: 0.01, valor: 0.62, sufixo: '' },
           { chave: 'p3', rotulo: 'Enrolamento', min: 0.4, max: 5, passo: 0.05, valor: 1.6, sufixo: '' },
           { chave: 'p4', rotulo: 'Lados', min: 3, max: 12, passo: 1, valor: 6, sufixo: '' },
           { chave: 'p5', rotulo: 'Poligonal', min: 0, max: 1, passo: 0.01, valor: 0.55, sufixo: '' }
@@ -812,6 +830,36 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     ];
   }
+
+  // ====================================================================
+  // Uma directive propria, em oito linhas.
+  //
+  // Um <input type="range"> nasce com min 0, max 100 e step 1. Se o valor
+  // chegar antes da faixa, o navegador arredonda: 0.12 vira 0. O v-model
+  // roda com prioridade 40 e o v-bind com 30, entao um `:min` comum
+  // chegaria tarde demais. Registrando acima do MODEL, a faixa e escrita
+  // primeiro e o valor entra intacto.
+  // ====================================================================
+  V.directive('faixa', {
+    priority: V.PRIORITY.MODEL + 1,
+
+    created: function (el, binding) {
+      var c = binding.value;
+      if (!c) return;
+      el.min = String(c.min);
+      el.max = String(c.max);
+      el.step = String(c.passo);
+    },
+
+    updated: function (el, binding) {
+      var c = binding.value;
+      if (!c) return;
+      el.min = String(c.min);
+      el.max = String(c.max);
+      el.step = String(c.passo);
+      el.value = String(c.valor);
+    }
+  });
 
   V.component('galeria-shaders', {
 

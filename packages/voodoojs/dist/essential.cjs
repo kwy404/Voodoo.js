@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.2.0
+ * Voodoo.js v0.2.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -732,8 +732,14 @@ var init_registry = __esm({
       DATA: 70,
       COMPONENT: 65,
       REF: 60,
+      // O binding vem antes do modelo de proposito.
+      //
+      // `v-model` escreve o valor no campo, e `:min`, `:max` e `:step` mudam o que
+      // o navegador aceita como valor. Na ordem contraria o campo recebia o valor
+      // com as regras antigas ainda no lugar, e o proprio navegador arredondava ou
+      // grampeava: `0.12` virava `0` enquanto o `step` anterior fosse `1`.
+      BIND: 45,
       MODEL: 40,
-      BIND: 30,
       DEFAULT: 0,
       INIT: -10,
       TRANSITION: -20
@@ -6143,7 +6149,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.2.0";
+var version = "0.2.1";
 var core = {
   // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
   ...utils_exports,

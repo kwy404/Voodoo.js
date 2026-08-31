@@ -24,12 +24,12 @@
 
   var TAM_MUNDO = 620;      // lado do terreno, em metros
   var SEG_TERRENO = 168;    // divisoes do terreno (168x168 quads)
-  var BLOCO = 38;           // distancia entre duas ruas paralelas
-  var MEIA_RUA = 5.5;       // meia largura do asfalto
-  var CALCADA = 8.5;        // ate onde vai a calcada, medido do centro da rua
-  var RAIO_CIDADE = 190;    // depois disso comeca o campo
+  var BLOCO = 46;           // distancia entre duas ruas paralelas
+  var MEIA_RUA = 6.0;       // meia largura do asfalto
+  var CALCADA = 9.5;        // ate onde vai a calcada, medido do centro da rua
+  var RAIO_CIDADE = 230;    // depois disso comeca o campo
   var PASSO_POSTE = 40;     // espacamento dos postes ao longo das avenidas
-  var LADO_POSTE = 7.6;     // distancia do poste ate o centro da avenida
+  var LADO_POSTE = 8.3;     // distancia do poste ate o centro da avenida
   var SEMENTE = 20260831;   // seed fixa: o mesmo mundo em toda visita
 
   // 20 floats por instancia: posicao, tamanho, cor, matriz 3x3 e tipo.
@@ -357,7 +357,7 @@
 
     // --- asfalto: granulado fino e faixas de pneu mais claras
     '  float grao = ruido2(P.xz * 3.1) * 0.05 + ruido2(P.xz * 13.0) * 0.03;',
-    '  vec3 asfalto = vec3(0.048, 0.051, 0.058) + grao;',
+    '  vec3 asfalto = vec3(0.030, 0.032, 0.038) + grao * 0.7;',
 
     // --- sinalizacao. longX = 1 quando esta via corre no eixo X.
     '  float longX = step(dz, dx);',
@@ -376,7 +376,7 @@
 
     // --- calcada: concreto com juntas a cada 3 metros
     '  float junta = min(smoothstep(0.0, 0.10, grade(P.x, 3.0)), smoothstep(0.0, 0.10, grade(P.z, 3.0)));',
-    '  vec3 concreto = mix(vec3(0.16, 0.16, 0.17), vec3(0.30, 0.30, 0.305), junta);',
+    '  vec3 concreto = mix(vec3(0.12, 0.12, 0.13), vec3(0.235, 0.235, 0.24), junta);',
     '  concreto += ruido2(P.xz * 6.0) * 0.035;',
 
     // --- meio-fio: risco claro na transicao rua/calcada
@@ -474,23 +474,30 @@
     '      float lv = (v - 4.4) / 3.05;',
     '      vec2 cel = vec2(fract(lu), fract(lv));',
     '      float col = floor(lu), andar = floor(lv);',
-    '      float jan = step(0.11, cel.x) * step(cel.x, 0.89) * step(0.13, cel.y) * step(cel.y, 0.85);',
+    '      float jan = step(0.13, cel.x) * step(cel.x, 0.87) * step(0.15, cel.y) * step(cel.y, 0.84);',
     '      jan *= step(4.4, v) * step(v, altTotal - 1.4);',
+    // Moldura: um anel fino em volta do vidro, escuro. E o que impede a
+    // fachada de virar um tabuleiro de xadrez de quadrados chapados.
+    '      float fora = step(0.06, cel.x) * step(cel.x, 0.94) * step(0.08, cel.y) * step(cel.y, 0.91);',
+    '      float moldura = clamp(fora * step(4.4, v) * step(v, altTotal - 1.4) - jan, 0.0, 1.0);',
+    '      albedo = mix(albedo, albedo * 0.42, moldura);',
     // laje entre andares, um risco escuro por piso
     '      float laje = (1.0 - smoothstep(0.0, 0.09, cel.y)) * step(4.4, v);',
     '      albedo = mix(albedo, albedo * 0.62, laje * 0.8);',
     '      float acesa = step(0.58, hash21(vec2(col, andar) + vTipo.y * 13.7));',
-    '      vec3 vidro = mix(albedo * 0.30, uZenite * 0.75 + 0.028, 0.46);',
+    '      vec3 vidro = mix(vec3(0.018, 0.024, 0.036), uZenite * 0.52 + 0.018, 0.42);',
     '      albedo = mix(albedo, vidro, jan);',
     '      espec = jan * 0.40;',
-    '      emissivo += vec3(1.0, 0.82, 0.53) * jan * acesa * uNoite * 2.6;',
+    '      emissivo += vec3(1.0, 0.74, 0.40) * jan * acesa * uNoite * (1.55 / uExposicao);',
     // terreo: vitrine acesa a noite
     '      float terreo = step(0.8, v) * step(v, 3.9);',
-    '      emissivo += vec3(1.0, 0.86, 0.62) * terreo * uNoite * 0.55;',
+    '      emissivo += vec3(1.0, 0.78, 0.48) * terreo * uNoite * (0.55 / uExposicao);',
     '      albedo = mix(albedo, albedo * 0.55 + 0.06, terreo * 0.5);',
+    '      float parapeito = step(altTotal - 1.4, v);',
+    '      albedo = mix(albedo, albedo * 0.70, parapeito);',
     '    } else if (vNormalL.y > 0.5) {',
     // cobertura: mais escura e um pouco suja
-    '      albedo = albedo * 0.55 + ruido2(vMundo.xz * 0.6) * 0.05;',
+    '      albedo = albedo * 0.80 + ruido2(vMundo.xz * 0.6) * 0.07;',
     '    }',
     // oclusao de contato falsa: escurece a base do predio. Isso vale mesmo
     // com o shadow map ligado, porque ancora o volume no chao de perto.
@@ -499,7 +506,7 @@
 
     // ---- tipo 2: emissivo puro (lampada, farol, lanterna)
     '  else if (tipo > 1.5 && tipo < 2.5) {',
-    '    emissivo = vCor * (0.35 + uNoite * 3.2) * vTipo.y;',
+    '    emissivo = vCor * (0.35 + uNoite * 3.2 / uExposicao) * vTipo.y;',
     '    albedo = vCor * 0.4;',
     '  }',
 
@@ -682,8 +689,7 @@
     var blocos = [];    // {cx, cz, parque}
 
     var lim = Math.floor(RAIO_CIDADE / BLOCO);
-    var util = BLOCO - MEIA_RUA * 2 - (CALCADA - MEIA_RUA) * 2; // area util do bloco
-    var meioLote = util / 4;
+    var util = BLOCO - CALCADA * 2;   // area util do quarteirao, sem calcada
 
     for (var bi = -lim; bi <= lim; bi++) {
       for (var bj = -lim; bj <= lim; bj++) {
@@ -708,27 +714,43 @@
           continue;
         }
 
-        // Ate quatro lotes por quarteirao. O centro do mapa e o "centro
-        // financeiro": os predios crescem conforme se aproxima da origem.
+        // Formato do quarteirao. Predios largos leem muito melhor que
+        // torres finas: com fachada estreita a grade de janelas do shader
+        // fica enorme e o predio inteiro parece um brinquedo. Por isso o
+        // quarteirao sorteia entre uma torre so, dois blocos ou uma vila
+        // de quatro casas baixas, em vez de dividir sempre em quatro.
         var fatorCentro = 1 - clamp(dCentro / RAIO_CIDADE, 0, 1);
-        for (var lx = 0; lx < 2; lx++) {
-          for (var lz = 0; lz < 2; lz++) {
-            if (rnd() > 0.90) continue;
-            var ox = cx + (lx - 0.5) * meioLote * 2;
-            var oz = cz + (lz - 0.5) * meioLote * 2;
-            var larg = meioLote * (1.15 + rnd() * 0.55);
-            var prof = meioLote * (1.15 + rnd() * 0.55);
-            var alt = 7 + rnd() * 10;
-            alt += Math.pow(fatorCentro, 2.0) * (12 + rnd() * 44);
-            if (rnd() < 0.05) alt *= 1.55;   // uma torre solta aqui e ali
-            var cor = CORES_PREDIO[Math.floor(rnd() * CORES_PREDIO.length)];
-            // No centro, mais vidro azulado; na periferia, mais concreto.
-            if (fatorCentro > 0.55 && rnd() < 0.5) cor = [0.17, 0.22, 0.29];
-            predios.push({
-              x: ox, z: oz, lx: larg, lz: prof,
-              alt: alt, cor: cor, semente: rnd() * 100
-            });
-          }
+        var sorteio = rnd();
+        var lotes;
+        if (sorteio < 0.34) {
+          lotes = [[0, 0, 0.88, 0.88]];
+        } else if (sorteio < 0.72) {
+          lotes = rnd() < 0.5
+            ? [[0, -0.245, 0.90, 0.45], [0, 0.245, 0.90, 0.45]]
+            : [[-0.245, 0, 0.45, 0.90], [0.245, 0, 0.45, 0.90]];
+        } else {
+          lotes = [[-0.25, -0.25, 0.45, 0.45], [0.25, -0.25, 0.45, 0.45],
+                   [-0.25, 0.25, 0.45, 0.45], [0.25, 0.25, 0.45, 0.45]];
+        }
+
+        for (var l = 0; l < lotes.length; l++) {
+          if (lotes.length > 1 && rnd() < 0.12) continue;  // um terreno baldio
+          var lt = lotes[l];
+          var alt = 8 + rnd() * 9;
+          // A torre unica sobe muito mais do que a vila de quatro casas.
+          var ganho = lotes.length === 1 ? 1 : (lotes.length === 2 ? 0.7 : 0.32);
+          alt += Math.pow(fatorCentro, 1.9) * (14 + rnd() * 50) * ganho;
+          if (rnd() < 0.05) alt *= 1.4;    // uma torre solta aqui e ali
+          var cor = CORES_PREDIO[Math.floor(rnd() * CORES_PREDIO.length)];
+          // No centro, mais vidro azulado; na periferia, mais concreto.
+          if (fatorCentro > 0.5 && rnd() < 0.5) cor = [0.17, 0.22, 0.29];
+          predios.push({
+            x: cx + lt[0] * util,
+            z: cz + lt[1] * util,
+            lx: util * lt[2] * (0.86 + rnd() * 0.14),
+            lz: util * lt[3] * (0.86 + rnd() * 0.14),
+            alt: alt, cor: cor, semente: rnd() * 100
+          });
         }
 
         // Arvores na faixa de grama entre a calcada e o lote. O recuo
@@ -1113,7 +1135,7 @@
     // ---------------------------------------------------------- o jogador
 
     var carro = {
-      x: 2.9, z: -BLOCO * 2 - BLOCO * 0.5,
+      x: -3.0, z: -BLOCO * 2 - BLOCO * 0.5,
       y: 0, guinada: 0,
       vel: 0, arfagem: 0, rolagem: 0
     };
@@ -1249,6 +1271,7 @@
       var lim = TAM_MUNDO / 2 - 12;
       carro.x = clamp(carro.x, -lim, lim);
       carro.z = clamp(carro.z, -lim, lim);
+      manterNaRua();
       carro.y = altura(carro.x, carro.z);
 
       // Inclina a carroceria seguindo o terreno.
@@ -1258,6 +1281,32 @@
       var rol = Math.asin(clamp(-(normalTmp[0] * rx + normalTmp[2] * rz), -1, 1));
       carro.arfagem = lerp(carro.arfagem, arf, 1 - Math.exp(-9 * dt));
       carro.rolagem = lerp(carro.rolagem, rol, 1 - Math.exp(-9 * dt));
+    }
+
+    // Colisao simplificada. Nao ha teste por predio: a cidade e uma grade,
+    // entao basta impedir o carro de entrar no miolo do quarteirao. Se as
+    // duas distancias ate as ruas passam do limite da calcada, o carro esta
+    // dentro de um lote e volta pelo eixo em que saiu menos fundo. Barato,
+    // sempre certo, e nunca deixa o carro atravessar uma parede.
+    function manterNaRua() {
+      if (Math.max(Math.abs(carro.x), Math.abs(carro.z)) > RAIO_CIDADE + BLOCO) return;
+      var limite = CALCADA - 0.8;
+      var ox = modPos(carro.x + BLOCO * 0.5, BLOCO) - BLOCO * 0.5;
+      var oz = modPos(carro.z + BLOCO * 0.5, BLOCO) - BLOCO * 0.5;
+      var dx = Math.abs(ox), dz = Math.abs(oz);
+      if (dx <= limite || dz <= limite) return;
+
+      var correcao;
+      if (dx - limite < dz - limite) {
+        correcao = dx - limite;
+        carro.x -= Math.sign(ox) * correcao;
+      } else {
+        correcao = dz - limite;
+        carro.z -= Math.sign(oz) * correcao;
+      }
+      // Raspar custa velocidade em proporcao ao tranco: encostar de leve na
+      // guia quase nao pesa, entrar de frente na quina para o carro.
+      carro.vel *= 1 - clamp(correcao * 0.35, 0, 0.45);
     }
 
     function atualizarVida(dt) {
@@ -1424,7 +1473,14 @@
 
     var larguraCss = 0, alturaCss = 0;
 
+    var tamForcado = null;
+
     function ajustarTamanho() {
+      if (tamForcado) {
+        canvas.width = tamForcado[0]; canvas.height = tamForcado[1];
+        larguraCss = tamForcado[0]; alturaCss = tamForcado[1];
+        return;
+      }
       var dprMax = opcoes.qualidade === 'baixa' ? 1 : (opcoes.qualidade === 'media' ? 1.4 : 2);
       var dpr = Math.min(global.devicePixelRatio || 1, dprMax);
       var l = canvas.clientWidth || 1;
@@ -1849,7 +1905,7 @@
     }
 
     function reposicionar() {
-      carro.x = 2.9;
+      carro.x = -3.0;
       carro.z = -BLOCO * 2 - BLOCO * 0.5;
       carro.guinada = 0;
       carro.vel = 0;
@@ -1864,7 +1920,42 @@
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         return { status: st, completo: st === gl.FRAMEBUFFER_COMPLETE, erro: gl.getError(), tam: TAM_SOMBRA };
       },
-      luz: function () { return { solDir: solDir.slice(), noite: noite, m: Array.from(mLuzViewProj) }; }
+      luz: function () { return { solDir: solDir.slice(), noite: noite, m: Array.from(mLuzViewProj) }; },
+      forcarTamanho: function (w, h) { tamForcado = w ? [w, h] : null; },
+      umQuadro: function (dt) {
+        tempoTotal += dt;
+        ajustarTamanho();
+        atualizarAmbiente(dt); atualizarCarro(dt); atualizarVida(dt); atualizarCamera(dt);
+        montarDinamicas();
+        desenhar(passeSombra());
+      },
+      passo: function (n, dt) {
+        dt = dt || 1 / 60;
+        for (var i = 0; i < n; i++) global.__depuraMundo.umQuadro(dt);
+        desenharMinimapa();
+        var jogo = { fps: 0, velocidade: Math.abs(carro.vel) * 3.6, hora: opcoes.hora, noite: noite,
+          x: carro.x, z: carro.z, instancias: estaticasCaixa.contagem + estaticasEsfera.contagem + contagemDin };
+        if (aoAtualizar) aoAtualizar(jogo);
+        return { x: carro.x, z: carro.z, guinada: carro.guinada, vel: carro.vel,
+          camera: camera.olho.slice(), hora: opcoes.hora };
+      },
+      medir: function (n) {
+        n = n || 200;
+        // gl.finish() nao sincroniza de verdade no Chrome: os comandos vao
+        // para o processo da GPU e voltam antes de terem sido executados.
+        // Ler um pixel forca a espera real pelo fim do trabalho enfileirado.
+        var pix = new Uint8Array(4);
+        var drenar = function () { gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pix); };
+        for (var a = 0; a < 30; a++) global.__depuraMundo.umQuadro(1 / 60);
+        drenar();
+        var t0 = performance.now();
+        for (var i = 0; i < n; i++) global.__depuraMundo.umQuadro(1 / 60);
+        drenar();
+        var ms = (performance.now() - t0) / n;
+        return { msPorQuadro: +ms.toFixed(3), fps: Math.round(1000 / ms),
+          resolucao: canvas.width + 'x' + canvas.height, qualidade: opcoes.qualidade,
+          instancias: estaticasCaixa.contagem + estaticasEsfera.contagem + contagemDin };
+      }
     };
 
     return {

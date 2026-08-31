@@ -1,4 +1,4 @@
-import { c as core, V as VoodooCollection } from './query-D1QXdi0N.cjs';
+import { c as core, V as VoodooCollection } from './query-i0jxSS5I.cjs';
 import './http.cjs';
 import './utils.cjs';
 import './reactivity.cjs';

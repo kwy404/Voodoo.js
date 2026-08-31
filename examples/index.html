@@ -113,7 +113,7 @@
     <div>
       <h1 class="ix-titulo">Demos da <span>Voodoo.js</span></h1>
       <p class="ix-lema">
-        Sete aplicacoes completas, escritas quase inteiras no proprio HTML.
+        Doze aplicacoes completas, escritas quase inteiras no proprio HTML.
         Cada uma existe para provar um pedaco diferente da biblioteca, e todas
         funcionam de verdade, sem framework por baixo e sem passo de compilacao.
       </p>
@@ -135,6 +135,33 @@
   </p>
 
   <main class="ix-grade">
+
+    <a class="ix-cartao" href="mundo-aberto/" style="--ix-cor: #2ED9A5">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">◈</span>
+        <span class="ix-capa-nome">Mundo aberto</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Uma cidade inteira gerada por codigo em WebGL2 puro, sem nenhuma
+          biblioteca de terceiros: predios, arvores e postes a partir de uma
+          seed fixa, ciclo de dia e noite, sombras, nevoa, minimapa e
+          velocimetro. Toda a interface por cima dela e Voodoo declarativo.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-component</span>
+          <span class="ix-directive">v-model.number</span>
+          <span class="ix-directive">v-show</span>
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">V.store</span>
+          <span class="ix-directive">V.storage</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">&rarr;</span>
+          <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
 
     <a class="ix-cartao" href="pokedex/" style="--ix-cor: #FF6D3E">
       <div class="ix-capa">
@@ -342,6 +369,84 @@
         <div class="ix-rodape-cartao">
           Abrir a demo <span aria-hidden="true">→</span>
           <span class="ix-pacote">essencial</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="jogos/breakout/" style="--ix-cor: #9B7BFF">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">▚</span>
+        <span class="ix-capa-nome">Breakout</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Um Breakout completo em cinco niveis, com power-ups, combo, vidas,
+          pausa e recorde. O placar, os menus e a faixa de power-ups sao HTML
+          declarativo; so o tabuleiro e canvas.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-component</span>
+          <span class="ix-directive">v-show</span>
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-ref</span>
+          <span class="ix-directive">V.storage</span>
+          <span class="ix-directive">V.sound</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">completo</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="jogos/tetris/" style="--ix-cor: #38bdf8">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">▦</span>
+        <span class="ix-capa-nome">Tetris</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Saco de sete pecas, peca fantasma, guardar peca, wall kick e nivel que
+          acelera. As pecas da fila nao sao canvas: sao grades de span geradas
+          por v-for aninhado.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">:style</span>
+          <span class="ix-directive">v-show</span>
+          <span class="ix-directive">computed</span>
+          <span class="ix-directive">V.storage</span>
+          <span class="ix-directive">V.sound</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">completo</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="ix-cartao" href="shaders/" style="--ix-cor: #FF2D95">
+      <div class="ix-capa">
+        <span class="ix-simbolo" aria-hidden="true">◈</span>
+        <span class="ix-capa-nome">Shaders 3D</span>
+      </div>
+      <div class="ix-corpo">
+        <p class="ix-frase">
+          Quatro cenas de raymarching em WebGL2 puro, sem Three.js e sem nenhuma
+          dependencia. O painel de uniforms nasce de um v-for, e cada slider e um
+          v-model ligado direto a GPU.
+        </p>
+        <div class="ix-directives">
+          <span class="ix-directive">v-for</span>
+          <span class="ix-directive">v-model</span>
+          <span class="ix-directive">V.directive</span>
+          <span class="ix-directive">V.PRIORITY</span>
+          <span class="ix-directive">computed</span>
+          <span class="ix-directive">v-ref</span>
+        </div>
+        <div class="ix-rodape-cartao">
+          Abrir a demo <span aria-hidden="true">→</span>
+          <span class="ix-pacote">completo</span>
         </div>
       </div>
     </a>

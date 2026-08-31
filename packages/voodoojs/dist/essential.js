@@ -1,14 +1,14 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-X2GHG26A.js';
-import { magic } from './chunk-Z4DFDNBF.js';
-import './chunk-2QSN3EHP.js';
-import './chunk-FEGKDBKV.js';
-import './chunk-ACYEVG54.js';
-import './chunk-P55KMR6F.js';
-import './chunk-L4J47GLP.js';
-import './chunk-HSVOQNVX.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-JZ5ESRSP.js';
+import { magic } from './chunk-MPNHZNQD.js';
+import './chunk-PWTGMP63.js';
+import './chunk-F375ULFK.js';
+import './chunk-BTORMWLO.js';
+import './chunk-XICVH2QO.js';
+import './chunk-UNICRHSA.js';
+import './chunk-LUEWHAC4.js';
 
 /**
- * Voodoo.js v0.2.0
+ * Voodoo.js v0.2.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */

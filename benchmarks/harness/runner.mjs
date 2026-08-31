@@ -213,8 +213,19 @@ export async function runCase(def, { onProgress } = {}) {
     // literatura usa: coeficiente de variacao, em porcento.
     result.stats.cv = result.stats.rsd;
     result.targetRsd = targetRsd;
-    result.stable = result.stats.rsd <= targetRsd * 1.25;
-    if (!result.stable) {
+
+    // Menos de 5 amostras nao descreve dispersao nenhuma. Com UMA amostra o
+    // desvio padrao e zero por construcao, e um CV de 0,0% ali significa
+    // "nao medido", nao "perfeitamente estavel". Casos assim ficam fora de
+    // qualquer portao de regressao, por mais bonito que o numero pareca.
+    const poucasAmostras = ranSamples < 5;
+    result.stable = !poucasAmostras && result.stats.rsd <= targetRsd * 1.25;
+
+    if (poucasAmostras) {
+      result.notes =
+        `${result.notes ? result.notes + '; ' : ''}apenas ${ranSamples} amostra(s): a dispersao nao ` +
+        'foi medida (um CV de 0% aqui significa "sem dados", nao "estavel") — NAO usar como portao';
+    } else if (!result.stable) {
       result.notes =
         `${result.notes ? result.notes + '; ' : ''}RSD ${result.stats.rsd.toFixed(1)}% acima do alvo ` +
         `${targetRsd}% depois de ${ranSamples} amostras — NAO confiavel para portao de regressao`;

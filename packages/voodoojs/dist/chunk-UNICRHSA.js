@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.2.0
+ * Voodoo.js v0.2.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -27,8 +27,14 @@ var PRIORITY = {
   DATA: 70,
   COMPONENT: 65,
   REF: 60,
+  // O binding vem antes do modelo de proposito.
+  //
+  // `v-model` escreve o valor no campo, e `:min`, `:max` e `:step` mudam o que
+  // o navegador aceita como valor. Na ordem contraria o campo recebia o valor
+  // com as regras antigas ainda no lugar, e o proprio navegador arredondava ou
+  // grampeava: `0.12` virava `0` enquanto o `step` anterior fosse `1`.
+  BIND: 45,
   MODEL: 40,
-  BIND: 30,
   DEFAULT: 0,
   INIT: -10,
   TRANSITION: -20
@@ -54,5 +60,5 @@ function usePlugin(V, plugin, options) {
 }
 
 export { PRIORITY, components, config, defineDirective, directives, normalizeComponentName, usePlugin };
-//# sourceMappingURL=chunk-L4J47GLP.js.map
-//# sourceMappingURL=chunk-L4J47GLP.js.map
+//# sourceMappingURL=chunk-UNICRHSA.js.map
+//# sourceMappingURL=chunk-UNICRHSA.js.map

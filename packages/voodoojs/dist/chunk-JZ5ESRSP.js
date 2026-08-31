@@ -1,13 +1,13 @@
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, avisarChaveDuplicada, setComponentMounter, closestDirective, magic, avisar, descreverElemento, readAttr, hasAttr, componentAliases, avisarComponenteDesconhecido, avisarAlias, Scope, queryDirective, parse, evaluate, parseAttribute, avisarPropObrigatoria, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-Z4DFDNBF.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-2QSN3EHP.js';
-import { http, HttpError, request } from './chunk-FEGKDBKV.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-ACYEVG54.js';
-import { injectStyle, ensureTokens } from './chunk-P55KMR6F.js';
-import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-L4J47GLP.js';
-import { __publicField } from './chunk-HSVOQNVX.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, avisarChaveDuplicada, setComponentMounter, closestDirective, magic, avisar, descreverElemento, readAttr, hasAttr, componentAliases, avisarComponenteDesconhecido, avisarAlias, Scope, queryDirective, parse, evaluate, parseAttribute, avisarPropObrigatoria, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-MPNHZNQD.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-PWTGMP63.js';
+import { http, HttpError, request } from './chunk-F375ULFK.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-BTORMWLO.js';
+import { injectStyle, ensureTokens } from './chunk-XICVH2QO.js';
+import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-UNICRHSA.js';
+import { __publicField } from './chunk-LUEWHAC4.js';
 
 /**
- * Voodoo.js v0.2.0
+ * Voodoo.js v0.2.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2624,7 +2624,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-275F5I2T.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-7TSB3AUJ.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -2911,7 +2911,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.2.0";
+var version = "0.2.1";
 var core = {
   // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
   ...utils_exports,
@@ -10171,5 +10171,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-X2GHG26A.js.map
-//# sourceMappingURL=chunk-X2GHG26A.js.map
+//# sourceMappingURL=chunk-JZ5ESRSP.js.map
+//# sourceMappingURL=chunk-JZ5ESRSP.js.map

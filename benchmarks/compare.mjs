@@ -78,7 +78,10 @@ for (const [id, b] of mapaBase) {
   const deltaPct = antes ? ((depois - antes) / antes) * 100 : 0;
   const gate = gateFor(b, n);
   const cv = Math.max(b.stats.rsd, n.stats.rsd);
-  const confiavel = cv <= RSD_INSTAVEL;
+  // Poucas amostras nao produzem dispersao: um CV de 0% com uma amostra e
+  // ausencia de dados, e nao estabilidade. Esses casos nunca reprovam a build.
+  const amostrasSuficientes = b.stats.samples >= 5 && n.stats.samples >= 5;
+  const confiavel = amostrasSuficientes && cv <= RSD_INSTAVEL;
 
   const registro = { id, antes, depois, deltaPct, gate, cv, confiavel, unit: n.unit ?? 'ms' };
   linhas.push(registro);

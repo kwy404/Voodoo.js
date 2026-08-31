@@ -483,17 +483,18 @@
      ------------------------------------------------------------------ */
   @media (max-width: 860px) {
     .ma-hud { gap: var(--v-space-2); }
-    .ma-minimapa { width: 108px; height: 108px; }
-    .ma-velocimetro { width: 108px; height: 108px; }
+    .ma-minimapa { width: 108px; height: 108px; grid-row: 2; align-self: end; }
+    .ma-velocimetro { width: 108px; height: 108px; grid-row: 2; align-self: end; }
     .ma-velocimetro__num { font-size: 21px; }
     .ma-metrica { min-width: 50px; padding: 2px 7px; }
     .ma-acoes { justify-self: end; grid-column: 2 / -1; }
     .ma-painel {
-      grid-column: 1 / -1; grid-row: 3;
+      grid-column: 1 / -1; grid-row: 2 / -1;
       justify-self: stretch; align-self: end;
-      width: auto; max-height: 56vh;
+      width: auto; max-height: 62vh;
+      z-index: 2;
     }
-    .ma-toque { padding-bottom: 76px; }
+    .ma-toque { padding-bottom: 0; }
     .ma-caixa { padding: var(--v-space-5); }
   }
 
@@ -668,7 +669,7 @@
          Controles de toque. Aparecem em tela estreita ou em aparelho
          com ponteiro grosseiro; no desktop somem sem ocupar espaco.
          ============================================================ -->
-    <div class="ma-toque" v-show="usarToque">
+    <div class="ma-toque" v-show="usarToque && !painel">
       <div class="ma-toque__lado">
         <button type="button" class="ma-pedal" aria-label="Virar para a esquerda"
                 @pointerdown="segurar('direcao', -1, $event)"
