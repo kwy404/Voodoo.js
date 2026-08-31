@@ -301,6 +301,12 @@ interface DirectiveHooks<T = any> {
     priority?: number;
     /** Quando `true`, a expressao nao e avaliada automaticamente. */
     raw?: boolean;
+    /**
+     * Assume a subarvore inteira, como fazem `v-if` e `v-for`: o walker nao desce
+     * nos filhos, e quem decide o que fazer com eles e a propria directive.
+     * Sem isto, um plugin nao consegue escrever uma directive estrutural.
+     */
+    terminal?: boolean;
 }
 /** Contexto entregue as directives internas, com controle fino de efeitos. */
 interface DirectiveContext {
@@ -1017,80 +1023,80 @@ declare const core: {
     http: {
         defaults: HttpDefaults;
         get<T = unknown>(url: string, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         post<T = unknown>(url: string, body?: unknown, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         put<T = unknown>(url: string, body?: unknown, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         patch<T = unknown>(url: string, body?: unknown, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         delete<T = unknown>(url: string, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<T>;
         head(url: string, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<unknown>;
@@ -1106,15 +1112,15 @@ declare const core: {
             error?: (e: Event) => void;
         }): EventSource;
         stream(url: string, onLine: (line: string) => void, options?: {
-            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
-            headers?: Record<string, string> | undefined;
-            credentials?: RequestCredentials | undefined;
-            signal?: AbortSignal | undefined;
             params?: Record<string, string | number | boolean | null | undefined> | undefined;
+            headers?: Record<string, string> | undefined;
             timeout?: number | undefined;
             retry?: number | undefined;
             retryDelay?: number | undefined;
             cache?: number | undefined;
+            signal?: AbortSignal | undefined;
+            credentials?: RequestCredentials | undefined;
+            responseType?: "auto" | "json" | "text" | "blob" | "arrayBuffer" | "formData" | undefined;
             onProgress?: ((loaded: number, total: number) => void) | undefined;
             offlineQueue?: boolean | undefined;
         }): Promise<void>;

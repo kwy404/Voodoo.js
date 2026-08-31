@@ -214,7 +214,7 @@ function directive<T = any>(
         hooks.unmounted?.(ctx.el, binding);
       });
     },
-    { priority: hooks.priority ?? PRIORITY.DEFAULT }
+    { priority: hooks.priority ?? PRIORITY.DEFAULT, terminal: hooks.terminal ?? false }
   );
 }
 
@@ -230,7 +230,10 @@ function directive<T = any>(
  * ```
  */
 function data<T extends Record<string, unknown>>(values: T): T {
-  Object.assign(rootScope.data, values);
+  // Copia por descritor pelo mesmo motivo do store: `Object.assign` chamaria o
+  // getter e guardaria o resultado, transformando um valor derivado em numero
+  // fixo. Com os descritores, `get total() { ... }` continua recalculando.
+  Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data as T;
 }
 

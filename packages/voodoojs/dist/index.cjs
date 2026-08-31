@@ -3060,16 +3060,24 @@ function store(name, definition, options = {}) {
     return existing;
   }
   const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-  let initial = { ...definition };
+  const descritores = Object.getOwnPropertyDescriptors(definition);
+  const initial = Object.defineProperties({}, descritores);
   if (options.persist && typeof localStorage !== "undefined") {
     try {
       const saved = localStorage.getItem(key);
-      if (saved) Object.assign(initial, JSON.parse(saved));
+      if (saved) {
+        const salvo = JSON.parse(saved);
+        for (const [chave, valor] of Object.entries(salvo)) {
+          if (descritores[chave] && !("value" in descritores[chave])) continue;
+          initial[chave] = valor;
+        }
+      }
     } catch {
     }
   }
   const created = reactive(initial);
-  for (const [prop, value] of Object.entries(definition)) {
+  for (const [prop, descritor] of Object.entries(descritores)) {
+    const value = descritor.value;
     if (typeof value === "function") {
       created[prop] = (...args) => value.apply(created, args);
     }
@@ -3093,8 +3101,10 @@ function store(name, definition, options = {}) {
 }
 function stripFunctions(source) {
   const out = {};
+  const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === "function") continue;
+    if (descritores[key] && !("value" in descritores[key])) continue;
     out[key] = value;
   }
   return out;
@@ -6137,11 +6147,11 @@ function directive(name, definition) {
         hooks.unmounted?.(ctx.el, binding);
       });
     },
-    { priority: hooks.priority ?? exports.PRIORITY.DEFAULT }
+    { priority: hooks.priority ?? exports.PRIORITY.DEFAULT, terminal: hooks.terminal ?? false }
   );
 }
 function data(values) {
-  Object.assign(rootScope.data, values);
+  Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
 var version = "0.1.0";

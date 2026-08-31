@@ -14,7 +14,7 @@
  * ```
  */
 
-import { reactive, ref, watch, type WatchStopHandle } from '../reactivity';
+import { reactive, ref, toRaw, watch, type WatchStopHandle } from '../reactivity';
 
 export type StoreDefinition = Record<string, any>;
 
@@ -63,11 +63,29 @@ export function store<T extends StoreDefinition>(
 
   const key = typeof options.persist === 'string' ? options.persist : `voodoo:store:${name}`;
 
-  let initial: Record<string, any> = { ...definition };
+  // Copia por descritor, e nao por espalhamento.
+  //
+  // `{ ...definition }` chama o getter na hora da copia e guarda o resultado,
+  // entao `get total() { return this.itens.length }` viraria um numero fixo,
+  // que e exatamente o contrario do que a pessoa escreveu. Com os descritores o
+  // getter continua sendo getter, e o proxy reativo o executa a cada leitura,
+  // rastreando as dependencias de dentro dele.
+  const descritores = Object.getOwnPropertyDescriptors(definition);
+  const initial: Record<string, any> = Object.defineProperties({}, descritores);
+
   if (options.persist && typeof localStorage !== 'undefined') {
     try {
       const saved = localStorage.getItem(key);
-      if (saved) Object.assign(initial, JSON.parse(saved));
+      if (saved) {
+        const salvo = JSON.parse(saved) as Record<string, unknown>;
+        // So repoe o que e dado. Escrever por cima de um getter sem setter
+        // falharia, e valor derivado nao precisa ser restaurado: ele se
+        // recalcula sozinho a partir do que foi.
+        for (const [chave, valor] of Object.entries(salvo)) {
+          if (descritores[chave] && !('value' in descritores[chave])) continue;
+          initial[chave] = valor;
+        }
+      }
     } catch {
       // Dados corrompidos: mantem o estado inicial da definicao.
     }
@@ -75,8 +93,10 @@ export function store<T extends StoreDefinition>(
 
   const created = reactive(initial) as T;
 
-  // Liga os metodos ao proprio store.
-  for (const [prop, value] of Object.entries(definition)) {
+  // Liga os metodos ao proprio store. A leitura e por descritor para nao
+  // disparar os getters sem necessidade.
+  for (const [prop, descritor] of Object.entries(descritores)) {
+    const value = descritor.value;
     if (typeof value === 'function') {
       (created as Record<string, any>)[prop] = (...args: unknown[]) => value.apply(created, args);
     }
@@ -105,8 +125,12 @@ export function store<T extends StoreDefinition>(
 
 function stripFunctions(source: Record<string, any>): Record<string, any> {
   const out: Record<string, any> = {};
+  // Valor derivado de getter fica de fora: ele se recalcula sozinho no proximo
+  // carregamento, e gravar o resultado so criaria chance de ficar desatualizado.
+  const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === 'function') continue;
+    if (descritores[key] && !('value' in descritores[key])) continue;
     out[key] = value;
   }
   return out;

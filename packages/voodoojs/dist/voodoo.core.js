@@ -3045,16 +3045,24 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return existing;
     }
     const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-    let initial = { ...definition };
+    const descritores = Object.getOwnPropertyDescriptors(definition);
+    const initial = Object.defineProperties({}, descritores);
     if (options.persist && typeof localStorage !== "undefined") {
       try {
         const saved = localStorage.getItem(key);
-        if (saved) Object.assign(initial, JSON.parse(saved));
+        if (saved) {
+          const salvo = JSON.parse(saved);
+          for (const [chave, valor] of Object.entries(salvo)) {
+            if (descritores[chave] && !("value" in descritores[chave])) continue;
+            initial[chave] = valor;
+          }
+        }
       } catch (e) {
       }
     }
     const created = reactive(initial);
-    for (const [prop, value] of Object.entries(definition)) {
+    for (const [prop, descritor] of Object.entries(descritores)) {
+      const value = descritor.value;
       if (typeof value === "function") {
         created[prop] = (...args) => value.apply(created, args);
       }
@@ -3078,8 +3086,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   function stripFunctions(source) {
     const out = {};
+    const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
     for (const [key, value] of Object.entries(source)) {
       if (typeof value === "function") continue;
+      if (descritores[key] && !("value" in descritores[key])) continue;
       out[key] = value;
     }
     return out;
@@ -6143,16 +6153,16 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     (_a = eventBus.get(name)) == null ? void 0 : _a.delete(handler);
   }
   function directive(name, definition) {
-    var _a;
+    var _a, _b;
     const hooks = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
     defineDirective(
       name,
       (ctx) => {
-        var _a2, _b;
+        var _a2, _b2;
         let oldValue;
         let mounted = false;
         const makeBinding = (value) => {
-          var _a3, _b2;
+          var _a3, _b3;
           return {
             el: ctx.el,
             value,
@@ -6161,14 +6171,14 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             modifiers: ctx.modifiers,
             expression: ctx.expression,
             scope: ctx.scope,
-            instance: (_b2 = (_a3 = ctx.scope.owner) == null ? void 0 : _a3.component) != null ? _b2 : null
+            instance: (_b3 = (_a3 = ctx.scope.owner) == null ? void 0 : _a3.component) != null ? _b3 : null
           };
         };
         const initial = hooks.raw ? ctx.expression : ctx.evaluate();
         (_a2 = hooks.created) == null ? void 0 : _a2.call(hooks, ctx.el, makeBinding(initial));
-        (_b = hooks.beforeMount) == null ? void 0 : _b.call(hooks, ctx.el, makeBinding(initial));
+        (_b2 = hooks.beforeMount) == null ? void 0 : _b2.call(hooks, ctx.el, makeBinding(initial));
         ctx.effect(() => {
-          var _a3, _b2;
+          var _a3, _b3;
           const value = hooks.raw ? ctx.expression : ctx.evaluate();
           if (!mounted) {
             mounted = true;
@@ -6178,21 +6188,21 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           }
           if (value === oldValue) return;
           const binding = makeBinding(value);
-          (_b2 = hooks.updated) == null ? void 0 : _b2.call(hooks, ctx.el, binding);
+          (_b3 = hooks.updated) == null ? void 0 : _b3.call(hooks, ctx.el, binding);
           oldValue = value;
         });
         ctx.cleanup(() => {
-          var _a3, _b2;
+          var _a3, _b3;
           const binding = makeBinding(oldValue);
           (_a3 = hooks.beforeUnmount) == null ? void 0 : _a3.call(hooks, ctx.el, binding);
-          (_b2 = hooks.unmounted) == null ? void 0 : _b2.call(hooks, ctx.el, binding);
+          (_b3 = hooks.unmounted) == null ? void 0 : _b3.call(hooks, ctx.el, binding);
         });
       },
-      { priority: (_a = hooks.priority) != null ? _a : PRIORITY.DEFAULT }
+      { priority: (_a = hooks.priority) != null ? _a : PRIORITY.DEFAULT, terminal: (_b = hooks.terminal) != null ? _b : false }
     );
   }
   function data(values) {
-    Object.assign(rootScope.data, values);
+    Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
   var version = "0.1.0";

@@ -16,7 +16,12 @@
     "format": "prettier --write \"**/*.{ts,js,json,md,html,css}\"",
     "size": "node scripts/size.mjs",
     "serve": "node scripts/serve.mjs",
-    "docs:index": "node scripts/docs-index.mjs"
+    "docs:index": "node scripts/docs-index.mjs",
+    "quality": "node scripts/quality.mjs",
+    "quality:ci": "node scripts/quality.mjs --ci --report",
+    "quality:report": "node scripts/quality.mjs --report",
+    "api:snapshot": "node scripts/api-snapshot.mjs --update",
+    "check:links": "node scripts/check-links.mjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

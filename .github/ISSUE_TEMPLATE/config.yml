@@ -1,14 +1,23 @@
 blank_issues_enabled: false
 contact_links:
   - name: Documentação
-    url: https://github.com/voodoojs/voodoo/tree/main/docs
+    url: https://github.com/kwy404/Voodoo.js/tree/main/docs
     about: Guias, referência da API e perguntas frequentes. Comece por aqui.
+  - name: Documentation (English)
+    url: https://github.com/kwy404/Voodoo.js/tree/main/docs/en
+    about: Getting started, reactivity, directives, components, HTTP, forms, security.
   - name: Perguntas frequentes
-    url: https://github.com/voodoojs/voodoo/blob/main/docs/perguntas-frequentes.md
+    url: https://github.com/kwy404/Voodoo.js/blob/main/docs/perguntas-frequentes.md
     about: Respostas para as dúvidas mais comuns, incluindo erros de configuração.
+  - name: Navegadores suportados
+    url: https://github.com/kwy404/Voodoo.js/blob/main/BROWSER_SUPPORT.md
+    about: Antes de reportar um problema de compatibilidade, confira a matriz de suporte.
+  - name: Roadmap
+    url: https://github.com/kwy404/Voodoo.js/blob/main/ROADMAP.md
+    about: O que está planejado, o que está em investigação e o que está fora de escopo.
   - name: Dúvidas e discussões
-    url: https://github.com/voodoojs/voodoo/discussions
+    url: https://github.com/kwy404/Voodoo.js/discussions
     about: Perguntas de uso, ideias em aberto e conversas com a comunidade.
   - name: Vulnerabilidade de segurança
-    url: https://github.com/voodoojs/voodoo/security/advisories/new
+    url: https://github.com/kwy404/Voodoo.js/security/advisories/new
     about: Reporte de forma privada. Não abra uma issue pública.

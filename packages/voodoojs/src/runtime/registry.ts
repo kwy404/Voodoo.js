@@ -91,6 +91,12 @@ export interface DirectiveHooks<T = any> {
   priority?: number;
   /** Quando `true`, a expressao nao e avaliada automaticamente. */
   raw?: boolean;
+  /**
+   * Assume a subarvore inteira, como fazem `v-if` e `v-for`: o walker nao desce
+   * nos filhos, e quem decide o que fazer com eles e a propria directive.
+   * Sem isto, um plugin nao consegue escrever uma directive estrutural.
+   */
+  terminal?: boolean;
 }
 
 /** Contexto entregue as directives internas, com controle fino de efeitos. */

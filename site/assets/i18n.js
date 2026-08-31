@@ -20,12 +20,12 @@
   // ---------------------------------------------------------------------
   var pt = {
     meta: {
-      title: 'Voodoo.js: micro framework JavaScript sem build, direto no HTML',
+      title: 'Voodoo.js: o framework JavaScript HTML-first, direto no HTML',
       description:
-        'Voodoo.js e um micro framework JavaScript vanilla sem build e sem dependencias. Reatividade real, componentes, HTTP declarativo, formularios, animacoes e interface pronta em uma tag script. A alternativa leve ao Vue, ao React e ao jQuery.',
+        'Voodoo.js e o framework JavaScript HTML-first: construa aplicacoes reativas direto no HTML, sem build e sem dependencias. Reatividade real, componentes, HTTP declarativo, formularios, animacoes e interface pronta em uma tag script. A alternativa leve ao Vue, ao React e ao jQuery.',
       ogTitle: 'Voodoo.js: JavaScript feels like magic.',
       ogDescription:
-        'Micro framework JavaScript sem passo de build. Reatividade, componentes, requisicoes HTTP e animacoes escritas direto nos atributos do HTML.',
+        'O framework JavaScript HTML-first. Construa aplicacoes reativas direto no HTML: reatividade, componentes, requisicoes HTTP e animacoes escritas nos atributos.',
       imageAlt: 'Vudu, o mascote da Voodoo.js, conjurando componentes de interface.',
     },
     nav: {
@@ -50,7 +50,7 @@
     },
     hero: {
       badge: 'Zero build, zero dependencias, uma tag script',
-      title: 'O micro framework JavaScript sem build que faz quase tudo pelo HTML',
+      title: 'O framework JavaScript HTML-first: construa aplicacoes reativas direto no HTML',
       lead: 'Reatividade de verdade, componentes, requisicoes HTTP, formularios, animacoes e interface pronta, escritos em atributos do proprio HTML. Coloque uma tag script na pagina e pronto.',
       ctaStart: 'Comecar agora',
       ctaGithub: 'Ver no GitHub',
@@ -392,7 +392,7 @@
       title: 'Perguntas frequentes',
       lead: 'As duvidas que aparecem antes de alguem colocar a tag script na pagina.',
       q1: 'O que e a Voodoo.js?',
-      a1: 'Um micro framework JavaScript vanilla que coloca reatividade, componentes, requisicoes HTTP, formularios, animacoes e interface direto nos atributos do HTML. Voce carrega uma tag script e escreve o comportamento no proprio markup, sem passo de build e sem dependencias.',
+      a1: 'O framework JavaScript HTML-first: voce constroi aplicacoes reativas direto no HTML. Ele coloca reatividade, componentes, requisicoes HTTP, formularios, animacoes e interface direto nos atributos do HTML. Voce carrega uma tag script e escreve o comportamento no proprio markup, sem passo de build e sem dependencias.',
       q2: 'Preciso de Node, npm ou de um passo de build?',
       a2: 'Nao. Uma tag script apontando para o arquivo ja resolve. Node e npm existem apenas para quem prefere instalar pelo gerenciador de pacotes e importar modulos em um bundler que ja usa.',
       q3: 'Qual e o tamanho real do arquivo?',
@@ -460,7 +460,7 @@
       artAlt: 'Vudu se apoia na borda de um caldeirao vazio e espia la dentro.',
     },
     footer: {
-      tagline: 'Micro framework JavaScript sem build. Feito para quem gosta de HTML.',
+      tagline: 'O framework JavaScript HTML-first. Feito para quem gosta de HTML.',
       product: 'Produto',
       resources: 'Recursos',
       community: 'Comunidade',
@@ -482,10 +482,10 @@
     meta: {
       title: 'Voodoo.js: the no build step JavaScript framework, right in your HTML',
       description:
-        'Voodoo.js is a vanilla JavaScript micro framework with no build step and no dependencies. Real reactivity, components, declarative HTTP, forms, animation and ready made UI in a single script tag. The lightweight alternative to Vue, React and jQuery.',
+        'Voodoo.js is the HTML-first JavaScript framework: build reactive applications directly in HTML, with no build step and no dependencies. Real reactivity, components, declarative HTTP, forms, animation and ready made UI in a single script tag. The lightweight alternative to Vue, React and jQuery.',
       ogTitle: 'Voodoo.js: JavaScript feels like magic.',
       ogDescription:
-        'A JavaScript micro framework with no build step. Reactivity, components, HTTP requests and animation written straight into HTML attributes.',
+        'The HTML-first JavaScript framework. Build reactive applications directly in HTML: reactivity, components, HTTP requests and animation written straight into the attributes.',
       imageAlt: 'Vudu, the Voodoo.js mascot, conjuring interface components.',
     },
     nav: {
@@ -852,7 +852,7 @@
       title: 'Frequently asked questions',
       lead: 'The questions that come up before anyone puts the script tag on the page.',
       q1: 'What is Voodoo.js?',
-      a1: 'A vanilla JavaScript micro framework that puts reactivity, components, HTTP requests, forms, animation and UI straight into HTML attributes. You load one script tag and write behavior in the markup itself, with no build step and no dependencies.',
+      a1: 'The HTML-first JavaScript framework: you build reactive applications directly in HTML. It puts reactivity, components, HTTP requests, forms, animation and UI straight into HTML attributes. You load one script tag and write behavior in the markup itself, with no build step and no dependencies.',
       q2: 'Do I need Node, npm or a build step?',
       a2: 'No. A script tag pointing at the file is enough. Node and npm exist only for people who prefer installing through a package manager and importing modules into a bundler they already use.',
       q3: 'How big is the file, really?',
@@ -920,7 +920,7 @@
       artAlt: 'Vudu leans on the rim of an empty cauldron and peeks inside.',
     },
     footer: {
-      tagline: 'A JavaScript micro framework with no build step. Made for people who like HTML.',
+      tagline: 'The HTML-first JavaScript framework. Made for people who like HTML.',
       product: 'Product',
       resources: 'Resources',
       community: 'Community',
@@ -940,12 +940,12 @@
   // ---------------------------------------------------------------------
   var es = {
     meta: {
-      title: 'Voodoo.js: micro framework JavaScript sin build, directo en el HTML',
+      title: 'Voodoo.js: el framework JavaScript HTML-first, directo en el HTML',
       description:
-        'Voodoo.js es un micro framework JavaScript vanilla sin paso de build y sin dependencias. Reactividad real, componentes, HTTP declarativo, formularios, animaciones e interfaz lista en una sola etiqueta script. La alternativa ligera a Vue, React y jQuery.',
+        'Voodoo.js es el framework JavaScript HTML-first: construye aplicaciones reactivas directamente en el HTML, sin paso de build y sin dependencias. Reactividad real, componentes, HTTP declarativo, formularios, animaciones e interfaz lista en una sola etiqueta script. La alternativa ligera a Vue, React y jQuery.',
       ogTitle: 'Voodoo.js: JavaScript feels like magic.',
       ogDescription:
-        'Micro framework JavaScript sin paso de build. Reactividad, componentes, peticiones HTTP y animaciones escritas directamente en los atributos del HTML.',
+        'El framework JavaScript HTML-first. Construye aplicaciones reactivas directamente en el HTML: reactividad, componentes, peticiones HTTP y animaciones escritas en los atributos.',
       imageAlt: 'Vudu, la mascota de Voodoo.js, conjurando componentes de interfaz.',
     },
     nav: {
@@ -970,7 +970,7 @@
     },
     hero: {
       badge: 'Cero build, cero dependencias, una etiqueta script',
-      title: 'El micro framework JavaScript sin build que hace casi todo desde el HTML',
+      title: 'El framework JavaScript HTML-first: construye aplicaciones reactivas directamente en el HTML',
       lead: 'Reactividad real, componentes, peticiones HTTP, formularios, animaciones e interfaz lista, todo escrito como atributos de tu propio HTML. Pon una etiqueta script y listo.',
       ctaStart: 'Empezar ahora',
       ctaGithub: 'Ver en GitHub',
@@ -1312,7 +1312,7 @@
       title: 'Preguntas frecuentes',
       lead: 'Las dudas que aparecen antes de que alguien ponga la etiqueta script en la pagina.',
       q1: 'Que es Voodoo.js?',
-      a1: 'Un micro framework JavaScript vanilla que pone reactividad, componentes, peticiones HTTP, formularios, animaciones e interfaz directamente en los atributos del HTML. Cargas una etiqueta script y escribes el comportamiento en el propio markup, sin paso de build y sin dependencias.',
+      a1: 'El framework JavaScript HTML-first: construyes aplicaciones reactivas directamente en el HTML. Pone reactividad, componentes, peticiones HTTP, formularios, animaciones e interfaz directamente en los atributos del HTML. Cargas una etiqueta script y escribes el comportamiento en el propio markup, sin paso de build y sin dependencias.',
       q2: 'Necesito Node, npm o un paso de build?',
       a2: 'No. Una etiqueta script apuntando al archivo ya basta. Node y npm existen solo para quien prefiere instalar con el gestor de paquetes e importar modulos en un bundler que ya usa.',
       q3: 'Cual es el tamano real del archivo?',
@@ -1380,7 +1380,7 @@
       artAlt: 'Vudu se apoya en el borde de un caldero vacio y mira dentro.',
     },
     footer: {
-      tagline: 'Micro framework JavaScript sin build. Hecho para quien disfruta del HTML.',
+      tagline: 'El framework JavaScript HTML-first. Hecho para quien disfruta del HTML.',
       product: 'Producto',
       resources: 'Recursos',
       community: 'Comunidad',
@@ -1400,12 +1400,12 @@
   // ---------------------------------------------------------------------
   var fr = {
     meta: {
-      title: 'Voodoo.js : le micro framework JavaScript sans build, directement dans le HTML',
+      title: 'Voodoo.js : le framework JavaScript HTML-first, directement dans le HTML',
       description:
-        'Voodoo.js est un micro framework JavaScript vanilla sans etape de build et sans dependances. Reactivite reelle, composants, HTTP declaratif, formulaires, animations et interface prete dans une seule balise script. L alternative legere a Vue, React et jQuery.',
+        'Voodoo.js est le framework JavaScript HTML-first : construisez des applications reactives directement dans le HTML, sans etape de build et sans dependances. Reactivite reelle, composants, HTTP declaratif, formulaires, animations et interface prete dans une seule balise script. L alternative legere a Vue, React et jQuery.',
       ogTitle: 'Voodoo.js : JavaScript feels like magic.',
       ogDescription:
-        'Micro framework JavaScript sans etape de build. Reactivite, composants, requetes HTTP et animations ecrites directement dans les attributs du HTML.',
+        'Le framework JavaScript HTML-first. Construisez des applications reactives directement dans le HTML : reactivite, composants, requetes HTTP et animations ecrites dans les attributs.',
       imageAlt: 'Vudu, la mascotte de Voodoo.js, qui invoque des composants d interface.',
     },
     nav: {
@@ -1430,7 +1430,7 @@
     },
     hero: {
       badge: 'Zero build, zero dependance, une balise script',
-      title: 'Le micro framework JavaScript sans build qui fait presque tout depuis le HTML',
+      title: 'Le framework JavaScript HTML-first : construisez des applications reactives directement dans le HTML',
       lead: 'Reactivite reelle, composants, requetes HTTP, formulaires, animations et interface prete, ecrits comme des attributs de votre propre HTML. Posez une balise script et c est fini.',
       ctaStart: 'Commencer',
       ctaGithub: 'Voir sur GitHub',
@@ -1772,7 +1772,7 @@
       title: 'Questions frequentes',
       lead: 'Les questions qui arrivent avant de poser la balise script sur la page.',
       q1: 'Qu est ce que Voodoo.js ?',
-      a1: 'Un micro framework JavaScript vanilla qui met reactivite, composants, requetes HTTP, formulaires, animations et interface directement dans les attributs du HTML. Vous chargez une balise script et vous ecrivez le comportement dans le markup, sans etape de build et sans dependances.',
+      a1: 'Le framework JavaScript HTML-first : vous construisez des applications reactives directement dans le HTML. Il met reactivite, composants, requetes HTTP, formulaires, animations et interface directement dans les attributs du HTML. Vous chargez une balise script et vous ecrivez le comportement dans le markup, sans etape de build et sans dependances.',
       q2: 'Ai je besoin de Node, de npm ou d une etape de build ?',
       a2: 'Non. Une balise script pointant vers le fichier suffit. Node et npm existent seulement pour ceux qui preferent installer par le gestionnaire de paquets et importer des modules dans un bundler deja en place.',
       q3: 'Quelle est la taille reelle du fichier ?',
@@ -1840,7 +1840,7 @@
       artAlt: 'Vudu s appuie sur le bord d un chaudron vide et regarde a l interieur.',
     },
     footer: {
-      tagline: 'Micro framework JavaScript sans build. Fait pour ceux qui aiment le HTML.',
+      tagline: 'Le framework JavaScript HTML-first. Fait pour ceux qui aiment le HTML.',
       product: 'Produit',
       resources: 'Ressources',
       community: 'Communaute',

@@ -1,0 +1,62 @@
+name: Quality
+
+# Separado do CI de proposito. O `ci.yml` responde "quebrou?" e precisa ser
+# rapido, rodar na matriz de versoes do Node e barrar merge. Este aqui responde
+# "esta bom?": roda uma vez, produz o relatorio com os achados de seguranca,
+# acessibilidade, empacotamento, compatibilidade de API e documentacao, e
+# publica o arquivo como artifact para leitura humana.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Relatorio de qualidade
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixa o repositorio
+        uses: actions/checkout@v4
+        with:
+          # O check de compatibilidade de API compara com o snapshot commitado;
+          # o historico completo ajuda a investigar quando ele acusa quebra.
+          fetch-depth: 0
+
+      - name: Prepara o Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instala as dependencias
+        run: npm ci
+
+      - name: Gera os bundles
+        # O relatorio inspeciona dist/: tamanho, sourcemaps, compatibilidade com
+        # CSP, superficie publica e conteudo do tarball. Sem build, metade dos
+        # checks so teria SKIP para contar.
+        run: npm run build
+
+      - name: Roda o relatorio de qualidade
+        run: npm run quality -- --ci --report
+
+      - name: Publica o QUALITY_REPORT.md
+        # Roda mesmo quando o passo anterior falha: e justamente no build
+        # vermelho que o relatorio tem mais a dizer.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: QUALITY_REPORT.md
+          if-no-files-found: error
+          retention-days: 30

@@ -1,7 +1,7 @@
 import { reactive, ref, handleError, nextTick, queuePostFlush, warn, watch, toRaw, EffectScope, effect, flushSync, effectScope, stop, unref, markRaw, watchEffect, computed, shallowRef, setErrorHandler } from './chunk-ABAHVFPX.js';
 import { http, HttpError, request } from './chunk-WCQZFFOE.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-UNO6H5ZW.js';
-import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-ECGTKQCT.js';
+import { defineDirective, config, PRIORITY, directives, injectStyle, ensureTokens, components, normalizeComponentName, usePlugin } from './chunk-ZS5ZW7GU.js';
 import { __publicField } from './chunk-5V56KGIJ.js';
 
 /**
@@ -2232,16 +2232,24 @@ function store(name, definition, options = {}) {
     return existing;
   }
   const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-  let initial = { ...definition };
+  const descritores = Object.getOwnPropertyDescriptors(definition);
+  const initial = Object.defineProperties({}, descritores);
   if (options.persist && typeof localStorage !== "undefined") {
     try {
       const saved = localStorage.getItem(key);
-      if (saved) Object.assign(initial, JSON.parse(saved));
+      if (saved) {
+        const salvo = JSON.parse(saved);
+        for (const [chave, valor] of Object.entries(salvo)) {
+          if (descritores[chave] && !("value" in descritores[chave])) continue;
+          initial[chave] = valor;
+        }
+      }
     } catch {
     }
   }
   const created = reactive(initial);
-  for (const [prop, value] of Object.entries(definition)) {
+  for (const [prop, descritor] of Object.entries(descritores)) {
+    const value = descritor.value;
     if (typeof value === "function") {
       created[prop] = (...args) => value.apply(created, args);
     }
@@ -2265,8 +2273,10 @@ function store(name, definition, options = {}) {
 }
 function stripFunctions(source) {
   const out = {};
+  const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === "function") continue;
+    if (descritores[key] && !("value" in descritores[key])) continue;
     out[key] = value;
   }
   return out;
@@ -4213,7 +4223,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-UJ5QAZRX.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-AGREAIPL.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -4493,11 +4503,11 @@ function directive(name, definition) {
         hooks.unmounted?.(ctx.el, binding);
       });
     },
-    { priority: hooks.priority ?? PRIORITY.DEFAULT }
+    { priority: hooks.priority ?? PRIORITY.DEFAULT, terminal: hooks.terminal ?? false }
   );
 }
 function data(values) {
-  Object.assign(rootScope.data, values);
+  Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
 var version = "0.1.0";
@@ -11760,5 +11770,5 @@ defineDirective(
 );
 
 export { Scope, VoodooCollection, VoodooRuntimeError, VoodooSyntaxError, addCleanup, alert, allStores, allowedGlobals, applyMask, avisarAlias, cache2 as cache, clearErrors, clearParseCache, clipboard, collectDirectives, confirm, cookie, core, createApp, createResource, defineComponent, destroy, dialog, efeitos, ensurePalette, enter, evaluate, evaluateIn, fadeIn, fadeOut, findScope, fromHtml, getEffectScopes, getScope, hadDirectives, hotkey, instances, leave, magic, magics, markSkipChildren, mask, masks, messages, modal, mountComponent, network, palette, parse, prompt, query, readAttr, ready, ready2, refresh, registerMask, removeStore, rootScope, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, start, storage, store, storeNames, stringify, theme, toast, tokenize, unmask, url, validate, validator, viewTransition, walk, whenElement, whenReady };
-//# sourceMappingURL=chunk-AOX35K2N.js.map
-//# sourceMappingURL=chunk-AOX35K2N.js.map
+//# sourceMappingURL=chunk-PU4U35NX.js.map
+//# sourceMappingURL=chunk-PU4U35NX.js.map
