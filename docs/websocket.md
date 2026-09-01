@@ -93,11 +93,11 @@ Opens the connection and publishes `$socket` in the scope.
 
 ```html
 <div v-socket="wss://exemplo.com/chat">
-  <p v-show="!$socket.conectado">Reconectando...</p>
+  <p v-show="!$socket.connected">Reconectando...</p>
   <ul>
-    <li v-for="m in $socket.mensagens">{ m.texto }</li>
+    <li v-for="m in $socket.messages">{ m.texto }</li>
   </ul>
-  <button @click="$socket.enviar('ola', { de: 'ana' })">Enviar</button>
+  <button @click="$socket.send('ola', { de: 'ana' })">Enviar</button>
 </div>
 ```
 
