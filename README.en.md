@@ -459,27 +459,19 @@ environment and how to reproduce every measurement.
 Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
 buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.
 
-**Runtime.** <!--BENCH:methodology-caption--> (1,000-row workload; environment, sample count and
-statistic are recorded in the report; medians shown).
+**Comparison against other frameworks.** The harness is in the repository — adapters for vanilla
+JavaScript, Alpine, Vue, React, Preact, Svelte and Solid, with pinned versions, production builds
+and a check that every one produces the same DOM. **The results are not published yet**, so there
+is no table here: a benchmark number without a recorded run is worth nothing. To run it on your
+own machine, see [`benchmarks/README.md`](benchmarks/README.md).
 
-| | Create 1k rows | Update 1k rows | Swap rows | Select row | Clear rows | Peak memory |
-| --- | --- | --- | --- | --- | --- | --- |
-| Vanilla JS | <!--BENCH:vanilla-create--> | <!--BENCH:vanilla-update--> | <!--BENCH:vanilla-swap--> | <!--BENCH:vanilla-select--> | <!--BENCH:vanilla-clear--> | <!--BENCH:vanilla-memory--> |
-| **Voodoo.js** | <!--BENCH:voodoo-create--> | <!--BENCH:voodoo-update--> | <!--BENCH:voodoo-swap--> | <!--BENCH:voodoo-select--> | <!--BENCH:voodoo-clear--> | <!--BENCH:voodoo-memory--> |
-| Alpine.js | <!--BENCH:alpine-create--> | <!--BENCH:alpine-update--> | <!--BENCH:alpine-swap--> | <!--BENCH:alpine-select--> | <!--BENCH:alpine-clear--> | <!--BENCH:alpine-memory--> |
-| Vue | <!--BENCH:vue-create--> | <!--BENCH:vue-update--> | <!--BENCH:vue-swap--> | <!--BENCH:vue-select--> | <!--BENCH:vue-clear--> | <!--BENCH:vue-memory--> |
-| React | <!--BENCH:react-create--> | <!--BENCH:react-update--> | <!--BENCH:react-swap--> | <!--BENCH:react-select--> | <!--BENCH:react-clear--> | <!--BENCH:react-memory--> |
-| Preact | <!--BENCH:preact-create--> | <!--BENCH:preact-update--> | <!--BENCH:preact-swap--> | <!--BENCH:preact-select--> | <!--BENCH:preact-clear--> | <!--BENCH:preact-memory--> |
-| Svelte | <!--BENCH:svelte-create--> | <!--BENCH:svelte-update--> | <!--BENCH:svelte-swap--> | <!--BENCH:svelte-select--> | <!--BENCH:svelte-clear--> | <!--BENCH:svelte-memory--> |
-| Solid | <!--BENCH:solid-create--> | <!--BENCH:solid-update--> | <!--BENCH:solid-swap--> | <!--BENCH:solid-select--> | <!--BENCH:solid-clear--> | <!--BENCH:solid-memory--> |
-
-**Bundle size**, measured on the committed builds at <!--BENCH:size-commit-->:
+**Bundle size**, measured on the committed builds at `8e765d2`:
 
 | Build | Minified | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | <!--BENCH:core-min--> | <!--BENCH:core-gzip--> | <!--BENCH:core-brotli--> |
-| `voodoo.min.js` | <!--BENCH:essential-min--> | <!--BENCH:essential-gzip--> | <!--BENCH:essential-brotli--> |
-| `voodoo.full.min.js` | <!--BENCH:full-min--> | <!--BENCH:full-gzip--> | <!--BENCH:full-brotli--> |
+| `voodoo.core.min.js` | 129.68 KB | 45.04 KB | 39.50 KB |
+| `voodoo.min.js` | 252.04 KB | 81.66 KB | 69.30 KB |
+| `voodoo.full.min.js` | 424.28 KB | 128.37 KB | 107.08 KB |
 
 Run them yourself: the harness and the exact versions under test live in
 [`benchmarks/`](benchmarks/).

@@ -326,8 +326,36 @@ resposta.raw;     // o Response original
 | `params` | Objeto que vira query string. Valores nulos e vazios são omitidos |
 | `headers` | Cabeçalhos da requisição |
 | `timeout` | Milissegundos até abortar. Padrão 30000. `0` desliga |
-| `retry` | Tentativas extras em falha de rede e 5xx. A espera dobra a cada rodada |
+| `retry` | Tentativas extras em falha de rede e 5xx. A espera dobra a cada rodada. **Só vale sozinho em `GET`, `HEAD` e `OPTIONS`** |
+| `retryUnsafe` | Libera o retry em `POST`, `PATCH`, `PUT` e `DELETE`. Leia o aviso abaixo antes de ligar |
 | `retryDelay` | Espera inicial entre tentativas. Padrão 500 ms |
+
+### Por que o retry não repete `POST` sozinho
+
+Repetir uma requisição que muda estado pode executar a operação duas vezes. O caso clássico é o
+pagamento: o servidor recebe e processa, a resposta se perde no caminho de volta, o cliente entende
+como falha de rede e reenvia. O usuário é cobrado duas vezes.
+
+Por isso o retry automático só vale para métodos idempotentes, aqueles em que repetir tem o mesmo
+efeito de fazer uma vez: `GET`, `HEAD` e `OPTIONS`.
+
+Para os demais existem dois caminhos, e os dois são explícitos de propósito:
+
+```js
+// 1. Você garante que repetir é seguro nesta rota.
+V.http.post('/api/eventos', dados, { retry: 2, retryUnsafe: true })
+
+// 2. Melhor: o servidor deduplica pela chave de idempotência.
+V.http.post('/api/pagamentos', dados, {
+  retry: 2,
+  headers: { 'Idempotency-Key': V.uid('pag') },
+})
+```
+
+A segunda forma é a correta quando a operação realmente importa. A chave precisa ser a mesma nas
+tentativas repetidas e o servidor precisa reconhecê-la — sem isso ela não protege nada.
+
+Em desenvolvimento, pedir `retry` num método inseguro sem nenhum dos dois gera aviso no console.
 | `cache` | Milissegundos de cache. Só para GET |
 | `signal` | `AbortSignal` para cancelar |
 | `credentials` | Padrão `same-origin` |

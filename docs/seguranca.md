@@ -108,6 +108,31 @@ pela biblioteca. Confie apenas em respostas do seu próprio servidor.
 A opção `html` das notificações (`V.toast({ html })`) também insere sem escapar. Use só com
 conteúdo próprio.
 
+## srcdoc em iframe
+
+`srcdoc` recebe um documento HTML inteiro e o navegador o executa, com scripts. Ligar um valor ali
+é tão perigoso quanto `v-html`, mas a sintaxe não deixava isso óbvio: parecia um atributo comum.
+
+Por isso `:srcdoc` é recusado, e o atributo é removido do elemento:
+
+```html
+<!-- recusado, com aviso no console -->
+<iframe :srcdoc="htmlDoUsuario"></iframe>
+```
+
+Quando o conteúdo é de fato seu e você quer isso, o perigo precisa estar escrito:
+
+```html
+<iframe :srcdoc.dangerous="meuHtmlControlado"></iframe>
+```
+
+O modificador não sanitiza nada. Ele existe para que ninguém injete um documento executável por
+descuido, e para que uma revisão de código consiga encontrar todos os pontos perigosos procurando
+por uma palavra.
+
+O bloqueio vale também para `.prop` e para a forma sem argumento, `v-bind="{ srcdoc }"`, e pode ser
+desligado inteiro com `V.config.sanitizeUrls = false` — o que não recomendo.
+
 ## O que a biblioteca escapa sozinha
 
 | Situação | Comportamento |
