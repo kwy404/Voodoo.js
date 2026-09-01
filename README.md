@@ -3,193 +3,188 @@
 <img src="brand/logo/voodoo-logo.svg#gh-light-mode-only" alt="Voodoo.js" width="380">
 <img src="brand/logo/voodoo-logo-dark.svg#gh-dark-mode-only" alt="Voodoo.js" width="380">
 
-### O framework JavaScript HTML-first.
+### The HTML-first JavaScript framework.
 
-**Construa aplicações reativas direto no HTML.**
+**Build reactive applications directly in HTML.**
 
-Sem passo de build obrigatório · Sem dependências em tempo de execução · Sem Virtual DOM · Sem configuração
+No mandatory build step · No runtime dependencies · No Virtual DOM · No configuration required
 
 [![CI](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml/badge.svg)](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml)
-[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-FFB35C.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6.svg)](#typescript)
+[![License: MIT](https://img.shields.io/badge/license-MIT-FFB35C.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6.svg)](#typescript)
 [![voodoo.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.min.js?branch=main&label=voodoo.min.js)](packages/voodoojs/dist/voodoo.min.js)
 
-<img src="brand/mascot/vudu-wave.svg" alt="Vudu, o mascote da Voodoo.js" width="120">
+<img src="brand/mascot/vudu-wave.svg" alt="Vudu, the Voodoo.js mascot" width="120">
 
 *JavaScript feels like magic.*
 
-[Instalação](#instalação) · [Início rápido](#início-rápido) · [Documentação](#documentação) · [Exemplos](#exemplos) · [English](README.en.md)
+[Install](#installation) · [Quick start](#quick-start) · [Docs](#documentation) · [Examples](#examples) · [Português](README.pt-BR.md)
 
 </div>
 
 ---
 
-## A versão de 30 segundos
+## The 30-second version
 
-Salve este arquivo. Abra no navegador. Funciona.
+Save this file. Open it in a browser. It works.
 
 ```html
 <script src="voodoo.min.js" defer></script>
 
-<div v-data="{ contador: 0 }">
-  <button @click="contador--">-</button>
-  <strong>{ contador }</strong>
-  <button @click="contador++">+</button>
+<div v-data="{ count: 0 }">
+  <button @click="count--">-</button>
+  <strong>{ count }</strong>
+  <button @click="count++">+</button>
 </div>
 ```
 
-Sem bundler, sem `npm install`, sem arquivo de configuração, sem JSX. Só HTML que pensa.
+No bundler, no `npm install`, no config file, no JSX. Just HTML that thinks.
 
-### A mesma ideia, fazendo trabalho de verdade
+### The same idea, doing real work
 
-Estado reativo, uma requisição HTTP ao vivo, um formulário validado e uma notificação — ainda em
-uma tag de script, ainda sem passo de build:
+Reactive state, a live HTTP request, a validated form and a toast notification — still one script
+tag, still no build step:
 
 ```html
 <div v-data="{ }">
 
-  <!-- Uma requisição com estado próprio de carregamento, erro e dados, declarada no HTML -->
-  <div v-resource="usuarios: /api/usuarios">
-    <p v-if="usuarios.loading">Carregando…</p>
-    <p v-else-if="usuarios.error">{ usuarios.error.message }</p>
+  <!-- A request with its own loading / error / data state, declared in HTML -->
+  <div v-resource="users: /api/users">
+    <p v-if="users.loading">Loading…</p>
+    <p v-else-if="users.error">{ users.error.message }</p>
     <ul v-else>
-      <li v-for="u in usuarios.data" :key="u.id">{ u.nome }</li>
+      <li v-for="user in users.data" :key="user.id">{ user.name }</li>
     </ul>
-    <button @click="usuarios.reload()">Atualizar</button>
+    <button @click="users.reload()">Refresh</button>
   </div>
 
-  <!-- Um formulário que valida, envia por AJAX e devolve o resultado -->
-  <form v-submit="/api/usuarios" v-method="POST" v-validate
-        v-toast-success="Usuário criado" v-reset-success>
-    <input name="nome" v-required>
+  <!-- A form that validates, submits over AJAX and reports back -->
+  <form v-submit="/api/users" v-method="POST" v-validate
+        v-toast-success="User created" v-reset-success>
+    <input name="name" v-required>
     <input name="email" type="email" v-required v-email>
     <button type="submit" :disabled="$form.loading">
-      { $form.loading ? 'Salvando…' : 'Salvar' }
+      { $form.loading ? 'Saving…' : 'Save' }
     </button>
   </form>
 
 </div>
 ```
 
-Essa é a aplicação inteira. Não existe um `app.js` ao lado fazendo a ligação.
+That is the whole application. There is no companion `app.js` doing the wiring.
 
-## O que é a Voodoo?
+## What is Voodoo?
 
-React e Vue começam pelo JavaScript: você descreve a interface em uma linguagem de componentes, e o
-HTML é o que o framework produz no final.
+React and Vue start from JavaScript: you describe the UI in a component language, and HTML is what
+the framework produces at the end.
 
-**A Voodoo começa pelo HTML.** A página que você já tem *é* a aplicação. Você acrescenta atributos a
-ela, cada atributo é ligado ao estado reativo, e quando esse estado muda apenas os nós do DOM que
-dependem dele são atualizados — nada mais é tocado, e não existe Virtual DOM no meio do caminho.
+**Voodoo starts from HTML.** The page you already have *is* the application. You add attributes to
+it, each attribute is bound to reactive state, and when that state changes only the DOM nodes that
+depend on it are updated — nothing else is touched, and there is no Virtual DOM in between.
 
-Quando o HTML não basta, a API `V` está ali: `V.reactive`, `V.component`, `V.http`, `V.store`,
-`V.router` e uma coleção de DOM encadeável através de `V('#seletor')`. Se preferir, dá para
-escrever a aplicação inteira em JavaScript com `V.createApp().mount('#app')`. É o mesmo runtime, e
-os dois modos convivem livremente na mesma página.
+When HTML is not enough, the `V` API is right there: `V.reactive`, `V.component`, `V.http`,
+`V.store`, `V.router`, and a chainable DOM collection through `V('#selector')`. You can write an
+entire application in JavaScript with `V.createApp().mount('#app')` if you prefer. Same runtime,
+and the two modes mix freely in one page.
 
-Isto não é um "matador de React". É um ponto de partida diferente para um tipo de projeto
-diferente: painéis administrativos gerados no servidor, sites de conteúdo, protótipos, páginas
-legadas e qualquer coisa em que montar um pipeline de build custa mais do que o problema que você
-está resolvendo.
+This is not a "React killer". It is a different starting point for a different kind of project:
+server-rendered admin panels, content sites, prototypes, legacy pages, and anything where adding a
+build pipeline costs more than the problem you are solving.
 
-## Por que a Voodoo?
+## Why Voodoo?
 
-- **HTML-first.** O comportamento fica ao lado da marcação a que pertence. Um arquivo, não três.
-- **Reatividade granular.** `reactive` / `ref` / `computed` / `effect` sobre Proxy. Uma escrita
-  reexecuta apenas os efeitos que de fato leram aquele valor.
-- **Sem passo de build obrigatório.** Uma tag `<script>` já é a instalação completa. O build existe
-  quando você quiser, nunca por obrigação.
-- **Zero dependências em tempo de execução.** Os bundles de navegador não carregam nada além da
-  própria Voodoo.
-- **Atualização direta do DOM.** Sem Virtual DOM, sem passo de diff, sem heurística de
-  reconciliação.
-- **Parser de expressões seguro.** As expressões dos atributos passam por um lexer de verdade, um
-  parser Pratt e um interpretador de AST. Sem `eval`, sem `new Function` — por isso a Voodoo roda
-  sob uma Content Security Policy sem `unsafe-eval`.
-- **Melhoria progressiva.** A Voodoo nunca toma conta da página: ela enriquece os elementos que
-  você marca e deixa o resto em paz, então entra em bases de código existentes sem reescrita.
-- **Tudo incluído.** Reatividade, componentes, roteador, HTTP, formulários, validação, máscaras,
-  interface, arrastar e soltar, animação, gráficos, i18n e stores vêm na caixa — e não em doze
-  pacotes.
-- **TypeScript.** O código inteiro é TypeScript e todo ponto de entrada publica declarações.
-- **Ferramentas opcionais.** Existe uma CLI para criar projetos e builds sob medida. Você nunca é
-  obrigado a usar.
+- **HTML-first.** Behavior lives next to the markup it belongs to. One file, not three.
+- **Fine-grained reactivity.** Proxy-based `reactive` / `ref` / `computed` / `effect`. A write
+  re-runs only the effects that actually read that value.
+- **No mandatory build step.** One `<script>` tag is a complete setup. A build is available when
+  you want one, never required.
+- **Zero runtime dependencies.** The browser bundles ship nothing but Voodoo.
+- **Direct DOM updates.** No Virtual DOM, no diff pass, no reconciliation heuristics.
+- **Secure expression parser.** Attribute expressions go through a real lexer, a Pratt parser and
+  an AST interpreter. No `eval`, no `new Function` — so Voodoo runs under a Content Security
+  Policy without `unsafe-eval`.
+- **Progressive enhancement.** Voodoo never takes over the page: it enhances the elements you mark
+  and leaves the rest alone, so it drops into existing codebases without a rewrite.
+- **Batteries included.** Reactivity, components, router, HTTP, forms, validation, masks, UI,
+  drag-and-drop, animation, charts, i18n and stores are in the box — not in twelve packages.
+- **TypeScript.** The whole source is TypeScript and every entry point ships declarations.
+- **Optional tooling.** A CLI exists for scaffolding and custom builds. You never have to use it.
 
-## Duas formas de escrever
+## Two ways to write it
 
-**Modo 1 — HTML.** Estado declarado onde ele é usado:
+**Mode 1 — HTML.** State declared where it is used:
 
 ```html
-<div v-data="{ contador: 0 }">
-  <button @click="contador++">Cliques: { contador }</button>
+<div v-data="{ count: 0 }">
+  <button @click="count++">Clicked { count } times</button>
 </div>
 ```
 
-**Modo 2 — JavaScript.** O mesmo motor de reatividade, guiado pelo seu código:
+**Mode 2 — JavaScript.** The same reactivity engine, driven from your own code:
 
 ```js
-const estado = V.reactive({ contador: 0 })
-V.effect(() => { document.title = `Cliques: ${estado.contador}` })
-estado.contador++
+const state = V.reactive({ count: 0 })
+V.effect(() => { document.title = `Count: ${state.count}` })
+state.count++
 ```
 
-## Tudo incluído
+## Batteries included
 
-Cada linha abaixo faz parte do runtime publicado.
+Every row below is part of the shipped runtime.
 
-| Pilar | O que você tem |
+| Pillar | What you get |
 | --- | --- |
-| **Reatividade** | `reactive`, `ref`, `computed`, `effect`, `watch`, `watchEffect`, `nextTick`, `effectScope`, `flushSync` |
-| **Expressões** | Lexer + parser Pratt + interpretador de AST próprios. Sem `eval`, compatível com CSP |
-| **Directives** | Texto, condicionais, listas, ligação, classes, estilos, eventos, refs, transições e mais |
-| **Componentes** | Props, estado, computados, métodos, watchers, template, estilo próprio, slots nomeados, `provide`/`inject`, ciclo de vida |
-| **Modo aplicação** | `V.createApp({…}).mount('#app')` com `use`, `provide`, componentes locais e `unmount` |
-| **DOM** | Coleção encadeável via `V('#seletor')`, mais utilitários de transição |
-| **HTTP** | Interceptors, timeout, retry exponencial, cache, CSRF, progresso de upload, SSE, stream NDJSON, fila offline |
-| **Requisições declarativas** | `v-get`/`v-post`/`v-put`/`v-patch`/`v-delete`, `v-resource`, `v-load`, `v-load-visible`, `v-search`, polling |
-| **Formulários** | Envio por AJAX, serialização, upload, dropzone, autosave, aviso ao sair, estado reativo `$form` |
-| **Validação e máscaras** | Conjunto completo de regras, regras assíncronas, regras e mensagens próprias, máscaras de entrada |
-| **Stores** | `V.store(nome, def, { persist })` e a mágica `$store`, com persistência opcional no `localStorage` |
-| **Armazenamento** | `storage`, `session`, `cookie`, `cache`, `url`, `theme` |
-| **Interface** | Toast, modal, alert, confirm, prompt, dialog, paleta de comandos, mais directives de abas, dropdown, tooltip, gaveta, popover e acordeão |
-| **Arrastar e soltar** | `v-draggable`, `v-droppable`, `v-sortable`, grupos, suporte a teclado |
-| **Roteador** | Modos history e hash, params, query, guards, restauração de rolagem, cache de view, `v-link`, `v-router-view`, rotas dinâmicas |
-| **i18n** | Mensagens por idioma, `V.t`, `v-t`, pluralização, troca de idioma em tempo de execução |
-| **Animação** | Física de mola, stagger, `inView`, progresso de rolagem, presets |
-| **Gráficos** | Desenhados em SVG puro, sem dependência de biblioteca de gráficos |
-| **Tempo real** | `V.socket` com WebSocket nativo e protocolo Socket.IO, salas publicas e privadas, reconexao com espera progressiva, heartbeat e fila de envio. Declarativo com `v-socket`, `v-room` e `v-on-socket:` |
-| **GPU** | `V.gpu` sobre WebGPU com reflexao de WGSL, e a directive `v-shader`. Sem WebGPU, cai no conteudo alternativo do canvas |
-| **Devtools** | Inspetor de reatividade `V.xray` e um barramento de eventos |
+| **Reactivity** | `reactive`, `ref`, `computed`, `effect`, `watch`, `watchEffect`, `nextTick`, `effectScope`, `flushSync` |
+| **Expressions** | Own lexer + Pratt parser + AST interpreter. No `eval`, CSP-friendly |
+| **Directives** | Text, conditionals, lists, binding, classes, styles, events, refs, transitions and more |
+| **Components** | Props, state, computed, methods, watchers, template, scoped style, named slots, `provide`/`inject`, lifecycle |
+| **App mode** | `V.createApp({…}).mount('#app')` with `use`, `provide`, local components and `unmount` |
+| **DOM** | Chainable collection via `V('#selector')`, plus transition helpers |
+| **HTTP** | Interceptors, timeout, exponential retry, cache, CSRF, upload progress, SSE, NDJSON streaming, offline queue |
+| **Declarative requests** | `v-get`/`v-post`/`v-put`/`v-patch`/`v-delete`, `v-resource`, `v-load`, `v-load-visible`, `v-search`, polling |
+| **Forms** | AJAX submit, serialization, upload, dropzone, autosave, leave guard, reactive `$form` state |
+| **Validation & masks** | Full rule set, async rules, custom rules and messages, input masks |
+| **Stores** | `V.store(name, def, { persist })` and the `$store` magic, with optional `localStorage` persistence |
+| **Storage** | `storage`, `session`, `cookie`, `cache`, `url`, `theme` |
+| **UI** | Toast, modal, alert, confirm, prompt, dialog, command palette, plus directives for tabs, dropdowns, tooltips, drawers, popovers and accordions |
+| **Drag and drop** | `v-draggable`, `v-droppable`, `v-sortable`, groups, keyboard support |
+| **Router** | History and hash modes, params, query, guards, scroll restoration, view cache, `v-link`, `v-router-view`, dynamic routes |
+| **i18n** | Locale messages, `V.t`, `v-t`, pluralization, runtime locale switching |
+| **Motion** | Spring physics, stagger, `inView`, scroll progress, presets |
+| **Charts** | Rendered as plain SVG, no charting dependency |
+| **Realtime** | `V.socket` over native WebSocket and the Socket.IO protocol, public and private rooms, backoff reconnection, heartbeat and a send queue. Declarative via `v-socket`, `v-room` and `v-on-socket:` |
+| **GPU** | `V.gpu` over WebGPU with WGSL reflection, plus the `v-shader` directive. Without WebGPU it falls back to the canvas content |
+| **Devtools** | `V.xray` reactivity inspector and an event bus |
 | **CLI** | `@voodoo/cli`: `init`, `build --modules=…`, `add`, `info` |
 
-## Instalação
+## Installation
 
-> **Sobre o npm.** O pacote `voodoojs` ainda não foi publicado no registro do npm. As instruções de
-> npm e CDN abaixo estão escritas para o momento em que ele for. Até lá, use o download direto ou
-> um build local — os dois funcionam hoje.
+> **Note on npm.** The `voodoojs` package is not published to the npm registry yet. The npm and CDN
+> instructions below are written for the moment it is. Until then use the direct download or a
+> local build — both work today.
 
-**Download direto, ou build local — os dois funcionam agora**
+**Direct download, or build it locally — both work right now**
 
 ```bash
 curl -O https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js
-# ou
+# or
 git clone https://github.com/kwy404/Voodoo.js.git
-cd Voodoo.js && npm install && npm run build   # os bundles saem em packages/voodoojs/dist/
+cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
 ```
 
 ```html
 <script src="voodoo.min.js" defer></script>
 ```
 
-**CDN direto do repositório (funciona agora)**
+**CDN straight from the repository (works right now)**
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/packages/voodoojs/dist/voodoo.min.js" defer></script>
 ```
 
-**CDN, npm e ES Modules (quando publicado)**
+**CDN, npm and ES Modules (once published)**
 
-Os caminhos de CDN apoiados no npm abaixo ainda não resolvem, porque o pacote não está no registro.
+The npm-backed CDN paths below do not resolve yet, because the package is not on the registry.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
@@ -197,11 +192,11 @@ Os caminhos de CDN apoiados no npm abaixo ainda não resolvem, porque o pacote n
 ```
 
 ```js
-// npm install voodoojs   (planejado, ainda não está no registro)
+// npm install voodoojs   (planned, not on the registry yet)
 import V from 'voodoojs'
 V.start()
 
-// ou importe só o que precisa — pontos de entrada separados, em ESM e CJS, com tipos
+// or import only what you need — separate entry points, ESM and CJS, with types
 import { reactive, computed } from 'voodoojs/reactivity'
 import { http } from 'voodoojs/http'
 import { debounce } from 'voodoojs/utils'
@@ -210,456 +205,447 @@ import { debounce } from 'voodoojs/utils'
 **CLI**
 
 ```bash
-npx voodoo init minha-pagina                     # cria um projeto pronto para abrir
-npx voodoo build --modules=core,directives,http  # bundle sob medida, só com o que você usa
-npx voodoo add card                              # copia um componente para o seu projeto
-npx voodoo info                                  # lista os módulos e o tamanho de cada um
+npx voodoo init my-page                          # scaffold a ready-to-open project
+npx voodoo build --modules=core,directives,http  # custom bundle with only what you use
+npx voodoo add card                              # copy a component into your project
+npx voodoo info                                  # list modules and their sizes
 ```
 
-**Qual bundle escolher?**
+**Which bundle?**
 
-| Arquivo | O que vem dentro |
+| File | Contents |
 | --- | --- |
-| `voodoo.core.min.js` | Build mínimo: reatividade, expressões, directives, componentes, DOM, requisições |
-| `voodoo.min.js` | **Build essencial — o padrão.** Soma formulários, validação, máscaras, interface, arrastar e soltar |
-| `voodoo.full.min.js` | Tudo: gráficos, animação, roteador, i18n, devtools, componentes prontos |
+| `voodoo.core.min.js` | Minimal build: reactivity, expressions, directives, components, DOM, requests |
+| `voodoo.min.js` | **Essential build — the default.** Adds forms, validation, masks, UI, drag-and-drop |
+| `voodoo.full.min.js` | Everything: charts, motion, router, i18n, devtools, ready-made components |
 
-Os tamanhos são dinâmicos — veja o badge acima, ou rode `npm run size` / `npx voodoo info`.
+Sizes are dynamic — see the badge above, or run `npm run size` / `npx voodoo info`.
 
-## Início rápido
+## Quick start
 
-**Estado, eventos e ligação de dois sentidos.** A interpolação usa chave simples:
-`{ expressão }`. `{{ expressão }}` também é aceita, para quem vem do Vue.
+**State, events and two-way binding.** Interpolation uses single braces: `{ expression }`.
+`{{ expression }}` is accepted too, if you are coming from Vue.
 
 ```html
-<div v-data="{ nome: 'Mundo', email: '' }">
-  <p>Olá, { nome }!</p>
-  <button @click="nome = 'Voodoo'">Trocar</button>
+<div v-data="{ name: 'World', email: '' }">
+  <p>Hello, { name }!</p>
+  <button @click="name = 'Voodoo'">Change</button>
 
   <input v-model="email" type="email">
-  <p v-show="email">Você digitou: { email }</p>
+  <p v-show="email">You typed: { email }</p>
 </div>
 ```
 
-**Condicionais, listas, classes e estilos.**
+**Conditionals, lists, classes and styles.**
 
 ```html
-<div v-data="{ status: 'pronto', itens: ['um', 'dois'], largura: 60 }">
-  <p v-if="status === 'carregando'">Carregando…</p>
-  <p v-else-if="status === 'erro'">Alguma coisa deu errado.</p>
-  <p v-else>Pronto.</p>
+<div v-data="{ status: 'ready', items: ['one', 'two'], width: 60 }">
+  <p v-if="status === 'loading'">Loading…</p>
+  <p v-else-if="status === 'error'">Something went wrong.</p>
+  <p v-else>Done.</p>
 
-  <li v-for="(item, i) in itens" :key="i">{ i + 1 }. { item }</li>
+  <li v-for="(item, index) in items" :key="index">{ index + 1 }. { item }</li>
 
-  <span :class="{ 'ativo': status === 'pronto' }" :style="{ width: largura + '%' }"></span>
+  <span :class="{ 'is-active': status === 'ready' }" :style="{ width: width + '%' }"></span>
 </div>
 ```
 
-**HTTP sem escrever fetch, e um componente.**
+**HTTP without writing fetch, and a component.**
 
 ```html
-<button v-get="/api/estatisticas" v-target="#painel" v-swap="innerHTML">Carregar</button>
-<div id="painel"></div>
+<button v-get="/api/stats" v-target="#panel" v-swap="innerHTML">Load</button>
+<div id="panel"></div>
 
 <script>
-  V.component('cartao-usuario', {
-    props: { nome: { type: 'string', default: 'Anônimo' } },
-    template: `<div class="cartao"><strong v-text="nome"></strong></div>`
+  V.component('user-card', {
+    props: { name: { type: 'string', default: 'Anonymous' } },
+    template: `<div class="card"><strong v-text="name"></strong></div>`
   })
 </script>
 
-<cartao-usuario nome="Ada"></cartao-usuario>
+<user-card name="Ada"></user-card>
 ```
 
-## Componentes
+## Components
 
-Um componente é um escopo com estado, métodos, computados, watchers, props, slots e ciclo de vida,
-montado sobre um elemento. Sem passo de compilação, sem formato de arquivo único.
+A component is a scope with state, methods, computed values, watchers, props, slots and lifecycle
+hooks, mounted over an element. No compile step, no single-file component format.
 
 ```js
-V.component('contador', {
+V.component('counter', {
   props: {
-    inicio: { type: 'number', default: 0 },
-    rotulo: { type: 'string', required: true }
+    start: { type: 'number', default: 0 },
+    label: { type: 'string', required: true }
   },
 
-  state(props) { return { valor: props.inicio } },
+  state(props) { return { count: props.start } },
 
-  computed: { dobro() { return this.valor * 2 } },
+  computed: { doubled() { return this.count * 2 } },
 
   methods: {
-    somar() {
-      this.valor++
-      this.emit('mudou', this.valor)   // um CustomEvent de verdade, que sobe pela árvore
+    increment() {
+      this.count++
+      this.emit('changed', this.count)   // a real bubbling CustomEvent
     }
   },
 
-  watch: { valor(v) { console.log('agora', v) } },
+  watch: { count(value) { console.log('now', value) } },
 
   template: `
-    <button @click="somar()">{ rotulo }: { valor }</button>
-    <small>dobro: { dobro }</small>
-    <slot name="rodape"></slot>
+    <button @click="increment()">{ label }: { count }</button>
+    <small>doubled: { doubled }</small>
+    <slot name="footer"></slot>
   `,
 
-  style: `.contador { font-weight: 600 }`,
+  style: `.counter { font-weight: 600 }`,
 
-  mounted() { /* o elemento já está no DOM */ }
+  mounted() { /* the element is in the DOM */ }
 })
 ```
 
-Três formas equivalentes de usar, e ouvir o que ele emite é um listener comum:
+Three equivalent ways to use it, and listening to what it emits is a plain event listener:
 
 ```html
-<div v-component="contador" rotulo="Cliques"></div>
-<contador rotulo="Cliques" :inicio="10" @mudou="console.log($event.detail)"></contador>
-<Contador rotulo="Cliques"></Contador>
+<div v-component="counter" label="Clicks"></div>
+<counter label="Clicks" :start="10" @changed="console.log($event.detail)"></counter>
+<Counter label="Clicks"></Counter>
 ```
 
-Atributos estáticos viram props de texto, convertidas para o `type` declarado. Atributos escritos
-com `:` são ligações reativas avaliadas no escopo do pai, e o conteúdo dos slots também; slots
-nomeados casam por `slot="nome"`. Dentro da instância você ainda tem `$el`, `$props`, `$refs`,
-`$parent`, `$name`, `$emit`, `$watch` e `$nextTick`, mais `provide` / `inject` para injeção de
-dependência.
+Static attributes become string props, coerced to the declared `type`. Attributes written with `:`
+are reactive bindings evaluated in the parent scope, and so is slot content; named slots are
+matched with `slot="name"`. Inside an instance you also get `$el`, `$props`, `$refs`, `$parent`,
+`$name`, `$emit`, `$watch` and `$nextTick`, plus `provide` / `inject` for dependency injection.
 
-**Modo aplicação** — se preferir descrever tudo em JavaScript:
+**App mode** — if you would rather describe the whole application in JavaScript:
 
 ```js
 V.createApp({
   data: () => ({ n: 0 }),
-  computed: { dobro() { return this.n * 2 } },
-  methods: { somar() { this.n++ } },
-  template: `<button @click="somar()">Cliques: { n }</button><p>Dobro: { dobro }</p>`
+  computed: { doubled() { return this.n * 2 } },
+  methods: { add() { this.n++ } },
+  template: `<button @click="add()">Clicks: { n }</button><p>Doubled: { doubled }</p>`
 }).mount('#app')
 ```
 
-O `mount` aceita um alvo que ainda não existe — ele espera, então não há corrida com o carregamento
-da página. O `unmount` devolve o HTML original do container em vez de deixá-lo vazio.
+`mount` accepts a target that does not exist yet — it waits for it, so there is no race with page
+load. `unmount` restores the container's original HTML instead of leaving it empty.
 
 ## HTTP
 
-**Declarativo.** Ligue uma requisição a um elemento e diga para onde vai a resposta:
+**Declarative.** Attach a request to an element and say where the response goes:
 
 ```html
-<button v-get="/api/relatorio" v-target="#saida" v-swap="innerHTML">Carregar</button>
+<button v-get="/api/report" v-target="#out" v-swap="innerHTML">Load</button>
 
-<button v-delete="'/api/usuarios/' + usuario.id"
-        v-confirm="Excluir este usuário?"
-        v-toast-success="Usuário excluído">Excluir</button>
+<button v-delete="'/api/users/' + user.id"
+        v-confirm="Delete this user?"
+        v-toast-success="User deleted">Delete</button>
 
 <div v-get="/api/feed" v-trigger="visible" v-poll="30s"></div>
 
-<input v-search="/api/busca" v-param="q" v-debounce="300ms" v-target="#resultados">
+<input v-search="/api/search" v-param="q" v-debounce="300ms" v-target="#results">
 ```
 
-A URL pode ser um literal (`/api/usuarios`) ou uma expressão (`'/api/usuarios/' + id`). Os
-atributos de apoio incluem `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-body`, `v-params`,
-`v-headers`, `v-cache`, `v-retry`, `v-timeout`, `v-json-path`, `v-template`, `v-offline-queue`,
-`v-redirect`, `v-scroll-to`, `v-toast-success`, `v-toast-error`, `v-on-success`, `v-on-error` e
-`v-on-complete`.
+The URL may be a literal (`/api/users`) or an expression (`'/api/users/' + id`). Supporting
+attributes include `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-body`, `v-params`, `v-headers`,
+`v-cache`, `v-retry`, `v-timeout`, `v-json-path`, `v-template`, `v-offline-queue`, `v-redirect`,
+`v-scroll-to`, `v-toast-success`, `v-toast-error`, `v-on-success`, `v-on-error`, `v-on-complete`.
 
-O `v-resource` é a versão que entrega o estado da requisição como dado reativo em vez de trocar
-HTML. Ele expõe `data`, `loading`, `error`, `loaded`, `reload()` e `set()` — veja a demonstração no
-começo deste arquivo.
+`v-resource` is the version that hands you the request state as reactive data instead of swapping
+HTML. It exposes `data`, `loading`, `error`, `loaded`, `reload()` and `set()` — see the demo at the
+top of this file.
 
-**Programático.**
+**Programmatic.**
 
 ```js
-const usuarios = await V.http.get('/api/usuarios')
-const criado   = await V.http.post('/api/usuarios', { nome: 'Ada' })
+const users   = await V.http.get('/api/users')
+const created = await V.http.post('/api/users', { name: 'Ada' })
 
-// Resposta completa, com status e cabeçalhos
-const res = await V.http.request({ url: '/api/usuarios', retry: 2, timeout: 5000, cache: 60000 })
+// Full response, with status and headers
+const res = await V.http.request({ url: '/api/users', retry: 2, timeout: 5000, cache: 60000 })
 
-// Upload com progresso real
-await V.http.upload('/api/arquivos', formData, { onProgress: (pct) => console.log(pct + '%') })
+// Upload with real progress
+await V.http.upload('/api/files', formData, { onProgress: (pct) => console.log(pct + '%') })
 
-// Server-Sent Events e stream NDJSON
-V.http.sse('/api/eventos', { message: (dados) => console.log(dados) })
-await V.http.stream('/api/tokens', (linha) => console.log(linha))
+// Server-Sent Events and NDJSON streaming
+V.http.sse('/api/events', { message: (data) => console.log(data) })
+await V.http.stream('/api/tokens', (line) => console.log(line))
 ```
 
-Padrões, interceptors, URL base, cabeçalho de CSRF e cache ficam em `V.http.defaults` e
+Defaults, interceptors, base URL, CSRF header and cache all live on `V.http.defaults` and
 `V.http.interceptors`.
 
-## Formulários
+## Forms
 
-Enviar, validar, mostrar o carregamento e reportar o resultado — tudo declarado no próprio
-formulário:
+Submit, validate, show loading state and report the result — all declared on the form itself:
 
 ```html
-<form v-submit="/api/contato" v-method="POST" v-validate
-      v-toast-success="Mensagem enviada" v-toast-error="Não foi possível enviar" v-reset-success>
+<form v-submit="/api/contact" v-method="POST" v-validate
+      v-toast-success="Message sent" v-toast-error="Could not send" v-reset-success>
 
-  <input name="nome" v-required>
+  <input name="name" v-required>
   <input name="email" type="email" v-required v-email>
-  <input name="telefone" v-mask="phone">
-  <textarea name="mensagem" v-minlength="20"></textarea>
+  <input name="phone" v-mask="phone">
+  <textarea name="message" v-minlength="20"></textarea>
 
   <p v-if="$form.errors.email">{ $form.errors.email }</p>
 
   <button type="submit" :disabled="$form.loading">
-    { $form.loading ? 'Enviando…' : 'Enviar' }
+    { $form.loading ? 'Sending…' : 'Send' }
   </button>
 </form>
 ```
 
-`$form` é reativo e carrega `loading`, `saving`, `success`, `errors`, `message`, `data`, `status`,
-`dirty` e `progress`. O conjunto de regras cobre o esperado — `required`, `email`, `url`, `number`,
-`min`, `max`, `minlength`, `maxlength`, `between`, `match`, `regex`, `date`, `same`, `different`,
-`in`, `strongpassword`, `cpf`, `cnpj`, `cep` e mais — além de regras assíncronas e das suas
-próprias, via `V.validator()`.
+`$form` is reactive and carries `loading`, `saving`, `success`, `errors`, `message`, `data`,
+`status`, `dirty` and `progress`. The rule set covers the usual ground — `required`, `email`,
+`url`, `number`, `min`, `max`, `minlength`, `maxlength`, `between`, `match`, `regex`, `date`,
+`same`, `different`, `in`, `strongpassword` and more — plus async rules and your own via
+`V.validator()`.
 
-## Construindo aplicações completas
+## Building full applications
 
-A Voodoo cresce além de uma página sem mudar o modelo.
+Voodoo scales past a single page without changing the model.
 
-- **Componentes** — registre uma vez, use como tag em qualquer lugar da página.
-- **Stores** — `V.store('carrinho', { itens: [] }, { persist: true })`, lido em qualquer lugar como
-  `$store.carrinho`.
-- **Roteador** — `V.router({ mode: 'history', routes: { '/usuarios/:id': { component: 'pagina-usuario' } } })`,
-  com guards, params, comportamento de rolagem, `v-link` e `v-router-view`.
-- **Plugins** — `V.use(plugin)` ou `app.use(plugin)` para registrar directives, componentes e
-  serviços.
-- **Carregamento sob demanda** — `v-load-visible` e rotas com `view` buscam o HTML só quando ele é
-  necessário.
-- **i18n** — `V.i18n({ locale: 'pt-BR', messages })`, depois `v-t` na marcação e `V.t()` no código.
+- **Components** — register once, use as tags anywhere on the page.
+- **Stores** — `V.store('cart', { items: [] }, { persist: true })`, read anywhere as `$store.cart`.
+- **Router** — `V.router({ mode: 'history', routes: { '/users/:id': { component: 'user-page' } } })`,
+  with guards, params, scroll behavior, `v-link` and `v-router-view`.
+- **Plugins** — `V.use(plugin)` or `app.use(plugin)` to register directives, components and services.
+- **Lazy loading** — `v-load-visible` and route `view` records fetch HTML only when it is needed.
+- **i18n** — `V.i18n({ locale: 'en', messages })`, then `v-t` in markup and `V.t()` in code.
 
-Cada um deles tem o seu guia em [`docs/`](docs/).
+Each of these has its own guide in [`docs/`](docs/).
 
 ## DevTools
 
-O build completo traz o `xray`, um inspetor visual de reatividade: ele mostra a árvore de escopos,
-o estado ao vivo, quais efeitos estão rodando, e os registros de eventos e de rede.
+The full build ships `xray`, a visual reactivity inspector: it shows the scope tree, live state,
+which effects are running, and the event and network logs.
 
 ```js
-V.xray()        // alterna o painel
-V.xray(true)    // abre
-V.xray(false)   // fecha
+V.xray()        // toggle the panel
+V.xray(true)    // open it
+V.xray(false)   // close it
 
-V.enableXrayShortcut()   // instala apenas o atalho, sem abrir o painel
+V.enableXrayShortcut()   // install only the shortcut, without opening the panel
 ```
 
-A primeira chamada também instala o atalho `Ctrl+Shift+X`, então o inspetor fica a uma tecla de
-distância durante o desenvolvimento, sem custo nenhum enquanto ninguém aperta.
+The first call also installs the `Ctrl+Shift+X` shortcut, so the inspector stays one keystroke
+away during development at no cost while nobody presses it.
 
-## Arquitetura
+## Architecture
 
 ```
-  atributos HTML ─▶  Walker + MutationObserver      acha os atributos v-*, monta os escopos
-                            │
-  expressões     ─▶  Lexer → parser Pratt → interpretador de AST   sem eval, sem new Function
-                            │
-                     Reatividade: alvos em Proxy + efeitos   leituras rastreadas, escritas na fila
-                            │
-                     Directives atualizam os nós reais do DOM   sem Virtual DOM, sem diff
+  HTML attributes ─▶  Walker + MutationObserver     finds v-* attributes, builds scopes
+                             │
+  expressions     ─▶  Lexer → Pratt parser → AST interpreter    no eval, no new Function
+                             │
+                      Reactivity: Proxy targets + effects       reads tracked, writes queued
+                             │
+                      Directives update the real DOM nodes      no Virtual DOM, no diff pass
 
-  Por cima: componentes · stores · roteador · HTTP · formulários · interface · i18n · animação · gráficos
+  On top: components · stores · router · HTTP · forms · UI · i18n · motion · charts
 ```
 
-A versão longa, com as fronteiras de cada módulo e o modelo de escopos, está em
+The long version, including module boundaries and the scope model, is in
 [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
-## Desempenho
+## Performance
 
-Os benchmarks são reproduzíveis: versões de dependência fixadas, builds de produção, metodologia
-publicada e ambiente registrado. O relatório completo — incluindo os casos em que a Voodoo *perde*
-— está em [`benchmarks/README.md`](benchmarks/README.md), com a metodologia, o ambiente e como
-reproduzir cada medição.
+The benchmarks are reproducible: pinned dependency versions, production builds, a published
+methodology and a recorded environment. The full write-up — including the cases where Voodoo
+*loses* — is in [`benchmarks/README.md`](benchmarks/README.md), along with the methodology, the
+environment and how to reproduce every measurement.
 
-O JavaScript puro é o teto aqui, e a Voodoo cobra um custo real pela produtividade que entrega. A
-função destes números é mostrar o tamanho desse custo, não fingir que ele é zero.
+Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
+buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.
 
-**Comparação com outros frameworks.** A infraestrutura está no repositório — adaptadores para
-JavaScript puro, Alpine, Vue, React, Preact, Svelte e Solid, com versões fixas, builds de produção
-e validação de que todos produzem o mesmo DOM. **Os resultados ainda não foram publicados**, e por
-isso não há tabela aqui: número de benchmark sem execução registrada não vale nada. Para rodar na
-sua máquina, veja [`benchmarks/README.md`](benchmarks/README.md).
+**Comparison against other frameworks.** The harness is in the repository — adapters for vanilla
+JavaScript, Alpine, Vue, React, Preact, Svelte and Solid, with pinned versions, production builds
+and a check that every one produces the same DOM. **The results are not published yet**, so there
+is no table here: a benchmark number without a recorded run is worth nothing. To run it on your
+own machine, see [`benchmarks/README.md`](benchmarks/README.md).
 
-**Tamanho dos bundles**, medido sobre os builds versionados em `8e765d2`:
+**Bundle size**, measured on the committed builds at `8e765d2`:
 
-| Build | Minificado | Gzip | Brotli |
+| Build | Minified | Gzip | Brotli |
 | --- | --- | --- | --- |
 | `voodoo.core.min.js` | 129.68 KB | 45.04 KB | 39.50 KB |
 | `voodoo.min.js` | 252.04 KB | 81.66 KB | 69.30 KB |
 | `voodoo.full.min.js` | 424.28 KB | 128.37 KB | 107.08 KB |
 
-Rode você mesmo: o arcabouço de medição e as versões exatas testadas estão em
+Run them yourself: the harness and the exact versions under test live in
 [`benchmarks/`](benchmarks/).
 
-## Comparação
+## Comparison
 
-Uma comparação honesta. Toda ferramenta aqui é boa naquilo para que foi desenhada.
+An honest one. Every tool here is good at what it was designed for.
 
 | | Voodoo.js | Alpine.js | HTMX | Vue 3 | React | jQuery |
 | --- | --- | --- | --- | --- | --- | --- |
-| Ponto de partida | HTML | HTML | HTML | JavaScript | JavaScript | JavaScript |
-| Roda por uma tag de CDN | nativo | nativo | nativo | nativo | nativo | nativo |
-| Passo de build | possível | possível | possível | recomendado | recomendado | possível |
-| Renderização | DOM direto | DOM direto | HTML do servidor | Virtual DOM | Virtual DOM | manual |
-| Estado reativo | nativo | nativo | — | nativo | nativo | — |
-| Componentes | nativo | via pacote do ecossistema | — | nativo | nativo | — |
-| Cliente HTTP | nativo | via pacote do ecossistema | nativo | via pacote do ecossistema | via pacote do ecossistema | nativo |
-| Formulários + validação | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Roteador | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Interface (toast, modal, abas) | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Gráficos / i18n | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Renderização no servidor | — | — | nativo (quem renderiza é o servidor) | nativo | nativo | — |
-| Tamanho do ecossistema | jovem | crescendo | crescendo | grande | muito grande | muito grande |
+| Starting point | HTML | HTML | HTML | JavaScript | JavaScript | JavaScript |
+| Runs from a CDN tag | built-in | built-in | built-in | built-in | built-in | built-in |
+| Build step | possible | possible | possible | recommended | recommended | possible |
+| Rendering | direct DOM | direct DOM | server HTML | Virtual DOM | Virtual DOM | manual |
+| Reactive state | built-in | built-in | — | built-in | built-in | — |
+| Components | built-in | via ecosystem package | — | built-in | built-in | — |
+| HTTP client | built-in | via ecosystem package | built-in | via ecosystem package | via ecosystem package | built-in |
+| Forms + validation | built-in | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package |
+| Router | built-in | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package |
+| UI (toast, modal, tabs) | built-in | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package |
+| Charts / i18n | built-in | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package | via ecosystem package |
+| Server-side rendering | — | — | native (the server renders) | built-in | built-in | — |
+| Ecosystem size | young | growing | growing | large | very large | very large |
 
-A diferença real é filosófica. O **HTMX** diz que o HTML é do servidor e o navegador apenas o
-encaixa. O **Alpine** dá ao HTML uma pitada de estado reativo e para por aí, de propósito. **Vue e
-React** pedem que você descreva a interface em JavaScript e geram o HTML. A **Voodoo** mantém o
-HTML como fonte da verdade *e* entrega a caixa de ferramentas completa — assim você raramente
-precisa sair dele, e a API `V` espera pelos momentos em que precisar.
+The real difference is philosophical. **HTMX** says the server owns the HTML and the browser just
+swaps it in. **Alpine** gives HTML a sprinkle of reactive state and stops there on purpose. **Vue
+and React** ask you to describe the UI in JavaScript and generate the HTML. **Voodoo** keeps HTML
+as the source of truth *and* gives it the full toolbox — so you rarely have to leave it, and the
+`V` API is waiting for the moments when you do.
 
-## Quando usar a Voodoo
+## When to use Voodoo
 
-Encaixa bem em: painéis administrativos gerados no servidor (Laravel, Rails, Django, Spring, PHP
-puro); sites de conteúdo e landing pages que precisam de comportamento sem um pipeline de
-front-end; protótipos, em que abrir um arquivo vale mais do que qualquer arquitetura; times
-pequenos que não querem manter um build só para mostrar uma tabela; páginas legadas, em que a
-Voodoo convive com o código existente porque nunca toma conta do documento; e aplicações de página
-única completas, com componentes, stores e roteador.
+Good fits: server-rendered admin panels (Laravel, Rails, Django, Spring, plain PHP); content sites
+and landing pages that need behavior without a front-end pipeline; prototypes, where opening a file
+beats any architecture; small teams that do not want to maintain a build just to render a table;
+legacy pages, where Voodoo coexists with existing code because it never takes over the document;
+and full single-page applications, using components, stores and the router.
 
-### Limitações atuais
+### Current limitations
 
-Ditas com clareza, para que nada surpreenda depois:
+Stated plainly, so nothing surprises you later:
 
-- **Sem renderização no servidor nem hidratação.** A Voodoo roda no navegador. Os módulos puros
-  (reatividade, HTTP, utilitários) funcionam em Node, mas não existe hidratação.
-- **Sem alvo nativo em celular.** Não existe equivalente ao React Native.
-- **Ecossistema jovem.** Menos plugins de terceiros, integrações e respostas na internet do que os
-  frameworks estabelecidos. Essa distância é real e leva tempo para diminuir.
-- **Integrações de terceiros limitadas.** Bibliotecas de componentes e ferramentas feitas para
-  React ou Vue não vêm junto.
-- **Sem tipagem estática dentro dos templates.** As expressões dos atributos são texto; os erros
-  aparecem em tempo de execução, não de compilação.
-- **Sem virtualização de listas.** O `v-for` reaproveita elementos por chave, mas listas muito
-  grandes ainda renderizam todas as linhas.
+- **No server-side rendering or hydration.** Voodoo runs in the browser. The pure modules
+  (reactivity, HTTP, utils) work in Node, but there is no hydration story.
+- **No mobile-native target.** There is no React Native equivalent.
+- **Young ecosystem.** Fewer third-party plugins, integrations and answers online than the
+  established frameworks. That gap is real and it takes time to close.
+- **Limited third-party integrations.** Component libraries and tooling built for React or Vue do
+  not transfer over.
+- **No static typing inside templates.** Attribute expressions are strings; mistakes surface at
+  runtime, not at compile time.
+- **No list virtualization.** `v-for` reuses elements by key, but very large lists still render
+  every row.
 
-## Documentação
+## Documentation
 
-A documentação existe em dois idiomas: português em [`docs/`](docs/) (completa) e inglês em
-[`docs/en/`](docs/en/).
+The documentation exists in two languages: Portuguese under [`docs/`](docs/) (complete) and English
+under [`docs/en/`](docs/en/).
 
-| Onde | O quê |
+| Where | What |
 | --- | --- |
-| [`docs/`](docs/) | Índice do guia completo e da referência |
-| [`docs/introducao.md`](docs/introducao.md) | O que é, para quem serve, quando não usar |
-| [`docs/instalacao.md`](docs/instalacao.md) | Bundles, CDN, npm, configuração pela tag script |
-| [`docs/inicio-rapido.md`](docs/inicio-rapido.md) | Do arquivo vazio ao primeiro app |
-| [`docs/directives.md`](docs/directives.md) | Referência completa de directives |
-| [`docs/api.md`](docs/api.md) | Referência completa da API `V` |
-| [`site/`](site/) | Código do site de documentação |
+| [`docs/`](docs/) | Index of the full guide and reference |
+| [`docs/introducao.md`](docs/introducao.md) | What it is, who it is for, when not to use it |
+| [`docs/instalacao.md`](docs/instalacao.md) | Bundles, CDN, npm, script-tag configuration |
+| [`docs/inicio-rapido.md`](docs/inicio-rapido.md) | From an empty file to a working app |
+| [`docs/directives.md`](docs/directives.md) | Full directive reference |
+| [`docs/api.md`](docs/api.md) | Full `V` API reference |
+| [`site/`](site/) | Source of the documentation website |
 
-## Exemplos
+## Examples
 
-Cada exemplo é um único arquivo HTML que você abre direto no navegador. Comece por
+Every example is a single HTML file you can open directly in a browser. Start at
 [`examples/index.html`](examples/index.html).
 
-| Exemplo | O que mostra |
+| Example | What it shows |
 | --- | --- |
-| [Tarefas](examples/todo/) | Estado, listas, edição no lugar, filtros, reordenação |
-| [CRUD](examples/crud/) | Um componente, formulários, validação, máscaras, toasts, atualização otimista |
-| [Painel](examples/dashboard/) | Gráficos, computados reativos, atualização periódica |
-| [Kanban](examples/kanban/) | Arrastar e soltar entre colunas, estado persistido |
-| [Chat](examples/chat/) | Atualização ao vivo, rolagem, composição de mensagens |
-| [E-commerce](examples/ecommerce/) | Catálogo, filtros, store de carrinho, fluxo de checkout |
-| [Pokédex](examples/pokedex/) | Consumo de API real, busca, paginação, carregamento sob demanda |
+| [Todo](examples/todo/) | State, lists, editing in place, filters, reordering |
+| [CRUD](examples/crud/) | A component, forms, validation, masks, toasts, optimistic updates |
+| [Dashboard](examples/dashboard/) | Charts, reactive computed values, periodic refresh |
+| [Kanban](examples/kanban/) | Drag and drop between columns, persisted state |
+| [Chat](examples/chat/) | Live updates, scroll behavior, message composition |
+| [E-commerce](examples/ecommerce/) | Catalog, filters, cart store, checkout flow |
+| [Pokédex](examples/pokedex/) | Real API consumption, search, pagination, lazy loading |
 
-## Ecossistema
+## Ecosystem
 
-| Pacote | Para que serve |
+| Package | Purpose |
 | --- | --- |
-| [`voodoojs`](packages/voodoojs/) | O framework: runtime, directives, componentes, HTTP, formulários, interface, roteador, i18n |
-| [`@voodoo/cli`](packages/cli/) | Criação de projetos, builds sob medida, cópia de componentes, informação de módulos |
+| [`voodoojs`](packages/voodoojs/) | The framework: runtime, directives, components, HTTP, forms, UI, router, i18n |
+| [`@voodoo/cli`](packages/cli/) | Scaffolding, custom builds, component copying, module info |
 
 ## TypeScript
 
-O código inteiro é TypeScript, e todo ponto de entrada publica declarações `.d.ts`.
+The entire source is TypeScript, and every entry point ships `.d.ts` declarations.
 
 ```ts
 import V, { reactive, computed, type HttpResponse } from 'voodoojs'
 
-const estado = reactive({ contador: 0 })
-const dobro = computed(() => estado.contador * 2)
+const state = reactive({ count: 0 })
+const doubled = computed(() => state.count * 2)
 ```
 
 ## Roadmap
 
-O foco de curto prazo é a documentação em inglês, mais exemplos, uma superfície maior de plugins e
-a publicação no npm. O plano acompanhado fica em [`ROADMAP.md`](ROADMAP.md); o que já foi entregue
-está registrado no [`CHANGELOG.md`](CHANGELOG.md).
+The near-term focus is English documentation, more examples, a wider plugin surface and publishing
+to npm. The tracked plan lives in [`ROADMAP.md`](ROADMAP.md); shipped changes are recorded in
+[`CHANGELOG.md`](CHANGELOG.md).
 
-## Contribuindo
+## Contributing
 
 ```bash
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install
 ```
 
-Um monorepo com npm workspaces: [`packages/voodoojs`](packages/voodoojs/) é o framework,
-[`packages/cli`](packages/cli/) é a CLI, mais [`docs/`](docs/), [`site/`](site/) e
+An npm workspaces monorepo: [`packages/voodoojs`](packages/voodoojs/) is the framework,
+[`packages/cli`](packages/cli/) is the CLI, plus [`docs/`](docs/), [`site/`](site/) and
 [`examples/`](examples/).
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `npm test` | Roda a suíte inteira uma vez (vitest + jsdom) |
-| `npm run test:watch` | A mesma suíte, reexecutando enquanto você edita |
-| `npm run coverage` | Rodada de testes com relatório de cobertura |
-| `npm run typecheck` | `tsc --noEmit` sobre o pacote do framework |
-| `npm run build` | Gera todos os bundles do `voodoojs` e do `@voodoo/cli` |
-| `npm run size` | Informa o tamanho de cada bundle gerado |
-| `npm run serve` | Servidor estático local para os exemplos e o site |
-| `npm run format` | Prettier sobre o repositório |
+| `npm test` | Runs the whole suite once (vitest + jsdom) |
+| `npm run test:watch` | Same suite, re-running as you edit |
+| `npm run coverage` | Test run with a coverage report |
+| `npm run typecheck` | `tsc --noEmit` over the framework package |
+| `npm run build` | Builds every bundle for `voodoojs` and `@voodoo/cli` |
+| `npm run size` | Reports the size of each generated bundle |
+| `npm run serve` | Local static server for the examples and the site |
+| `npm run format` | Prettier over the repository |
 
-Novos scripts entram com o tempo — o `package.json` da raiz é a lista definitiva.
+More scripts get added over time — `package.json` at the repo root is the authoritative list.
 
-**O ciclo.** Crie um branch a partir da `main`, faça a mudança, rode `npm test` e
-`npm run typecheck` antes de abrir o PR, e escreva as mensagens de commit no estilo
-[Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `docs:`). O CI
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda typecheck, testes, build e a
-checagem de tamanho dos bundles no Node 20 e no 22.
+**The cycle.** Branch off `main`, make the change, run `npm test` and `npm run typecheck` before
+opening the PR, and write commit messages in [Conventional Commits](https://www.conventionalcommits.org/)
+style (`fix:`, `feat:`, `docs:`). CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs
+typecheck, tests, build and the bundle-size check on Node 20 and 22.
 
-**Onde mexer.** Bug no runtime → `src/runtime/`. Reatividade → `src/reactivity/`. Expressões →
-`src/parser/`. Directive nova → `src/directives/`. Componente de interface → `src/ui/`.
-Documentação → `docs/` e `site/docs/`.
+**Where things live.** Runtime bug → `src/runtime/`. Reactivity → `src/reactivity/`. Expression
+parsing → `src/parser/`. New directive → `src/directives/`. UI component → `src/ui/`. Docs →
+`docs/` and `site/docs/`.
 
-### Como acrescentar uma directive
+### Adding a directive
 
-As directives internas são registradas com `defineDirective(nome, setup, { priority, terminal })`,
-de `src/runtime/registry.ts`, no arquivo correspondente dentro de `src/directives/`. A função
-`setup` recebe um `DirectiveContext` com `el`, `scope`, `expression`, `arg`, `modifiers`,
-`evaluate()`, `effect()`, `cleanup()` e `walk()`. O `priority` define a ordem de execução (maior
-roda primeiro, veja a tabela `PRIORITY`); `terminal: true` impede o walker de descer nos filhos,
-como fazem o `v-for` e o `v-if`.
+Internal directives are registered with `defineDirective(name, setup, { priority, terminal })` from
+`src/runtime/registry.ts`, in the matching file under `src/directives/`. The `setup` function
+receives a `DirectiveContext` with `el`, `scope`, `expression`, `arg`, `modifiers`, `evaluate()`,
+`effect()`, `cleanup()` and `walk()`. `priority` orders the run (higher first, see the `PRIORITY`
+table); `terminal: true` stops the walker from descending into children, as `v-for` and `v-if` do.
 
 ```ts
 import { defineDirective } from '../runtime/registry';
 
-// <p v-shout="mensagem">  →  mostra o valor em caixa alta
+// <p v-shout="message">  →  renders the value in upper case
 defineDirective('shout', ({ el, effect, evaluate, cleanup }) => {
   effect(() => {
     el.textContent = String(evaluate() ?? '').toUpperCase();
   });
 
-  // Sempre libere o que você prendeu: listeners, timers, observers.
-  const aoClicar = () => el.classList.toggle('alto');
-  el.addEventListener('click', aoClicar);
-  cleanup(() => el.removeEventListener('click', aoClicar));
+  // Always release what you attach — listeners, timers, observers.
+  const onClick = () => el.classList.toggle('loud');
+  el.addEventListener('click', onClick);
+  cleanup(() => el.removeEventListener('click', onClick));
 });
 ```
 
-Essa é a API interna. A pública é `V.directive(nome, hooks)`, que embrulha o mesmo mecanismo em
-hooks de ciclo de vida no estilo do Vue (`created`, `mounted`, `updated`, `unmounted`) e entrega a
-cada hook um `binding` com o `value` já avaliado, `oldValue`, `arg` e `modifiers`. Use
-`V.directive` no código da aplicação; use `defineDirective` dentro do framework.
+That is the internal API. The public one is `V.directive(name, hooks)`, which wraps the same
+mechanism in Vue-style lifecycle hooks (`created`, `mounted`, `updated`, `unmounted`) and gives
+each hook a `binding` with the evaluated `value`, `oldValue`, `arg` and `modifiers`. Use
+`V.directive` from application code; use `defineDirective` inside the framework.
 
-### Como acrescentar um teste
+### Adding a test
 
-Os testes ficam em [`packages/voodoojs/test/`](packages/voodoojs/test/) como `*.test.ts`, e rodam
-em vitest com jsdom. Um teste de directive monta o HTML, percorre com um escopo e verifica o DOM:
+Tests live in [`packages/voodoojs/test/`](packages/voodoojs/test/) as `*.test.ts`, and run under
+vitest with jsdom. A directive test mounts HTML, walks it with a scope, and asserts on the DOM:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -669,38 +655,38 @@ import { walk } from '../src/runtime/walker';
 import '../src/core';
 
 describe('v-shout', () => {
-  it('mostra o valor em caixa alta', async () => {
-    const dados = reactive({ mensagem: 'ola' });
-    const raiz = document.createElement('div');
-    raiz.innerHTML = '<p v-shout="mensagem"></p>';
-    document.body.appendChild(raiz);
-    walk(raiz, new Scope(dados));
+  it('renders the value in upper case', async () => {
+    const data = reactive({ message: 'hello' });
+    const root = document.createElement('div');
+    root.innerHTML = '<p v-shout="message"></p>';
+    document.body.appendChild(root);
+    walk(root, new Scope(data));
 
-    expect(raiz.textContent).toBe('OLA');
+    expect(root.textContent).toBe('HELLO');
 
-    dados.mensagem = 'tchau';
+    data.message = 'bye';
     await nextTick();
     await nextTick();
-    expect(raiz.textContent).toBe('TCHAU');
+    expect(root.textContent).toBe('BYE');
   });
 });
 ```
 
-**A regra de ouro: toda correção de bug entra junto com um teste de regressão.** Se quebrou uma
-vez pode quebrar de novo, e o teste é o que impede.
+**The golden rule: every bug fix ships with a regression test.** If it broke once it can break
+again, and the test is what stops it.
 
-O detalhe completo está no [`CONTRIBUTING.md`](CONTRIBUTING.md), e todo mundo deve seguir o
+The full detail is in [`CONTRIBUTING.md`](CONTRIBUTING.md), and everyone is expected to follow the
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
-## Licença
+## License
 
-[MIT](LICENSE) © contribuidores da Voodoo.js.
+[MIT](LICENSE) © Voodoo.js contributors.
 
 ---
 
 <div align="center">
 
-**Prefer to read in English?** → [README.en.md](README.en.md)
+**Prefere ler em português?** → [README.pt-BR.md](README.pt-BR.md)
 
 <sub>JavaScript feels like magic.</sub>
 

@@ -55,7 +55,7 @@ A visão completa, com o caminho de uma atualização e as fronteiras entre mód
 
 - Português do Brasil em comentários de código e na documentação de `docs/`.
 - Inglês nos arquivos de raiz (`ARCHITECTURE.md`, `CONVENTIONS.md`, `SECURITY.md`,
-  `BROWSER_SUPPORT.md`, `QUALITY.md`, `ROADMAP.md`, `README.en.md`) e em `docs/en/`.
+  `BROWSER_SUPPORT.md`, `QUALITY.md`, `ROADMAP.md`, `README.pt-BR.md`) e em `docs/en/`.
 - **Nunca usar travessão.** Nem `—` nem `–`. Use vírgula, dois pontos ou ponto final.
 - TypeScript estrito, sem `any` implícito, com JSDoc nas funções exportadas.
 - Zero dependências externas em tempo de execução.
