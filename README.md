@@ -459,6 +459,20 @@ environment and how to reproduce every measurement.
 Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
 buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.
 
+**Tearing down a keyed list.** Profiling found that `destroy()` was reading `node.childNodes`, a
+live collection the DOM rebuilds on every access and invalidates on every mutation. Walking siblings
+instead cut the cost of clearing a large list by about a third:
+
+![v-for teardown: before and after](docs/media/vfor-teardown.svg)
+
+Measured on Node 24 with jsdom, medians of repeated runs, on one machine. Treat it as the shape of
+the change, not as an absolute number: your browser is not jsdom. The full method is in
+[`benchmarks/README.md`](benchmarks/README.md).
+
+One honest caveat from the same run: list *creation* at this size is dominated by the DOM itself.
+Inserting 4,000 nodes with no framework at all took longer in jsdom than Voodoo's whole render, so
+the creation numbers say more about the environment than about the framework.
+
 **Comparison against other frameworks.** The harness is in the repository — adapters for vanilla
 JavaScript, Alpine, Vue, React, Preact, Svelte and Solid, with pinned versions, production builds
 and a check that every one produces the same DOM. **The results are not published yet**, so there

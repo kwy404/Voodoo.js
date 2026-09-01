@@ -470,6 +470,20 @@ reproduzir cada medição.
 O JavaScript puro é o teto aqui, e a Voodoo cobra um custo real pela produtividade que entrega. A
 função destes números é mostrar o tamanho desse custo, não fingir que ele é zero.
 
+**Desmontar uma lista com chave.** O perfil mostrou que o `destroy()` lia `node.childNodes`, uma
+coleção viva que o DOM reconstrói a cada acesso e invalida a cada mudança na árvore. Trocar por
+travessia entre irmãos cortou cerca de um terço do custo de limpar uma lista grande:
+
+![Desmontagem do v-for: antes e depois](docs/media/vfor-teardown.svg)
+
+Medido no Node 24 com jsdom, medianas de execuções repetidas, em uma máquina só. Leia como a forma
+da mudança, e não como número absoluto: o seu navegador não é o jsdom. A metodologia completa está
+em [`benchmarks/README.md`](benchmarks/README.md).
+
+Uma ressalva honesta da mesma medição: a *criação* da lista nesse tamanho é dominada pelo próprio
+DOM. Inserir 4.000 nós sem framework nenhum levou mais tempo no jsdom do que a renderização inteira
+da Voodoo, então os números de criação dizem mais sobre o ambiente do que sobre o framework.
+
 **Comparação com outros frameworks.** A infraestrutura está no repositório — adaptadores para
 JavaScript puro, Alpine, Vue, React, Preact, Svelte e Solid, com versões fixas, builds de produção
 e validação de que todos produzem o mesmo DOM. **Os resultados ainda não foram publicados**, e por

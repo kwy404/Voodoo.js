@@ -118,11 +118,18 @@ export function addCleanup(node: Node, fn: () => void): void {
 export function destroy(node: Node): void {
   if (node.nodeType === 1) {
     // Percorre os filhos antes, para desmontar de dentro para fora.
-    const children = node.childNodes;
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i];
-      if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+    //
+    // A caminhada e por irmaos, e nao por `childNodes`. A lista de filhos e
+    // viva: o navegador a reconstroi a cada acesso e a invalida a cada
+    // mudanca na arvore. Em uma lista grande sendo desmontada, indexar essa
+    // lista dentro do laco passou a dominar o custo inteiro da limpeza, como
+    // o perfil de CPU mostrou. `firstChild` e `nextSibling` leem o mesmo, sem
+    // materializar coleccao nenhuma.
+    const filhos: Node[] = [];
+    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
+      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
     }
+    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -252,14 +259,32 @@ function priorityOf(attr: ParsedAttribute): number {
  */
 const directiveIndex = new Map<string, Set<Element>>();
 
+/**
+ * Nomes sob os quais cada elemento foi indexado.
+ *
+ * Sem este mapa, tirar um elemento do indice obrigava a percorrer o Set de
+ * todas as directives registradas, que hoje passam de oitenta. Limpar uma
+ * lista de dez mil linhas custava quase um milhao de operacoes so para
+ * desfazer indice. Com ele, a limpeza toca apenas os nomes que aquele elemento
+ * realmente declarou, que sao dois ou tres.
+ */
+const directiveNamesOf = new WeakMap<Element, Set<string>>();
+
 function indexDirective(el: Element, name: string): void {
   let set = directiveIndex.get(name);
   if (!set) directiveIndex.set(name, (set = new Set()));
   set.add(el);
+
+  let names = directiveNamesOf.get(el);
+  if (!names) directiveNamesOf.set(el, (names = new Set()));
+  names.add(name);
 }
 
 function unindexElement(el: Element): void {
-  for (const set of directiveIndex.values()) set.delete(el);
+  const names = directiveNamesOf.get(el);
+  if (!names) return;
+  for (const name of names) directiveIndex.get(name)?.delete(el);
+  directiveNamesOf.delete(el);
 }
 
 /** `true` quando o elemento declarou a directive, mesmo ja limpa do HTML. */
@@ -285,10 +310,14 @@ export function queryDirective(root: ParentNode, name: string): HTMLElement[] {
   }
 
   // Elementos ainda nao processados continuam com o atributo no HTML.
+  // O conjunto evita o `includes` dentro do laco, que era quadratico.
+  const vistos = new Set<Element>(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (!out.includes(el as HTMLElement)) out.push(el as HTMLElement);
+    if (vistos.has(el)) continue;
+    vistos.add(el);
+    out.push(el as HTMLElement);
   }
 
   // Ordem do documento, para a navegacao por teclado ficar previsivel.
@@ -638,11 +667,11 @@ export function walk(node: Node, scope?: Scope): void {
 }
 
 function walkChildren(el: Element, scope: Scope): void {
-  const children = el.childNodes;
-  // Copia porque directives podem alterar a lista durante a caminhada.
+  // Copia porque directives podem alterar a lista durante a caminhada, e a
+  // leitura e por irmaos pelo mesmo motivo do `destroy`: `childNodes` e uma
+  // lista viva, cara de materializar e invalidada a cada mudanca.
   const list: Node[] = [];
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
+  for (let child = el.firstChild; child; child = child.nextSibling) {
     if (child.nodeType === 1) list.push(child);
     else if (child.nodeType === 3) bindTextNode(child as Text, scope);
   }

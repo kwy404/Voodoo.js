@@ -78,10 +78,14 @@ export function nextTick<T = void>(fn?: () => T): Promise<T | void> {
 }
 
 export function queueJob(job: ReactiveEffect): void {
-  if (!queue.includes(job)) {
-    queue.push(job);
-    queueFlush();
-  }
+  // A marca no proprio efeito substitui o `queue.includes(job)` de antes, que
+  // varria a fila inteira a cada enfileiramento. Com muitos efeitos distintos
+  // invalidados no mesmo tick o custo era quadratico: mil efeitos custavam meio
+  // milhao de comparacoes so para descobrir que nenhum estava repetido.
+  if (job.queued) return;
+  job.queued = true;
+  queue.push(job);
+  queueFlush();
 }
 
 /** Agenda um callback para rodar depois que o DOM foi atualizado. */
@@ -123,6 +127,9 @@ function flushJobs(): void {
       }
     }
   } finally {
+    // Libera a marca de todo mundo que estava na fila, inclusive de quem
+    // entrou durante o proprio flush.
+    for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
 
@@ -210,6 +217,8 @@ let effectId = 0;
 export class ReactiveEffect<T = any> {
   readonly id = effectId++;
   active = true;
+  /** `true` enquanto o efeito espera na fila do agendador. */
+  queued = false;
   deps: Dep[] = [];
   parent: ReactiveEffect | undefined = undefined;
   scheduler: EffectScheduler | undefined;

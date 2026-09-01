@@ -354,8 +354,12 @@ defineDirective(
       });
 
       // Remove os blocos que sairam da lista.
+      // O conjunto guarda quem foi reaproveitado por identidade. Antes isso era
+      // `next.includes(block)`, uma varredura dentro de um laco que ja percorre
+      // a lista: em dez mil linhas davam cem milhoes de comparacoes.
+      const reaproveitados = new Set<ForBlock>(next);
       for (const block of blocks) {
-        if (used.has(block.key) && next.includes(block)) continue;
+        if (used.has(block.key) && reaproveitados.has(block)) continue;
         for (const node of block.nodes) {
           destroy(node);
           (node as ChildNode).remove();

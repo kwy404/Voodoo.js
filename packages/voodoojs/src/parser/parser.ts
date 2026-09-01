@@ -512,9 +512,27 @@ export function parse(source: string): Node {
 
   const node = new Parser(tokenize(source), source).parseProgram();
 
-  if (cache.size >= MAX_CACHE) cache.clear();
+  if (cache.size >= MAX_CACHE) evictOldest();
   cache.set(source, node);
   return node;
+}
+
+/**
+ * Descarta a metade mais antiga do cache quando ele enche.
+ *
+ * Antes isto era `cache.clear()`. Uma pagina que passasse do teto perdia tudo
+ * de uma vez, inclusive as expressoes que estavam em uso naquele instante, e
+ * voltava a analisar todas elas do zero. `Map` preserva a ordem de insercao,
+ * entao remover a metade mais antiga mantem no lugar o que entrou por ultimo,
+ * que e o que a pagina esta usando agora.
+ */
+function evictOldest(): void {
+  const alvo = Math.floor(MAX_CACHE / 2);
+  let removidos = 0;
+  for (const chave of cache.keys()) {
+    cache.delete(chave);
+    if (++removidos >= alvo) break;
+  }
 }
 
 /** Limpa o cache de expressoes. Usado em testes e no hot reload. */
