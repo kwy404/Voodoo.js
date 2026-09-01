@@ -1,27 +1,27 @@
 /**
  * @module ui/dialog
  *
- * Motor de dialogos acessiveis: modal generico, `alert`, `confirm` e `prompt`.
+ * Accessible dialog engine: generic modal, `alert`, `confirm`, and `prompt`.
  *
- * Todos compartilham o mesmo nucleo: fundo escurecido, trava de rolagem, foco
- * preso dentro do painel, devolucao do foco ao fechar, fechamento por Escape ou
- * clique no fundo, animacao de entrada e saida e empilhamento de varios
- * dialogos abertos ao mesmo tempo.
+ * All share the same core: darkened backdrop, scroll lock, focus trapped
+ * within the panel, focus restored on close, closing via Escape or backdrop
+ * click, entrance and exit animations, and stacking of multiple open dialogs
+ * at the same time.
  *
  * ```js
  * V.modal.open('#login')
- * await V.alert('Arquivo enviado.')
- * if (await V.confirm('Excluir o pedido?')) remover()
- * const nome = await V.prompt('Como devemos te chamar?')
+ * await V.alert('File uploaded.')
+ * if (await V.confirm('Delete the order?')) remove()
+ * const name = await V.prompt('What should we call you?')
  * ```
  *
  * ```html
- * <button v-modal="#login">Entrar</button>
+ * <button v-modal="#login">Sign in</button>
  * <div id="login" v-modal-content>
- *   <h2>Entrar</h2>
- *   <button v-modal-close>Fechar</button>
+ *   <h2>Sign in</h2>
+ *   <button v-modal-close>Close</button>
  * </div>
- * <button v-confirm="Excluir mesmo?" v-click="excluir()">Excluir</button>
+ * <button v-confirm="Delete for real?" v-click="remove()">Delete</button>
  * ```
  */
 
@@ -33,39 +33,39 @@ import { uid } from '../utils';
 import { ensurePalette } from './palette';
 
 // ---------------------------------------------------------------------------
-// Textos padrao
+// Default text
 // ---------------------------------------------------------------------------
 
-/** Textos dos botoes e mensagens padrao, todos configuraveis. */
+/** Button texts and default messages, all configurable. */
 export interface DialogLabels {
   confirm: string;
   cancel: string;
   ok: string;
   close: string;
-  /** Mensagem usada por `v-confirm` quando o atributo vem vazio. */
+  /** Message used by `v-confirm` when the attribute is empty. */
   confirmQuestion: string;
-  /** Erro mostrado pelo `prompt` quando o campo obrigatorio fica vazio. */
+  /** Error shown by `prompt` when the required field is empty. */
   required: string;
 }
 
 const labels: DialogLabels = {
-  confirm: 'Confirmar',
-  cancel: 'Cancelar',
+  confirm: 'Confirm',
+  cancel: 'Cancel',
   ok: 'OK',
-  close: 'Fechar',
-  confirmQuestion: 'Tem certeza?',
-  required: 'Preencha este campo.',
+  close: 'Close',
+  confirmQuestion: 'Are you sure?',
+  required: 'Please fill in this field.',
 };
 
 const settings = {
-  /** Duracao da animacao de entrada e saida, em milissegundos. */
+  /** Duration of entrance and exit animation, in milliseconds. */
   duration: 220,
-  /** Tamanho padrao dos dialogos criados por `dialog()`. */
+  /** Default size of dialogs created by `dialog()`. */
   size: 'md' as DialogSize,
 };
 
 // ---------------------------------------------------------------------------
-// Estilo
+// Styling
 // ---------------------------------------------------------------------------
 
 const CSS = `
@@ -173,7 +173,7 @@ function ensureStyles(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Icones
+// Icons
 // ---------------------------------------------------------------------------
 
 const ICONS: Record<string, string> = {
@@ -186,62 +186,62 @@ const ICONS: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
 export type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 export type DialogTone = 'default' | 'success' | 'warning' | 'danger';
 export type DialogIcon = 'info' | 'success' | 'warning' | 'danger' | 'question' | 'none';
 
-/** Opcoes comuns a qualquer dialogo. */
+/** Common options for any dialog. */
 export interface ModalOptions {
-  /** Fecha ao clicar no fundo escurecido. Padrao `true`. */
+  /** Close when clicking the darkened backdrop. Default `true`. */
   closeOnBackdrop?: boolean;
-  /** Fecha ao pressionar Escape. Padrao `true`. */
+  /** Close when pressing Escape. Default `true`. */
   closeOnEscape?: boolean;
-  /** Largura maxima do painel. Padrao `md`. */
+  /** Maximum width of the panel. Default `md`. */
   size?: DialogSize;
-  /** Alinhamento vertical. Padrao `center`. */
+  /** Vertical alignment. Default `center`. */
   position?: 'center' | 'top';
-  /** Trava a rolagem da pagina enquanto estiver aberto. Padrao `true`. */
+  /** Lock page scrolling while open. Default `true`. */
   lockScroll?: boolean;
-  /** Devolve o foco ao elemento anterior ao fechar. Padrao `true`. */
+  /** Restore focus to the previous element on close. Default `true`. */
   restoreFocus?: boolean;
-  /** Mostra o botao de fechar no canto. Padrao `true`. */
+  /** Show the close button in the corner. Default `true`. */
   closable?: boolean;
-  /** Remove fundo, borda e sombra do painel. */
+  /** Remove background, border, and shadow from the panel. */
   plain?: boolean;
-  /** Classes extras aplicadas ao painel. */
+  /** Extra classes applied to the panel. */
   className?: string;
-  /** Seletor ou elemento que recebe o foco inicial. */
+  /** Selector or element that receives initial focus. */
   initialFocus?: string | HTMLElement | null;
-  /** Rotulo lido por leitores de tela quando nao ha titulo visivel. */
+  /** Label read by screen readers when there is no visible title. */
   ariaLabel?: string;
   onOpen?(handle: DialogHandle): void;
   onClose?(result: unknown, handle: DialogHandle): void;
 }
 
-/** Controle de um dialogo aberto. */
+/** Control of an open dialog. */
 export interface DialogHandle {
   id: string;
-  /** Camada fixa que cobre a tela. */
+  /** Fixed layer covering the screen. */
   root: HTMLElement;
-  /** Painel onde o conteudo aparece. */
+  /** Panel where the content appears. */
   panel: HTMLElement;
-  /** Corpo do painel, util para injetar conteudo depois de aberto. */
+  /** Panel body, useful for injecting content after opening. */
   body: HTMLElement;
-  /** Chave usada por `modal.close('#login')`. */
+  /** Key used by `modal.close('#login')`. */
   key: string | null;
-  /** Elemento da pagina adotado pelo dialogo, quando houver. */
+  /** Page element adopted by the dialog, if any. */
   source: HTMLElement | null;
-  /** Fecha o dialogo, resolvendo `closed` com o resultado. */
+  /** Close the dialog, resolving `closed` with the result. */
   close(result?: unknown): void;
-  /** Resolvida quando o dialogo termina de fechar. */
+  /** Resolved when the dialog finishes closing. */
   closed: Promise<unknown>;
 }
 
 // ---------------------------------------------------------------------------
-// Pilha, trava de rolagem e foco
+// Stack, scroll lock, and focus management
 // ---------------------------------------------------------------------------
 
 interface StackEntry {
@@ -312,8 +312,8 @@ function onKeydown(event: KeyboardEvent): void {
   }
 
   if (event.key !== 'Tab') return;
-  // Prende o foco: Tab no ultimo volta ao primeiro, Shift+Tab no primeiro vai
-  // para o ultimo.
+  // Trap focus: Tab on the last element returns to first, Shift+Tab on first
+  // goes to the last.
   const items = focusableIn(entry.handle.panel);
   if (!items.length) {
     event.preventDefault();
@@ -338,7 +338,7 @@ function onFocusIn(event: FocusEvent): void {
   if (!entry) return;
   const target = event.target as Node | null;
   if (target && entry.handle.root.contains(target)) return;
-  // O foco escapou do dialogo, normalmente pelo Tab do navegador. Traz de volta.
+  // Focus escaped the dialog, typically via browser Tab. Bring it back.
   const items = focusableIn(entry.handle.panel);
   (items[0] ?? entry.handle.panel).focus();
 }
@@ -358,13 +358,13 @@ function stopListening(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Abertura e fechamento
+// Opening and closing
 // ---------------------------------------------------------------------------
 
 interface OpenRequest extends ModalOptions {
-  /** Conteudo montado que vira o corpo do painel. */
+  /** Mounted content that becomes the panel body. */
   content?: Node | null;
-  /** Elemento da pagina que sera adotado e devolvido ao fechar. */
+  /** Page element to be adopted and returned on close. */
   source?: HTMLElement | null;
   key?: string | null;
   role?: 'dialog' | 'alertdialog';
@@ -408,8 +408,8 @@ function openDialog(request: OpenRequest): DialogHandle {
   body.className = 'v-dialog-body';
 
   if (request.source) {
-    // O elemento da pagina vira o conteudo. A ancora guarda o lugar original
-    // para devolve-lo exatamente onde estava quando o dialogo fechar.
+    // The page element becomes the content. The anchor saves the original location
+    // to return it exactly where it was when the dialog closes.
     const anchor = document.createComment(' v-modal ');
     request.source.parentNode?.insertBefore(anchor, request.source);
     sourceAnchors.set(request.source, anchor);
@@ -460,8 +460,8 @@ function openDialog(request: OpenRequest): DialogHandle {
       root.classList.add('is-closing');
 
       const finish = (): void => {
-        // O elemento adotado volta ao lugar antes de remover a camada, senao o
-        // observador do DOM desmontaria as directives dele.
+        // The adopted element is returned to its place before removing the layer,
+        // otherwise the DOM observer would unmount its directives.
         const source = request.source;
         if (source) {
           const anchor = sourceAnchors.get(source);
@@ -501,9 +501,9 @@ function openDialog(request: OpenRequest): DialogHandle {
     locked: request.lockScroll !== false,
   };
 
-  // Fecha apenas quando o clique inteiro acontece no fundo. Um arraste que
-  // comeca dentro do painel gera o clique na raiz, nao no fundo, e por isso
-  // nao fecha o dialogo.
+  // Close only when the entire click happens on the backdrop. A drag that
+  // starts inside the panel generates a click on the root, not the backdrop,
+  // and therefore does not close the dialog.
   backdrop.addEventListener('click', () => {
     if (request.closeOnBackdrop === false) return;
     handle.close(undefined);
@@ -568,7 +568,7 @@ function findByKey(key: string): StackEntry | undefined {
 }
 
 /**
- * Controle dos modais montados a partir de elementos que ja existem na pagina.
+ * Control of modals created from elements already on the page.
  *
  * ```js
  * V.modal.open('#login', { size: 'sm' })
@@ -577,19 +577,19 @@ function findByKey(key: string): StackEntry | undefined {
  * ```
  */
 export const modal = {
-  /** Abre um elemento da pagina como modal. Aceita seletor ou o proprio elemento. */
+  /** Open a page element as a modal. Accepts a selector or the element itself. */
   open(target: string | HTMLElement, options: ModalOptions = {}): DialogHandle | null {
     const element = resolveTarget(target);
     if (!element) {
       // eslint-disable-next-line no-console
-      console.warn(`[Voodoo] modal.open: alvo nao encontrado (${String(target)}).`);
+      console.warn(`[Voodoo] modal.open: target not found (${String(target)}).`);
       return null;
     }
     const key = keyOf(target) ?? (element.id ? `#${element.id}` : null);
     const existing = key ? findByKey(key) : undefined;
     if (existing) return existing.handle;
 
-    // Um titulo dentro do conteudo vira o rotulo acessivel do dialogo.
+    // A title within the content becomes the accessible label of the dialog.
     const heading = element.querySelector<HTMLElement>('[data-dialog-title],h1,h2,h3');
     if (heading && !heading.id) heading.id = uid('v-dialog-title-');
 
@@ -601,7 +601,7 @@ export const modal = {
     });
   },
 
-  /** Fecha o modal indicado, ou o que estiver no topo da pilha. */
+  /** Close the indicated modal, or the one at the top of the stack. */
   close(target?: string | HTMLElement, result?: unknown): void {
     if (target === undefined) {
       top()?.handle.close(result);
@@ -612,12 +612,12 @@ export const modal = {
     entry?.handle.close(result);
   },
 
-  /** Fecha todos os dialogos abertos, do topo para a base. */
+  /** Close all open dialogs, from top to bottom. */
   closeAll(result?: unknown): void {
     for (const entry of [...stack].reverse()) entry.handle.close(result);
   },
 
-  /** Abre se estiver fechado, fecha se estiver aberto. */
+  /** Open if closed, close if open. */
   toggle(target: string | HTMLElement, options: ModalOptions = {}): DialogHandle | null {
     const key = keyOf(target);
     const entry = key ? findByKey(key) : undefined;
@@ -628,29 +628,29 @@ export const modal = {
     return this.open(target, options);
   },
 
-  /** Informa se um modal especifico, ou qualquer um, esta aberto. */
+  /** Check if a specific modal, or any, is open. */
   isOpen(target?: string | HTMLElement): boolean {
     if (target === undefined) return stack.length > 0;
     const key = keyOf(target);
     return !!(key && findByKey(key));
   },
 
-  /** Dialogos abertos, do mais antigo ao mais recente. */
+  /** Open dialogs, from oldest to newest. */
   get opened(): DialogHandle[] {
     return stack.map((entry) => entry.handle);
   },
 
-  /** Quantidade de dialogos abertos. */
+  /** Number of open dialogs. */
   get count(): number {
     return stack.length;
   },
 
-  /** Ajusta duracao da animacao e tamanho padrao. */
+  /** Adjust animation duration and default size. */
   configure(options: Partial<typeof settings>): void {
     Object.assign(settings, options);
   },
 
-  /** Troca os textos padrao dos botoes. */
+  /** Change the default button texts. */
   labels(next: Partial<DialogLabels>): DialogLabels {
     Object.assign(labels, next);
     return labels;
@@ -661,29 +661,29 @@ export const modal = {
 // dialog()
 // ---------------------------------------------------------------------------
 
-/** Botao mostrado no rodape de um dialogo. */
+/** Button shown in a dialog footer. */
 export interface DialogButton {
   label: string;
-  /** Valor entregue pela promessa quando este botao e clicado. */
+  /** Value delivered by the promise when this button is clicked. */
   value?: unknown;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-  /** Fecha o dialogo ao clicar. Padrao `true`. */
+  /** Close the dialog on click. Default `true`. */
   close?: boolean;
-  /** Recebe o foco assim que o dialogo abre. */
+  /** Receive focus as soon as the dialog opens. */
   autofocus?: boolean;
-  /** Executa antes de fechar. Devolver `false` mantem o dialogo aberto. */
+  /** Execute before closing. Return `false` to keep the dialog open. */
   onClick?(handle: DialogHandle): unknown;
 }
 
-/** Opcoes de `V.dialog()`. */
+/** Options for `V.dialog()`. */
 export interface DialogOptions extends ModalOptions {
   title?: string;
   description?: string;
-  /** Texto simples do corpo, inserido sem interpretar HTML. */
+  /** Plain text body, inserted without interpreting HTML. */
   text?: string;
-  /** HTML do corpo. Use apenas com conteudo proprio. */
+  /** Body HTML. Use only with your own content. */
   html?: string;
-  /** No pronto para virar o corpo, util para formularios montados a mao. */
+  /** Ready node to become the body, useful for hand-built forms. */
   node?: Node;
   buttons?: DialogButton[];
   icon?: DialogIcon;
@@ -691,20 +691,20 @@ export interface DialogOptions extends ModalOptions {
 }
 
 /**
- * Dialogo generico com titulo, descricao, conteudo e botoes.
+ * Generic dialog with title, description, content, and buttons.
  *
  * ```js
- * const escolha = await V.dialog({
- *   title: 'Publicar agora?',
- *   description: 'A alteracao fica visivel para todo mundo.',
+ * const choice = await V.dialog({
+ *   title: 'Publish now?',
+ *   description: 'The change will be visible to everyone.',
  *   buttons: [
- *     { label: 'Cancelar', variant: 'secondary', value: null },
- *     { label: 'Publicar', variant: 'primary', value: 'publicar', autofocus: true }
+ *     { label: 'Cancel', variant: 'secondary', value: null },
+ *     { label: 'Publish', variant: 'primary', value: 'publish', autofocus: true }
  *   ]
  * })
  * ```
  *
- * @returns o `value` do botao clicado, ou `null` quando o dialogo e dispensado
+ * @returns the `value` of the clicked button, or `null` when the dialog is dismissed
  */
 export function dialog<T = unknown>(options: DialogOptions): Promise<T | null> {
   ensureStyles();
@@ -804,7 +804,7 @@ export function dialog<T = unknown>(options: DialogOptions): Promise<T | null> {
       handle.panel.appendChild(foot);
     }
 
-    // O corpo vazio nao deve ocupar espaco entre o titulo e os botoes.
+    // Empty body should not take space between title and buttons.
     if (!handle.body.childNodes.length) handle.body.remove();
   });
 }
@@ -818,21 +818,21 @@ function toneOfIcon(icon: DialogIcon): string {
 // alert, confirm, prompt
 // ---------------------------------------------------------------------------
 
-/** Opcoes de `V.alert()`. */
+/** Options for `V.alert()`. */
 export interface AlertOptions extends ModalOptions {
   title?: string;
   description?: string;
   icon?: DialogIcon;
   tone?: DialogTone;
-  /** Texto do unico botao. Padrao `OK`. */
+  /** Text of the single button. Default `OK`. */
   confirmLabel?: string;
 }
 
 /**
- * Aviso com um unico botao.
+ * Alert with a single button.
  *
  * ```js
- * await V.alert('Pedido enviado com sucesso.', { icon: 'success' })
+ * await V.alert('Order sent successfully.', { icon: 'success' })
  * ```
  */
 export function alert(message: string, options: AlertOptions = {}): Promise<void> {
@@ -852,7 +852,7 @@ export function alert(message: string, options: AlertOptions = {}): Promise<void
   }).then(() => undefined);
 }
 
-/** Opcoes de `V.confirm()`. */
+/** Options for `V.confirm()`. */
 export interface ConfirmOptions extends ModalOptions {
   title?: string;
   description?: string;
@@ -860,15 +860,15 @@ export interface ConfirmOptions extends ModalOptions {
   tone?: DialogTone;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Atalho para `tone: 'danger'`, com botao vermelho. */
+  /** Shortcut for `tone: 'danger'`, with red button. */
   danger?: boolean;
 }
 
 /**
- * Pergunta de sim ou nao.
+ * Yes or no question.
  *
  * ```js
- * if (await V.confirm('Excluir o pedido?', { danger: true })) remover()
+ * if (await V.confirm('Delete the order?', { danger: true })) remove()
  * ```
  */
 export function confirm(message: string, options: ConfirmOptions = {}): Promise<boolean> {
@@ -891,39 +891,39 @@ export function confirm(message: string, options: ConfirmOptions = {}): Promise<
   }).then((result) => result === true);
 }
 
-/** Tipos aceitos pelo campo do `prompt`. */
+/** Types accepted by the `prompt` field. */
 export type PromptType = 'text' | 'password' | 'email' | 'number' | 'textarea';
 
-/** Opcoes de `V.prompt()`. */
+/** Options for `V.prompt()`. */
 export interface PromptOptions extends ModalOptions {
   title?: string;
   description?: string;
   icon?: DialogIcon;
   type?: PromptType;
-  /** Valor inicial do campo. */
+  /** Initial field value. */
   value?: string;
   placeholder?: string;
   hint?: string;
   required?: boolean;
   confirmLabel?: string;
   cancelLabel?: string;
-  /** Devolva uma mensagem para bloquear o envio, ou `null` para liberar. */
+  /** Return a message to block submission, or `null` to allow. */
   validate?(value: string): string | null | undefined;
 }
 
 /**
- * Pergunta que espera um texto. O campo ja abre focado e a validacao mantem o
- * dialogo aberto enquanto o valor nao for aceito.
+ * Question expecting text input. The field opens focused and validation keeps
+ * the dialog open until the value is accepted.
  *
  * ```js
- * const email = await V.prompt('E-mail para contato', {
+ * const email = await V.prompt('Contact email', {
  *   type: 'email',
  *   required: true,
- *   validate: (v) => v.includes('@') ? null : 'Informe um e-mail valido.'
+ *   validate: (v) => v.includes('@') ? null : 'Please enter a valid email.'
  * })
  * ```
  *
- * @returns o texto digitado, ou `null` quando o usuario cancela
+ * @returns the typed text, or `null` when the user cancels
  */
 export function prompt(label: string, options: PromptOptions = {}): Promise<string | null> {
   ensureStyles();
@@ -996,7 +996,7 @@ export function prompt(label: string, options: PromptOptions = {}): Promise<stri
 
   let confirmHandle: DialogHandle | null = null;
 
-  // Enter envia, menos no textarea, onde a tecla precisa quebrar a linha.
+  // Enter submits, except in textarea, where the key needs to break the line.
   const control: HTMLElement = input;
   control.addEventListener('keydown', (event: Event) => {
     const key = event as KeyboardEvent;
@@ -1037,8 +1037,8 @@ export function prompt(label: string, options: PromptOptions = {}): Promise<stri
 // ---------------------------------------------------------------------------
 
 /**
- * `v-modal="#login"` abre o modal ao clicar.
- * Modificadores: `.close` fecha em vez de abrir, `.toggle` alterna.
+ * `v-modal="#login"` opens the modal on click.
+ * Modifiers: `.close` closes instead of opening, `.toggle` toggles.
  */
 defineDirective('modal', ({ el, expression, modifiers, cleanup }) => {
   const target = expression.trim();
@@ -1062,8 +1062,8 @@ defineDirective('modal', ({ el, expression, modifiers, cleanup }) => {
 });
 
 /**
- * `v-modal-content` marca um trecho da pagina como conteudo de modal. O bloco
- * fica escondido ate que `modal.open()` o adote.
+ * `v-modal-content` marks a section of the page as modal content. The block
+ * stays hidden until `modal.open()` adopts it.
  */
 defineDirective(
   'modal-content',
@@ -1075,7 +1075,7 @@ defineDirective(
   { priority: PRIORITY.REF }
 );
 
-/** `v-modal-close` fecha o dialogo que contem o elemento. */
+/** `v-modal-close` closes the dialog containing the element. */
 defineDirective('modal-close', ({ el, expression, cleanup }) => {
   const handler = (event: Event): void => {
     event.preventDefault();
@@ -1088,14 +1088,14 @@ defineDirective('modal-close', ({ el, expression, cleanup }) => {
   cleanup(() => el.removeEventListener('click', handler));
 });
 
-// Enquanto o clique confirmado e reencenado, a guarda deixa o evento passar.
+// While the confirmed click is replaying, the guard lets the event through.
 let replaying = false;
 
 /**
- * `v-confirm="Tem certeza?"` intercepta o clique, faz a pergunta e so libera a
- * acao original depois do sim. Funciona junto de `v-click`, `@click`, links e
- * botoes de envio no mesmo elemento, porque a guarda roda na fase de captura,
- * antes de qualquer outro ouvinte.
+ * `v-confirm="Are you sure?"` intercepts the click, asks the question, and only
+ * releases the original action after a yes. Works with `v-click`, `@click`, links,
+ * and submit buttons on the same element, because the guard runs in the capture phase,
+ * before any other listener.
  */
 defineDirective(
   'confirm',
@@ -1108,7 +1108,7 @@ defineDirective(
       event.stopImmediatePropagation();
 
       const origin = (event.target instanceof HTMLElement ? event.target : el) as HTMLElement;
-      // Lidos pelo cache, porque o clique acontece depois da limpeza do HTML.
+      // Read via cache, because the click happens after HTML cleanup.
       const title = readAttr(el, `${config.prefix}confirm-title`) ?? undefined;
       const confirmLabel = readAttr(el, `${config.prefix}confirm-label`) ?? undefined;
       const cancelLabel = readAttr(el, `${config.prefix}confirm-cancel`) ?? undefined;
@@ -1137,7 +1137,7 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// Variaveis magicas
+// Magic variables
 // ---------------------------------------------------------------------------
 
 magic('$modal', () => modal);

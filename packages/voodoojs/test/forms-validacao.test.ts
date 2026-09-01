@@ -535,7 +535,7 @@ describe('regra propria', () => {
     const el = campo('<input name="x" v-explode value="a">');
 
     expect((await validateField(el)).valid).toBe(true);
-    expect(String(aviso.mock.calls[0][0])).toContain('Regra "explode" falhou');
+    expect(String(aviso.mock.calls[0][0])).toContain('Rule "explode" failed to execute');
     aviso.mockRestore();
   });
 
@@ -545,7 +545,7 @@ describe('regra propria', () => {
     // Com um valor so, min e max apontam para ele.
     expect(formatMessage('entre {min} e {max}', { param: '5' })).toBe('entre 5 e 5');
     expect(formatMessage('{field}: {value}', { field: 'Nome', value: 'x' })).toBe('Nome: x');
-    expect(formatMessage('{field}', {})).toBe('campo');
+    expect(formatMessage('{field}', {})).toBe('field');
     // Chave desconhecida fica como esta.
     expect(formatMessage('{fantasma}', {})).toBe('{fantasma}');
   });
@@ -626,7 +626,7 @@ describe('leitura do campo', () => {
   it('fieldKey usa name, depois id, depois a tag', () => {
     expect(fieldKey(campo('<input name="a" id="b">'))).toBe('a');
     expect(fieldKey(campo('<input id="b">'))).toBe('b');
-    expect(fieldKey(campo('<select></select>'))).toBe('campo-select');
+    expect(fieldKey(campo('<select></select>'))).toBe('field-select');
   });
 
   it('fieldLabel procura v-label, label[for], label em volta e cai no name', () => {
@@ -641,7 +641,7 @@ describe('leitura do campo', () => {
     expect(fieldLabel(campo('<input aria-label="Busca">'))).toBe('Busca');
     expect(fieldLabel(campo('<input placeholder="Digite">'))).toBe('Digite');
     expect(fieldLabel(campo('<input name="email">'))).toBe('email');
-    expect(fieldLabel(campo('<input>'))).toBe('campo');
+    expect(fieldLabel(campo('<input>'))).toBe('field');
   });
 
   it('isFormField reconhece so os tres elementos de formulario', () => {
@@ -1270,9 +1270,9 @@ describe('directive v-mask', () => {
     montar('<input v-mask="  ">');
 
     const textos = aviso.mock.calls.map((c) => String(c[0]));
-    expect(textos.some((t) => t.includes('so funciona em input'))).toBe(true);
+    expect(textos.some((t) => t.includes('only works on input or textarea'))).toBe(true);
     expect(textos.some((t) => t.includes('type="number"'))).toBe(true);
-    expect(textos.some((t) => t.includes('precisa de um padrao'))).toBe(true);
+    expect(textos.some((t) => t.includes('needs a pattern'))).toBe(true);
     aviso.mockRestore();
   });
 
@@ -1361,7 +1361,7 @@ describe('directive v-mask-currency', () => {
   it('avisa quando o alvo nao serve', () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     montar('<div v-mask-currency></div>');
-    expect(String(aviso.mock.calls[0][0])).toContain('so funciona em input');
+    expect(String(aviso.mock.calls[0][0])).toContain('only works on input or textarea');
     aviso.mockRestore();
   });
 });

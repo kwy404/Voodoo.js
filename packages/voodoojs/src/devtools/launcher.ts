@@ -1,32 +1,31 @@
 /**
  * @module devtools/launcher
  *
- * Widget flutuante das devtools.
+ * Floating widget for devtools.
  *
- * O inspetor `xray` sempre existiu, mas so abria por chamada no console. Este
- * modulo coloca um botao na propria pagina: ele aparece quando as devtools
- * estao ligadas, mostra atividade em tempo real e abre o painel completo com um
- * clique.
+ * The `xray` inspector always existed, but only opened via console call. This
+ * module adds a button to the page itself: it appears when devtools are on,
+ * shows live activity, and opens the full panel with a click.
  *
- * Ligar pelo HTML, sem escrever JavaScript nenhum:
+ * Enable via HTML without writing any JavaScript:
  *
  * ```html
  * <script src="voodoo.full.min.js" devtools defer></script>
  * ```
  *
- * As formas equivalentes tambem valem: `data-devtools`, `devtools="true"` e
- * `window.VOODOO_DEVTOOLS = true` antes do carregamento.
+ * Equivalent forms also work: `data-devtools`, `devtools="true"` and
+ * `window.VOODOO_DEVTOOLS = true` before loading.
  *
- * Ligar por JavaScript:
+ * Enable via JavaScript:
  *
  * ```js
- * V.devtoolsWidget()       // alterna
- * V.devtoolsWidget(true)   // mostra
- * V.devtoolsWidget(false)  // esconde
+ * V.devtoolsWidget()       // toggle
+ * V.devtoolsWidget(true)   // show
+ * V.devtoolsWidget(false)  // hide
  * ```
  *
- * O modulo nao faz nada ao ser importado: nenhum listener, nenhum estilo e
- * nenhum timer existe antes da primeira chamada de `mountDevtoolsWidget()`.
+ * The module does nothing when imported: no listeners, no styles, and
+ * no timers exist before the first call to `mountDevtoolsWidget()`.
  */
 
 import { injectStyle } from '../dom/style';
@@ -35,16 +34,16 @@ import { devtoolsBus } from './bus';
 import { isXrayEnabled, xray } from './xray';
 
 // ---------------------------------------------------------------------------
-// Estado do modulo
+// Module state
 // ---------------------------------------------------------------------------
 
-/** Onde a posicao arrastada fica guardada entre recarregamentos. */
+/** Where the dragged position is saved between reloads. */
 const POSICAO_KEY = 'voodoo:devtools:widget-position';
 
-/** Marca que o desenvolvedor escondeu o widget nesta aba. */
+/** Marks that the developer hid the widget in this tab. */
 const ESCONDIDO_KEY = 'voodoo:devtools:widget-hidden';
 
-/** Distancia minima em pixels para o gesto contar como arrasto, nao clique. */
+/** Minimum distance in pixels for the gesture to count as drag, not click. */
 const LIMIAR_ARRASTO = 4;
 
 interface Refs {
@@ -62,7 +61,7 @@ let timerPulso = 0;
 let desligar: Array<() => void> = [];
 
 // ---------------------------------------------------------------------------
-// Estilo
+// Styles
 // ---------------------------------------------------------------------------
 
 const WIDGET_CSS = `
@@ -198,14 +197,14 @@ const WIDGET_CSS = `
 }
 `;
 
-/** Marca da Voodoo desenhada em SVG, para o widget nao depender de arquivo. */
+/** Voodoo mark drawn in SVG, so the widget doesn't depend on a file. */
 const MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 <path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
 </svg>`;
 
 // ---------------------------------------------------------------------------
-// Posicao
+// Position
 // ---------------------------------------------------------------------------
 
 interface Posicao {
@@ -229,11 +228,11 @@ function gravarPosicao(pos: Posicao): void {
   try {
     localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
   } catch {
-    // Armazenamento bloqueado: o widget so nao lembra a posicao.
+    // Storage blocked: the widget just won't remember the position.
   }
 }
 
-/** Mantem o widget dentro da janela, mesmo depois de redimensionar. */
+/** Keeps the widget inside the window, even after resizing. */
 function aplicarPosicao(raiz: HTMLElement, pos: Posicao): void {
   const largura = raiz.offsetWidth || 120;
   const altura = raiz.offsetHeight || 38;
@@ -246,7 +245,7 @@ function aplicarPosicao(raiz: HTMLElement, pos: Posicao): void {
 }
 
 // ---------------------------------------------------------------------------
-// Construcao
+// Construction
 // ---------------------------------------------------------------------------
 
 function construir(): Refs {
@@ -257,9 +256,9 @@ function construir(): Refs {
   const botao = document.createElement('button');
   botao.type = 'button';
   botao.className = 'v-devtools-btn';
-  botao.setAttribute('aria-label', 'Abrir as devtools da Voodoo (Ctrl+Shift+X)');
+  botao.setAttribute('aria-label', 'Open Voodoo devtools (Ctrl+Shift+X)');
   botao.setAttribute('aria-pressed', 'false');
-  botao.title = 'Devtools da Voodoo — clique para inspecionar, arraste para mover (Ctrl+Shift+X)';
+  botao.title = 'Voodoo devtools — click to inspect, drag to move (Ctrl+Shift+X)';
   botao.innerHTML = MARCA;
 
   const rotulo = document.createElement('span');
@@ -279,8 +278,8 @@ function construir(): Refs {
   const fechar = document.createElement('button');
   fechar.type = 'button';
   fechar.className = 'v-devtools-close';
-  fechar.setAttribute('aria-label', 'Esconder o widget das devtools nesta aba');
-  fechar.title = 'Esconder nesta aba';
+  fechar.setAttribute('aria-label', 'Hide the devtools widget in this tab');
+  fechar.title = 'Hide in this tab';
   fechar.textContent = '×';
 
   raiz.append(botao, fechar);
@@ -298,14 +297,14 @@ function construir(): Refs {
 }
 
 // ---------------------------------------------------------------------------
-// Arrasto
+// Dragging
 // ---------------------------------------------------------------------------
 
 /**
- * Liga o arrasto do widget. Devolve a funcao de limpeza.
+ * Enables widget dragging. Returns the cleanup function.
  *
- * O gesto so vira arrasto depois de passar do limiar; abaixo disso o ponteiro
- * solta como clique normal, entao o botao continua clicavel.
+ * The gesture only becomes a drag after passing the threshold; below that the
+ * pointer releases as a normal click, so the button stays clickable.
  */
 function ligarArrasto(refs: Refs, aoClicar: () => void): () => void {
   let arrastando = false;
@@ -349,7 +348,7 @@ function ligarArrasto(refs: Refs, aoClicar: () => void): () => void {
     gravarPosicao({ x: caixa.left, y: caixa.top });
   };
 
-  // O teclado nunca passa pelo arrasto: Enter e Espaco disparam o clique nativo.
+  // Keyboard never goes through dragging: Enter and Space trigger native click.
   const aoTeclar = (evento: KeyboardEvent): void => {
     if (evento.key !== 'Enter' && evento.key !== ' ') return;
     evento.preventDefault();
@@ -379,14 +378,14 @@ function ligarArrasto(refs: Refs, aoClicar: () => void): () => void {
 }
 
 // ---------------------------------------------------------------------------
-// Atividade
+// Activity
 // ---------------------------------------------------------------------------
 
 /**
- * Acende o ponto de atividade por um instante.
+ * Lights up the activity dot for a moment.
  *
- * O widget nao instrumenta nada por conta propria: ele apenas escuta o
- * barramento que os modulos ja alimentam. Sem atividade, o custo e zero.
+ * The widget doesn't instrument anything on its own: it only listens to the
+ * bus that modules already feed. Without activity, the cost is zero.
  */
 function piscar(): void {
   if (!refs) return;
@@ -400,23 +399,23 @@ function piscar(): void {
 function atualizarContador(): void {
   if (!refs) return;
   const total = instances.size;
-  const texto = total === 1 ? '1 componente' : `${total} componentes`;
+  const texto = total === 1 ? '1 component' : `${total} components`;
   if (refs.contador.textContent !== texto) refs.contador.textContent = texto;
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
-/** Mostra o widget flutuante. Chamar duas vezes nao duplica nada. */
+/** Shows the floating widget. Calling twice doesn't duplicate anything. */
 export function mountDevtoolsWidget(): void {
   if (montado || typeof document === 'undefined' || !document.body) return;
 
-  // Respeita quem escondeu o widget nesta aba.
+  // Respects whoever hid the widget in this tab.
   try {
     if (sessionStorage.getItem(ESCONDIDO_KEY) === '1') return;
   } catch {
-    // Sem sessionStorage: o widget simplesmente aparece.
+    // No sessionStorage: the widget simply appears.
   }
 
   montado = true;
@@ -436,16 +435,16 @@ export function mountDevtoolsWidget(): void {
     try {
       sessionStorage.setItem(ESCONDIDO_KEY, '1');
     } catch {
-      // Sem sessionStorage: some so ate a proxima navegacao.
+      // No sessionStorage: it disappears until the next navigation.
     }
     unmountDevtoolsWidget();
     // eslint-disable-next-line no-console
-    console.info('[Voodoo] widget das devtools escondido. Use V.devtoolsWidget(true) para voltar.');
+    console.info('[Voodoo] devtools widget hidden. Use V.devtoolsWidget(true) to bring back.');
   };
   refs.fechar.addEventListener('click', aoFechar);
   desligar.push(() => refs?.fechar.removeEventListener('click', aoFechar));
 
-  // Mantem o estado visual em dia quando o painel e aberto pelo atalho.
+  // Keeps visual state up to date when the panel is opened via shortcut.
   const aoTeclarGlobal = (): void => {
     const ligado = isXrayEnabled();
     refs?.raiz.setAttribute('data-active', String(ligado));
@@ -462,7 +461,7 @@ export function mountDevtoolsWidget(): void {
   timerContador = window.setInterval(atualizarContador, 1000);
 }
 
-/** Remove o widget e todos os listeners que ele criou. */
+/** Removes the widget and all listeners it created. */
 export function unmountDevtoolsWidget(): void {
   if (!montado) return;
   montado = false;
@@ -471,7 +470,7 @@ export function unmountDevtoolsWidget(): void {
     try {
       fn();
     } catch {
-      // Uma limpeza com problema nao pode impedir as outras.
+      // Broken cleanup must not prevent others.
     }
   }
 
@@ -484,31 +483,31 @@ export function unmountDevtoolsWidget(): void {
   refs = null;
 }
 
-/** `true` quando o widget esta na tela. */
+/** `true` when the widget is on screen. */
 export function isDevtoolsWidgetMounted(): boolean {
   return montado;
 }
 
 /**
- * Mostra e esconde o widget flutuante das devtools.
+ * Shows and hides the devtools floating widget.
  *
  * ```js
- * V.devtoolsWidget()       // alterna
- * V.devtoolsWidget(true)   // mostra
- * V.devtoolsWidget(false)  // esconde
+ * V.devtoolsWidget()       // toggle
+ * V.devtoolsWidget(true)   // show
+ * V.devtoolsWidget(false)  // hide
  * ```
  *
- * @param force mostre ou esconda explicitamente. Sem argumento, alterna.
- * @returns o estado depois da chamada.
+ * @param force show or hide explicitly. Without argument, toggles.
+ * @returns the state after the call.
  */
 export function devtoolsWidget(force?: boolean): boolean {
   const alvo = force ?? !montado;
   if (alvo) {
-    // Uma chamada explicita vence o "escondido nesta aba".
+    // An explicit call overrides "hidden in this tab".
     try {
       sessionStorage.removeItem(ESCONDIDO_KEY);
     } catch {
-      // Sem sessionStorage: nada a limpar.
+      // No sessionStorage: nothing to clean up.
     }
     mountDevtoolsWidget();
   } else {

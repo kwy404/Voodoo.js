@@ -1,10 +1,10 @@
-# Migrando do jQuery
+# Migrating from jQuery
 
-A Voodoo.js tem uma coleção encadeável com a mesma ergonomia do jQuery, então boa parte do seu
-código continua parecido. A diferença de fundo é outra: no jQuery você **manda o DOM mudar**, na
-Voodoo você **descreve o estado** e o DOM acompanha.
+Voodoo.js has a chainable collection with the same ergonomics as jQuery, so much of your
+code looks similar. The fundamental difference is this: in jQuery you **command the DOM to change**, in
+Voodoo you **describe the state** and the DOM follows.
 
-Você pode migrar aos poucos. As duas bibliotecas convivem na mesma página.
+You can migrate gradually. The two libraries coexist on the same page.
 
 ## Seleção e percurso
 
@@ -139,114 +139,113 @@ try {
 | `$.isArray(x)` | `Array.isArray(x)` |
 | `$.param(obj)` | `new URLSearchParams(obj).toString()` |
 
-## O salto: pare de mandar, comece a descrever
+## The leap: stop commanding, start describing
 
-Este é o ponto que muda tudo. Um contador em jQuery:
+This is the point that changes everything. A counter in jQuery:
 
 ```html
-<div id="contador">
-  <button class="menos">-</button>
-  <span class="valor">0</span>
-  <button class="mais">+</button>
+<div id="counter">
+  <button class="less">-</button>
+  <span class="value">0</span>
+  <button class="more">+</button>
 </div>
 ```
 
 ```js
-let valor = 0;
-$('#contador .mais').on('click', function () {
-  valor++;
-  $('#contador .valor').text(valor);
-  $('#contador .menos').prop('disabled', valor === 0);
+let value = 0;
+$('#counter .more').on('click', function () {
+  value++;
+  $('#counter .value').text(value);
+  $('#counter .less').prop('disabled', value === 0);
 });
-$('#contador .menos').on('click', function () {
-  valor--;
-  $('#contador .valor').text(valor);
-  $('#contador .menos').prop('disabled', valor === 0);
+$('#counter .less').on('click', function () {
+  value--;
+  $('#counter .value').text(value);
+  $('#counter .less').prop('disabled', value === 0);
 });
 ```
 
-O mesmo em Voodoo.js:
+The same in Voodoo.js:
 
 ```html
-<div v-data="{ valor: 0 }">
-  <button v-click="valor--" :disabled="valor === 0">-</button>
-  <span>{ valor }</span>
-  <button v-click="valor++">+</button>
+<div v-data="{ value: 0 }">
+  <button v-click="value--" :disabled="value === 0">-</button>
+  <span>{ value }</span>
+  <button v-click="value++">+</button>
 </div>
 ```
 
-A regra "o botão de menos fica desabilitado no zero" aparece **uma vez**, no lugar onde ela
-importa. No jQuery ela precisava ser repetida em todo lugar que mexia no valor, e esquecer uma
-repetição era o bug clássico.
+The rule "the minus button is disabled at zero" appears **once**, where it matters. In jQuery it had to be
+repeated everywhere that changed the value, and forgetting one repetition was the classic bug.
 
-## Uma lista
+## A list
 
 ```js
 // jQuery
-function renderizar(itens) {
-  const $ul = $('#lista').empty();
-  itens.forEach((item) => {
-    $ul.append(`<li data-id="${item.id}">${item.nome} <button class="x">remover</button></li>`);
+function render(items) {
+  const $ul = $('#list').empty();
+  items.forEach((item) => {
+    $ul.append(`<li data-id="${item.id}">${item.name} <button class="x">remove</button></li>`);
   });
 }
-$('#lista').on('click', '.x', function () {
+$('#list').on('click', '.x', function () {
   const id = $(this).closest('li').data('id');
-  itens = itens.filter((i) => i.id !== id);
-  renderizar(itens);
+  items = items.filter((i) => i.id !== id);
+  render(items);
 });
 ```
 
 ```html
 <!-- Voodoo.js -->
-<ul v-data="{ itens: [] }">
-  <li v-for="item in itens" :key="item.id">
-    { item.nome }
-    <button v-click="itens.splice(itens.indexOf(item), 1)">remover</button>
+<ul v-data="{ items: [] }">
+  <li v-for="item in items" :key="item.id">
+    { item.name }
+    <button v-click="items.splice(items.indexOf(item), 1)">remove</button>
   </li>
 </ul>
 ```
 
-Não existe função de renderizar. Não existe delegação. Não existe `data-id` só para achar o item
-de volta.
+There's no render function. No delegation. No `data-id` just to find the item
+back.
 
-## Um formulário AJAX
+## An AJAX form
 
 ```js
 // jQuery
 $('#form').on('submit', function (e) {
   e.preventDefault();
-  const $btn = $(this).find('button').prop('disabled', true).text('Enviando...');
-  $.post('/api/contato', $(this).serialize())
-    .done(() => { alert('Enviado!'); this.reset(); })
-    .fail((xhr) => { $('#erro').text(xhr.responseJSON.message); })
-    .always(() => { $btn.prop('disabled', false).text('Enviar'); });
+  const $btn = $(this).find('button').prop('disabled', true).text('Sending...');
+  $.post('/api/contact', $(this).serialize())
+    .done(() => { alert('Sent!'); this.reset(); })
+    .fail((xhr) => { $('#error').text(xhr.responseJSON.message); })
+    .always(() => { $btn.prop('disabled', false).text('Send'); });
 });
 ```
 
 ```html
 <!-- Voodoo.js -->
-<form v-submit="/api/contato" v-validate v-reset-success v-disable-loading
-      v-toast-success="Enviado!">
-  <input name="nome" v-required>
+<form v-submit="/api/contact" v-validate v-reset-success v-disable-loading
+      v-toast-success="Sent!">
+  <input name="name" v-required>
   <input name="email" type="email" v-required v-email>
-  <button>{ $form.loading ? 'Enviando...' : 'Enviar' }</button>
+  <button>{ $form.loading ? 'Sending...' : 'Send' }</button>
 </form>
 ```
 
-Validação, estado de carregamento, erros por campo e notificação vêm juntos.
+Validation, loading state, field errors and notification come together.
 
-## Plugins do jQuery
+## jQuery plugins
 
-Um plugin que precisa de um elemento vira uma directive:
+A plugin that needs an element becomes a directive:
 
 ```js
 // jQuery
-$('.data').datepicker({ format: 'dd/mm/yyyy' });
+$('.date').datepicker({ format: 'dd/mm/yyyy' });
 
 // Voodoo.js
 V.directive('datepicker', {
   mounted(el, binding) {
-    el.__picker = new SeuDatepicker(el, { format: binding.value || 'dd/mm/yyyy' });
+    el.__picker = new YourDatepicker(el, { format: binding.value || 'dd/mm/yyyy' });
   },
   unmounted(el) {
     el.__picker.destroy();
@@ -258,25 +257,25 @@ V.directive('datepicker', {
 <input v-datepicker="'dd/mm/yyyy'">
 ```
 
-A vantagem: elementos criados depois, por `v-for` ou por uma requisição, já nascem inicializados.
-Com jQuery você precisaria chamar o plugin de novo a cada renderização.
+The advantage: elements created later, by `v-for` or a request, are already initialized.
+With jQuery you'd need to call the plugin again on each render.
 
-## Convivendo com o jQuery
+## Coexisting with jQuery
 
 ```html
 <script src="jquery.min.js"></script>
 <script src="voodoo.min.js" defer></script>
 ```
 
-As duas usam o DOM padrão, então não brigam. Um caminho comum de migração:
+The two use standard DOM, so they don't fight. A common migration path:
 
-1. troque `$.ajax` por `V.http` nas requisições novas;
-2. troque blocos que renderizam HTML em JavaScript por `v-for` e `v-if`;
-3. troque formulários por `v-submit`;
-4. deixe os plugins antigos por último, virando directives quando sobrar tempo.
+1. swap `$.ajax` for `V.http` in new requests;
+2. swap blocks that render HTML in JavaScript with `v-for` and `v-if`;
+3. swap forms with `v-submit`;
+4. leave old plugins for last, turning them into directives when you have time.
 
-Quando não sobrar nenhum `$`, remova o jQuery.
+When no `$` is left, remove jQuery.
 
 ---
 
-Anterior: [Desempenho](desempenho.md) · Próximo: [Migrando do Alpine](migrando-do-alpine.md)
+Previous: [Performance](desempenho.md) · Next: [Migrating from Alpine](migrando-do-alpine.md)

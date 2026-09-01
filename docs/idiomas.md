@@ -1,12 +1,12 @@
-# Idiomas
+# Languages
 
-> Este módulo vem apenas no `voodoo.full.min.js` ou em um build sob medida.
+> This module only comes in `voodoo.full.min.js` or in a custom build.
 
-Internacionalização reativa. Trocar o idioma não recarrega a página: todo texto que passou por
-`t()` e todo formatador de número, moeda ou data se atualiza sozinho, porque tudo lê o mesmo
-estado reativo.
+Reactive internationalization. Changing the language doesn't reload the page: all text that went
+through `t()` and all number, currency, or date formatters update by themselves, because everything
+reads from the same reactive state.
 
-## Configurando
+## Configuring
 
 ```js
 V.i18n({
@@ -27,35 +27,35 @@ V.i18n({
 });
 ```
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `locale` | `V.config.locale` | Idioma inicial |
-| `fallback` | `en` | Idioma usado quando a chave não existe |
-| `messages` | | Mensagens por idioma |
-| `currency` | `V.config.currency` | Moeda padrão de `c()` |
-| `persist` | `true` | Guarda o idioma escolhido no `localStorage` |
-| `detect` | `true` | Detecta o idioma do navegador quando nada foi salvo |
-| `loadPath` | | Modelo de URL para carregamento sob demanda, com `{locale}` |
+| `locale` | `V.config.locale` | Initial language |
+| `fallback` | `en` | Language used when the key doesn't exist |
+| `messages` | | Messages by language |
+| `currency` | `V.config.currency` | Default currency for `c()` |
+| `persist` | `true` | Saves the chosen language in `localStorage` |
+| `detect` | `true` | Detects browser language when nothing was saved |
+| `loadPath` | | URL template for on-demand loading, with `{locale}` |
 
-A ordem de escolha do idioma é: o que estava salvo, o detectado no navegador, o declarado na
-opção, e por fim o fallback. O idioma escolhido também vai para `document.documentElement.lang`.
+The order of language selection is: what was saved, what's detected in the browser, what's declared
+in the option, and finally the fallback. The chosen language also goes to `document.documentElement.lang`.
 
-## Mensagens
+## Messages
 
-A árvore aceita aninhamento em qualquer nível, e a chave é lida por ponto:
-
-```js
-{ comum: { botoes: { salvar: 'Salvar' } } }   // t('comum.botoes.salvar')
-```
-
-O mapa achatado também funciona:
+The tree accepts nesting at any level, and the key is read by dot:
 
 ```js
-{ 'comum.botoes.salvar': 'Salvar' }
+{ common: { buttons: { save: 'Save' } } }   // t('common.buttons.save')
 ```
 
-Quando a chave não existe em lugar nenhum, `t()` devolve a própria chave. Isso é melhor do que
-texto vazio na tela e facilita achar o que falta.
+The flattened map also works:
+
+```js
+{ 'common.buttons.save': 'Save' }
+```
+
+When the key doesn't exist anywhere, `t()` returns the key itself. This is better than empty
+text on screen and makes it easy to find what's missing.
 
 ## v-t
 
@@ -65,74 +65,73 @@ texto vazio na tela e facilita achar o que falta.
 <span v-t="'menu.' + secao"></span>
 ```
 
-Sem argumento, traduz o conteúdo do elemento. Com argumento, escreve no atributo indicado.
+Without argument, translates the element's content. With argument, writes to the indicated attribute.
 
-## Interpolação
+## Interpolation
 
 ```js
-{ ola: 'Olá, {nome}!' }
+{ hello: 'Hello, {name}!' }
 ```
 
 ```html
-<span>{ $t('ola', { nome: usuario.nome }) }</span>
+<span>{ $t('hello', { name: user.name }) }</span>
 ```
 
-`v-t-params` também existe:
+`v-t-params` also exists:
 
 ```html
-<span v-t="ola" v-t-params="{ nome: usuario.nome }"></span>
+<span v-t="hello" v-t-params="{ name: user.name }"></span>
 ```
 
-> Um aviso honesto: `v-t-params` é lido apenas na primeira renderização. Se o texto precisa
-> acompanhar a troca de idioma ou a mudança dos valores, use a interpolação com `$t`, que é
-> totalmente reativa.
+> A honest warning: `v-t-params` is read only on first render. If the text needs to follow
+> language changes or value changes, use interpolation with `$t`, which is fully reactive.
 
-## Pluralização
+## Pluralization
 
-As formas são separadas por barra vertical:
+Forms are separated by pipe:
 
 ```js
 {
-  itens: 'nenhum item | {n} item | {n} itens',
-  mensagens: '{n} mensagem | {n} mensagens',
+  items: 'no items | {n} item | {n} items',
+  messages: '{n} message | {n} messages',
 }
 ```
 
 ```html
-<span>{ $t('itens', { n: carrinho.length }) }</span>
-<span>{ $t('itens', carrinho.length) }</span>     <!-- atalho do mesmo caso -->
+<span>{ $t('items', { n: cart.length }) }</span>
+<span>{ $t('items', cart.length) }</span>     <!-- shortcut for the same case -->
 ```
 
-Como as formas são escolhidas:
+How forms are chosen:
 
-- **duas formas** seguem direto a categoria de `Intl.PluralRules` do idioma;
-- **três formas** reservam a primeira para o zero, que é o costume em português e em inglês;
-- **quatro ou mais** usam a ordem oficial das categorias do CLDR, o que cobre idiomas com dual e
+- **two forms** follow the language's `Intl.PluralRules` category directly;
+- **three forms** reserve the first for zero, which is the custom in Portuguese and English;
+- **four or more** use the official order of CLDR categories, covering languages with dual and
   paucal.
 
-A contagem é lida de `n` ou de `count`.
+The count is read from `n` or `count`.
 
-## Trocando o idioma
+## Changing the language
 
 ```html
-<button v-locale="pt-BR">Português</button>
+<button v-locale="pt-BR">Portuguese</button>
 <button v-locale="en">English</button>
-<button v-locale="idiomaEscolhido">Trocar</button>
+<button v-locale="chosenLanguage">Switch</button>
 ```
 
-O botão do idioma ativo recebe a classe `v-locale-active`.
+The active language button receives the `v-locale-active` class.
 
-Por JavaScript:
+Via JavaScript:
 
 ```js
 await V.setLocale('en');
 V.getLocale();       // 'en'
-V.i18n.locales;      // idiomas com mensagens carregadas
+V.i18n.locales;      // languages with loaded messages
 ```
 
-Toda a tela se atualiza sozinha, incluindo números, moedas e datas.
+The entire screen updates by itself, including numbers, currencies and dates.
 
-## Carregando sob demanda
+## Loading on demand
 
 ```js
 V.i18n({
@@ -142,58 +141,57 @@ V.i18n({
 });
 
 await V.i18n.loadMessages('es', '/i18n/es.json');
-V.i18n.addMessages('es', { comum: { salvar: 'Guardar' } });
+V.i18n.addMessages('es', { common: { save: 'Save' } });
 ```
 
-Com `loadPath`, trocar para um idioma sem mensagens carregadas busca o arquivo automaticamente.
-Chamadas repetidas do mesmo idioma compartilham a mesma promessa, então não existe requisição
-duplicada.
+With `loadPath`, switching to a language without loaded messages fetches the file automatically.
+Repeated calls for the same language share the same promise, so there's no duplicate request.
 
-## Formatadores
+## Formatters
 
-Todos usam o idioma atual e são reativos.
+All use the current language and are reactive.
 
 ```html
 <span>{ $n(1234.5) }</span>                 <!-- 1.234,5 -->
 <span>{ $n(0.75, { style: 'percent' }) }</span>
 <span>{ $c(1234.5) }</span>                 <!-- R$ 1.234,50 -->
 <span>{ $c(99, 'USD') }</span>              <!-- US$ 99,00 -->
-<span>{ $d(pedido.criadoEm) }</span>        <!-- 28/08/2026 -->
-<span>{ $d(pedido.criadoEm, 'long') }</span>
-<span>{ $rt(pedido.criadoEm) }</span>       <!-- há 5 minutos -->
+<span>{ $d(order.createdAt) }</span>        <!-- 28/08/2026 -->
+<span>{ $d(order.createdAt, 'long') }</span>
+<span>{ $rt(order.createdAt) }</span>       <!-- 5 minutes ago -->
 ```
 
-Presets de `$d`: `short`, `long`, `full`, `time`, `datetime`. Você também pode passar um objeto de
-`Intl.DateTimeFormatOptions` ou uma máscara textual como `DD/MM/YYYY HH:mm`.
+Presets for `$d`: `short`, `long`, `full`, `time`, `datetime`. You can also pass an `Intl.DateTimeFormatOptions`
+object or a text mask like `DD/MM/YYYY HH:mm`.
 
-## Magias
+## Magics
 
-| Magia | O que é |
+| Magic | What it is |
 | --- | --- |
-| `$t` | Traduz |
-| `$locale` | Idioma ativo, reativo |
-| `$i18n` | O módulo inteiro |
-| `$n` | Formata número |
-| `$c` | Formata moeda |
-| `$d` | Formata data |
-| `$rt` | Tempo relativo |
+| `$t` | Translates |
+| `$locale` | Active language, reactive |
+| `$i18n` | The entire module |
+| `$n` | Formats number |
+| `$c` | Formats currency |
+| `$d` | Formats date |
+| `$rt` | Relative time |
 
 ```html
-<p>Você está lendo em { $locale }</p>
+<p>You are reading in { $locale }</p>
 <div :lang="$locale">...</div>
 ```
 
-O atributo `lang` do elemento raiz já é atualizado sozinho a cada troca de idioma.
+The `lang` attribute of the root element is already updated by itself each time the language changes.
 
-## API completa
+## Complete API
 
 ```js
-V.t('comum.salvar');
-V.t('ola', { nome: 'Ana' });
+V.t('common.save');
+V.t('hello', { name: 'Ana' });
 V.setLocale('en');
 V.getLocale();
 
-V.i18n.te('comum.salvar');        // a chave existe?
+V.i18n.te('common.save');        // does the key exist?
 V.i18n.messagesOf('pt-BR');
 V.i18n.addMessages('fr', { ... });
 V.i18n.loadMessages('fr', '/i18n/fr.json');
@@ -203,21 +201,21 @@ V.i18n.fallback;
 V.i18n.locales;
 ```
 
-## Um exemplo completo
+## A complete example
 
 ```html
-<div v-data="{ carrinho: [] }">
+<div v-data="{ cart: [] }">
   <header>
     <button v-locale="pt-BR">PT</button>
     <button v-locale="en">EN</button>
     <button v-locale="es">ES</button>
   </header>
 
-  <h1 v-t="loja.titulo"></h1>
-  <p>{ $t('carrinho.itens', carrinho.length) }</p>
+  <h1 v-t="store.title"></h1>
+  <p>{ $t('cart.items', cart.length) }</p>
   <p>{ $c(total) }</p>
 
-  <button v-t="comum.finalizar" v-click="finalizar()"></button>
+  <button v-t="common.checkout" v-click="checkout()"></button>
 </div>
 ```
 
@@ -228,9 +226,9 @@ V.i18n({
   loadPath: '/i18n/{locale}.json',
   messages: {
     'pt-BR': {
-      loja: { titulo: 'Nossa loja' },
-      carrinho: { itens: 'carrinho vazio | {n} item no carrinho | {n} itens no carrinho' },
-      comum: { finalizar: 'Finalizar compra' },
+      store: { title: 'Our store' },
+      cart: { items: 'empty cart | {n} item in cart | {n} items in cart' },
+      common: { checkout: 'Complete purchase' },
     },
   },
 });
@@ -238,4 +236,4 @@ V.i18n({
 
 ---
 
-Anterior: [Roteador](roteador.md) · Próximo: [Tema e paleta](tema-e-paleta.md)
+Previous: [Router](roteador.md) · Next: [Theme and palette](tema-e-paleta.md)

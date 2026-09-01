@@ -497,7 +497,7 @@ describe('timeout e cancelamento', () => {
       expect.unreachable('deveria ter falhado');
     } catch (err) {
       expect(err).toBeInstanceOf(HttpError);
-      expect((err as HttpError).message).toBe('Tempo esgotado apos 10ms');
+      expect((err as HttpError).message).toBe('Timeout after 10ms');
       expect((err as HttpError).isNetworkError).toBe(true);
     }
   });
@@ -794,13 +794,13 @@ describe('upload', () => {
     xhr.status = 413;
     xhr.responseText = '{}';
     xhr.emitir('load');
-    await expect(promessa).rejects.toThrow('Upload falhou com status 413');
+    await expect(promessa).rejects.toThrow('Upload failed with status 413');
   });
 
   it('falha de rede vira HttpError', async () => {
     const promessa = http.upload('/a', new FormData());
     XHRFalso.ultimo!.emitir('error');
-    await expect(promessa).rejects.toThrow('Falha de rede no upload');
+    await expect(promessa).rejects.toThrow('Network failure during upload');
   });
 
   it('o sinal cancela o envio', async () => {
@@ -809,7 +809,7 @@ describe('upload', () => {
     controle.abort();
 
     expect(XHRFalso.ultimo!.abortado).toBe(true);
-    await expect(promessa).rejects.toThrow('Upload cancelado');
+    await expect(promessa).rejects.toThrow('Upload canceled');
   });
 });
 
@@ -1024,7 +1024,7 @@ describe('recurso reativo', () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
     const recurso = createResource('/api/x', { manual: true });
     await recurso.reload();
-    expect(recurso.error?.message).toBe('Requisicao falhou com status 500');
+    expect(recurso.error?.message).toBe('Request failed with status 500');
   });
 
   it('set troca os dados sem ir a rede', async () => {

@@ -1,385 +1,384 @@
 # Directives
 
-Referência completa. Toda directive é um atributo com o prefixo `v-` (configurável em
-`V.config.prefix`). A grafia `data-v-nome` é sempre aceita, mesmo quando o prefixo é outro.
+Complete reference. Every directive is an attribute with the `v-` prefix (configurable in
+`V.config.prefix`). The `data-v-name` spelling is always accepted, even when the prefix is different.
 
-## Como um atributo é lido
+## How an attribute is read
 
 ```
-v-on:click.prevent.once="salvar()"
-│  │  │     │              └── expressão
-│  │  │     └── modificadores, separados por ponto
-│  │  └── argumento, depois dos dois pontos
-│  └── nome da directive
-└── prefixo
+v-on:click.prevent.once="save()"
+│  │  │     │              └── expression
+│  │  │     └── modifiers, separated by dot
+│  │  └── argument, after the colon
+│  └── directive name
+└── prefix
 ```
 
-Atalhos:
+Shortcuts:
 
-| Escrita | Equivale a |
+| Write | Equals |
 | --- | --- |
 | `@click="..."` | `v-on:click="..."` |
 | `:href="..."` | `v-bind:href="..."` |
 | `.value="..."` | `v-bind:value.prop="..."` |
 
-Modificadores são sempre nomes soltos, porque um `=` dentro do nome do atributo não sobrevive ao
-parser de HTML. Quando uma directive precisa de um número, ela oferece um atributo próprio
-(`v-debounce`, `v-autosave-delay`, `v-mask-decimals`) ou aceita o valor como modificador direto,
-como em `@hold.2s`.
+Modifiers are always plain names, because an `=` inside an attribute name doesn't survive the
+HTML parser. When a directive needs a number, it offers its own attribute
+(`v-debounce`, `v-autosave-delay`, `v-mask-decimals`) or accepts the value as a direct modifier,
+like in `@hold.2s`.
 
-## Ordem de execução
+## Execution order
 
-Em um mesmo elemento a ordem é fixa, e não depende de como você escreveu os atributos:
+On the same element the order is fixed and doesn't depend on how you wrote the attributes:
 
-1. `v-ignore` e `v-pre` cancelam tudo naquela subárvore;
-2. directives terminais (`v-for`, `v-if`, `v-else-if`, `v-else`) assumem o controle;
-3. `v-data` e `v-component` criam o escopo usado pelo resto;
-4. as demais rodam por prioridade decrescente: `v-ref`, `v-mask`, `v-model`, `v-bind`, o resto,
-   `v-init` e por fim as classes de transição;
-5. os filhos são percorridos com o escopo resultante.
+1. `v-ignore` and `v-pre` cancel everything in that subtree;
+2. terminal directives (`v-for`, `v-if`, `v-else-if`, `v-else`) take control;
+3. `v-data` and `v-component` create the scope used by the rest;
+4. the rest run by decreasing priority: `v-ref`, `v-mask`, `v-model`, `v-bind`, the rest,
+   `v-init`, and finally transition classes;
+5. children are traversed with the resulting scope.
 
-## Os atributos somem do HTML
+## Attributes disappear from HTML
 
-Depois que uma directive é processada, o atributo sai do documento. Isso deixa o DOM limpo no
-inspetor, do mesmo jeito que um framework com compilador faria:
+After a directive is processed, the attribute leaves the document. This keeps the DOM clean in
+the inspector, just like a framework with a compiler would:
 
 ```html
-<!-- você escreve -->
-<button v-click="salvar()" :disabled="carregando">Salvar</button>
+<!-- you write -->
+<button v-click="save()" :disabled="loading">Save</button>
 
-<!-- o inspetor mostra -->
-<button disabled>Salvar</button>
+<!-- the inspector shows -->
+<button disabled>Save</button>
 ```
 
-Os valores continuam guardados no runtime, então o comportamento não muda. Duas consequências:
+The values stay stored in the runtime, so behavior doesn't change. Two consequences:
 
-- **nunca escreva CSS apoiado em seletores como `[v-tab]`**, use classes;
-- `el.getAttribute('v-alguma-coisa')` devolve `null` depois da montagem.
+- **never write CSS based on selectors like `[v-tab]`**, use classes;
+- `el.getAttribute('v-something')` returns `null` after mounting.
 
-Para desligar, use `V.config.cleanAttributes = false` ou o atributo `data-keep-attributes` na tag
-`<script>`.
+To turn it off, use `V.config.cleanAttributes = false` or the `data-keep-attributes` attribute on the
+`<script>` tag.
 
 ---
 
-# Conteúdo e visibilidade
+# Content and visibility
 
 ## v-text
 
-Escreve texto no elemento. HTML é escapado.
+Writes text in the element. HTML is escaped.
 
 ```html
-<span v-text="usuario.nome"></span>
+<span v-text="user.name"></span>
 <span v-text="'Total: ' + total"></span>
 ```
 
 ## v-html
 
-Insere HTML e inicializa as directives que vierem dentro dele.
+Inserts HTML and initializes directives that come inside.
 
 ```html
-<div v-html="conteudoDoEditor"></div>
+<div v-html="editorContent"></div>
 ```
 
-> **Atenção.** Nunca use `v-html` com texto vindo do usuário sem sanitizar. Veja
-> [Segurança](seguranca.md).
+> **Warning.** Never use `v-html` with text from the user without sanitizing. See
+> [Security](security.md).
 
 ## v-show
 
-Alterna `display`. O elemento continua no documento.
+Toggles `display`. The element stays in the document.
 
 ```html
-<div v-show="usuario.logado">Bem-vindo</div>
-<div v-show="aberto" v-transition="fade">Com animação</div>
+<div v-show="user.loggedIn">Welcome</div>
+<div v-show="open" v-transition="fade">With animation</div>
 ```
 
 ## v-if, v-else-if, v-else
 
-Insere e remove do DOM de verdade.
+Actually inserts and removes from the DOM.
 
 ```html
-<p v-if="nota >= 9">ótimo</p>
-<p v-else-if="nota >= 6">bom</p>
-<p v-else>precisa melhorar</p>
+<p v-if="grade >= 9">excellent</p>
+<p v-else-if="grade >= 6">good</p>
+<p v-else>needs improvement</p>
 ```
 
-`v-else-if` e `v-else` precisam ser irmãos imediatos do `v-if`. Um `<template>` funciona quando
-você quer condicionar vários elementos sem um contêiner extra:
+`v-else-if` and `v-else` need to be immediate siblings of `v-if`. A `<template>` works when
+you want to condition multiple elements without an extra container:
 
 ```html
-<template v-if="carregado">
-  <h2>Título</h2>
-  <p>Texto</p>
+<template v-if="loaded">
+  <h2>Title</h2>
+  <p>Text</p>
 </template>
 ```
 
 ## v-once
 
-Avalia uma única vez, escreve o resultado e não cria efeito reativo.
+Evaluates once, writes the result, and doesn't create a reactive effect.
 
 ```html
-<span v-once="dataDeCriacao"></span>
+<span v-once="createdDate"></span>
 ```
 
 ## v-cloak
 
-Remove o próprio atributo quando a biblioteca inicia. Combine com CSS para evitar o piscar do
-conteúdo:
+Removes itself when the library starts. Combine with CSS to prevent content flashing:
 
 ```html
 <style>[v-cloak] { display: none !important; }</style>
-<div v-cloak v-data="{ pronto: true }">...</div>
+<div v-cloak v-data="{ ready: true }">...</div>
 ```
 
-## v-pre e v-ignore
+## v-pre and v-ignore
 
-Desligam a Voodoo naquela subárvore. Nada é processado, nem interpolação.
+Turn off Voodoo in that subtree. Nothing is processed, not even interpolation.
 
 ```html
-<pre v-pre>{ isto fica literal }</pre>
+<pre v-pre>{ this stays literal }</pre>
 ```
 
 ---
 
-# Listas
+# Lists
 
 ## v-for
 
 ```html
-<li v-for="item in itens">{ item }</li>
-<li v-for="(item, i) in itens">{ i }: { item }</li>
-<li v-for="(valor, chave) in objeto">{ chave } = { valor }</li>
-<li v-for="(valor, chave, i) in objeto">{ i }. { chave }</li>
+<li v-for="item in items">{ item }</li>
+<li v-for="(item, i) in items">{ i }: { item }</li>
+<li v-for="(value, key) in object">{ key } = { value }</li>
+<li v-for="(value, key, i) in object">{ i }. { key }</li>
 <li v-for="n in 3">{ n }</li>              <!-- 1, 2, 3 -->
-<li v-for="letra in 'abc'">{ letra }</li>
+<li v-for="letter in 'abc'">{ letter }</li>
 ```
 
-`in` e `of` funcionam igual. As fontes aceitas são array, número, texto, objeto, `Map` e `Set`.
+`in` and `of` work the same. Accepted sources are array, number, text, object, `Map`, and `Set`.
 
-**Sempre use `:key` quando a lista puder ser reordenada ou filtrada.** Com chave, os elementos são
-reaproveitados em vez de recriados, e o estado interno (foco, valor digitado, rolagem) sobrevive:
+**Always use `:key` when the list can be reordered or filtered.** With a key, elements are
+reused instead of recreated, and internal state (focus, typed value, scroll) survives:
 
 ```html
-<li v-for="produto in produtos" :key="produto.id">
-  { produto.nome }
+<li v-for="product in products" :key="product.id">
+  { product.name }
 </li>
 ```
 
-`<template v-for>` repete vários filhos sem contêiner:
+`<template v-for>` repeats multiple children without a container:
 
 ```html
-<template v-for="linha in linhas" :key="linha.id">
-  <dt>{ linha.termo }</dt>
-  <dd>{ linha.definicao }</dd>
+<template v-for="row in rows" :key="row.id">
+  <dt>{ row.term }</dt>
+  <dd>{ row.definition }</dd>
 </template>
 ```
 
-`v-for` e `v-if` no mesmo elemento não combinam, porque os dois são terminais. Ponha o `v-if` no
-filho:
+`v-for` and `v-if` on the same element don't combine, because both are terminal. Put `v-if` in
+the child:
 
 ```html
-<div v-for="n in lista">
+<div v-for="n in list">
   <span v-if="n % 2 === 0">{ n }</span>
 </div>
 ```
 
 ---
 
-# Atributos, classes e estilos
+# Attributes, classes and styles
 
-## v-bind e o atalho `:`
+## v-bind and the `:` shortcut
 
 ```html
-<a :href="link" :title="titulo">Ir</a>
-<button :disabled="carregando">Salvar</button>
-<input :value="nome">
-<img :src="foto" :alt="nome">
+<a :href="link" :title="title">Go</a>
+<button :disabled="loading">Save</button>
+<input :value="name">
+<img :src="photo" :alt="name">
 ```
 
-Atributos booleanos (`disabled`, `checked`, `readonly`, `required`, `selected`, `hidden`, `open`,
-`multiple`, `autofocus`, `novalidate`, `inert`) são adicionados e removidos conforme o valor.
+Boolean attributes (`disabled`, `checked`, `readonly`, `required`, `selected`, `hidden`, `open`,
+`multiple`, `autofocus`, `novalidate`, `inert`) are added and removed based on the value.
 
-Sem argumento, aplica um objeto inteiro:
+Without an argument, applies an entire object:
 
 ```html
-<input v-bind="{ placeholder: 'Nome', maxlength: '10', required: true }">
+<input v-bind="{ placeholder: 'Name', maxlength: '10', required: true }">
 ```
 
-O modificador `.prop` escreve na propriedade do elemento em vez do atributo. O atalho `.` faz o
-mesmo:
+The `.prop` modifier writes to the element's property instead of the attribute. The `.` shortcut does
+the same:
 
 ```html
-<video :current-time.prop="segundos"></video>
-<video .currentTime="segundos"></video>
+<video :current-time.prop="seconds"></video>
+<video .currentTime="seconds"></video>
 ```
 
 ## v-class
 
-Aceita texto, array e objeto. As classes originais do elemento são sempre preservadas.
+Accepts text, array, and object. The element's original classes are always preserved.
 
 ```html
-<div class="card" :class="{ ativo: selecionado, erro: temErro }"></div>
-<div :class="['base', tema, { grande: expandido }]"></div>
+<div class="card" :class="{ active: selected, error: hasError }"></div>
+<div :class="['base', theme, { large: expanded }]"></div>
 <div v-class="statusCss"></div>
 ```
 
 ## v-style
 
 ```html
-<div :style="{ color: cor, backgroundColor: fundo }"></div>
-<div :style="'width: ' + largura + 'px'"></div>
-<div :style="{ '--v-primary': corDaMarca }"></div>
+<div :style="{ color: color, backgroundColor: background }"></div>
+<div :style="'width: ' + width + 'px'"></div>
+<div :style="{ '--v-primary': brandColor }"></div>
 ```
 
-Nomes em camelCase viram traço-hífen. Propriedades customizadas (`--algo`) passam intactas.
+CamelCase names become hyphenated. Custom properties (`--something`) pass through unchanged.
 
 ---
 
-# Formulário
+# Form
 
 ## v-model
 
-Liga um campo ao estado nos dois sentidos.
+Links a field to state in both directions.
 
 ```html
-<input v-model="nome">
+<input v-model="name">
 <textarea v-model="bio"></textarea>
-<select v-model="uf"><option>SP</option><option>RJ</option></select>
-<input type="checkbox" v-model="aceito">
+<select v-model="state"><option>CA</option><option>NY</option></select>
+<input type="checkbox" v-model="accepted">
 <input type="checkbox" value="a" v-model="tags">
-<input type="radio" value="pix" v-model="pagamento">
-<select multiple v-model="selecionados"></select>
-<input type="file" v-model="arquivos">
+<input type="radio" value="pix" v-model="payment">
+<select multiple v-model="selected"></select>
+<input type="file" v-model="files">
 ```
 
-Comportamento por tipo:
+Behavior by type:
 
-| Campo | Valor no estado |
+| Field | Value in state |
 | --- | --- |
-| texto, textarea | string |
-| number, range | número (conversão automática) |
-| checkbox sozinho | booleano |
-| checkbox ligado a um array | o array com os `value` marcados |
-| radio | o `value` do escolhido |
-| select simples | string |
-| select múltiplo | array de strings |
-| file | `FileList`, ou o primeiro arquivo com `.single` |
+| text, textarea | string |
+| number, range | number (automatic conversion) |
+| checkbox alone | boolean |
+| checkbox tied to array | array with marked `value`s |
+| radio | the chosen `value` |
+| simple select | string |
+| multiple select | array of strings |
+| file | `FileList`, or first file with `.single` |
 
-Modificadores:
+Modifiers:
 
-| Modificador | Efeito |
+| Modifier | Effect |
 | --- | --- |
-| `.lazy` | Atualiza no `change` em vez de no `input` |
-| `.number` | Converte para número |
-| `.trim` | Remove espaços nas pontas |
-| `.debounce` | Espera antes de escrever. O atributo `v-debounce` define o tempo |
-| `.single` | Em `type="file"`, guarda um arquivo em vez da lista |
+| `.lazy` | Updates on `change` instead of `input` |
+| `.number` | Converts to number |
+| `.trim` | Strips whitespace from ends |
+| `.debounce` | Waits before writing. The `v-debounce` attribute sets the time |
+| `.single` | On `type="file"`, stores one file instead of the list |
 
 ---
 
-# Eventos
+# Events
 
-Cobertos em detalhe em [Eventos](eventos.md). O resumo:
+Covered in detail in [Events](events.md). Summary:
 
 ```html
-<button v-on:click="salvar()">Salvar</button>
-<button @click="salvar()">Salvar</button>
-<button v-click="salvar()">Salvar</button>
+<button v-on:click="save()">Save</button>
+<button @click="save()">Save</button>
+<button v-click="save()">Save</button>
 ```
 
-Atalhos com nome próprio: `v-click`, `v-dblclick`, `v-input`, `v-change`, `v-keyup`, `v-keydown`,
+Shortcuts with proper names: `v-click`, `v-dblclick`, `v-input`, `v-change`, `v-keyup`, `v-keydown`,
 `v-keypress`, `v-mouseenter`, `v-mouseleave`, `v-mouseover`, `v-mousedown`, `v-mouseup`,
 `v-contextmenu`, `v-wheel`, `v-paste`, `v-dragstart`, `v-dragover`, `v-dragleave`, `v-drop`.
 
-Modificadores: `.prevent`, `.stop`, `.self`, `.once`, `.capture`, `.passive`, `.window`,
-`.document`, `.outside`, `.debounce`, `.throttle`, teclas (`.enter`, `.esc`, `.space`, `.tab`,
-`.delete`, `.up`, `.down`, `.left`, `.right`, letras e dígitos) e teclas de sistema (`.ctrl`,
+Modifiers: `.prevent`, `.stop`, `.self`, `.once`, `.capture`, `.passive`, `.window`,
+`.document`, `.outside`, `.debounce`, `.throttle`, keys (`.enter`, `.esc`, `.space`, `.tab`,
+`.delete`, `.up`, `.down`, `.left`, `.right`, letters and digits) and system keys (`.ctrl`,
 `.shift`, `.alt`, `.meta`).
 
-Eventos sintéticos: `@hold`, `@outside`, `@visible`, `@swipeleft`, `@swiperight`, `@swipeup`,
+Synthetic events: `@hold`, `@outside`, `@visible`, `@swipeleft`, `@swiperight`, `@swipeup`,
 `@swipedown`.
 
 ---
 
-# Escopo e ciclo de vida
+# Scope and lifecycle
 
 ## v-data
 
-Cria um escopo reativo.
+Creates a reactive scope.
 
 ```html
-<div v-data="{ aberto: false, itens: [] }">
-  <button v-click="aberto = !aberto">alternar</button>
+<div v-data="{ open: false, items: [] }">
+  <button v-click="open = !open">toggle</button>
 </div>
 ```
 
-Sem valor, cria um escopo vazio: `<div v-data>`.
+Without a value, creates an empty scope: `<div v-data>`.
 
 ## v-init
 
-Executa uma expressão depois que o DOM da rodada foi aplicado.
+Runs an expression after the round's DOM has been applied.
 
 ```html
-<div v-data="{ dados: null }" v-init="carregar()"></div>
-<div v-data="{ n: 0 }" v-init="console.log('montado', $el)"></div>
+<div v-data="{ data: null }" v-init="load()"></div>
+<div v-data="{ n: 0 }" v-init="console.log('mounted', $el)"></div>
 ```
 
-Quando a expressão é o nome de uma função, ela é chamada com `this` apontando para o escopo.
+When the expression is a function name, it's called with `this` pointing to the scope.
 
 ## v-ref
 
-Guarda o elemento em `$refs`.
+Stores the element in `$refs`.
 
 ```html
 <div v-data="{}">
-  <input v-ref="busca">
-  <button v-click="$refs.busca.focus()">Focar</button>
+  <input v-ref="search">
+  <button v-click="$refs.search.focus()">Focus</button>
 </div>
 ```
 
 ## v-effect
 
-Roda a expressão sempre que qualquer dependência lida por ela mudar.
+Runs the expression whenever any dependency read by it changes.
 
 ```html
-<div v-effect="document.title = 'Carrinho (' + itens.length + ')'"></div>
+<div v-effect="document.title = 'Cart (' + items.length + ')'"></div>
 ```
 
 ## v-watch
 
-Observa o `v-model` do mesmo elemento e roda a expressão quando o valor muda. Dentro dela você
-tem `$value` e `$old`.
+Watches the `v-model` of the same element and runs the expression when the value changes. Inside
+it you have `$value` and `$old`.
 
 ```html
-<input v-model="busca" v-watch="buscar($value)">
+<input v-model="search" v-watch="search($value)">
 ```
 
 ## v-teleport
 
-Move o elemento para outro lugar do documento, mantendo o escopo de origem.
+Moves the element to another place in the document, keeping the original scope.
 
 ```html
-<div v-teleport="body">Este bloco vai para o final do body</div>
-<div v-teleport="#area-de-modais">...</div>
+<div v-teleport="body">This block goes to the end of body</div>
+<div v-teleport="#modals-area">...</div>
 ```
 
-Ao ser removido, o elemento volta para o lugar original.
+When removed, the element goes back to its original place.
 
 ## v-component
 
-Monta um componente registrado sobre o elemento. Veja [Componentes](componentes.md).
+Mounts a registered component on the element. See [Components](components.md).
 
 ```html
-<div v-component="cartao-usuario" :usuario="atual"></div>
+<div v-component="user-card" :user="current"></div>
 ```
 
-## v-transition e classes auxiliares
+## v-transition and helper classes
 
-Aplica classes CSS nas entradas e saídas de `v-if` e `v-show`.
+Applies CSS classes on entries and exits of `v-if` and `v-show`.
 
 ```html
-<div v-show="aberto" v-transition="fade" v-duration="300">...</div>
+<div v-show="open" v-transition="fade" v-duration="300">...</div>
 
-<div v-if="aberto"
+<div v-if="open"
      v-enter-class="opacity-0"
      v-enter-active-class="transition"
      v-enter-to-class="opacity-100"
@@ -389,24 +388,24 @@ Aplica classes CSS nas entradas e saídas de `v-if` e `v-show`.
 </div>
 ```
 
-Sem classes próprias, o nome vira o prefixo: `v-fade-enter-from`, `v-fade-enter-active`,
+Without custom classes, the name becomes the prefix: `v-fade-enter-from`, `v-fade-enter-active`,
 `v-fade-enter-to`, `v-fade-leave-from`, `v-fade-leave-active`, `v-fade-leave-to`.
 
 ---
 
 # HTTP
 
-Detalhado em [HTTP](http.md).
+Detailed in [HTTP](http.md).
 
-| Directive | O que faz |
+| Directive | What it does |
 | --- | --- |
-| `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` | Dispara a requisição no gatilho natural do elemento |
-| `v-load` | Requisição GET na montagem |
-| `v-load-visible` | Requisição GET quando o elemento chega perto da tela |
-| `v-search` | Busca enquanto o usuário digita, com debounce |
-| `v-resource` | Objeto reativo com `data`, `loading`, `error`, `loaded`, `reload()`, `set()` |
+| `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` | Fires the request on the element's natural trigger |
+| `v-load` | GET request on mount |
+| `v-load-visible` | GET request when element gets close to screen |
+| `v-search` | Search while user types, with debounce |
+| `v-resource` | Reactive object with `data`, `loading`, `error`, `loaded`, `reload()`, `set()` |
 
-Atributos de configuração: `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-params`, `v-param`,
+Configuration attributes: `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-params`, `v-param`,
 `v-body`, `v-headers`, `v-cache`, `v-retry`, `v-timeout`, `v-as`, `v-json-path`, `v-template`,
 `v-offline-queue`, `v-min-length`, `v-scroll-to`, `v-manual`, `v-debounce`, `v-method`,
 `v-redirect`, `v-loading`, `v-loading-class`, `v-disable-loading`, `v-toast-success`,
@@ -414,39 +413,39 @@ Atributos de configuração: `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-par
 
 ---
 
-# Formulários
+# Forms
 
-Detalhado em [Formulários](formularios.md).
+Detailed in [Forms](forms.md).
 
-| Directive | O que faz |
+| Directive | What it does |
 | --- | --- |
-| `v-submit` | Envia o formulário por AJAX |
-| `v-upload` | Envia arquivos de um `<input type="file">` com progresso |
-| `v-dropzone` | Área de soltar arquivos |
-| `v-autosave` | Salva o formulário sozinho, com debounce |
-| `v-guard` | Avisa antes de sair da página com alterações pendentes |
-| `v-loading` | Esconde um elemento até a requisição começar |
+| `v-submit` | Submits the form via AJAX |
+| `v-upload` | Sends files from `<input type="file">` with progress |
+| `v-dropzone` | File drop area |
+| `v-autosave` | Saves the form by itself, with debounce |
+| `v-guard` | Warns before leaving the page with pending changes |
+| `v-loading` | Hides an element until the request starts |
 
 ---
 
-# Validação
+# Validation
 
-Detalhado em [Validação](validacao.md).
+Detailed in [Validation](validation.md).
 
-`v-validate` no formulário liga a validação automática. Nos campos:
+`v-validate` on the form enables automatic validation. On fields:
 
 `v-required`, `v-email`, `v-url`, `v-number`, `v-integer`, `v-minlength`, `v-maxlength`, `v-min`,
 `v-max`, `v-match`, `v-regex`, `v-cpf`, `v-cnpj`, `v-cep`, `v-phone`, `v-date`, `v-accepted`,
-`v-strong-password`, além de `v-validate-<regra>` para qualquer regra registrada.
+`v-strong-password`, plus `v-validate-<rule>` for any registered rule.
 
-Configuração por campo: `v-error-message`, `v-error-target`, `v-regex-flags`, `v-unique-url`,
+Per-field configuration: `v-error-message`, `v-error-target`, `v-regex-flags`, `v-unique-url`,
 `v-label`.
 
 ---
 
-# Máscaras
+# Masks
 
-Detalhado em [Máscaras](mascaras.md).
+Detailed in [Masks](masks.md).
 
 ```html
 <input v-mask="cpf">
@@ -459,106 +458,106 @@ Detalhado em [Máscaras](mascaras.md).
 
 # Interface
 
-Detalhado em [Interface](interface.md).
+Detailed in [Interface](interface.md).
 
-| Directive | O que faz |
+| Directive | What it does |
 | --- | --- |
-| `v-toggle` | Mostra e esconde um alvo, ou alterna uma classe |
-| `v-collapse`, `v-collapse-toggle` | Painel que abre e fecha com animação de altura |
-| `v-dropdown`, `v-dropdown-menu` | Menu suspenso com navegação por setas |
-| `v-popover` | Camada flutuante com foco preso |
-| `v-tooltip` | Dica ao passar o mouse ou focar |
-| `v-tabs`, `v-tab`, `v-tab-panel` | Abas acessíveis |
-| `v-accordion`, `v-accordion-item` | Acordeão |
-| `v-drawer`, `v-drawer-content`, `v-drawer-close`, `v-offcanvas` | Gaveta lateral |
+| `v-toggle` | Shows and hides a target, or toggles a class |
+| `v-collapse`, `v-collapse-toggle` | Panel that opens and closes with height animation |
+| `v-dropdown`, `v-dropdown-menu` | Dropdown menu with arrow navigation |
+| `v-popover` | Floating layer with focus trapped |
+| `v-tooltip` | Tip on hover or focus |
+| `v-tabs`, `v-tab`, `v-tab-panel` | Accessible tabs |
+| `v-accordion`, `v-accordion-item` | Accordion |
+| `v-drawer`, `v-drawer-content`, `v-drawer-close`, `v-offcanvas` | Side drawer |
 | `v-modal`, `v-modal-content`, `v-modal-close` | Modal |
-| `v-confirm` | Pede confirmação antes de deixar a ação seguir |
-| `v-theme-toggle` | Alterna tema claro e escuro |
-| `v-focus`, `v-focus-trap` | Foco automático e foco preso |
-| `v-click-outside`, `v-escape` | Reage a clique fora e à tecla Escape |
-| `v-hotkey` | Atalho de teclado que clica no elemento |
-| `v-scroll-to`, `v-scrollspy`, `v-sticky` | Rolagem |
-| `v-visible`, `v-infinite-scroll` | Entrada na tela e rolagem infinita |
-| `v-lazy-src`, `v-lazy-bg` | Imagens sob demanda |
-| `v-skeleton` | Esqueleto de carregamento |
-| `v-copy`, `v-copy-from` | Copiar para a área de transferência |
-| `v-print`, `v-share`, `v-download`, `v-fullscreen` | Ações do navegador |
-| `v-resizable` | Redimensionar com mouse e teclado |
-| `v-command`, `v-command-item` | Paleta de comandos |
-| `v-idle` | Reage a inatividade |
-| `v-online`, `v-offline` | Reage à conexão |
+| `v-confirm` | Asks for confirmation before letting the action proceed |
+| `v-theme-toggle` | Toggles light and dark theme |
+| `v-focus`, `v-focus-trap` | Auto focus and focus trap |
+| `v-click-outside`, `v-escape` | Reacts to click outside and Escape key |
+| `v-hotkey` | Keyboard shortcut that clicks the element |
+| `v-scroll-to`, `v-scrollspy`, `v-sticky` | Scrolling |
+| `v-visible`, `v-infinite-scroll` | Entry on screen and infinite scroll |
+| `v-lazy-src`, `v-lazy-bg` | On-demand images |
+| `v-skeleton` | Loading skeleton |
+| `v-copy`, `v-copy-from` | Copy to clipboard |
+| `v-print`, `v-share`, `v-download`, `v-fullscreen` | Browser actions |
+| `v-resizable` | Resize with mouse and keyboard |
+| `v-command`, `v-command-item` | Command palette |
+| `v-idle` | Reacts to inactivity |
+| `v-online`, `v-offline` | Reacts to connection |
 
 ---
 
-# Arrastar e soltar
+# Drag and drop
 
-Detalhado em [Arrastar e soltar](arrastar-e-soltar.md).
+Detailed in [Drag and drop](drag-and-drop.md).
 
-`v-sortable`, `v-draggable`, `v-droppable`, `v-dnd-group` e os atributos de configuração
+`v-sortable`, `v-draggable`, `v-droppable`, `v-dnd-group` and configuration attributes
 `v-sortable-group`, `v-sortable-handle`, `v-draggable-handle`, `v-draggable-axis`,
 `v-draggable-data`, `v-draggable-group`, `v-droppable-accept`, `v-droppable-group`.
 
 ---
 
-# Estado avançado
+# Advanced state
 
-Detalhado em [Estado e stores](estado-e-stores.md).
+Detailed in [State and stores](state-and-stores.md).
 
-| Directive | O que faz |
+| Directive | What it does |
 | --- | --- |
-| `v-persist` | Guarda o escopo no `localStorage` e restaura ao recarregar |
-| `v-sync` | Sincroniza o escopo com as outras abas abertas |
-| `v-history` | Desfazer e refazer, com `$history` |
-| `v-undo`, `v-redo` | Botões de desfazer e refazer |
-| `v-storage` | Liga um campo direto ao `localStorage` |
+| `v-persist` | Saves the scope to `localStorage` and restores on reload |
+| `v-sync` | Syncs the scope with other open tabs |
+| `v-history` | Undo and redo, with `$history` |
+| `v-undo`, `v-redo` | Undo and redo buttons |
+| `v-storage` | Links a single field to `localStorage` |
 
 ---
 
-# Somente no build completo
+# Full build only
 
-## Animação
+## Animation
 
 `v-motion`, `v-motion-scroll`, `v-motion-stagger`, `v-motion-stagger-from`, `v-motion-hover`,
-`v-motion-tap`, `v-parallax`, `v-flip`, `v-count`, `v-typewriter`. Veja
-[Animações](animacoes.md).
+`v-motion-tap`, `v-parallax`, `v-flip`, `v-count`, `v-typewriter`. See
+[Animations](animations.md).
 
-## Gráficos
+## Charts
 
-`v-chart` e os atributos `v-chart-*`. Veja [Gráficos](graficos.md).
+`v-chart` and `v-chart-*` attributes. See [Charts](charts.md).
 
-## Roteador
+## Router
 
-`v-router-view`, `v-link`, `v-route-active`. Veja [Roteador](roteador.md).
+`v-router-view`, `v-link`, `v-route-active`. See [Router](router.md).
 
-## Idiomas
+## Languages
 
-`v-t`, `v-t-params`, `v-locale`. Veja [Idiomas](idiomas.md).
+`v-t`, `v-t-params`, `v-locale`. See [Languages](languages.md).
 
 ---
 
-# Criando a sua própria
+# Creating your own
 
 ```js
-V.directive('destaque', {
+V.directive('highlight', {
   mounted(el, binding) { el.style.background = binding.value; },
   updated(el, binding) { el.style.background = binding.value; },
 });
 ```
 
 ```html
-<div v-destaque="'yellow'">Destaque</div>
+<div v-highlight="'yellow'">Highlight</div>
 ```
 
-A forma curta em função vale para `mounted` e `updated` ao mesmo tempo:
+The short function form works for both `mounted` and `updated`:
 
 ```js
-V.directive('marcar', (el, binding) => {
-  el.dataset.marcado = binding.value;
+V.directive('mark', (el, binding) => {
+  el.dataset.marked = binding.value;
 });
 ```
 
-Veja [Plugins](plugins.md) para o formato completo, com prioridade, efeitos e limpeza.
+See [Plugins](plugins.md) for the complete format, with priority, effects, and cleanup.
 
 ---
 
-Anterior: [Expressões](expressoes.md) · Próximo: [Componentes](componentes.md)
+Previous: [Expressions](expressions.md) · Next: [Components](components.md)

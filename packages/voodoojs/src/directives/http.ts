@@ -1,19 +1,19 @@
 /**
  * @module directives/http
  *
- * Requisicoes HTTP declaradas no HTML. Substitui o par "escrever fetch a mao +
- * montar o HTML na unha" por atributos.
+ * Declarative HTTP requests in HTML. Replaces manual fetch writing and HTML
+ * assembly with attributes.
  *
  * ```html
- * <button v-get="/api/usuarios" v-target="#lista">Carregar</button>
+ * <button v-get="/api/users" v-target="#list">Load</button>
  *
- * <div v-resource="produtos: /api/produtos">
- *   <p v-if="produtos.loading">Carregando...</p>
- *   <p v-else-if="produtos.error">{ produtos.error.message }</p>
+ * <div v-resource="products: /api/products">
+ *   <p v-if="products.loading">Loading...</p>
+ *   <p v-else-if="products.error">{ products.error.message }</p>
  *   <ul v-else>
- *     <li v-for="p in produtos.data">{ p.nome }</li>
+ *     <li v-for="p in products.data">{ p.name }</li>
  *   </ul>
- *   <button v-click="produtos.reload()">Atualizar</button>
+ *   <button v-click="products.reload()">Refresh</button>
  * </div>
  * ```
  */
@@ -35,14 +35,14 @@ import { escapeHtml, parseDuration, debounce } from '../utils';
 import { toast } from '../ui/toast';
 
 // ---------------------------------------------------------------------------
-// Leitura da configuracao declarada no elemento
+// Reading the configuration declared in the element
 // ---------------------------------------------------------------------------
 
 const p = (): string => config.prefix;
 
 /**
- * Le um atributo de configuracao. Usa o cache do walker, entao continua
- * funcionando depois que os atributos saem do HTML.
+ * Reads a configuration attribute. Uses the walker's cache, so it continues
+ * working after attributes are removed from the HTML.
  */
 function attr(el: Element, name: string): string | null {
   return readAttr(el, `${p()}${name}`);
@@ -127,10 +127,10 @@ function readSettings(el: HTMLElement, scope: Scope): RequestSettings {
 }
 
 // ---------------------------------------------------------------------------
-// Insercao do resultado no DOM
+// Inserting the result in the DOM
 // ---------------------------------------------------------------------------
 
-/** Aplica um pedaco de HTML no destino, respeitando o modo de troca. */
+/** Applies a piece of HTML to the target, respecting the swap mode. */
 export function swapContent(
   target: HTMLElement,
   html: string,
@@ -199,20 +199,20 @@ export function swapContent(
   }
 }
 
-/** Le um caminho dentro do JSON, como `data.items.0.nome`. */
+/** Reads a path within JSON, like `data.items.0.name`. */
 
 /**
- * Converte JSON em HTML legivel quando nao existe template.
+ * Converts JSON to readable HTML when there's no template.
  *
- * Valores simples viram texto. Listas de objetos viram tabela. Objetos viram
- * uma lista de definicoes. Tudo escapado, entao a resposta nunca injeta HTML.
+ * Simple values become text. Lists of objects become a table. Objects become
+ * a definition list. Everything is escaped, so the response never injects HTML.
  */
 export function renderJSON(value: unknown, depth = 0): string {
   if (value == null) return '';
   if (typeof value !== 'object') return escapeHtml(String(value));
 
   if (Array.isArray(value)) {
-    if (!value.length) return '<p class="v-json-empty">Nenhum resultado.</p>';
+    if (!value.length) return '<p class="v-json-empty">No results.</p>';
 
     const allObjects = value.every((item) => item && typeof item === 'object' && !Array.isArray(item));
     if (allObjects && depth === 0) {
@@ -249,11 +249,11 @@ export function renderJSON(value: unknown, depth = 0): string {
     .join('')}</dl>`;
 }
 
-/** Renderiza uma lista usando um `<template>` da pagina, com `{ campo }`. */
+/** Renders a list using a `<template>` from the page, with `{ field }`. */
 function renderWithTemplate(selector: string, data: unknown, scope: Scope, target: HTMLElement): void {
   const template = document.querySelector<HTMLTemplateElement>(selector);
   if (!template) {
-    handleError(new Error(`Template nao encontrado: ${selector}`), 'v-template');
+    handleError(new Error(`Template not found: ${selector}`), 'v-template');
     return;
   }
 
@@ -275,7 +275,7 @@ function renderWithTemplate(selector: string, data: unknown, scope: Scope, targe
 }
 
 // ---------------------------------------------------------------------------
-// Execucao
+// Execution
 // ---------------------------------------------------------------------------
 
 const inFlight = new WeakMap<HTMLElement, AbortController>();
@@ -290,21 +290,21 @@ interface RunOptions {
   event?: Event;
 }
 
-/** Executa uma requisicao declarativa completa, do confirm ate o swap. */
+/** Executes a complete declarative request, from confirmation to swap. */
 export async function runRequest(options: RunOptions): Promise<void> {
   const { el, scope, method } = options;
   const settings = readSettings(el, scope);
 
-  // Quando o modulo de dialogos esta no pacote, a directive `v-confirm` ja
-  // intercepta o clique na fase de captura e pergunta por conta propria.
-  // Perguntar de novo aqui mostraria dois dialogos seguidos.
-  const dialogoCuidaDaPergunta = directives.has(`confirm`);
-  if (settings.confirmMessage && !dialogoCuidaDaPergunta) {
+  // When the dialog module is in the package, the `v-confirm` directive already
+  // intercepts the click in the capture phase and asks on its own.
+  // Asking again here would show two dialogs in a row.
+  const dialogHandlesTheQuestion = directives.has(`confirm`);
+  if (settings.confirmMessage && !dialogHandlesTheQuestion) {
     const confirmed = await askConfirmation(settings.confirmMessage);
     if (!confirmed) return;
   }
 
-  // Cancela uma requisicao anterior ainda pendente do mesmo elemento.
+  // Cancels a previous pending request from the same element.
   inFlight.get(el)?.abort();
   const controller = new AbortController();
   inFlight.set(el, controller);
@@ -354,16 +354,16 @@ export async function runRequest(options: RunOptions): Promise<void> {
 
     const data = pick(response.data, settings.jsonPath);
 
-    // Guarda no estado em vez de escrever no DOM.
+    // Stores in state instead of writing to the DOM.
     if (settings.storeAs) {
       scope.set(settings.storeAs, data);
     } else if (settings.templateSelector) {
       renderWithTemplate(settings.templateSelector, data, scope, target);
     } else if (typeof data === 'string') {
-      // Resposta HTML entra direto.
+      // HTML response goes straight in.
       swapContent(target, data, settings.swap, scope);
     } else if (data !== undefined && data !== null) {
-      // Resposta JSON vira HTML legivel.
+      // JSON response becomes readable HTML.
       injectJSONStyles();
       swapContent(target, renderJSON(data), settings.swap, scope);
     }
@@ -386,14 +386,14 @@ export async function runRequest(options: RunOptions): Promise<void> {
     const message =
       err instanceof HttpError
         ? extractMessage(err) ?? err.message
-        : (err as Error)?.message ?? 'Erro desconhecido';
+        : (err as Error)?.message ?? 'Unknown error';
 
     if (settings.toastError) toast.error(settings.toastError);
     else if (!settings.onError) toast.error(message);
 
     if (settings.onError) callHandler(settings.onError, scope, el, { error: err, message });
     dispatch(el, 'voodoo:error', { error: err, message });
-    handleError(err, `requisicao ${method} ${options.url}`);
+    handleError(err, `request ${method} ${options.url}`);
   } finally {
     stopLoading();
     inFlight.delete(el);
@@ -402,7 +402,7 @@ export async function runRequest(options: RunOptions): Promise<void> {
   }
 }
 
-/** Procura a mensagem de erro dentro do corpo da resposta. */
+/** Finds the error message within the response body. */
 
 function dispatch(el: HTMLElement, type: string, detail: unknown): void {
   el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
@@ -415,11 +415,11 @@ function callHandler(
   extra: Record<string, unknown>
 ): void {
   const local = scope.child({ $el: el, ...extra });
-  const value = evaluateIn(expression, local, 'callback HTTP');
+  const value = evaluateIn(expression, local, 'HTTP callback');
   if (typeof value === 'function') value.call(scope.data, extra.data ?? extra.error);
 }
 
-/** Usa o dialogo da Voodoo quando disponivel, ou o `confirm` do navegador. */
+/** Uses the Voodoo dialog when available, or the browser's `confirm`. */
 async function askConfirmation(message: string): Promise<boolean> {
   const global = (globalThis as Record<string, any>).V;
   if (global && typeof global.confirm === 'function' && global.confirm !== globalThis.confirm) {
@@ -450,10 +450,10 @@ function injectJSONStyles(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Gatilhos
+// Triggers
 // ---------------------------------------------------------------------------
 
-/** Gatilho natural de cada elemento, no espirito do HTMX. */
+/** Natural trigger for each element, in the spirit of HTMX. */
 function defaultTrigger(el: HTMLElement): string {
   const tag = el.tagName;
   if (tag === 'FORM') return 'submit';
@@ -471,7 +471,7 @@ interface TriggerOptions {
   run: (event?: Event) => void;
 }
 
-/** Liga a requisicao ao gatilho declarado em `v-trigger`. */
+/** Wires the request to the trigger declared in `v-trigger`. */
 function installTrigger({ el, cleanup, run }: TriggerOptions): void {
   const declared = attr(el, 'trigger') || defaultTrigger(el);
   const [name, ...modifiers] = declared.split(/[.\s]+/);
@@ -525,7 +525,7 @@ function installTrigger({ el, cleanup, run }: TriggerOptions): void {
 }
 
 // ---------------------------------------------------------------------------
-// Directives por verbo
+// Directives by HTTP verb
 // ---------------------------------------------------------------------------
 
 const VERBS: Array<[string, HttpMethod]> = [
@@ -539,7 +539,7 @@ const VERBS: Array<[string, HttpMethod]> = [
 for (const [name, method] of VERBS) {
   defineDirective(name, ({ el, scope, expression, cleanup }) => {
     const run = (event?: Event): void => {
-      // A URL pode ser dinamica: v-delete="'/api/users/' + user.id"
+      // URL can be dynamic: v-delete="'/api/users/' + user.id"
       const url = resolveURL(expression, scope);
       if (!url) return;
 
@@ -561,8 +561,8 @@ for (const [name, method] of VERBS) {
 }
 
 /**
- * A expressao pode ser uma URL literal ou uma expressao JavaScript.
- * `/api/users` fica como esta. `'/api/users/' + id` e avaliado.
+ * The expression can be a literal URL or a JavaScript expression.
+ * `/api/users` stays as is. `'/api/users/' + id` is evaluated.
  */
 function resolveURL(expression: string, scope: Scope): string {
   const trimmed = expression.trim();
@@ -575,7 +575,7 @@ function resolveURL(expression: string, scope: Scope): string {
 }
 
 // ---------------------------------------------------------------------------
-// v-load e v-load-visible
+// v-load and v-load-visible
 // ---------------------------------------------------------------------------
 
 defineDirective('load', ({ el, scope, expression }) => {
@@ -606,7 +606,7 @@ defineDirective('load-visible', ({ el, scope, cleanup, expression }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-search: busca enquanto digita
+// v-search: search-as-you-type
 // ---------------------------------------------------------------------------
 
 defineDirective('search', ({ el, scope, expression, cleanup }) => {
@@ -637,17 +637,17 @@ defineDirective('search', ({ el, scope, expression, cleanup }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-resource: estado completo de uma requisicao
+// v-resource: complete request state
 // ---------------------------------------------------------------------------
 
 /**
- * Cria um recurso reativo e o publica no escopo.
+ * Creates a reactive resource and publishes it to the scope.
  *
- * Sintaxe: `v-resource="nome: /url"` ou `v-resource="/url"` com `v-as="nome"`.
- * O padrao do nome, quando nada e informado, e `resource`.
+ * Syntax: `v-resource="name: /url"` or `v-resource="/url"` with `v-as="name"`.
+ * The default name, when none is given, is `resource`.
  *
- * O nucleo esta em `createResource`, o mesmo que `V.resource()` usa. Aqui so
- * acontece a leitura da configuracao escrita nos atributos.
+ * The core is in `createResource`, which is what `V.resource()` uses. Here only
+ * the configuration written in attributes is read.
  */
 defineDirective(
   'resource',
@@ -656,7 +656,7 @@ defineDirective(
     let name = attr(el, 'as') || 'resource';
     let urlExpression = expression.trim();
 
-    // `nome: /url` apenas quando o que vem antes dos dois pontos e um identificador.
+    // `name: /url` only when what comes before the colon is an identifier.
     if (separator > -1) {
       const head = expression.slice(0, separator).trim();
       if (/^[A-Za-z_$][\w$]*$/.test(head)) {
@@ -682,14 +682,14 @@ defineDirective(
     });
 
     scope.set(name, resource);
-    // Sair do DOM cancela a requisicao pendente e a repeticao automatica.
+    // Leaving the DOM cancels the pending request and automatic repetition.
     cleanup(() => resource.stop());
   },
   { priority: PRIORITY.DATA }
 );
 
 // ---------------------------------------------------------------------------
-// Atributos auxiliares registrados para nao gerarem aviso de directive
+// Auxiliary attributes registered to not generate directive warnings
 // ---------------------------------------------------------------------------
 
 for (const name of [

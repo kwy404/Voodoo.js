@@ -1,52 +1,52 @@
 /**
  * @module parser/interpreter
  *
- * Interpretador da AST. Recebe um no e um escopo e devolve o valor.
+ * AST interpreter. Takes a node and a scope and returns the value.
  *
- * Seguranca: nao existe acesso implicito a `window`, `globalThis`, `document`,
- * `fetch` ou `eval`. Identificadores que nao estao no escopo sao procurados em
- * uma lista fechada de globais permitidos, configuravel pela aplicacao.
+ * Security: there is no implicit access to `window`, `globalThis`, `document`,
+ * `fetch` or `eval`. Identifiers not in scope are looked up in a closed list of
+ * allowed globals, configurable by the application.
  */
 
 import type { Node } from './parser';
 
-/** Contrato minimo que um escopo precisa cumprir para ser avaliado. */
+/** Minimum contract that a scope must fulfill to be evaluated. */
 export interface EvalScope {
-  /** Retorna o objeto que contem a chave, subindo a cadeia de escopos. */
+  /** Returns the object containing the key, walking up the scope chain. */
   lookup(name: string): Record<string, any> | undefined;
-  /** Le um valor da cadeia de escopos. */
+  /** Reads a value from the scope chain. */
   get(name: string): unknown;
-  /** Escreve na cadeia de escopos, no dono da chave quando ele existir. */
+  /** Writes to the scope chain, in the key owner when it exists. */
   set(name: string, value: unknown): void;
-  /** Cria um escopo filho com variaveis locais, usado por arrow functions e `v-for`. */
+  /** Creates a child scope with local variables, used by arrow functions and `v-for`. */
   child(vars: Record<string, unknown>): EvalScope;
 }
 
 /**
- * Globais liberados dentro de expressoes de template.
+ * Globals allowed within template expressions.
  *
- * Estende com `V.config.globals.Minha = valor`.
+ * Extend with `V.config.globals.Minha = valor`.
  */
 /**
- * Subconjunto seguro de `Object`.
+ * Safe subset of `Object`.
  *
- * O `Object` nativo nao pode ser liberado inteiro. O bloqueio de chaves cobre
- * o acesso direto, como `x.constructor`, mas os metodos reflexivos do proprio
- * `Object` recebem o alvo como ARGUMENTO, e argumento nao passa por aquele
- * bloqueio. A cadeia abaixo devolvia `Function` e executava codigo arbitrario:
+ * The native `Object` cannot be fully exposed. Key blocking covers direct
+ * access like `x.constructor`, but the reflective methods of `Object` itself
+ * receive the target as an ARGUMENT, and arguments don't pass through that
+ * blocking. The chain below would return `Function` and execute arbitrary code:
  *
  * ```js
  * Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object), 'constructor')
  *   .value('return this')()
  * ```
  *
- * A regra que fecha isso de vez nao e uma lista de proibicoes cada vez maior:
- * e inverter o padrao. Uma expressao de template pode CHAMAR funcionalidades;
- * ela nao recebe ferramentas para inspecionar o runtime de JavaScript. Por
- * isso ficam de fora `getPrototypeOf`, `setPrototypeOf`,
+ * The rule that closes this once and for all is not an ever-growing list of
+ * prohibitions: it's inverting the pattern. A template expression can CALL
+ * functionality; it doesn't receive tools to inspect the JavaScript runtime.
+ * For this reason `getPrototypeOf`, `setPrototypeOf`,
  * `getOwnPropertyDescriptor`, `getOwnPropertyDescriptors`,
  * `getOwnPropertyNames`, `getOwnPropertySymbols`, `defineProperty`,
- * `defineProperties` e `create`.
+ * `defineProperties` and `create` are excluded.
  */
 const SafeObject = /* @__PURE__ */ Object.freeze({
   keys: Object.keys,
@@ -81,13 +81,13 @@ export const allowedGlobals: Record<string, unknown> = {
   console,
 };
 
-/** Erro em tempo de execucao de uma expressao, com o texto original anexado. */
+/** Runtime error for an expression, with original text attached. */
 export class VoodooRuntimeError extends Error {
   constructor(
     message: string,
     public readonly expression?: string
   ) {
-    super(expression ? `${message}\n\nExpressao: ${expression}` : message);
+    super(expression ? `${message}\n\nExpression: ${expression}` : message);
     this.name = 'VoodooRuntimeError';
   }
 }
@@ -95,39 +95,39 @@ export class VoodooRuntimeError extends Error {
 const SPREAD = Symbol('spread');
 
 /**
- * Chaves que abrem a cadeia de prototipos e por isso ficam fora do alcance das
- * expressoes de template.
+ * Keys that open the prototype chain and are thus outside the reach of
+ * template expressions.
  *
- * Ler `constructor` bastava para escapar do interpretador: `({}).constructor`
- * devolve `Object`, e `Object.constructor` devolve `Function`, ou seja
- * `constructor.constructor("return this")()` era `eval` pela porta dos fundos,
- * com acesso a `window`, `document` e `fetch`. Escrever em `__proto__` ou em
- * `prototype` polui `Object.prototype` e contamina a pagina inteira.
+ * Reading `constructor` was enough to escape the interpreter: `({}).constructor`
+ * returns `Object`, and `Object.constructor` returns `Function`, that is
+ * `constructor.constructor("return this")()` was `eval` through the back door,
+ * with access to `window`, `document` and `fetch`. Writing to `__proto__` or
+ * `prototype` pollutes `Object.prototype` and contaminates the entire page.
  */
-const CHAVES_BLOQUEADAS = new Set(['__proto__', 'constructor', 'prototype']);
+const BLOCKED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-/** `true` quando a chave alcanca a cadeia de prototipos. */
+/** `true` when the key reaches the prototype chain. */
 export function chaveBloqueada(key: unknown): boolean {
-  return typeof key === 'string' && CHAVES_BLOQUEADAS.has(key);
+  return typeof key === 'string' && BLOCKED_KEYS.has(key);
 }
 
-/** Recusa a chave quando ela alcanca a cadeia de prototipos. */
-function checarChave(key: unknown, expressao?: string): PropertyKey {
+/** Rejects the key when it reaches the prototype chain. */
+function checkKey(key: unknown, expression?: string): PropertyKey {
   if (chaveBloqueada(key)) {
     throw new VoodooRuntimeError(
-      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a ` +
-        'cadeia de prototipos. Exponha um metodo no estado em vez disso.',
-      expressao
+      `Access blocked to "${String(key)}": template expressions cannot reach ` +
+        'the prototype chain. Expose a method in state instead.',
+      expression
     );
   }
   return key as PropertyKey;
 }
 
 /**
- * Avalia um no da AST.
+ * Evaluates an AST node.
  *
- * @param node no gerado por `parse()`
- * @param scope escopo de leitura e escrita
+ * @param node node generated by `parse()`
+ * @param scope read and write scope
  */
 export function evaluate(node: Node, scope: EvalScope): any {
   switch (node.t) {
@@ -144,9 +144,9 @@ export function evaluate(node: Node, scope: EvalScope): any {
     }
 
     case 'id': {
-      // `constructor` e companhia existem em qualquer objeto por heranca, entao
-      // `name in data` os encontraria mesmo sem ninguem ter declarado nada.
-      checarChave(node.n);
+      // `constructor` and friends exist on any object by inheritance, so
+      // `name in data` would find them even without anything declared.
+      checkKey(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -158,10 +158,10 @@ export function evaluate(node: Node, scope: EvalScope): any {
       if (obj == null) {
         if (node.opt) return undefined;
         throw new VoodooRuntimeError(
-          `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? 'null' : 'undefined'}`
+          `Could not read "${describeKey(node, scope)}" from ${obj === null ? 'null' : 'undefined'}`
         );
       }
-      const key = checarChave(
+      const key = checkKey(
         node.computed ? evaluate(node.p, scope) : (node.p as { v: string }).v
       );
       return (obj as any)[key];
@@ -176,12 +176,12 @@ export function evaluate(node: Node, scope: EvalScope): any {
         if (obj == null) {
           if (node.callee.opt || node.opt) return undefined;
           throw new VoodooRuntimeError(
-            `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${
+            `Could not call "${describeKey(node.callee, scope)}" from ${
               obj === null ? 'null' : 'undefined'
             }`
           );
         }
-        const key = checarChave(
+        const key = checkKey(
           node.callee.computed
             ? evaluate(node.callee.p, scope)
             : (node.callee.p as { v: string }).v
@@ -189,7 +189,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
         thisArg = obj;
         fn = (obj as any)[key];
       } else if (node.callee.t === 'id') {
-        checarChave(node.callee.n);
+        checkKey(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -204,7 +204,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
       if (fn == null && node.opt) return undefined;
       if (typeof fn !== 'function') {
         const name = node.callee.t === 'id' ? node.callee.n : describeKey(node.callee, scope);
-        throw new VoodooRuntimeError(`"${name}" nao e uma funcao`);
+        throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
 
       return (fn as Function).apply(thisArg, evalArgs(node.args, scope));
@@ -213,9 +213,9 @@ export function evaluate(node: Node, scope: EvalScope): any {
     case 'unary': {
       if (node.op === '...') return { [SPREAD]: evaluate(node.a, scope) };
       if (node.op === 'typeof') {
-        // typeof de identificador desconhecido nao pode lancar erro.
+        // typeof of unknown identifier cannot throw error.
         if (node.a.t === 'id') {
-          // Chave bloqueada nunca vaza nem por `typeof`.
+          // Blocked key never leaks, not even through `typeof`.
           if (chaveBloqueada(node.a.n)) return 'undefined';
           const owner = scope.lookup(node.a.n);
           const value = owner ? owner[node.a.n] : allowedGlobals[node.a.n];
@@ -234,7 +234,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
         case 'void':
           return undefined;
       }
-      throw new VoodooRuntimeError(`Operador unario nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported unary operator: ${node.op}`);
     }
 
     case 'update': {
@@ -283,7 +283,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
         case 'instanceof':
           return l instanceof (r as Function);
       }
-      throw new VoodooRuntimeError(`Operador nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
     }
 
     case 'logic': {
@@ -329,7 +329,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
             value = current ** operand;
             break;
           default:
-            throw new VoodooRuntimeError(`Atribuicao nao suportada: ${node.op}`);
+            throw new VoodooRuntimeError(`Unsupported assignment: ${node.op}`);
         }
       }
       assign(node.target, value, scope);
@@ -352,8 +352,8 @@ export function evaluate(node: Node, scope: EvalScope): any {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope) as object);
         } else {
-          // `{ __proto__: ... }` trocaria o prototipo do objeto criado aqui.
-          const key = checarChave(
+          // `{ __proto__: ... }` would change the prototype of the object created here.
+          const key = checkKey(
             prop.key !== null ? prop.key : String(evaluate(prop.keyExpr!, scope))
           ) as string;
           out[key] = evaluate(prop.value!, scope);
@@ -381,7 +381,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
     }
   }
 
-  throw new VoodooRuntimeError(`No desconhecido: ${(node as { t: string }).t}`);
+  throw new VoodooRuntimeError(`Unknown node: ${(node as { t: string }).t}`);
 }
 
 function evalArgs(args: Node[], scope: EvalScope): unknown[] {
@@ -397,26 +397,26 @@ function evalArgs(args: Node[], scope: EvalScope): unknown[] {
   return out;
 }
 
-/** Escreve em um identificador ou em um acesso a membro. */
+/** Writes to an identifier or member access. */
 function assign(target: Node, value: unknown, scope: EvalScope): void {
   if (target.t === 'id') {
-    checarChave(target.n);
+    checkKey(target.n);
     scope.set(target.n, value);
     return;
   }
   if (target.t === 'member') {
     const obj = evaluate(target.o, scope);
     if (obj == null) {
-      throw new VoodooRuntimeError('Nao foi possivel escrever em null ou undefined');
+      throw new VoodooRuntimeError('Could not write to null or undefined');
     }
-    // `x.__proto__.qualquer = 1` poluiria `Object.prototype` para a pagina toda.
-    const key = checarChave(
+    // `x.__proto__.qualquer = 1` would pollute `Object.prototype` for the entire page.
+    const key = checkKey(
       target.computed ? evaluate(target.p, scope) : (target.p as { v: string }).v
     );
     (obj as any)[key] = value;
     return;
   }
-  throw new VoodooRuntimeError('Alvo de atribuicao invalido');
+  throw new VoodooRuntimeError('Invalid assignment target');
 }
 
 function describeKey(node: Node, scope: EvalScope): string {
@@ -424,10 +424,10 @@ function describeKey(node: Node, scope: EvalScope): string {
     return node.computed ? String(evaluate(node.p, scope)) : String((node.p as { v: string }).v);
   }
   if (node.t === 'id') return node.n;
-  return 'valor';
+  return 'value';
 }
 
-/** Converte qualquer valor no texto que sera escrito no DOM. */
+/** Converts any value to text that will be written to the DOM. */
 export function stringify(value: unknown): string {
   if (value == null) return '';
   if (typeof value === 'string') return value;

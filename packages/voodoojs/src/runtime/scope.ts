@@ -1,9 +1,9 @@
 /**
  * @module runtime/scope
  *
- * Cadeia de escopos. Cada `v-data`, cada componente e cada iteracao de `v-for`
- * cria um escopo filho. A busca de um identificador sobe a cadeia ate a raiz e,
- * se nada for encontrado, cai nas variaveis magicas (`$store`, `$el`, ...).
+ * Scope chain. Each `v-data`, each component, and each iteration of `v-for`
+ * creates a child scope. Identifier lookup travels up the chain to the root, and
+ * if nothing is found, falls back to magic variables (`$store`, `$el`, ...).
  */
 
 import type { EvalScope } from '../parser/interpreter';
@@ -11,25 +11,25 @@ import { reactive } from '../reactivity';
 
 export type MagicGetter = (scope: Scope) => unknown;
 
-/** Registro global de variaveis magicas, preenchido pelos modulos. */
+/** Global registry of magic variables, filled by modules. */
 export const magics = new Map<string, MagicGetter>();
 
-/** Registra uma variavel magica disponivel em qualquer expressao. */
+/** Register a magic variable available in any expression. */
 export function magic(name: string, getter: MagicGetter): void {
   magics.set(name.startsWith('$') ? name : `$${name}`, getter);
 }
 
 export class Scope implements EvalScope {
-  /** Dados proprios deste escopo, normalmente um proxy reativo. */
+  /** Data local to this scope, normally a reactive proxy. */
   data: Record<string, any>;
   parent: Scope | null;
-  /** Elemento que criou o escopo. Usado por `$el` e `$refs`. */
+  /** Element that created the scope. Used by `$el` and `$refs`. */
   el: Element | null;
-  /** Referencias declaradas com `v-ref` dentro deste escopo. */
+  /** References declared with `v-ref` within this scope. */
   refs: Record<string, Element> = {};
-  /** Instancia de componente, quando este escopo pertence a um. */
+  /** Component instance, when this scope belongs to one. */
   component: any = null;
-  /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+  /** Values delivered by `provide`, visible to lower scopes. */
   provides: Record<string, unknown> | null = null;
 
   private magicCache: Map<string, Record<string, unknown>> | null = null;
@@ -40,14 +40,14 @@ export class Scope implements EvalScope {
     this.el = el;
   }
 
-  /** Escopo raiz da cadeia. */
+  /** Root scope of the chain. */
   get root(): Scope {
     let s: Scope = this;
     while (s.parent) s = s.parent;
     return s;
   }
 
-  /** Procura um valor de `provide` subindo a cadeia de escopos. */
+  /** Look up a `provide` value by traveling up the scope chain. */
   inject<T = unknown>(key: string, fallback?: T): T | undefined {
     let s: Scope | null = this;
     while (s) {
@@ -57,7 +57,7 @@ export class Scope implements EvalScope {
     return fallback;
   }
 
-  /** Escopo de componente mais proximo, subindo a cadeia. */
+  /** Nearest component scope, traveling up the chain. */
   get owner(): Scope | null {
     let s: Scope | null = this;
     while (s) {
@@ -67,7 +67,7 @@ export class Scope implements EvalScope {
     return null;
   }
 
-  /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
+  /** Set of visible refs, merging ancestor scopes. */
   get allRefs(): Record<string, Element> {
     const chain: Scope[] = [];
     let s: Scope | null = this;
@@ -118,7 +118,7 @@ export class Scope implements EvalScope {
     return new Scope(vars, this, el ?? this.el);
   }
 
-  /** Cria um escopo filho reativo, usado por `v-data` e por `v-for`. */
+  /** Create a reactive child scope, used by `v-data` and `v-for`. */
   reactiveChild(vars: Record<string, unknown>, el: Element | null = null): Scope {
     return new Scope(reactive(vars), this, el ?? this.el);
   }
@@ -134,7 +134,7 @@ export class Scope implements EvalScope {
     Object.defineProperty(container, name, {
       get: () => getter(scope),
       set: (value: unknown) => {
-        // Magias sao somente leitura, com excecao das que expoem `set` proprio.
+        // Magic variables are read-only, except those that expose their own `set`.
         const target = getter(scope);
         if (target && typeof target === 'object' && 'set' in (target as object)) {
           (target as { set: (v: unknown) => void }).set(value);
@@ -149,8 +149,8 @@ export class Scope implements EvalScope {
 }
 
 /**
- * Escopo raiz global, compartilhado por elementos sem `v-data`.
- * Os dados sao reativos, entao qualquer valor colocado aqui por `V.data()`
- * ou por `v-resource` atualiza a pagina sozinho.
+ * Global root scope, shared by elements without `v-data`.
+ * The data is reactive, so any value placed here by `V.data()` or `v-resource`
+ * automatically updates the page.
  */
 export const rootScope = new Scope(reactive({}));

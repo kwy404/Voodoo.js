@@ -334,7 +334,7 @@ describe('reconexao', () => {
     // 1 inicial + 2 tentativas, e nada depois disso.
     expect(FakeWebSocket.abertos.length).toBe(3);
     expect(s.state).toBe('closed');
-    expect(s.error).toContain('desistiu');
+    expect(s.error).toContain('gave up after');
   });
 
   it('reconectar com sucesso zera o contador', () => {
@@ -382,7 +382,7 @@ describe('heartbeat', () => {
 
     vi.advanceTimersByTime(1600);
     expect(s.connected).toBe(false);
-    expect(s.error).toContain('sem resposta');
+    expect(s.error).toContain('connection unresponsive');
     // E a reconexao entra em cena sozinha.
     vi.advanceTimersByTime(50);
     expect(FakeWebSocket.abertos.length).toBe(2);
@@ -773,7 +773,7 @@ describe('presenca', () => {
 describe('v-socket', () => {
   it('publica $socket no escopo e reage a conexao', async () => {
     const { root, estado } = montar(
-      '<div v-socket="wss://exemplo.com"><p v-show="$socket.conectado">on</p></div>'
+      '<div v-socket="wss://exemplo.com"><p v-show="$socket.connected">on</p></div>'
     );
     await assentar();
     const p = root.querySelector('p')!;
@@ -800,8 +800,8 @@ describe('v-socket', () => {
   it('v-room publica $room com mensagens e membros', async () => {
     const { root } = montar(
       '<div v-socket="wss://exemplo.com" v-room="geral">' +
-        '<span v-text="$room.membros.length"></span>' +
-        '<b v-text="$room.mensagens.length"></b>' +
+        '<span v-text="$room.members.length"></span>' +
+        '<b v-text="$room.messages.length"></b>' +
         '</div>'
     );
     const ws = FakeWebSocket.ultimo;
@@ -856,7 +856,7 @@ describe('v-socket', () => {
       expect(() => createSocket('wss://x')).not.toThrow();
       const inerte = createSocket('wss://x');
       expect(inerte.state).toBe('closed');
-      expect(inerte.error).toContain('indisponivel');
+      expect(inerte.error).toContain('unavailable');
 
       const { root } = montar('<div v-socket="wss://x"></div>');
       const div = root.querySelector('div')!;

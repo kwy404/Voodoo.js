@@ -12,7 +12,7 @@ import { Scope } from '../src/runtime/scope';
 import { walk, evaluateIn } from '../src/runtime/walker';
 import { parse, clearParseCache, VoodooSyntaxError } from '../src/parser/parser';
 import { config } from '../src/runtime/registry';
-import { limparAvisos } from '../src/runtime/avisos';
+import { clearWarnings } from '../src/runtime/avisos';
 import '../src/core';
 
 function montar(html: string, dados: Record<string, unknown> = {}) {
@@ -42,7 +42,7 @@ function comColetaDeErros<T>(fn: (erros: unknown[]) => T): T {
 beforeEach(() => {
   document.body.innerHTML = '';
   clearParseCache();
-  limparAvisos();
+  clearWarnings();
 });
 
 afterEach(() => {
@@ -258,7 +258,7 @@ describe('aviso detalhado em modo desenvolvimento', () => {
     expect(texto).toContain('v-text');
     expect(texto).toContain('#alvo');
     expect(texto).toContain('a +');
-    expect(texto).toContain('Sugestao');
+    expect(texto).toContain('Suggestion');
   });
 
   it('em producao nao escreve nada no console', () => {

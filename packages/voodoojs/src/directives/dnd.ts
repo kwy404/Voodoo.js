@@ -1,10 +1,9 @@
 /**
  * @module directives/dnd
  *
- * Arrastar e soltar completo, construido sobre eventos de ponteiro. A Drag and
- * Drop API do HTML5 foi deixada de lado de proposito: ela nao funciona bem no
- * toque, nao deixa customizar a imagem arrastada e nao ajuda em listas
- * ordenaveis.
+ * Complete drag and drop built on pointer events. The HTML5 Drag and Drop API
+ * was intentionally left out: it doesn't work well on touch, doesn't allow
+ * customizing the drag image, and doesn't help with sortable lists.
  *
  * ```html
  * <div v-dnd-group="kanban">
@@ -12,13 +11,13 @@
  *   <ul v-sortable v-sortable-group="kanban"> ... </ul>
  * </div>
  *
- * <div v-draggable v-draggable-data="produto">Arraste</div>
- * <div v-droppable="adicionarAoCarrinho" v-droppable-accept=".produto">Solte aqui</div>
+ * <div v-draggable v-draggable-data="product">Drag</div>
+ * <div v-droppable="addToCart" v-droppable-accept=".product">Drop here</div>
  * ```
  *
- * Tudo funciona com mouse, caneta, toque e teclado. O arraste pelo teclado usa
- * espaco para pegar e soltar, setas para mover e Escape para cancelar, com
- * anuncio em regiao `aria-live`.
+ * Everything works with mouse, pen, touch, and keyboard. Keyboard drag uses
+ * space to grab and drop, arrows to move, and Escape to cancel, with
+ * announcement in an `aria-live` region.
  */
 
 import { injectStyle, ensureTokens } from '../dom/style';
@@ -29,7 +28,7 @@ import { device } from '../utils';
 import { announce, callExpression, defineOption, dispatch, readOption } from './shared';
 
 // ---------------------------------------------------------------------------
-// Estilos
+// Styles
 // ---------------------------------------------------------------------------
 
 const DND_CSS = `
@@ -58,14 +57,14 @@ const DND_CSS = `
 }
 `;
 
-/** Garante os tokens e o CSS do arrastar e soltar. */
+/** Ensures tokens and CSS for drag and drop. */
 function ensureDnd(): void {
   ensureTokens();
   injectStyle('dnd', DND_CSS);
 }
 
 // ---------------------------------------------------------------------------
-// Registros
+// Registries
 // ---------------------------------------------------------------------------
 
 interface SortableInfo {
@@ -86,8 +85,8 @@ const sortableRegistry = new Map<HTMLElement, SortableInfo>();
 const droppableRegistry = new Map<HTMLElement, DroppableInfo>();
 
 /**
- * Descobre o grupo de um elemento: o proprio atributo quando existe, senao o
- * `v-dnd-group` do ancestral mais proximo.
+ * Discovers an element's group: its own attribute if present, otherwise
+ * the `v-dnd-group` of the nearest ancestor.
  */
 function groupOf(el: HTMLElement, own: string | null): string | null {
   if (own && own.trim()) return own.trim();
@@ -95,24 +94,24 @@ function groupOf(el: HTMLElement, own: string | null): string | null {
   return holder?.getAttribute('data-v-dnd-group') || null;
 }
 
-/** Filhos diretos que podem ser arrastados dentro de uma lista. */
+/** Direct children that can be dragged within a list. */
 function itemsOf(list: HTMLElement): HTMLElement[] {
   return Array.from(list.children).filter(
     (child) => !child.classList.contains('v-drag-ghost')
   ) as HTMLElement[];
 }
 
-/** Identificador de um item, usado na ordem entregue pelos eventos. */
+/** Identifier of an item, used in the order delivered by events. */
 function itemKey(item: HTMLElement, index: number): string {
   return item.getAttribute('data-id') ?? (item.id || String(index));
 }
 
-/** Ordem atual de uma lista, em chaves estaveis. */
+/** Current order of a list, in stable keys. */
 function orderOf(list: HTMLElement): string[] {
   return itemsOf(list).map((item, index) => itemKey(item, index));
 }
 
-/** Detecta listas dispostas em linha, onde as setas horizontais fazem sentido. */
+/** Detects lists laid out horizontally, where arrow keys make sense. */
 function isHorizontal(list: HTMLElement): boolean {
   const style = getComputedStyle(list);
   if (style.display.includes('flex')) return style.flexDirection.startsWith('row');
@@ -121,12 +120,12 @@ function isHorizontal(list: HTMLElement): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Sessao de arraste
+// Drag session
 // ---------------------------------------------------------------------------
 
 interface DragSession {
   item: HTMLElement;
-  /** `sort` reordena listas, `free` apenas entrega o item a uma area. */
+  /** `sort` reorders lists, `free` just delivers the item to a drop zone. */
   mode: 'sort' | 'free';
   data: unknown;
   group: string | null;
@@ -149,7 +148,7 @@ interface DragSession {
 let session: DragSession | null = null;
 let scrollFrame = 0;
 
-/** Cria o fantasma que acompanha o cursor. */
+/** Creates the ghost that follows the cursor. */
 function createGhost(item: HTMLElement, rect: DOMRect): HTMLElement {
   const ghost = item.cloneNode(true) as HTMLElement;
   ghost.classList.add('v-drag-ghost');
@@ -163,7 +162,7 @@ function createGhost(item: HTMLElement, rect: DOMRect): HTMLElement {
   return ghost;
 }
 
-/** Move o fantasma respeitando o eixo travado. */
+/** Moves the ghost respecting the locked axis. */
 function moveGhost(x: number, y: number): void {
   if (!session?.ghost) return;
   const left = session.axis === 'y' ? session.lastX : x;
@@ -173,7 +172,7 @@ function moveGhost(x: number, y: number): void {
   )}px, 0)`;
 }
 
-/** Container rolavel mais proximo, usado pela rolagem automatica. */
+/** Nearest scrollable container, used by auto-scroll. */
 function scrollParent(el: HTMLElement | null): HTMLElement | null {
   let current = el;
   while (current && current !== document.body && current !== document.documentElement) {
@@ -190,7 +189,7 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
   return null;
 }
 
-/** Rola o container ou a janela quando o cursor chega perto da borda. */
+/** Scrolls the container or window when cursor nears the edge. */
 function autoScroll(): void {
   if (!session) return;
   const zone = 56;
@@ -231,10 +230,10 @@ function stopScrollLoop(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Compatibilidade entre origem e destino
+// Compatibility between source and target
 // ---------------------------------------------------------------------------
 
-/** Verifica se uma lista aceita o item que esta sendo arrastado. */
+/** Checks if a list accepts the item being dragged. */
 function listAccepts(list: HTMLElement, current: DragSession): boolean {
   const info = sortableRegistry.get(list);
   if (!info) return false;
@@ -243,14 +242,14 @@ function listAccepts(list: HTMLElement, current: DragSession): boolean {
   return info.group === current.group;
 }
 
-/** Verifica se uma area de soltura aceita o item que esta sendo arrastado. */
+/** Checks if a drop zone accepts the item being dragged. */
 function dropAccepts(info: DroppableInfo, current: DragSession): boolean {
   if (info.accept && !current.item.matches(info.accept)) return false;
   if (info.group && info.group !== current.group) return false;
   return true;
 }
 
-/** Marca visualmente todas as areas compativeis com o arraste atual. */
+/** Visually marks all zones compatible with the current drag. */
 function highlightTargets(current: DragSession, on: boolean): void {
   for (const info of droppableRegistry.values()) {
     info.el.classList.toggle('v-drop-active', on && dropAccepts(info, current));
@@ -260,7 +259,7 @@ function highlightTargets(current: DragSession, on: boolean): void {
   }
 }
 
-/** Insere o item na posicao correspondente ao ponteiro dentro da lista. */
+/** Inserts the item at the position corresponding to the pointer within the list. */
 function placeInList(list: HTMLElement, item: HTMLElement, x: number, y: number): void {
   const horizontal = isHorizontal(list);
   let reference: HTMLElement | null = null;
@@ -286,10 +285,10 @@ function placeInList(list: HTMLElement, item: HTMLElement, x: number, y: number)
 }
 
 // ---------------------------------------------------------------------------
-// Ciclo do arraste
+// Drag cycle
 // ---------------------------------------------------------------------------
 
-/** Monta a sessao e prepara o visual do arraste. */
+/** Sets up the session and prepares the drag visuals. */
 function beginDrag(
   item: HTMLElement,
   options: {
@@ -344,7 +343,7 @@ function beginDrag(
   dispatch(item, 'voodoo:drag-start', { item, data: options.data, group: options.group });
 }
 
-/** Atualiza destino e posicao durante o arraste com ponteiro. */
+/** Updates target and position during pointer drag. */
 function updateDrag(x: number, y: number): void {
   if (!session) return;
   session.lastX = x;
@@ -355,7 +354,7 @@ function updateDrag(x: number, y: number): void {
   const list = (under?.closest('.v-sortable') as HTMLElement | null) ?? null;
   const drop = (under?.closest('.v-droppable') as HTMLElement | null) ?? null;
 
-  // Reordenacao dentro da lista, inclusive entre listas do mesmo grupo.
+  // Reordering within a list, including between lists in the same group.
   if (session.mode === 'sort' && list && listAccepts(list, session)) {
     if (session.overList && session.overList !== list) {
       session.overList.classList.remove('v-drop-over');
@@ -381,7 +380,7 @@ function updateDrag(x: number, y: number): void {
   session.ghost?.classList.toggle('v-drag-invalid', !!drop && !valid);
 }
 
-/** Devolve o item para a posicao onde o arraste comecou. */
+/** Returns the item to the position where the drag started. */
 function restorePosition(current: DragSession): void {
   if (!current.startParent) return;
   if (current.startNext && current.startNext.parentNode === current.startParent) {
@@ -391,7 +390,7 @@ function restorePosition(current: DragSession): void {
   }
 }
 
-/** Limpa classes, fantasma e listeners da sessao. */
+/** Cleans up classes, ghost, and listeners for the session. */
 function teardown(current: DragSession): void {
   current.ghost?.remove();
   current.item.classList.remove('v-dragging', 'v-grabbed');
@@ -404,7 +403,7 @@ function teardown(current: DragSession): void {
   session = null;
 }
 
-/** Conclui o arraste, avisando lista e area de soltura envolvidas. */
+/** Completes the drag, notifying involved list and drop zone. */
 function finishDrag(): void {
   const current = session;
   if (!current) return;
@@ -432,7 +431,7 @@ function finishDrag(): void {
           order: orderOf(current.startList),
         });
       }
-      announce(`Item movido para a posicao ${newIndex + 1} de ${itemsOf(list).length}`);
+      announce(`Item moved to position ${newIndex + 1} of ${itemsOf(list).length}`);
     }
   }
 
@@ -447,20 +446,20 @@ function finishDrag(): void {
     const event = new CustomEvent('voodoo:drop', { detail, bubbles: true });
     drop.dispatchEvent(event);
     callExpression(info.expression, info.scope, drop, event, detail);
-    announce('Item solto na area de destino');
+    announce('Item dropped in drop zone');
   }
 
   dispatch(current.item, 'voodoo:drag-end', { item: current.item, data: current.data });
   teardown(current);
 }
 
-/** Cancela o arraste e devolve o item ao lugar de origem. */
+/** Cancels the drag and returns the item to its original location. */
 function cancelDrag(): void {
   const current = session;
   if (!current) return;
   restorePosition(current);
   dispatch(current.item, 'voodoo:drag-cancel', { item: current.item });
-  announce('Arraste cancelado');
+  announce('Drag canceled');
   teardown(current);
 }
 
@@ -471,21 +470,21 @@ function onDragKeyDown(event: KeyboardEvent): void {
 }
 
 // ---------------------------------------------------------------------------
-// Ponteiro: instalacao em um elemento arrastavel
+// Pointer: installation on a draggable element
 // ---------------------------------------------------------------------------
 
 interface PointerDragOptions {
   mode: 'sort' | 'free';
-  /** Seletor da alca. Quando ausente, o proprio item e a alca. */
+  /** Selector for the handle. When absent, the item itself is the handle. */
   handle: string | null;
   group: () => string | null;
   data: () => unknown;
   axis: () => 'x' | 'y' | null;
-  /** Item real a partir do alvo do evento, usado pelas listas ordenaveis. */
+  /** Actual item from the event target, used by sortable lists. */
   itemFrom: (target: HTMLElement) => HTMLElement | null;
 }
 
-/** Liga os eventos de ponteiro que iniciam e conduzem um arraste. */
+/** Attaches pointer events that start and drive a drag. */
 function installPointerDrag(
   root: HTMLElement,
   options: PointerDragOptions,
@@ -543,7 +542,7 @@ function installPointerDrag(
     if (event.button !== 0 || session) return;
     const target = event.target as HTMLElement | null;
     if (!target) return;
-    // Controles interativos continuam clicaveis dentro do item arrastavel.
+    // Interactive controls remain clickable within the draggable item.
     if (target.closest('input,textarea,select,option,[contenteditable="true"]')) return;
     if (options.handle && !target.closest(options.handle)) return;
 
@@ -570,10 +569,10 @@ function installPointerDrag(
 }
 
 // ---------------------------------------------------------------------------
-// Teclado
+// Keyboard
 // ---------------------------------------------------------------------------
 
-/** Listas do mesmo grupo, na ordem em que aparecem no documento. */
+/** Lists in the same group, in the order they appear in the document. */
 function listsInGroup(group: string | null): HTMLElement[] {
   if (!group) return [];
   return Array.from(sortableRegistry.values())
@@ -582,7 +581,7 @@ function listsInGroup(group: string | null): HTMLElement[] {
     .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
 }
 
-/** Move um item pego pelo teclado dentro da lista ou para a lista vizinha. */
+/** Moves an item grabbed by keyboard within the list or to an adjacent list. */
 function keyboardMove(item: HTMLElement, key: string): boolean {
   if (!session) return false;
   const list = item.parentElement as HTMLElement | null;
@@ -599,12 +598,12 @@ function keyboardMove(item: HTMLElement, key: string): boolean {
     if (target < 0 || target >= siblings.length) return false;
     if (forward) list.insertBefore(item, siblings[target].nextSibling);
     else list.insertBefore(item, siblings[target]);
-    announce(`Posicao ${target + 1} de ${siblings.length}`);
+    announce(`Position ${target + 1} of ${siblings.length}`);
     item.focus();
     return true;
   }
 
-  // Setas laterais em listas verticais trocam de coluna, util em quadros.
+  // Side arrows on vertical lists switch columns, useful for boards.
   if (!horizontal && (key === 'ArrowLeft' || key === 'ArrowRight')) {
     const lists = listsInGroup(session.group);
     const position = lists.indexOf(list);
@@ -612,14 +611,14 @@ function keyboardMove(item: HTMLElement, key: string): boolean {
     const next = lists[position + (key === 'ArrowRight' ? 1 : -1)];
     if (!next) return false;
     next.appendChild(item);
-    announce(`Movido para a lista ${lists.indexOf(next) + 1} de ${lists.length}`);
+    announce(`Moved to list ${lists.indexOf(next) + 1} of ${lists.length}`);
     item.focus();
     return true;
   }
   return false;
 }
 
-/** Areas de soltura compativeis, usadas na navegacao por teclado. */
+/** Compatible drop zones, used in keyboard navigation. */
 function droppableTargets(current: DragSession): HTMLElement[] {
   return Array.from(droppableRegistry.values())
     .filter((info) => dropAccepts(info, current))
@@ -653,9 +652,9 @@ defineDirective('sortable', ({ el, expression, cleanup }) => {
   };
   sortableRegistry.set(el, info);
 
-  if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', 'Lista reordenavel');
+  if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', 'Sortable list');
 
-  /** Prepara um item: foco por teclado, alca e estado ARIA. */
+  /** Prepares an item: keyboard focus, handle, and ARIA state. */
   const prepare = (item: HTMLElement): void => {
     if (!item.hasAttribute('tabindex')) item.setAttribute('tabindex', '0');
     if (!item.hasAttribute('aria-grabbed')) item.setAttribute('aria-grabbed', 'false');
@@ -689,7 +688,7 @@ defineDirective('sortable', ({ el, expression, cleanup }) => {
     cleanup
   );
 
-  // Arraste pelo teclado: espaco pega e solta, setas movem, Escape cancela.
+  // Keyboard drag: space grabs and drops, arrows move, Escape cancels.
   const onKeyDown = (event: KeyboardEvent): void => {
     const target = event.target as HTMLElement | null;
     if (!target) return;
@@ -700,7 +699,7 @@ defineDirective('sortable', ({ el, expression, cleanup }) => {
       event.preventDefault();
       if (session && session.item === item) {
         finishDrag();
-        announce('Item solto');
+        announce('Item dropped');
         return;
       }
       if (session) return;
@@ -714,7 +713,7 @@ defineDirective('sortable', ({ el, expression, cleanup }) => {
         y: 0,
         keyboard: true,
       });
-      announce('Item pego. Use as setas para mover e espaco para soltar.');
+      announce('Item grabbed. Use arrow keys to move and space to drop.');
       return;
     }
 
@@ -755,7 +754,7 @@ defineDirective('draggable', ({ el, expression, scope, cleanup }) => {
   if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
   el.setAttribute('aria-grabbed', 'false');
   if (!el.hasAttribute('aria-roledescription')) {
-    el.setAttribute('aria-roledescription', 'item arrastavel');
+    el.setAttribute('aria-roledescription', 'draggable item');
   }
 
   const readData = (): unknown =>
@@ -774,7 +773,7 @@ defineDirective('draggable', ({ el, expression, scope, cleanup }) => {
     cleanup
   );
 
-  // Pelo teclado: espaco pega, setas percorrem os destinos, espaco solta.
+  // Keyboard: space grabs, arrows navigate targets, space drops.
   let targets: HTMLElement[] = [];
   let cursor = 0;
 
@@ -785,7 +784,7 @@ defineDirective('draggable', ({ el, expression, scope, cleanup }) => {
     session.overDrop = active;
     if (!device.reducedMotion) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     else active.scrollIntoView({ block: 'nearest' });
-    announce(active.getAttribute('aria-label') || `Destino ${cursor + 1} de ${targets.length}`);
+    announce(active.getAttribute('aria-label') || `Target ${cursor + 1} of ${targets.length}`);
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
@@ -810,7 +809,7 @@ defineDirective('draggable', ({ el, expression, scope, cleanup }) => {
       targets = session ? droppableTargets(session) : [];
       cursor = 0;
       if (targets.length) highlight();
-      else announce('Nenhum destino disponivel');
+      else announce('No targets available');
       return;
     }
 
@@ -868,15 +867,15 @@ defineDirective('droppable', ({ el, expression, scope, cleanup }) => {
 defineOption('droppable-accept');
 defineOption('droppable-group');
 
-/** Nome do atributo lido por `v-dnd-group`, exportado para documentacao. */
+/** Name of the attribute read by `v-dnd-group`, exported for documentation. */
 export const DND_GROUP_ATTRIBUTE = 'data-v-dnd-group';
 
-/** Indica se existe um arraste em andamento. Util em testes e integracoes. */
+/** Indicates if a drag is in progress. Useful in tests and integrations. */
 export function isDragging(): boolean {
   return session !== null;
 }
 
-/** Cancela o arraste em andamento, se houver. */
+/** Cancels the current drag, if any. */
 export function cancelDragging(): void {
   cancelDrag();
 }

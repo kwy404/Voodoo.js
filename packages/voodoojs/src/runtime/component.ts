@@ -1,16 +1,16 @@
 /**
  * @module runtime/component
  *
- * Modelo de componentes. Um componente da Voodoo e um escopo com estado,
- * metodos, computados, watchers, props, slots e ciclo de vida, montado sobre um
- * elemento existente. Nao existe passo de compilacao.
+ * Component model. A Voodoo component is a scope with state, methods, computed
+ * properties, watchers, props, slots and lifecycle, mounted on an existing
+ * element. There is no compilation step.
  *
- * Tres formas de uso:
+ * Three ways to use:
  *
  * ```html
- * <div v-component="counter"></div>          <!-- registrado -->
- * <counter></counter>                        <!-- tag propria -->
- * <Counter start="10"></Counter>             <!-- tag em PascalCase -->
+ * <div v-component="counter"></div>          <!-- registered -->
+ * <counter></counter>                        <!-- custom tag -->
+ * <Counter start="10"></Counter>             <!-- PascalCase tag -->
  * ```
  */
 
@@ -30,7 +30,7 @@ import {
   type ComponentDefinition,
   type PropDefinition,
 } from './registry';
-import { avisarAlias, avisarComponenteDesconhecido, avisarPropObrigatoria } from './avisos';
+import { warnAlias, warnUnknownComponent, warnRequiredProp } from './avisos';
 import { Scope } from './scope';
 import {
   addCleanup,
@@ -57,106 +57,104 @@ export interface ComponentInstance {
   [key: string]: any;
 }
 
-/** Componentes ja montados, para inspecao pelas devtools. */
+/** Already mounted components, for inspection by devtools. */
 export const instances = new Set<ComponentInstance>();
 
 const injectedStyles = new Set<string>();
 
 /**
- * Registra um componente.
+ * Registers a component.
  *
  * ```js
  * V.component('counter', {
  *   props: { start: { type: 'number', default: 0 } },
  *   state(props) { return { count: props.start } },
- *   computed: { dobro() { return this.count * 2 } },
+ *   computed: { double() { return this.count * 2 } },
  *   methods: { increment() { this.count++ } },
  *   template: `
  *     <button v-click="increment" v-text="count"></button>
- *     <small v-text="dobro"></small>
+ *     <small v-text="double"></small>
  *   `,
- *   mounted() { console.log('montado') }
+ *   mounted() { console.log('mounted') }
  * })
  * ```
  */
 export function defineComponent(name: string, definition: ComponentDefinition): void {
   const normalized = normalizeComponentName(name);
   components.set(normalized, definition);
-  // Permite `<UserCard>`, que o HTML entrega como tag "usercard".
+  // Allows `<UserCard>`, which HTML delivers as tag "usercard".
   componentAliases.set(normalized.replace(/-/g, ''), normalized);
   mountPending(normalized);
 }
 
 /**
- * Monta as tags que ja estavam na pagina esperando por este componente.
+ * Mounts tags that were already on the page waiting for this component.
  *
- * Sem isso, registrar um componente depois que a pagina carregou nao teria
- * efeito nenhum, o que e justamente o caso mais comum: a tag do CDN com
- * `defer` roda antes do script da aplicacao.
+ * Without this, registering a component after the page loaded would have no
+ * effect, which is exactly the most common case: the CDN tag with `defer`
+ * runs before the application script.
  */
 function mountPending(normalized: string): void {
   if (typeof document === 'undefined' || !document.body) return;
 
-  const semHifen = normalized.replace(/-/g, '');
-  const seletores = [normalized, semHifen, `[${config.prefix}component="${normalized}"]`];
+  const noHyphen = normalized.replace(/-/g, '');
+  const selectors = [normalized, noHyphen, `[${config.prefix}component="${normalized}"]`];
 
-  for (const seletor of seletores) {
-    let encontrados: Element[];
+  for (const selector of selectors) {
+    let found: Element[];
     try {
-      encontrados = Array.from(document.querySelectorAll(seletor));
+      found = Array.from(document.querySelectorAll(selector));
     } catch {
-      continue; // seletor invalido para nomes sem hifen
+      continue; // invalid selector for hyphen-free names
     }
-    for (const el of encontrados) {
-      // Ja e um componente montado: nada a fazer.
+    for (const el of found) {
+      // Already a mounted component: nothing to do.
       if (getScope(el)?.component) continue;
 
-      // Um ancestral que ainda nao foi processado significa que a caminhada
-      // principal ainda nao chegou aqui. Montar agora ligaria os atributos da
-      // tag ao escopo errado, porque o `v-data` de cima ainda nao existe: o
-      // `@evento` do componente gravaria na raiz em vez de gravar no escopo do
-      // pai. E como o elemento ficaria marcado como pronto, a caminhada
-      // seguinte passaria direto e o engano seria permanente. Deixar para
-      // depois nao custa nada, porque a caminhada vai montar este elemento
-      // sozinha, na ordem certa.
-      if (temAncestralPendente(el)) continue;
+      // An ancestor not yet processed means the main walk hasn't reached here.
+      // Mounting now would bind the tag's attributes to the wrong scope, because
+      // the `v-data` above doesn't exist yet: the component's `@event` would
+      // write to the root instead of the parent's scope. And since the element
+      // would be marked ready, the following walk would skip it and the error
+      // would be permanent. Waiting costs nothing, because the walk will mount
+      // this element itself, in the right order.
+      if (hasPendingAncestor(el)) continue;
 
-      const escopo = findScope(el.parentNode);
+      const scope = findScope(el.parentNode);
 
-      // O elemento pode ter sido percorrido antes do componente existir, por
-      // causa de outros atributos como `@evento`. Nesse caso ele foi marcado
-      // como pronto sem nunca ter sido montado, entao desmontamos e refazemos.
+      // The element may have been walked before the component existed, because
+      // of other attributes like `@event`. In that case it was marked ready
+      // without ever being mounted, so we unmount and redo.
       if (isInitialized(el)) {
         destroyElement(el);
-        // Os atributos ja tinham sido retirados do HTML pela limpeza, entao
-        // precisam voltar para que o walker os enxergue de novo.
+        // Attributes were already removed from HTML by cleanup, so they need to
+        // come back for the walker to see them again.
         restoreAttributes(el);
       }
 
-      walkElement(el, escopo);
+      walkElement(el, scope);
     }
   }
 }
 
 /**
- * `true` quando algum ancestral ainda tem directives esperando processamento.
+ * `true` when some ancestor still has directives waiting for processing.
  *
- * O sinal e o proprio HTML: um elemento ja processado teve os atributos `v-*`
- * retirados, entao continuar com eles quer dizer que a caminhada nao passou
- * por ali. A checagem de `isInitialized` cobre o caso de
- * `config.cleanAttributes` desligado, em que os atributos ficam no lugar
- * mesmo depois de processados.
+ * The signal is the HTML itself: a processed element had its `v-*` attributes
+ * removed, so keeping them means the walk didn't pass through there. The
+ * `isInitialized` check covers the case where `config.cleanAttributes` is off,
+ * where attributes stay in place even after processing.
  */
-function temAncestralPendente(el: Element): boolean {
-  let atual = el.parentElement;
-  while (atual && atual !== document.body) {
-    if (hasDirectives(atual) && !isInitialized(atual)) return true;
-    atual = atual.parentElement;
+function hasPendingAncestor(el: Element): boolean {
+  let current = el.parentElement;
+  while (current && current !== document.body) {
+    if (hasDirectives(current) && !isInitialized(current)) return true;
+    current = current.parentElement;
   }
   return false;
 }
 
-/** Converte o valor bruto de um atributo para o tipo declarado na prop. */
+/** Converts the raw attribute value to the type declared in the prop. */
 function coerce(value: unknown, def: PropDefinition | undefined): unknown {
   if (!def || !def.type || def.type === 'any') return value;
   if (value == null || value === '') return def.default ?? value;
@@ -186,21 +184,21 @@ function propDefinitions(def: ComponentDefinition): Record<string, PropDefinitio
   return out;
 }
 
-/** `user-name` e `username` viram `userName`. */
+/** `user-name` and `username` become `userName`. */
 function camelize(name: string): string {
   return name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase());
 }
 
 /**
- * Le as props do elemento. Atributos estaticos entram como texto, atributos com
- * `:` viram efeitos reativos ligados ao escopo do pai.
+ * Reads props from the element. Static attributes come in as text, attributes
+ * with `:` become reactive effects linked to the parent scope.
  */
 function resolveProps(
   el: HTMLElement,
   defs: Record<string, PropDefinition>,
   parentScope: Scope,
   owner: EffectScope,
-  nomeDoComponente: string
+  componentName: string
 ): Record<string, any> {
   const props = reactive<Record<string, any>>({});
   const known = Object.keys(defs);
@@ -211,7 +209,7 @@ function resolveProps(
     lookup.set(camelize(key).toLowerCase(), key);
   }
 
-  // Valores padrao primeiro, para que o estado inicial nunca veja `undefined`.
+  // Default values first, so initial state never sees `undefined`.
   for (const key of known) {
     if (defs[key].default !== undefined) props[key] = defs[key].default;
   }
@@ -231,7 +229,7 @@ function resolveProps(
       continue;
     }
 
-    if (parsed) continue; // demais directives nao sao props
+    if (parsed) continue; // other directives are not props
 
     const target = lookup.get(attr.name.toLowerCase());
     if (target) props[target] = coerce(attr.value, defs[target]);
@@ -240,7 +238,7 @@ function resolveProps(
 
   for (const key of known) {
     if (defs[key].required && props[key] === undefined) {
-      avisarPropObrigatoria(el, nomeDoComponente, key);
+      warnRequiredProp(el, componentName, key);
     }
   }
 
@@ -248,8 +246,8 @@ function resolveProps(
 }
 
 /**
- * Distribui o conteudo original do elemento nos `<slot>` do template.
- * O conteudo do slot continua avaliado no escopo do pai, como no Vue.
+ * Distributes the element's original content into the template's `<slot>` tags.
+ * The slot content remains evaluated in the parent scope, like in Vue.
  */
 function applySlots(el: HTMLElement, original: DocumentFragment, parentScope: Scope): void {
   const slots = Array.from(el.querySelectorAll('slot'));
@@ -278,10 +276,10 @@ function applySlots(el: HTMLElement, original: DocumentFragment, parentScope: Sc
     if (content && content.length) {
       for (const node of content) frag.appendChild(node);
     } else {
-      // Mantem o conteudo padrao escrito dentro do proprio `<slot>`.
+      // Keeps the default content written inside the `<slot>` itself.
       while (slot.firstChild) frag.appendChild(slot.firstChild);
     }
-    // O conteudo do slot pertence ao escopo do pai.
+    // The slot content belongs to the parent scope.
     Array.from(frag.childNodes).forEach((node) => {
       if (node.nodeType === 1) markScope(node, parentScope);
     });
@@ -289,7 +287,7 @@ function applySlots(el: HTMLElement, original: DocumentFragment, parentScope: Sc
   }
 }
 
-/** Associa um no a um escopo especifico antes do walker chegar nele. */
+/** Associates a node with a specific scope before the walker reaches it. */
 let scopeMarker: ((node: Node, scope: Scope) => void) | null = null;
 export function setScopeMarker(fn: (node: Node, scope: Scope) => void): void {
   scopeMarker = fn;
@@ -299,8 +297,8 @@ function markScope(node: Node, scope: Scope): void {
 }
 
 /**
- * Monta um componente sobre um elemento e devolve o escopo resultante.
- * Chamado pelo walker quando encontra `v-component` ou uma tag registrada.
+ * Mounts a component on an element and returns the resulting scope.
+ * Called by the walker when it finds `v-component` or a registered tag.
  */
 export function mountComponent(
   el: HTMLElement,
@@ -313,26 +311,26 @@ export function mountComponent(
     : {};
 
   if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
-    // Componente inline: sem registro, apenas escopo isolado.
-    avisarComponenteDesconhecido(el, name);
+    // Inline component: unregistered, just an isolated scope.
+    warnUnknownComponent(el, name);
   }
 
   const owner = new EffectScope(true);
   const defs = propDefinitions(definition);
   const props = resolveProps(el, defs, parentScope, owner, normalized || 'inline');
 
-  // Estado inicial.
-  // `data` e `destroyed` continuam funcionando; os nomes oficiais sao `state`
-  // e `unmounted`, e o aviso so aparece em desenvolvimento.
-  if (!definition.state && definition.data) avisarAlias('data()', 'state()');
-  if (definition.destroyed) avisarAlias('destroyed()', 'unmounted()');
+  // Initial state.
+  // `data` and `destroyed` still work; the official names are `state` and
+  // `unmounted`, and the warning only appears in development.
+  if (!definition.state && definition.data) warnAlias('data()', 'state()');
+  if (definition.destroyed) warnAlias('destroyed()', 'unmounted()');
 
   const stateFactory = definition.state ?? definition.data;
   let stateRaw: Record<string, any> = {};
 
   const instance = {} as ComponentInstance;
 
-  // O escopo do componente enxerga o pai apenas quando `inheritScope` e ligado.
+  // The component's scope sees the parent only when `inheritScope` is on.
   const scopeParent = definition.inheritScope ? parentScope : parentScope.root;
   const scope = new Scope({}, scopeParent, el);
   scope.component = instance;
@@ -340,49 +338,49 @@ export function mountComponent(
   try {
     stateRaw = stateFactory ? stateFactory.call(instance, props) ?? {} : {};
   } catch (err) {
-    handleError(err, `state() do componente "${name}"`);
+    handleError(err, `state() of component "${name}"`);
   }
 
-  // `v-data` no mesmo elemento complementa o estado do componente.
+  // `v-data` on the same element supplements the component's state.
   const dataAttr = el.getAttribute(`${config.prefix}data`);
   if (dataAttr) {
     const extra = evaluateIn<Record<string, unknown>>(dataAttr, parentScope, 'v-data');
     if (extra && typeof extra === 'object') Object.assign(stateRaw, extra);
   }
 
-  // provide: fica no escopo, e os descendentes acham subindo a cadeia.
+  // provide: lives in the scope, descendants find it by walking up the chain.
   if (definition.provide) {
     try {
-      const fornecidos =
+      const provided =
         typeof definition.provide === 'function'
           ? definition.provide.call(instance)
           : definition.provide;
-      if (fornecidos && typeof fornecidos === 'object') {
-        scope.provides = { ...fornecidos };
+      if (provided && typeof provided === 'object') {
+        scope.provides = { ...provided };
       }
     } catch (err) {
-      handleError(err, `provide() do componente "${name}"`);
+      handleError(err, `provide() of component "${name}"`);
     }
   }
 
-  // inject: le o que algum ancestral forneceu e entrega como estado inicial.
+  // inject: reads what an ancestor provided and delivers as initial state.
   if (definition.inject) {
-    const pedidos = Array.isArray(definition.inject)
-      ? definition.inject.map((chave) => [chave, { from: chave }] as const)
+    const requests = Array.isArray(definition.inject)
+      ? definition.inject.map((key) => [key, { from: key }] as const)
       : Object.entries(definition.inject).map(
-          ([chave, opcoes]) => [chave, opcoes ?? {}] as const
+          ([key, options]) => [key, options ?? {}] as const
         );
 
-    for (const [chave, opcoes] of pedidos) {
-      const de = (opcoes as { from?: string }).from ?? chave;
-      const valor = parentScope.inject(de, (opcoes as { default?: unknown }).default);
-      if (!(chave in stateRaw)) stateRaw[chave] = valor;
+    for (const [key, options] of requests) {
+      const from = (options as { from?: string }).from ?? key;
+      const value = parentScope.inject(from, (options as { default?: unknown }).default);
+      if (!(key in stateRaw)) stateRaw[key] = value;
     }
   }
 
   const state = reactive(stateRaw);
 
-  // Computados.
+  // Computed properties.
   const computedRefs: Record<string, { value: any }> = {};
   if (definition.computed) {
     for (const [key, getter] of Object.entries(definition.computed)) {
@@ -390,14 +388,14 @@ export function mountComponent(
     }
   }
 
-  // Metodos ligados a instancia.
+  // Methods bound to instance.
   const methods: Record<string, Function> = {};
   if (definition.methods) {
     for (const [key, fn] of Object.entries(definition.methods)) {
       methods[key] = (...args: unknown[]) => fn.apply(instance, args);
     }
   }
-  // Funcoes soltas na definicao tambem viram metodos, para escrita mais curta.
+  // Functions loose in the definition also become methods, for shorter writing.
   for (const [key, value] of Object.entries(definition)) {
     if (typeof value !== 'function') continue;
     if (LIFECYCLE.has(key) || key === 'state' || key === 'data') continue;
@@ -475,10 +473,10 @@ export function mountComponent(
 
   const proxy = new Proxy(instance as Record<string, any>, handler);
   scope.data = proxy;
-  // A instancia publica e o proprio proxy, para que `this` funcione nos metodos.
+  // The public instance is the proxy itself, so `this` works in methods.
   Object.setPrototypeOf(instance, proxy);
 
-  // Watchers declarados.
+  // Declared watchers.
   if (definition.watch) {
     for (const [key, cb] of Object.entries(definition.watch)) {
       owner.run(() =>
@@ -490,7 +488,7 @@ export function mountComponent(
     }
   }
 
-  // Estilo do componente, injetado uma vez.
+  // Component styles, injected once.
   if (definition.style && !injectedStyles.has(normalized)) {
     injectedStyles.add(normalized);
     const tag = document.createElement('style');
@@ -501,7 +499,7 @@ export function mountComponent(
 
   callHook(definition, proxy, 'beforeMount');
 
-  // Template: o conteudo original vira slot.
+  // Template: original content becomes a slot.
   if (definition.template) {
     const original = document.createDocumentFragment();
     while (el.firstChild) original.appendChild(el.firstChild);
@@ -516,7 +514,7 @@ export function mountComponent(
     if (definition.updated) {
       owner.run(() =>
         createEffect(() => {
-          // Le todo o estado para reagir a qualquer mudanca.
+          // Read all state to react to any change.
           for (const key of Object.keys(state)) void state[key];
           callHook(definition, proxy, 'updated');
         })

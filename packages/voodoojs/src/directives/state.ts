@@ -1,16 +1,15 @@
 /**
  * @module directives/state
  *
- * Recursos de estado que nenhuma biblioteca do mesmo porte oferece de forma
- * declarativa:
+ * State features that no library of the same size offers declaratively:
  *
- * - `v-persist`: o estado sobrevive ao recarregar a pagina.
- * - `v-sync`: o estado acompanha as outras abas abertas, ao vivo.
- * - `v-history`: desfazer e refazer de graca, com `v-undo` e `v-redo`.
+ * - `v-persist`: state survives page reload.
+ * - `v-sync`: state follows other open tabs in real-time.
+ * - `v-history`: undo and redo for free, with `v-undo` and `v-redo`.
  *
  * ```html
- * <div v-data="{ tema: 'escuro', rascunho: '' }" v-persist="editor" v-sync>
- *   <textarea v-model="rascunho"></textarea>
+ * <div v-data="{ theme: 'dark', draft: '' }" v-persist="editor" v-sync>
+ *   <textarea v-model="draft"></textarea>
  * </div>
  * ```
  */
@@ -21,7 +20,7 @@ import { magic } from '../runtime/scope';
 import { storage } from '../storage';
 import { debounce, parseDuration } from '../utils';
 
-/** Remove funcoes e valores nao serializaveis antes de gravar. */
+/** Removes functions and non-serializable values before saving. */
 function serializable(source: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(source)) {
@@ -31,13 +30,13 @@ function serializable(source: Record<string, unknown>): Record<string, unknown> 
       JSON.stringify(value);
       out[key] = toRaw(value);
     } catch {
-      // Valor circular ou exotico: fica de fora do que e salvo.
+      // Circular or exotic value: stays out of what is saved.
     }
   }
   return out;
 }
 
-/** Chave estavel para um elemento, quando nenhuma foi informada. */
+/** Stable key for an element, when none was provided. */
 function autoKey(el: HTMLElement, prefix: string): string {
   if (el.id) return `${prefix}:${location.pathname}:#${el.id}`;
   const path: string[] = [];
@@ -62,7 +61,7 @@ defineDirective(
       ? `voodoo:persist:${expression.trim()}`
       : autoKey(el, 'voodoo:persist');
 
-    // Restaura o que foi salvo, sem apagar chaves que o estado declarou agora.
+    // Restores what was saved, without deleting keys that state just declared.
     const saved = storage.get<Record<string, unknown>>(key);
     if (saved && typeof saved === 'object') {
       for (const [prop, value] of Object.entries(saved)) {
@@ -76,8 +75,8 @@ defineDirective(
 
     const stopWatching = watch(scope.data, () => save(), { deep: true });
 
-    // Grava tambem o estado inicial, para a chave existir desde o primeiro
-    // carregamento, mesmo que o usuario nao mexa em nada.
+    // Also saves the initial state, so the key exists from the first
+    // load, even if the user does not change anything.
     save();
 
     cleanup(() => {
@@ -89,7 +88,7 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// v-sync: estado compartilhado entre abas
+// v-sync: state shared between tabs
 // ---------------------------------------------------------------------------
 
 defineDirective(
@@ -99,7 +98,7 @@ defineDirective(
 
     const name = expression.trim() || autoKey(el, 'voodoo:sync');
     const channel = new BroadcastChannel(name);
-    // Identifica esta aba, para nao reagir ao proprio envio.
+    // Identifies this tab, so it doesn't react to its own send.
     const senderId = Math.random().toString(36).slice(2);
     let applyingRemote = false;
 
@@ -119,7 +118,7 @@ defineDirective(
       for (const [prop, value] of Object.entries(payload.state)) {
         if (prop in scope.data && scope.data[prop] !== value) scope.data[prop] = value;
       }
-      // Libera no proximo ciclo, depois que os efeitos rodarem.
+      // Releases in the next cycle, after effects run.
       queueMicrotask(() => {
         applyingRemote = false;
       });
@@ -136,23 +135,23 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// v-history, v-undo e v-redo
+// v-history, v-undo, and v-redo
 // ---------------------------------------------------------------------------
 
 export interface HistoryController {
   canUndo: boolean;
   canRedo: boolean;
-  /** Quantidade de estados guardados. */
+  /** Number of saved states. */
   size: number;
   undo(): void;
   redo(): void;
-  /** Apaga o historico e recomeca do estado atual. */
+  /** Clears history and restarts from the current state. */
   clear(): void;
 }
 
 const controllers = new WeakMap<HTMLElement, HistoryController>();
 
-/** Controlador de historico mais proximo, subindo pelos ancestrais. */
+/** Closest history controller, walking up ancestors. */
 function findController(el: HTMLElement): HistoryController | null {
   let current: HTMLElement | null = el;
   while (current) {
@@ -218,7 +217,7 @@ defineDirective(
       const current = JSON.stringify(serializable(scope.data));
       if (current === JSON.stringify(snapshots[position])) return;
 
-      // Escrever depois de desfazer descarta o futuro, como em qualquer editor.
+      // Writing after undo discards the future, like any editor.
       snapshots.splice(position + 1);
       snapshots.push(JSON.parse(current));
       if (snapshots.length > limit) snapshots.shift();
@@ -253,7 +252,7 @@ defineDirective('redo', ({ el, cleanup }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-storage: liga um campo direto ao localStorage
+// v-storage: wires a field directly to localStorage
 // ---------------------------------------------------------------------------
 
 defineDirective('storage', ({ el, expression, cleanup, scope }) => {
@@ -272,5 +271,5 @@ defineDirective('storage', ({ el, expression, cleanup, scope }) => {
   void scope;
 });
 
-// A variavel magica so existe quando ha um `v-history` acima na arvore.
+// The magic variable only exists when there is a `v-history` above in the tree.
 magic('$history', (scope) => (scope.el ? findController(scope.el as HTMLElement) : null));

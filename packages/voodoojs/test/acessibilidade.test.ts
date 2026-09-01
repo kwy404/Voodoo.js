@@ -1,9 +1,9 @@
 /**
- * Acessibilidade dos componentes de interface.
+ * Accessibility of UI components.
  *
- * O teste aqui e o comportamento observavel: papel ARIA correto, foco indo e
- * voltando para o lugar certo, e teclado funcionando sem mouse. Um componente
- * que so responde a clique nao esta pronto.
+ * The test here is observable behavior: correct ARIA role, focus going and
+ * coming back to the right place, and keyboard working without mouse. A component
+ * that only responds to clicks is not ready.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -13,13 +13,13 @@ import { walk, destroy } from '../src/runtime/walker';
 import { modal } from '../src/ui/dialog';
 import '../src/index';
 
-function montar(html: string, dados: Record<string, unknown> = {}) {
-  const estado = reactive(dados);
+function mount(html: string, data: Record<string, unknown> = {}) {
+  const state = reactive(data);
   const root = document.createElement('div');
   root.innerHTML = html;
   document.body.appendChild(root);
-  walk(root, new Scope(estado));
-  return { root, estado };
+  walk(root, new Scope(state));
+  return { root, state };
 }
 
 async function settle(n = 4): Promise<void> {
@@ -27,18 +27,18 @@ async function settle(n = 4): Promise<void> {
 }
 
 /**
- * Espera um quadro de animacao. O foco inicial dos dialogos e aplicado dentro
- * de `requestAnimationFrame`, entao esperar so as microtasks nao basta.
+ * Wait for one animation frame. The initial focus of dialogs is applied inside
+ * `requestAnimationFrame`, so waiting only for microtasks is not enough.
  */
-function proximoQuadro(): Promise<void> {
+function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-/** Envia uma tecla para o alvo, subindo pela arvore como no navegador. */
-function tecla(alvo: EventTarget, key: string): KeyboardEvent {
-  const evento = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
-  alvo.dispatchEvent(evento);
-  return evento;
+/** Dispatch a key to the target, bubbling through the tree as in the browser. */
+function key(target: EventTarget, key: string): KeyboardEvent {
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+  target.dispatchEvent(event);
+  return event;
 }
 
 beforeEach(() => {
@@ -65,81 +65,81 @@ describe('modal', () => {
     modal.close();
   });
 
-  it('o gatilho anuncia que abre um dialogo', () => {
-    const { root } = montar(HTML);
+  it('trigger announces opening a dialog', () => {
+    const { root } = mount(HTML);
     expect(root.querySelector('#abrir')!.getAttribute('aria-haspopup')).toBe('dialog');
   });
 
-  it('o painel aberto tem role="dialog" e aria-modal', async () => {
-    montar(HTML);
+  it('opened panel has role="dialog" and aria-modal', async () => {
+    mount(HTML);
     (document.querySelector('#abrir') as HTMLElement).click();
     await settle();
 
-    const dialogo = document.querySelector('[role="dialog"]');
-    expect(dialogo).not.toBeNull();
-    expect(dialogo!.getAttribute('aria-modal')).toBe('true');
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    expect(dialog!.getAttribute('aria-modal')).toBe('true');
   });
 
-  it('o titulo do conteudo vira o rotulo acessivel', async () => {
-    montar(HTML);
+  it('content title becomes the accessible label', async () => {
+    mount(HTML);
     (document.querySelector('#abrir') as HTMLElement).click();
     await settle();
 
-    const dialogo = document.querySelector('[role="dialog"]')!;
-    const rotulo = dialogo.getAttribute('aria-labelledby');
-    expect(rotulo).toBeTruthy();
-    expect(document.getElementById(rotulo!)!.textContent).toContain('Titulo do painel');
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const label = dialog.getAttribute('aria-labelledby');
+    expect(label).toBeTruthy();
+    expect(document.getElementById(label!)!.textContent).toContain('Titulo do painel');
   });
 
-  it('o foco entra no dialogo ao abrir', async () => {
-    montar(HTML);
+  it('focus enters dialog on open', async () => {
+    mount(HTML);
     (document.querySelector('#abrir') as HTMLElement).click();
     await settle();
-    await proximoQuadro();
+    await nextFrame();
 
-    const dialogo = document.querySelector('[role="dialog"]')!;
-    expect(dialogo.contains(document.activeElement)).toBe(true);
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 
-  it('Escape fecha o dialogo', async () => {
-    montar(HTML);
+  it('Escape closes the dialog', async () => {
+    mount(HTML);
     (document.querySelector('#abrir') as HTMLElement).click();
     await settle();
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
 
-    tecla(document, 'Escape');
+    key(document, 'Escape');
     await settle();
     await new Promise((r) => setTimeout(r, 250));
 
     expect(modal.isOpen()).toBe(false);
   });
 
-  it('o foco volta para o gatilho ao fechar', async () => {
-    montar(HTML);
-    const gatilho = document.querySelector('#abrir') as HTMLElement;
-    gatilho.focus();
-    gatilho.click();
+  it('focus returns to trigger on close', async () => {
+    mount(HTML);
+    const trigger = document.querySelector('#abrir') as HTMLElement;
+    trigger.focus();
+    trigger.click();
     await settle();
 
     modal.close();
     await settle();
     await new Promise((r) => setTimeout(r, 250));
 
-    expect(document.activeElement).toBe(gatilho);
+    expect(document.activeElement).toBe(trigger);
   });
 
-  it('Tab circula dentro do dialogo em vez de sair', async () => {
-    montar(HTML);
+  it('Tab cycles within dialog instead of exiting', async () => {
+    mount(HTML);
     (document.querySelector('#abrir') as HTMLElement).click();
     await settle();
 
-    await proximoQuadro();
-    const evento = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
-    document.dispatchEvent(evento);
+    await nextFrame();
+    const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    document.dispatchEvent(event);
     await settle();
 
-    const dialogo = document.querySelector('[role="dialog"]')!;
-    expect(dialogo.contains(document.activeElement)).toBe(true);
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(dialog.contains(document.activeElement)).toBe(true);
   });
 });
 
@@ -156,72 +156,72 @@ describe('dropdown', () => {
       <button id="i3">Tres</button>
     </div>`;
 
-  it('o gatilho descreve o menu com aria-haspopup, aria-controls e aria-expanded', () => {
-    const { root } = montar(HTML);
+  it('trigger describes menu with aria-haspopup, aria-controls and aria-expanded', () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g')!;
     expect(g.getAttribute('aria-haspopup')).toBe('menu');
     expect(g.getAttribute('aria-expanded')).toBe('false');
     expect(g.getAttribute('aria-controls')).toBe('menu');
   });
 
-  it('o painel recebe role="menu" e os itens role="menuitem"', () => {
-    const { root } = montar(HTML);
+  it('panel gets role="menu" and items get role="menuitem"', () => {
+    const { root } = mount(HTML);
     void root;
     const menu = document.querySelector('#menu')!;
     expect(menu.getAttribute('role')).toBe('menu');
     expect(menu.querySelectorAll('[role="menuitem"]').length).toBe(3);
   });
 
-  it('aria-expanded acompanha a abertura', async () => {
-    const { root } = montar(HTML);
+  it('aria-expanded tracks opening', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
     g.click();
     await settle();
     expect(g.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('a seta para baixo no gatilho abre e foca o primeiro item', async () => {
-    const { root } = montar(HTML);
+  it('down arrow on trigger opens and focuses first item', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
-    tecla(g, 'ArrowDown');
+    key(g, 'ArrowDown');
     await settle();
     expect(g.getAttribute('aria-expanded')).toBe('true');
     expect(document.activeElement?.id).toBe('i1');
   });
 
-  it('as setas caminham entre os itens', async () => {
-    const { root } = montar(HTML);
+  it('arrows navigate between items', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
-    tecla(g, 'ArrowDown');
+    key(g, 'ArrowDown');
     await settle();
 
-    tecla(document.activeElement!, 'ArrowDown');
+    key(document.activeElement!, 'ArrowDown');
     expect(document.activeElement?.id).toBe('i2');
-    tecla(document.activeElement!, 'ArrowDown');
+    key(document.activeElement!, 'ArrowDown');
     expect(document.activeElement?.id).toBe('i3');
-    tecla(document.activeElement!, 'ArrowUp');
+    key(document.activeElement!, 'ArrowUp');
     expect(document.activeElement?.id).toBe('i2');
   });
 
-  it('Home e End vao para as pontas', async () => {
-    const { root } = montar(HTML);
-    tecla(root.querySelector('#g') as HTMLElement, 'ArrowDown');
+  it('Home and End go to the ends', async () => {
+    const { root } = mount(HTML);
+    key(root.querySelector('#g') as HTMLElement, 'ArrowDown');
     await settle();
 
-    tecla(document.activeElement!, 'End');
+    key(document.activeElement!, 'End');
     expect(document.activeElement?.id).toBe('i3');
-    tecla(document.activeElement!, 'Home');
+    key(document.activeElement!, 'Home');
     expect(document.activeElement?.id).toBe('i1');
   });
 
-  it('Escape fecha e devolve o foco ao gatilho', async () => {
-    const { root } = montar(HTML);
+  it('Escape closes and returns focus to trigger', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
     g.focus();
     g.click();
     await settle();
 
-    tecla(document, 'Escape');
+    key(document, 'Escape');
     await settle();
 
     expect(g.getAttribute('aria-expanded')).toBe('false');
@@ -246,62 +246,62 @@ describe('tabs', () => {
       <section v-tab-panel="c">Conteudo C</section>
     </div>`;
 
-  it('a lista recebe role="tablist" e cada botao role="tab"', () => {
-    const { root } = montar(HTML);
+  it('list gets role="tablist" and each button gets role="tab"', () => {
+    const { root } = mount(HTML);
     expect(root.querySelector('[role="tablist"]')).not.toBeNull();
     expect(root.querySelectorAll('[role="tab"]').length).toBe(3);
   });
 
-  it('cada painel recebe role="tabpanel" ligado ao seu tab', () => {
-    const { root } = montar(HTML);
-    const paineis = Array.from(root.querySelectorAll('[role="tabpanel"]'));
-    expect(paineis.length).toBe(3);
-    for (const painel of paineis) {
-      const rotulo = painel.getAttribute('aria-labelledby');
-      expect(rotulo).toBeTruthy();
-      const tab = document.getElementById(rotulo!)!;
-      expect(tab.getAttribute('aria-controls')).toBe(painel.id);
+  it('each panel gets role="tabpanel" linked to its tab', () => {
+    const { root } = mount(HTML);
+    const panels = Array.from(root.querySelectorAll('[role="tabpanel"]'));
+    expect(panels.length).toBe(3);
+    for (const panel of panels) {
+      const label = panel.getAttribute('aria-labelledby');
+      expect(label).toBeTruthy();
+      const tab = document.getElementById(label!)!;
+      expect(tab.getAttribute('aria-controls')).toBe(panel.id);
     }
   });
 
-  it('aria-selected marca apenas o tab ativo', () => {
-    const { root } = montar(HTML);
+  it('aria-selected marks only the active tab', () => {
+    const { root } = mount(HTML);
     const tabs = Array.from(root.querySelectorAll('[role="tab"]'));
     expect(tabs.map((t) => t.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false']);
   });
 
-  it('so o tab ativo fica no caminho do Tab', () => {
-    const { root } = montar(HTML);
+  it('only active tab is in the Tab order', () => {
+    const { root } = mount(HTML);
     const tabs = Array.from(root.querySelectorAll('[role="tab"]'));
     expect(tabs.map((t) => t.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
   });
 
-  it('as setas trocam de aba e levam o foco junto', () => {
-    const { root } = montar(HTML);
+  it('arrows switch tabs and move focus', () => {
+    const { root } = mount(HTML);
     const tabs = Array.from(root.querySelectorAll('[role="tab"]')) as HTMLElement[];
 
-    tecla(tabs[0], 'ArrowRight');
+    key(tabs[0], 'ArrowRight');
     expect(tabs[1].getAttribute('aria-selected')).toBe('true');
     expect(document.activeElement).toBe(tabs[1]);
 
-    tecla(tabs[1], 'ArrowLeft');
+    key(tabs[1], 'ArrowLeft');
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
   });
 
-  it('End e Home vao para a ultima e a primeira aba', () => {
-    const { root } = montar(HTML);
+  it('End and Home go to last and first tab', () => {
+    const { root } = mount(HTML);
     const tabs = Array.from(root.querySelectorAll('[role="tab"]')) as HTMLElement[];
 
-    tecla(tabs[0], 'End');
+    key(tabs[0], 'End');
     expect(tabs[2].getAttribute('aria-selected')).toBe('true');
-    tecla(tabs[2], 'Home');
+    key(tabs[2], 'Home');
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
   });
 
-  it('somente o painel ativo fica visivel', () => {
-    const { root } = montar(HTML);
-    const paineis = Array.from(root.querySelectorAll('[role="tabpanel"]')) as HTMLElement[];
-    expect(paineis.map((p) => p.hidden)).toEqual([false, true, true]);
+  it('only active panel is visible', () => {
+    const { root } = mount(HTML);
+    const panels = Array.from(root.querySelectorAll('[role="tabpanel"]')) as HTMLElement[];
+    expect(panels.map((p) => p.hidden)).toEqual([false, true, true]);
   });
 });
 
@@ -322,15 +322,15 @@ describe('accordion', () => {
       </div>
     </div>`;
 
-  it('os cabecalhos ficam acionaveis pelo teclado', () => {
-    const { root } = montar(HTML);
+  it('headers are keyboard accessible', () => {
+    const { root } = mount(HTML);
     const h1 = root.querySelector('#h1')!;
     expect(h1.getAttribute('role')).toBe('button');
     expect(h1.getAttribute('tabindex')).toBe('0');
   });
 
-  it('aria-expanded e aria-controls descrevem o painel', () => {
-    const { root } = montar(HTML);
+  it('aria-expanded and aria-controls describe the panel', () => {
+    const { root } = mount(HTML);
     const h1 = root.querySelector('#h1')!;
     expect(h1.getAttribute('aria-expanded')).toBe('false');
     expect(h1.getAttribute('aria-controls')).toBe(root.querySelector('#p1')!.id);
@@ -339,23 +339,23 @@ describe('accordion', () => {
     expect(h2.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('clicar no cabecalho vira o aria-expanded', async () => {
-    const { root } = montar(HTML);
+  it('clicking header toggles aria-expanded', async () => {
+    const { root } = mount(HTML);
     const h1 = root.querySelector('#h1') as HTMLElement;
     h1.click();
     await settle();
     expect(h1.getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('Enter e espaco acionam o cabecalho como um botao', async () => {
-    const { root } = montar(HTML);
+  it('Enter and space activate header as a button', async () => {
+    const { root } = mount(HTML);
     const h1 = root.querySelector('#h1') as HTMLElement;
 
-    tecla(h1, 'Enter');
+    key(h1, 'Enter');
     await settle();
     expect(h1.getAttribute('aria-expanded')).toBe('true');
 
-    tecla(h1, ' ');
+    key(h1, ' ');
     await settle();
     expect(h1.getAttribute('aria-expanded')).toBe('false');
   });
@@ -368,32 +368,32 @@ describe('accordion', () => {
 describe('tooltip', () => {
   const HTML = '<button id="b" v-tooltip="Explicacao curta">Ajuda</button>';
 
-  it('aparece ao receber foco, nao so no hover', async () => {
-    const { root } = montar(HTML);
+  it('appears on focus, not just on hover', async () => {
+    const { root } = mount(HTML);
     const b = root.querySelector('#b') as HTMLElement;
 
     b.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await settle();
 
-    const balao = document.querySelector('[role="tooltip"]');
-    expect(balao).not.toBeNull();
-    expect(balao!.textContent).toBe('Explicacao curta');
+    const balloon = document.querySelector('[role="tooltip"]');
+    expect(balloon).not.toBeNull();
+    expect(balloon!.textContent).toBe('Explicacao curta');
   });
 
-  it('liga o balao ao gatilho com aria-describedby', async () => {
-    const { root } = montar(HTML);
+  it('links balloon to trigger with aria-describedby', async () => {
+    const { root } = mount(HTML);
     const b = root.querySelector('#b') as HTMLElement;
 
     b.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await settle();
 
-    const descrito = b.getAttribute('aria-describedby');
-    expect(descrito).toBeTruthy();
-    expect(document.getElementById(descrito!)!.getAttribute('role')).toBe('tooltip');
+    const described = b.getAttribute('aria-describedby');
+    expect(described).toBeTruthy();
+    expect(document.getElementById(described!)!.getAttribute('role')).toBe('tooltip');
   });
 
-  it('sair do foco esconde o balao e solta o aria-describedby', async () => {
-    const { root } = montar(HTML);
+  it('losing focus hides balloon and removes aria-describedby', async () => {
+    const { root } = mount(HTML);
     const b = root.querySelector('#b') as HTMLElement;
 
     b.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
@@ -404,21 +404,21 @@ describe('tooltip', () => {
     expect(b.hasAttribute('aria-describedby')).toBe(false);
   });
 
-  it('Escape fecha o balao aberto', async () => {
-    const { root } = montar(HTML);
+  it('Escape closes open balloon', async () => {
+    const { root } = mount(HTML);
     const b = root.querySelector('#b') as HTMLElement;
 
     b.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     await settle();
     expect(b.hasAttribute('aria-describedby')).toBe(true);
 
-    tecla(b, 'Escape');
+    key(b, 'Escape');
     await settle();
     expect(b.hasAttribute('aria-describedby')).toBe(false);
   });
 
-  it('o balao some quando o elemento e destruido', async () => {
-    const { root } = montar(HTML);
+  it('balloon disappears when element is destroyed', async () => {
+    const { root } = mount(HTML);
     const b = root.querySelector('#b') as HTMLElement;
 
     b.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
@@ -443,23 +443,23 @@ describe('drawer', () => {
       <button id="dentro">Acao</button>
     </aside>`;
 
-  it('o painel e um dialogo modal', () => {
-    const { root } = montar(HTML);
-    const gaveta = root.querySelector('#gaveta')!;
-    expect(gaveta.getAttribute('role')).toBe('dialog');
-    expect(gaveta.getAttribute('aria-modal')).toBe('true');
+  it('panel is a modal dialog', () => {
+    const { root } = mount(HTML);
+    const drawer = root.querySelector('#gaveta')!;
+    expect(drawer.getAttribute('role')).toBe('dialog');
+    expect(drawer.getAttribute('aria-modal')).toBe('true');
   });
 
-  it('o gatilho descreve o que controla', () => {
-    const { root } = montar(HTML);
+  it('trigger describes what it controls', () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g')!;
     expect(g.getAttribute('aria-haspopup')).toBe('dialog');
     expect(g.getAttribute('aria-controls')).toBe('gaveta');
     expect(g.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('abrir leva o foco para dentro e marca aria-expanded', async () => {
-    const { root } = montar(HTML);
+  it('opening moves focus inside and marks aria-expanded', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
     g.click();
     await settle();
@@ -468,14 +468,14 @@ describe('drawer', () => {
     expect(document.querySelector('#gaveta')!.contains(document.activeElement)).toBe(true);
   });
 
-  it('Escape fecha e devolve o foco ao gatilho', async () => {
-    const { root } = montar(HTML);
+  it('Escape closes and returns focus to trigger', async () => {
+    const { root } = mount(HTML);
     const g = root.querySelector('#g') as HTMLElement;
     g.focus();
     g.click();
     await settle();
 
-    tecla(document, 'Escape');
+    key(document, 'Escape');
     await settle();
 
     expect(g.getAttribute('aria-expanded')).toBe('false');
@@ -487,9 +487,9 @@ describe('drawer', () => {
 // v-toggle e v-collapse
 // ---------------------------------------------------------------------------
 
-describe('toggle e collapse', () => {
-  it('v-toggle descreve o alvo e mantem aria-expanded', async () => {
-    const { root } = montar('<button id="g" v-toggle="#alvo">x</button><div id="alvo">c</div>');
+describe('toggle and collapse', () => {
+  it('v-toggle describes target and maintains aria-expanded', async () => {
+    const { root } = mount('<button id="g" v-toggle="#alvo">x</button><div id="alvo">c</div>');
     const g = root.querySelector('#g') as HTMLElement;
 
     expect(g.getAttribute('aria-controls')).toBe('alvo');
@@ -500,16 +500,16 @@ describe('toggle e collapse', () => {
     expect(g.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('v-collapse-toggle mantem aria-expanded e aria-controls', async () => {
-    const { root } = montar(
+  it('v-collapse-toggle maintains aria-expanded and aria-controls', async () => {
+    const { root } = mount(
       '<button id="g" v-collapse-toggle="#p">x</button><div id="p" v-collapse>c</div>'
     );
     const g = root.querySelector('#g') as HTMLElement;
     expect(g.getAttribute('aria-controls')).toBe(root.querySelector('#p')!.id);
-    const antes = g.getAttribute('aria-expanded');
+    const before = g.getAttribute('aria-expanded');
 
     g.click();
     await settle();
-    expect(g.getAttribute('aria-expanded')).not.toBe(antes);
+    expect(g.getAttribute('aria-expanded')).not.toBe(before);
   });
 });

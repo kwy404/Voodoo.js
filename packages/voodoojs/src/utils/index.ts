@@ -1,15 +1,15 @@
 /**
  * @module utils
  *
- * Utilitarios puros. Nenhum deles toca no DOM, entao o modulo roda igual em
- * navegador, Node, Bun e Deno. Tudo aqui e tree shakeable.
+ * Pure utilities. None of them touch the DOM, so the module works the same in
+ * browser, Node, Bun, and Deno. Everything here is tree-shakeable.
  */
 
 // ---------------------------------------------------------------------------
-// Identificadores e tempo
+// Identifiers and time
 // ---------------------------------------------------------------------------
 
-/** UUID v4. Usa `crypto.randomUUID` quando disponivel. */
+/** UUID v4. Uses `crypto.randomUUID` when available. */
 export function uuid(): string {
   const c = globalThis.crypto as Crypto | undefined;
   if (c?.randomUUID) return c.randomUUID();
@@ -26,19 +26,19 @@ export function uuid(): string {
   });
 }
 
-/** Identificador curto, util para ids de elementos. */
+/** Short identifier, useful for element ids. */
 export function uid(prefix = 'v'): string {
   return `${prefix}${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Pausa a execucao. `await V.sleep(500)`. */
+/** Pauses execution. `await V.sleep(500)`. */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Converte `"300"`, `"300ms"`, `"1.5s"` e `"2m"` em milissegundos.
- * Aceita `null` porque a origem mais comum e `getAttribute`, que devolve null.
+ * Converts `"300"`, `"300ms"`, `"1.5s"`, and `"2m"` to milliseconds.
+ * Accepts `null` because the most common source is `getAttribute`, which returns null.
  */
 export function parseDuration(value: string | number | null | undefined, fallback = 0): number {
   if (value == null || value === '') return fallback;
@@ -59,7 +59,7 @@ export function parseDuration(value: string | number | null | undefined, fallbac
 }
 
 // ---------------------------------------------------------------------------
-// Funcoes de ordem superior
+// Higher-order functions
 // ---------------------------------------------------------------------------
 
 export interface DebouncedFunction<T extends (...args: any[]) => any> {
@@ -69,10 +69,10 @@ export interface DebouncedFunction<T extends (...args: any[]) => any> {
 }
 
 /**
- * Adia a execucao ate parar de ser chamada por `wait` ms.
+ * Delays execution until it stops being called for `wait` ms.
  *
  * ```js
- * const buscar = V.debounce(fetchProdutos, 300)
+ * const search = V.debounce(fetchProducts, 300)
  * ```
  */
 export function debounce<T extends (...args: any[]) => any>(
@@ -111,7 +111,7 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced;
 }
 
-/** Limita a no maximo uma execucao a cada `wait` ms. */
+/** Limits to at most one execution every `wait` ms. */
 export function throttle<T extends (...args: any[]) => any>(fn: T, wait = 250): DebouncedFunction<T> {
   let last = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -151,7 +151,7 @@ export function throttle<T extends (...args: any[]) => any>(fn: T, wait = 250): 
   return throttled;
 }
 
-/** Executa a funcao uma unica vez e memoriza o retorno. */
+/** Executes the function once and memoizes the return value. */
 export function once<T extends (...args: any[]) => any>(fn: T): T {
   let called = false;
   let result: ReturnType<T>;
@@ -164,7 +164,7 @@ export function once<T extends (...args: any[]) => any>(fn: T): T {
   } as T;
 }
 
-/** Cache de resultado por argumento. */
+/** Result cache by argument. */
 export function memoize<T extends (...args: any[]) => any>(
   fn: T,
   keyFn: (...args: Parameters<T>) => string = (...args) => JSON.stringify(args)
@@ -182,17 +182,17 @@ export function memoize<T extends (...args: any[]) => any>(
 }
 
 // ---------------------------------------------------------------------------
-// Objetos e arrays
+// Objects and arrays
 // ---------------------------------------------------------------------------
 
-/** Copia profunda. Usa `structuredClone` quando existir. */
+/** Deep copy. Uses `structuredClone` when available. */
 export function clone<T>(value: T): T {
   if (value === null || typeof value !== 'object') return value;
   if (typeof structuredClone === 'function') {
     try {
       return structuredClone(value);
     } catch {
-      // Objetos com funcoes caem no caminho manual.
+      // Objects with functions fall through to manual path.
     }
   }
   if (Array.isArray(value)) return value.map((v) => clone(v)) as unknown as T;
@@ -204,7 +204,7 @@ export function clone<T>(value: T): T {
   return out as T;
 }
 
-/** Mescla objetos em profundidade. Arrays sao substituidos, nao concatenados. */
+/** Deep merges objects. Arrays are replaced, not concatenated. */
 export function merge<T extends Record<string, any>>(target: T, ...sources: Array<Partial<T>>): T {
   for (const source of sources) {
     if (!source) continue;
@@ -227,7 +227,7 @@ export function merge<T extends Record<string, any>>(target: T, ...sources: Arra
   return target;
 }
 
-/** Agrupa por chave ou por funcao. */
+/** Groups by key or by function. */
 export function groupBy<T>(
   list: T[],
   key: string | ((item: T) => string | number)
@@ -241,7 +241,7 @@ export function groupBy<T>(
   return out;
 }
 
-/** Remove duplicados. Aceita chave para objetos. */
+/** Removes duplicates. Accepts key for objects. */
 export function unique<T>(list: T[], key?: string | ((item: T) => unknown)): T[] {
   if (!key) return [...new Set(list)];
   const getKey = typeof key === 'function' ? key : (item: T) => (item as any)?.[key];
@@ -256,7 +256,7 @@ export function unique<T>(list: T[], key?: string | ((item: T) => unknown)): T[]
   return out;
 }
 
-/** Divide em blocos de tamanho fixo. */
+/** Divides into fixed-size chunks. */
 export function chunk<T>(list: T[], size = 10): T[][] {
   if (size < 1) return [list];
   const out: T[][] = [];
@@ -264,7 +264,7 @@ export function chunk<T>(list: T[], size = 10): T[][] {
   return out;
 }
 
-/** Ordena por chave sem alterar o array original. */
+/** Sorts by key without altering the original array. */
 export function sortBy<T>(
   list: T[],
   key: string | ((item: T) => any),
@@ -285,7 +285,7 @@ export function sortBy<T>(
   });
 }
 
-/** Le um caminho aninhado com seguranca: `get(obj, 'a.b.0.c')`. */
+/** Safely reads a nested path: `get(obj, 'a.b.0.c')`. */
 export function get<T = unknown>(object: unknown, path: string, fallback?: T): T | undefined {
   const parts = path.split('.');
   let current: any = object;
@@ -296,7 +296,7 @@ export function get<T = unknown>(object: unknown, path: string, fallback?: T): T
   return (current ?? fallback) as T | undefined;
 }
 
-/** Escreve em um caminho aninhado, criando os objetos do meio. */
+/** Writes to a nested path, creating intermediate objects. */
 export function set(object: Record<string, any>, path: string, value: unknown): void {
   const parts = path.split('.');
   let current = object;
@@ -310,12 +310,12 @@ export function set(object: Record<string, any>, path: string, value: unknown): 
   current[parts[parts.length - 1]] = value;
 }
 
-/** Numero aleatorio inteiro entre min e max, inclusive. */
+/** Random integer between min and max, inclusive. */
 export function random(min = 0, max = 1): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/** Sorteia um item de uma lista. */
+/** Randomly picks an item from a list. */
 export function sample<T>(list: T[]): T | undefined {
   return list[Math.floor(Math.random() * list.length)];
 }
@@ -324,7 +324,7 @@ export function sample<T>(list: T[]): T | undefined {
 // Strings
 // ---------------------------------------------------------------------------
 
-/** Converte texto em slug de URL, removendo acentos. */
+/** Converts text to URL slug, removing accents. */
 export function slugify(text: string, separator = '-'): string {
   return String(text)
     .normalize('NFD')
@@ -336,25 +336,25 @@ export function slugify(text: string, separator = '-'): string {
     .replace(new RegExp(`^\\${separator}|\\${separator}$`, 'g'), '');
 }
 
-/** Corta o texto respeitando o limite e adiciona reticencias. */
+/** Truncates text at limit and adds ellipsis. */
 export function truncate(text: string, length = 100, suffix = '...'): string {
   const value = String(text ?? '');
   if (value.length <= length) return value;
   return value.slice(0, Math.max(0, length - suffix.length)).trimEnd() + suffix;
 }
 
-/** Primeira letra maiuscula. */
+/** First letter uppercase. */
 export function capitalize(text: string): string {
   const value = String(text ?? '');
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-/** Primeira letra de cada palavra em maiuscula. */
+/** First letter of each word uppercase. */
 export function titleCase(text: string): string {
   return String(text ?? '').replace(/\w\S*/g, (word) => capitalize(word.toLowerCase()));
 }
 
-/** Escapa caracteres perigosos para interpolar texto em HTML. */
+/** Escapes dangerous characters for interpolating text in HTML. */
 export function escapeHtml(text: string): string {
   return String(text ?? '')
     .replace(/&/g, '&amp;')
@@ -364,13 +364,13 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** Remove todas as tags de um HTML, deixando somente o texto. */
+/** Removes all tags from HTML, leaving only text. */
 export function stripTags(html: string): string {
   return String(html ?? '').replace(/<\/?[^>]+(>|$)/g, '');
 }
 
 // ---------------------------------------------------------------------------
-// Formatadores
+// Formatters
 // ---------------------------------------------------------------------------
 
 export interface FormatOptions {
@@ -381,13 +381,13 @@ export interface FormatOptions {
 let defaultLocale = 'pt-BR';
 let defaultCurrency = 'BRL';
 
-/** Define o locale e a moeda usados pelos formatadores. */
+/** Sets the locale and currency used by formatters. */
 export function setFormatDefaults(locale?: string, currency?: string): void {
   if (locale) defaultLocale = locale;
   if (currency) defaultCurrency = currency;
 }
 
-/** Formata como moeda: `formatCurrency(1234.5)` devolve `R$ 1.234,50`. */
+/** Formats as currency: `formatCurrency(1234.5)` returns `R$ 1.234,50`. */
 export function formatCurrency(value: number | string, options: FormatOptions = {}): string {
   const n = typeof value === 'string' ? parseFloat(value) : value;
   if (n == null || Number.isNaN(n)) return '';
@@ -397,7 +397,7 @@ export function formatCurrency(value: number | string, options: FormatOptions = 
   }).format(n);
 }
 
-/** Formata numero com separadores locais. */
+/** Formats number with locale separators. */
 export function formatNumber(
   value: number | string,
   options: Intl.NumberFormatOptions & FormatOptions = {}
@@ -408,7 +408,7 @@ export function formatNumber(
   return new Intl.NumberFormat(locale ?? defaultLocale, rest).format(n);
 }
 
-/** Formata datas aceitando Date, timestamp ou string ISO. */
+/** Formats dates accepting Date, timestamp, or ISO string. */
 export function formatDate(
   value: Date | string | number,
   format: string | Intl.DateTimeFormatOptions = 'short',
@@ -429,7 +429,7 @@ export function formatDate(
   };
   if (presets[format]) return new Intl.DateTimeFormat(loc, presets[format]).format(date);
 
-  // Formato por padrao textual: DD/MM/YYYY HH:mm:ss
+  // Format by text pattern: DD/MM/YYYY HH:mm:ss
   const pad = (n: number): string => String(n).padStart(2, '0');
   return format
     .replace(/YYYY/g, String(date.getFullYear()))
@@ -441,7 +441,7 @@ export function formatDate(
     .replace(/ss/g, pad(date.getSeconds()));
 }
 
-/** Tempo relativo legivel: `ha 5 minutos`, `em 2 dias`. */
+/** Human-readable relative time: `5 minutes ago`, `in 2 days`. */
 export function relativeTime(value: Date | string | number, locale?: string): string {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
@@ -467,7 +467,7 @@ export function relativeTime(value: Date | string | number, locale?: string): st
   return '';
 }
 
-/** Tamanho de arquivo legivel: `1.4 MB`. */
+/** Human-readable file size: `1.4 MB`. */
 export function formatFileSize(bytes: number, decimals = 1): string {
   const n = Number(bytes);
   if (!n || Number.isNaN(n)) return '0 B';
@@ -476,7 +476,7 @@ export function formatFileSize(bytes: number, decimals = 1): string {
   return `${(n / 1024 ** i).toFixed(i === 0 ? 0 : decimals)} ${units[i]}`;
 }
 
-/** Percentual formatado. */
+/** Formatted percentage. */
 export function formatPercent(value: number, decimals = 0, locale?: string): string {
   return new Intl.NumberFormat(locale ?? defaultLocale, {
     style: 'percent',
@@ -486,21 +486,20 @@ export function formatPercent(value: number, decimals = 0, locale?: string): str
 }
 
 // ---------------------------------------------------------------------------
-// Ambiente
+// Environment
 // ---------------------------------------------------------------------------
 
-/** `true` quando existe DOM disponivel. */
+/** `true` when DOM is available. */
 export const isBrowser =
   typeof window !== 'undefined' && typeof window.document !== 'undefined';
 
 /**
- * Consulta uma media query com seguranca.
+ * Safely queries a media query.
  *
- * `matchMedia` nao existe em todo lugar: falta no jsdom e em webviews antigas.
- * Sem esta guarda, ler `device.reducedMotion` lancava TypeError, e como as
- * directives de interface leem essa propriedade no meio de abrir e fechar
- * paineis, a excecao interrompia o metodo e deixava `aria-expanded` e o foco
- * no estado errado.
+ * `matchMedia` doesn't exist everywhere: it's missing in jsdom and old webviews.
+ * Without this guard, reading `device.reducedMotion` would throw TypeError, and since
+ * UI directives read this property while opening and closing panels, the exception
+ * would interrupt the method and leave `aria-expanded` and focus in the wrong state.
  */
 export function matchesMedia(query: string): boolean {
   if (!isBrowser || typeof window.matchMedia !== 'function') return false;
@@ -511,7 +510,7 @@ export function matchesMedia(query: string): boolean {
   }
 }
 
-/** Informacoes do dispositivo, calculadas sob demanda. */
+/** Device information, calculated on demand. */
 export const device = {
   get touch(): boolean {
     return isBrowser && ('ontouchstart' in window || navigator.maxTouchPoints > 0);

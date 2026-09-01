@@ -1,59 +1,59 @@
-# Especificação de plugin
+# Plugin specification
 
-Este é o contrato oficial para quem escreve plugins de terceiros para a Voodoo.js. Ele
-descreve o comportamento real de `usePlugin`
-(`packages/voodoojs/src/runtime/registry.ts`), o que um plugin pode registrar, as regras de
-nome e o que ainda falta no runtime.
+This is the official contract for those writing third-party plugins for Voodoo.js. It
+describes the actual behavior of `usePlugin`
+(`packages/voodoojs/src/runtime/registry.ts`), what a plugin can register, naming rules,
+and what's still missing in the runtime.
 
-Se você quer aprender a usar plugins, leia [Plugins](plugins.md) primeiro. Esta página é
-mais formal e serve de referência para autores.
+If you want to learn to use plugins, read [Plugins](plugins.md) first. This page is
+more formal and serves as a reference for authors.
 
-Versão descrita: `0.1.0`.
+Version described: `0.1.0`.
 
 ---
 
-## 1. O contrato
+## 1. The contract
 
-Um plugin é **um objeto com um método `install`** ou **uma função**. As duas formas são
-equivalentes para o runtime.
+A plugin is **an object with an `install` method** or **a function**. Both forms are
+equivalent for the runtime.
 
-### Forma de objeto
+### Object form
 
 ```js
-export const meuPlugin = {
-  name: 'meu-plugin',
+export const myPlugin = {
+  name: 'my-plugin',
 
-  install(V, opcoes) {
-    // registre aqui
+  install(V, options) {
+    // register here
   },
 };
 ```
 
-| Campo     | Tipo                                             | Obrigatório | Uso hoje |
-| --------- | ------------------------------------------------ | ----------- | -------- |
-| `name`    | `string`                                          | não         | **Não é usado pelo runtime.** Existe no tipo `VoodooPlugin` e serve para documentação e depuração. |
-| `install` | `(V, options?: Record<string, unknown>) => void`  | **sim**     | Chamado uma vez, no momento da instalação. |
+| Field     | Type                                             | Required | Usage today |
+| --------- | ------------------------------------------------ | -------- | -------- |
+| `name`    | `string`                                          | no       | **Not used by the runtime.** Exists in the `VoodooPlugin` type and serves for documentation and debugging. |
+| `install` | `(V, options?: Record<string, unknown>) => void`  | **yes**  | Called once, at install time. |
 
-O retorno de `install` é ignorado. Se ele lançar, o erro sobe para quem chamou `V.use`; não
-existe tratamento interno.
+The return value of `install` is ignored. If it throws, the error bubbles up to whoever called `V.use`; there
+is no internal handling.
 
-### Forma de função
+### Function form
 
 ```js
-export function meuPlugin(V, opcoes) {
-  // registre aqui
+export function myPlugin(V, options) {
+  // register here
 }
 ```
 
-Idêntica na prática. Use quando o plugin não precisa de nome nem de outros campos.
+Identical in practice. Use when the plugin doesn't need a name or other fields.
 
-### Instalação
+### Installation
 
 ```js
-V.use(meuPlugin, { chave: 'abc123' });
+V.use(myPlugin, { key: 'abc123' });
 ```
 
-O que acontece por dentro:
+What happens internally:
 
 ```ts
 const installedPlugins = new Set<VoodooPlugin | Function>();
@@ -66,60 +66,59 @@ export function usePlugin(V, plugin, options) {
 }
 ```
 
-Quatro fatos que decorrem diretamente disso.
+Four facts that follow directly from this.
 
-**1. Instalar duas vezes é ignorado, em silêncio.**
+**1. Installing twice is silently ignored.**
 
 ```js
-V.use(meuPlugin, { a: 1 });
-V.use(meuPlugin, { a: 2 });  // nao faz nada, nem avisa
+V.use(myPlugin, { a: 1 });
+V.use(myPlugin, { a: 2 });  // does nothing, no warning
 ```
 
-A segunda chamada não instala e **as opções são descartadas**. Não existe merge de opções e
-não existe aviso. Se o seu plugin precisa aceitar reconfiguração, exponha um método para
-isso:
+The second call does not install and **options are discarded**. There is no option merging and
+no warning. If your plugin needs to accept reconfiguration, expose a method for it:
 
 ```js
-install(V, opcoes) {
-  V.meuPlugin = {
-    configurar(novas) { Object.assign(config, novas); },
+install(V, options) {
+  V.myPlugin = {
+    configure(newOpts) { Object.assign(config, newOpts); },
   };
 }
 ```
 
-**2. A deduplicação é por identidade do objeto, não por nome.**
+**2. Deduplication is by object identity, not by name.**
 
 ```js
 V.use({ name: 'analytics', install: a });
-V.use({ name: 'analytics', install: b });  // instala tambem
+V.use({ name: 'analytics', install: b });  // also installs
 ```
 
-São dois objetos diferentes, então os dois instalam. O campo `name` não participa da
-decisão. Isso importa quando duas versões do mesmo plugin chegam por caminhos diferentes.
+Two different objects, so both install. The `name` field does not participate in the
+decision. This matters when two versions of the same plugin come through different paths.
 
-**3. O `V` recebido é o objeto real da aplicação.** Não é uma cópia, não é um proxy, não é
-um contexto restrito. Um plugin pode ler e escrever qualquer coisa em `V`, inclusive
-`V.config` e `V.http.defaults`. Não existe sandbox.
+**3. The `V` received is the real application object.** It's not a copy, not a proxy, not a
+restricted context. A plugin can read and write anything in `V`, including
+`V.config` and `V.http.defaults`. There is no sandbox.
 
-**4. `app.use()` instala no `V` global.** Em modo aplicação:
+**4. `app.use()` installs in the global `V`.** In application mode:
 
 ```js
 const app = V.createApp({ /* ... */ });
-app.use(meuPlugin);
+app.use(myPlugin);
 ```
 
-`app.use` chama `usePlugin(V_global, plugin, opcoes)`. **O plugin não fica restrito à
-aplicação.** Uma directive registrada por ele vale na página inteira, inclusive fora do
-container montado. Isso é diferente do Vue e é intencional no estado atual do runtime.
+`app.use` calls `usePlugin(V_global, plugin, options)`. **The plugin is not restricted to the
+application.** A directive registered by it works across the entire page, even outside the
+mounted container. This is different from Vue and is intentional in the current runtime state.
 
 ---
 
-## 2. O que um plugin pode registrar
+## 2. What a plugin can register
 
 ### Directive
 
 ```js
-V.directive('destaque', {
+V.directive('highlight', {
   created(el, binding) {},
   beforeMount(el, binding) {},
   mounted(el, binding) { el.style.background = binding.value; },
@@ -131,207 +130,206 @@ V.directive('destaque', {
 });
 ```
 
-Forma curta, instalada como `mounted` **e** `updated` ao mesmo tempo:
+Short form, installed as `mounted` **and** `updated` at the same time:
 
 ```js
-V.directive('destaque', (el, binding) => {
+V.directive('highlight', (el, binding) => {
   el.style.background = binding.value;
 });
 ```
 
-O `binding` traz `el`, `value`, `oldValue`, `arg`, `modifiers`, `expression`, `scope` e
+The `binding` brings `el`, `value`, `oldValue`, `arg`, `modifiers`, `expression`, `scope`, and
 `instance`.
 
-`priority` decide a ordem entre directives no mesmo elemento; maior roda primeiro. As
-constantes ficam em `V.PRIORITY`. O padrão é `PRIORITY.DEFAULT`, que é `0`.
+`priority` decides the order among directives on the same element; higher runs first. The
+constants are in `V.PRIORITY`. The default is `PRIORITY.DEFAULT`, which is `0`.
 
-`raw: true` entrega o texto da expressão sem avaliar, para directives que recebem seletor
-ou nome em vez de valor.
+`raw: true` delivers the expression text without evaluation, for directives that receive a selector
+or name instead of a value.
 
-**Limitação:** `V.directive` não repassa `terminal` para `defineDirective`. Um plugin não
-consegue declarar uma directive que assume a subárvore inteira, como `v-if` e `v-for` fazem.
-Veja a seção 7.
+**Limitation:** `V.directive` does not pass `terminal` to `defineDirective`. A plugin cannot
+declare a directive that assumes the entire subtree, like `v-if` and `v-for` do.
+See section 7.
 
-### Componente
+### Component
 
 ```js
-V.component('meu-plugin-visor', {
-  props: { valor: { type: 'number', default: 0 } },
-  state: (props) => ({ interno: props.valor }),
-  computed: { dobro() { return this.interno * 2; } },
-  methods: { somar() { this.interno++; } },
-  template: `<button @click="somar()">{ dobro }</button>`,
-  style: `.meu-plugin-visor { color: var(--v-primary); }`,
+V.component('my-plugin-viewer', {
+  props: { value: { type: 'number', default: 0 } },
+  state: (props) => ({ internal: props.value }),
+  computed: { double() { return this.internal * 2; } },
+  methods: { add() { this.internal++; } },
+  template: `<button @click="add()">{ double }</button>`,
+  style: `.my-plugin-viewer { color: var(--v-primary); }`,
   mounted() {},
   beforeUnmount() {},
 });
 ```
 
-Registre em kebab-case. A Voodoo cria sozinha o apelido sem hífen, para a tag em PascalCase
-funcionar.
+Register in kebab-case. Voodoo automatically creates the hyphen-less alias so the PascalCase tag
+works.
 
-Registrar um componente depois da página carregar **monta as tags que já estavam
-esperando**. Um plugin instalado no fim do `app.js` funciona.
+Registering a component after the page loads **mounts the tags that were already waiting**.
+A plugin installed at the end of `app.js` works.
 
-`style` é injetado uma vez por nome de componente e respeita `V.config.injectStyles`.
+`style` is injected once per component name and respects `V.config.injectStyles`.
 
-### Variável mágica
-
-```js
-V.magic('$analytics', () => V.meuPlugin);
-V.magic('$agora', (scope) => new Date());
-```
-
-A assinatura é `(name: string, getter: (scope: Scope) => unknown) => void`. O `$` é
-acrescentado se você não escrever.
-
-O getter recebe o escopo do ponto onde a expressão está, então dá para expor coisas
-sensíveis ao contexto:
+### Magic variable
 
 ```js
-V.magic('$formulario', (scope) => scope.el?.closest('form'));
+V.magic('$analytics', () => V.myPlugin);
+V.magic('$now', (scope) => new Date());
 ```
 
-Magias são somente leitura, a não ser que o valor devolvido exponha um `set` próprio.
+The signature is `(name: string, getter: (scope: Scope) => unknown) => void`. The `$` is
+added if you don't write it.
 
-### Regra de validação
+The getter receives the scope at the point where the expression is, so you can expose context-sensitive things:
 
 ```js
-V.validator('par', (valor) => Number(valor) % 2 === 0, 'Informe um número par.');
+V.magic('$form', (scope) => scope.el?.closest('form'));
 ```
 
-Assinatura: `(name, fn, defaultMessage?)`. Isso faz três coisas:
+Magics are read-only, unless the returned value exposes its own `set` method.
 
-1. registra a regra no registro interno de regras, com o nome em minúsculas (esse `Map` não
-   é exposto em `V`);
-2. define a mensagem padrão, se ainda não existir uma com esse nome;
-3. **registra a directive `v-validate-par`** automaticamente.
+### Validation rule
+
+```js
+V.validator('even', (value) => Number(value) % 2 === 0, 'Provide an even number.');
+```
+
+Signature: `(name, fn, defaultMessage?)`. This does three things:
+
+1. registers the rule in the internal rule registry, with the name in lowercase (this `Map` is not
+   exposed in `V`);
+2. sets the default message, if one doesn't already exist with that name;
+3. **registers the `v-validate-even` directive** automatically.
 
 ```html
-<input v-validate-par>
+<input v-validate-even>
 ```
 
-A função de validação recebe `(valor, parametro, campo)` e devolve `boolean` ou uma string
-com a mensagem de erro.
+The validation function receives `(value, parameter, field)` and returns `boolean` or a string
+with the error message.
 
-### Máscara
+### Mask
 
 ```js
-V.registerMask('processo', '9999999-99.9999.9.99.9999');
-V.registerMask('reverso', (v) => v.split('').reverse().join(''));
+V.registerMask('process', '9999999-99.9999.9.99.9999');
+V.registerMask('reverse', (v) => v.split('').reverse().join(''));
 ```
 
-Assinatura: `(name, patternOrFn)`. Tokens do padrão: `9` dígito, `A` letra, `S`
-alfanumérico, `*` qualquer caractere.
+Signature: `(name, patternOrFn)`. Pattern tokens: `9` digit, `A` letter, `S`
+alphanumeric, `*` any character.
 
 ```html
-<input v-mask="processo">
+<input v-mask="process">
 ```
 
-### Serviço em `V`
+### Service in `V`
 
 ```js
-install(V, opcoes) {
-  V.meuPlugin = {
-    fazerAlgo(x) { return x * 2; },
-    configurar(novas) { Object.assign(config, novas); },
+install(V, options) {
+  V.myPlugin = {
+    doSomething(x) { return x * 2; },
+    configure(newOpts) { Object.assign(config, newOpts); },
   };
 }
 ```
 
-**Reivindique um nome só.** Veja a seção 3.
+**Claim only one name.** See section 3.
 
-### Mensagens de tradução
+### Translation messages
 
-Disponível apenas no build completo:
+Available only in the full build:
 
 ```js
 if (V.i18n) {
-  V.i18n.addMessages('pt-BR', { meuPlugin: { salvar: 'Salvar' } });
-  V.i18n.addMessages('en', { meuPlugin: { salvar: 'Save' } });
+  V.i18n.addMessages('pt-BR', { myPlugin: { save: 'Salvar' } });
+  V.i18n.addMessages('en', { myPlugin: { save: 'Save' } });
 }
 ```
 
-### Interceptador HTTP
+### HTTP interceptor
 
 ```js
-const remover = V.http.interceptors.request.use((config) => {
-  config.headers = { ...config.headers, 'X-Meu-Plugin': '1' };
+const remove = V.http.interceptors.request.use((config) => {
+  config.headers = { ...config.headers, 'X-My-Plugin': '1' };
   return config;
 });
 ```
 
-`use` devolve a função que remove o interceptador. **Guarde esse retorno.** É a única
-limpeza que o runtime te dá de graça, e você vai precisar dela quando existir `uninstall`.
+`use` returns the function that removes the interceptor. **Keep this return value.** It's the only
+cleanup the runtime gives you for free, and you'll need it when `uninstall` exists.
 
-Um interceptador vê todas as requisições e todas as respostas da aplicação. Um plugin que
-instala um está pedindo confiança total, e a documentação dele deve dizer isso.
+An interceptor sees all requests and all responses in the application. A plugin that
+installs one is asking for full trust, and its documentation should say so.
 
-### Configuração e globais
+### Configuration and globals
 
 ```js
-install(V, opcoes) {
-  V.config.globals.MEU_PLUGIN_VERSAO = '1.0.0';
+install(V, options) {
+  V.config.globals.MY_PLUGIN_VERSION = '1.0.0';
 }
 ```
 
-`V.config.globals` entra em `allowedGlobals` e fica visível em **toda expressão da página**.
+`V.config.globals` enters `allowedGlobals` and becomes visible in **every expression on the page**.
 
-> **Coloque valores e funções puras aqui, nunca capacidades.** Adicionar `window`, `fetch`
-> ou `document` desfaz a caixa em que o avaliador de expressões roda. Veja
+> **Put values and pure functions here, never capabilities.** Adding `window`, `fetch`
+> or `document` breaks the sandbox the expression evaluator runs in. See
 > [SECURITY.md](../SECURITY.md).
 
-Mexer em `V.config.prefix`, `V.config.autoDiscover` ou `V.config.injectStyles` a partir de
-um plugin é considerado invasivo. Se o plugin precisa disso, documente e deixe o usuário
-escolher por opção.
+Touching `V.config.prefix`, `V.config.autoDiscover`, or `V.config.injectStyles` from a
+plugin is considered invasive. If the plugin needs it, document it and let the user
+choose via option.
 
 ---
 
 ## 3. Namespace
 
-Plugins dividem os mesmos registros que o núcleo. Colisão de nome é o problema mais comum e
-o mais fácil de evitar.
+Plugins share the same registries as the core. Name collision is the most common and
+easiest problem to avoid.
 
-| O que registra          | Regra                                | Exemplo                        |
-| ----------------------- | ------------------------------------ | ------------------------------ |
-| Directive               | prefixe com o nome do plugin         | `v-graficos-pro-render`        |
-| Componente              | prefixe com o nome do plugin         | `<graficos-pro-legenda>`       |
-| Magia                   | `$` mais o nome, um objeto só        | `$graficosPro.tema`            |
-| Propriedade em `V`      | uma só, o namespace do plugin        | `V.graficosPro.render()`       |
-| Regra de validação      | prefixe com o nome do plugin         | `v-validate-graficospro-faixa` |
-| Máscara                 | prefixe com o nome do plugin         | `V.registerMask('graficospro-faixa', ...)` |
-| Evento global           | `nomePlugin:evento`                  | `V.emit('graficosPro:pronto')` |
-| Evento de DOM           | `nomeplugin:evento`                  | `graficospro:renderizado`      |
-| Chave de `localStorage` | `nomeplugin:`                        | `graficospro:preferencias`     |
-| Classe CSS              | `.nomeplugin-`                       | `.graficospro-legenda`         |
-| Variável CSS            | `--nomeplugin-`                      | `--graficospro-cor`            |
+| What registers         | Rule                                | Example                        |
+| ---------------------- | ----------------------------------- | ------------------------------ |
+| Directive              | prefix with the plugin name         | `v-charts-pro-render`          |
+| Component              | prefix with the plugin name         | `<charts-pro-legend>`          |
+| Magic                  | `$` plus the name, one object only  | `$chartsPro.theme`             |
+| Property in `V`        | one only, the plugin namespace      | `V.chartsPro.render()`         |
+| Validation rule        | prefix with the plugin name         | `v-validate-chartspro-range`   |
+| Mask                   | prefix with the plugin name         | `V.registerMask('chartspro-range', ...)` |
+| Global event           | `pluginName:event`                  | `V.emit('chartsPro:ready')`    |
+| DOM event              | `pluginname:event`                  | `chartspro:rendered`           |
+| `localStorage` key     | `pluginname:`                       | `chartspro:preferences`        |
+| CSS class              | `.pluginname-`                      | `.chartspro-legend`            |
+| CSS variable           | `--pluginname-`                     | `--chartspro-color`            |
 
-Reservado para o núcleo: todo nome já presente em `V`, toda magia listada em
-`runtime/magics.ts`, todo nome de atributo registrado pelos módulos que vêm na biblioteca,
-o prefixo `v-` nos nomes de directive que o núcleo já usa, o prefixo `--v-` em variáveis
-CSS e o prefixo `voodoo:` em eventos.
+Reserved for core: any name already in `V`, any magic listed in
+`runtime/magics.ts`, any attribute name registered by built-in modules,
+the `v-` prefix on directive names the core already uses, the `--v-` prefix on CSS
+variables, and the `voodoo:` prefix on events.
 
-**Como verificar antes de publicar:**
+**How to check before publishing:**
 
 ```js
-console.log(V.directives.has('meu-nome'));   // deve ser false
-console.log(V.components.has('meu-nome'));   // deve ser false
-console.log(V.magics.has('$meuNome'));       // deve ser false
-console.log('meuNome' in V);                 // deve ser false
+console.log(V.directives.has('my-name'));   // should be false
+console.log(V.components.has('my-name'));   // should be false
+console.log(V.magics.has('$myName'));       // should be false
+console.log('myName' in V);                 // should be false
 ```
 
-O runtime **não** avisa quando você sobrescreve um nome existente. `defineDirective` faz
-`directives.set(name, ...)`, que substitui em silêncio.
+The runtime **does not** warn when you overwrite an existing name. `defineDirective` does
+`directives.set(name, ...)`, which overwrites silently.
 
 ---
 
-## 4. Versionamento
+## 4. Versioning
 
-Um plugin declara compatibilidade em `peerDependencies`:
+A plugin declares compatibility in `peerDependencies`:
 
 ```json
 {
-  "name": "voodoo-graficos-pro",
+  "name": "voodoo-charts-pro",
   "version": "1.2.0",
   "peerDependencies": {
     "voodoojs": "^0.1.0"
@@ -339,15 +337,15 @@ Um plugin declara compatibilidade em `peerDependencies`:
 }
 ```
 
-O runtime **não verifica isso**. Se o seu plugin depende de algo que pode não existir,
-cheque na mão:
+The runtime **does not check this**. If your plugin depends on something that might not exist,
+check manually:
 
 ```js
-install(V, opcoes) {
+install(V, options) {
   if (!V.renderChart) {
     console.warn(
-      '[graficos-pro] precisa do build completo da Voodoo.js. ' +
-        'Use voodoo.full.min.js ou importe voodoojs pelo bundler.'
+      '[charts-pro] needs the full Voodoo.js build. ' +
+        'Use voodoo.full.min.js or import voodoojs via bundler.'
     );
     return;
   }
@@ -355,78 +353,77 @@ install(V, opcoes) {
 }
 ```
 
-Isso é especialmente importante porque os três builds de navegador expõem superfícies
-diferentes. `V.router`, `V.i18n`, `V.renderChart`, `V.animate` e `V.xray` só existem no
-build completo. `V.validate` e `V.modal` não existem no build mínimo.
+This is especially important because the three browser builds expose different surfaces.
+`V.router`, `V.i18n`, `V.renderChart`, `V.animate`, and `V.xray` only exist in the
+full build. `V.validate` and `V.modal` don't exist in the minimal build.
 
-Nome do pacote: prefixe com `voodoo-`. Palavras-chave sugeridas no `package.json`:
+Package name: prefix with `voodoo-`. Suggested keywords in `package.json`:
 `voodoojs`, `voodoo-plugin`.
 
-Siga SemVer para o próprio plugin. Uma mudança no nome de uma directive que você registrou
-é uma mudança que quebra, porque o HTML de quem usa vai parar de funcionar.
+Follow SemVer for the plugin itself. A change in the name of a directive you registered
+is a breaking change, because the user's HTML will stop working.
 
 ---
 
-## 5. Limpeza
+## 5. Cleanup
 
-O runtime **não oferece desinstalação**. Isso é um vazio conhecido, registrado no
-[ROADMAP.md](../ROADMAP.md). Enquanto ele existir, a responsabilidade é do plugin.
+The runtime **does not offer uninstallation**. This is a known gap, registered in
+[ROADMAP.md](../ROADMAP.md). Until it exists, the plugin is responsible.
 
-O padrão recomendado é expor uma função de limpeza explícita:
+The recommended pattern is to expose an explicit cleanup function:
 
 ```js
-export const meuPlugin = {
-  name: 'meu-plugin',
+export const myPlugin = {
+  name: 'my-plugin',
 
-  install(V, opcoes) {
-    const limpezas = [];
+  install(V, options) {
+    const cleanups = [];
 
-    // Guarde tudo que da para desfazer.
-    limpezas.push(V.http.interceptors.request.use(adicionarCabecalho));
-    limpezas.push(V.on('rota:mudou', aoMudarRota));
+    // Save everything that can be undone.
+    cleanups.push(V.http.interceptors.request.use(addHeader));
+    cleanups.push(V.on('route:changed', onRouteChange));
 
-    const aoRedimensionar = () => recalcular();
-    window.addEventListener('resize', aoRedimensionar);
-    limpezas.push(() => window.removeEventListener('resize', aoRedimensionar));
+    const onResize = () => recalculate();
+    window.addEventListener('resize', onResize);
+    cleanups.push(() => window.removeEventListener('resize', onResize));
 
-    const timer = setInterval(sincronizar, 30_000);
-    limpezas.push(() => clearInterval(timer));
+    const timer = setInterval(sync, 30_000);
+    cleanups.push(() => clearInterval(timer));
 
-    V.meuPlugin = {
+    V.myPlugin = {
       // ...
-      desligar() {
-        for (const fn of limpezas.reverse()) fn();
-        limpezas.length = 0;
+      shutdown() {
+        for (const fn of cleanups.reverse()) fn();
+        cleanups.length = 0;
       },
     };
   },
 };
 ```
 
-O que **é** limpo sozinho:
+What **is** cleaned up automatically:
 
-- efeitos criados com `ctx.effect` dentro de uma directive;
-- funções passadas para `ctx.cleanup`;
-- listeners registrados pelas directives nativas;
-- o escopo de efeitos de um componente, quando o elemento sai do DOM.
+- effects created with `ctx.effect` inside a directive;
+- functions passed to `ctx.cleanup`;
+- listeners registered by built-in directives;
+- the effect scope of a component when the element leaves the DOM.
 
-O que **não** é limpo sozinho:
+What **is not** cleaned up automatically:
 
-- entradas em `V.directives`, `V.components`, `V.magics`, `V.masks` e no registro de regras
-  de validação;
-- propriedades que o plugin colocou em `V`;
-- entradas em `V.config.globals`;
-- interceptadores de HTTP;
-- assinaturas do barramento global (`V.on`);
-- listeners que você registrou em `window` ou `document`;
+- entries in `V.directives`, `V.components`, `V.magics`, `V.masks`, and the validation rule registry;
+- properties the plugin put in `V`;
+- entries in `V.config.globals`;
+- HTTP interceptors;
+- global bus subscriptions (`V.on`);
+- listeners you registered on `window` or `document`;
 - timers;
-- `<style>` injetados;
-- a entrada no `Set` interno `installedPlugins`, que nunca é esvaziada.
+- injected `<style>`;
+- the entry in the internal `installedPlugins` `Set`, which is never emptied.
 
-Dentro de directives e componentes, sempre use os ganchos que o runtime dá:
+Inside directives and components, always use the hooks the runtime provides:
 
 ```js
-V.directive('meu-widget', {
+V.directive('my-widget', {
   mounted(el, binding) {
     el._widget = new Widget(el, binding.value);
   },
@@ -439,65 +436,65 @@ V.directive('meu-widget', {
 
 ---
 
-## 6. Plugin completo de exemplo
+## 6. Complete example plugin
 
 ```js
 /**
  * voodoo-analytics
  *
- * Registra `v-track` para eventos de clique, a magia `$analytics` e o
- * serviço `V.analytics`.
+ * Registers `v-track` for click events, the `$analytics` magic, and the
+ * `V.analytics` service.
  */
 
-const PADRAO = {
-  url: '/eventos',
+const DEFAULTS = {
+  url: '/events',
   debug: false,
-  fila: 10,
+  queue: 10,
 };
 
 export const analytics = {
   name: 'analytics',
 
-  install(V, opcoes = {}) {
-    const config = { ...PADRAO, ...opcoes };
-    const limpezas = [];
-    let fila = [];
+  install(V, options = {}) {
+    const config = { ...DEFAULTS, ...options };
+    const cleanups = [];
+    let queue = [];
 
-    function enviar() {
-      if (!fila.length) return;
-      const lote = fila;
-      fila = [];
-      if (config.debug) console.log('[analytics]', lote);
-      navigator.sendBeacon(config.url, JSON.stringify(lote));
+    function send() {
+      if (!queue.length) return;
+      const batch = queue;
+      queue = [];
+      if (config.debug) console.log('[analytics]', batch);
+      navigator.sendBeacon(config.url, JSON.stringify(batch));
     }
 
-    function rastrear(evento, dados = {}) {
-      fila.push({ evento, dados, em: Date.now() });
-      if (fila.length >= config.fila) enviar();
+    function track(event, data = {}) {
+      queue.push({ event, data, at: Date.now() });
+      if (queue.length >= config.queue) send();
     }
 
-    // Um namespace so em V.
+    // One namespace in V.
     V.analytics = {
-      rastrear,
-      enviar,
-      configurar(novas) { Object.assign(config, novas); },
-      desligar() {
-        enviar();
-        for (const fn of limpezas.reverse()) fn();
-        limpezas.length = 0;
+      track,
+      send,
+      configure(newOpts) { Object.assign(config, newOpts); },
+      shutdown() {
+        send();
+        for (const fn of cleanups.reverse()) fn();
+        cleanups.length = 0;
         delete V.analytics;
       },
     };
 
-    // Magia, apontando para o mesmo namespace.
+    // Magic, pointing to the same namespace.
     V.magic('$analytics', () => V.analytics);
 
-    // Directive prefixada.
+    // Prefixed directive.
     V.directive('analytics-track', {
       mounted(el, binding) {
-        const aoClicar = () => rastrear(binding.value, { texto: el.textContent?.trim() });
-        el.addEventListener('click', aoClicar);
-        el._analyticsOff = () => el.removeEventListener('click', aoClicar);
+        const onClick = () => track(binding.value, { text: el.textContent?.trim() });
+        el.addEventListener('click', onClick);
+        el._analyticsOff = () => el.removeEventListener('click', onClick);
       },
       beforeUnmount(el) {
         el._analyticsOff?.();
@@ -505,88 +502,88 @@ export const analytics = {
       },
     });
 
-    // Interceptador, com a remocao guardada.
-    limpezas.push(
-      V.http.interceptors.error.use((erro) => {
-        rastrear('http:erro', { status: erro.status, url: erro.config?.url });
+    // Interceptor, with removal saved.
+    cleanups.push(
+      V.http.interceptors.error.use((error) => {
+        track('http:error', { status: error.status, url: error.config?.url });
       })
     );
 
-    // Descarrega o que sobrou quando a aba sai.
-    const aoSair = () => enviar();
-    window.addEventListener('pagehide', aoSair);
-    limpezas.push(() => window.removeEventListener('pagehide', aoSair));
+    // Flush what's left when the tab closes.
+    const onExit = () => send();
+    window.addEventListener('pagehide', onExit);
+    cleanups.push(() => window.removeEventListener('pagehide', onExit));
   },
 };
 ```
 
 ```js
-V.use(analytics, { url: '/api/eventos', debug: true });
+V.use(analytics, { url: '/api/events', debug: true });
 ```
 
 ```html
-<button v-analytics-track="'comprar-clicado'">Comprar</button>
-<span>{ $analytics ? 'ligado' : 'desligado' }</span>
+<button v-analytics-track="'purchase-clicked'">Buy</button>
+<span>{ $analytics ? 'on' : 'off' }</span>
 ```
 
 ---
 
-## 7. O que falta no runtime
+## 7. What's missing from the runtime
 
-Registrado aqui porque quem escreve plugin esbarra nisso, e porque a especificação só fica
-completa quando estas lacunas fecharem. Todas estão no [ROADMAP.md](../ROADMAP.md).
+Documented here because plugin authors run into this, and because the specification is only
+complete when these gaps close. All are in [ROADMAP.md](../ROADMAP.md).
 
-| Lacuna | Consequência para quem escreve plugin |
+| Gap | Consequence for plugin authors |
 | ------ | ------------------------------------- |
-| **Não existe `uninstall`.** `usePlugin` só adiciona ao `Set`. | Nenhum plugin pode ser removido. Impede recarregamento a quente e teardown limpo em teste. |
-| **Não existe `unregister` para directive, componente, magia, regra ou máscara.** | Um nome registrado fica registrado para sempre. Testes que instalam plugins contaminam uns aos outros. |
-| **Deduplicação por identidade, não por `name`.** | Duas cópias do mesmo plugin, vindas de caminhos diferentes, instalam as duas e registram o mesmo nome duas vezes. |
-| **O campo `name` não é usado.** | Não dá para listar o que está instalado nem detectar conflito por nome. |
-| **Não existe verificação de versão.** | Um plugin escrito para uma versão futura instala em silêncio e falha depois, longe da causa. |
-| **`V.directive` não repassa `terminal`.** | Um plugin não consegue criar uma directive estrutural, do tipo de `v-if` e `v-for`. |
-| **Sobrescrever um nome existente não avisa.** | Um plugin pode substituir `v-text` sem que ninguém perceba. |
-| **`app.use()` instala no `V` global.** | Não existe registro por aplicação. Duas aplicações na mesma página dividem tudo. |
-| **`install` não recebe contexto.** | O plugin não sabe se foi instalado por `V.use` ou por `app.use`, nem qual aplicação. |
+| **No `uninstall`.** `usePlugin` only adds to the `Set`. | No plugin can be removed. Prevents hot reloading and clean teardown in tests. |
+| **No `unregister` for directive, component, magic, rule, or mask.** | A registered name stays registered forever. Tests that install plugins contaminate each other. |
+| **Deduplication by identity, not by `name`.** | Two copies of the same plugin from different paths both install and register the same name twice. |
+| **The `name` field is not used.** | Can't list what's installed or detect name conflicts. |
+| **No version checking.** | A plugin written for a future version installs silently and fails later, far from the cause. |
+| **`V.directive` doesn't pass `terminal`.** | A plugin can't create a structural directive like `v-if` and `v-for`. |
+| **Overwriting an existing name doesn't warn.** | A plugin can replace `v-text` without anyone noticing. |
+| **`app.use()` installs in the global `V`.** | No per-application registration. Two apps on the same page share everything. |
+| **`install` doesn't receive context.** | The plugin doesn't know if it was installed via `V.use` or `app.use`, or which app. |
 
-Uma forma de fechar isso sem quebrar o que existe seria dar ao `install` um segundo objeto
-de contexto com um registrador que anota tudo, e usar essas anotações para desfazer:
+One way to close this without breaking what exists would be to give `install` a second context
+object with a logger that tracks everything, and use those annotations to undo:
 
 ```js
-// Proposta, ainda nao implementada.
-install(V, opcoes, ctx) {
-  ctx.directive('meu-widget', hooks);   // registrado e anotado
+// Proposal, not yet implemented.
+install(V, options, ctx) {
+  ctx.directive('my-widget', hooks);   // registered and tracked
   ctx.onUninstall(() => { /* ... */ });
 }
 
-V.unuse(meuPlugin);  // desfaz tudo que ctx anotou
+V.unuse(myPlugin);  // undoes everything ctx tracked
 ```
 
-Se você for implementar, mantenha `install(V, options)` funcionando exatamente como hoje: o
-terceiro parâmetro é aditivo e não quebra nenhum plugin existente.
+If you implement it, keep `install(V, options)` working exactly as today: the
+third parameter is additive and won't break any existing plugin.
 
 ---
 
-## 8. Checklist de publicação
+## 8. Publishing checklist
 
-- [ ] `install(V, options)` existe e não lança quando `options` é `undefined`.
-- [ ] O plugin reivindica **uma** propriedade em `V`.
-- [ ] Toda directive, componente, magia, regra e máscara está prefixada com o nome do
-      plugin.
-- [ ] Nenhum nome colide com o núcleo (rode as checagens da seção 3).
-- [ ] Recursos que só existem no build completo são verificados antes do uso.
-- [ ] Existe um método de desligamento que desfaz interceptadores, listeners e timers.
-- [ ] Directives e componentes limpam o que criaram nos ganchos de desmontagem.
-- [ ] Nada é acrescentado a `V.config.globals` além de valores e funções puras.
-- [ ] `peerDependencies` declara a faixa de versão da `voodoojs`.
-- [ ] O README documenta as opções, tudo que é registrado e a licença.
-- [ ] O plugin não usa `eval` nem `new Function`, e não traz dependência em tempo de
-      execução, para continuar compatível com CSP restritiva.
+- [ ] `install(V, options)` exists and doesn't throw when `options` is `undefined`.
+- [ ] The plugin claims **one** property in `V`.
+- [ ] Every directive, component, magic, rule, and mask is prefixed with the
+      plugin name.
+- [ ] No name collides with the core (run the checks in section 3).
+- [ ] Features that only exist in the full build are checked before use.
+- [ ] There is a shutdown method that undoes interceptors, listeners, and timers.
+- [ ] Directives and components clean up what they created in unmount hooks.
+- [ ] Nothing is added to `V.config.globals` except values and pure functions.
+- [ ] `peerDependencies` declares the `voodoojs` version range.
+- [ ] The README documents options, everything that's registered, and the license.
+- [ ] The plugin doesn't use `eval` or `new Function`, and doesn't bring runtime
+      dependencies, to stay compatible with restrictive CSP.
 
-## Leia também
+## Read also
 
-- [Plugins](plugins.md), o guia de uso
+- [Plugins](plugins.md), the usage guide
 - [Directives](directives.md)
-- [Componentes](componentes.md)
-- [Estrutura de aplicação](application-structure.md)
-- [CONVENTIONS.md](../CONVENTIONS.md), regras de nome e política de depreciação
-- [SECURITY.md](../SECURITY.md), o que um plugin pode comprometer
+- [Components](components.md)
+- [Application structure](application-structure.md)
+- [CONVENTIONS.md](../CONVENTIONS.md), naming rules and deprecation policy
+- [SECURITY.md](../SECURITY.md), what a plugin can compromise

@@ -1,64 +1,62 @@
-# Estrutura de aplicação
+# Application structure
 
-> **Nada nesta página é obrigatório.**
+> **Nothing on this page is required.**
 >
-> Um `index.html` com uma tag `<script>` continua sendo uma aplicação Voodoo.js completa e
-> legítima. Esta página descreve uma convenção opcional, para quando o projeto cresceu a
-> ponto de um arquivo só ter virado incômodo. Se o seu projeto ainda cabe em um arquivo,
-> pare de ler aqui e volte a programar.
+> An `index.html` with a `<script>` tag continues to be a complete and
+> legitimate Voodoo.js application. This page describes an optional convention, for when the project grew
+> to the point where one file became inconvenient. If your project still fits in one file,
+> stop reading here and go back to coding.
 
-## O que esta página resolve
+## What this page solves
 
-Existe um momento, que chega em uns projetos e nunca em outros, em que você abre o
-`index.html`, rola por trezentas linhas de `<script>` e não acha mais a função que queria
-mudar. É o momento em que separar arquivos passa a economizar tempo em vez de custar.
+There's a moment, that comes in some projects and never in others, when you open
+`index.html`, scroll through three hundred lines of `<script>` and can't find the function you wanted
+to change. It's the moment when splitting files starts saving time instead of costing it.
 
-O que vem abaixo é uma forma de separar que funciona bem com a Voodoo.js, testada contra o
-jeito que a biblioteca de fato carrega as coisas. Não é uma arquitetura, é um lugar
-previsível para guardar cada tipo de coisa.
+What follows is a way to split that works well with Voodoo.js, tested against how
+the library actually loads things. It's not an architecture, it's a predictable place to store each type of thing.
 
-## O mesmo app, das duas formas
+## The same app, two ways
 
-Um app pequeno: uma lista de tarefas com contador, salva no navegador.
+A small app: a to-do list with counter, saved in the browser.
 
-### Forma 1: um arquivo
+### Way 1: one file
 
 ```html
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Tarefas</title>
+  <title>Tasks</title>
   <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
 </head>
 <body>
-  <main v-data="{ nova: '', tarefas: [] }" v-persist="tarefas">
-    <form @submit.prevent="tarefas.push({ id: Date.now(), texto: nova, feita: false }); nova = ''">
-      <input v-model="nova" placeholder="O que precisa ser feito?" required>
-      <button>Adicionar</button>
+  <main v-data="{ new: '', tasks: [] }" v-persist="tasks">
+    <form @submit.prevent="tasks.push({ id: Date.now(), text: new, done: false }); new = ''">
+      <input v-model="new" placeholder="What needs to be done?" required>
+      <button>Add</button>
     </form>
 
     <ul>
-      <li v-for="tarefa in tarefas" :key="tarefa.id">
-        <input type="checkbox" v-model="tarefa.feita">
-        <span :class="{ feita: tarefa.feita }">{ tarefa.texto }</span>
-        <button @click="tarefas = tarefas.filter(t => t.id !== tarefa.id)">Remover</button>
+      <li v-for="task in tasks" :key="task.id">
+        <input type="checkbox" v-model="task.done">
+        <span :class="{ done: task.done }">{ task.text }</span>
+        <button @click="tasks = tasks.filter(t => t.id !== task.id)">Remove</button>
       </li>
     </ul>
 
-    <p>{ tarefas.filter(t => !t.feita).length } de { tarefas.length } pendentes</p>
+    <p>{ tasks.filter(t => !t.done).length } of { tasks.length } pending</p>
   </main>
 </body>
 </html>
 ```
 
-Isso é uma aplicação inteira. Funciona, é reativa, persiste entre recarregamentos, não
-precisa de build, de servidor de desenvolvimento nem de `npm install`. **Se o seu projeto
-é assim, ele está pronto.**
+This is an entire application. It works, it's reactive, it persists between reloads, it doesn't
+need a build, a dev server or `npm install`. **If your project is like this, it's ready.**
 
-### Forma 2: estruturado
+### Way 2: structured
 
-O mesmo comportamento, quando a lista de tarefas virou parte de um sistema maior.
+The same behavior, when the to-do list became part of a larger system.
 
 ```
 projeto/
@@ -151,54 +149,54 @@ registrarTarefasStore();
 registrarListaTarefas();
 ```
 
-Compare os dois. O comportamento é idêntico. O segundo tem mais arquivos e mais cerimônia,
-e ganha alguma coisa em troca: a lógica das tarefas mora em um lugar só, o componente pode
-aparecer em várias páginas, e quem chegar no projeto sabe onde procurar.
+Compare the two. The behavior is identical. The second has more files and more ceremony,
+and gains something in return: the task logic lives in one place, the component can
+appear on multiple pages, and anyone who arrives at the project knows where to look.
 
-**A troca só compensa quando o projeto realmente cresceu.** Fazer isso em um app de trinta
-linhas é burocracia.
+**The trade-off only makes sense when the project really grew.** Doing this in a thirty-line
+app is bureaucracy.
 
-## As pastas
+## The folders
 
 ```
 src/
-├── app.js          ponto de entrada: importa e registra tudo
-├── components/     componentes reutilizáveis
-├── pages/          telas, quando o app tem roteador
-├── stores/         estado global
-├── services/       conversa com o mundo externo
-├── plugins/        extensões da própria Voodoo
-└── routes/         mapa de rotas
+├── app.js          entry point: imports and registers everything
+├── components/     reusable components
+├── pages/          screens, when the app has a router
+├── stores/         global state
+├── services/       talk to the outside world
+├── plugins/        extensions to Voodoo itself
+└── routes/         route map
 ```
 
-Nenhuma dessas pastas é procurada automaticamente pela Voodoo.js. Não existe convenção
-mágica, não existe autoload. Os nomes valem porque são previsíveis, e nada mais. Crie
-apenas as pastas de que você precisa.
+None of these folders are automatically searched by Voodoo.js. There's no
+magic convention, no autoload. The names work because they're predictable, and nothing more. Create
+only the folders you need.
 
 ### `src/app.js`
 
-O único arquivo que a página carrega diretamente. Ele importa e registra o resto.
+The only file the page loads directly. It imports and registers everything else.
 
 ```js
-import { registrarComponentes } from './components/index.js';
-import { registrarStores } from './stores/index.js';
-import { instalarPlugins } from './plugins/index.js';
-import { registrarRotas } from './routes/index.js';
+import { registerComponents } from './components/index.js';
+import { registerStores } from './stores/index.js';
+import { installPlugins } from './plugins/index.js';
+import { registerRoutes } from './routes/index.js';
 
 V.config.baseURL = '/api';
-V.config.locale = 'pt-BR';
+V.config.locale = 'en';
 
-instalarPlugins();
-registrarStores();
-registrarComponentes();
-registrarRotas();
+installPlugins();
+registerStores();
+registerComponents();
+registerRoutes();
 ```
 
-Duas coisas importantes sobre a ordem.
+Two important things about order.
 
-**Configuração vem antes de tudo.** `V.config.prefix` e `V.config.autoDiscover` precisam
-estar definidos antes de a Voodoo percorrer a página. Para garantir isso, use `data-manual`
-na tag do script e chame `V.start()` você mesmo:
+**Configuration comes before everything.** `V.config.prefix` and `V.config.autoDiscover` need
+to be set before Voodoo walks the page. To guarantee this, use `data-manual`
+on the script tag and call `V.start()` yourself:
 
 ```html
 <script src="voodoo.min.js" data-manual defer></script>
@@ -206,14 +204,14 @@ na tag do script e chame `V.start()` você mesmo:
 ```
 
 ```js
-// no fim de src/app.js
+// at the end of src/app.js
 V.start();
 ```
 
-**Registrar componente depois da página carregar funciona.** A Voodoo.js monta as tags que
-já estavam esperando pelo nome que você acabou de registrar. Isso é intencional e está
-implementado em `defineComponent`, exatamente porque o script do CDN com `defer` roda antes
-do script da sua aplicação. Você não precisa se preocupar com a corrida.
+**Registering a component after the page loads works.** Voodoo.js mounts the tags that
+were already waiting for the name you just registered. This is intentional and is
+implemented in `defineComponent`, exactly because the CDN script with `defer` runs before
+your application script. You don't need to worry about the race.
 
 ### `src/components/`
 
@@ -273,138 +271,138 @@ export function registrarComponentes() {
 }
 ```
 
-O `index.js` existe para o `app.js` não virar uma lista de vinte importações. Quando forem
-três componentes, importe direto e pule o `index.js`.
+The `index.js` exists so `app.js` doesn't become a list of twenty imports. When there are
+three components, import directly and skip `index.js`.
 
-**Quando o template ficar grande**, tire ele do JavaScript e coloque em um `<template>` no
+**When the template gets large**, take it out of JavaScript and put it in a `<template>` in
 HTML:
 
 ```html
-<template id="tpl-cartao-produto">
-  <article :class="{ destaque: destaque }">
-    <h3>{ produto.nome }</h3>
-    <p>{ precoFormatado }</p>
-    <button @click="adicionar()">Adicionar</button>
+<template id="tpl-product-card">
+  <article :class="{ highlight: highlight }">
+    <h3>{ product.name }</h3>
+    <p>{ priceFormatted }</p>
+    <button @click="add()">Add</button>
   </article>
 </template>
 ```
 
 ```js
-V.component('cartao-produto', {
-  template: document.getElementById('tpl-cartao-produto').innerHTML,
+V.component('product-card', {
+  template: document.getElementById('tpl-product-card').innerHTML,
   // ...
 });
 ```
 
-Você recupera destaque de sintaxe do editor e o HTML volta a parecer HTML.
+You get editor syntax highlighting and HTML looks like HTML again.
 
 ### `src/stores/`
 
-Estado que mais de um componente precisa enxergar. Estado que só um componente usa fica no
-`state()` dele.
+State that more than one component needs to see. State that only one component uses stays in
+its `state()`.
 
 ```js
-// stores/carrinho.js
-export function registrar() {
-  V.store('carrinho', {
-    itens: [],
-    cupom: null,
+// stores/cart.js
+export function register() {
+  V.store('cart', {
+    items: [],
+    coupon: null,
 
-    adicionar(produto) {
-      const existente = this.itens.find((i) => i.id === produto.id);
-      if (existente) existente.quantidade++;
-      else this.itens.push({ ...produto, quantidade: 1 });
+    add(product) {
+      const existing = this.items.find((i) => i.id === product.id);
+      if (existing) existing.quantity++;
+      else this.items.push({ ...product, quantity: 1 });
     },
 
-    remover(id) {
-      this.itens = this.itens.filter((i) => i.id !== id);
+    remove(id) {
+      this.items = this.items.filter((i) => i.id !== id);
     },
 
     subtotal() {
-      return this.itens.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
+      return this.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     },
 
     total() {
-      return this.cupom ? this.subtotal() * (1 - this.cupom.desconto) : this.subtotal();
+      return this.coupon ? this.subtotal() * (1 - this.coupon.discount) : this.subtotal();
     },
   }, { persist: true });
 }
 ```
 
-Um store fica visível em qualquer expressão da página como `$store.carrinho`, e em
-JavaScript como `V.stores.carrinho`. Métodos declarados na definição recebem `this`
-apontando para o próprio store, então `this.itens` funciona.
+A store is visible in any page expression as `$store.cart`, and in
+JavaScript as `V.stores.cart`. Methods declared in the definition receive `this`
+pointing to the store itself, so `this.items` works.
 
-`{ persist: true }` salva no `localStorage` e restaura no próximo carregamento. Funções não
-são salvas, só os dados.
+`{ persist: true }` saves to `localStorage` and restores on the next load. Functions are not
+saved, only data.
 
-Regra prática para decidir onde o estado mora:
+Practical rule to decide where state lives:
 
-| Quem precisa ver | Onde fica                      |
+| Who needs to see | Where it lives                 |
 | ---------------- | ------------------------------ |
-| Um elemento      | `v-data` no próprio elemento   |
-| Um componente    | `state()` do componente        |
-| A página inteira | `V.data()`                     |
-| A aplicação      | `V.store()`                    |
+| One element      | `v-data` on the element itself |
+| One component    | `state()` of the component     |
+| The whole page   | `V.data()`                     |
+| The application  | `V.store()`                    |
 
 ### `src/services/`
 
-Tudo que fala com o mundo de fora: API, WebSocket, integração com biblioteca de terceiros.
-Um serviço é um módulo comum, sem nada de Voodoo dentro além do cliente HTTP.
+Everything that talks to the outside world: API, WebSocket, third-party library integration.
+A service is a plain module, with nothing Voodoo inside except the HTTP client.
 
 ```js
-// services/produtos.js
-export const produtos = {
-  listar(filtros = {}) {
-    return V.http.get('/produtos', { params: filtros });
+// services/products.js
+export const products = {
+  list(filters = {}) {
+    return V.http.get('/products', { params: filters });
   },
 
-  buscar(id) {
-    return V.http.get(`/produtos/${id}`);
+  fetch(id) {
+    return V.http.get(`/products/${id}`);
   },
 
-  criar(dados) {
-    return V.http.post('/produtos', dados);
+  create(data) {
+    return V.http.post('/products', data);
   },
 };
 ```
 
 ```js
-// components/lista-produtos.js
-import { produtos } from '../services/produtos.js';
+// components/product-list.js
+import { products } from '../services/products.js';
 
-V.component('lista-produtos', {
-  state: () => ({ itens: [], carregando: false, erro: null }),
+V.component('product-list', {
+  state: () => ({ items: [], loading: false, error: null }),
 
   methods: {
-    async carregar() {
-      this.carregando = true;
-      this.erro = null;
+    async load() {
+      this.loading = true;
+      this.error = null;
       try {
-        this.itens = await produtos.listar();
+        this.items = await products.list();
       } catch (err) {
-        this.erro = err.message;
+        this.error = err.message;
       } finally {
-        this.carregando = false;
+        this.loading = false;
       }
     },
   },
 
   mounted() {
-    this.carregar();
+    this.load();
   },
 });
 ```
 
-O ganho é que a URL da API aparece em um lugar só. Quando o backend mudar o caminho, você
-muda uma linha.
+The gain is that the API URL appears in one place. When the backend changes the path, you
+change one line.
 
-Autenticação e tratamento de erro global ficam bem como interceptadores, e o lugar deles é
-aqui:
+Authentication and global error handling work well as interceptors, and they belong
+here:
 
 ```js
 // services/http.js
-export function configurar() {
+export function configure() {
   V.http.setBaseURL('/api');
 
   V.http.interceptors.request.use((config) => {
@@ -413,33 +411,33 @@ export function configurar() {
     return config;
   });
 
-  V.http.interceptors.error.use((erro) => {
-    if (erro.status === 401) V.navigate('/entrar');
-    else V.toast.error('Não foi possível completar a operação.');
+  V.http.interceptors.error.use((error) => {
+    if (error.status === 401) V.navigate('/login');
+    else V.toast.error('Could not complete the operation.');
   });
 }
 ```
 
 ### `src/plugins/`
 
-Extensões da própria Voodoo: directives, magics, validadores, máscaras. A especificação
-completa está em [plugin-spec.md](plugin-spec.md).
+Extensions to Voodoo itself: directives, magics, validators, masks. The complete
+specification is in [plugin-spec.md](plugin-spec.md).
 
 ```js
 // plugins/analytics.js
 export const analytics = {
   name: 'analytics',
 
-  install(V, opcoes) {
-    function rastrear(evento, dados) {
-      navigator.sendBeacon(opcoes.url, JSON.stringify({ evento, dados }));
+  install(V, options) {
+    function track(event, data) {
+      navigator.sendBeacon(options.url, JSON.stringify({ event, data }));
     }
 
-    V.analytics = { rastrear };
+    V.analytics = { track };
     V.magic('$analytics', () => V.analytics);
 
     V.directive('analytics-track', (el, binding) => {
-      el.addEventListener('click', () => rastrear(binding.value));
+      el.addEventListener('click', () => track(binding.value));
     });
   },
 };
@@ -449,46 +447,46 @@ export const analytics = {
 // plugins/index.js
 import { analytics } from './analytics.js';
 
-export function instalarPlugins() {
-  V.use(analytics, { url: '/eventos' });
+export function installPlugins() {
+  V.use(analytics, { url: '/events' });
 }
 ```
 
-Plugins são instalados **antes** dos componentes, porque um componente pode usar uma
-directive que o plugin registrou.
+Plugins are installed **before** components, because a component can use a
+directive that the plugin registered.
 
-### `src/routes/` e `src/pages/`
+### `src/routes/` and `src/pages/`
 
-Só fazem sentido quando o app é uma SPA de verdade, com o roteador do build completo.
+Only make sense when the app is a true SPA, with the router from the complete build.
 
 ```
 routes/
 └── index.js
 pages/
-├── inicio.js
-├── produtos.js
-├── produto-detalhe.js
-└── nao-encontrado.js
+├── home.js
+├── products.js
+├── product-detail.js
+└── not-found.js
 ```
 
 ```js
-// pages/produtos.js
-import { produtos } from '../services/produtos.js';
+// pages/products.js
+import { products } from '../services/products.js';
 
-export function registrar() {
-  V.component('pagina-produtos', {
-    state: () => ({ itens: [], carregando: true }),
+export function register() {
+  V.component('page-products', {
+    state: () => ({ items: [], loading: true }),
 
     async mounted() {
-      this.itens = await produtos.listar();
-      this.carregando = false;
+      this.items = await products.list();
+      this.loading = false;
     },
 
     template: `
-      <h1>Produtos</h1>
-      <p v-show="carregando">Carregando...</p>
-      <div v-for="p in itens" :key="p.id">
-        <cartao-produto :produto="p"></cartao-produto>
+      <h1>Products</h1>
+      <p v-show="loading">Loading...</p>
+      <div v-for="p in items" :key="p.id">
+        <product-card :product="p"></product-card>
       </div>
     `,
   });
@@ -497,13 +495,13 @@ export function registrar() {
 
 ```js
 // routes/index.js
-export function registrarRotas() {
+export function registerRoutes() {
   V.router({
     routes: {
-      '/': { component: 'pagina-inicio', title: 'Início' },
-      '/produtos': { component: 'pagina-produtos', title: 'Produtos' },
-      '/produtos/:id': { component: 'pagina-produto-detalhe' },
-      '*': { component: 'pagina-nao-encontrado' },
+      '/': { component: 'page-home', title: 'Home' },
+      '/products': { component: 'page-products', title: 'Products' },
+      '/products/:id': { component: 'page-product-detail' },
+      '*': { component: 'page-not-found' },
     },
   });
 }
@@ -511,83 +509,83 @@ export function registrarRotas() {
 
 ```html
 <nav>
-  <a v-link="/">Início</a>
-  <a v-link="/produtos">Produtos</a>
+  <a v-link="/">Home</a>
+  <a v-link="/products">Products</a>
 </nav>
 <main v-router-view></main>
 ```
 
-Uma página é um componente comum. A única diferença é quem decide quando montar: o
-roteador, e não a tag no HTML. Por isso `pages/` e `components/` são pastas separadas: não
-por serem coisas diferentes, mas por serem usadas de formas diferentes.
+A page is a common component. The only difference is who decides when to mount: the
+router, not the tag in HTML. That's why `pages/` and `components/` are separate folders: not
+because they're different things, but because they're used in different ways.
 
-## Padrões que valem a pena
+## Patterns that pay off
 
-### Um componente, um arquivo
+### One component, one file
 
-Não junte três componentes em um arquivo porque são pequenos. Eles crescem, e separar
-depois dá mais trabalho do que separar agora.
+Don't put three components in one file because they're small. They grow, and splitting
+later takes more work than splitting now.
 
-### Nome de arquivo igual ao nome registrado
+### Filename equals registered name
 
-`components/cartao-produto.js` registra `cartao-produto`. Sem exceção. Isso deixa o
-`Ctrl+P` do editor útil.
+`components/product-card.js` registers `product-card`. No exceptions. This keeps
+the editor's `Ctrl+P` useful.
 
-### Exporte uma função `registrar`, não execute na importação
+### Export a `register` function, don't execute on import
 
 ```js
-// Assim: quem importa decide a ordem.
-export function registrar() {
-  V.component('cartao-produto', { /* ... */ });
+// This way: whoever imports decides the order.
+export function register() {
+  V.component('product-card', { /* ... */ });
 }
 
-// Assim não: o registro acontece na hora da importação, e a ordem
-// vira consequência do grafo de módulos em vez de uma decisão sua.
-V.component('cartao-produto', { /* ... */ });
+// Not this way: registration happens at import time, and order
+// becomes a consequence of the module graph instead of your decision.
+V.component('product-card', { /* ... */ });
 ```
 
-Importa quando um componente depende de um store, ou de uma directive vinda de um plugin.
+It matters when a component depends on a store, or a directive from a plugin.
 
-### Serviços não conhecem componentes
+### Services don't know components
 
-Um serviço devolve dados. Ele não sabe quem vai usar, não mexe no DOM e não chama
-`V.toast`. Isso mantém o serviço testável e reaproveitável.
+A service returns data. It doesn't know who'll use it, doesn't touch the DOM and doesn't call
+`V.toast`. This keeps the service testable and reusable.
 
-### Estado global só quando for global mesmo
+### Global state only when it's truly global
 
-Store é conveniente e por isso é fácil abusar. Um store que só um componente usa é estado
-local com passos a mais e um vazamento de encapsulamento de brinde.
+Store is convenient and that's why it's easy to abuse. A store that only one component uses is
+local state with extra steps and an encapsulation leak as a bonus.
 
-### O template mora perto do componente
+### Template lives close to the component
 
-Ou como string na definição, ou em um `<template>` no HTML com um id que combina com o nome
-do componente. Não espalhe pedaços de template por vários lugares.
+Either as a string in the definition, or in a `<template>` in HTML with an id that matches the
+component's name. Don't spread template pieces all over the place.
 
-## Burocracia que não vale a pena
+## Bureaucracy that's not worth it
 
-Coisas que parecem organização e são só peso:
+Things that look like organization but are just overhead:
 
-- **Uma pasta por componente**, com `index.js`, `template.html` e `style.css` para um
-  componente de trinta linhas.
-- **Uma camada de abstração sobre `V.http`** que só repassa as chamadas.
-- **Barrel files em toda pasta.** O `index.js` existe para encurtar o `app.js`. Se a pasta
-  tem dois arquivos, ele só atrapalha.
-- **Separar em `models/`, `controllers/` e `views/`.** A Voodoo.js não é MVC e forçar essa
-  divisão gera arquivos que existem só para ter a pasta preenchida.
-- **Uma constante para cada string.** `'/produtos'` aparecendo duas vezes não é duplicação
-  que precisa de arquivo de constantes.
-- **Estruturar antes de precisar.** Comece com um arquivo. Separe quando doer.
+- **One folder per component**, with `index.js`, `template.html` and `style.css` for a
+  thirty-line component.
+- **An abstraction layer over `V.http`** that just passes calls through.
+- **Barrel files in every folder.** `index.js` exists to shorten `app.js`. If the folder
+  has two files, it just gets in the way.
+- **Separating into `models/`, `controllers/` and `views/`.** Voodoo.js is not MVC and forcing that
+  division creates files that exist only to fill the folder.
+- **One constant for each string.** `'/products'` appearing twice is not duplication
+  that needs a constants file.
+- **Structure before you need it.** Start with one file. Split when it hurts.
 
-## Servindo os arquivos
+## Serving the files
 
-Módulos ES precisam ser servidos por HTTP; abrir o `index.html` com duplo clique não
-funciona por causa do CORS. O repositório traz um servidor simples:
+ES modules need to be served over HTTP; opening `index.html` with a double-click doesn't
+work because of CORS. The repository brings a simple server:
 
 ```bash
 npm run serve
 ```
 
-Qualquer servidor estático serve. Não existe passo de build:
+Any static server works. There's no build step:
 
 ```bash
 npx serve .
@@ -595,7 +593,7 @@ python -m http.server 8000
 php -S localhost:8000
 ```
 
-Se você já usa um bundler, importe pelo npm em vez do CDN:
+If you already use a bundler, import from npm instead of CDN:
 
 ```bash
 npm install voodoojs
@@ -604,30 +602,30 @@ npm install voodoojs
 ```js
 import V from 'voodoojs';
 
-V.component('cartao-produto', { /* ... */ });
+V.component('product-card', { /* ... */ });
 V.start();
 ```
 
-Importar `voodoojs` não mexe no DOM sozinho. Quem inicializa é o build de navegador ou uma
-chamada explícita a `V.start()`.
+Importing `voodoojs` doesn't touch the DOM by itself. What initializes it is the browser build or an
+explicit call to `V.start()`.
 
-## Checklist para migrar de um arquivo para vários
+## Checklist to migrate from one file to many
 
-Se você decidiu que chegou a hora, a ordem que dá menos trabalho:
+If you decided it's time, the order that requires the least work:
 
-1. Crie `src/app.js` e mova o `<script>` inteiro para lá. Troque por
-   `<script type="module" src="/src/app.js"></script>`. Confirme que nada quebrou.
-2. Extraia os stores. São os que menos dependem de outras coisas.
-3. Extraia os serviços, junto com as chamadas HTTP espalhadas.
-4. Extraia os componentes, um por vez, testando entre um e outro.
-5. Só então crie `plugins/`, `routes/` e `pages/`, e apenas se o app precisar.
+1. Create `src/app.js` and move the entire `<script>` there. Replace with
+   `<script type="module" src="/src/app.js"></script>`. Confirm nothing broke.
+2. Extract the stores. They depend on the least other things.
+3. Extract the services, along with the scattered HTTP calls.
+4. Extract the components, one at a time, testing between each one.
+5. Only then create `plugins/`, `routes/` and `pages/`, and only if the app needs them.
 
-Pare em qualquer degrau que já esteja bom. A estrutura completa não é a meta, é o teto.
+Stop at any level that's already good. The complete structure is not the goal, it's the ceiling.
 
-## Leia também
+## Read also
 
-- [Componentes](componentes.md)
-- [Estado e stores](estado-e-stores.md)
-- [Roteador](roteador.md)
-- [Plugins](plugins.md) e [Especificação de plugin](plugin-spec.md)
-- [Desempenho](performance.md)
+- [Components](componentes.md)
+- [State and stores](estado-e-stores.md)
+- [Router](roteador.md)
+- [Plugins](plugins.md) and [Plugin specification](plugin-spec.md)
+- [Performance](performance.md)

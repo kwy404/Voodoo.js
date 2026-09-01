@@ -1,14 +1,13 @@
 /**
- * Build minimo da Voodoo.js.
+ * Minimal build of Voodoo.js.
  *
- * Traz o que faz o HTML virar aplicacao: reatividade, o avaliador seguro de
- * expressoes, o motor de DOM, os componentes, todas as directives de estado e
- * renderizacao, os eventos, as requisicoes por atributo e a colecao encadeavel.
+ * Includes what makes HTML into an application: reactivity, the safe expression
+ * evaluator, the DOM engine, components, all state and rendering directives,
+ * events, attribute-based requests, and the chainable collection.
  *
- * Fica de fora: formularios com validacao e mascaras, componentes de interface,
- * arrastar e soltar, graficos, animacoes, roteador, idiomas, inspetor e a
- * biblioteca de componentes prontos. Para esses, use `voodoo.min.js` ou
- * `voodoo.full.min.js`.
+ * Excluded: forms with validation and masks, interface components, drag and drop,
+ * charts, animations, router, internationalization, inspector, and the ready-to-use
+ * component library. For these, use `voodoo.min.js` or `voodoo.full.min.js`.
  */
 
 import { core } from './core';

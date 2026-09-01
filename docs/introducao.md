@@ -1,135 +1,132 @@
-# Introdução
+# Introduction
 
-A Voodoo.js é o framework JavaScript HTML-first: você constrói aplicações reativas direto no HTML.
-O comportamento da página fica dentro do próprio HTML. Você escreve atributos, a biblioteca liga
-cada um deles ao estado reativo e a tela se atualiza sozinha.
+Voodoo.js is an HTML-first JavaScript framework: you build reactive applications directly in HTML.
+Page behavior lives inside the HTML itself. You write attributes, the library connects each one to
+reactive state, and the screen updates automatically.
 
 ```html
-<div v-data="{ nome: '' }">
-  <input v-model="nome" placeholder="Seu nome">
-  <p v-show="nome">Olá, { nome }!</p>
+<div v-data="{ name: '' }">
+  <input v-model="name" placeholder="Your name">
+  <p v-show="name">Hello, { name }!</p>
 </div>
 ```
 
-Não existe passo de compilação, nem arquivo de configuração, nem JSX. Você abre o HTML no
-navegador e funciona.
+There's no compilation step, no config file, no JSX. You open the HTML in the browser and it works.
 
-## O que vem na caixa
+## What comes in the box
 
-O build essencial (`voodoo.min.js`) traz:
+The essential build (`voodoo.min.js`) brings:
 
-- reatividade com Proxy e efeitos granulares;
-- directives para texto, condição, lista, formulário, atributo, classe, estilo e evento;
-- componentes com props, slots, computados, watchers e ciclo de vida;
-- coleção de DOM encadeável, no espírito do jQuery;
-- HTTP declarativo: `v-get`, `v-post`, `v-resource` e um cliente completo em `V.http`;
-- formulários com envio por AJAX, validação, máscaras, upload e autosave;
-- interface pronta: modal, gaveta, abas, dropdown, tooltip, acordeão, paleta de comandos;
-- arrastar e soltar com mouse, toque e teclado;
-- notificações, diálogos, armazenamento e paleta de cores configurável.
+- reactivity with Proxy and granular effects;
+- directives for text, condition, list, form, attribute, class, style, and event;
+- components with props, slots, computed, watchers, and lifecycle;
+- chainable DOM collection, in the spirit of jQuery;
+- declarative HTTP: `v-get`, `v-post`, `v-resource`, and a complete client in `V.http`;
+- forms with AJAX submission, validation, masks, upload, and autosave;
+- ready-made interface: modal, drawer, tabs, dropdown, tooltip, accordion, command palette;
+- drag and drop with mouse, touch, and keyboard;
+- notifications, dialogs, storage, and configurable color palette.
 
-O build completo (`voodoo.full.min.js`) soma:
+The full build (`voodoo.full.min.js`) adds:
 
-- gráficos em SVG puro;
-- animações com física de mola;
-- roteador de página única;
-- internacionalização;
-- inspetor de reatividade (`xray`);
-- 29 componentes prontos, de `VButton` a `VCodeBlock`.
+- charts in pure SVG;
+- animations with spring physics;
+- single-page router;
+- internationalization;
+- reactivity inspector (`xray`);
+- 29 ready-made components, from `VButton` to `VCodeBlock`.
 
-## Para quem é
+## For whom is it
 
-A Voodoo.js foi feita para quem constrói páginas que precisam de interatividade sem virar uma
-aplicação inteira em JavaScript:
+Voodoo.js was made for people building pages that need interactivity without becoming a whole
+JavaScript application:
 
-- **painéis administrativos** gerados no servidor com Laravel, Rails, Django, Spring ou PHP puro;
-- **landing pages e sites de conteúdo** que precisam de um pouco de vida sem carregar 200 KB de
+- **admin panels** generated on the server with Laravel, Rails, Django, Spring, or plain PHP;
+- **landing pages and content sites** that need some interactivity without loading 200 KB of
   framework;
-- **protótipos**, onde abrir um arquivo e ver o resultado vale mais do que qualquer arquitetura;
-- **times pequenos** que não querem manter um pipeline de build só para mostrar uma tabela;
-- **projetos legados**, onde a biblioteca convive com o código que já existe, porque ela nunca
-  toma conta da página inteira.
+- **prototypes**, where opening a file and seeing the result is worth more than any architecture;
+- **small teams** that don't want to maintain a build pipeline just to show a table;
+- **legacy projects**, where the library coexists with existing code, because it never takes over
+  the whole page.
 
-## Para quem não é
+## For whom it isn't
 
-Vale mais a pena escolher outra ferramenta quando:
+It's better to choose another tool when:
 
-- **o app tem centenas de telas e um time grande.** Componentes de arquivo único, roteamento
-  aninhado e ferramentas de tipo em tempo de compilação são vantagens reais do Vue, do React e
-  do Svelte nesse tamanho.
-- **você precisa de renderização no servidor com hidratação.** A Voodoo.js roda no navegador. Os
-  módulos puros (reatividade, HTTP, utilitários) funcionam em Node, mas não existe hidratação.
-- **o projeto depende de um ecossistema específico**, como React Native, bibliotecas de
-  componentes React ou ferramentas de teste de componentes de um framework em particular.
-- **listas com dezenas de milhares de linhas atualizando ao mesmo tempo.** O `v-for` reaproveita
-  elementos por chave, mas não faz virtualização.
-- **você precisa de tipagem estática nos templates.** As expressões dos atributos são texto e só
-  falham em tempo de execução.
+- **the app has hundreds of screens and a large team.** Single-file components, nested routing,
+  and compile-time type tools are real advantages of Vue, React, and Svelte at that scale.
+- **you need server-side rendering with hydration.** Voodoo.js runs in the browser. Pure modules
+  (reactivity, HTTP, utilities) work in Node, but there is no hydration.
+- **the project depends on a specific ecosystem**, like React Native, React component libraries,
+  or testing tools from a particular framework.
+- **lists with tens of thousands of rows updating at the same time.** `v-for` reuses elements by
+  key, but does not virtualize.
+- **you need static typing in templates.** Attribute expressions are text and only fail at
+  runtime.
 
-## O que torna a Voodoo diferente
+## What makes Voodoo different
 
-**Interpolação com chave simples.** `{ variavel }` é a forma padrão. `{{ variavel }}` também é
-aceita, para quem vem do Vue.
+**Single-brace interpolation.** `{ variable }` is the standard form. `{{ variable }}` is also
+accepted, for those coming from Vue.
 
-**O HTML fica limpo.** Depois que uma directive é processada, o atributo `v-*` sai do documento.
-No inspetor você vê `<button>Salvar</button>`, não `<button v-click="salvar()" v-loading="#spin">`.
-O comportamento continua funcionando porque os valores ficam guardados no runtime. Isso é
-controlado por `V.config.cleanAttributes`, ligado por padrão. Consequência prática: nunca escreva
-CSS ou `querySelectorAll` apoiado em seletores como `[v-tab]`.
+**Clean HTML.** After a directive is processed, the `v-*` attribute leaves the document. In the
+inspector you see `<button>Save</button>`, not `<button v-click="save()" v-loading="#spin">`.
+Behavior keeps working because values are stored in the runtime. This is controlled by
+`V.config.cleanAttributes`, on by default. Practical consequence: never write CSS or
+`querySelectorAll` relying on selectors like `[v-tab]`.
 
-**Sem `eval`, sem `new Function`.** As expressões passam por um lexer, um parser Pratt e um
-interpretador de árvore escritos à mão. A biblioteca roda sob Content Security Policy restritiva,
-sem `unsafe-eval`.
+**No `eval`, no `new Function`.** Expressions go through a hand-written lexer, Pratt parser, and
+tree interpreter. The library runs under restrictive Content Security Policy, no `unsafe-eval`.
 
-**Zero dependências em tempo de execução.** Nenhum pacote de terceiros é embarcado.
+**Zero runtime dependencies.** No third-party packages are bundled.
 
-**Atualizações granulares.** Não existe Virtual DOM. Quando `count` muda, apenas os efeitos que
-leram `count` rodam de novo, e cada efeito escreve somente no nó que ele mesmo criou.
+**Granular updates.** No Virtual DOM. When `count` changes, only effects that read `count` run
+again, and each effect writes only to the node it created.
 
-## Números do projeto
+## Project numbers
 
-| Item | Valor |
+| Item | Value |
 | --- | --- |
-| Bundle essencial (`voodoo.min.js`) | cerca de 75 KB gzip |
-| Bundle completo (`voodoo.full.min.js`) | cerca de 120 KB gzip |
-| Dependências em tempo de execução | zero |
-| Uso de `eval` ou `new Function` | nenhum |
-| Testes automatizados | mais de 190, todos passando |
-| Componentes prontos | 29 |
+| Essential bundle (`voodoo.min.js`) | about 75 KB gzip |
+| Full bundle (`voodoo.full.min.js`) | about 120 KB gzip |
+| Runtime dependencies | zero |
+| Use of `eval` or `new Function` | none |
+| Automated tests | more than 190, all passing |
+| Ready-made components | 29 |
 
-Os tamanhos e a contagem de testes mudam a cada versão. Rode `npm run size` e `npm test` no
-repositório para ver os números exatos do que você está usando.
+Sizes and test counts change with each version. Run `npm run size` and `npm test` in the repository
+to see the exact numbers of what you're using.
 
 ## Roadmap
 
-Estes itens ainda não existem no código. Eles estão listados aqui para que ninguém os procure na
-documentação achando que já foram entregues.
+These items do not yet exist in the code. They are listed here so no one looks for them in the
+documentation thinking they have already been delivered.
 
-- **Renderização no servidor e hidratação.** Hoje a biblioteca só monta no navegador.
-- **Virtualização de listas.** O `v-for` renderiza todos os itens da fonte.
-- **Extensão de navegador para as devtools.** O inspetor `xray` roda dentro da própria página e
-  não conversa com uma extensão dedicada.
-- **Transições entre rotas com controle de entrada e saída.** O roteador usa a View Transitions
-  API quando o navegador oferece, mas não expõe classes de transição próprias por rota.
-- **Rotas aninhadas.** O `v-router-view` renderiza uma única saída, sem hierarquia de views.
-- **Máscara de data com validação de calendário embutida.** `v-mask="date"` formata, e a validação
-  fica por conta da regra `v-date`.
-- **Componentes de data e de upload prontos.** A biblioteca traz `VInput` e `VSelect`, mas ainda
-  não um seletor de data nem um gerenciador visual de arquivos.
-- **Tipos gerados para os templates.** As expressões de atributo não têm checagem estática.
+- **Server-side rendering and hydration.** Today the library only mounts in the browser.
+- **List virtualization.** `v-for` renders all source items.
+- **Browser extension for devtools.** The `xray` inspector runs inside the page itself and doesn't
+  talk to a dedicated extension.
+- **Route transitions with enter and exit control.** The router uses the View Transitions API when
+  the browser offers it, but does not expose custom transition classes per route.
+- **Nested routes.** `v-router-view` renders a single output, no view hierarchy.
+- **Date mask with built-in calendar validation.** `v-mask="date"` formats, and validation is up
+  to the `v-date` rule.
+- **Ready-made date and upload components.** The library brings `VInput` and `VSelect`, but not yet
+  a date picker or visual file manager.
+- **Generated types for templates.** Attribute expressions have no static type checking.
 
-Quatro detalhes conhecidos que dependem de correção, e que valem lembrar enquanto isso:
+Four known details that need fixing, worth remembering meanwhile:
 
-- `v-confirm` no mesmo elemento de `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` ou
-  `v-submit` pergunta duas vezes. Use `v-confirm` com `v-click`, ou peça a confirmação com
-  `$confirm(...)` dentro da própria expressão.
-- `v-t-params` só é lido na primeira renderização. Depois de trocar de idioma, prefira a
-  interpolação `{ $t('itens', { n: total }) }`.
-- `v-chart-type` e os demais atributos `v-chart-*` valem para gráficos estáticos. Quando os dados
-  são reativos, declare tudo no objeto: `v-chart="{ type: 'bar', data: vendas }"`.
-- Os textos extras do `v-confirm` (`v-confirm-title` e companhia) só funcionam com
+- `v-confirm` on the same element as `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete`, or
+  `v-submit` asks twice. Use `v-confirm` with `v-click`, or ask for confirmation with
+  `$confirm(...)` inside the expression itself.
+- `v-t-params` is only read on first render. After switching language, prefer reactive
+  interpolation `{ $t('items', { n: total }) }`.
+- `v-chart-type` and other `v-chart-*` attributes work for static charts. When data is reactive,
+  declare everything in the object: `v-chart="{ type: 'bar', data: sales }"`.
+- Extra text for `v-confirm` (`v-confirm-title` and such) only works with
   `V.config.cleanAttributes = false`.
 
 ---
 
-Anterior: [Índice](README.md) · Próximo: [Instalação](instalacao.md)
+Previous: [Index](README.md) · Next: [Installation](instalacao.md)

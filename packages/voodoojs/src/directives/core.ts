@@ -1,16 +1,16 @@
 /**
  * @module directives/core
  *
- * Directives fundamentais: texto, HTML, condicionais, listas, formulario,
- * atributos, classes, estilos, eventos, refs e teleporte.
+ * Core directives: text, HTML, conditionals, lists, form, attributes,
+ * classes, styles, events, refs and teleport.
  */
 
 import { handleError, nextTick, queuePostFlush } from '../reactivity';
 import { evaluate, stringify } from '../parser/interpreter';
-// `AstNode` evita conflito com o `Node` do DOM, usado em todo este arquivo.
+// `AstNode` avoids conflict with DOM `Node`, used throughout this file.
 import { parse, type Node as AstNode } from '../parser/parser';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
-import { avisar, avisarChaveDuplicada, descreverElemento } from '../runtime/avisos';
+import { warn, warnDuplicateKey, describeElement } from '../runtime/avisos';
 import { Scope } from '../runtime/scope';
 import {
   addCleanup,
@@ -26,10 +26,10 @@ import { enter, leave, type TransitionOptions } from '../dom/transition';
 import { debounce, parseDuration, throttle } from '../utils';
 
 // ---------------------------------------------------------------------------
-// Auxiliares
+// Helpers
 // ---------------------------------------------------------------------------
 
-/** Escreve um valor em uma expressao atribuivel, como `form.email`. */
+/** Writes a value to an assignable expression, like `form.email`. */
 function setValue(expression: string, scope: Scope, value: unknown): void {
   try {
     const target = parse(expression);
@@ -41,11 +41,11 @@ function setValue(expression: string, scope: Scope, value: unknown): void {
     } as AstNode;
     evaluate(assignment, scope);
   } catch (err) {
-    handleError(err, `atribuicao em "${expression}"`);
+    handleError(err, `assignment in "${expression}"`);
   }
 }
 
-/** Le a configuracao de transicao declarada no elemento. */
+/** Reads the transition configuration declared on the element. */
 export function transitionOptions(el: Element): TransitionOptions | null {
   const p = config.prefix;
   const has = el.hasAttribute(`${p}transition`);
@@ -76,8 +76,8 @@ export function transitionOptions(el: Element): TransitionOptions | null {
 // ---------------------------------------------------------------------------
 
 defineDirective('text', ({ el, effect, evaluate: ev }) => {
-  // O conteudo escrito aqui e resultado, nao modelo. Marcar os nos de texto
-  // impede que a caminhada trate um valor como "{ a: 1 }" como interpolacao.
+  // The content written here is result, not template. Mark text nodes
+  // to prevent the walk from treating a value like "{ a: 1 }" as interpolation.
   effect(() => {
     el.textContent = stringify(ev());
     const primeiro = el.firstChild;
@@ -94,10 +94,10 @@ defineDirective('html', (ctx) => {
   markSkipChildren(el);
   effect(() => {
     const value = ev();
-    // Desmonta o conteudo anterior antes de substituir, evitando vazamento.
+    // Unmount previous content before replacing, avoiding leaks.
     for (const child of Array.from(el.children)) destroy(child);
     el.innerHTML = value == null ? '' : String(value);
-    // O HTML inserido tambem ganha directives.
+    // Inserted HTML also gains directives.
     for (const child of Array.from(el.children)) walk(child, scope);
   });
 });
@@ -148,7 +148,7 @@ defineDirective(
     const p = config.prefix;
     const branches: Branch[] = [{ expression, template: el }];
 
-    // Coleta a cadeia de irmaos `v-else-if` e `v-else`.
+    // Collects the chain of `v-else-if` and `v-else` siblings.
     let sibling = el.nextElementSibling;
     while (sibling) {
       if (sibling.hasAttribute(`${p}else-if`)) {
@@ -169,15 +169,15 @@ defineDirective(
     const anchor = document.createComment(config.devtools ? ` v-if: ${expression} ` : '');
     el.parentNode?.insertBefore(anchor, el);
 
-    // Retira os modelos do documento e limpa os atributos de controle.
+    // Removes templates from the document and cleans up control attributes.
     for (const branch of branches) {
       removeQuietly(branch.template);
       branch.template.removeAttribute(`${p}if`);
       branch.template.removeAttribute(`${p}else-if`);
       branch.template.removeAttribute(`${p}else`);
-      // O modelo sai de cena e nunca deve ser percorrido. A caminhada do
-      // elemento pai ja tinha este no na lista, e sem a marca ela entraria
-      // aqui e inicializaria as directives de dentro do proprio modelo.
+      // The template leaves the scene and should never be traversed. The walk of the
+      // parent element already had this node in the list, and without the mark it would
+      // enter here and initialize directives within the template itself.
       markInitialized(branch.template);
     }
 
@@ -229,8 +229,8 @@ defineDirective(
 );
 
 /**
- * Clona um modelo, insere antes da ancora e inicializa. Suporta `<template>`
- * com varios filhos.
+ * Clones a template, inserts before the anchor and initializes. Supports
+ * `<template>` with multiple children.
  */
 function renderTemplate(source: Element, anchor: Node, scope: Scope): Node[] {
   const parent = anchor.parentNode;
@@ -260,8 +260,8 @@ function renderTemplate(source: Element, anchor: Node, scope: Scope): Node[] {
   return nodes;
 }
 
-// `v-else-if` e `v-else` sao consumidos por `v-if`. Registrados para nao
-// aparecerem como directives desconhecidas.
+// `v-else-if` and `v-else` are consumed by `v-if`. Registered to not
+// appear as unknown directives.
 defineDirective('else-if', () => undefined, { priority: PRIORITY.IF, terminal: true });
 defineDirective('else', () => undefined, { priority: PRIORITY.IF, terminal: true });
 
@@ -284,7 +284,7 @@ defineDirective(
     const match = FOR_PATTERN.exec(expression);
     if (!match) {
       handleError(
-        new Error(`Sintaxe invalida em v-for="${expression}". Use "item in itens".`),
+        new Error(`Invalid syntax in v-for="${expression}". Use "item in items".`),
         'v-for'
       );
       return;
@@ -302,8 +302,8 @@ defineDirective(
 
     const template = el.cloneNode(true) as Element;
     template.removeAttribute(`${p}for`);
-    // Remocao silenciosa: o elemento original vira modelo, nao esta saindo de
-    // cena, entao o observador nao deve desmontar o efeito da lista.
+    // Silent removal: the original element becomes a template, is not leaving the
+    // scene, so the observer should not unmount the list's effect.
     removeQuietly(el);
 
     let blocks: ForBlock[] = [];
@@ -335,13 +335,13 @@ defineDirective(
           ? evaluateIn(keyExpression, scope.child(vars), ':key')
           : `__index_${index}`;
 
-        // Chave repetida faz a lista reaproveitar o bloco errado ao reordenar.
-        if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
+        // Repeated key causes the list to reuse the wrong block when reordering.
+        if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
 
         const existing = previous.get(key);
         if (existing && !used.has(key)) {
           used.add(key);
-          // Reaproveita o bloco: apenas atualiza as variaveis do escopo.
+          // Reuses the block: only updates the scope variables.
           for (const [name, value] of Object.entries(vars)) existing.data[name] = value;
           next.push(existing);
           return;
@@ -353,10 +353,10 @@ defineDirective(
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
 
-      // Remove os blocos que sairam da lista.
-      // O conjunto guarda quem foi reaproveitado por identidade. Antes isso era
-      // `next.includes(block)`, uma varredura dentro de um laco que ja percorre
-      // a lista: em dez mil linhas davam cem milhoes de comparacoes.
+      // Removes blocks that left the list.
+      // The set keeps track of who was reused by identity. Previously this was
+      // `next.includes(block)`, a scan inside a loop that already iterates the list:
+      // on ten thousand lines it gave a hundred million comparisons.
       const reaproveitados = new Set<ForBlock>(next);
       for (const block of blocks) {
         if (used.has(block.key) && reaproveitados.has(block)) continue;
@@ -366,7 +366,7 @@ defineDirective(
         }
       }
 
-      // Reordena o DOM percorrendo de tras para frente com um cursor.
+      // Reorders the DOM by traversing backwards with a cursor.
       let cursor: Node = anchor;
       for (let i = next.length - 1; i >= 0; i--) {
         const block = next[i];
@@ -383,7 +383,7 @@ defineDirective(
   { priority: PRIORITY.FOR, terminal: true }
 );
 
-/** Converte array, objeto, numero ou string na lista de escopos de cada item. */
+/** Converts array, object, number or string into a list of item scopes. */
 function normalizeSource(
   source: unknown,
   itemAlias: string,
@@ -457,9 +457,9 @@ const BOOLEAN_ATTRIBUTES = new Set([
 ]);
 
 /**
- * Atributos que o navegador trata como endereco a seguir. Um valor vindo do
- * estado pode ter nascido de dado externo, entao o esquema precisa ser checado
- * antes de virar `href` ou `src`.
+ * Attributes that the browser treats as addresses to follow. A value from
+ * state may have originated from external data, so the scheme needs to be
+ * checked before it becomes `href` or `src`.
  */
 const ATRIBUTOS_DE_URL = new Set([
   'href',
@@ -471,17 +471,17 @@ const ATRIBUTOS_DE_URL = new Set([
   'poster',
 ]);
 
-/** Espacos e caracteres de controle que o navegador descarta ao ler o esquema. */
+/** Whitespace and control characters that the browser discards when reading the scheme. */
 const RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
 
 /**
- * `true` quando o endereco usa um esquema que executa codigo. `data:text/html`
- * entra na lista porque abre um documento com origem propria e script ativo.
+ * `true` when the address uses a scheme that executes code. `data:text/html`
+ * is in the list because it opens a document with its own origin and active script.
  */
 export function urlPerigosa(valor: string): boolean {
-  // Um endereco pode trazer quebra de linha no meio de `javascript:` e o
-  // navegador ainda assim o executa, entao a checagem limpa o ruido antes de
-  // comparar, do mesmo jeito que ele faz.
+  // An address can bring a line break in the middle of `javascript:` and the
+  // browser still executes it, so the check cleans the noise before comparing,
+  // the same way it does.
   const limpo = valor.replace(RUIDO_DE_ESQUEMA, '').toLowerCase();
   return (
     limpo.startsWith('javascript:') ||
@@ -492,10 +492,10 @@ export function urlPerigosa(valor: string): boolean {
 }
 
 /**
- * Aplica um valor a um atributo, tratando casos especiais.
+ * Applies a value to an attribute, handling special cases.
  *
- * `perigoLiberado` vem do modificador `.dangerous` e libera os bindings que
- * escrevem markup executavel, hoje apenas `srcdoc`.
+ * `perigoLiberado` comes from the `.dangerous` modifier and enables bindings
+ * that write executable markup, currently only `srcdoc`.
  */
 export function applyBinding(
   el: HTMLElement,
@@ -507,40 +507,40 @@ export function applyBinding(
   if (name === 'class') return applyClass(el, value);
   if (name === 'style') return applyStyle(el, value);
 
-  // `srcdoc` escreve um documento inteiro dentro do iframe, com script ativo.
-  // E o `v-html` do iframe, mas escrito como se fosse um bind qualquer, entao o
-  // perigo nao aparece na leitura do HTML. Aqui ele precisa ser dito em voz
-  // alta: `:srcdoc.dangerous="..."` no ponto de uso, ou
-  // `V.config.sanitizeUrls = false` para a aplicacao toda.
+  // `srcdoc` writes an entire document inside the iframe, with active script.
+  // It's like the iframe's `v-html`, but written as if it were just a binding,
+  // so the danger doesn't show in the HTML reading. Here it needs to be stated out loud:
+  // `:srcdoc.dangerous="..."` at the point of use, or `V.config.sanitizeUrls = false`
+  // for the entire application.
   if (config.sanitizeUrls && !perigoLiberado && name === 'srcdoc') {
-    avisar(
-      `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento ` +
-        'com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. ' +
-        'Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar ' +
-        'esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.'
+    warn(
+      `:srcdoc refused in ${describeElement(el)}: the value becomes a document ` +
+        'with active script inside the iframe, the same way v-html becomes markup. ' +
+        'If the content is trusted, write :srcdoc.dangerous="..."; to turn off ' +
+        'this protection on the entire application, set V.config.sanitizeUrls = false.'
     );
     el.removeAttribute(name);
     return;
   }
 
   if (config.sanitizeUrls && !asProp) {
-    // Endereco com esquema executavel: o atributo nao chega ao DOM.
+    // Address with executable scheme: attribute doesn't reach the DOM.
     if (ATRIBUTOS_DE_URL.has(name) && typeof value === 'string' && urlPerigosa(value)) {
-      avisar(
-        `valor recusado em :${name} de ${descreverElemento(el)}: ` +
-          `"${value.slice(0, 60)}" usa um esquema que executa codigo. ` +
-          'Use um endereco http(s) ou relativo. Para desligar esta protecao, ' +
-          'defina V.config.sanitizeUrls = false.'
+      warn(
+        `value refused in :${name} of ${describeElement(el)}: ` +
+          `"${value.slice(0, 60)}" uses a scheme that executes code. ` +
+          'Use an http(s) or relative address. To turn off this protection, ' +
+          'set V.config.sanitizeUrls = false.'
       );
       el.removeAttribute(name);
       return;
     }
-    // `:onerror="..."` viraria um manipulador embutido, que roda como script.
-    // Eventos se declaram com `@evento`, que nunca passa por este caminho.
+    // `:onerror="..."` would become an inline handler, which runs as script.
+    // Events are declared with `@event`, which never passes through this path.
     if (name.length > 2 && /^on[a-z]/.test(name)) {
-      avisar(
-        `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por ` +
-          `atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+      warn(
+        `attribute "${name}" refused in ${describeElement(el)}: linking event by ` +
+          `attribute creates an inline handler. Use @${name.slice(2)}="..." instead.`
       );
       el.removeAttribute(name);
       return;
@@ -555,7 +555,7 @@ export function applyBinding(
   if (BOOLEAN_ATTRIBUTES.has(name)) {
     if (value === false || value == null) el.removeAttribute(name);
     else el.setAttribute(name, '');
-    // Mantem a propriedade em sincronia, importante para inputs.
+    // Keeps the property in sync, important for inputs.
     if (name in el) (el as any)[name] = !!value;
     return;
   }
@@ -569,7 +569,7 @@ export function applyBinding(
   else el.setAttribute(name, value === true ? '' : String(value));
 }
 
-/** Classes originais do elemento, preservadas entre atualizacoes. */
+/** Original classes of the element, preserved between updates. */
 const baseClasses = new WeakMap<Element, string[]>();
 
 export function applyClass(el: HTMLElement, value: unknown): void {
@@ -627,7 +627,7 @@ export function applyStyle(el: HTMLElement, value: unknown): void {
 defineDirective(
   'bind',
   ({ el, arg, modifiers, effect, evaluate: ev, expression }) => {
-    // `v-bind="{ a: 1, b: 2 }"` sem argumento aplica varios atributos.
+    // `v-bind="{ a: 1, b: 2 }"` without argument applies multiple attributes.
     if (!arg) {
       effect(() => {
         const values = ev<Record<string, unknown>>();
@@ -637,10 +637,10 @@ defineDirective(
       });
       return;
     }
-    if (arg === 'key') return; // consumido por v-for
+    if (arg === 'key') return; // consumed by v-for
     const asProp = !!modifiers.prop;
-    // `.dangerous` e a forma explicita de pedir um binding que escreve markup
-    // executavel. Sem ele, `:srcdoc` e recusado.
+    // `.dangerous` is the explicit way to request a binding that writes executable markup.
+    // Without it, `:srcdoc` is refused.
     const perigoLiberado = !!modifiers.dangerous;
     effect(() => {
       applyBinding(el, arg, ev(), asProp, perigoLiberado);
@@ -659,7 +659,7 @@ defineDirective('style', ({ el, effect, evaluate: ev }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-on, @evento e atalhos
+// v-on, @event and shortcuts
 // ---------------------------------------------------------------------------
 
 const KEY_ALIASES: Record<string, string[]> = {
@@ -679,15 +679,15 @@ const KEY_ALIASES: Record<string, string[]> = {
 const SYSTEM_MODIFIERS = ['ctrl', 'shift', 'alt', 'meta'] as const;
 
 /**
- * Executa a expressao de um evento. Se a expressao for apenas o nome de uma
- * funcao, ela e chamada com o evento (ou com o `detail`, quando vem de `emit`).
+ * Executes the expression of an event. If the expression is just the name of a
+ * function, it is called with the event (or with `detail`, when coming from `emit`).
  */
 export function runHandler(expression: string, scope: Scope, event: Event, el: HTMLElement): void {
   const payload = (event as CustomEvent).detail;
   const isEmit = (event as any).__voodoo === true;
-  // Em evento vindo de `emit`, `$event` entrega direto a carga enviada, que e o
-  // que a pessoa espera ao escrever `@salvo="ultimo = $event"`. O evento cru
-  // continua disponivel em `$rawEvent`.
+  // In an event coming from `emit`, `$event` delivers the payload directly, which
+  // is what the person expects when writing `@saved="last = $event"`. The raw event
+  // remains available in `$rawEvent`.
   const local = scope.child({
     $event: isEmit ? payload : event,
     $rawEvent: event,
@@ -698,18 +698,18 @@ export function runHandler(expression: string, scope: Scope, event: Event, el: H
   try {
     const node = parse(expression);
     const value = evaluate(node, local);
-    // `v-click="save"` chama a funcao encontrada.
+    // `v-click="save"` calls the found function.
     if (typeof value === 'function' && (node.t === 'id' || node.t === 'member')) {
       value.call(scope.data, isEmit ? payload : event);
     }
   } catch (err) {
-    handleError(err, `evento ${event.type} ("${expression}")`);
+    handleError(err, `event ${event.type} ("${expression}")`);
   }
 }
 
 /**
- * Apelidos amigaveis. `@hover` e mais legivel que `@mouseenter`, e `@tap`
- * funciona igual no toque e no mouse.
+ * Friendly aliases. `@hover` is more legible than `@mouseenter`, and `@tap`
+ * works the same on touch and mouse.
  */
 const EVENT_ALIASES: Record<string, string> = {
   hover: 'mouseenter',
@@ -731,11 +731,11 @@ export type CustomEventInstaller = (
 ) => void;
 
 /**
- * Eventos que a Voodoo cria em cima dos nativos: segurar, clique fora, swipe e
- * entrada na tela. Plugins podem registrar os seus com `V.event()`.
+ * Events that Voodoo creates on top of natives: hold, click outside, swipe and
+ * screen entry. Plugins can register theirs with `V.event()`.
  */
 export const customEvents: Record<string, CustomEventInstaller> = {
-  /** Segurar pressionado. Duracao pela modificador, como `@hold.1s`. */
+  /** Hold pressed. Duration via modifier, like `@hold.1s`. */
   hold(el, run, modifiers, cleanup) {
     const holdFor = parseDuration(
       (typeof modifiers.duration === 'string' && modifiers.duration) ||
@@ -763,7 +763,7 @@ export const customEvents: Record<string, CustomEventInstaller> = {
       timer = null;
       el.classList.remove('v-holding');
     };
-    // Evita que o clique normal dispare logo depois de um hold concluido.
+    // Prevents normal click from firing right after a completed hold.
     const swallowClick = (event: Event): void => {
       if (fired) {
         event.preventDefault();
@@ -788,7 +788,7 @@ export const customEvents: Record<string, CustomEventInstaller> = {
     });
   },
 
-  /** Clique em qualquer lugar fora do elemento. */
+  /** Click anywhere outside the element. */
   outside(el, run, _modifiers, cleanup) {
     const handler = (event: Event): void => {
       if (!el.isConnected) return;
@@ -799,7 +799,7 @@ export const customEvents: Record<string, CustomEventInstaller> = {
     cleanup(() => document.removeEventListener('click', handler, true));
   },
 
-  /** Elemento entrou na area visivel. */
+  /** Element entered visible area. */
   visible(el, run, modifiers, cleanup) {
     if (typeof IntersectionObserver === 'undefined') {
       run(new CustomEvent('visible'));
@@ -810,7 +810,7 @@ export const customEvents: Record<string, CustomEventInstaller> = {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           run(new CustomEvent('visible', { detail: entry }));
-          // Sem o modificador `.repeat`, o evento acontece uma vez so.
+          // Without the `.repeat` modifier, the event happens just once.
           if (modifiers.repeat !== true) observer.unobserve(el);
         }
       },
@@ -821,7 +821,7 @@ export const customEvents: Record<string, CustomEventInstaller> = {
   },
 };
 
-/** Instala os quatro sentidos de swipe usando eventos de ponteiro. */
+/** Installs the four swipe directions using pointer events. */
 for (const direction of ['left', 'right', 'up', 'down'] as const) {
   customEvents[`swipe${direction}`] = (el, run, _modifiers, cleanup) => {
     let startX = 0;
@@ -869,7 +869,7 @@ function bindEvent(
 ): void {
   const eventName = EVENT_ALIASES[rawEventName] ?? rawEventName;
 
-  // Eventos sinteticos tem instalacao propria.
+  // Synthetic events have their own installation.
   const custom = customEvents[rawEventName];
   if (custom) {
     custom(
@@ -900,7 +900,7 @@ function bindEvent(
       if (!el.isConnected) return;
     }
 
-    // Filtro por tecla.
+    // Key filter.
     if (event instanceof KeyboardEvent) {
       for (const mod of SYSTEM_MODIFIERS) {
         if (modifiers[mod] && !(event as any)[`${mod}Key`]) return;
@@ -948,7 +948,7 @@ defineDirective('on', ({ el, arg, expression, scope, modifiers, cleanup }) => {
   bindEvent(el, arg, expression, scope, modifiers, cleanup);
 });
 
-/** Atalhos como `v-click`, que equivalem a `v-on:click`. */
+/** Shortcuts like `v-click`, which are equivalent to `v-on:click`. */
 const EVENT_SHORTCUTS = [
   'click',
   'dblclick',
@@ -1006,7 +1006,7 @@ defineDirective(
 
     const eventName = lazy || isSelect || isCheckbox || isRadio || isFile ? 'change' : 'input';
 
-    // DOM -> estado
+    // DOM -> state
     let onInput = (): void => {
       let value: unknown;
 
@@ -1048,7 +1048,7 @@ defineDirective(
     input.addEventListener(eventName, onInput);
     cleanup(() => input.removeEventListener(eventName, onInput));
 
-    // estado -> DOM
+    // state -> DOM
     effect(() => {
       const value = evaluateIn(expression, scope, 'v-model');
 
@@ -1067,12 +1067,12 @@ defineDirective(
         }
         return;
       }
-      if (isFile) return; // inputs de arquivo sao somente leitura
+      if (isFile) return; // file inputs are read-only
 
       const next = value == null ? '' : String(value);
       if (input.value !== next) input.value = next;
 
-      // `<select>` pode receber as opcoes depois. Reaplica no proximo ciclo.
+      // `<select>` may receive options later. Reapplies in the next cycle.
       if (isSelect && input.value !== next) {
         void nextTick(() => {
           if (input.value !== next) input.value = next;
@@ -1120,7 +1120,7 @@ defineDirective('effect', ({ effect, evaluate: ev }) => {
 });
 
 defineDirective('watch', ({ el, expression, scope, effect }) => {
-  // Observa o valor de `v-model` no mesmo elemento e chama a expressao.
+  // Observes the value of `v-model` on the same element and calls the expression.
   const modelExpression = el.getAttribute(`${config.prefix}model`);
   let previous: unknown;
   let first = true;
@@ -1152,7 +1152,7 @@ defineDirective('cloak', ({ el }) => {
 });
 
 defineDirective('once', ({ el, effect, evaluate: ev }) => {
-  // Avalia uma unica vez e nao cria efeito reativo.
+  // Evaluates once only and does not create reactive effect.
   void effect;
   const value = ev();
   if (value !== undefined) el.textContent = stringify(value);
@@ -1169,7 +1169,7 @@ defineDirective(
     const target =
       selector === 'body' ? document.body : (document.querySelector(selector) as HTMLElement | null);
     if (!target) {
-      handleError(new Error(`Destino de v-teleport nao encontrado: ${selector}`), 'v-teleport');
+      handleError(new Error(`v-teleport destination not found: ${selector}`), 'v-teleport');
       return;
     }
     const placeholder = document.createComment(' v-teleport ');
@@ -1185,7 +1185,7 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// v-transition e classes auxiliares: registradas para nao gerarem aviso
+// v-transition and auxiliary classes: registered to not generate warnings
 // ---------------------------------------------------------------------------
 
 for (const name of [
@@ -1206,11 +1206,11 @@ for (const name of [
 }
 
 // ---------------------------------------------------------------------------
-// v-data e v-component
+// v-data and v-component
 // ---------------------------------------------------------------------------
 
-// O walker trata estes dois diretamente, porque eles criam o escopo usado pelo
-// restante do elemento. O registro existe para que a ordenacao por prioridade,
-// a limpeza dos atributos e o inspetor os reconhecam como directives de verdade.
+// The walker handles these two directly, because they create the scope used by
+// the rest of the element. The registration exists so that priority ordering,
+// attribute cleanup and the inspector recognize them as real directives.
 defineDirective('data', () => undefined, { priority: PRIORITY.DATA });
 defineDirective('component', () => undefined, { priority: PRIORITY.COMPONENT });

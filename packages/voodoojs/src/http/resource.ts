@@ -1,12 +1,12 @@
 /**
  * @module http/resource
  *
- * Recurso reativo: uma requisicao com estado de carregamento, erro e dados
- * prontos para serem lidos direto no HTML.
+ * Reactive resource: a request with loading state, error, and data ready to be
+ * read directly in HTML.
  *
- * E o mesmo nucleo usado por `v-resource`. A directive apenas le a configuracao
- * dos atributos e chama esta funcao, entao o comportamento dos dois e sempre o
- * mesmo, sem logica duplicada.
+ * It's the same core used by `v-resource`. The directive just reads the
+ * configuration from attributes and calls this function, so the behavior of
+ * both is always the same, with no duplicated logic.
  *
  * ```js
  * const produtos = V.resource('/api/produtos')
@@ -19,49 +19,49 @@ import { reactive } from '../reactivity';
 import { http, HttpError, type HttpMethod } from './index';
 
 export interface ResourceOptions {
-  /** Verbo HTTP. Padrao `GET`. */
+  /** HTTP verb. Default `GET`. */
   method?: HttpMethod;
-  /** Parametros de query. Uma funcao e reavaliada a cada requisicao. */
+  /** Query parameters. A function is re-evaluated on each request. */
   params?:
     | Record<string, string | number | boolean | null | undefined>
     | (() => Record<string, string | number | boolean | null | undefined> | undefined);
-  /** Tempo de cache da resposta, em ms. */
+  /** Response cache duration in ms. */
   cache?: number;
-  /** Tentativas extras em caso de falha. */
+  /** Extra attempts on failure. */
   retry?: number;
-  /** Milissegundos ate abortar. */
+  /** Milliseconds before aborting. */
   timeout?: number;
   headers?: Record<string, string>;
-  /** Caminho dentro do JSON da resposta, como `dados.itens`. */
+  /** Path within the JSON response, like `data.items`. */
   jsonPath?: string | null;
-  /** Nao dispara a primeira requisicao sozinho. */
+  /** Don't fire the first request automatically. */
   manual?: boolean;
-  /** Repete a requisicao a cada N ms enquanto a aba estiver visivel. */
+  /** Repeat request every N ms while the tab is visible. */
   poll?: number;
-  /** Chamado depois de cada resposta bem sucedida. */
+  /** Called after each successful response. */
   onSuccess?(data: unknown): void;
-  /** Chamado quando a requisicao falha, com a mensagem ja extraida. */
+  /** Called when request fails, with message already extracted. */
   onError?(err: unknown, message: string): void;
 }
 
 export interface Resource<T = unknown> {
-  /** Corpo da resposta, ja recortado por `jsonPath` quando houver. */
+  /** Response body, already sliced by `jsonPath` if present. */
   data: T | null;
-  /** `true` enquanto a requisicao esta em andamento. */
+  /** `true` while request is in progress. */
   loading: boolean;
-  /** Erro da ultima tentativa, ou `null`. */
+  /** Error from last attempt, or `null`. */
   error: (Error & { message: string }) | null;
-  /** `true` depois da primeira resposta bem sucedida. */
+  /** `true` after first successful response. */
   loaded: boolean;
-  /** Refaz a requisicao. */
+  /** Redo the request. */
   reload(): Promise<void>;
-  /** Troca os dados localmente, util para atualizacao otimista. */
+  /** Change data locally, useful for optimistic updates. */
   set(value: T): void;
-  /** Cancela a requisicao em andamento e para a repeticao automatica. */
+  /** Cancel in-progress request and stop automatic repetition. */
   stop(): void;
 }
 
-/** Caminha por um JSON usando um caminho com pontos. */
+/** Walk through JSON using a dot-separated path. */
 export function pick(value: unknown, path: string | null | undefined): unknown {
   if (!path) return value;
   let current: any = value;
@@ -72,7 +72,7 @@ export function pick(value: unknown, path: string | null | undefined): unknown {
   return current;
 }
 
-/** Procura a mensagem que a API escreveu no corpo do erro. */
+/** Search for the message the API wrote in the error body. */
 export function extractMessage(error: HttpError): string | null {
   const data = error.response?.data as Record<string, unknown> | undefined;
   if (!data || typeof data !== 'object') return null;
@@ -84,11 +84,11 @@ export function extractMessage(error: HttpError): string | null {
 }
 
 /**
- * Cria um recurso reativo.
+ * Creates a reactive resource.
  *
- * @param url endereco fixo, ou funcao que devolve o endereco a cada chamada.
- *   Devolver vazio adia a requisicao, util enquanto um parametro nao existe.
- * @param options configuracao da requisicao e do ciclo de vida
+ * @param url fixed address, or function that returns the address on each call.
+ *   Returning empty postpones the request, useful while a parameter doesn't exist.
+ * @param options request and lifecycle configuration
  */
 export function createResource<T = unknown>(
   url: string | (() => string),
@@ -99,8 +99,8 @@ export function createResource<T = unknown>(
     | Record<string, string | number | boolean | null | undefined>
     | undefined => (typeof options.params === 'function' ? options.params() : options.params);
 
-  // Cada `reload` cancela o anterior: sem isso, uma resposta antiga que
-  // demorasse mais sobrescreveria a nova ao chegar depois.
+  // Each `reload` cancels the previous one: without this, an old response that
+  // took longer would overwrite the new one when it arrives later.
   let controller: AbortController | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
 
@@ -130,7 +130,7 @@ export function createResource<T = unknown>(
           timeout: options.timeout ?? http.defaults.timeout,
           signal: atual.signal,
         });
-        // Uma resposta de requisicao ja cancelada nao mexe mais no estado.
+        // A response from an already-canceled request won't touch state.
         if (atual.signal.aborted) return;
         resource.data = pick(response.data, options.jsonPath) as never;
         resource.loaded = true;
@@ -154,7 +154,7 @@ export function createResource<T = unknown>(
     stop(): void {
       controller?.abort();
       controller = null;
-      // Parar no meio nao pode deixar a tela presa em "carregando".
+      // Stopping mid-request can't leave the screen stuck on "loading".
       resource.loading = false;
       if (timer !== null) {
         clearInterval(timer);
@@ -165,7 +165,7 @@ export function createResource<T = unknown>(
 
   if (options.poll && options.poll > 0) {
     timer = setInterval(() => {
-      // Aba escondida nao precisa continuar consultando o servidor.
+      // Hidden tab doesn't need to keep polling the server.
       if (typeof document === 'undefined' || document.visibilityState === 'visible') {
         void resource.reload();
       }

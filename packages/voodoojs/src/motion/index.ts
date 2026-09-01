@@ -1,25 +1,25 @@
 /**
  * @module motion
  *
- * Motor de animacao proprio, no espirito do Framer Motion, escrito em vanilla.
+ * Custom animation engine, in the spirit of Framer Motion, written in vanilla JavaScript.
  *
- * O nucleo e um unico laco de `requestAnimationFrame` compartilhado por todas
- * as animacoes ativas. Existem dois modos de progresso:
+ * The core is a single `requestAnimationFrame` loop shared by all active
+ * animations. There are two progress modes:
  *
- * - tween, com duracao fixa e curva de easing;
- * - mola, com integracao numerica real de `stiffness`, `damping` e `mass`.
+ * - tween, with fixed duration and easing curve;
+ * - spring, with real numerical integration of `stiffness`, `damping`, and `mass`.
  *
- * As propriedades `x`, `y`, `z`, `scale`, `rotate` e `skew` nao viram estilos
- * separados: elas alimentam um estado por elemento que e recomposto em um unico
- * `transform`, entao varias animacoes convivem sem sobrescrever umas as outras.
+ * The properties `x`, `y`, `z`, `scale`, `rotate`, and `skew` are not rendered as
+ * separate styles: they feed into per-element state that is recomposed into a single
+ * `transform`, so multiple animations coexist without overwriting each other.
  *
  * ```js
- * V.animate(botao, { scale: [1, 1.1], opacity: [0, 1] }, { spring: true })
+ * V.animate(button, { scale: [1, 1.1], opacity: [0, 1] }, { spring: true })
  * V.spring(0, 100, { stiffness: 210, onUpdate: (v) => console.log(v) })
  * ```
  *
- * Tudo respeita `prefers-reduced-motion: reduce`. Nesse caso o estado final e
- * aplicado na hora, sem quadros intermediarios.
+ * Everything respects `prefers-reduced-motion: reduce`. In that case, the final state
+ * is applied immediately, with no intermediate frames.
  */
 
 import { warn } from '../reactivity';
@@ -27,8 +27,8 @@ import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import { device, parseDuration } from '../utils';
 
 /**
- * Preferencia do usuario por menos movimento. Ambientes de teste e renderizacao
- * no servidor nao tem `matchMedia`, entao ali a resposta e sempre `false`.
+ * User preference for reduced motion. Test and server-side rendering environments
+ * do not have `matchMedia`, so the response is always `false` there.
  */
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
@@ -36,113 +36,113 @@ function prefersReducedMotion(): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
-/** Elemento animavel. SVG entra junto porque tambem tem `style` e caixa. */
+/** Animatable element. SVG is included because it also has `style` and a box model. */
 export type MotionElement = HTMLElement | SVGElement;
 
-/** Alvo aceito por `animate` e `stagger`. */
+/** Target accepted by `animate` and `stagger`. */
 export type MotionTarget = Element | ArrayLike<Element> | string | null | undefined;
 
-/** Valor de uma propriedade animada. */
+/** Value of an animated property. */
 export type MotionValue = number | string;
 
 /**
- * Mapa de propriedades animadas. Um valor unico usa o estado atual como ponto
- * de partida. Um par `[de, para]` define os dois extremos.
+ * Map of animated properties. A single value uses the current state as the
+ * starting point. A pair `[from, to]` defines both extremes.
  */
 export type MotionKeyframes = Record<string, MotionValue | [MotionValue, MotionValue]>;
 
-/** Curva de progresso. Recebe e devolve numeros normalmente entre 0 e 1. */
+/** Progress curve. Takes and returns numbers normally between 0 and 1. */
 export type EasingFunction = (t: number) => number;
 
-/** Controle devolvido por qualquer animacao. */
+/** Control returned by any animation. */
 export interface AnimationControl {
-  /** Interrompe a animacao no ponto atual, sem disparar `onComplete`. */
+  /** Stops the animation at the current point, without firing `onComplete`. */
   stop(): void;
-  /** Resolve quando a animacao termina ou quando e interrompida. */
+  /** Resolves when the animation finishes or is interrupted. */
   finished: Promise<void>;
 }
 
-/** Parametros fisicos da mola. */
+/** Physical parameters of the spring. */
 export interface SpringConfig {
-  /** Rigidez da mola. Quanto maior, mais rapido. Padrao 170. */
+  /** Spring stiffness. Higher = faster. Default 170. */
   stiffness?: number;
-  /** Atrito. Quanto maior, menos oscilacao. Padrao 26. */
+  /** Damping. Higher = less oscillation. Default 26. */
   damping?: number;
-  /** Massa do corpo. Quanto maior, mais lento e pesado. Padrao 1. */
+  /** Mass of the body. Higher = slower and heavier. Default 1. */
   mass?: number;
-  /** Velocidade inicial, em unidades por segundo. */
+  /** Initial velocity, in units per second. */
   velocity?: number;
-  /** Distancia considerada repouso. */
+  /** Distance considered at rest. */
   restDelta?: number;
-  /** Velocidade considerada repouso. */
+  /** Velocity considered at rest. */
   restSpeed?: number;
 }
 
-/** Opcoes de `animate`. */
+/** Options for `animate`. */
 export interface AnimateOptions {
-  /** Duracao em milissegundos. Ignorada quando `spring` esta ativo. Padrao 400. */
+  /** Duration in milliseconds. Ignored when `spring` is active. Default 400. */
   duration?: number;
-  /** Espera antes de comecar, em milissegundos. */
+  /** Wait before starting, in milliseconds. */
   delay?: number;
-  /** Nome de um easing conhecido ou funcao propria. */
+  /** Name of a known easing or custom function. */
   easing?: EasingName | EasingFunction | string;
-  /** Usa fisica de mola no lugar do tween. `true` aceita os padroes. */
+  /** Use spring physics instead of tween. `true` accepts defaults. */
   spring?: boolean | SpringConfig;
-  /** Repeticoes extras. `2` executa tres vezes ao todo. */
+  /** Extra repetitions. `2` plays three times total. */
   repeat?: number;
-  /** Comportamento de cada repeticao. */
+  /** Behavior of each repetition. */
   repeatType?: 'loop' | 'reverse' | 'mirror';
-  /** Ignora `prefers-reduced-motion`. Reserve para animacoes essenciais. */
+  /** Ignores `prefers-reduced-motion`. Reserve for essential animations. */
   force?: boolean;
-  /** Chamado a cada quadro com o progresso, que pode passar de 1 na mola. */
+  /** Called each frame with progress, which can exceed 1 for springs. */
   onUpdate?(progress: number): void;
-  /** Chamado quando a animacao chega ao fim por conta propria. */
+  /** Called when the animation finishes naturally. */
   onComplete?(): void;
 }
 
-/** Opcoes de `stagger`. */
+/** Options for `stagger`. */
 export interface StaggerOptions extends AnimateOptions {
-  /** Atraso somado a cada item da lista, em milissegundos. Padrao 60. */
+  /** Delay added to each list item, in milliseconds. Default 60. */
   delay?: number;
-  /** De onde a onda parte. Padrao `first`. */
+  /** Where the wave starts. Default `first`. */
   from?: 'first' | 'last' | 'center';
-  /** Atraso aplicado antes do primeiro item da onda. */
+  /** Delay applied before the first item in the wave. */
   start?: number;
 }
 
-/** Opcoes de `spring`. */
+/** Options for `spring`. */
 export interface SpringOptions extends SpringConfig {
-  /** Recebe o valor interpolado a cada quadro. */
+  /** Receives the interpolated value each frame. */
   onUpdate?(value: number): void;
-  /** Chamado quando a mola entra em repouso. */
+  /** Called when the spring comes to rest. */
   onComplete?(): void;
 }
 
-/** Opcoes de `inView`. */
+/** Options for `inView`. */
 export interface InViewOptions {
-  /** Desliga o observador depois da primeira entrada. Padrao `true`. */
+  /** Turns off the observer after the first entry. Default `true`. */
   once?: boolean;
-  /** Margem do observador, no formato de `rootMargin`. */
+  /** Observer margin, in the format of `rootMargin`. */
   margin?: string;
-  /** Fracao visivel necessaria, ou `any` e `all`. Padrao 0.25. */
+  /** Visible fraction required, or `any` and `all`. Default 0.25. */
   amount?: number | 'any' | 'all';
-  /** Raiz do observador. Padrao a viewport. */
+  /** Observer root. Default is the viewport. */
   root?: Element | null;
 }
 
 /**
- * Objeto que mistura propriedades animadas e opcoes de animacao, no formato
- * usado pelos presets e pelas directives.
+ * Object that mixes animated properties and animation options, in the format
+ * used by presets and directives.
  */
 export interface MotionVariant extends AnimateOptions {
   [property: string]: unknown;
 }
 
 // ---------------------------------------------------------------------------
-// Laco de quadros compartilhado
+// Shared frame loop
 // ---------------------------------------------------------------------------
 
 type FrameCallback = (now: number) => void;
@@ -152,7 +152,7 @@ let frameHandle = 0;
 
 function runFrame(now: number): void {
   frameHandle = 0;
-  // Copia a lista porque um callback pode registrar ou remover outros.
+  // Copy the list because a callback can register or remove others.
   const pending = Array.from(frameCallbacks);
   for (const callback of pending) {
     if (frameCallbacks.has(callback)) callback(now);
@@ -160,14 +160,14 @@ function runFrame(now: number): void {
   if (frameCallbacks.size > 0) frameHandle = requestAnimationFrame(runFrame);
 }
 
-/** Registra um callback no laco compartilhado. */
+/** Registers a callback in the shared loop. */
 function addFrame(callback: FrameCallback): void {
   if (typeof requestAnimationFrame !== 'function') return;
   frameCallbacks.add(callback);
   if (!frameHandle) frameHandle = requestAnimationFrame(runFrame);
 }
 
-/** Remove um callback do laco compartilhado. */
+/** Removes a callback from the shared loop. */
 function removeFrame(callback: FrameCallback): void {
   frameCallbacks.delete(callback);
   if (frameCallbacks.size === 0 && frameHandle) {
@@ -176,7 +176,7 @@ function removeFrame(callback: FrameCallback): void {
   }
 }
 
-/** Tempo maximo de uma animacao, para molas que nunca chegam ao repouso. */
+/** Maximum animation duration, for springs that never reach rest. */
 const MAX_DURATION = 12_000;
 
 // ---------------------------------------------------------------------------
@@ -188,44 +188,44 @@ function backIn(t: number): number {
 }
 
 /**
- * Curvas de progresso prontas. Todas recebem e devolvem valores entre 0 e 1,
- * com excecao de `easeOutBack` e `anticipate`, que passam do intervalo de
- * proposito para dar a sensacao de peso.
+ * Ready-made progress curves. All take and return values between 0 and 1,
+ * except `easeOutBack` and `anticipate`, which exceed the range on purpose
+ * to give a sense of weight.
  */
 export const easings = {
-  /** Progresso constante. */
+  /** Constant progress. */
   linear(t: number): number {
     return t;
   },
-  /** Comeca devagar e acelera. */
+  /** Starts slow and accelerates. */
   easeIn(t: number): number {
     return t * t * t;
   },
-  /** Comeca rapido e desacelera. A escolha padrao para entradas. */
+  /** Starts fast and decelerates. The default choice for entries. */
   easeOut(t: number): number {
     return 1 - Math.pow(1 - t, 3);
   },
-  /** Acelera no comeco e freia no fim. */
+  /** Accelerates at the start and brakes at the end. */
   easeInOut(t: number): number {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   },
-  /** Passa do alvo e volta, dando um leve exagero no fim. */
+  /** Overshoots the target and comes back, giving a slight exaggeration at the end. */
   easeOutBack(t: number): number {
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   },
-  /** Freada muito longa, boa para entradas grandes. */
+  /** Very long deceleration, good for large entries. */
   easeOutExpo(t: number): number {
     return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
   },
-  /** Recua um pouco antes de avancar, como quem toma impulso. */
+  /** Pulls back slightly before advancing, like taking a running start. */
   anticipate(t: number): number {
     const doubled = t * 2;
     if (doubled < 1) return 0.5 * backIn(doubled);
     return 0.5 * (2 - Math.pow(2, -10 * (doubled - 1)));
   },
-  /** Quica ao chegar no alvo. */
+  /** Bounces when reaching the target. */
   bounce(t: number): number {
     const n1 = 7.5625;
     const d1 = 2.75;
@@ -244,10 +244,10 @@ export const easings = {
   },
 };
 
-/** Nomes aceitos na opcao `easing`. */
+/** Names accepted in the `easing` option. */
 export type EasingName = keyof typeof easings;
 
-/** Converte o valor da opcao `easing` em funcao. */
+/** Converts the `easing` option value into a function. */
 function resolveEasing(easing?: EasingName | EasingFunction | string): EasingFunction {
   if (typeof easing === 'function') return easing;
   if (typeof easing === 'string') {
@@ -258,7 +258,7 @@ function resolveEasing(easing?: EasingName | EasingFunction | string): EasingFun
 }
 
 // ---------------------------------------------------------------------------
-// Estado de transform e filter por elemento
+// Transform and filter state per element
 // ---------------------------------------------------------------------------
 
 const TRANSFORM_DEFAULTS: Record<string, number> = {
@@ -291,7 +291,7 @@ const TRANSFORM_UNITS: Record<string, string> = {
   scaleY: '',
 };
 
-/** Nomes alternativos aceitos nos keyframes. */
+/** Alternative names accepted in keyframes. */
 const TRANSFORM_ALIASES: Record<string, string> = {
   translateX: 'x',
   translateY: 'y',
@@ -315,7 +315,7 @@ const FILTER_UNITS: Record<string, string> = {
   contrast: '',
 };
 
-/** Propriedades CSS numericas que nao levam unidade. */
+/** Numeric CSS properties that do not take a unit. */
 const UNITLESS = new Set([
   'opacity',
   'z-index',
@@ -335,7 +335,7 @@ const UNITLESS = new Set([
 const transformState = new WeakMap<MotionElement, Record<string, number>>();
 const filterState = new WeakMap<MotionElement, Record<string, number>>();
 
-/** Estado de transform do elemento, criado com os valores neutros. */
+/** Element's transform state, created with neutral values. */
 function getTransformState(el: MotionElement): Record<string, number> {
   let state = transformState.get(el);
   if (!state) {
@@ -345,7 +345,7 @@ function getTransformState(el: MotionElement): Record<string, number> {
   return state;
 }
 
-/** Estado de filter do elemento, criado com os valores neutros. */
+/** Element's filter state, created with neutral values. */
 function getFilterState(el: MotionElement): Record<string, number> {
   let state = filterState.get(el);
   if (!state) {
@@ -359,7 +359,7 @@ function round(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
-/** Recompoe o `transform` inteiro a partir do estado do elemento. */
+/** Recomposes the entire `transform` from the element's state. */
 function applyTransform(el: MotionElement): void {
   const state = transformState.get(el);
   if (!state) return;
@@ -382,7 +382,7 @@ function applyTransform(el: MotionElement): void {
   else el.style.removeProperty('transform');
 }
 
-/** Recompoe o `filter` inteiro a partir do estado do elemento. */
+/** Recomposes the entire `filter` from the element's state. */
 function applyFilter(el: MotionElement): void {
   const state = filterState.get(el);
   if (!state) return;
@@ -398,7 +398,7 @@ function applyFilter(el: MotionElement): void {
 }
 
 // ---------------------------------------------------------------------------
-// Numeros, unidades e cores
+// Numbers, units, and colors
 // ---------------------------------------------------------------------------
 
 const NUMBER_UNIT = /^([+-]?(?:\d+\.?\d*|\.\d+))([a-z%]*)$/i;
@@ -436,7 +436,7 @@ function hslToRgb(hue: number, saturation: number, lightness: number): [number, 
   ];
 }
 
-/** Le `#fff`, `#112233aa`, `rgb()`, `rgba()`, `hsl()`, `hsla()` e `transparent`. */
+/** Parses `#fff`, `#112233aa`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, and `transparent`. */
 function parseColor(input: string): Rgba {
   const text = input.trim().toLowerCase();
   if (text === 'transparent') return [0, 0, 0, 0];
@@ -463,8 +463,8 @@ function parseColor(input: string): Rgba {
   };
 
   if (text.startsWith('hsl')) {
-    // Saturacao e luminosidade chegam como `50%` ou como `0.5`. Os dois viram
-    // fracao de 0 a 1 antes da conversao.
+    // Saturation and lightness come as `50%` or as `0.5`. Both become
+    // fractions from 0 to 1 before conversion.
     const ratio = (index: number): number => {
       const raw = tokens[index] ?? '0';
       const amount = parseFloat(raw);
@@ -482,14 +482,14 @@ function formatRgba(color: Rgba): string {
   return `rgba(${Math.round(color[0])}, ${Math.round(color[1])}, ${Math.round(color[2])}, ${round(alpha)})`;
 }
 
-/** Converte `backgroundColor` em `background-color`. */
+/** Converts `backgroundColor` to `background-color`. */
 function kebabCase(name: string): string {
   if (name.startsWith('--')) return name;
   return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 // ---------------------------------------------------------------------------
-// Trilhas de animacao
+// Animation tracks
 // ---------------------------------------------------------------------------
 
 type TrackKind = 'transform' | 'filter' | 'style';
@@ -497,9 +497,9 @@ type TrackMode = 'number' | 'color' | 'discrete';
 
 interface Track {
   kind: TrackKind;
-  /** Nome normalizado, ja sem alias. */
+  /** Normalized name, already without aliases. */
   prop: string;
-  /** Nome da propriedade CSS, usado quando `kind` e `style`. */
+  /** CSS property name, used when `kind` is `style`. */
   cssName: string;
   mode: TrackMode;
   unit: string;
@@ -511,7 +511,7 @@ interface Track {
   toText: string;
 }
 
-/** Le o valor atual de uma propriedade, seja ela transform, filter ou CSS. */
+/** Reads the current value of a property, whether transform, filter, or CSS. */
 function readCurrent(el: MotionElement, kind: TrackKind, prop: string, cssName: string): MotionValue {
   if (kind === 'transform') return getTransformState(el)[prop];
   if (kind === 'filter') return getFilterState(el)[prop];
@@ -520,7 +520,7 @@ function readCurrent(el: MotionElement, kind: TrackKind, prop: string, cssName: 
   return computed ? computed.trim() : '';
 }
 
-/** Monta a trilha de uma propriedade, resolvendo tipo, unidade e extremos. */
+/** Builds a property's track, resolving type, unit, and extremes. */
 function buildTrack(
   el: MotionElement,
   name: string,
@@ -589,7 +589,7 @@ function readNumeric(value: MotionValue, fallbackUnit: string): { value: number;
   return { value: parseFloat(match[1]), unit: match[2] || fallbackUnit };
 }
 
-/** Escreve o estado das trilhas no elemento para um progresso qualquer. */
+/** Writes the state of tracks to the element for any given progress. */
 function applyTracks(el: MotionElement, tracks: Track[], progress: number): void {
   let touchedTransform = false;
   let touchedFilter = false;
@@ -638,8 +638,8 @@ function buildTracks(el: MotionElement, keyframes: MotionKeyframes): Track[] {
 }
 
 /**
- * Aplica o estado inicial de um conjunto de keyframes sem animar. Usado pelas
- * directives que precisam esconder o elemento antes da hora de entrar.
+ * Applies the initial state of a set of keyframes without animating. Used by
+ * directives that need to hide the element before it enters.
  */
 export function applyInitial(target: MotionTarget, keyframes: MotionKeyframes): void {
   for (const el of resolveTargets(target)) {
@@ -648,8 +648,8 @@ export function applyInitial(target: MotionTarget, keyframes: MotionKeyframes): 
 }
 
 /**
- * Le o estado atual das propriedades citadas nos keyframes. Serve para guardar
- * o ponto de retorno de animacoes de hover e de toque.
+ * Reads the current state of the properties mentioned in keyframes. Used to save
+ * the return point for hover and touch animations.
  */
 export function captureState(el: MotionElement, keyframes: MotionKeyframes): MotionKeyframes {
   const out: MotionKeyframes = {};
@@ -663,7 +663,7 @@ export function captureState(el: MotionElement, keyframes: MotionKeyframes): Mot
 }
 
 // ---------------------------------------------------------------------------
-// Alvos
+// Targets
 // ---------------------------------------------------------------------------
 
 function isMotionElement(value: unknown): value is MotionElement {
@@ -671,7 +671,7 @@ function isMotionElement(value: unknown): value is MotionElement {
   return typeof SVGElement !== 'undefined' && value instanceof SVGElement;
 }
 
-/** Normaliza seletores, listas e elementos soltos em uma lista de elementos. */
+/** Normalizes selectors, lists, and loose elements into a list of elements. */
 function resolveTargets(target: MotionTarget): MotionElement[] {
   if (!target) return [];
   if (typeof target === 'string') {
@@ -690,8 +690,8 @@ function resolveTargets(target: MotionTarget): MotionElement[] {
 }
 
 /**
- * Controle de uma animacao que ja nasce concluida. Aparece quando o alvo nao
- * existe ou quando `prefers-reduced-motion` aplicou o estado final na hora.
+ * Control of an animation that is already complete at birth. Appears when the target does not
+ * exist or when `prefers-reduced-motion` applied the final state immediately.
  */
 function instantControl(onStop?: () => void): AnimationControl {
   return {
@@ -816,7 +816,7 @@ function animateOne(
     options.onComplete?.();
   }
 
-  // Aplica o ponto de partida ainda neste quadro para evitar piscada.
+  // Apply the starting point in this frame to avoid flickering.
   applyTracks(el, tracks, springConfig ? springPosition : ease(0));
   addFrame(frame);
 
@@ -832,17 +832,17 @@ function animateOne(
 }
 
 /**
- * Anima um ou varios elementos.
+ * Animates one or multiple elements.
  *
  * ```js
  * V.animate('.card', { opacity: [0, 1], y: [24, 0] }, { duration: 420 })
- * const controle = V.animate(el, { scale: 1.2 }, { spring: { stiffness: 300 } })
- * await controle.finished
+ * const control = V.animate(el, { scale: 1.2 }, { spring: { stiffness: 300 } })
+ * await control.finished
  * ```
  *
- * @param target elemento, lista de elementos ou seletor CSS
- * @param keyframes propriedades animadas, com valor unico ou par `[de, para]`
- * @param options duracao, atraso, easing, mola e repeticao
+ * @param target element, list of elements, or CSS selector
+ * @param keyframes animated properties, with single value or `[from, to]` pair
+ * @param options duration, delay, easing, spring, and repetition
  */
 export function animate(
   target: MotionTarget,
@@ -867,12 +867,12 @@ export function animate(
 // ---------------------------------------------------------------------------
 
 /**
- * Integra uma mola real entre dois numeros e entrega o valor a cada quadro.
- * Nao toca no DOM, entao serve tanto para estilos quanto para contadores,
- * rolagem suave ou qualquer outro valor numerico.
+ * Integrates a real spring between two numbers and delivers the value each frame.
+ * Does not touch the DOM, so it works for both styles and counters,
+ * smooth scrolling, or any other numeric value.
  *
  * ```js
- * V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) => barra.style.width = v + 'px' })
+ * V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) => bar.style.width = v + 'px' })
  * ```
  */
 export function spring(from: number, to: number, options: SpringOptions = {}): AnimationControl {
@@ -949,7 +949,7 @@ export function spring(from: number, to: number, options: SpringOptions = {}): A
 // stagger
 // ---------------------------------------------------------------------------
 
-/** Calcula o atraso de um item dentro da onda. */
+/** Calculates the delay of an item within the wave. */
 function staggerDelay(
   index: number,
   total: number,
@@ -962,15 +962,15 @@ function staggerDelay(
 }
 
 /**
- * Anima uma lista inteira com atraso progressivo entre os itens.
+ * Animates an entire list with progressive delay between items.
  *
  * ```js
  * V.stagger('.card', V.motionPresets.fadeUp, { delay: 70, from: 'center' })
  * ```
  *
- * @param targets elementos, lista ou seletor CSS
- * @param keyframes propriedades animadas
- * @param options `delay` e o passo entre itens e `start` o atraso da onda toda
+ * @param targets elements, list, or CSS selector
+ * @param keyframes animated properties
+ * @param options `delay` is the step between items and `start` is the delay for the entire wave
  */
 export function stagger(
   targets: MotionTarget,
@@ -1000,7 +1000,7 @@ export function stagger(
 }
 
 // ---------------------------------------------------------------------------
-// inView e scrollProgress
+// inView and scrollProgress
 // ---------------------------------------------------------------------------
 
 function thresholdOf(amount: InViewOptions['amount']): number {
@@ -1011,16 +1011,16 @@ function thresholdOf(amount: InViewOptions['amount']): number {
 }
 
 /**
- * Dispara um callback quando o elemento entra na viewport.
+ * Fires a callback when the element enters the viewport.
  *
- * O callback pode devolver uma funcao de limpeza, executada quando o elemento
- * sai da viewport. Isso permite montar e desmontar efeitos sem esforco.
+ * The callback can return a cleanup function, executed when the element
+ * leaves the viewport. This allows mounting and unmounting effects effortlessly.
  *
  * ```js
- * const parar = V.inView(secao, () => secao.classList.add('ativa'), { once: true })
+ * const stop = V.inView(section, () => section.classList.add('active'), { once: true })
  * ```
  *
- * @returns funcao que encerra a observacao
+ * @returns function that stops the observation
  */
 export function inView(
   el: Element,
@@ -1031,7 +1031,7 @@ export function inView(
   let leaveHandler: (() => void) | void;
 
   if (typeof IntersectionObserver === 'undefined') {
-    // Sem suporte, o conteudo precisa aparecer de qualquer jeito.
+    // No support, content still needs to appear anyway.
     leaveHandler = callback({
       target: el,
       isIntersecting: true,
@@ -1070,21 +1070,21 @@ export function inView(
 }
 
 /**
- * Reporta de 0 a 1 conforme o elemento atravessa a tela. Vale 0 quando o topo
- * do elemento encosta na base da viewport e 1 quando a base dele sai por cima.
+ * Reports from 0 to 1 as the element crosses the screen. Equals 0 when the top
+ * of the element touches the bottom of the viewport and 1 when its bottom exits the top.
  *
  * ```js
- * V.scrollProgress(secao, (p) => barra.style.width = (p * 100) + '%')
+ * V.scrollProgress(section, (p) => bar.style.width = (p * 100) + '%')
  * ```
  *
- * @returns funcao que encerra a observacao
+ * @returns function that stops the observation
  */
 export function scrollProgress(el: Element, callback: (progress: number) => void): () => void {
   let stopped = false;
   let queued = false;
 
   if (typeof window === 'undefined') {
-    // Sem janela nao existe rolagem, entao o progresso fica parado no inicio.
+    // No window means no scrolling, so progress stays at the beginning.
     callback(0);
     return (): void => {
       stopped = true;
@@ -1119,13 +1119,13 @@ export function scrollProgress(el: Element, callback: (progress: number) => void
 }
 
 // ---------------------------------------------------------------------------
-// Presets de variantes
+// Preset variants
 // ---------------------------------------------------------------------------
 
-/** Aparecimento simples, so opacidade. */
+/** Simple appearance, opacity only. */
 export const fadeIn: MotionVariant = { opacity: [0, 1], duration: 420, easing: 'easeOut' };
 
-/** Sobe alguns pixels enquanto aparece. O preset mais usado em listas. */
+/** Rises a few pixels while appearing. The most used preset in lists. */
 export const fadeUp: MotionVariant = {
   opacity: [0, 1],
   y: [24, 0],
@@ -1133,7 +1133,7 @@ export const fadeUp: MotionVariant = {
   easing: 'easeOutExpo',
 };
 
-/** Desce alguns pixels enquanto aparece. */
+/** Descends a few pixels while appearing. */
 export const fadeDown: MotionVariant = {
   opacity: [0, 1],
   y: [-24, 0],
@@ -1141,7 +1141,7 @@ export const fadeDown: MotionVariant = {
   easing: 'easeOutExpo',
 };
 
-/** Cresce de dentro para fora. */
+/** Grows from inside out. */
 export const scaleIn: MotionVariant = {
   opacity: [0, 1],
   scale: [0.92, 1],
@@ -1149,7 +1149,7 @@ export const scaleIn: MotionVariant = {
   easing: 'easeOutBack',
 };
 
-/** Entra deslizando da direita para a esquerda. */
+/** Enters by sliding from right to left. */
 export const slideLeft: MotionVariant = {
   opacity: [0, 1],
   x: [36, 0],
@@ -1157,7 +1157,7 @@ export const slideLeft: MotionVariant = {
   easing: 'easeOutExpo',
 };
 
-/** Entra deslizando da esquerda para a direita. */
+/** Enters by sliding from left to right. */
 export const slideRight: MotionVariant = {
   opacity: [0, 1],
   x: [-36, 0],
@@ -1165,14 +1165,14 @@ export const slideRight: MotionVariant = {
   easing: 'easeOutExpo',
 };
 
-/** Estoura no lugar, com mola bem viva. */
+/** Bursts in place with a lively spring. */
 export const pop: MotionVariant = {
   opacity: [0, 1],
   scale: [0.6, 1],
   spring: { stiffness: 420, damping: 18 },
 };
 
-/** Sai do desfoque ate ficar nitido. */
+/** Emerges from blur to sharp. */
 export const blurIn: MotionVariant = {
   opacity: [0, 1],
   blur: [10, 0],
@@ -1180,7 +1180,7 @@ export const blurIn: MotionVariant = {
   easing: 'easeOut',
 };
 
-/** Gira no eixo horizontal ao entrar, como uma carta virando. */
+/** Rotates on the horizontal axis when entering, like a card flipping. */
 export const flip: MotionVariant = {
   opacity: [0, 1],
   rotateX: [-80, 0],
@@ -1188,7 +1188,7 @@ export const flip: MotionVariant = {
   easing: 'easeOutBack',
 };
 
-/** Todos os presets reunidos, para busca por nome. */
+/** All presets gathered for lookup by name. */
 export const motionPresets: Record<string, MotionVariant> = {
   fadeIn,
   fadeUp,
@@ -1202,10 +1202,10 @@ export const motionPresets: Record<string, MotionVariant> = {
 };
 
 // ---------------------------------------------------------------------------
-// Leitura de variantes vindas do HTML
+// Reading variants from HTML
 // ---------------------------------------------------------------------------
 
-/** Chaves de um objeto de variante que sao opcoes, nao propriedades animadas. */
+/** Keys of a variant object that are options, not animated properties. */
 const OPTION_KEYS = new Set([
   'duration',
   'delay',
@@ -1220,7 +1220,7 @@ const OPTION_KEYS = new Set([
   'onComplete',
 ]);
 
-/** Separa um objeto de variante em keyframes e opcoes. */
+/** Separates a variant object into keyframes and options. */
 export function splitVariant(variant: MotionVariant): {
   keyframes: MotionKeyframes;
   options: AnimateOptions;
@@ -1236,8 +1236,8 @@ export function splitVariant(variant: MotionVariant): {
 }
 
 /**
- * Decide se o texto de um atributo deve ser avaliado como expressao ou usado
- * como texto literal. `usuario.nome` e expressao, `Bem vindo de volta` nao e.
+ * Decides whether attribute text should be evaluated as an expression or used
+ * as literal text. `user.name` is an expression, `Welcome back` is not.
  */
 function looksLikeExpression(text: string): boolean {
   const value = text.trim();
@@ -1249,7 +1249,7 @@ function looksLikeExpression(text: string): boolean {
 
 type Evaluator = <T = unknown>(expression?: string) => T;
 
-/** Resolve `v-motion="fadeUp"` ou `v-motion="{ ... }"` em uma variante. */
+/** Resolves `v-motion="fadeUp"` or `v-motion="{ ... }"` into a variant. */
 function resolveVariant(expression: string, evaluate: Evaluator): MotionVariant | null {
   const text = expression.trim();
   if (!text) return null;
@@ -1262,7 +1262,7 @@ function resolveVariant(expression: string, evaluate: Evaluator): MotionVariant 
   return null;
 }
 
-/** Le um atributo da Voodoo aceitando o prefixo configurado e `data-v-`. */
+/** Reads a Voodoo attribute accepting the configured prefix and `data-v-`. */
 function readAttr(el: Element, name: string): string | null {
   return el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
 }
@@ -1272,7 +1272,7 @@ function hasAttr(el: Element, name: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Orquestracao de stagger no HTML
+// Stagger orchestration in HTML
 // ---------------------------------------------------------------------------
 
 interface StaggerSetup {
@@ -1293,9 +1293,9 @@ function isStaggerChild(el: Element): boolean {
 }
 
 /**
- * Calcula o atraso que um filho recebe quando o pai declara `v-motion-stagger`.
- * O indice e apurado na hora, entao filhos criados depois por `v-for` tambem
- * entram na onda.
+ * Calculates the delay that a child receives when the parent declares `v-motion-stagger`.
+ * The index is determined on the fly, so children created later by `v-for` also
+ * enter the wave.
  */
 function inheritedStaggerDelay(el: Element): number {
   const parent = el.parentElement;
@@ -1315,17 +1315,17 @@ function inheritedStaggerDelay(el: Element): number {
 }
 
 // ---------------------------------------------------------------------------
-// Directives de entrada
+// Entry directives
 // ---------------------------------------------------------------------------
 
 /**
- * `v-motion="fadeUp"` ou `v-motion="{ opacity: [0,1], y: [20,0], duration: 400 }"`.
- * Anima o elemento assim que ele e inicializado.
+ * `v-motion="fadeUp"` or `v-motion="{ opacity: [0,1], y: [20,0], duration: 400 }"`.
+ * Animates the element as soon as it is initialized.
  */
 defineDirective('motion', ({ el, expression, evaluate, cleanup }) => {
   const variant = resolveVariant(expression, evaluate as Evaluator);
   if (!variant) {
-    warn(`v-motion nao reconheceu a variante "${expression}".`);
+    warn(`v-motion did not recognize the variant "${expression}".`);
     return;
   }
   const { keyframes, options } = splitVariant(variant);
@@ -1337,14 +1337,14 @@ defineDirective('motion', ({ el, expression, evaluate, cleanup }) => {
 });
 
 /**
- * `v-motion-scroll="fadeUp"`. Anima quando o elemento entra na viewport.
- * O modificador `.repeat` refaz a animacao a cada nova entrada e
- * `v-motion-scroll-amount` ajusta a fracao visivel necessaria.
+ * `v-motion-scroll="fadeUp"`. Animates when the element enters the viewport.
+ * The `.repeat` modifier re-runs the animation on each new entry and
+ * `v-motion-scroll-amount` adjusts the required visible fraction.
  */
 defineDirective('motion-scroll', ({ el, expression, evaluate, modifiers, cleanup }) => {
   const variant = resolveVariant(expression, evaluate as Evaluator);
   if (!variant) {
-    warn(`v-motion-scroll nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-scroll did not recognize the variant "${expression}".`);
     return;
   }
   const { keyframes, options } = splitVariant(variant);
@@ -1379,9 +1379,9 @@ defineDirective('motion-scroll', ({ el, expression, evaluate, modifiers, cleanup
 });
 
 /**
- * `v-motion-stagger="60"`. Guarda o passo da onda para os filhos diretos que
- * usam `v-motion` ou `v-motion-scroll`. Aceita `v-motion-stagger-from` com
- * `first`, `last` ou `center`.
+ * `v-motion-stagger="60"`. Saves the wave step for direct children that
+ * use `v-motion` or `v-motion-scroll`. Accepts `v-motion-stagger-from` with
+ * `first`, `last`, or `center`.
  */
 defineDirective(
   'motion-stagger',
@@ -1397,10 +1397,10 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// Directives de interacao
+// Interaction directives
 // ---------------------------------------------------------------------------
 
-/** Liga uma variante a um par de eventos de entrada e de saida. */
+/** Binds a variant to a pair of enter and leave events. */
 function bindInteraction(
   el: HTMLElement,
   variant: MotionVariant,
@@ -1439,11 +1439,11 @@ function bindInteraction(
   });
 }
 
-/** `v-motion-hover="{ scale: 1.05 }"`. Anima no mouse e no foco de teclado. */
+/** `v-motion-hover="{ scale: 1.05 }"`. Animates on mouse and keyboard focus. */
 defineDirective('motion-hover', ({ el, expression, evaluate, cleanup }) => {
   const variant = resolveVariant(expression, evaluate as Evaluator);
   if (!variant) {
-    warn(`v-motion-hover nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-hover did not recognize the variant "${expression}".`);
     return;
   }
   bindInteraction(
@@ -1456,11 +1456,11 @@ defineDirective('motion-hover', ({ el, expression, evaluate, cleanup }) => {
   );
 });
 
-/** `v-motion-tap="{ scale: 0.96 }"`. Anima enquanto o elemento esta pressionado. */
+/** `v-motion-tap="{ scale: 0.96 }"`. Animates while the element is pressed. */
 defineDirective('motion-tap', ({ el, expression, evaluate, cleanup }) => {
   const variant = resolveVariant(expression, evaluate as Evaluator);
   if (!variant) {
-    warn(`v-motion-tap nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-tap did not recognize the variant "${expression}".`);
     return;
   }
   bindInteraction(
@@ -1478,8 +1478,8 @@ defineDirective('motion-tap', ({ el, expression, evaluate, cleanup }) => {
 // ---------------------------------------------------------------------------
 
 /**
- * `v-parallax="0.3"`. Desloca o elemento conforme a rolagem, com o fator
- * informado. Valores negativos invertem o sentido do movimento.
+ * `v-parallax="0.3"`. Offsets the element as the page scrolls, with the given
+ * factor. Negative values reverse the direction of movement.
  */
 defineDirective('parallax', ({ el, expression, evaluate, cleanup }) => {
   if (prefersReducedMotion() || typeof window === 'undefined') return;
@@ -1542,8 +1542,8 @@ function scheduleFlipPass(): void {
 }
 
 /**
- * Compara a posicao anterior com a atual e, quando muda, coloca o elemento de
- * volta no lugar antigo por transform e anima ate zero. Esta e a tecnica FLIP.
+ * Compares the previous position with the current one, and when it changes, places the element
+ * back in the old place via transform and animates to zero. This is the FLIP technique.
  */
 function runFlipPass(): void {
   flipQueued = false;
@@ -1581,16 +1581,16 @@ function ensureFlipWatcher(): void {
   if (flipObserver || typeof MutationObserver === 'undefined') return;
   const root = config.root ?? document.body;
   if (!root) return;
-  // Apenas `childList` porque o proprio FLIP escreve no atributo `style` e
-  // observar atributos criaria um laco infinito de medicoes.
+  // Only `childList` because FLIP itself writes to the `style` attribute and
+  // observing attributes would create an infinite loop of measurements.
   flipObserver = new MutationObserver(scheduleFlipPass);
   flipObserver.observe(root, { childList: true, subtree: true });
   window.addEventListener('resize', scheduleFlipPass);
 }
 
 /**
- * `v-flip`. Guarda a posicao do elemento e, quando ela muda entre atualizacoes,
- * anima suavemente do lugar antigo para o novo. Aceita opcoes:
+ * `v-flip`. Saves the element's position, and when it changes between updates,
+ * smoothly animates from the old place to the new one. Accepts options:
  * `v-flip="{ duration: 300, easing: 'easeInOut' }"`.
  */
 defineDirective('flip', ({ el, expression, evaluate, cleanup }) => {
@@ -1622,8 +1622,8 @@ defineDirective('flip', ({ el, expression, evaluate, cleanup }) => {
 // ---------------------------------------------------------------------------
 
 /**
- * Monta o formatador de `v-count`. O formato `percent` apenas acrescenta o
- * simbolo, porque em painel o valor ja costuma vir na escala de 0 a 100.
+ * Sets up the formatter for `v-count`. The `percent` format only adds the
+ * symbol, because in a dashboard the value usually already comes in the 0 to 100 scale.
  */
 function countFormatter(format: string, decimals: number): (value: number) => string {
   const numberOptions: Intl.NumberFormatOptions = {
@@ -1640,10 +1640,10 @@ function countFormatter(format: string, decimals: number): (value: number) => st
 }
 
 /**
- * `v-count="1250"`. Anima o numero de zero ate o valor e escreve no elemento.
- * Aceita `v-count-duration`, `v-count-decimals`, `v-count-format`
- * (`number`, `currency` ou `percent`), `v-count-prefix` e `v-count-suffix`.
- * Mudancas reativas no valor reanimam a partir do numero exibido.
+ * `v-count="1250"`. Animates the number from zero to the value and writes it to the element.
+ * Accepts `v-count-duration`, `v-count-decimals`, `v-count-format`
+ * (`number`, `currency`, or `percent`), `v-count-prefix`, and `v-count-suffix`.
+ * Reactive changes to the value re-animate from the currently displayed number.
  */
 defineDirective('count', ({ el, evaluate, effect, cleanup }) => {
   const duration = parseDuration(readAttr(el, 'count-duration') ?? undefined, 1400);
@@ -1683,9 +1683,9 @@ defineDirective('count', ({ el, evaluate, effect, cleanup }) => {
 // ---------------------------------------------------------------------------
 
 /**
- * `v-typewriter="Texto aqui"`. Escreve o texto letra por letra. Aceita
- * `v-typewriter-speed` com os milissegundos de cada caractere. O valor pode ser
- * um texto solto ou uma expressao reativa, como `v-typewriter="frase"`.
+ * `v-typewriter="Text here"`. Writes the text letter by letter. Accepts
+ * `v-typewriter-speed` with the milliseconds for each character. The value can be
+ * plain text or a reactive expression, like `v-typewriter="message"`.
  */
 defineDirective('typewriter', ({ el, expression, evaluate, effect, cleanup }) => {
   const speed = parseDuration(readAttr(el, 'typewriter-speed') ?? undefined, 45);
@@ -1723,8 +1723,8 @@ defineDirective('typewriter', ({ el, expression, evaluate, effect, cleanup }) =>
 // ---------------------------------------------------------------------------
 
 /**
- * Tudo do modulo reunido em um objeto so, para expor como `V.motion` sem
- * colidir com nomes de outros modulos, como o `fadeIn` de `dom/transition`.
+ * Everything from the module gathered in a single object, to expose as `V.motion` without
+ * colliding with names from other modules, like the `fadeIn` from `dom/transition`.
  */
 export const motion = {
   animate,

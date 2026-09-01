@@ -1,32 +1,32 @@
 /**
  * @module reactivity
  *
- * Nucleo reativo da Voodoo.js.
+ * The reactive core of Voodoo.js.
  *
- * Modelo: Proxy + rastreamento de dependencias por chave, com agendamento em
- * microtask. Nao existe Virtual DOM. Quando `count` muda, apenas os efeitos que
- * leram `count` sao reexecutados, e cada efeito atualiza somente o no do DOM
- * que ele mesmo escreveu.
+ * The model: a Proxy plus per-key dependency tracking, scheduled on a
+ * microtask. There is no Virtual DOM. When `count` changes, only the effects
+ * that read `count` re-run, and each effect updates only the DOM node it wrote
+ * itself.
  *
- * Este modulo nao toca no DOM e nao assume `window`, entao funciona em Node,
- * Bun e Deno sem adaptacao.
+ * This module never touches the DOM and never assumes `window`, so it runs on
+ * Node, Bun and Deno with no adaptation.
  */
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
 export type Dep = Set<ReactiveEffect>;
 export type EffectScheduler = () => void;
 
 export interface EffectOptions {
-  /** Executa em vez do proprio efeito quando uma dependencia muda. */
+  /** Runs instead of the effect itself when a dependency changes. */
   scheduler?: EffectScheduler;
-  /** Nao executa imediatamente na criacao. */
+  /** Does not run immediately on creation. */
   lazy?: boolean;
-  /** Chamado quando o efeito e parado. */
+  /** Called when the effect is stopped. */
   onStop?: () => void;
-  /** Escopo dono do efeito, para limpeza automatica. */
+  /** The scope that owns the effect, for automatic cleanup. */
   scope?: EffectScope;
 }
 
@@ -49,7 +49,7 @@ export interface WatchOptions {
 export type WatchStopHandle = () => void;
 
 // ---------------------------------------------------------------------------
-// Agendador (scheduler)
+// Scheduler
 // ---------------------------------------------------------------------------
 
 const resolvedPromise = /* @__PURE__ */ Promise.resolve();
@@ -60,16 +60,16 @@ let isFlushing = false;
 let isFlushPending = false;
 let flushPromise: Promise<void> | null = null;
 
-/** Numero maximo de reexecucoes do mesmo efeito em um flush, para achar loops. */
+/** Maximum re-runs of the same effect within one flush, to catch loops. */
 const RECURSION_LIMIT = 100;
 
 /**
- * Resolve depois que a fila de atualizacoes for aplicada ao DOM.
+ * Resolves once the queue of updates has been applied to the DOM.
  *
  * ```js
  * count.value++
  * await V.nextTick()
- * // o DOM ja refletiu a mudanca
+ * // the DOM already reflects the change
  * ```
  */
 export function nextTick<T = void>(fn?: () => T): Promise<T | void> {
@@ -78,17 +78,17 @@ export function nextTick<T = void>(fn?: () => T): Promise<T | void> {
 }
 
 export function queueJob(job: ReactiveEffect): void {
-  // A marca no proprio efeito substitui o `queue.includes(job)` de antes, que
-  // varria a fila inteira a cada enfileiramento. Com muitos efeitos distintos
-  // invalidados no mesmo tick o custo era quadratico: mil efeitos custavam meio
-  // milhao de comparacoes so para descobrir que nenhum estava repetido.
+  // The flag on the effect itself replaces the earlier `queue.includes(job)`,
+  // which swept the whole queue on every enqueue. With many distinct effects
+  // invalidated in the same tick the cost was quadratic: a thousand effects cost
+  // half a million comparisons just to discover that none was a duplicate.
   if (job.queued) return;
   job.queued = true;
   queue.push(job);
   queueFlush();
 }
 
-/** Agenda um callback para rodar depois que o DOM foi atualizado. */
+/** Schedules a callback to run after the DOM has been updated. */
 export function queuePostFlush(cb: () => void): void {
   postQueue.push(cb);
   queueFlush();
@@ -114,9 +114,9 @@ function flushJobs(): void {
       counts.set(job, count);
       if (count > RECURSION_LIMIT) {
         warn(
-          'Loop infinito de atualizacao detectado. Um efeito reativo esta se ' +
-            'disparando de novo sem parar. Verifique se alguma expressao escreve ' +
-            'em um estado que ela mesma le.'
+          'Infinite update loop detected. A reactive effect keeps triggering ' +
+            'itself without ever settling. Check whether some expression writes ' +
+            'to state that it also reads.'
         );
         continue;
       }
@@ -127,8 +127,8 @@ function flushJobs(): void {
       }
     }
   } finally {
-    // Libera a marca de todo mundo que estava na fila, inclusive de quem
-    // entrou durante o proprio flush.
+    // Clear the flag on everything that was in the queue, including jobs that
+    // joined during the flush itself.
     for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
@@ -143,7 +143,7 @@ function flushJobs(): void {
       }
     }
 
-    // Efeitos enfileirados durante o post flush entram em um novo ciclo.
+    // Effects queued during the post flush go into a fresh cycle.
     if (queue.length || postQueue.length) {
       flushPromise = resolvedPromise.then(flushJobs);
       isFlushPending = true;
@@ -153,7 +153,7 @@ function flushJobs(): void {
   }
 }
 
-/** Aplica imediatamente tudo que estiver pendente. Util em testes. */
+/** Applies everything still pending right away. Useful in tests. */
 export function flushSync(): void {
   if (isFlushing) return;
   isFlushPending = false;
@@ -161,7 +161,7 @@ export function flushSync(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Tratamento de erro
+// Error handling
 // ---------------------------------------------------------------------------
 
 type ErrorHandler = (err: unknown, context: string) => void;
@@ -178,7 +178,7 @@ export function handleError(err: unknown, context: string): void {
     return;
   }
   // eslint-disable-next-line no-console
-  console.error(`[Voodoo] erro em ${context}:`, err);
+  console.error(`[Voodoo] error in ${context}:`, err);
 }
 
 export function warn(msg: string, ...args: unknown[]): void {
@@ -187,7 +187,7 @@ export function warn(msg: string, ...args: unknown[]): void {
 }
 
 // ---------------------------------------------------------------------------
-// Efeitos
+// Effects
 // ---------------------------------------------------------------------------
 
 let activeEffect: ReactiveEffect | undefined;
@@ -217,13 +217,13 @@ let effectId = 0;
 export class ReactiveEffect<T = any> {
   readonly id = effectId++;
   active = true;
-  /** `true` enquanto o efeito espera na fila do agendador. */
+  /** `true` while the effect is waiting in the scheduler queue. */
   queued = false;
   deps: Dep[] = [];
   parent: ReactiveEffect | undefined = undefined;
   scheduler: EffectScheduler | undefined;
   onStop: (() => void) | undefined;
-  /** Callbacks de limpeza registrados pelo proprio efeito. */
+  /** Cleanup callbacks registered by the effect itself. */
   cleanups: Array<() => void> = [];
 
   constructor(public fn: () => T, options?: EffectOptions) {
@@ -236,7 +236,7 @@ export class ReactiveEffect<T = any> {
   run(): T | undefined {
     if (!this.active) return this.fn();
 
-    // Impede recursao direta do mesmo efeito.
+    // Prevents the same effect from recursing directly into itself.
     let parent: ReactiveEffect | undefined = activeEffect;
     while (parent) {
       if (parent === this) return undefined;
@@ -258,7 +258,7 @@ export class ReactiveEffect<T = any> {
     }
   }
 
-  /** Registra uma funcao chamada antes da proxima execucao e ao parar. */
+  /** Registers a function called before the next run and on stop. */
   onInvalidate(fn: () => void): void {
     this.cleanups.push(fn);
   }
@@ -297,13 +297,13 @@ export interface EffectRunner<T = any> {
 }
 
 /**
- * Cria um efeito reativo. Executa uma vez na criacao e reexecuta sempre que
- * qualquer estado lido dentro dele mudar.
+ * Creates a reactive effect. Runs once on creation and re-runs whenever any
+ * state read inside it changes.
  *
  * ```js
  * const state = V.reactive({ count: 0 })
  * V.effect(() => console.log(state.count))
- * state.count++ // dispara o log
+ * state.count++ // triggers the log
  * ```
  */
 export function effect<T = any>(fn: () => T, options?: EffectOptions): EffectRunner<T> {
@@ -320,7 +320,7 @@ export function stop(runner: EffectRunner | ReactiveEffect): void {
 }
 
 // ---------------------------------------------------------------------------
-// Escopos de efeito (limpeza em lote)
+// Effect scopes (batch cleanup)
 // ---------------------------------------------------------------------------
 
 let activeScope: EffectScope | undefined;
@@ -385,7 +385,7 @@ export function getActiveScope(): EffectScope | undefined {
 }
 
 // ---------------------------------------------------------------------------
-// Rastreamento
+// Tracking
 // ---------------------------------------------------------------------------
 
 export const ITERATE_KEY = Symbol('voodoo:iterate');
@@ -523,13 +523,13 @@ function canObserve(value: unknown): boolean {
   return tag === 'Object' || tag === 'Array' || tag === 'Map' || tag === 'Set';
 }
 
-/** Marca um objeto para nunca ser transformado em proxy reativo. */
+/** Marks an object so it is never turned into a reactive proxy. */
 export function markRaw<T extends object>(value: T): T {
   Object.defineProperty(value, SKIP, { value: true, enumerable: false, configurable: true });
   return value;
 }
 
-/** Devolve o objeto original por tras de um proxy reativo. */
+/** Returns the original object behind a reactive proxy. */
 export function toRaw<T>(observed: T): T {
   const raw = observed && (observed as any)[RAW];
   return raw ? toRaw(raw) : observed;

@@ -1,22 +1,22 @@
 /**
  * @module directives/gpu
  *
- * `v-shader`: um shader WebGPU rodando num `<canvas>` sem escrever JavaScript.
+ * `v-shader`: a WebGPU shader running on a `<canvas>` without writing JavaScript.
  *
  * ```html
- * <canvas v-shader="ondas.wgsl" :set="{ speed: velocidade, tint: cor }"></canvas>
- * <canvas v-shader="#meu-shader" v-shader.visible></canvas>
- * <script type="x-shader/wgsl" id="meu-shader"> ... </script>
+ * <canvas v-shader="waves.wgsl" :set="{ speed: velocity, tint: color }"></canvas>
+ * <canvas v-shader="#my-shader" v-shader.visible></canvas>
+ * <script type="x-shader/wgsl" id="my-shader"> ... </script>
  * ```
  *
- * O compromisso da directive e o mesmo do modulo `gpu`: sem WebGPU nada quebra.
- * O canvas ganha `data-gpu="unsupported"`, dispara `voodoo:gpu-unsupported` e o
- * conteudo que estava dentro dele aparece no lugar dele. Nenhum rAF e agendado,
- * nenhum observador fica aberto e o console so recebe um aviso em modo dev.
+ * The directive's commitment is the same as the `gpu` module: without WebGPU nothing breaks.
+ * The canvas gets `data-gpu="unsupported"`, fires `voodoo:gpu-unsupported`, and the
+ * content inside it appears in its place. No rAF is scheduled,
+ * no observer stays open, and the console only gets a warning in dev mode.
  */
 
 import { handleError } from '../reactivity';
-import { avisar, descreverElemento } from '../runtime/avisos';
+import { warn, describeElement } from '../runtime/avisos';
 import { defineDirective } from '../runtime/registry';
 import { destroy as destruirNo, originalAttributes } from '../runtime/walker';
 import { http } from '../http';
@@ -34,18 +34,18 @@ import {
 } from '../gpu';
 
 // ---------------------------------------------------------------------------
-// Origem do shader
+// Shader source
 // ---------------------------------------------------------------------------
 
-/** De onde o texto do shader vem. */
+/** Where the shader text comes from. */
 export type ShaderSourceKind = 'inline' | 'selector' | 'url' | 'empty';
 
 /**
- * Decide se o valor do atributo e WGSL escrito ali mesmo, um seletor de
- * elemento ou um endereco para buscar.
+ * Decides if the attribute value is WGSL written right there, an element
+ * selector, or an address to fetch.
  *
- * A regra e por eliminacao: `#` so aparece em seletor, e WGSL sempre traz uma
- * declaracao ou uma chave. O que sobra e endereco, que e o caso mais comum.
+ * The rule is by elimination: `#` only appears in selectors, and WGSL always has
+ * a declaration or a key. What's left is an address, the most common case.
  */
 export function classifyShaderSource(text: string): ShaderSourceKind {
   const valor = text.trim();
@@ -58,9 +58,9 @@ export function classifyShaderSource(text: string): ShaderSourceKind {
 }
 
 /**
- * Resolve o texto do shader.
+ * Resolves the shader text.
  *
- * @returns o WGSL, ou string vazia quando a origem nao existe
+ * @returns the WGSL, or empty string when the source doesn't exist
  */
 export async function resolveShaderSource(text: string): Promise<string> {
   const valor = text.trim();
@@ -71,90 +71,90 @@ export async function resolveShaderSource(text: string): Promise<string> {
 
   if (kind === 'selector') {
     if (typeof document === 'undefined') return '';
-    let alvo: Element | null = null;
+    let target: Element | null = null;
     try {
-      alvo = document.querySelector(valor);
+      target = document.querySelector(valor);
     } catch {
-      // Seletor invalido. Tratado como shader ausente, sem derrubar a pagina.
-      alvo = null;
+      // Invalid selector. Treated as missing shader, without breaking the page.
+      target = null;
     }
-    if (!alvo) {
-      avisar(`v-shader nao encontrou o elemento "${valor}" com a fonte do shader.`);
+    if (!target) {
+      warn(`v-shader did not find the element "${valor}" with the shader source.`);
       return '';
     }
-    return alvo.textContent ?? '';
+    return target.textContent ?? '';
   }
 
   try {
-    const resposta = await http.get<string>(valor, { responseType: 'text' });
-    return typeof resposta === 'string' ? resposta : '';
+    const response = await http.get<string>(valor, { responseType: 'text' });
+    return typeof response === 'string' ? response : '';
   } catch (err) {
-    handleError(err, `v-shader ao buscar "${valor}"`);
+    handleError(err, `v-shader when fetching "${valor}"`);
     return '';
   }
 }
 
 // ---------------------------------------------------------------------------
-// Fallback sem WebGPU
+// Fallback without WebGPU
 // ---------------------------------------------------------------------------
 
 /**
- * Revela o conteudo que estava dentro do `<canvas>`.
+ * Reveals the content that was inside the `<canvas>`.
  *
- * O navegador so mostra os filhos de um canvas quando nao sabe desenhar canvas
- * nenhum, e nao e esse o caso aqui: o canvas funciona, o que falta e WebGPU.
- * Entao os filhos sao movidos para um irmao e o canvas sai de cena.
+ * The browser only shows canvas children when it can't draw any canvas,
+ * and that's not the case here: the canvas works, what's missing is WebGPU.
+ * So the children are moved to a sibling and the canvas disappears.
  *
- * @returns funcao que devolve o DOM ao estado original
+ * @returns function that restores the DOM to its original state
  */
-function revelarFallback(el: HTMLCanvasElement, montar: (no: Node) => void): () => void {
+function revealFallback(el: HTMLCanvasElement, mount: (node: Node) => void): () => void {
   if (!el.firstChild || typeof document === 'undefined') return () => undefined;
 
-  const substituto = document.createElement('div');
-  substituto.setAttribute('data-gpu-fallback', '');
-  while (el.firstChild) substituto.appendChild(el.firstChild);
-  el.parentNode?.insertBefore(substituto, el.nextSibling);
+  const substitute = document.createElement('div');
+  substitute.setAttribute('data-gpu-fallback', '');
+  while (el.firstChild) substitute.appendChild(el.firstChild);
+  el.parentNode?.insertBefore(substitute, el.nextSibling);
 
-  const displayAnterior = el.style.display;
+  const previousDisplay = el.style.display;
   el.style.display = 'none';
 
-  // O conteudo revelado continua sendo HTML da Voodoo: interpolacao e
-  // directives ali dentro precisam funcionar como funcionariam no lugar antigo.
-  montar(substituto);
+  // The revealed content is still Voodoo HTML: interpolation and
+  // directives inside need to work as they would in the old place.
+  mount(substitute);
 
   return (): void => {
-    destruirNo(substituto);
-    while (substituto.firstChild) el.appendChild(substituto.firstChild);
-    substituto.remove();
-    if (displayAnterior) el.style.display = displayAnterior;
+    destruirNo(substitute);
+    while (substitute.firstChild) el.appendChild(substitute.firstChild);
+    substitute.remove();
+    if (previousDisplay) el.style.display = previousDisplay;
     else el.style.removeProperty('display');
   };
 }
 
-/** Marca o canvas, avisa a pagina e revela o fallback. */
-function semSuporte(
+/** Marks the canvas, warns the page, and reveals the fallback. */
+function noSupport(
   el: HTMLCanvasElement,
-  motivo: string,
-  montar: (no: Node) => void
+  reason: string,
+  mount: (node: Node) => void
 ): () => void {
   el.setAttribute('data-gpu', 'unsupported');
   el.dispatchEvent(
-    new CustomEvent('voodoo:gpu-unsupported', { bubbles: true, detail: { motivo, el } })
+    new CustomEvent('voodoo:gpu-unsupported', { bubbles: true, detail: { reason, el } })
   );
-  avisar(
-    `v-shader em ${descreverElemento(el)} nao rodou: ${motivo}. ` +
-      'O conteudo dentro do <canvas> foi usado como alternativa. ' +
-      'Escute voodoo:gpu-unsupported para oferecer outra coisa.'
+  warn(
+    `v-shader at ${describeElement(el)} did not run: ${reason}. ` +
+      'The content inside the <canvas> was used as a fallback. ' +
+      'Listen to voodoo:gpu-unsupported to offer something else.'
   );
-  return revelarFallback(el, montar);
+  return revealFallback(el, mount);
 }
 
 // ---------------------------------------------------------------------------
-// Leitura dos atributos auxiliares
+// Reading auxiliary attributes
 // ---------------------------------------------------------------------------
 
-/** Procura a expressao de `:set`, aceitando as tres grafias equivalentes. */
-function expressaoDeSet(el: Element): string | null {
+/** Looks for the `:set` expression, accepting the three equivalent spellings. */
+function expressionOfSet(el: Element): string | null {
   const atributos = originalAttributes(el);
   for (const nome of [':set', 'v-bind:set', 'data-v-bind:set']) {
     const valor = atributos.get(nome);
@@ -164,219 +164,219 @@ function expressaoDeSet(el: Element): string | null {
   return proprio || null;
 }
 
-/** Le `v-shader-dpr="1,2"`. */
-function faixaDpr(el: Element): [number, number] {
-  const bruto = el.getAttribute('v-shader-dpr') ?? el.getAttribute('data-v-shader-dpr');
-  if (!bruto) return [1, 2];
-  const partes = bruto.split(',').map((n) => parseFloat(n.trim()));
-  const min = Number.isFinite(partes[0]) ? partes[0] : 1;
-  const max = Number.isFinite(partes[1]) ? partes[1] : Math.max(min, 2);
+/** Reads `v-shader-dpr="1,2"`. */
+function dprRange(el: Element): [number, number] {
+  const raw = el.getAttribute('v-shader-dpr') ?? el.getAttribute('data-v-shader-dpr');
+  if (!raw) return [1, 2];
+  const parts = raw.split(',').map((n) => parseFloat(n.trim()));
+  const min = Number.isFinite(parts[0]) ? parts[0] : 1;
+  const max = Number.isFinite(parts[1]) ? parts[1] : Math.max(min, 2);
   return [Math.max(0.5, min), Math.max(min, max)];
 }
 
 // ---------------------------------------------------------------------------
-// A directive
+// The directive
 // ---------------------------------------------------------------------------
 
-/** Uniforms que a Voodoo alimenta sozinha, quando o shader os declara. */
-const UNIFORMS_AUTOMATICOS = ['time', 'delta', 'frame', 'resolution'];
+/** Uniforms that Voodoo feeds on its own, when the shader declares them. */
+const AUTOMATIC_UNIFORMS = ['time', 'delta', 'frame', 'resolution'];
 
 defineDirective('shader', (ctx) => {
   const { el, expression, modifiers, evaluate, effect, cleanup, scope, walk } = ctx;
 
-  const montarNo = (no: Node): void => walk(no, scope);
+  const mountOn = (node: Node): void => walk(node, scope);
 
   if (typeof HTMLCanvasElement === 'undefined' || !(el instanceof HTMLCanvasElement)) {
-    avisar(
-      `v-shader precisa de um <canvas>, mas foi usado em ${descreverElemento(el)}. ` +
-        'Troque a tag por <canvas> para o shader ter onde desenhar.'
+    warn(
+      `v-shader needs a <canvas>, but was used on ${describeElement(el)}. ` +
+        'Change the tag to <canvas> so the shader has somewhere to draw.'
     );
     return;
   }
 
   const canvas = el;
-  let cancelado = false;
-  // Registrada antes de tudo, e por isso a ultima a rodar: vale para o caminho
-  // com GPU, para o fallback e para o shader que nem chegou a compilar.
+  let canceled = false;
+  // Registered first, and therefore runs last: works for the GPU path,
+  // for the fallback, and for the shader that didn't even compile.
   cleanup(() => {
-    cancelado = true;
+    canceled = true;
     canvas.removeAttribute('data-gpu');
   });
 
   if (!supported()) {
-    const restaurar = semSuporte(canvas, 'este navegador nao tem WebGPU', montarNo);
-    cleanup(restaurar);
+    const restore = noSupport(canvas, 'this browser does not have WebGPU', mountOn);
+    cleanup(restore);
     return;
   }
 
-  // Valores vindos de `:set`. Ficam guardados desde antes do pipeline existir,
-  // entao o primeiro quadro ja nasce com os uniforms certos.
-  const setExpr = expressaoDeSet(canvas);
-  let valores: Record<string, unknown> = {};
-  let aplicar: ((v: Record<string, unknown>) => void) | null = null;
+  // Values from `:set`. They stay saved before the pipeline exists,
+  // so the first frame is born with the correct uniforms.
+  const setExpr = expressionOfSet(canvas);
+  let values: Record<string, unknown> = {};
+  let apply: ((v: Record<string, unknown>) => void) | null = null;
 
   if (setExpr) {
     effect(() => {
-      const lido = evaluate<unknown>(setExpr);
-      valores = lido && typeof lido === 'object' ? (lido as Record<string, unknown>) : {};
-      // Trocar um uniform nao recria pipeline nenhum: so reescreve o buffer.
-      aplicar?.(valores);
+      const read = evaluate<unknown>(setExpr);
+      values = read && typeof read === 'object' ? (read as Record<string, unknown>) : {};
+      // Changing a uniform doesn't recreate any pipeline: just rewrites the buffer.
+      apply?.(values);
     });
   }
 
-  // `.paused` comeca parado; `v-shader-paused` deixa o estado decidir.
+  // `.paused` starts paused; `v-shader-paused` lets state decide.
   const pausedExpr =
     canvas.getAttribute('v-shader-paused') ?? canvas.getAttribute('data-v-shader-paused');
-  let pausado = !!modifiers.paused;
-  let visivel = !modifiers.visible;
+  let paused = !!modifiers.paused;
+  let visible = !modifiers.visible;
 
-  let tela: GpuSurface | null = null;
-  let efeito: GpuEffect | null = null;
-  let pararLaco: (() => void) | null = null;
-  let quadroUnico = 0;
-  let observador: IntersectionObserver | null = null;
-  let restaurarFallback: (() => void) | null = null;
-  let automaticos: string[] = [];
+  let surface_obj: GpuSurface | null = null;
+  let effect_obj: GpuEffect | null = null;
+  let stopLoop: (() => void) | null = null;
+  let singleFrame = 0;
+  let observer_obj: IntersectionObserver | null = null;
+  let restoreFallback: (() => void) | null = null;
+  let automaticList: string[] = [];
 
-  const relogio = clock();
+  const clock_obj = clock();
 
   cleanup(() => {
-    pararLaco?.();
-    pararLaco = null;
-    observador?.disconnect();
-    observador = null;
-    if (quadroUnico) cancelAnimationFrame(quadroUnico);
-    quadroUnico = 0;
-    efeito?.destroy();
-    efeito = null;
-    tela?.destroy();
-    tela = null;
-    aplicar = null;
-    restaurarFallback?.();
-    restaurarFallback = null;
+    stopLoop?.();
+    stopLoop = null;
+    observer_obj?.disconnect();
+    observer_obj = null;
+    if (singleFrame) cancelAnimationFrame(singleFrame);
+    singleFrame = 0;
+    effect_obj?.destroy();
+    effect_obj = null;
+    surface_obj?.destroy();
+    surface_obj = null;
+    apply = null;
+    restoreFallback?.();
+    restoreFallback = null;
   });
 
-  /** Entrega `time`, `delta`, `frame` e `resolution` aos shaders que pedirem. */
-  const alimentarRelogio = (): void => {
-    if (!efeito || automaticos.length === 0) return;
-    const pacote: Record<string, unknown> = {
-      time: relogio.time,
-      delta: relogio.delta,
-      frame: relogio.frame,
-      resolution: [tela?.width ?? 0, tela?.height ?? 0],
+  /** Delivers `time`, `delta`, `frame`, and `resolution` to requesting shaders. */
+  const feedClock = (): void => {
+    if (!effect_obj || automaticList.length === 0) return;
+    const package_data: Record<string, unknown> = {
+      time: clock_obj.time,
+      delta: clock_obj.delta,
+      frame: clock_obj.frame,
+      resolution: [surface_obj?.width ?? 0, surface_obj?.height ?? 0],
     };
-    const so: Record<string, unknown> = {};
-    for (const nome of automaticos) so[nome] = pacote[nome];
-    efeito.set(so);
+    const uniforms: Record<string, unknown> = {};
+    for (const name of automaticList) uniforms[name] = package_data[name];
+    effect_obj.set(uniforms);
   };
 
-  const desenhar = (gpu: GpuContext): void => {
-    alimentarRelogio();
-    gravarQuadro(gpu, (quadro) => quadro.pass(tela, efeito));
+  const draw = (gpu: GpuContext): void => {
+    feedClock();
+    gravarQuadro(gpu, (frame) => frame.pass(surface_obj, effect_obj));
   };
 
-  const rodando = (): boolean => !!pararLaco;
+  const isRunning = (): boolean => !!stopLoop;
 
-  const sincronizarLaco = (gpu: GpuContext): void => {
-    if (cancelado || !efeito) return;
-    const deveRodar = !pausado && visivel && !modifiers.once;
+  const syncLoop = (gpu: GpuContext): void => {
+    if (canceled || !effect_obj) return;
+    const shouldRun = !paused && visible && !modifiers.once;
 
-    if (deveRodar && !rodando()) {
-      pararLaco = frameLoop(gpu, (quadro) => {
-        // O relogio proprio nao zera quando o laco pausa e volta, entao a
-        // animacao continua de onde parou em vez de dar um salto.
-        relogio.tick();
-        alimentarRelogio();
-        quadro.pass(tela, efeito);
+    if (shouldRun && !isRunning()) {
+      stopLoop = frameLoop(gpu, (frame) => {
+        // The own clock doesn't reset when the loop pauses and resumes, so the
+        // animation continues from where it paused instead of jumping.
+        clock_obj.tick();
+        feedClock();
+        frame.pass(surface_obj, effect_obj);
       });
       canvas.setAttribute('data-gpu', 'ready');
       return;
     }
 
-    if (!deveRodar && rodando()) {
-      pararLaco?.();
-      pararLaco = null;
+    if (!shouldRun && isRunning()) {
+      stopLoop?.();
+      stopLoop = null;
       canvas.setAttribute('data-gpu', 'paused');
     }
   };
 
-  const montar = (gpu: GpuContext, fonte: string): void => {
-    tela = surface(gpu, canvas, { dpr: faixaDpr(canvas), alpha: true });
-    efeito = criarEffect(gpu, fonte, {
-      set: valores,
-      format: tela.format || undefined,
-      label: `v-shader ${descreverElemento(canvas)}`,
+  const mount = (gpu: GpuContext, source: string): void => {
+    surface_obj = surface(gpu, canvas, { dpr: dprRange(canvas), alpha: true });
+    effect_obj = criarEffect(gpu, source, {
+      set: values,
+      format: surface_obj.format || undefined,
+      label: `v-shader ${describeElement(canvas)}`,
     });
 
-    if (!efeito.ok) {
+    if (!effect_obj.ok) {
       canvas.setAttribute('data-gpu', 'error');
-      efeito.destroy();
-      efeito = null;
-      tela.destroy();
-      tela = null;
+      effect_obj.destroy();
+      effect_obj = null;
+      surface_obj.destroy();
+      surface_obj = null;
       return;
     }
 
-    aplicar = (v) => efeito?.set(v);
-    const campos = efeito.reflection.uniform?.struct?.fields ?? [];
-    automaticos = UNIFORMS_AUTOMATICOS.filter((nome) => campos.some((f) => f.name === nome));
+    apply = (v) => effect_obj?.set(v);
+    const fields = effect_obj.reflection.uniform?.struct?.fields ?? [];
+    automaticList = AUTOMATIC_UNIFORMS.filter((name) => fields.some((f) => f.name === name));
 
     if (pausedExpr) {
       effect(() => {
-        pausado = !!evaluate<unknown>(pausedExpr);
-        sincronizarLaco(gpu);
+        paused = !!evaluate<unknown>(pausedExpr);
+        syncLoop(gpu);
       });
     }
 
     if (modifiers.visible && typeof IntersectionObserver !== 'undefined') {
-      observador = new IntersectionObserver((entradas) => {
-        for (const entrada of entradas) visivel = entrada.isIntersecting;
-        sincronizarLaco(gpu);
+      observer_obj = new IntersectionObserver((entries) => {
+        for (const entry of entries) visible = entry.isIntersecting;
+        syncLoop(gpu);
       });
-      observador.observe(canvas);
+      observer_obj.observe(canvas);
     } else {
-      visivel = true;
+      visible = true;
     }
 
     if (modifiers.once) {
-      // Um quadro so, depois do primeiro rAF, para o canvas ja ter medida.
-      quadroUnico = requestAnimationFrame(() => {
-        quadroUnico = 0;
-        if (cancelado) return;
-        relogio.tick();
-        desenhar(gpu);
+      // One frame only, after the first rAF, so the canvas has a size.
+      singleFrame = requestAnimationFrame(() => {
+        singleFrame = 0;
+        if (canceled) return;
+        clock_obj.tick();
+        draw(gpu);
         canvas.setAttribute('data-gpu', 'ready');
       });
       return;
     }
 
     canvas.setAttribute('data-gpu', 'ready');
-    sincronizarLaco(gpu);
+    syncLoop(gpu);
   };
 
   canvas.setAttribute('data-gpu', 'loading');
 
   void (async (): Promise<void> => {
-    const fonte = await resolveShaderSource(expression);
-    if (cancelado) return;
-    if (!fonte) {
+    const source = await resolveShaderSource(expression);
+    if (canceled) return;
+    if (!source) {
       canvas.setAttribute('data-gpu', 'error');
-      restaurarFallback = revelarFallback(canvas, montarNo);
+      restoreFallback = revealFallback(canvas, mountOn);
       return;
     }
 
     const gpu = await shared();
-    if (cancelado) return;
+    if (canceled) return;
     if (!gpu) {
-      restaurarFallback = semSuporte(canvas, 'o adaptador WebGPU nao abriu', montarNo);
+      restoreFallback = noSupport(canvas, 'the WebGPU adapter did not open', mountOn);
       return;
     }
 
     try {
-      montar(gpu, fonte);
+      mount(gpu, source);
     } catch (err) {
       canvas.setAttribute('data-gpu', 'error');
-      handleError(err, `v-shader em ${descreverElemento(canvas)}`);
+      handleError(err, `v-shader at ${describeElement(canvas)}`);
     }
   })();
 });

@@ -1,16 +1,16 @@
 /**
  * @module store
  *
- * Estado global reativo. Um store e um objeto reativo nomeado, acessivel de
- * qualquer expressao pela variavel magica `$store`.
+ * Reactive global state. A store is a named reactive object, accessible from
+ * any expression via the magic variable `$store`.
  *
  * ```js
- * V.store('carrinho', { itens: [], get total() { return this.itens.length } })
+ * V.store('cart', { items: [], get total() { return this.items.length } })
  * ```
  *
  * ```html
- * <span>{ $store.carrinho.total }</span>
- * <button v-click="$store.carrinho.itens.push(produto)">Adicionar</button>
+ * <span>{ $store.cart.total }</span>
+ * <button v-click="$store.cart.items.push(product)">Add</button>
  * ```
  */
 
@@ -21,24 +21,24 @@ export type StoreDefinition = Record<string, any>;
 const stores = new Map<string, Record<string, any>>();
 
 /**
- * Versao do conjunto de stores. Ler esta referencia dentro do proxy `$store`
- * faz com que criar um store novo atualize quem ja estava na tela esperando
- * por ele, mesmo que o registro aconteca depois do carregamento.
+ * Version of the store set. Reading this reference inside the `$store` proxy
+ * causes creating a new store to update anyone already on screen waiting for it,
+ * even if registration happens after load.
  */
 const versao = ref(0);
 const persistHandles = new Map<string, WatchStopHandle>();
 
 export interface StoreOptions {
-  /** Salva o store no localStorage e restaura no proximo carregamento. */
+  /** Saves the store to localStorage and restores on next load. */
   persist?: boolean | string;
 }
 
 /**
- * Cria ou recupera um store.
+ * Creates or retrieves a store.
  *
- * Passando apenas o nome, devolve o store existente. Passando a definicao,
- * cria o store. Metodos declarados na definicao recebem `this` apontando para
- * o proprio store.
+ * Passing only the name returns the existing store. Passing the definition
+ * creates the store. Methods declared in the definition receive `this` pointing
+ * to the store itself.
  */
 export function store<T extends StoreDefinition>(
   name: string,
@@ -56,20 +56,20 @@ export function store<T extends StoreDefinition>(
   }
 
   if (existing) {
-    // Redefinir um store existente atualiza os valores sem trocar a referencia.
+    // Redefining an existing store updates values without changing the reference.
     Object.assign(existing, definition);
     return existing as T;
   }
 
   const key = typeof options.persist === 'string' ? options.persist : `voodoo:store:${name}`;
 
-  // Copia por descritor, e nao por espalhamento.
+  // Copy by descriptor, not by spread.
   //
-  // `{ ...definition }` chama o getter na hora da copia e guarda o resultado,
-  // entao `get total() { return this.itens.length }` viraria um numero fixo,
-  // que e exatamente o contrario do que a pessoa escreveu. Com os descritores o
-  // getter continua sendo getter, e o proxy reativo o executa a cada leitura,
-  // rastreando as dependencias de dentro dele.
+  // `{ ...definition }` calls the getter at copy time and stores the result,
+  // so `get total() { return this.items.length }` would become a fixed number,
+  // which is exactly opposite to what the person wrote. With descriptors, the
+  // getter remains a getter, and the reactive proxy executes it on each read,
+  // tracking dependencies inside it.
   const descritores = Object.getOwnPropertyDescriptors(definition);
   const initial: Record<string, any> = Object.defineProperties({}, descritores);
 
@@ -78,23 +78,23 @@ export function store<T extends StoreDefinition>(
       const saved = localStorage.getItem(key);
       if (saved) {
         const salvo = JSON.parse(saved) as Record<string, unknown>;
-        // So repoe o que e dado. Escrever por cima de um getter sem setter
-        // falharia, e valor derivado nao precisa ser restaurado: ele se
-        // recalcula sozinho a partir do que foi.
+        // Only restores what is given. Writing over a getter without a setter
+        // would fail, and derived values don't need to be restored: they
+        // recalculate themselves from what was saved.
         for (const [chave, valor] of Object.entries(salvo)) {
           if (descritores[chave] && !('value' in descritores[chave])) continue;
           initial[chave] = valor;
         }
       }
     } catch {
-      // Dados corrompidos: mantem o estado inicial da definicao.
+      // Corrupted data: keep the initial state from the definition.
     }
   }
 
   const created = reactive(initial) as T;
 
-  // Liga os metodos ao proprio store. A leitura e por descritor para nao
-  // disparar os getters sem necessidade.
+  // Binds methods to the store itself. Reading is by descriptor to avoid
+  // triggering getters unnecessarily.
   for (const [prop, descritor] of Object.entries(descritores)) {
     const value = descritor.value;
     if (typeof value === 'function') {
@@ -112,7 +112,7 @@ export function store<T extends StoreDefinition>(
         try {
           localStorage.setItem(key, JSON.stringify(stripFunctions(created)));
         } catch {
-          // Cota excedida: o store continua funcionando em memoria.
+          // Quota exceeded: the store keeps working in memory.
         }
       },
       { deep: true }
@@ -125,8 +125,8 @@ export function store<T extends StoreDefinition>(
 
 function stripFunctions(source: Record<string, any>): Record<string, any> {
   const out: Record<string, any> = {};
-  // Valor derivado de getter fica de fora: ele se recalcula sozinho no proximo
-  // carregamento, e gravar o resultado so criaria chance de ficar desatualizado.
+  // Getter-derived values are left out: they recalculate themselves on next load,
+  // and saving the result would only create a chance to get out of sync.
   const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === 'function') continue;
@@ -136,12 +136,12 @@ function stripFunctions(source: Record<string, any>): Record<string, any> {
   return out;
 }
 
-/** Todos os stores registrados, usado por `$store` e pelas devtools. */
+/** All registered stores, used by `$store` and devtools. */
 export const allStores: Record<string, Record<string, any>> = new Proxy(
   {},
   {
     get: (_t, key: string) => {
-      void versao.value; // assina a criacao de stores novos
+      void versao.value; // subscribes to new store creation
       return stores.get(key);
     },
     has: (_t, key: string) => {
@@ -153,14 +153,14 @@ export const allStores: Record<string, Record<string, any>> = new Proxy(
   }
 );
 
-/** Remove um store e para a persistencia associada. */
+/** Removes a store and stops its associated persistence. */
 export function removeStore(name: string): void {
   persistHandles.get(name)?.();
   persistHandles.delete(name);
   stores.delete(name);
 }
 
-/** Lista os nomes dos stores existentes. */
+/** Lists the names of existing stores. */
 export function storeNames(): string[] {
   return [...stores.keys()];
 }

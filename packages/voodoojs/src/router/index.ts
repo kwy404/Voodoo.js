@@ -1,10 +1,10 @@
 /**
  * @module router
  *
- * Roteador de aplicacao de pagina unica, sem nenhuma dependencia externa.
+ * Single-page application router with no external dependencies.
  *
- * Dois modos: `history`, que usa a History API e URLs limpas, e `hash`, que
- * guarda a rota depois do `#` e funciona ate abrindo o arquivo direto do disco.
+ * Two modes: `history`, which uses the History API and clean URLs, and `hash`, which
+ * stores the route after `#` and works even when opening the file directly from disk.
  *
  * ```js
  * V.router({
@@ -42,62 +42,62 @@ import { devtoolsBus } from '../devtools/bus';
 import { uid } from '../utils';
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
-/** Definicao de uma rota, associada a um padrao como `/usuarios/:id`. */
+/** Definition of a route, associated with a pattern like `/usuarios/:id`. */
 export interface RouteRecord {
-  /** Nome do componente registrado que sera montado dentro de `v-router-view`. */
+  /** Name of the registered component that will be mounted inside `v-router-view`. */
   component?: string;
-  /** URL de um HTML remoto carregado e inserido no lugar do componente. */
+  /** URL of remote HTML loaded and inserted in place of the component. */
   view?: string;
-  /** Titulo aplicado em `document.title` ao entrar na rota. */
+  /** Title applied to `document.title` when entering the route. */
   title?: string;
-  /** Nome da rota, util para `$route.name` e para navegacao por nome. */
+  /** Route name, useful for `$route.name` and for navigation by name. */
   name?: string;
-  /** Dados livres da rota, disponiveis em `$route.meta`. */
+  /** Free-form data of the route, available in `$route.meta`. */
   meta?: Record<string, unknown>;
-  /** Redireciona para outro caminho assim que a rota casa. */
+  /** Redirects to another path as soon as the route matches. */
   redirect?: string;
-  /** Guard exclusivo desta rota, executado antes do `beforeEach` global. */
+  /** Guard exclusive to this route, executed before the global `beforeEach`. */
   beforeEnter?: NavigationGuard;
 }
 
-/** Estado da rota atual. E o objeto exposto por `$route`. */
+/** Current route state. It is the object exposed by `$route`. */
 export interface RouteLocation {
-  /** Caminho sem query e sem hash, sempre comecando com barra. */
+  /** Path without query and without hash, always starting with a slash. */
   path: string;
-  /** Caminho completo, com query e hash. */
+  /** Full path, with query and hash. */
   fullPath: string;
-  /** Parametros extraidos do padrao, como `{ id: '42' }`. */
+  /** Parameters extracted from the pattern, like `{ id: '42' }`. */
   params: Record<string, string>;
-  /** Query string ja convertida em objeto. */
+  /** Query string already converted to an object. */
   query: Record<string, string>;
-  /** Ancora da URL, sem o `#`. */
+  /** URL anchor, without the `#`. */
   hash: string;
-  /** Nome declarado na rota casada. */
+  /** Name declared in the matched route. */
   name: string;
-  /** Metadados declarados na rota casada. */
+  /** Metadata declared in the matched route. */
   meta: Record<string, unknown>;
-  /** Padrao que casou, como `/usuarios/:id`. `null` quando nada casou. */
+  /** Pattern that matched, like `/usuarios/:id`. `null` when nothing matched. */
   matched: string | null;
 }
 
 /**
- * Guard de navegacao. Devolva `false` para cancelar, uma string para
- * redirecionar, ou `true`, `undefined` ou nada para deixar seguir.
+ * Navigation guard. Return `false` to cancel, a string to redirect,
+ * or `true`, `undefined`, or nothing to allow passage.
  */
 export type NavigationGuard = (
   to: RouteLocation,
   from: RouteLocation
 ) => boolean | string | void | Promise<boolean | string | void>;
 
-/** Hook executado depois que a navegacao foi concluida. */
+/** Hook executed after navigation is completed. */
 export type NavigationHook = (to: RouteLocation, from: RouteLocation) => void;
 
 /**
- * Controle de rolagem. Devolva a posicao vertical desejada, ou `false` para
- * assumir a rolagem manualmente.
+ * Scroll control. Return the desired vertical position, or `false` to
+ * handle scrolling manually.
  */
 export type ScrollBehavior = (
   to: RouteLocation,
@@ -106,41 +106,41 @@ export type ScrollBehavior = (
 ) => number | false | void;
 
 export interface RouterOptions {
-  /** `history` usa URLs limpas, `hash` guarda a rota depois do `#`. */
+  /** `history` uses clean URLs, `hash` stores the route after `#`. */
   mode?: 'history' | 'hash';
-  /** Prefixo comum de todas as rotas no modo `history`. Padrao `/`. */
+  /** Common prefix for all routes in `history` mode. Default `/`. */
   base?: string;
-  /** Mapa de padrao para definicao de rota. */
+  /** Map of pattern to route definition. */
   routes: Record<string, RouteRecord>;
-  /** Guard global executado antes de cada navegacao. */
+  /** Global guard executed before each navigation. */
   beforeEach?: NavigationGuard;
-  /** Hook global executado depois de cada navegacao. */
+  /** Global hook executed after each navigation. */
   afterEach?: NavigationHook;
-  /** Classe aplicada por `v-link` quando a rota comeca com o destino. */
+  /** Class applied by `v-link` when the route starts with the target. */
   linkActiveClass?: string;
-  /** Classe aplicada por `v-link` quando a rota e exatamente o destino. */
+  /** Class applied by `v-link` when the route is exactly the target. */
   linkExactActiveClass?: string;
-  /** Usa a View Transitions API na troca de pagina. Padrao `true`. */
+  /** Uses the View Transitions API when switching pages. Default `true`. */
   transition?: boolean;
-  /** Modelo do titulo, com `%s` no lugar do titulo da rota. */
+  /** Title template, with `%s` in place of the route title. */
   titleTemplate?: string;
-  /** Controle fino da rolagem apos cada navegacao. */
+  /** Fine control of scrolling after each navigation. */
   scrollBehavior?: ScrollBehavior;
 }
 
 export interface NavigateOptions {
-  /** Substitui a entrada atual do historico em vez de empilhar uma nova. */
+  /** Replaces the current history entry instead of stacking a new one. */
   replace?: boolean;
-  /** Estado extra guardado na entrada do historico. */
+  /** Extra state saved in the history entry. */
   state?: Record<string, unknown>;
-  /** Desliga a rolagem automatica desta navegacao. */
+  /** Disables automatic scrolling for this navigation. */
   scroll?: boolean;
-  /** Navega mesmo quando o destino e igual a rota atual. */
+  /** Navigates even when the target is the same as the current route. */
   force?: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// Estado interno
+// Internal state
 // ---------------------------------------------------------------------------
 
 interface RouteSegment {
@@ -180,10 +180,10 @@ const settings: RouterSettings = {
   scrollBehavior: null,
 };
 
-/** Chave usada para guardar a identidade da entrada no historico. */
+/** Key used to store the identity of the history entry. */
 const HISTORY_KEY = '__voodooRoute';
 
-/** Limite de redirecionamentos encadeados, para nao travar a pagina. */
+/** Limit of chained redirects, to prevent freezing the page. */
 const MAX_REDIRECTS = 10;
 
 const compiled: CompiledRoute[] = [];
@@ -208,16 +208,16 @@ function emptyLocation(): RouteLocation {
 }
 
 /**
- * Rota atual, reativa. Qualquer expressao que leia `$route` se atualiza sozinha
- * quando a navegacao acontece.
+ * Current route, reactive. Any expression that reads `$route` updates itself
+ * when navigation happens.
  */
 export const route: RouteLocation = reactive(emptyLocation());
 
 // ---------------------------------------------------------------------------
-// Analise e montagem de URLs
+// URL parsing and building
 // ---------------------------------------------------------------------------
 
-/** Normaliza o caminho: barra inicial, sem barras duplas, sem barra final. */
+/** Normalizes the path: leading slash, no double slashes, no trailing slash. */
 function normalizePath(path: string): string {
   let out = path || '/';
   if (!out.startsWith('/')) out = `/${out}`;
@@ -245,7 +245,7 @@ function stringifyQuery(query: Record<string, string>): string {
   return params.toString();
 }
 
-/** Separa um destino como `/posts/1?tab=x#topo` em caminho, query e hash. */
+/** Separates a target like `/posts/1?tab=x#anchor` into path, query, and hash. */
 function splitTarget(target: string): {
   path: string;
   query: Record<string, string>;
@@ -275,7 +275,7 @@ function stripBase(pathname: string): string {
   return pathname;
 }
 
-/** Le a URL do navegador de acordo com o modo configurado. */
+/** Reads the browser URL according to the configured mode. */
 function readLocation(): { path: string; query: Record<string, string>; hash: string } {
   if (typeof window === 'undefined') return { path: '/', query: {}, hash: '' };
   if (settings.mode === 'hash') {
@@ -293,7 +293,7 @@ function fullPathOf(path: string, query: Record<string, string>, hash: string): 
   return `${path}${qs ? `?${qs}` : ''}${hash ? `#${hash}` : ''}`;
 }
 
-/** Monta a URL que sera escrita no historico. */
+/** Builds the URL that will be written to history. */
 function buildUrl(location: RouteLocation): string {
   const suffix = fullPathOf(location.path, location.query, location.hash);
   if (settings.mode === 'hash') {
@@ -305,16 +305,15 @@ function buildUrl(location: RouteLocation): string {
 }
 
 // ---------------------------------------------------------------------------
-// Compilacao e casamento de rotas
+// Route compilation and matching
 // ---------------------------------------------------------------------------
 
 /**
- * Converte um padrao em segmentos e calcula a especificidade.
+ * Converts a pattern into segments and calculates specificity.
  *
- * Pesos por segmento: estatico vale mais que parametro, parametro vale mais que
- * opcional, e o curinga derruba a pontuacao para o fim da fila. Assim
- * `/usuarios/novo` sempre vence `/usuarios/:id`, e `*` so entra quando nada
- * mais casou.
+ * Segment weights: static is worth more than parameter, parameter is worth more than
+ * optional, and wildcard lowers the score to the end of the queue. Thus
+ * `/usuarios/novo` always beats `/usuarios/:id`, and `*` only enters when nothing else matched.
  */
 function compileRoute(pattern: string, record: RouteRecord): CompiledRoute {
   const clean = pattern === '*' ? '*' : normalizePath(pattern);
@@ -342,7 +341,7 @@ function compileRoute(pattern: string, record: RouteRecord): CompiledRoute {
   return { pattern: clean, segments, score, record };
 }
 
-/** Tenta casar um caminho com um padrao ja compilado. */
+/** Attempts to match a path with an already-compiled pattern. */
 function matchSegments(
   segments: RouteSegment[],
   parts: string[]
@@ -380,7 +379,7 @@ function decodeSafe(value: string): string {
   }
 }
 
-/** Procura a rota mais especifica que casa com o caminho. */
+/** Searches for the most specific route that matches the path. */
 function matchRoute(path: string): { route: CompiledRoute; params: Record<string, string> } | null {
   const parts = path.split('/').filter(Boolean);
   let best: { route: CompiledRoute; params: Record<string, string> } | null = null;
@@ -394,18 +393,18 @@ function matchRoute(path: string): { route: CompiledRoute; params: Record<string
   return best;
 }
 
-/** Devolve a definicao associada a um padrao ja casado. */
+/** Returns the definition associated with an already-matched pattern. */
 function findRecord(pattern: string | null): RouteRecord | null {
   if (!pattern) return null;
   return compiled.find((item) => item.pattern === pattern)?.record ?? null;
 }
 
 // ---------------------------------------------------------------------------
-// Resolucao e aplicacao da rota
+// Route resolution and application
 // ---------------------------------------------------------------------------
 
 /**
- * Resolve um destino em uma rota completa, sem navegar.
+ * Resolves a target into a complete route without navigating.
  *
  * ```js
  * V.router.resolve('/usuarios/7').params.id // '7'
@@ -434,7 +433,7 @@ function locationFor(
   };
 }
 
-/** Copia simples da rota atual, entregue aos guards sem proxy reativo. */
+/** Simple copy of the current route, delivered to guards without a reactive proxy. */
 function snapshot(): RouteLocation {
   return {
     path: route.path,
@@ -467,7 +466,7 @@ function applyLocation(location: RouteLocation): void {
 }
 
 // ---------------------------------------------------------------------------
-// Guards
+// Navigation guards
 // ---------------------------------------------------------------------------
 
 async function runGuards(to: RouteLocation, from: RouteLocation): Promise<boolean | string> {
@@ -508,7 +507,7 @@ function scheduleScroll(to: RouteLocation, from: RouteLocation, saved: number | 
 
   queuePostFlush(() => {
     requestAnimationFrame(() => {
-      // Rolar para onde a pagina ja esta seria trabalho a toa.
+      // Rolling to where the page already is would be wasted work.
       const moveTo = (top: number): void => {
         if (Math.abs(window.scrollY - top) > 1) window.scrollTo(0, top);
       };
@@ -523,8 +522,8 @@ function scheduleScroll(to: RouteLocation, from: RouteLocation, saved: number | 
       }
 
       if (to.hash) {
-        // Nomes com caracteres estranhos quebrariam o seletor, entao o `name`
-        // so e consultado quando o texto e simples.
+        // Names with strange characters would break the selector, so `name`
+        // is only consulted when the text is simple.
         const anchor =
           document.getElementById(to.hash) ??
           (/^[\w-]+$/.test(to.hash) ? document.querySelector(`[name="${to.hash}"]`) : null);
@@ -540,18 +539,18 @@ function scheduleScroll(to: RouteLocation, from: RouteLocation, saved: number | 
 }
 
 // ---------------------------------------------------------------------------
-// Navegacao
+// Navigation
 // ---------------------------------------------------------------------------
 
 /**
- * Navega para um caminho sem recarregar a pagina.
+ * Navigates to a path without reloading the page.
  *
  * ```js
  * await V.navigate('/usuarios/42')
  * await V.navigate('/login', { replace: true })
  * ```
  *
- * @returns `true` quando a navegacao aconteceu, `false` quando um guard cancelou.
+ * @returns `true` when navigation happened, `false` when a guard canceled.
  */
 export async function navigate(target: string, options: NavigateOptions = {}): Promise<boolean> {
   if (typeof window === 'undefined') return false;
@@ -564,7 +563,7 @@ export async function navigate(target: string, options: NavigateOptions = {}): P
 
   for (let redirects = 0; ; redirects++) {
     if (redirects > MAX_REDIRECTS) {
-      warn(`Router: excesso de redirecionamentos ao navegar para "${target}".`);
+      warn(`Router: too many redirects when navigating to "${target}".`);
       return false;
     }
     const verdict = await runGuards(destination, from);
@@ -605,7 +604,7 @@ export async function navigate(target: string, options: NavigateOptions = {}): P
   return true;
 }
 
-/** Trata `popstate` e `hashchange`, ou seja, os botoes de voltar e avancar. */
+/** Handles `popstate` and `hashchange`, i.e., the back and forward buttons. */
 async function onHistoryChange(event: PopStateEvent | HashChangeEvent): Promise<void> {
   const { path, query, hash } = readLocation();
   const destination = locationFor(path, query, hash);
@@ -614,7 +613,7 @@ async function onHistoryChange(event: PopStateEvent | HashChangeEvent): Promise<
 
   const verdict = await runGuards(destination, from);
   if (verdict === false) {
-    // Guard recusou: devolve a URL anterior sem criar entrada nova.
+    // Guard refused: returns the previous URL without creating a new entry.
     window.history.replaceState(
       { [HISTORY_KEY]: currentKey },
       '',
@@ -652,7 +651,7 @@ function historyListener(event: PopStateEvent | HashChangeEvent): void {
   void onHistoryChange(event);
 }
 
-/** Liga os ouvintes do historico uma unica vez. */
+/** Connects the history listeners once. */
 function startListening(): void {
   if (listening || typeof window === 'undefined') return;
   listening = true;
@@ -664,7 +663,7 @@ function startListening(): void {
   window.addEventListener('beforeunload', saveScroll);
 }
 
-/** Desliga os ouvintes do historico. Util em testes e ao trocar de app. */
+/** Disconnects the history listeners. Useful in tests and when switching apps. */
 export function stopRouter(): void {
   if (!listening || typeof window === 'undefined') return;
   listening = false;
@@ -673,7 +672,7 @@ export function stopRouter(): void {
   window.removeEventListener('beforeunload', saveScroll);
 }
 
-/** Aplica a rota da URL atual, executando os guards da entrada inicial. */
+/** Applies the route from the current URL, executing guards for the initial entry. */
 async function enterInitialRoute(): Promise<void> {
   if (typeof window === 'undefined') return;
   const { path, query, hash } = readLocation();
@@ -682,7 +681,7 @@ async function enterInitialRoute(): Promise<void> {
 
   for (let redirects = 0; ; redirects++) {
     if (redirects > MAX_REDIRECTS) {
-      warn('Router: excesso de redirecionamentos na rota inicial.');
+      warn('Router: too many redirects in the initial route.');
       return;
     }
     const verdict = await runGuards(destination, from);
@@ -702,10 +701,10 @@ async function enterInitialRoute(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
-/** Registra ou substitui uma rota depois da configuracao inicial. */
+/** Registers or replaces a route after initial configuration. */
 export function addRoute(pattern: string, record: RouteRecord): void {
   const compiledRoute = compileRoute(pattern, record);
   const index = compiled.findIndex((item) => item.pattern === compiledRoute.pattern);
@@ -713,19 +712,19 @@ export function addRoute(pattern: string, record: RouteRecord): void {
   else compiled.push(compiledRoute);
 }
 
-/** Remove uma rota pelo padrao. */
+/** Removes a route by pattern. */
 export function removeRoute(pattern: string): void {
   const clean = pattern === '*' ? '*' : normalizePath(pattern);
   const index = compiled.findIndex((item) => item.pattern === clean);
   if (index > -1) compiled.splice(index, 1);
 }
 
-/** Lista os padroes registrados, do mais especifico para o menos especifico. */
+/** Lists the registered patterns, from most specific to least specific. */
 export function routePatterns(): string[] {
   return [...compiled].sort((a, b) => b.score - a.score).map((item) => item.pattern);
 }
 
-/** Limpa o cache de HTML remoto usado pelas rotas com `view`. */
+/** Clears the remote HTML cache used by routes with `view`. */
 export function clearViewCache(url?: string): void {
   if (url) viewCache.delete(url);
   else viewCache.clear();
@@ -755,36 +754,36 @@ function configureRouter(options: RouterOptions): RouterApi {
 
 export interface RouterApi {
   (options: RouterOptions): RouterApi;
-  /** Rota atual, reativa. */
+  /** Current route, reactive. */
   readonly current: RouteLocation;
-  /** Empilha uma nova entrada no historico. */
+  /** Stacks a new entry in history. */
   push(target: string, options?: NavigateOptions): Promise<boolean>;
-  /** Substitui a entrada atual do historico. */
+  /** Replaces the current history entry. */
   replace(target: string, options?: NavigateOptions): Promise<boolean>;
-  /** Alias de `push`, mesma funcao exposta em `V.navigate`. */
+  /** Alias of `push`, same function exposed in `V.navigate`. */
   navigate(target: string, options?: NavigateOptions): Promise<boolean>;
-  /** Volta uma entrada no historico. */
+  /** Goes back one entry in history. */
   back(): void;
-  /** Avanca uma entrada no historico. */
+  /** Goes forward one entry in history. */
   forward(): void;
-  /** Anda `delta` entradas no historico. */
+  /** Goes `delta` entries in history. */
   go(delta: number): void;
-  /** Resolve um destino sem navegar. */
+  /** Resolves a destination without navigating. */
   resolve(target: string): RouteLocation;
   addRoute(pattern: string, record: RouteRecord): void;
   removeRoute(pattern: string): void;
-  /** Padroes registrados, do mais especifico para o menos especifico. */
+  /** Registered patterns, from most specific to least specific. */
   patterns(): string[];
-  /** Desliga os ouvintes de historico. */
+  /** Disconnects the history listeners. */
   stop(): void;
   clearViewCache(url?: string): void;
-  /** `true` depois que `V.router({...})` foi chamado. */
+  /** `true` after `V.router({...})` is called. */
   readonly ready: boolean;
 }
 
 /**
- * Roteador da Voodoo. Chamado como funcao configura as rotas, e traz os
- * comandos de navegacao como metodos.
+ * Voodoo's router. Called as a function configures the routes and brings
+ * navigation commands as methods.
  *
  * ```js
  * V.router({ routes: { '/': { component: 'home' } } })
@@ -793,13 +792,12 @@ export interface RouterApi {
  * ```
  */
 /**
- * Os membros entram por `defineProperties`, e nao por `Object.assign`, porque
- * `Object.assign` le cada getter uma unica vez e copia o valor. Com ele
- * `V.router.ready` ficava preso no `false` do carregamento do modulo e nunca
- * mudava, mesmo depois de `V.router({...})`. E a mesma armadilha que o modulo
- * de i18n ja documenta.
+ * The members enter via `defineProperties`, not `Object.assign`, because
+ * `Object.assign` reads each getter once and copies the value. With it,
+ * `V.router.ready` would get stuck at the module's initial `false` and never change,
+ * even after `V.router({...})`. It's the same trap that the i18n module already documents.
  */
-const membrosDoRouter = {
+const routerMembers = {
   get current(): RouteLocation {
     return route;
   },
@@ -829,11 +827,11 @@ const membrosDoRouter = {
 
 export const router: RouterApi = Object.defineProperties(
   configureRouter,
-  Object.getOwnPropertyDescriptors(membrosDoRouter)
+  Object.getOwnPropertyDescriptors(routerMembers)
 ) as unknown as RouterApi;
 
 // ---------------------------------------------------------------------------
-// Variaveis magicas
+// Magic variables
 // ---------------------------------------------------------------------------
 
 magic('$route', () => route);
@@ -843,7 +841,7 @@ magic('$router', () => router);
 // v-router-view
 // ---------------------------------------------------------------------------
 
-/** Carrega e memoriza o HTML de uma rota declarada com `view`. */
+/** Loads and caches the HTML of a route declared with `view`. */
 async function loadView(url: string): Promise<string> {
   const cached = viewCache.get(url);
   if (cached !== undefined) return cached;
@@ -853,18 +851,18 @@ async function loadView(url: string): Promise<string> {
   return text;
 }
 
-/** Assinatura dos parametros, usada para detectar troca de `/usuarios/:id`. */
+/** Signature of parameters, used to detect changes in `/usuarios/:id`. */
 function paramsSignature(params: Record<string, string>): string {
   const keys = Object.keys(params).sort();
   return keys.map((key) => `${key}=${params[key]}`).join('&');
 }
 
 /**
- * `v-router-view` renderiza a rota atual.
+ * `v-router-view` renders the current route.
  *
- * Rota com `component` monta o componente registrado. Rota com `view` busca o
- * HTML remoto e o insere ja com as directives ligadas. O conteudo original do
- * elemento fica guardado e volta quando nenhuma rota casa.
+ * Route with `component` mounts the registered component. Route with `view` fetches
+ * remote HTML and inserts it with directives already connected. The element's original
+ * content is saved and restored when no route matches.
  *
  * ```html
  * <main v-router-view>Carregando...</main>
@@ -920,7 +918,7 @@ defineDirective(
     };
 
     effect(() => {
-      // Le a rota casada e os parametros para reagir as duas mudancas.
+      // Reads the matched route and parameters to react to both changes.
       const matched = route.matched;
       void paramsSignature(route.params);
       const record = findRecord(matched);
@@ -941,7 +939,7 @@ defineDirective(
 
 const EXTERNAL_PROTOCOL = /^[a-z][a-z0-9+.-]*:/i;
 
-/** Decide se um href deve ficar com o comportamento nativo do navegador. */
+/** Decides if an href should keep the browser's native behavior. */
 function isExternalHref(href: string): boolean {
   if (!href) return true;
   if (href.startsWith('//')) return true;
@@ -949,11 +947,11 @@ function isExternalHref(href: string): boolean {
   return false;
 }
 
-/** Le o destino declarado em `v-link`, aceitando href, texto ou expressao. */
+/** Reads the destination declared in `v-link`, accepting href, text, or expression. */
 function linkTarget(el: HTMLElement, expression: string, evaluate: <T>(e?: string) => T): string {
   const raw = expression.trim();
   if (raw) {
-    // Caminho literal como `/sobre` nao e uma expressao valida, entao vale como texto.
+    // A literal path like `/sobre` is not a valid expression, so it counts as text.
     if (raw.startsWith('/') || raw.startsWith('#')) return raw;
     const value = evaluate<unknown>(raw);
     if (typeof value === 'string' && value) return value;
@@ -964,20 +962,20 @@ function linkTarget(el: HTMLElement, expression: string, evaluate: <T>(e?: strin
   return href;
 }
 
-/** `true` quando a rota atual esta dentro do destino informado. */
+/** `true` when the current route is within the informed destination. */
 function isActivePath(target: string, exact: boolean): boolean {
   const { path } = splitTarget(target);
-  // A raiz so fica ativa nela mesma, senao ficaria ativa em todas as telas.
+  // The root is only active in itself, otherwise it would be active on all screens.
   if (path === '/' || exact) return route.path === path;
   return route.path === path || route.path.startsWith(`${path}/`);
 }
 
 /**
- * `v-link` transforma qualquer `<a href>` em navegacao interna.
+ * `v-link` transforms any `<a href>` into internal navigation.
  *
- * Cliques com ctrl, cmd, shift ou alt, cliques que nao sejam com o botao
- * principal, links com `target`, com `download`, com `rel="external"` e links
- * para outro dominio continuam com o comportamento nativo.
+ * Clicks with ctrl, cmd, shift or alt, clicks that aren't with the main button,
+ * links with `target`, with `download`, with `rel="external"` and links to another
+ * domain continue with native behavior.
  *
  * ```html
  * <a v-link href="/usuarios">Usuarios</a>
@@ -1032,7 +1030,7 @@ defineDirective('link', ({ el, expression, modifiers, effect, cleanup, evaluate 
 // ---------------------------------------------------------------------------
 
 /**
- * `v-route-active` aplica uma classe quando a rota atual casa com o caminho.
+ * `v-route-active` applies a class when the current route matches the path.
  *
  * ```html
  * <li v-route-active="/usuarios">Usuarios</li>

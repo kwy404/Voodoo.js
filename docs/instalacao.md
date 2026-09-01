@@ -1,57 +1,57 @@
-# Instalação
+# Installation
 
-Existem três caminhos: CDN, npm e download direto. Todos entregam a mesma biblioteca.
+There are three ways: CDN, npm, and direct download. All deliver the same library.
 
-## CDN, o caminho mais curto
+## CDN, the shortest way
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
 ```
 
-Isso é tudo. Ao carregar, a biblioteca publica `window.V` (e `window.Voodoo`, o mesmo objeto),
-aplica o tema salvo, aplica a paleta salva e percorre o `document.body` inicializando os atributos
-`v-*` assim que o DOM fica pronto.
+That's it. On load, the library publishes `window.V` (and `window.Voodoo`, the same object), applies
+the saved theme, applies the saved palette, and walks `document.body` initializing `v-*` attributes
+as soon as the DOM is ready.
 
-Para o build completo, com gráficos, animações, roteador, idiomas, inspetor e os componentes
-prontos:
+For the full build, with charts, animations, router, languages, inspector, and ready-made
+components:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js" defer></script>
 ```
 
-O `unpkg` também funciona:
+`unpkg` also works:
 
 ```html
 <script src="https://unpkg.com/voodoojs/dist/voodoo.min.js" defer></script>
 ```
 
-Fixe a versão em produção, para que uma publicação nova nunca mude a sua página sem aviso:
+Pin the version in production so a new release never changes your page without warning:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.1.0/dist/voodoo.min.js" defer></script>
 ```
 
-## Qual bundle escolher
+## Which bundle to choose
 
 | | `voodoo.min.js` | `voodoo.full.min.js` |
 | --- | --- | --- |
-| Tamanho aproximado | 75 KB gzip | 120 KB gzip |
-| Reatividade, directives, componentes | sim | sim |
-| DOM encadeável (`V('#app')`) | sim | sim |
-| HTTP declarativo e `V.http` | sim | sim |
-| Formulários, validação, máscaras | sim | sim |
-| Interface: modal, abas, gaveta, tooltip, paleta de comandos | sim | sim |
-| Arrastar e soltar | sim | sim |
-| Notificações, diálogos, armazenamento, paleta de cores | sim | sim |
-| Gráficos SVG (`v-chart`) | não | sim |
-| Animações com mola (`v-motion`, `V.animate`) | não | sim |
-| Roteador (`v-link`, `v-router-view`) | não | sim |
-| Idiomas (`v-t`, `$t`) | não | sim |
-| Inspetor `xray` | não | sim |
-| 29 componentes prontos (`VButton`, `VCard`, ...) | não | sim |
+| Approximate size | 75 KB gzip | 120 KB gzip |
+| Reactivity, directives, components | yes | yes |
+| Chainable DOM (`V('#app')`) | yes | yes |
+| Declarative HTTP and `V.http` | yes | yes |
+| Forms, validation, masks | yes | yes |
+| Interface: modal, tabs, drawer, tooltip, command palette | yes | yes |
+| Drag and drop | yes | yes |
+| Notifications, dialogs, storage, color palette | yes | yes |
+| SVG charts (`v-chart`) | no | yes |
+| Spring animations (`v-motion`, `V.animate`) | no | yes |
+| Router (`v-link`, `v-router-view`) | no | yes |
+| Languages (`v-t`, `$t`) | no | yes |
+| `xray` inspector | no | yes |
+| 29 ready-made components (`VButton`, `VCard`, ...) | no | yes |
 
-Regra prática: comece pelo essencial. Troque para o completo no dia em que precisar de um gráfico,
-de uma rota ou dos componentes prontos.
+Practical rule: start with the essential. Switch to the full one the day you need a chart,
+a route, or the ready-made components.
 
 ## npm
 
@@ -59,7 +59,7 @@ de uma rota ou dos componentes prontos.
 npm install voodoojs
 ```
 
-Importar o pacote não mexe no DOM. Você decide quando iniciar:
+Importing the package doesn't touch the DOM. You decide when to start:
 
 ```js
 import V from 'voodoojs';
@@ -67,7 +67,7 @@ import V from 'voodoojs';
 V.start();
 ```
 
-Também dá para importar apenas o que usa, com tree shaking:
+You can also import only what you use, with tree shaking:
 
 ```js
 import { reactive, watch } from 'voodoojs/reactivity';
@@ -75,94 +75,95 @@ import { http } from 'voodoojs/http';
 import { debounce, formatCurrency } from 'voodoojs/utils';
 ```
 
-Ou pegar nomes soltos do pacote principal:
+Or grab loose names from the main package:
 
 ```js
 import { reactive, http, toast, store, validate, animate } from 'voodoojs';
 ```
 
-Pontos de entrada publicados:
+Published entry points:
 
-| Import | Conteúdo |
+| Import | Content |
 | --- | --- |
-| `voodoojs` | Objeto `V` completo e todas as reexportações |
+| `voodoojs` | Complete `V` object and all re-exports |
 | `voodoojs/reactivity` | `reactive`, `ref`, `computed`, `effect`, `watch`, `nextTick`, `EffectScope` |
 | `voodoojs/http` | `http`, `request`, `HttpError` |
-| `voodoojs/utils` | `debounce`, `throttle`, formatadores, utilitários de array e texto |
-| `voodoojs/dist/voodoo.min.js` | Arquivo de navegador, caso queira servir por conta própria |
+| `voodoojs/utils` | `debounce`, `throttle`, formatters, array and text utilities |
+| `voodoojs/dist/voodoo.min.js` | Browser file, if you want to serve it yourself |
 
-O pacote publica ESM (`import`), CJS (`require`) e tipos TypeScript.
+The package publishes ESM (`import`), CJS (`require`), and TypeScript types.
 
-## Download direto
+## Direct download
 
-Baixe `dist/voodoo.min.js` (ou `dist/voodoo.full.min.js`), coloque ao lado do seu HTML e aponte:
+Download `dist/voodoo.min.js` (or `dist/voodoo.full.min.js`), place it next to your HTML, and point
+to it:
 
 ```html
 <script src="/js/voodoo.min.js" defer></script>
 ```
 
-Cada arquivo vem com o `.map` correspondente. Copie os dois se quiser depurar o código original.
+Each file comes with its corresponding `.map`. Copy both if you want to debug the original code.
 
-## Configuração pela tag script
+## Script tag configuration
 
-O jeito mais rápido de configurar é por atributos na própria tag, sem escrever JavaScript:
+The fastest way to configure is with attributes on the tag itself, without writing JavaScript:
 
 ```html
 <script
   src="voodoo.min.js"
-  data-base-url="https://api.exemplo.com"
-  data-locale="pt-BR"
+  data-base-url="https://api.example.com"
+  data-locale="en-US"
   defer
 ></script>
 ```
 
-| Atributo | Efeito |
+| Attribute | Effect |
 | --- | --- |
-| `data-manual` | Não inicia sozinho. Você chama `V.start()` quando quiser |
-| `data-defer-init` | O mesmo que `data-manual` |
-| `data-prefix` | Troca o prefixo dos atributos, por exemplo `data-v-` |
-| `data-base-url` | URL base das requisições de `V.http` e das directives HTTP |
-| `data-locale` | Idioma usado por formatadores de data, número e moeda |
-| `data-devtools` | Liga avisos detalhados no console |
-| `data-no-styles` | Não injeta o CSS dos componentes de interface |
-| `data-no-observer` | Desliga o `MutationObserver` que inicializa HTML criado depois |
-| `data-keep-attributes` | Mantém os atributos `v-*` no HTML depois de processados |
+| `data-manual` | Does not start on its own. You call `V.start()` when you want |
+| `data-defer-init` | Same as `data-manual` |
+| `data-prefix` | Changes the attribute prefix, for example `data-v-` |
+| `data-base-url` | Base URL for `V.http` and HTTP directive requests |
+| `data-locale` | Locale used by date, number, and currency formatters |
+| `data-devtools` | Enables detailed console warnings |
+| `data-no-styles` | Does not inject interface component CSS |
+| `data-no-observer` | Disables the `MutationObserver` that initializes HTML created later |
+| `data-keep-attributes` | Keeps `v-*` attributes in HTML after processing |
 
-## Configuração por JavaScript
+## JavaScript configuration
 
-Para ajustar antes do primeiro render, use `data-manual` e configure na mão:
+To adjust before the first render, use `data-manual` and configure manually:
 
 ```html
 <script src="voodoo.min.js" data-manual></script>
 <script>
   V.config.prefix = 'data-v-';
-  V.config.locale = 'pt-BR';
-  V.config.currency = 'BRL';
-  V.config.globals.formatarSlug = (texto) => texto.toLowerCase();
-  V.http.setBaseURL('https://api.exemplo.com');
+  V.config.locale = 'en-US';
+  V.config.currency = 'USD';
+  V.config.globals.formatSlug = (text) => text.toLowerCase();
+  V.http.setBaseURL('https://api.example.com');
   V.start();
 </script>
 ```
 
-Todas as opções de `V.config`:
+All `V.config` options:
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `prefix` | `'v-'` | Prefixo dos atributos |
-| `autoStart` | `true` | Inicia a biblioteca quando o script carrega |
-| `autoDiscover` | `true` | Observa o DOM e inicializa elementos criados depois |
-| `root` | `null` | Raiz observada. Sem valor, usa `document.body` |
-| `devtools` | `false` | Avisos detalhados no console e comentários âncora nomeados |
-| `baseURL` | `''` | URL base das requisições declarativas |
-| `globals` | `{}` | Valores extras liberados dentro das expressões |
-| `locale` | idioma do navegador | Locale dos formatadores |
-| `currency` | `'BRL'` | Moeda padrão dos formatadores |
-| `injectStyles` | `true` | Injeta o CSS dos componentes de interface |
-| `cleanAttributes` | `true` | Retira os atributos `v-*` do HTML depois de processados |
+| `prefix` | `'v-'` | Attribute prefix |
+| `autoStart` | `true` | Starts the library when the script loads |
+| `autoDiscover` | `true` | Watches the DOM and initializes elements created later |
+| `root` | `null` | Observed root. No value means `document.body` |
+| `devtools` | `false` | Detailed console warnings and named anchor comments |
+| `baseURL` | `''` | Base URL for declarative requests |
+| `globals` | `{}` | Extra values released inside expressions |
+| `locale` | browser language | Locale of formatters |
+| `currency` | `'USD'` | Default currency for formatters |
+| `injectStyles` | `true` | Injects interface component CSS |
+| `cleanAttributes` | `true` | Removes `v-*` attributes from HTML after processing |
 
-## Prefixo válido para HTML estrito
+## Valid prefix for strict HTML
 
-Se o seu validador de HTML reclamar de `v-text`, troque o prefixo:
+If your HTML validator complains about `v-text`, change the prefix:
 
 ```html
 <script src="voodoo.min.js" data-prefix="data-v-" defer></script>
@@ -170,53 +171,53 @@ Se o seu validador de HTML reclamar de `v-text`, troque o prefixo:
 
 ```html
 <div data-v-data="{ n: 0 }">
-  <button data-v-click="n++">Somar</button>
+  <button data-v-click="n++">Add</button>
   <b data-v-text="n"></b>
 </div>
 ```
 
-A biblioteca sempre aceita `data-v-nome`, mesmo quando o prefixo configurado é outro. Os atalhos
-`:atributo` e `@evento` continuam funcionando nos dois modos.
+The library always accepts `data-v-name`, even when the configured prefix is something else. The
+shortcuts `:attribute` and `@event` keep working in both modes.
 
-## Evitando o piscar do conteúdo
+## Avoiding content flash
 
-Enquanto a biblioteca não iniciou, o HTML bruto aparece na tela por um instante. Use `v-cloak`
-com uma regra de CSS:
+While the library hasn't started, raw HTML appears on screen for an instant. Use `v-cloak` with
+a CSS rule:
 
 ```html
 <style>
   [v-cloak] { display: none !important; }
 </style>
 
-<div v-cloak v-data="{ carregando: true }">
-  <p>{ carregando ? 'Carregando...' : 'Pronto' }</p>
+<div v-cloak v-data="{ loading: true }">
+  <p>{ loading ? 'Loading...' : 'Ready' }</p>
 </div>
 ```
 
-O CSS de `[v-cloak]` já vem embutido nos tokens injetados pela biblioteca, mas declarar no seu
-próprio arquivo garante que a regra exista antes do primeiro quadro.
+The `[v-cloak]` CSS comes built-in to the tokens injected by the library, but declaring it in your
+own file ensures the rule exists before the first frame.
 
-## Verificando se deu certo
+## Checking if it worked
 
 ```html
 <script>
   document.addEventListener('voodoo:ready', (e) => {
-    console.log('Voodoo', V.version, 'iniciada em', e.detail.root);
+    console.log('Voodoo', V.version, 'started at', e.detail.root);
   });
 </script>
 ```
 
 ## CLI
 
-O pacote `@voodoo/cli` monta builds sob medida com apenas os módulos que você usa:
+The `@voodoo/cli` package builds custom bundles with only the modules you use:
 
 ```bash
-npx voodoo init            # cria um projeto novo pronto para usar
-npx voodoo build           # monta um bundle escolhendo módulo por módulo
-npx voodoo add card        # copia um componente para dentro do seu projeto
-npx voodoo info            # mostra o que está instalado e o tamanho de cada módulo
+npx voodoo init            # creates a new project ready to use
+npx voodoo build           # builds a bundle choosing modules one by one
+npx voodoo add card        # copies a component into your project
+npx voodoo info            # shows what's installed and the size of each module
 ```
 
 ---
 
-Anterior: [Introdução](introducao.md) · Próximo: [Início rápido](inicio-rapido.md)
+Previous: [Introduction](introducao.md) · Next: [Quick Start](inicio-rapido.md)

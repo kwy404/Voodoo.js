@@ -1,9 +1,9 @@
 /**
  * @module storage
  *
- * Acesso uniforme a localStorage, sessionStorage, cookies, query string e a um
- * cache em memoria com expiracao. Todas as leituras e escritas sao seguras: em
- * modo privado, com cota cheia ou fora do navegador, as chamadas nao lancam.
+ * Uniform access to localStorage, sessionStorage, cookies, query string, and an
+ * in-memory cache with expiration. All reads and writes are safe: in private mode,
+ * with full quota, or outside the browser, calls do not throw.
  */
 
 export interface StorageAdapter {
@@ -44,7 +44,7 @@ function createStorage(getStore: () => Storage | undefined, prefix = ''): Storag
       try {
         getStore()?.removeItem(full(key));
       } catch {
-        // Ignorado de proposito.
+        // Intentionally ignored.
       }
     },
     clear(): void {
@@ -59,7 +59,7 @@ function createStorage(getStore: () => Storage | undefined, prefix = ''): Storag
           if (key.startsWith(prefix)) store.removeItem(key);
         }
       } catch {
-        // Ignorado de proposito.
+        // Intentionally ignored.
       }
     },
     has(key: string): boolean {
@@ -83,12 +83,12 @@ function createStorage(getStore: () => Storage | undefined, prefix = ''): Storag
   };
 }
 
-/** `localStorage` com serializacao JSON automatica. */
+/** `localStorage` with automatic JSON serialization. */
 export const storage = createStorage(() =>
   typeof localStorage !== 'undefined' ? localStorage : undefined
 );
 
-/** `sessionStorage` com serializacao JSON automatica. */
+/** `sessionStorage` with automatic JSON serialization. */
 export const session = createStorage(() =>
   typeof sessionStorage !== 'undefined' ? sessionStorage : undefined
 );
@@ -98,7 +98,7 @@ export const session = createStorage(() =>
 // ---------------------------------------------------------------------------
 
 export interface CookieOptions {
-  /** Dias ate expirar, ou uma data. */
+  /** Days until expiry, or a date. */
   expires?: number | Date;
   path?: string;
   domain?: string;
@@ -149,19 +149,19 @@ export const cookie = {
 // ---------------------------------------------------------------------------
 
 export const url = {
-  /** Le um parametro da URL atual. */
+  /** Reads a parameter from the current URL. */
   get(key: string, fallback?: string): string | undefined {
     if (typeof location === 'undefined') return fallback;
     return new URLSearchParams(location.search).get(key) ?? fallback;
   },
 
-  /** Le todos os parametros como objeto. */
+  /** Reads all parameters as an object. */
   all(): Record<string, string> {
     if (typeof location === 'undefined') return {};
     return Object.fromEntries(new URLSearchParams(location.search));
   },
 
-  /** Escreve um parametro sem recarregar a pagina. */
+  /** Writes a parameter without reloading the page. */
   set(key: string, value: string | number | null, replace = true): void {
     if (typeof location === 'undefined') return;
     const next = new URL(location.href);
@@ -174,7 +174,7 @@ export const url = {
     this.set(key, null, replace);
   },
 
-  /** Aplica varios parametros de uma vez. */
+  /** Applies multiple parameters at once. */
   merge(params: Record<string, string | number | null>, replace = true): void {
     if (typeof location === 'undefined') return;
     const next = new URL(location.href);
@@ -187,7 +187,7 @@ export const url = {
 };
 
 // ---------------------------------------------------------------------------
-// Cache em memoria com expiracao
+// In-memory cache with expiration
 // ---------------------------------------------------------------------------
 
 interface CacheEntry<T = unknown> {
@@ -198,7 +198,7 @@ interface CacheEntry<T = unknown> {
 const memoryCache = new Map<string, CacheEntry>();
 
 export const cache = {
-  /** Guarda um valor. `ttl` em milissegundos, `0` significa sem expiracao. */
+  /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
   set<T>(key: string, value: T, ttl = 0): T {
     memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
     return value;
@@ -226,7 +226,7 @@ export const cache = {
     memoryCache.clear();
   },
 
-  /** Executa a funcao apenas quando o valor nao estiver em cache. */
+  /** Executes the function only when the value is not in cache. */
   async remember<T>(key: string, ttl: number, factory: () => Promise<T> | T): Promise<T> {
     const hit = this.get<T>(key);
     if (hit !== undefined) return hit;
@@ -241,7 +241,7 @@ export const cache = {
 };
 
 // ---------------------------------------------------------------------------
-// Tema claro e escuro
+// Light and dark theme
 // ---------------------------------------------------------------------------
 
 export type ThemeName = 'light' | 'dark' | 'system';
@@ -249,12 +249,12 @@ export type ThemeName = 'light' | 'dark' | 'system';
 const THEME_KEY = 'voodoo:theme';
 
 export const theme = {
-  /** Tema escolhido pelo usuario, ou `system` quando nunca foi definido. */
+  /** Theme chosen by the user, or `system` when never set. */
   get current(): ThemeName {
     return (storage.get<ThemeName>(THEME_KEY) ?? 'system') as ThemeName;
   },
 
-  /** Tema efetivamente aplicado, resolvendo `system`. */
+  /** Theme effectively applied, resolving `system`. */
   get resolved(): 'light' | 'dark' {
     const value = this.current;
     if (value !== 'system') return value;
@@ -273,7 +273,7 @@ export const theme = {
     return next;
   },
 
-  /** Escreve `data-theme` no elemento raiz e avisa a pagina. */
+  /** Writes `data-theme` on the root element and notifies the page. */
   apply(): void {
     if (typeof document === 'undefined') return;
     const value = this.current;
@@ -286,7 +286,7 @@ export const theme = {
     );
   },
 
-  /** Aplica o tema salvo assim que a pagina carrega. */
+  /** Applies the saved theme as soon as the page loads. */
   init(): void {
     if (typeof document === 'undefined') return;
     this.apply();

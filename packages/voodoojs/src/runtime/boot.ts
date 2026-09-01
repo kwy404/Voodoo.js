@@ -1,255 +1,254 @@
 /**
  * @module runtime/boot
  *
- * Agendador de inicializacao proprio da Voodoo.
+ * Voodoo's custom initialization scheduler.
  *
- * A biblioteca nao usa `DOMContentLoaded` nem `document.readyState` para saber
- * quando comecar. Em vez disso ela mantem o proprio laco: a cada passo pergunta
- * se a condicao daquela tarefa ja vale, e executa as que valem.
+ * The library doesn't use `DOMContentLoaded` or `document.readyState` to know
+ * when to start. Instead it maintains its own loop: at each step it asks whether
+ * a task's condition is met, and executes those that are.
  *
- * O motivo e simples. Os eventos de carregamento do navegador respondem a
- * pergunta errada. `DOMContentLoaded` diz que o parser terminou, e nao que a
- * arvore que interessa existe. Uma pagina renderizada por outro script, um
- * fragmento inserido depois, um container que so aparece na segunda tela: em
- * todos esses casos o evento ja passou, ou vai passar cedo demais.
+ * The reason is simple. Browser load events answer the wrong question.
+ * `DOMContentLoaded` says the parser finished, not that the tree we care about
+ * exists. A page rendered by another script, a fragment inserted later, a
+ * container that only appears on the second viewport: in all these cases the
+ * event already passed, or will pass too early.
  *
- * O laco daqui responde a pergunta certa: "o que eu preciso ja esta no
- * documento e parou de mudar?". Isso vale tanto para o inicio automatico quanto
- * para `app.mount('#app')` chamado antes de `#app` existir.
+ * The loop here answers the right question: "do I have what I need in the
+ * document and has it stopped changing?". This applies both to automatic startup
+ * and to `app.mount('#app')` called before `#app` exists.
  *
  * ```js
- * whenReady(() => V.start())                    // documento estavel
- * whenElement('#app', (el) => montar(el))       // elemento, exista ele ou nao
+ * whenReady(() => V.start())                    // document stable
+ * whenElement('#app', (el) => mount(el))        // element, whether it exists or not
  * ```
  */
 
-/** Quanto tempo esperar, no maximo, antes de desistir de esperar. */
-const LIMITE_ESPERA = 10_000;
+/** Maximum time to wait before giving up. */
+const WAIT_LIMIT = 10_000;
 
-/** Passos consecutivos sem mudanca no DOM para considerar a arvore estavel. */
-const PASSOS_ESTAVEIS = 2;
+/** Consecutive steps without DOM changes to consider the tree stable. */
+const STABLE_STEPS = 2;
 
-interface Tarefa {
-  /** Devolve o valor esperado, ou `null` enquanto ele nao existir. */
-  pronto(): unknown;
-  /** Recebe o valor devolvido por `pronto`. */
-  acao(valor: any): void;
-  /** Chamado quando o limite de espera estoura sem o valor aparecer. */
-  aoDesistir?(): void;
-  /** Momento em que a tarefa entrou na fila. */
-  desde: number;
+interface Task {
+  /** Returns the expected value, or `null` while it doesn't exist. */
+  ready(): unknown;
+  /** Receives the value returned by `ready`. */
+  action(value: any): void;
+  /** Called when the wait limit expires without the value appearing. */
+  onGiveUp?(): void;
+  /** Time when the task entered the queue. */
+  since: number;
 }
 
-const fila: Tarefa[] = [];
+const queue: Task[] = [];
 
-let observador: MutationObserver | null = null;
-let versaoDoDom = 0;
-let versaoNoPassoAnterior = -1;
-let passosSemMudanca = 0;
-let agendado = false;
+let observer: MutationObserver | null = null;
+let domVersion = 0;
+let domVersionAtPreviousStep = -1;
+let stepsWithoutChange = 0;
+let scheduled = false;
 
-/** Relogio monotonico quando existir, com o do sistema como plano B. */
-function agora(): number {
+/** Monotonic clock when available, system time as fallback. */
+function now(): number {
   return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
 }
 
 /**
- * Conta mudancas no documento. E o unico sinal que o laco precisa do navegador,
- * e ele diz respeito a arvore, nao ao carregamento.
+ * Counts changes in the document. It's the only signal the loop needs from the
+ * browser, and it concerns the tree, not the load state.
  */
-function observarMudancas(): void {
-  if (observador || typeof MutationObserver === 'undefined' || typeof document === 'undefined') {
+function observeChanges(): void {
+  if (observer || typeof MutationObserver === 'undefined' || typeof document === 'undefined') {
     return;
   }
-  const raiz = document.documentElement;
-  if (!raiz) return;
+  const root = document.documentElement;
+  if (!root) return;
 
-  observador = new MutationObserver(() => {
-    versaoDoDom++;
+  observer = new MutationObserver(() => {
+    domVersion++;
   });
-  observador.observe(raiz, { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true });
 }
 
-/** Marca um passo do laco. Microtask primeiro, depois quadro, depois timer. */
-function agendarPasso(): void {
-  if (agendado) return;
-  agendado = true;
+/** Marks a loop step. Microtask first, then frame, then timer. */
+function scheduleStep(): void {
+  if (scheduled) return;
+  scheduled = true;
 
-  const executar = (): void => {
-    agendado = false;
-    passo();
+  const execute = (): void => {
+    scheduled = false;
+    step();
   };
 
-  // O quadro chega depois dos scripts com `defer`, que e exatamente quando
-  // queremos olhar de novo. O timer cobre abas em segundo plano, onde
-  // `requestAnimationFrame` nao roda.
+  // The frame arrives after scripts with `defer`, which is exactly when we
+  // want to check again. The timer covers background tabs where
+  // `requestAnimationFrame` doesn't run.
   if (typeof requestAnimationFrame === 'function') {
-    let disparado = false;
-    const uma = (): void => {
-      if (disparado) return;
-      disparado = true;
-      executar();
+    let fired = false;
+    const one = (): void => {
+      if (fired) return;
+      fired = true;
+      execute();
     };
-    requestAnimationFrame(uma);
-    setTimeout(uma, 32);
+    requestAnimationFrame(one);
+    setTimeout(one, 32);
     return;
   }
 
-  setTimeout(executar, 0);
+  setTimeout(execute, 0);
 }
 
-/** Um passo do laco: resolve o que der, e reagenda enquanto sobrar tarefa. */
-function passo(): void {
-  if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
-  else passosSemMudanca = 0;
-  versaoNoPassoAnterior = versaoDoDom;
+/** One loop step: resolves what it can, reschedules while tasks remain. */
+function step(): void {
+  if (domVersion === domVersionAtPreviousStep) stepsWithoutChange++;
+  else stepsWithoutChange = 0;
+  domVersionAtPreviousStep = domVersion;
 
-  const instante = agora();
+  const now_ = now();
 
-  for (let i = fila.length - 1; i >= 0; i--) {
-    const tarefa = fila[i];
-    let valor: unknown = null;
+  for (let i = queue.length - 1; i >= 0; i--) {
+    const task = queue[i];
+    let value: unknown = null;
 
     try {
-      valor = tarefa.pronto();
+      value = task.ready();
     } catch {
-      valor = null;
+      value = null;
     }
 
-    if (valor) {
-      fila.splice(i, 1);
-      tarefa.acao(valor);
+    if (value) {
+      queue.splice(i, 1);
+      task.action(value);
       continue;
     }
 
-    if (instante - tarefa.desde > LIMITE_ESPERA) {
-      fila.splice(i, 1);
-      tarefa.aoDesistir?.();
+    if (now_ - task.since > WAIT_LIMIT) {
+      queue.splice(i, 1);
+      task.onGiveUp?.();
     }
   }
 
-  if (fila.length) agendarPasso();
+  if (queue.length) scheduleStep();
 }
 
-/** Coloca uma tarefa no laco, tentando resolver na hora antes de esperar. */
-function enfileirar(tarefa: Omit<Tarefa, 'desde'>): void {
-  let valor: unknown = null;
+/** Puts a task in the loop, trying to resolve immediately before waiting. */
+function enqueue(task: Omit<Task, 'since'>): void {
+  let value: unknown = null;
   try {
-    valor = tarefa.pronto();
+    value = task.ready();
   } catch {
-    valor = null;
+    value = null;
   }
 
-  if (valor) {
-    tarefa.acao(valor);
+  if (value) {
+    task.action(value);
     return;
   }
 
-  observarMudancas();
-  fila.push({ ...tarefa, desde: agora() });
-  agendarPasso();
+  observeChanges();
+  queue.push({ ...task, since: now() });
+  scheduleStep();
 }
 
-/** `true` quando o corpo existe e a arvore parou de crescer. */
-function documentoEstavel(): boolean {
+/** `true` when the body exists and the tree stopped growing. */
+function documentStable(): boolean {
   if (typeof document === 'undefined' || !document.body) return false;
-  return passosSemMudanca >= PASSOS_ESTAVEIS;
+  return stepsWithoutChange >= STABLE_STEPS;
 }
 
 /**
- * `true` quando nada mudou no documento desde que o laco comecou a olhar.
+ * `true` when nothing changed in the document since the loop started looking.
  *
- * E o sinal de que a pagina nao esta mais sendo construida: um documento ja
- * montado, um teste, uma aba que terminou de carregar faz tempo. Nesses casos
- * esperar quadros seria so atraso.
+ * It's the signal that the page is no longer being constructed: an already-mounted
+ * document, a test, a tab that finished loading long ago. In these cases waiting
+ * for frames would just be a delay.
  */
-function documentoParado(): boolean {
+function documentStopped(): boolean {
   if (typeof document === 'undefined' || !document.body) return false;
-  return versaoDoDom === 0;
+  return domVersion === 0;
 }
 
 /**
- * Executa quando o documento tiver corpo e parar de mudar.
+ * Executes when the document has a body and stops changing.
  *
- * Substitui `DOMContentLoaded`. A diferenca pratica aparece em dois casos:
- * um script sem `defer` no `<head>`, onde o corpo ainda nao existe, e uma
- * pagina montada por outro script, onde o evento ja passou.
+ * Replaces `DOMContentLoaded`. The practical difference appears in two cases:
+ * a script without `defer` in `<head>`, where the body doesn't exist yet, and a
+ * page rendered by another script, where the event already passed.
  */
-export function whenReady(acao: () => void): void {
+export function whenReady(action: () => void): void {
   if (typeof document === 'undefined') return;
 
-  enfileirar({
-    pronto: () => (documentoEstavel() ? document.body : null),
-    acao: () => acao(),
-    // Passado o limite, comeca assim mesmo: uma pagina que nunca para de mudar
-    // ainda merece ser inicializada.
-    aoDesistir: () => {
-      if (document.body) acao();
+  enqueue({
+    ready: () => (documentStable() ? document.body : null),
+    action: () => action(),
+    // Past the limit, start anyway: a page that never stops changing
+    // still deserves to be initialized.
+    onGiveUp: () => {
+      if (document.body) action();
     },
   });
 }
 
 /**
- * Executa assim que o documento tiver corpo, sem esperar a arvore estabilizar.
+ * Executes as soon as the document has a body, without waiting for the tree to stabilize.
  *
- * E o criterio de `V.ready`: quem chama quer o documento utilizavel, e nao a
- * garantia de que nenhum outro script vai mexer nele depois. Quando nada mudou
- * desde que o laco comecou a olhar, a chamada acontece ja no proximo microtask,
- * sem custo de quadro.
+ * It's the criterion for `V.ready`: the caller wants a usable document, not a
+ * guarantee that no other script will touch it later. When nothing changed since the
+ * loop started looking, the call happens in the next microtask, with no frame cost.
  */
-export function whenBodyReady(acao: () => void): void {
+export function whenBodyReady(action: () => void): void {
   if (typeof document === 'undefined') return;
 
-  if (documentoParado()) {
-    void Promise.resolve().then(acao);
+  if (documentStopped()) {
+    void Promise.resolve().then(action);
     return;
   }
 
-  enfileirar({
-    pronto: () => (documentoEstavel() ? document.body : null),
-    acao: () => acao(),
-    aoDesistir: () => {
-      if (document.body) acao();
+  enqueue({
+    ready: () => (documentStable() ? document.body : null),
+    action: () => action(),
+    onGiveUp: () => {
+      if (document.body) action();
     },
   });
 }
 
 /**
- * Resolve um elemento que pode ainda nao existir.
+ * Resolves an element that may not exist yet.
  *
  * ```js
  * whenElement('#app', (el) => app.mount(el))
  * ```
  */
 export function whenElement(
-  alvo: string | Element,
-  acao: (el: Element) => void,
-  aoDesistir?: () => void
+  target: string | Element,
+  action: (el: Element) => void,
+  onGiveUp?: () => void
 ): void {
-  if (typeof alvo !== 'string') {
-    acao(alvo);
+  if (typeof target !== 'string') {
+    action(target);
     return;
   }
   if (typeof document === 'undefined') return;
 
-  enfileirar({
-    pronto: () => document.querySelector(alvo),
-    acao: (el: Element) => acao(el),
-    aoDesistir,
+  enqueue({
+    ready: () => document.querySelector(target),
+    action: (el: Element) => action(el),
+    onGiveUp,
   });
 }
 
-/** Promessa resolvida quando o documento estiver pronto pelo criterio acima. */
+/** Promise resolved when the document is ready by the above criterion. */
 export function ready(): Promise<void> {
   return new Promise((resolve) => whenReady(() => resolve()));
 }
 
-/** Encerra o observador do laco. Usado nos testes e por `V.destroy()`. */
+/** Stops the loop's observer. Used in tests and by `V.destroy()`. */
 export function stopBootLoop(): void {
-  observador?.disconnect();
-  observador = null;
-  fila.length = 0;
-  agendado = false;
-  passosSemMudanca = 0;
-  versaoNoPassoAnterior = -1;
+  observer?.disconnect();
+  observer = null;
+  queue.length = 0;
+  scheduled = false;
+  stepsWithoutChange = 0;
+  domVersionAtPreviousStep = -1;
 }

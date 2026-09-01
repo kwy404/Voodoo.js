@@ -1,24 +1,24 @@
 /**
  * @module runtime/avisos
  *
- * Avisos de modo desenvolvimento. Tudo aqui so acontece quando
- * `V.config.devtools` esta ligado; em producao o custo e uma comparacao
- * booleana e nada mais.
+ * Development warnings. Everything here only runs when
+ * `V.config.devtools` is enabled; in production the cost is a single
+ * boolean comparison and nothing more.
  *
- * Cada mensagem segue a mesma forma: o que foi encontrado, onde foi encontrado
- * e o que fazer a respeito. Um aviso que nao diz o que corrigir e ruido.
+ * Each message follows the same form: what was found, where it was found,
+ * and what to do about it. A warning that doesn't say how to fix it is noise.
  */
 
 import { config } from './registry';
 
-/** `true` quando os avisos detalhados estao ligados. */
-export function emDesenvolvimento(): boolean {
+/** `true` when detailed warnings are enabled. */
+export function inDevelopment(): boolean {
   return config.devtools === true;
 }
 
-/** Descreve um elemento de forma curta, no estilo de um seletor CSS. */
-export function descreverElemento(el: Element | null): string {
-  if (!el) return '(sem elemento)';
+/** Describe an element briefly, in the style of a CSS selector. */
+export function describeElement(el: Element | null): string {
+  if (!el) return '(no element)';
   let out = el.tagName.toLowerCase();
   if (el.id) out += `#${el.id}`;
   const classes = (el.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean);
@@ -26,107 +26,107 @@ export function descreverElemento(el: Element | null): string {
   return `<${out}>`;
 }
 
-/** Emite um aviso apenas em desenvolvimento. */
-export function avisar(mensagem: string): void {
-  if (!emDesenvolvimento()) return;
+/** Emit a warning only in development. */
+export function warn(message: string): void {
+  if (!inDevelopment()) return;
   // eslint-disable-next-line no-console
-  console.warn(`[Voodoo] ${mensagem}`);
+  console.warn(`[Voodoo] ${message}`);
 }
 
 /**
- * Avisa uma unica vez por chave. Evita encher o console quando o mesmo aviso
- * nasce dentro de um `v-for` com centenas de itens.
+ * Warn once per key. Prevents filling the console when the same warning
+ * arises inside a `v-for` with hundreds of items.
  */
-const jaAvisado = new Set<string>();
+const alreadyWarned = new Set<string>();
 
-export function avisarUmaVez(chave: string, mensagem: string): void {
-  if (!emDesenvolvimento()) return;
-  if (jaAvisado.has(chave)) return;
-  jaAvisado.add(chave);
+export function warnOnce(key: string, message: string): void {
+  if (!inDevelopment()) return;
+  if (alreadyWarned.has(key)) return;
+  alreadyWarned.add(key);
   // eslint-disable-next-line no-console
-  console.warn(`[Voodoo] ${mensagem}`);
+  console.warn(`[Voodoo] ${message}`);
 }
 
-/** Limpa a memoria dos avisos ja emitidos. Usado em testes. */
-export function limparAvisos(): void {
-  jaAvisado.clear();
+/** Clear the memory of already-emitted warnings. Used in tests. */
+export function clearWarnings(): void {
+  alreadyWarned.clear();
 }
 
 /**
- * Atributos `v-*` que a Voodoo le direto do HTML, sem passar por uma directive
- * registrada. Sem esta lista eles apareceriam como "directive desconhecida".
+ * `v-*` attributes that Voodoo reads directly from HTML, without going through a
+ * registered directive. Without this list, they would appear as "unknown directive".
  */
-const ATRIBUTOS_AUXILIARES = new Set([
+const AUXILIARY_ATTRIBUTES = new Set([
   'confirm-title',
   'confirm-label',
   'confirm-cancel',
   'hold-duration',
 ]);
 
-/** Avisa sobre `v-alguma-coisa` que ninguem registrou. */
-export function avisarDirectiveDesconhecida(el: Element, raw: string, nome: string): void {
-  if (!emDesenvolvimento()) return;
-  if (ATRIBUTOS_AUXILIARES.has(nome)) return;
-  avisarUmaVez(
-    `directive-desconhecida:${nome}`,
-    `directive desconhecida "${raw}" em ${descreverElemento(el)}. ` +
-      `Nenhuma directive chamada "${nome}" foi registrada. ` +
-      `Verifique a grafia ou registre com V.directive("${nome}", ...).`
+/** Warn about a `v-something` that no one registered. */
+export function warnUnknownDirective(el: Element, raw: string, name: string): void {
+  if (!inDevelopment()) return;
+  if (AUXILIARY_ATTRIBUTES.has(name)) return;
+  warnOnce(
+    `unknown-directive:${name}`,
+    `unknown directive "${raw}" at ${describeElement(el)}. ` +
+      `No directive named "${name}" was registered. ` +
+      `Check the spelling or register with V.directive("${name}", ...).`
   );
 }
 
-/** Avisa sobre uma tag de componente que ninguem registrou. */
-export function avisarComponenteDesconhecido(el: Element, nome: string): void {
-  avisarUmaVez(
-    `componente-desconhecido:${nome}`,
-    `componente "${nome}" nao registrado em ${descreverElemento(el)}. ` +
-      `Registre com V.component("${nome}", { ... }) antes de usar a tag, ` +
-      'ou remova o atributo para deixar o elemento como HTML comum.'
+/** Warn about a component tag that no one registered. */
+export function warnUnknownComponent(el: Element, name: string): void {
+  warnOnce(
+    `unknown-component:${name}`,
+    `component "${name}" not registered at ${describeElement(el)}. ` +
+      `Register with V.component("${name}", { ... }) before using the tag, ` +
+      'or remove the attribute to leave the element as plain HTML.'
   );
 }
 
-/** Avisa sobre uma expressao que nao pode ser avaliada. */
-export function avisarExpressaoInvalida(
+/** Warn about an expression that cannot be evaluated. */
+export function warnInvalidExpression(
   el: Element | null,
   raw: string,
-  expressao: string,
+  expression: string,
   err: unknown
 ): void {
-  if (!emDesenvolvimento()) return;
-  const motivo = err instanceof Error ? err.message.split('\n')[0] : String(err);
-  avisar(
-    `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.\n` +
-      `Motivo: ${motivo}\n` +
-      'Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior ' +
-      'que uma linha, mova para um metodo do componente e chame o metodo aqui.'
+  if (!inDevelopment()) return;
+  const reason = err instanceof Error ? err.message.split('\n')[0] : String(err);
+  warn(
+    `invalid expression in ${raw}="${expression}" on element ${describeElement(el)}.\n` +
+      `Reason: ${reason}\n` +
+      'Suggestion: attribute expressions accept a single value. If the logic spans more ' +
+      'than one line, move it to a component method and call the method here.'
   );
 }
 
-/** Avisa sobre chave repetida em `v-for`. */
-export function avisarChaveDuplicada(el: Element, chave: unknown, expressao: string): void {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ` +
-      `${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista ` +
-      'reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.'
+/** Warn about a duplicate key in `v-for`. */
+export function warnDuplicateKey(el: Element, key: unknown, expression: string): void {
+  if (!inDevelopment()) return;
+  warn(
+    `duplicate key "${String(key)}" in v-for="${expression}" on element ` +
+      `${describeElement(el)}. Two rows with the same key cause the list to ` +
+      'reuse the wrong block when reordering. Use a unique key, like the item id.'
   );
 }
 
-/** Avisa sobre prop obrigatoria que ninguem passou. */
-export function avisarPropObrigatoria(el: Element, componente: string, prop: string): void {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `prop obrigatoria "${prop}" ausente no componente "${componente}" em ` +
-      `${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um ` +
-      `texto fixo ou :${prop}="expressao" para um valor do estado.`
+/** Warn about a required prop that was not passed. */
+export function warnRequiredProp(el: Element, component: string, prop: string): void {
+  if (!inDevelopment()) return;
+  warn(
+    `required prop "${prop}" missing from component "${component}" at ` +
+      `${describeElement(el)}. Pass the value on the tag with ${prop}="..." for a ` +
+      `fixed value or :${prop}="expression" for a state value.`
   );
 }
 
-/** Avisa que um nome antigo continua funcionando, mas nao e mais o oficial. */
-export function avisarAlias(alias: string, canonico: string): void {
-  avisarUmaVez(
+/** Warn that an old name still works, but is no longer the official one. */
+export function warnAlias(alias: string, canonical: string): void {
+  warnOnce(
     `alias:${alias}`,
-    `"${alias}" e um apelido de "${canonico}" e continua funcionando, ` +
-      `mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
+    `"${alias}" is an alias for "${canonical}" and still works, ` +
+      `but the official name is "${canonical}". Prefer "${canonical}" in new code.`
   );
 }

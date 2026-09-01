@@ -1,18 +1,18 @@
 /**
  * @module dom/style
  *
- * Injecao de CSS sob demanda. Cada bloco entra no documento uma unica vez, so
- * quando o recurso correspondente e realmente usado, o que evita CSS morto.
+ * On-demand CSS injection. Each block enters the document only once, only
+ * when the corresponding resource is actually used, avoiding dead CSS.
  *
- * Todos os estilos usam variaveis CSS com valor padrao embutido. Se o projeto
- * carregar o design system da Voodoo, as cores seguem automaticamente o tema.
+ * All styles use CSS variables with built-in default values. If the project
+ * loads Voodoo's design system, colors automatically follow the theme.
  */
 
 import { config } from '../runtime/registry';
 
 const injected = new Set<string>();
 
-/** Injeta um bloco de CSS identificado por `id`. Repetir a chamada nao duplica. */
+/** Injects a CSS block identified by `id`. Repeating the call does not duplicate. */
 export function injectStyle(id: string, css: string): void {
   if (typeof document === 'undefined') return;
   if (!config.injectStyles) return;
@@ -25,7 +25,7 @@ export function injectStyle(id: string, css: string): void {
   document.head.appendChild(style);
 }
 
-/** Tokens base compartilhados pelos componentes de UI da Voodoo. */
+/** Base tokens shared by Voodoo's UI components. */
 export const BASE_TOKENS = `
 :root{
   --v-primary:#6D3BF5;
@@ -72,7 +72,7 @@ export const BASE_TOKENS = `
 [v-cloak]{display:none !important}
 `;
 
-/** Garante que os tokens estejam presentes antes de qualquer componente de UI. */
+/** Ensures tokens are present before any UI component. */
 export function ensureTokens(): void {
   injectStyle('tokens', BASE_TOKENS);
 }

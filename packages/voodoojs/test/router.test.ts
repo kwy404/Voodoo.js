@@ -570,7 +570,7 @@ describe('redirect declarado na rota', () => {
     });
 
     expect(await router.push('/a')).toBe(false);
-    expect(String(aviso.mock.calls.at(-1)?.[0])).toContain('excesso de redirecionamentos');
+    expect(String(aviso.mock.calls.at(-1)?.[0])).toContain('too many redirects');
   });
 
   it('ciclo na rota inicial tambem e interrompido', async () => {
@@ -579,7 +579,7 @@ describe('redirect declarado na rota', () => {
       url: '/a',
       routes: { '/a': { redirect: '/b' }, '/b': { redirect: '/a' } },
     });
-    expect(String(aviso.mock.calls.at(-1)?.[0])).toContain('rota inicial');
+    expect(String(aviso.mock.calls.at(-1)?.[0])).toContain('initial route');
   });
 });
 

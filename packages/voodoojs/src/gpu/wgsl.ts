@@ -1,71 +1,71 @@
 /**
  * @module gpu/wgsl
  *
- * Leitura de codigo WGSL para descobrir sozinho o que o shader precisa.
+ * Reading WGSL code to figure out what the shader needs on its own.
  *
- * A ideia veio do vgpu: quem escreve o shader ja declarou `@group`, `@binding`
- * e o `struct` dos uniforms la dentro. Repetir isso em JavaScript e trabalho
- * dobrado e uma chance a mais de os dois lados sairem do lugar. Entao o modulo
- * le a fonte e monta o bind group layout, o tamanho do buffer e o deslocamento
- * de cada campo a partir do proprio shader.
+ * The idea came from vgpu: whoever writes the shader already declared `@group`, `@binding`
+ * and the uniforms `struct` inside it. Repeating this in JavaScript is double work
+ * and one more chance for the two sides to get out of sync. So the module
+ * reads the source and builds the bind group layout, buffer size and offset
+ * of each field straight from the shader itself.
  *
- * Tudo aqui e funcao pura sobre texto: nao toca no DOM, nao precisa de GPU e
- * roda igual em jsdom. E por isso que esta e a parte mais testada do modulo.
+ * Everything here is pure text functions: doesn't touch the DOM, doesn't need GPU and
+ * runs the same in jsdom. That's why this is the most tested part of the module.
  *
- * O que a reflexao cobre esta descrito em `docs/gpu.md`. Em resumo: `struct`
- * declarado no proprio arquivo, escalares, vetores, matrizes e arrays de tamanho
- * fixo, mais texturas, samplers e buffers de storage. Fica de fora: `@align`,
- * `@size`, `@location` de vertice, arrays sem tamanho dentro de uniform (que o
- * WGSL tambem proibe) e `type`/alias definidos pelo usuario.
+ * What reflection covers is described in `docs/gpu.md`. In summary: `struct`
+ * declared in the file itself, scalars, vectors, matrices and fixed-size arrays,
+ * plus textures, samplers and storage buffers. Left out: `@align`,
+ * `@size`, vertex `@location`, unsized arrays inside uniform (which
+ * WGSL also forbids) and user-defined `type`/alias.
  */
 
 // ---------------------------------------------------------------------------
 // Tipos publicos
 // ---------------------------------------------------------------------------
 
-/** Familia de um tipo WGSL. */
+/** Family of a WGSL type. */
 export type WgslTypeKind = 'scalar' | 'vector' | 'matrix' | 'array' | 'struct' | 'unknown';
 
-/** Descricao de um tipo, com o tamanho e o alinhamento ja resolvidos. */
+/** Description of a type, with size and alignment already resolved. */
 export interface WgslType {
-  /** Texto original, como `vec3<f32>`. */
+  /** Original text, like `vec3<f32>`. */
   text: string;
   kind: WgslTypeKind;
-  /** Escalar de base. `f32` para tipos sem escalar claro. */
+  /** Base scalar. `f32` for types with no clear scalar. */
   scalar: 'f32' | 'i32' | 'u32' | 'f16' | 'bool';
-  /** Bytes ocupados. */
+  /** Bytes occupied. */
   size: number;
-  /** Alinhamento exigido, em bytes. */
+  /** Required alignment, in bytes. */
   align: number;
-  /** Quantos escalares o valor tem ao todo. `vec3<f32>` tem 3. */
+  /** How many scalars the value has in total. `vec3<f32>` has 3. */
   components: number;
-  /** Colunas da matriz. */
+  /** Matrix columns. */
   columns?: number;
-  /** Linhas da matriz, ou seja, o tamanho de cada coluna. */
+  /** Matrix rows, i.e., the size of each column. */
   rows?: number;
-  /** Distancia entre elementos de um array, ou entre colunas de uma matriz. */
+  /** Distance between array elements, or between matrix columns. */
   stride?: number;
-  /** Quantidade de elementos de um array de tamanho fixo. */
+  /** Number of elements in a fixed-size array. */
   count?: number;
-  /** Tipo do elemento de um array. */
+  /** Type of an array element. */
   element?: WgslType;
-  /** Nome do struct, quando `kind` e `struct`. */
+  /** Struct name, when `kind` is `struct`. */
   struct?: string;
 }
 
-/** Um campo de struct, com o deslocamento dentro do buffer. */
+/** A struct field, with offset within the buffer. */
 export interface WgslField {
   name: string;
   type: WgslType;
-  /** Deslocamento em bytes a partir do inicio do struct. */
+  /** Offset in bytes from the start of the struct. */
   offset: number;
 }
 
-/** Struct declarado no shader. */
+/** Struct declared in the shader. */
 export interface WgslStruct {
   name: string;
   fields: WgslField[];
-  /** Tamanho total, ja arredondado para o alinhamento. */
+  /** Total size, already rounded to alignment. */
   size: number;
   align: number;
 }
@@ -122,11 +122,11 @@ export interface WgslReflection {
 // ---------------------------------------------------------------------------
 
 /**
- * Remove comentarios de linha e de bloco. O WGSL permite bloco aninhado, entao
- * a contagem e feita com profundidade em vez de uma expressao regular.
+ * Removes line and block comments. WGSL allows nested blocks, so
+ * counting is done with depth instead of a regex.
  *
- * Os caracteres removidos viram espaco em vez de sumirem, para que o numero da
- * linha continue batendo com o arquivo original nas mensagens de erro.
+ * Removed characters become spaces instead of disappearing, so the line number
+ * still matches the original file in error messages.
  */
 export function stripWgslComments(source: string): string {
   let out = '';
@@ -186,13 +186,13 @@ export function stripWgslComments(source: string): string {
 
 const SCALAR_SIZE: Record<string, number> = { f32: 4, i32: 4, u32: 4, f16: 2, bool: 4 };
 
-/** Arredonda `value` para cima ate o proximo multiplo de `align`. */
+/** Rounds `value` up to the next multiple of `align`. */
 function roundUp(value: number, align: number): number {
   if (align <= 0) return value;
   return Math.ceil(value / align) * align;
 }
 
-/** Separa `vec3<f32>` em `vec3` e `f32`, respeitando aninhamento. */
+/** Splits `vec3<f32>` into `vec3` and `f32`, respecting nesting. */
 function splitGenerics(text: string): { base: string; args: string[] } {
   const open = text.indexOf('<');
   if (open < 0) return { base: text.trim(), args: [] };
@@ -202,8 +202,8 @@ function splitGenerics(text: string): { base: string; args: string[] } {
 }
 
 /**
- * Divide por virgulas de primeiro nivel. Sem isso `array<vec4<f32>, 8>` seria
- * cortado no meio do generico.
+ * Splits by top-level commas. Without this `array<vec4<f32>, 8>` would be
+ * cut in the middle of the generic.
  */
 export function splitTopLevel(text: string): string[] {
   const out: string[] = [];
@@ -233,11 +233,11 @@ const UNKNOWN_TYPE: WgslType = {
 };
 
 /**
- * Descreve um tipo WGSL com tamanho e alinhamento.
+ * Describes a WGSL type with size and alignment.
  *
- * As regras seguidas sao as do endereco `uniform`, que e o caso de uso do
- * modulo: struct alinhado a 16 bytes e passo de array tambem multiplo de 16.
- * Para `storage` o WGSL e mais frouxo; a diferenca esta documentada.
+ * The rules followed are for the `uniform` address space, which is the module's
+ * use case: struct aligned to 16 bytes and array stride also a multiple of 16.
+ * For `storage` WGSL is more relaxed; the difference is documented.
  */
 export function describeWgslType(
   text: string,
@@ -260,7 +260,7 @@ export function describeWgslType(
 
   const { base, args } = splitGenerics(clean);
 
-  // Apelidos curtos do WGSL moderno: `vec3f`, `vec2u`, `mat4x4f`.
+  // Short aliases of modern WGSL: `vec3f`, `vec2u`, `mat4x4f`.
   const shortVector = /^vec([234])([fiuh])$/.exec(base);
   if (shortVector) {
     return describeWgslType(`vec${shortVector[1]}<${expandShort(shortVector[2])}>`, structs);
@@ -283,7 +283,7 @@ export function describeWgslType(
       kind: 'vector',
       scalar,
       size: n * unit,
-      // vec3 alinha como vec4: e a pegadinha classica de quem escreve o offset a mao.
+      // vec3 aligns like vec4: the classic gotcha when writing offsets by hand.
       align: (n === 3 ? 4 : n) * unit,
       components: n,
     };
@@ -311,7 +311,7 @@ export function describeWgslType(
   if (base === 'array') {
     const element = describeWgslType(args[0] ?? 'f32', structs);
     const count = args[1] ? Number(args[1].replace(/[^\d]/g, '')) : 0;
-    // No endereco uniform o passo do array e sempre multiplo de 16.
+    // In the uniform address space, array stride is always a multiple of 16.
     const stride = roundUp(roundUp(element.size, element.align), 16);
     return {
       text: clean,
@@ -357,11 +357,11 @@ const STRUCT_RE = /\bstruct\s+([A-Za-z_]\w*)\s*\{([^}]*)\}/g;
 const MEMBER_RE = /^(?:@\w+\s*(?:\([^)]*\)\s*)?)*([A-Za-z_]\w*)\s*:\s*([\s\S]+)$/;
 
 /**
- * Le os `struct` da fonte e calcula o deslocamento de cada campo.
+ * Reads `struct`s from the source and calculates the offset of each field.
  *
- * Structs sao resolvidos em varias passadas porque um pode citar outro que
- * aparece depois no arquivo. Tres passadas cobrem qualquer aninhamento razoavel
- * sem virar um grafo de dependencias.
+ * Structs are resolved in multiple passes because one can reference another
+ * that appears later in the file. Three passes cover any reasonable nesting
+ * without becoming a dependency graph.
  */
 export function reflectStructs(source: string): Record<string, WgslStruct> {
   const bodies: Array<{ name: string; body: string }> = [];
@@ -389,7 +389,7 @@ function layoutStruct(
   let offset = 0;
   let align = 1;
 
-  // Membros podem terminar com virgula ou ponto e virgula; os dois valem.
+  // Members can end with comma or semicolon; both are valid.
   for (const raw of splitTopLevel(body.replace(/;/g, ','))) {
     const parsed = MEMBER_RE.exec(raw.trim());
     if (!parsed) continue;
@@ -401,7 +401,7 @@ function layoutStruct(
     align = Math.max(align, type.align);
   }
 
-  // Struct no endereco uniform alinha a 16 bytes.
+  // Struct in the uniform address space aligns to 16 bytes.
   const finalAlign = Math.max(align, 16);
   return { name, fields, align: finalAlign, size: roundUp(offset, finalAlign) };
 }

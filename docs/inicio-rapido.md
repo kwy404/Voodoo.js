@@ -1,265 +1,266 @@
-# Início rápido
+# Quick Start
 
-Do arquivo em branco até um app com estado, lista, formulário e requisição. Cada passo é um
-arquivo que abre direto no navegador, sem servidor e sem build.
+From blank file to an app with state, list, form, and request. Each step is a file that opens
+directly in the browser, no server and no build.
 
-## Passo 1: o esqueleto
+## Step 1: the skeleton
 
-Crie `index.html`:
+Create `index.html`:
 
 ```html
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Minha primeira Voodoo</title>
+  <title>My first Voodoo</title>
   <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
   <style>[v-cloak] { display: none !important; }</style>
 </head>
 <body>
-  <h1>Olá</h1>
+  <h1>Hello</h1>
 </body>
 </html>
 ```
 
-Abra o arquivo. Nada acontece ainda, e é isso mesmo. A biblioteca já iniciou e está esperando o
-primeiro atributo.
+Open the file. Nothing happens yet, and that's by design. The library has started and is waiting
+for the first attribute.
 
-## Passo 2: estado e interpolação
+## Step 2: state and interpolation
 
-`v-data` cria um escopo com estado reativo. Dentro dele, `{ expressao }` escreve valores no texto.
+`v-data` creates a scope with reactive state. Inside it, `{ expression }` writes values to text.
 
 ```html
-<div v-data="{ nome: 'mundo' }">
-  <h1>Olá, { nome }!</h1>
-  <input v-model="nome">
+<div v-data="{ name: 'world' }">
+  <h1>Hello, { name }!</h1>
+  <input v-model="name">
 </div>
 ```
 
-Digite no campo. O título muda a cada tecla, sem uma linha de JavaScript.
+Type in the field. The title changes with every keystroke, without a line of JavaScript.
 
-A forma `{{ nome }}`, com chave dupla, também funciona. A chave simples é a padrão da Voodoo.
+The `{{ name }}` form with double braces also works. Single braces are Voodoo's standard.
 
-## Passo 3: eventos
+## Step 3: events
 
-`v-click` liga o clique a uma expressão. `@click` é o mesmo atalho, para quem prefere.
+`v-click` ties click to an expression. `@click` is the same shortcut, for those who prefer.
 
 ```html
-<div v-data="{ contador: 0 }">
-  <button v-click="contador--">menos</button>
-  <strong>{ contador }</strong>
-  <button v-click="contador++">mais</button>
+<div v-data="{ counter: 0 }">
+  <button v-click="counter--">less</button>
+  <strong>{ counter }</strong>
+  <button v-click="counter++">more</button>
 
-  <p v-show="contador > 5">Já passou de cinco.</p>
+  <p v-show="counter > 5">Already over five.</p>
 </div>
 ```
 
-`v-show` alterna o `display`. O elemento continua no documento.
+`v-show` toggles `display`. The element stays in the document.
 
-## Passo 4: condição e lista
+## Step 4: condition and list
 
-`v-if` insere e remove do DOM. `v-for` repete um elemento por item.
+`v-if` inserts and removes from DOM. `v-for` repeats an element per item.
 
 ```html
-<div v-data="{ tarefas: ['Estudar', 'Correr'], nova: '' }">
-  <form @submit.prevent="tarefas.push(nova); nova = ''">
-    <input v-model="nova" placeholder="Nova tarefa">
-    <button>Adicionar</button>
+<div v-data="{ tasks: ['Study', 'Run'], newTask: '' }">
+  <form @submit.prevent="tasks.push(newTask); newTask = ''">
+    <input v-model="newTask" placeholder="New task">
+    <button>Add</button>
   </form>
 
-  <p v-if="tarefas.length === 0">Nenhuma tarefa por aqui.</p>
+  <p v-if="tasks.length === 0">No tasks here.</p>
   <ul v-else>
-    <li v-for="(tarefa, i) in tarefas">
-      { i + 1 }. { tarefa }
-      <button v-click="tarefas.splice(i, 1)">remover</button>
+    <li v-for="(task, i) in tasks">
+      { i + 1 }. { task }
+      <button v-click="tasks.splice(i, 1)">remove</button>
     </li>
   </ul>
 
-  <small>{ tarefas.length } tarefa(s)</small>
+  <small>{ tasks.length } task(s)</small>
 </div>
 ```
 
-Repare em três coisas:
+Notice three things:
 
-- `@submit.prevent` já chama `preventDefault()` para você;
-- `v-else` precisa ser o elemento irmão imediato do `v-if`;
-- a expressão aceita várias instruções separadas por ponto e vírgula.
+- `@submit.prevent` already calls `preventDefault()` for you;
+- `v-else` must be the immediate sibling of `v-if`;
+- the expression accepts multiple statements separated by semicolons.
 
-## Passo 5: atributos, classes e estilos
+## Step 5: attributes, classes, and styles
 
-Prefixe qualquer atributo com dois pontos para ligá-lo ao estado.
+Prefix any attribute with a colon to tie it to state.
 
 ```html
-<div v-data="{ ativo: false, cor: '#6D3BF5', carregando: false }">
+<div v-data="{ active: false, color: '#6D3BF5', loading: false }">
   <button
-    :class="{ ativo: ativo, 'em-espera': carregando }"
-    :style="{ borderColor: cor }"
-    :disabled="carregando"
-    v-click="ativo = !ativo"
+    :class="{ active: active, 'waiting': loading }"
+    :style="{ borderColor: color }"
+    :disabled="loading"
+    v-click="active = !active"
   >
-    { ativo ? 'Ligado' : 'Desligado' }
+    { active ? 'On' : 'Off' }
   </button>
 </div>
 ```
 
-As classes que já estavam no atributo `class` são preservadas. `:class` só acrescenta e remove as
-que você declarou.
+Classes already in the `class` attribute are preserved. `:class` only adds and removes the ones
+you declared.
 
-## Passo 6: buscar dados do servidor
+## Step 6: fetch data from server
 
-`v-resource` cria um objeto reativo com `data`, `loading`, `error`, `loaded`, `reload()` e `set()`.
+`v-resource` creates a reactive object with `data`, `loading`, `error`, `loaded`, `reload()`, and
+`set()`.
 
 ```html
-<div v-resource="usuarios: https://jsonplaceholder.typicode.com/users">
-  <p v-if="usuarios.loading">Carregando...</p>
-  <p v-else-if="usuarios.error">{ usuarios.error.message }</p>
+<div v-resource="users: https://jsonplaceholder.typicode.com/users">
+  <p v-if="users.loading">Loading...</p>
+  <p v-else-if="users.error">{ users.error.message }</p>
   <ul v-else>
-    <li v-for="u in usuarios.data">{ u.name } ({ u.email })</li>
+    <li v-for="u in users.data">{ u.name } ({ u.email })</li>
   </ul>
 
-  <button v-click="usuarios.reload()">Atualizar</button>
+  <button v-click="users.reload()">Refresh</button>
 </div>
 ```
 
-Se você só quer jogar HTML dentro de um alvo, `v-get` resolve:
+If you just want to throw HTML into a target, `v-get` does it:
 
 ```html
-<button v-get="/parciais/tabela.html" v-target="#area">Carregar tabela</button>
+<button v-get="/partials/table.html" v-target="#area">Load table</button>
 <div id="area"></div>
 ```
 
-## Passo 7: um formulário completo
+## Step 7: a complete form
 
 ```html
-<form v-submit="/api/contato" v-validate
-      v-toast-success="Mensagem enviada!" v-reset-success v-disable-loading>
+<form v-submit="/api/contact" v-validate
+      v-toast-success="Message sent!" v-reset-success v-disable-loading>
   <label>
-    Nome
-    <input name="nome" v-required v-minlength="3">
+    Name
+    <input name="name" v-required v-minlength="3">
   </label>
 
   <label>
-    E-mail
+    Email
     <input name="email" type="email" v-required v-email>
   </label>
 
   <label>
-    Telefone
-    <input name="telefone" v-mask="phone" v-phone>
+    Phone
+    <input name="phone" v-mask="phone" v-phone>
   </label>
 
   <button type="submit" :disabled="$form.loading">
-    { $form.loading ? 'Enviando...' : 'Enviar' }
+    { $form.loading ? 'Sending...' : 'Send' }
   </button>
 </form>
 ```
 
-O que acontece sozinho:
+What happens automatically:
 
-- os campos são validados ao sair do foco e a mensagem aparece embaixo de cada um;
-- o telefone ganha máscara enquanto você digita;
-- o envio vira uma requisição AJAX com o corpo serializado;
-- `$form.loading` fica verdadeiro durante o envio;
-- erros 422 do servidor voltam para os campos certos;
-- uma notificação de sucesso aparece e o formulário é limpo.
+- fields are validated on blur and the message appears below each one;
+- phone gets a mask as you type;
+- submission becomes an AJAX request with serialized body;
+- `$form.loading` is true during submission;
+- 422 errors from server go back to the right fields;
+- a success notification appears and the form is cleared.
 
-## Passo 8: componentes
+## Step 8: components
 
-Componentes ficam melhores em um bloco de script, porque envolvem lógica de verdade.
+Components are better in a script block, because they involve real logic.
 
 ```html
 <script>
-  V.component('contador', {
-    props: { inicio: { type: 'number', default: 0 } },
+  V.component('counter', {
+    props: { start: { type: 'number', default: 0 } },
     state(props) {
-      return { valor: props.inicio };
+      return { value: props.start };
     },
     computed: {
-      dobro() { return this.valor * 2; },
+      double() { return this.value * 2; },
     },
     methods: {
-      somar() { this.valor++; this.emit('mudou', this.valor); },
+      add() { this.value++; this.emit('changed', this.value); },
     },
     template: `
-      <button v-click="somar">Somar</button>
-      <span>{ valor } (dobro: { dobro })</span>
+      <button v-click="add">Add</button>
+      <span>{ value } (double: { double })</span>
     `,
   });
 </script>
 
-<contador inicio="10" @mudou="console.log($detail)"></contador>
-<Contador inicio="3"></Contador>
+<counter start="10" @changed="console.log($detail)"></counter>
+<Counter start="3"></Counter>
 ```
 
-As duas escritas funcionam: `<contador>` e `<Contador>`.
+Both forms work: `<counter>` and `<Counter>`.
 
-## Passo 9: notificações e diálogos
+## Step 9: notifications and dialogs
 
 ```html
-<button v-click="$toast.success('Salvo com sucesso!')">Salvar</button>
+<button v-click="$toast.success('Saved successfully!')">Save</button>
 
-<button v-click="$confirm('Excluir o pedido?').then(ok => ok && $toast.error('Excluído'))">
-  Excluir
+<button v-click="$confirm('Delete the order?').then(ok => ok && $toast.error('Deleted'))">
+  Delete
 </button>
 ```
 
-Ou de forma declarativa, com o guarda de confirmação:
+Or declaratively, with the confirmation guard:
 
 ```html
-<button v-confirm="Excluir o pedido?" v-click="excluirPedido(7)">Excluir</button>
+<button v-confirm="Delete the order?" v-click="deleteOrder(7)">Delete</button>
 ```
 
-## O app completo
+## The complete app
 
 ```html
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lista de tarefas</title>
+  <title>Task list</title>
   <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
   <style>
     [v-cloak] { display: none !important; }
     body { font-family: system-ui, sans-serif; max-width: 34rem; margin: 3rem auto; }
-    .feita { text-decoration: line-through; opacity: .55; }
+    .done { text-decoration: line-through; opacity: .55; }
   </style>
 </head>
 <body>
-  <div v-cloak v-data="{ itens: [], texto: '' }" v-persist="tarefas">
-    <h1>Tarefas</h1>
+  <div v-cloak v-data="{ items: [], text: '' }" v-persist="tasks">
+    <h1>Tasks</h1>
 
-    <form @submit.prevent="itens.push({ id: Date.now(), texto: texto, feita: false }); texto = ''">
-      <input v-model.trim="texto" placeholder="O que precisa ser feito?" required>
-      <button>Adicionar</button>
+    <form @submit.prevent="items.push({ id: Date.now(), text: text, done: false }); text = ''">
+      <input v-model.trim="text" placeholder="What needs to be done?" required>
+      <button>Add</button>
     </form>
 
     <ul>
-      <li v-for="item in itens" :key="item.id" :class="{ feita: item.feita }">
-        <input type="checkbox" v-model="item.feita">
-        { item.texto }
-        <button v-click="itens.splice(itens.indexOf(item), 1)">x</button>
+      <li v-for="item in items" :key="item.id" :class="{ done: item.done }">
+        <input type="checkbox" v-model="item.done">
+        { item.text }
+        <button v-click="items.splice(items.indexOf(item), 1)">x</button>
       </li>
     </ul>
 
-    <p v-show="itens.length">
-      { itens.filter(i => !i.feita).length } de { itens.length } pendentes
+    <p v-show="items.length">
+      { items.filter(i => !i.done).length } of { items.length } pending
     </p>
   </div>
 </body>
 </html>
 ```
 
-`v-persist="tarefas"` guarda o estado no `localStorage`. Recarregue a página: a lista continua lá.
+`v-persist="tasks"` stores state in `localStorage`. Reload the page: the list is still there.
 
-## Para onde ir agora
+## Where to go from here
 
-- [Directives](directives.md) para a referência completa dos atributos.
-- [Reatividade](reatividade.md) para entender o que acontece por baixo.
-- [Formulários](formularios.md) e [Validação](validacao.md) para trabalho de verdade com dados.
-- [Componentes](componentes.md) quando um bloco de HTML começar a se repetir.
+- [Directives](directives.md) for the complete reference of attributes.
+- [Reactivity](reatividade.md) to understand what happens underneath.
+- [Forms](formularios.md) and [Validation](validacao.md) for real work with data.
+- [Components](componentes.md) when an HTML block starts to repeat.
 
 ---
 
-Anterior: [Instalação](instalacao.md) · Próximo: [Reatividade](reatividade.md)
+Previous: [Installation](instalacao.md) · Next: [Reactivity](reatividade.md)

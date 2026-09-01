@@ -1,86 +1,85 @@
 /**
  * @module devtools/bus
  *
- * Barramento de eventos das devtools. Vive em um arquivo separado do inspetor
- * para continuar sendo tree shakeable: quem apenas reporta atividade paga
- * poucos bytes, e o painel visual so entra no pacote quando `xray()` e
- * realmente importado.
+ * Event bus for devtools. Lives in a separate file from the inspector to remain
+ * tree-shakeable: code that only reports activity pays minimal bytes, and the
+ * visual panel only enters the bundle when `xray()` is actually imported.
  *
- * Emitir sem nenhum ouvinte registrado custa uma busca em `Map` e nada mais,
- * entao qualquer modulo pode reportar atividade sem medo.
+ * Emitting with no registered listeners costs a `Map` lookup and nothing more,
+ * so any module can report activity safely.
  *
  * ```ts
  * import { devtoolsBus } from '../devtools/bus';
  *
- * // Reportando uma requisicao de rede a partir de uma directive:
- * const inicio = performance.now();
- * const dados = await http.get('/api/usuarios');
+ * // Reporting a network request from a directive:
+ * const start = performance.now();
+ * const data = await http.get('/api/users');
  * devtoolsBus.emit('network', {
  *   method: 'GET',
- *   url: '/api/usuarios',
+ *   url: '/api/users',
  *   status: 200,
  *   ok: true,
- *   duration: performance.now() - inicio,
+ *   duration: performance.now() - start,
  *   source: 'v-get',
  * });
  * ```
  */
 
-/** Requisicao reportada para a aba Rede do inspetor. */
+/** Network request reported to the devtools Network tab. */
 export interface DevtoolsNetworkEvent {
-  /** Metodo HTTP em maiusculas, como `GET` ou `POST`. */
+  /** HTTP method in uppercase, like `GET` or `POST`. */
   method: string;
-  /** URL final da requisicao. */
+  /** Final URL of the request. */
   url: string;
-  /** Codigo de status, quando a resposta chegou. */
+  /** Status code, when the response arrived. */
   status?: number;
-  /** `true` quando a resposta foi bem sucedida. */
+  /** `true` when the response was successful. */
   ok?: boolean;
-  /** Duracao em milissegundos. */
+  /** Duration in milliseconds. */
   duration?: number;
-  /** Mensagem de erro, quando a requisicao falhou. */
+  /** Error message, when the request failed. */
   error?: string;
-  /** Quem disparou, como `v-get`, `http` ou `router`. */
+  /** Who triggered it, like `v-get`, `http` or `router`. */
   source?: string;
 }
 
-/** Evento de DOM disparado por uma directive, mostrado na aba Eventos. */
+/** DOM event triggered by a directive, shown in the Events tab. */
 export interface DevtoolsDomEvent {
-  /** Nome do evento, como `click` ou `submit`. */
+  /** Event name, like `click` or `submit`. */
   type: string;
-  /** Elemento que recebeu o evento. */
+  /** Element that received the event. */
   el?: Element | null;
-  /** Expressao ou detalhe associado, apenas para exibicao. */
+  /** Expression or detail associated, for display purposes only. */
   detail?: unknown;
-  /** Quem reportou, como `v-on` ou `component.emit`. */
+  /** Who reported it, like `v-on` or `component.emit`. */
   source?: string;
 }
 
-/** Troca de rota reportada pelo roteador. */
+/** Route change reported by the router. */
 export interface DevtoolsNavigationEvent {
   from: string;
   to: string;
-  /** `true` quando um guard cancelou a navegacao. */
+  /** `true` when a guard cancelled the navigation. */
   cancelled?: boolean;
-  /** Padrao de rota casado, quando houver. */
+  /** Matched route pattern, if any. */
   matched?: string | null;
 }
 
-/** Troca de idioma reportada pelo modulo de i18n. */
+/** Locale change reported by the i18n module. */
 export interface DevtoolsLocaleEvent {
   from: string;
   to: string;
 }
 
-/** Atualizacao reativa reportada manualmente por um modulo. */
+/** Reactive update reported manually by a module. */
 export interface DevtoolsUpdateEvent {
   el?: Element | null;
-  /** Nome da chave que mudou, quando conhecido. */
+  /** Name of the key that changed, when known. */
   key?: string;
   source?: string;
 }
 
-/** Mapa de tipos de evento aceitos pelo barramento. */
+/** Map of event types accepted by the bus. */
 export interface DevtoolsEventMap {
   network: DevtoolsNetworkEvent;
   event: DevtoolsDomEvent;
@@ -96,15 +95,15 @@ type Listener = (data: never) => void;
 const listeners = new Map<string, Set<Listener>>();
 
 /**
- * Barramento simples de publicacao e assinatura usado pelas devtools.
+ * Simple publish-subscribe bus used by devtools.
  *
- * Para reportar uma requisicao de rede a partir de outro modulo, emita o tipo
- * `network` com `{ method, url, status, ok, duration, source }`. A aba Rede do
- * inspetor lista tudo que chegar por ai, mesmo quando a requisicao nao passou
- * pelo cliente `http` da Voodoo.
+ * To report a network request from another module, emit the `network` type
+ * with `{ method, url, status, ok, duration, source }`. The devtools Network
+ * tab lists everything that arrives through it, even when the request did not
+ * go through Voodoo's `http` client.
  */
 export const devtoolsBus = {
-  /** Publica um evento. Sem ouvintes, a chamada e praticamente gratuita. */
+  /** Publishes an event. With no listeners, the call is practically free. */
   emit<K extends DevtoolsEventType>(type: K, data: DevtoolsEventMap[K]): void {
     const set = listeners.get(type);
     if (!set || set.size === 0) return;
@@ -112,14 +111,14 @@ export const devtoolsBus = {
       try {
         (listener as (value: DevtoolsEventMap[K]) => void)(data);
       } catch (err) {
-        // Um ouvinte quebrado nunca pode derrubar quem emitiu.
+        // A broken listener must never crash the emitter.
         // eslint-disable-next-line no-console
-        console.error('[Voodoo] erro em ouvinte de devtools:', err);
+        console.error('[Voodoo] error in devtools listener:', err);
       }
     }
   },
 
-  /** Assina um tipo de evento. Devolve a funcao que cancela a assinatura. */
+  /** Subscribes to an event type. Returns the function that unsubscribes. */
   on<K extends DevtoolsEventType>(
     type: K,
     callback: (data: DevtoolsEventMap[K]) => void
@@ -132,18 +131,18 @@ export const devtoolsBus = {
     };
   },
 
-  /** Cancela uma assinatura especifica. */
+  /** Cancels a specific subscription. */
   off<K extends DevtoolsEventType>(type: K, callback: (data: DevtoolsEventMap[K]) => void): void {
     listeners.get(type)?.delete(callback as Listener);
   },
 
-  /** Remove todos os ouvintes, de um tipo ou de todos. */
+  /** Removes all listeners of a type or all listeners. */
   clear(type?: DevtoolsEventType): void {
     if (type) listeners.delete(type);
     else listeners.clear();
   },
 
-  /** Quantidade de ouvintes registrados em um tipo. */
+  /** Number of listeners registered for a type. */
   count(type: DevtoolsEventType): number {
     return listeners.get(type)?.size ?? 0;
   },

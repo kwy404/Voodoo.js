@@ -1,7 +1,7 @@
 # HTTP
 
-Duas camadas: um cliente completo em `V.http`, e directives que resolvem a maior parte dos casos
-sem uma linha de JavaScript.
+Two layers: a complete client in `V.http`, and directives that solve most cases without a single
+line of JavaScript.
 
 ---
 
@@ -15,18 +15,18 @@ sem uma linha de JavaScript.
 <div id="lista"></div>
 ```
 
-Cada verbo dispara no **gatilho natural** do elemento:
+Each verb triggers on the **element's natural trigger**:
 
-| Elemento | Gatilho |
+| Element | Trigger |
 | --- | --- |
 | `<form>` | `submit` |
-| `<input>`, `<select>`, `<textarea>` | `change` (ou `click` em botões) |
-| qualquer outro | `click` |
+| `<input>`, `<select>`, `<textarea>` | `change` (or `click` on buttons) |
+| any other | `click` |
 
-Se a resposta for HTML, ela entra direto no alvo. Se for JSON, vira uma tabela ou uma lista de
-definições legível, com tudo escapado. Se você preferir guardar em vez de renderizar, use `v-as`.
+If the response is HTML, it goes straight into the target. If it's JSON, it becomes a readable table
+or definition list with everything escaped. If you'd rather store it than render it, use `v-as`.
 
-A URL pode ser literal ou uma expressão:
+The URL can be literal or an expression:
 
 ```html
 <button v-delete="/api/pedidos/7">Excluir</button>
@@ -35,21 +35,22 @@ A URL pode ser literal ou uma expressão:
 
 ## v-target e v-swap
 
-`v-target` é o seletor do elemento que recebe o resultado. Sem ele, o próprio elemento é o alvo.
+`v-target` is the selector of the element that receives the result. Without it, the element itself
+is the target.
 
-`v-swap` escolhe como o conteúdo entra:
+`v-swap` chooses how the content enters:
 
-| Modo | O que faz |
+| Mode | What it does |
 | --- | --- |
-| `innerHTML` | Substitui o conteúdo do alvo. Padrão |
-| `outerHTML`, `replace` | Substitui o alvo inteiro |
-| `textContent` | Escreve como texto puro |
-| `beforebegin` | Insere antes do alvo |
-| `afterbegin`, `prepend` | Insere como primeiro filho |
-| `beforeend`, `append` | Insere como último filho |
-| `afterend` | Insere depois do alvo |
-| `delete` | Remove o alvo |
-| `none` | Não mexe no DOM |
+| `innerHTML` | Replaces the target's content. Default |
+| `outerHTML`, `replace` | Replaces the entire target |
+| `textContent` | Writes as plain text |
+| `beforebegin` | Inserts before the target |
+| `afterbegin`, `prepend` | Inserts as first child |
+| `beforeend`, `append` | Inserts as last child |
+| `afterend` | Inserts after the target |
+| `delete` | Removes the target |
+| `none` | Doesn't touch the DOM |
 
 ```html
 <button v-get="/api/comentarios?pagina=2" v-target="#comentarios" v-swap="append">
@@ -57,11 +58,11 @@ A URL pode ser literal ou uma expressão:
 </button>
 ```
 
-O HTML inserido é percorrido pela Voodoo, então ele pode trazer novas directives.
+The inserted HTML is walked by Voodoo, so it can bring new directives.
 
 ## v-trigger
 
-Troca o gatilho padrão:
+Changes the default trigger:
 
 ```html
 <div v-get="/api/status" v-trigger="load">...</div>
@@ -71,12 +72,12 @@ Troca o gatilho padrão:
 <button v-get="/api/x" v-trigger="click.once">Só uma vez</button>
 ```
 
-Gatilhos especiais: `load` e `ready` disparam na montagem, `visible` e `revealed` disparam quando
-o elemento chega perto da tela. Modificadores aceitos no texto: `once` e `repeat`.
+Special triggers: `load` and `ready` fire on mount, `visible` and `revealed` fire when the element
+comes close to the viewport. Modifiers accepted in the text: `once` and `repeat`.
 
 ## v-poll
 
-Repete a requisição em intervalo fixo. Pausa quando a aba não está visível.
+Repeats the request at fixed intervals. Pauses when the tab is not visible.
 
 ```html
 <div v-get="/api/notificacoes" v-poll="10s" v-target="#sino"></div>
@@ -84,18 +85,18 @@ Repete a requisição em intervalo fixo. Pausa quando a aba não está visível.
 
 ## v-load e v-load-visible
 
-Atalhos para carregar conteúdo sem escrever gatilho:
+Shortcuts to load content without writing a trigger:
 
 ```html
 <div v-load="/parciais/rodape.html"></div>
 <section v-load-visible="/parciais/depoimentos.html">Carregando...</section>
 ```
 
-`v-load-visible` só busca quando o elemento chega a 120 pixels da área visível.
+`v-load-visible` only fetches when the element comes within 120 pixels of the viewport.
 
 ## v-search
 
-Busca enquanto o usuário digita, com debounce e comprimento mínimo:
+Searches as the user types, with debounce and minimum length:
 
 ```html
 <input v-search="/api/produtos" v-target="#resultados" v-param="q"
@@ -104,15 +105,15 @@ Busca enquanto o usuário digita, com debounce e comprimento mínimo:
 <div id="resultados"></div>
 ```
 
-| Atributo | Padrão |
+| Attribute | Default |
 | --- | --- |
-| `v-param` | o `name` do input, ou `q` |
+| `v-param` | the input's `name`, or `q` |
 | `v-debounce` | 300 ms |
 | `v-min-length` | 0 |
 
 ## v-resource
 
-Cria um objeto reativo com o estado inteiro da requisição:
+Creates a reactive object with the entire request state:
 
 ```html
 <div v-resource="produtos: /api/produtos">
@@ -126,23 +127,23 @@ Cria um objeto reativo com o estado inteiro da requisição:
 </div>
 ```
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `data` | Corpo da resposta, ou `null` |
-| `loading` | `true` durante a requisição |
-| `error` | `{ name, message }`, ou `null` |
-| `loaded` | `true` depois do primeiro sucesso |
-| `reload()` | Refaz a requisição |
-| `set(valor)` | Troca os dados localmente, útil em atualização otimista |
+| `data` | Response body, or `null` |
+| `loading` | `true` during the request |
+| `error` | `{ name, message }`, or `null` |
+| `loaded` | `true` after first success |
+| `reload()` | Repeats the request |
+| `set(value)` | Changes the data locally, useful for optimistic updates |
 
-A sintaxe é `nome: url`. Sem nome, o recurso se chama `resource`. Você também pode usar `v-as`:
+The syntax is `name: url`. Without a name, the resource is called `resource`. You can also use `v-as`:
 
 ```html
 <div v-resource="/api/pedidos" v-as="pedidos"></div>
 ```
 
-Atributos aceitos: `v-method`, `v-params`, `v-cache`, `v-retry`, `v-timeout`, `v-json-path`,
-`v-poll` e `v-manual` (não busca na montagem, espera o `reload()`).
+Accepted attributes: `v-method`, `v-params`, `v-cache`, `v-retry`, `v-timeout`, `v-json-path`,
+`v-poll` and `v-manual` (doesn't fetch on mount, waits for `reload()`).
 
 ```html
 <div v-resource="usuarios: /api/usuarios"
@@ -154,7 +155,7 @@ Atributos aceitos: `v-method`, `v-params`, `v-cache`, `v-retry`, `v-timeout`, `v
 
 ## Renderizando com um template
 
-Para controlar o HTML da lista, aponte um `<template>` da página:
+To control the HTML of the list, point to a `<template>` on the page:
 
 ```html
 <button v-get="/api/usuarios" v-target="#lista" v-template="#linha">Carregar</button>
@@ -170,12 +171,12 @@ Para controlar o HTML da lista, aponte um `<template>` da página:
 <ul id="lista"></ul>
 ```
 
-Dentro do template você tem `item` (o objeto inteiro), `index` e cada chave do objeto como
-variável direta.
+Inside the template you have `item` (the entire object), `index`, and each key of the object as
+a direct variable.
 
 ## Guardando no estado
 
-`v-as` guarda a resposta no escopo em vez de escrever no DOM:
+`v-as` stores the response in the scope instead of writing to the DOM:
 
 ```html
 <div v-data="{ usuarios: [] }">
@@ -184,7 +185,7 @@ variável direta.
 </div>
 ```
 
-`v-json-path` recorta um pedaço da resposta antes:
+`v-json-path` extracts a piece of the response first:
 
 ```html
 <button v-get="/api/relatorio" v-as="linhas" v-json-path="dados.itens">Carregar</button>
@@ -204,13 +205,13 @@ variável direta.
 <div id="spinner">Gerando relatório...</div>
 ```
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-loading` | Seletor de um elemento que fica escondido até a requisição começar |
-| `v-loading-class` | Classe aplicada ao elemento durante a requisição. Padrão `v-loading` |
-| `v-disable-loading` | Desabilita o botão enquanto a requisição corre |
+| `v-loading` | Selector of an element that stays hidden until the request starts |
+| `v-loading-class` | Class applied to the element during the request. Default `v-loading` |
+| `v-disable-loading` | Disables the button while the request is running |
 
-Durante a requisição o elemento também recebe `aria-busy="true"`.
+During the request the element also receives `aria-busy="true"`.
 
 ## Confirmação, notificação e callbacks
 
@@ -225,49 +226,49 @@ Durante a requisição o elemento também recebe `aria-busy="true"`.
 </button>
 ```
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-confirm` | Pergunta antes de disparar. Veja o aviso abaixo |
-| `v-toast-success` | Notificação de sucesso |
-| `v-toast-error` | Notificação de erro. Sem ele, o erro do servidor vira a mensagem |
-| `v-on-success` | Expressão executada no sucesso. Tem `$el`, `data` e `response` |
-| `v-on-error` | Expressão executada no erro. Tem `$el`, `error` e `message` |
-| `v-on-complete` | Expressão executada sempre, no fim |
-| `v-redirect` | Navega para a URL depois do sucesso |
-| `v-scroll-to` | Rola suavemente até o seletor depois do sucesso |
+| `v-confirm` | Asks before firing. See the warning below |
+| `v-toast-success` | Success notification |
+| `v-toast-error` | Error notification. Without it, the server error becomes the message |
+| `v-on-success` | Expression executed on success. Has `$el`, `data` and `response` |
+| `v-on-error` | Expression executed on error. Has `$el`, `error` and `message` |
+| `v-on-complete` | Expression always executed at the end |
+| `v-redirect` | Navigates to the URL after success |
+| `v-scroll-to` | Smoothly scrolls to the selector after success |
 
-> **Aviso sobre `v-confirm` junto de uma requisição.** Hoje a pergunta é feita duas vezes quando
-> `v-confirm` está no mesmo elemento de um `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` ou
-> `v-submit`: uma pela guarda de confirmação, que intercepta o clique, e outra pela própria
-> requisição. Enquanto isso não é corrigido, peça a confirmação em um lugar só:
+> **Warning about `v-confirm` with a request.** Currently the question is asked twice when
+> `v-confirm` is on the same element as `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` or
+> `v-submit`: once by the confirmation guard, which intercepts the click, and once by the request
+> itself. Until this is fixed, ask for confirmation in only one place:
 >
 > ```html
-> <!-- confirmação pela guarda, requisição pela expressão -->
-> <button v-confirm="Excluir este pedido?"
->         v-click="$http.delete('/api/pedidos/' + pedido.id).then(() => lista.reload())">
->   Excluir
+> <!-- confirmation by guard, request by expression -->
+> <button v-confirm="Delete this order?"
+>         v-click="$http.delete('/api/orders/' + order.id).then(() => list.reload())">
+>   Delete
 > </button>
 > ```
 >
-> Ou peça a confirmação dentro da própria expressão:
+> Or ask for confirmation inside the expression itself:
 >
 > ```html
-> <button v-click="$confirm('Excluir este pedido?').then(ok => ok && excluir(pedido))">
->   Excluir
+> <button v-click="$confirm('Delete this order?').then(ok => ok && delete(order))">
+>   Delete
 > </button>
 > ```
 
 ## Outros atributos
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-params` | Objeto que vira query string |
-| `v-body` | Expressão que vira o corpo da requisição |
-| `v-headers` | Objeto de cabeçalhos |
-| `v-cache` | Guarda a resposta por um tempo. Só para GET. Aceita `30s`, `5m` |
-| `v-retry` | Tentativas extras em falha de rede e erro 5xx |
-| `v-timeout` | Tempo até abortar |
-| `v-offline-queue` | Guarda a requisição quando o navegador está offline e reenvia depois |
+| `v-params` | Object that becomes a query string |
+| `v-body` | Expression that becomes the request body |
+| `v-headers` | Object of headers |
+| `v-cache` | Stores the response for a time. GET only. Accepts `30s`, `5m` |
+| `v-retry` | Extra attempts on network failure and 5xx errors |
+| `v-timeout` | Time to abort |
+| `v-offline-queue` | Stores the request when the browser is offline and resends it later |
 
 ```html
 <form v-post="/api/pedidos"
@@ -308,7 +309,7 @@ await V.http.delete('/api/usuarios/1');
 await V.http.head('/api/usuarios');
 ```
 
-Os atalhos devolvem apenas os dados. Para a resposta completa, use `request`:
+The shortcuts return only the data. For the complete response, use `request`:
 
 ```js
 const resposta = await V.http.request({ url: '/api/usuarios', method: 'GET' });
@@ -321,46 +322,46 @@ resposta.raw;     // o Response original
 
 ## Opções
 
-| Opção | O que faz |
+| Option | What it does |
 | --- | --- |
-| `params` | Objeto que vira query string. Valores nulos e vazios são omitidos |
-| `headers` | Cabeçalhos da requisição |
-| `timeout` | Milissegundos até abortar. Padrão 30000. `0` desliga |
-| `retry` | Tentativas extras em falha de rede e 5xx. A espera dobra a cada rodada. **Só vale sozinho em `GET`, `HEAD` e `OPTIONS`** |
-| `retryUnsafe` | Libera o retry em `POST`, `PATCH`, `PUT` e `DELETE`. Leia o aviso abaixo antes de ligar |
-| `retryDelay` | Espera inicial entre tentativas. Padrão 500 ms |
+| `params` | Object that becomes a query string. Null and empty values are omitted |
+| `headers` | Request headers |
+| `timeout` | Milliseconds to abort. Default 30000. `0` turns it off |
+| `retry` | Extra attempts on network failure and 5xx. The wait doubles each round. **Only works alone on `GET`, `HEAD` and `OPTIONS`** |
+| `retryUnsafe` | Enables retry on `POST`, `PATCH`, `PUT` and `DELETE`. Read the warning below before turning it on |
+| `retryDelay` | Initial wait between attempts. Default 500 ms |
 
-### Por que o retry não repete `POST` sozinho
+### Why retry doesn't repeat `POST` alone
 
-Repetir uma requisição que muda estado pode executar a operação duas vezes. O caso clássico é o
-pagamento: o servidor recebe e processa, a resposta se perde no caminho de volta, o cliente entende
-como falha de rede e reenvia. O usuário é cobrado duas vezes.
+Retrying a request that changes state can execute the operation twice. The classic case is payment:
+the server receives and processes it, the response gets lost on the way back, the client thinks
+it's a network failure and resends. The user gets charged twice.
 
-Por isso o retry automático só vale para métodos idempotentes, aqueles em que repetir tem o mesmo
-efeito de fazer uma vez: `GET`, `HEAD` e `OPTIONS`.
+That's why automatic retry only works for idempotent methods, those where repeating has the same
+effect as doing it once: `GET`, `HEAD` and `OPTIONS`.
 
-Para os demais existem dois caminhos, e os dois são explícitos de propósito:
+For the others there are two paths, and both are explicit on purpose:
 
 ```js
-// 1. Você garante que repetir é seguro nesta rota.
-V.http.post('/api/eventos', dados, { retry: 2, retryUnsafe: true })
+// 1. You guarantee that retrying is safe on this route.
+V.http.post('/api/events', data, { retry: 2, retryUnsafe: true })
 
-// 2. Melhor: o servidor deduplica pela chave de idempotência.
-V.http.post('/api/pagamentos', dados, {
+// 2. Better: the server deduplicates by idempotency key.
+V.http.post('/api/payments', data, {
   retry: 2,
   headers: { 'Idempotency-Key': V.uid('pag') },
 })
 ```
 
-A segunda forma é a correta quando a operação realmente importa. A chave precisa ser a mesma nas
-tentativas repetidas e o servidor precisa reconhecê-la — sem isso ela não protege nada.
+The second form is correct when the operation really matters. The key must be the same in repeated
+attempts and the server must recognize it — without it, it doesn't protect anything.
 
-Em desenvolvimento, pedir `retry` num método inseguro sem nenhum dos dois gera aviso no console.
-| `cache` | Milissegundos de cache. Só para GET |
-| `signal` | `AbortSignal` para cancelar |
-| `credentials` | Padrão `same-origin` |
+In development, asking for `retry` on an unsafe method without either one generates a console warning.
+| `cache` | Cache milliseconds. GET only |
+| `signal` | `AbortSignal` to cancel |
+| `credentials` | Default `same-origin` |
 | `responseType` | `auto`, `json`, `text`, `blob`, `arrayBuffer`, `formData` |
-| `offlineQueue` | Guarda a requisição quando offline e reenvia ao voltar |
+| `offlineQueue` | Stores the request when offline and resends when back online |
 
 ```js
 const dados = await V.http.get('/api/produtos', {
@@ -373,8 +374,8 @@ const dados = await V.http.get('/api/produtos', {
 
 ## Corpo
 
-Objetos viram JSON com o cabeçalho certo. `FormData`, `Blob`, `URLSearchParams`, `ArrayBuffer` e
-texto passam como estão.
+Objects become JSON with the correct header. `FormData`, `Blob`, `URLSearchParams`, `ArrayBuffer`
+and text pass as-is.
 
 ```js
 await V.http.post('/api/usuarios', { nome: 'Ana' });          // application/json
@@ -396,7 +397,7 @@ try {
 }
 ```
 
-Erros 4xx não são repetidos. Erros 5xx e falhas de rede respeitam o `retry`.
+4xx errors are not retried. 5xx errors and network failures respect `retry`.
 
 ## Interceptadores
 
@@ -418,8 +419,8 @@ V.http.interceptors.error.use((erro) => {
 off();  // remove o interceptador de requisição
 ```
 
-Interceptadores podem ser assíncronos. O de requisição precisa devolver a configuração, e o de
-resposta precisa devolver a resposta.
+Interceptors can be asynchronous. The request one must return the config, and the response one
+must return the response.
 
 ## Autenticação e cabeçalhos padrão
 
@@ -432,9 +433,9 @@ V.http.setHeader('Accept-Language', 'pt-BR');
 V.http.setHeader('Accept-Language', null);   // remove
 ```
 
-Toda requisição já leva `X-Requested-With: XMLHttpRequest`. Em métodos que escrevem, o token CSRF
-é lido de `<meta name="csrf-token" content="...">` e enviado em `X-CSRF-TOKEN`. Os nomes são
-configuráveis em `V.http.defaults.csrfMeta` e `V.http.defaults.csrfHeader`.
+Every request already carries `X-Requested-With: XMLHttpRequest`. On writing methods, the CSRF token
+is read from `<meta name="csrf-token" content="...">` and sent as `X-CSRF-TOKEN`. The names are
+configurable in `V.http.defaults.csrfMeta` and `V.http.defaults.csrfHeader`.
 
 ## Upload com progresso
 
@@ -449,7 +450,7 @@ await V.http.upload('/api/arquivos', dados, {
 });
 ```
 
-Usa `XMLHttpRequest` por baixo, porque só ele reporta progresso real de envio.
+Uses `XMLHttpRequest` under the hood, because only it reports real upload progress.
 
 ## Server-Sent Events
 
@@ -462,7 +463,7 @@ const fonte = V.http.sse('/api/eventos', {
 fonte.close();
 ```
 
-O JSON é convertido automaticamente quando possível.
+JSON is converted automatically when possible.
 
 ## Streaming linha a linha
 
@@ -472,7 +473,7 @@ await V.http.stream('/api/logs', (linha) => {
 });
 ```
 
-Ideal para NDJSON e respostas longas.
+Ideal for NDJSON and long responses.
 
 ## Cache
 
@@ -485,19 +486,19 @@ V.http.clearCache(/^GET \/api\//); // limpa pelo padrão
 
 ## Fila offline
 
-Requisições com `offlineQueue: true` disparadas com o navegador offline são guardadas no
-`localStorage` e reenviadas automaticamente quando a conexão volta.
+Requests with `offlineQueue: true` fired with the browser offline are stored in `localStorage`
+and automatically resent when the connection returns.
 
 ```js
 await V.http.post('/api/pedidos', pedido, { offlineQueue: true });
 await V.http.flushOfflineQueue();   // força o reenvio
 ```
 
-A resposta imediata é sintética, com `status: 0` e `statusText: 'offline-queued'`.
+The immediate response is synthetic, with `status: 0` and `statusText: 'offline-queued'`.
 
 ## No HTML
 
-O cliente inteiro está disponível como `$http` dentro de qualquer expressão:
+The entire client is available as `$http` inside any expression:
 
 ```html
 <button v-click="$http.post('/api/curtidas', { id: post.id }).then(() => post.curtido = true)">
@@ -507,4 +508,4 @@ O cliente inteiro está disponível como `$http` dentro de qualquer expressão:
 
 ---
 
-Anterior: [Eventos](eventos.md) · Próximo: [Formulários](formularios.md)
+Previous: [Events](eventos.md) · Next: [Forms](formularios.md)

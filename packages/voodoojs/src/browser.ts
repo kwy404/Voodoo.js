@@ -1,9 +1,9 @@
 /**
- * Build completo da Voodoo.js para navegador.
+ * Full build of Voodoo.js for browsers.
  *
- * Alem de tudo que vem no build essencial, inclui graficos, animacoes com
- * fisica de mola, roteador, idiomas, inspetor de reatividade e a biblioteca de
- * componentes prontos.
+ * In addition to everything in the essential build, includes charts, animations
+ * with spring physics, router, internationalization, reactivity inspector, and
+ * the ready-to-use component library.
  *
  * ```html
  * <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.full.min.js" defer></script>

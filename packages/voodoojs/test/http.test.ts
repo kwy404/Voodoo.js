@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { http, request, HttpError } from '../src/http';
 import { config } from '../src/runtime/registry';
-import { limparAvisos } from '../src/runtime/avisos';
+import { clearWarnings } from '../src/runtime/avisos';
 
 /** Cria uma resposta falsa de fetch. */
 function jsonResponse(body: unknown, status = 200): Response {
@@ -139,7 +139,7 @@ describe('erros', () => {
 describe('retry so repete o que e seguro repetir', () => {
   beforeEach(() => {
     config.devtools = false;
-    limparAvisos();
+    clearWarnings();
   });
 
   afterEach(() => {
@@ -246,7 +246,7 @@ describe('retry so repete o que e seguro repetir', () => {
       request({ url: '/aviso-dev', method: 'POST', retry: 2, retryDelay: 1 })
     ).rejects.toBeInstanceOf(HttpError);
     const texto = aviso.mock.calls.map((c) => String(c[0])).join('\n');
-    expect(texto).toContain('retry ignorado em POST');
+    expect(texto).toContain('retry ignored on POST');
     expect(texto).toContain('retryUnsafe');
     expect(texto).toContain('Idempotency-Key');
   });

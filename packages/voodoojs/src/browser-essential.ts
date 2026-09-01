@@ -1,6 +1,6 @@
 /**
- * Ponto de entrada do build essencial para navegador.
- * Publica `window.V` e inicializa a pagina quando o DOM estiver pronto.
+ * Entry point for the essential build for browsers.
+ * Publishes `window.V` and initializes the page when the DOM is ready.
  */
 
 import V from './essential';

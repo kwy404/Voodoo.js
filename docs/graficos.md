@@ -1,17 +1,16 @@
-# Gráficos
+# Charts
 
-> Este módulo vem apenas no `voodoo.full.min.js` ou em um build sob medida.
+> This module comes only in `voodoo.full.min.js` or in a custom build.
 
-Gráficos em SVG puro, sem nenhuma dependência externa. Todo o desenho é gerado como texto e
-entregue de uma vez ao container, o que mantém o redesenho barato mesmo com dados mudando a cada
-quadro.
+Pure SVG charts with no external dependencies. All drawing is generated as text and delivered to the
+container at once, which keeps redrawing cheap even when data changes every frame.
 
-Três compromissos guiam o módulo:
+Three principles guide the module:
 
-- **responsivo**, com `viewBox`, `preserveAspectRatio` e `ResizeObserver`;
-- **acessível**, com `role="img"`, `aria-label` descritivo gerado a partir dos próprios dados, e
-  `<title>` por forma;
-- **temático**, usando as variáveis `--v-*`, então funciona em claro e escuro.
+- **responsive**, with `viewBox`, `preserveAspectRatio`, and `ResizeObserver`;
+- **accessible**, with `role="img"`, descriptive `aria-label` generated from the data itself, and
+  `<title>` per shape;
+- **themed**, using `--v-*` variables, so it works in light and dark.
 
 ## v-chart
 
@@ -19,7 +18,7 @@ Três compromissos guiam o módulo:
 <div v-chart="{ type: 'line', data: vendas, labels: meses, smooth: true }"></div>
 ```
 
-O valor pode ser o objeto de opções completo, ou apenas os dados:
+The value can be the full options object, or just the data:
 
 ```html
 <div v-data="{ vendas: [12, 19, 8, 25, 30] }">
@@ -27,29 +26,29 @@ O valor pode ser o objeto de opções completo, ou apenas os dados:
 </div>
 ```
 
-> Prefira sempre a forma de objeto quando os dados forem reativos. Os atributos `v-chart-*` são
-> lidos na montagem e servem bem para gráficos estáticos, mas o tipo declarado neles não sobrevive
-> à primeira atualização dos dados. Com `v-chart="{ type: 'bar', data: vendas }"` tudo continua
-> certo a cada redesenho.
+> Always prefer the object form when data is reactive. The `v-chart-*` attributes are
+> read on mount and work well for static charts, but the type declared in them doesn't survive
+> the first data update. With `v-chart="{ type: 'bar', data: vendas }"` everything stays
+> correct with each redraw.
 
-O gráfico é reativo: mudar um número dentro do array já redesenha, porque o efeito percorre a
-estrutura inteira e assina cada valor.
+The chart is reactive: changing a number in the array redraws it, because the effect walks the
+entire structure and subscribes to each value.
 
-## Tipos
+## Types
 
-| Tipo | Para que serve |
+| Type | What it does |
 | --- | --- |
-| `line` | Evolução ao longo do tempo. Padrão |
-| `area` | Igual à linha, com a área preenchida |
-| `bar` | Barras verticais |
-| `column` | Barras horizontais |
-| `stacked` | Barras empilhadas, para composição |
-| `pie` | Pizza, para participação |
-| `donut` | Rosca, com espaço no meio |
-| `sparkline` | Tendência miúda, sem eixos, para caber numa célula |
-| `radar` | Comparação de várias dimensões |
-| `scatter` | Dispersão, com `x` e `y` |
-| `progress` | Progresso circular |
+| `line` | Evolution over time. Default |
+| `area` | Like line, with the area filled |
+| `bar` | Vertical bars |
+| `column` | Horizontal bars |
+| `stacked` | Stacked bars for composition |
+| `pie` | Pie for share |
+| `donut` | Donut with space in the middle |
+| `sparkline` | Tiny trend, no axes, fits in a cell |
+| `radar` | Comparison of multiple dimensions |
+| `scatter` | Scatter with `x` and `y` |
+| `progress` | Circular progress |
 
 ```html
 <div v-chart="{ type: 'area', data: receita, labels: meses, smooth: true }"></div>
@@ -58,15 +57,15 @@ estrutura inteira e assina cada valor.
 <div v-chart="{ type: 'progress', data: 68, max: 100 }"></div>
 ```
 
-## Formatos de dados
+## Data formats
 
-**Números soltos**, com rótulos separados:
+**Bare numbers** with separate labels:
 
 ```js
 { type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Fev', 'Mar'] }
 ```
 
-**Pontos nomeados**:
+**Named points**:
 
 ```js
 { type: 'pie', data: [
@@ -76,7 +75,7 @@ estrutura inteira e assina cada valor.
 ] }
 ```
 
-**Séries nomeadas**, para várias linhas ou barras:
+**Named series** for multiple lines or bars:
 
 ```js
 { type: 'line', labels: ['Jan', 'Fev', 'Mar'], data: [
@@ -85,37 +84,37 @@ estrutura inteira e assina cada valor.
 ] }
 ```
 
-**Dispersão**, com coordenadas:
+**Scatter** with coordinates:
 
 ```js
 { type: 'scatter', data: [{ x: 1, y: 4 }, { x: 2, y: 7 }, { x: 3, y: 3 }] }
 ```
 
-**Um número só**, para `progress`:
+**Single number** for `progress`:
 
 ```js
 { type: 'progress', data: 68 }
 ```
 
-## Opções
+## Options
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `type` | `line` | Tipo do gráfico |
-| `data` | | Dados, em qualquer formato aceito |
-| `labels` | | Rótulos do eixo de categorias |
-| `name` | | Nome da série única, usado na legenda e no tooltip |
-| `colors` | paleta da marca | Cores das séries |
-| `height` | 260, ou 56 em `sparkline` | Altura em pixels |
-| `width` | | Largura usada quando o container ainda não tem medida |
-| `showGrid` | `true` | Linhas de grade e rótulos do eixo de valores |
-| `showLegend` | automático | Legenda clicável |
-| `showValues` | `false` | Escreve o valor de cada ponto, barra ou fatia |
-| `animate` | `true` | Anima o desenho na entrada |
-| `smooth` | `false` | Curvas suaves em linhas e áreas |
-| `max`, `min` | automático | Teto e piso da escala |
-| `format` | `number` | `number`, `currency` ou `percent` |
-| `tooltip` | `true` | Tooltip ao passar o mouse |
+| `type` | `line` | Chart type |
+| `data` | | Data in any accepted format |
+| `labels` | | Category axis labels |
+| `name` | | Name of single series, used in legend and tooltip |
+| `colors` | brand palette | Series colors |
+| `height` | 260, or 56 for `sparkline` | Height in pixels |
+| `width` | | Width used when container doesn't have measure |
+| `showGrid` | `true` | Grid lines and value axis labels |
+| `showLegend` | auto | Clickable legend |
+| `showValues` | `false` | Writes value of each point, bar, or slice |
+| `animate` | `true` | Animates drawing on entry |
+| `smooth` | `false` | Smooth curves on lines and areas |
+| `max`, `min` | auto | Scale ceiling and floor |
+| `format` | `number` | `number`, `currency`, or `percent` |
+| `tooltip` | `true` | Tooltip on mouse hover |
 
 ```html
 <div v-chart="{
@@ -130,9 +129,9 @@ estrutura inteira e assina cada valor.
 }"></div>
 ```
 
-## Atributos v-chart-*
+## v-chart-* attributes
 
-Para gráficos estáticos, os ajustes cabem em atributos:
+For static charts, adjustments fit in attributes:
 
 ```html
 <div v-chart="[12, 19, 8, 25]" v-chart-type="bar" v-chart-height="200"></div>
@@ -140,32 +139,32 @@ Para gráficos estáticos, os ajustes cabem em atributos:
 <div v-chart="dados" v-chart-grid="false" v-chart-legend="false" v-chart-tooltip="false"></div>
 ```
 
-Atributos aceitos: `v-chart-type`, `v-chart-height`, `v-chart-format`, `v-chart-colors`,
+Accepted attributes: `v-chart-type`, `v-chart-height`, `v-chart-format`, `v-chart-colors`,
 `v-chart-max`, `v-chart-min`, `v-chart-smooth`, `v-chart-grid`, `v-chart-legend`,
 `v-chart-values`, `v-chart-tooltip`, `v-chart-animate`.
 
-Os booleanos aceitam o atributo vazio, `true`, `1`, `false` e `0`.
+Booleans accept empty attribute, `true`, `1`, `false`, and `0`.
 
-## Cores
+## Colors
 
-Sem `colors`, o gráfico usa a paleta da marca:
+Without `colors`, the chart uses the brand palette:
 
 ```
 #6D3BF5  #FF3D8B  #2ED9A5  #FFB35C  #9B7BFF  #FF4D4D  #14111F  #3BB6F5
 ```
 
-Ela está em `V.chartColors` e em `V.charts.colors`. As cores de grade, texto e fundo vêm das
-variáveis `--v-*`, então o gráfico acompanha o tema e a paleta configurada.
+It's in `V.chartColors` and `V.charts.colors`. Grid, text, and background colors come from
+`--v-*` variables, so the chart follows the configured theme and palette.
 
-## Legenda e tooltip
+## Legend and tooltip
 
-A legenda aparece sozinha quando há mais de uma série ou quando o gráfico é categórico. Clicar em
-um item liga e desliga aquela série, e o gráfico é recalculado.
+The legend appears on its own when there's more than one series or when the chart is categorical. Clicking an
+item toggles that series, and the chart is recalculated.
 
-O tooltip mostra todas as séries da categoria sob o cursor. Em pizza, rosca, dispersão, progresso
-e radar, ele acompanha a forma.
+The tooltip shows all series for the category under the cursor. On pie, donut, scatter, progress,
+and radar, it follows the shape.
 
-## Por JavaScript
+## Via JavaScript
 
 ```js
 const grafico = V.renderChart(document.querySelector('#vendas'), {
@@ -180,24 +179,24 @@ grafico.options;
 grafico.destroy();
 ```
 
-`V.chart` é um alias de `V.renderChart`. O módulo inteiro está em `V.charts`:
+`V.chart` is an alias for `V.renderChart`. The entire module is in `V.charts`:
 
-| Membro | O que é |
+| Member | What it is |
 | --- | --- |
-| `V.charts.render` | O mesmo que `V.renderChart` |
-| `V.charts.format` | Formata um valor no padrão do gráfico |
-| `V.charts.colors` | A paleta padrão |
+| `V.charts.render` | Same as `V.renderChart` |
+| `V.charts.format` | Formats a value in chart format |
+| `V.charts.colors` | Default palette |
 
-## Um painel completo
+## A complete dashboard
 
 ```html
 <div v-data="{ periodo: '30d' }" v-resource="painel: /api/painel" v-params="{ periodo: periodo }">
   <select v-model="periodo" v-change="painel.reload()">
-    <option value="7d">7 dias</option>
-    <option value="30d">30 dias</option>
+    <option value="7d">7 days</option>
+    <option value="30d">30 days</option>
   </select>
 
-  <div v-if="painel.loading">Carregando...</div>
+  <div v-if="painel.loading">Loading...</div>
 
   <template v-else-if="painel.loaded">
     <VStat label="Receita" :value="painel.data.receita" :delta="painel.data.variacao" />
@@ -215,23 +214,23 @@ grafico.destroy();
 </div>
 ```
 
-## Acessibilidade
+## Accessibility
 
-Cada gráfico recebe `role="img"` e um `aria-label` escrito a partir dos dados, com o tipo, a
-quantidade de séries, mínimo, máximo e média. Cada forma tem um `<title>` próprio, lido no foco.
-A animação de entrada respeita `prefers-reduced-motion`.
+Each chart receives `role="img"` and an `aria-label` written from the data, with the type, number
+of series, minimum, maximum, and average. Each shape has its own `<title>`, read on focus.
+Entry animation respects `prefers-reduced-motion`.
 
-Para conjuntos importantes, ofereça também uma tabela:
+For important datasets, also offer a table:
 
 ```html
 <div v-chart="{ type: 'bar', data: vendas, labels: meses }"></div>
 
 <details>
-  <summary>Ver os dados em tabela</summary>
+  <summary>View data as table</summary>
   <VTable columns="mes:Mês, valor:Valor:right" :rows="tabelaDeVendas" />
 </details>
 ```
 
 ---
 
-Anterior: [Animações](animacoes.md) · Próximo: [Roteador](roteador.md)
+Previous: [Animations](animacoes.md) · Next: [Router](roteador.md)

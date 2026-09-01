@@ -1,133 +1,133 @@
 # Devtools
 
-> O inspetor vem apenas no `voodoo.full.min.js` ou em um build sob medida.
+> The inspector only comes in `voodoo.full.min.js` or in a custom build.
 
-Três ferramentas: o **widget flutuante**, que liga tudo direto pelo HTML, o **inspetor xray**,
-visual, que roda dentro da própria página, e o **barramento de eventos**, que qualquer módulo pode
-usar para reportar atividade.
+Three tools: the **floating widget**, which connects everything directly through HTML, the **xray
+inspector**, visual, which runs inside the page itself, and the **event bus**, which any module can
+use to report activity.
 
 ---
 
-# Ligando pelo HTML
+# Turning it on via HTML
 
-A forma mais curta. Um atributo na tag `<script>` e o inspetor está na página:
+The shortest way. An attribute on the `<script>` tag and the inspector is on the page:
 
 ```html
 <script src="voodoo.full.min.js" devtools defer></script>
 ```
 
-Um botão aparece no canto inferior direito. Clique nele e o painel completo abre.
+A button appears in the bottom right corner. Click it and the full panel opens.
 
-O widget mostra quantos componentes estão montados e acende um ponto sempre que acontece
-atividade: uma requisição, um evento de directive, uma troca de rota. Ele pode ser arrastado para
-qualquer canto, e a posição fica salva para o próximo carregamento.
+The widget shows how many components are mounted and lights up a dot whenever activity happens: a
+request, a directive event, a route change. It can be dragged to any corner, and the position is
+saved for the next load.
 
-## Formas equivalentes de ligar
+## Equivalent ways to turn it on
 
-| Forma | Quando usar |
+| Way | When to use |
 | --- | --- |
-| `<script src="voodoo.full.min.js" devtools>` | O caminho curto |
-| `<script src="voodoo.full.min.js" data-devtools>` | Quando o HTML precisa ser estritamente válido |
-| `devtools="false"` | Deixa o atributo no HTML e desliga sem apagar a linha |
-| `window.VOODOO_DEVTOOLS = true` antes do script | Quando a decisão vem do servidor |
-| `V.config.devtools = true` + `V.devtoolsWidget(true)` | Controle por JavaScript |
+| `<script src="voodoo.full.min.js" devtools>` | The short way |
+| `<script src="voodoo.full.min.js" data-devtools>` | When HTML needs to be strictly valid |
+| `devtools="false"` | Leaves the attribute in HTML and turns it off without deleting the line |
+| `window.VOODOO_DEVTOOLS = true` before the script | When the decision comes from the server |
+| `V.config.devtools = true` + `V.devtoolsWidget(true)` | Control via JavaScript |
 
-## Controlando o widget por JavaScript
+## Controlling the widget via JavaScript
 
 ```js
-V.devtoolsWidget();       // alterna
-V.devtoolsWidget(true);   // mostra
-V.devtoolsWidget(false);  // esconde
+V.devtoolsWidget();       // toggle
+V.devtoolsWidget(true);   // show
+V.devtoolsWidget(false);  // hide
 ```
 
-O `×` no canto do botão esconde o widget só naquela aba. Uma chamada explícita a
-`V.devtoolsWidget(true)` traz de volta.
+The `×` at the corner of the button hides the widget only on that tab. An explicit call to
+`V.devtoolsWidget(true)` brings it back.
 
-> O widget e o painel vivem no build completo. Nos builds menor e essencial o atributo
-> `devtools` continua ligando os avisos detalhados no console, e a Voodoo avisa lá mesmo que o
-> inspetor não veio junto.
+> The widget and panel live in the complete build. In the smaller and essential builds the `devtools`
+> attribute still turns on detailed warnings in the console, and Voodoo warns there that the
+> inspector didn't come along.
 
-Há uma página pronta em [`examples/devtools/`](../examples/devtools/) com contador, lista, store,
-componente e requisição, para ver as abas do painel reagindo a cada uma dessas coisas.
+There's a ready page in [`examples/devtools/`](../examples/devtools/) with counter, list, store,
+component and request, to see the panel tabs reacting to each of those things.
 
 ---
 
-# O inspetor xray
+# The xray inspector
 
 ```js
-V.xray();        // liga e desliga
-V.xray(true);    // força ligar
-V.xray(false);   // força desligar
+V.xray();        // toggle
+V.xray(true);    // force on
+V.xray(false);   // force off
 ```
 
-O atalho `Ctrl+Shift+X` é instalado na primeira chamada. Para ter o atalho disponível desde o
-começo, sem ligar nada:
+The `Ctrl+Shift+X` shortcut is installed on first call. To have the shortcut available from the
+start, without turning anything on:
 
 ```js
 V.enableXrayShortcut();
 ```
 
-## O que ele mostra
+## What it shows
 
-Ligado, o inspetor contorna todo elemento que tem directives, mostra um cartão com o escopo
-daquele elemento, abre um painel com abas e faz o elemento piscar toda vez que um efeito reativo
-escreve nele. Esse é o efeito raio-x: dá para ver a reatividade acontecendo.
+When on, the inspector outlines every element that has directives, shows a card with that element's
+scope, opens a panel with tabs, and makes the element flicker every time a reactive effect writes
+to it. That's the xray effect: you can see reactivity happening.
 
-As abas do painel:
+The panel tabs:
 
-| Aba | O que traz |
+| Tab | What it brings |
 | --- | --- |
-| Estado | Todos os escopos da página, com as variáveis visíveis em cada um. Valores simples são editáveis ali mesmo |
-| Componentes | Instâncias montadas, com props, estado e o elemento hospedeiro |
-| Stores | Stores globais e o conteúdo de cada um |
-| Eventos | Eventos disparados por directives, com o elemento de origem |
-| Rede | Requisições, com método, URL, status e duração |
-| Desempenho | Contagem de efeitos por elemento e quantas vezes cada um reexecutou |
+| State | All scopes on the page, with visible variables in each. Simple values are editable right there |
+| Components | Mounted instances, with props, state, and host element |
+| Stores | Global stores and their contents |
+| Events | Events fired by directives, with the source element |
+| Network | Requests, with method, URL, status and duration |
+| Performance | Effect count per element and how many times each reexecuted |
 
-Clicar em um elemento na página seleciona o escopo correspondente. Clicar em um elemento no painel
-o destaca e rola a página até ele.
+Clicking an element on the page selects the corresponding scope. Clicking an element in the panel
+highlights it and scrolls the page to it.
 
-## Custo em produção
+## Production cost
 
-O módulo não registra nada ao ser importado. Nenhum ouvinte, nenhum estilo e nenhum temporizador
-existe antes da primeira chamada, então ele é tree shakeable e não custa nada enquanto ninguém
-liga. Ainda assim, em produção o caminho mais seguro é servir o build essencial, ou montar um
-build sob medida sem o módulo `devtools`:
+The module doesn't register anything when imported. No listeners, no styles, and no timers exist
+before the first call, so it's tree-shakeable and costs nothing while nobody turns it on. Still, in
+production the safest path is to serve the essential build, or build a custom one without the
+`devtools` module:
 
 ```bash
 npx voodoo build
 ```
 
-## Como a contagem de efeitos é feita
+## How effect counting is done
 
-A aba de desempenho soma, para cada elemento, os efeitos criados pelas directives dele mais os
-efeitos dos textos interpolados que são filhos diretos. Um número alto em um elemento pequeno
-costuma indicar interpolação demais em um lugar só, e vale quebrar o bloco.
+The performance tab sums, for each element, the effects created by its directives plus the effects
+of interpolated texts that are direct children. A high number in a small element usually means too
+much interpolation in one place, and it's worth breaking the block.
 
 ---
 
-# O barramento de eventos
+# The event bus
 
 ```js
 V.devtools.emit('network', {
   method: 'GET',
-  url: '/api/usuarios',
+  url: '/api/users',
   status: 200,
   ok: true,
   duration: 128,
-  source: 'meu-plugin',
+  source: 'my-plugin',
 });
 
-const off = V.devtools.on('network', (evento) => console.log(evento.url));
+const off = V.devtools.on('network', (event) => console.log(event.url));
 off();
 ```
 
-Emitir sem nenhum ouvinte registrado custa uma busca em `Map` e nada mais, então qualquer módulo
-pode reportar atividade sem medo.
+Emitting with no listeners registered costs a `Map` lookup and nothing more, so any module can
+report activity without fear.
 
-## Tipos de evento
+## Event types
 
-| Tipo | Campos |
+| Type | Fields |
 | --- | --- |
 | `network` | `method`, `url`, `status`, `ok`, `duration`, `error`, `source` |
 | `event` | `type`, `el`, `detail`, `source` |
@@ -138,76 +138,76 @@ pode reportar atividade sem medo.
 ## API
 
 ```js
-V.devtools.emit(tipo, dados);
-V.devtools.on(tipo, callback);     // devolve a função que cancela
-V.devtools.off(tipo, callback);
-V.devtools.clear(tipo);            // remove os ouvintes de um tipo
-V.devtools.clear();                // remove todos
-V.devtools.count(tipo);            // quantos ouvintes existem
+V.devtools.emit(type, data);
+V.devtools.on(type, callback);     // returns the function that cancels
+V.devtools.off(type, callback);
+V.devtools.clear(type);            // removes listeners of a type
+V.devtools.clear();                // removes all
+V.devtools.count(type);            // how many listeners exist
 ```
 
-A aba Rede do inspetor lista tudo que chega por `network`, mesmo quando a requisição não passou
-pelo cliente `V.http`. É o gancho para integrar um cliente próprio ao painel.
+The Network tab of the inspector lists everything that comes via `network`, even when the request
+didn't go through the `V.http` client. It's the hook to integrate your own client into the panel.
 
 ---
 
-# Depuração sem o inspetor
+# Debugging without the inspector
 
-## Avisos detalhados
+## Detailed warnings
 
 ```js
 V.config.devtools = true;
 ```
 
-Com essa opção, os comentários âncora criados por `v-if` e `v-for` ganham nome, o que deixa a
-árvore muito mais legível no inspetor do navegador. Componentes não registrados também passam a
-avisar no console.
+With this option, the anchor comments created by `v-if` and `v-for` get names, which makes the
+tree much more readable in the browser inspector. Unregistered components also start warning in
+the console.
 
-## Tratador global de erros
+## Global error handler
 
 ```js
-V.onError((err, contexto) => {
-  console.error('[app]', contexto, err);
-  enviarParaOMonitoramento(err, contexto);
+V.onError((err, context) => {
+  console.error('[app]', context, err);
+  sendToMonitoring(err, context);
 });
 ```
 
-O contexto diz de onde veio: `directive v-click`, `interpolacao`, `hook mounted`,
-`requisicao GET /api/x`, `evento click ("salvar()")` e assim por diante.
+The context says where it came from: `directive v-click`, `interpolation`, `hook mounted`,
+`request GET /api/x`, `event click ("save()")` and so on.
 
-## Inspecionando escopo e instâncias
+## Inspecting scope and instances
 
 ```js
-V.scope.data;                                  // escopo raiz
-V.getScope(document.querySelector('#lista'));  // escopo do elemento, se ele criou um
-V.findScope(document.querySelector('li'));     // escopo efetivo, subindo os ancestrais
-V.instances;                                   // Set com os componentes montados
-V.components;                                  // Map com as definições registradas
-V.directives;                                  // Map com as directives registradas
-V.magics;                                      // Map com as variáveis mágicas
-V.stores;                                      // todos os stores
+V.scope.data;                                  // root scope
+V.getScope(document.querySelector('#list'));   // element scope, if it created one
+V.findScope(document.querySelector('li'));     // effective scope, walking up ancestors
+V.instances;                                   // Set with mounted components
+V.components;                                  // Map with registered definitions
+V.directives;                                  // Map with registered directives
+V.magics;                                      // Map with magic variables
+V.stores;                                      // all stores
 ```
 
-## Log dentro do HTML
+## Logging inside HTML
 
 ```html
-<div v-effect="$log('estado agora', $data)"></div>
-<button v-click="$log($event)">Ver o evento</button>
+<div v-effect="$log('state now', $data)"></div>
+<button v-click="$log($event)">See the event</button>
 ```
 
-`$log` escreve no console com o prefixo `[Voodoo]`.
+`$log` writes to the console with the `[Voodoo]` prefix.
 
-## Forçando e parando o processamento
+## Forcing and stopping processing
 
 ```js
-V.start();                     // percorre e inicializa a partir do body
+V.start();                     // walks and initializes from body
 V.start(document.querySelector('#area'));
-V.walk(elemento, escopo);      // inicializa um trecho com um escopo específico
-V.refresh(elemento);           // reinicializa uma raiz
-V.destroy(elemento);           // desmonta, parando efeitos e removendo ouvintes
-V.stopObserving();             // desliga o MutationObserver
+V.walk(element, scope);        // initializes a section with a specific scope
+V.refresh(element);            // reinitializes a root
+V.destroy(element);            // unmounts, stopping effects and removing listeners
+V.stopObserving();             // turns off the MutationObserver
 ```
 
 ---
 
-Anterior: [Tema e paleta](tema-e-paleta.md) · Próximo: [Plugins](plugins.md)
+Previous: [Theme and palette](tema-e-paleta.md) · Next: [Plugins](plugins.md)

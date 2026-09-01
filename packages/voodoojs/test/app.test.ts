@@ -1,10 +1,10 @@
 /**
- * Modo aplicacao: `createApp(...).mount('#app')`.
+ * Application mode: `createApp(...).mount('#app')`.
  *
- * Cobre a paridade com o Vue que a API promete (estado, computados, metodos,
- * watch, ciclo de vida, componentes locais, provide e inject, plugins) e as
- * duas diferencas propositais: montar em um alvo que ainda nao existe, e
- * devolver o container ao HTML original no `unmount`.
+ * Covers Vue API parity promise (state, computed, methods, watch, lifecycle,
+ * local components, provide and inject, plugins) and the two intentional
+ * differences: mounting on a target that doesn't exist yet, and restoring
+ * the container to original HTML on `unmount`.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -16,8 +16,8 @@ async function settle(n = 4) {
   for (let i = 0; i < n; i++) await nextTick();
 }
 
-/** O agendador do mount espera um quadro; aqui o tempo passa de proposito. */
-async function esperarMontagem(ms = 80) {
+/** The mount scheduler waits one frame; here time passes on purpose. */
+async function waitForMount(ms = 80) {
   await new Promise((r) => setTimeout(r, ms));
   await settle();
 }
@@ -27,7 +27,7 @@ beforeEach(() => {
 });
 
 describe('createApp', () => {
-  it('monta o template no container e reage ao estado', async () => {
+  it('mounts template in container and reacts to state', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({
@@ -40,25 +40,25 @@ describe('createApp', () => {
       template: '<button @click="somar()">Cliques: { n }</button>',
     });
 
-    const instancia = app.mount('#app');
+    const instance = app.mount('#app');
     await settle();
 
-    const botao = document.querySelector('#app button')!;
-    expect(botao.textContent).toBe('Cliques: 0');
+    const button = document.querySelector('#app button')!;
+    expect(button.textContent).toBe('Cliques: 0');
 
-    (botao as HTMLButtonElement).click();
+    (button as HTMLButtonElement).click();
     await settle();
-    expect(botao.textContent).toBe('Cliques: 1');
-    expect(instancia).not.toBeNull();
+    expect(button.textContent).toBe('Cliques: 1');
+    expect(instance).not.toBeNull();
 
     app.unmount();
   });
 
-  it('aceita computados, watch e ciclo de vida, como no Vue', async () => {
+  it('accepts computed, watch and lifecycle like Vue', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
-    const vistos: string[] = [];
-    const observado: number[] = [];
+    const seen: string[] = [];
+    const observed: number[] = [];
 
     const app = createApp({
       data: () => ({ n: 2 }),
@@ -68,34 +68,34 @@ describe('createApp', () => {
         },
       },
       watch: {
-        n(valor: number) {
-          observado.push(valor);
+        n(value: number) {
+          observed.push(value);
         },
       },
       beforeMount() {
-        vistos.push('beforeMount');
+        seen.push('beforeMount');
       },
       mounted() {
-        vistos.push('mounted');
+        seen.push('mounted');
       },
       template: '<p>{ n } e { dobro }</p>',
     });
 
-    const instancia = app.mount('#app') as any;
+    const instance = app.mount('#app') as any;
     await settle();
 
     expect(document.querySelector('#app p')!.textContent).toBe('2 e 4');
-    expect(vistos).toEqual(['beforeMount', 'mounted']);
+    expect(seen).toEqual(['beforeMount', 'mounted']);
 
-    instancia.n = 5;
+    instance.n = 5;
     await settle();
     expect(document.querySelector('#app p')!.textContent).toBe('5 e 10');
-    expect(observado).toEqual([5]);
+    expect(observed).toEqual([5]);
 
     app.unmount();
   });
 
-  it('registra componentes visiveis so dentro da aplicacao', async () => {
+  it('registers components visible only inside the application', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({
@@ -114,11 +114,11 @@ describe('createApp', () => {
     expect(document.querySelector('#app article')!.textContent).toBe('Oi');
 
     app.unmount();
-    // Sai do registro global junto com a aplicacao.
+    // Removed from global registry along with the application.
     expect(document.querySelector('#app article')).toBeNull();
   });
 
-  it('entrega valores por provide e inject', async () => {
+  it('delivers values via provide and inject', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({
@@ -139,7 +139,7 @@ describe('createApp', () => {
     app.unmount();
   });
 
-  it('app.provide funciona antes do mount', async () => {
+  it('app.provide works before mount', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({
@@ -160,20 +160,20 @@ describe('createApp', () => {
     app.unmount();
   });
 
-  it('instala plugin com app.use', async () => {
+  it('installs plugin with app.use', async () => {
     document.body.innerHTML = '<div id="app"></div>';
-    const instalado = vi.fn();
+    const installed = vi.fn();
 
     const app = createApp({ template: '<p>ok</p>' });
-    app.use({ name: 'teste-app-use', install: instalado }, { valor: 1 });
+    app.use({ name: 'teste-app-use', install: installed }, { valor: 1 });
 
-    expect(instalado).toHaveBeenCalledTimes(1);
+    expect(installed).toHaveBeenCalledTimes(1);
     app.mount('#app');
     await settle();
     app.unmount();
   });
 
-  it('globalProperties entram nas expressoes', async () => {
+  it('globalProperties enter expressions', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({ template: '<p>{ saudar("Ana") }</p>' });
@@ -186,31 +186,31 @@ describe('createApp', () => {
     app.unmount();
   });
 
-  it('monta em um elemento que so aparece depois', async () => {
+  it('mounts on element that appears later', async () => {
     const app = createApp({
       data: () => ({ texto: 'chegou depois' }),
       template: '<p>{ texto }</p>',
     });
 
-    // O elemento nao existe agora: a montagem fica com o agendador.
+    // Element doesn't exist now: mounting is scheduled.
     expect(app.mount('#tardio')).toBeNull();
     expect(app.isMounted).toBe(false);
 
-    const alvo = document.createElement('div');
-    alvo.id = 'tardio';
-    document.body.appendChild(alvo);
+    const target = document.createElement('div');
+    target.id = 'tardio';
+    document.body.appendChild(target);
 
-    const instancia = await app.whenMounted();
+    const instance = await app.whenMounted();
     await settle();
 
-    expect(instancia).not.toBeNull();
+    expect(instance).not.toBeNull();
     expect(app.isMounted).toBe(true);
     expect(document.querySelector('#tardio p')!.textContent).toBe('chegou depois');
 
     app.unmount();
   });
 
-  it('unmount devolve o container ao HTML original', async () => {
+  it('unmount restores container to original HTML', async () => {
     document.body.innerHTML = '<div id="app"><span>carregando</span></div>';
 
     const app = createApp({ template: '<p>pronto</p>' });
@@ -225,29 +225,29 @@ describe('createApp', () => {
     expect(app.instance).toBeNull();
   });
 
-  it('duas aplicacoes convivem na mesma pagina, com estados separados', async () => {
+  it('two applications coexist on same page with separate states', async () => {
     document.body.innerHTML = '<div id="a"></div><div id="b"></div>';
 
-    const um = createApp({ data: () => ({ n: 1 }), template: '<p>{ n }</p>' });
-    const dois = createApp({ data: () => ({ n: 9 }), template: '<p>{ n }</p>' });
+    const one = createApp({ data: () => ({ n: 1 }), template: '<p>{ n }</p>' });
+    const two = createApp({ data: () => ({ n: 9 }), template: '<p>{ n }</p>' });
 
-    um.mount('#a');
-    dois.mount('#b');
+    one.mount('#a');
+    two.mount('#b');
     await settle();
 
     expect(document.querySelector('#a p')!.textContent).toBe('1');
     expect(document.querySelector('#b p')!.textContent).toBe('9');
 
-    (um.instance as any).n = 2;
+    (one.instance as any).n = 2;
     await settle();
     expect(document.querySelector('#a p')!.textContent).toBe('2');
     expect(document.querySelector('#b p')!.textContent).toBe('9');
 
-    um.unmount();
-    dois.unmount();
+    one.unmount();
+    two.unmount();
   });
 
-  it('convive com o modo de atributos no HTML de fora', async () => {
+  it('coexists with attribute mode in outside HTML', async () => {
     document.body.innerHTML =
       '<div v-data="{ fora: 10 }"><b v-text="fora"></b></div><div id="app"></div>';
 
@@ -265,57 +265,57 @@ describe('createApp', () => {
     app.unmount();
   });
 
-  it('nao monta duas vezes no mesmo container', async () => {
+  it('does not mount twice on same container', async () => {
     document.body.innerHTML = '<div id="app"></div>';
 
     const app = createApp({ data: () => ({ n: 0 }), template: '<p>{ n }</p>' });
-    const primeira = app.mount('#app');
-    const segunda = app.mount('#app');
+    const first = app.mount('#app');
+    const second = app.mount('#app');
     await settle();
 
-    expect(primeira).toBe(segunda);
+    expect(first).toBe(second);
     expect(document.querySelectorAll('#app p').length).toBe(1);
 
     app.unmount();
   });
 });
 
-describe('agendador proprio, sem DOMContentLoaded', () => {
-  it('ready devolve promessa e roda o callback', async () => {
+describe('own scheduler without DOMContentLoaded', () => {
+  it('ready returns promise and runs callback', async () => {
     const { ready } = await import('../src/dom/query');
-    const visto: string[] = [];
+    const seen: string[] = [];
 
-    const promessa = ready(() => visto.push('callback'));
-    await esperarMontagem();
-    await promessa;
+    const promise = ready(() => seen.push('callback'));
+    await waitForMount();
+    await promise;
 
-    expect(visto).toEqual(['callback']);
+    expect(seen).toEqual(['callback']);
   });
 
-  it('whenElement resolve um elemento criado depois', async () => {
+  it('whenElement resolves element created later', async () => {
     const { whenElement } = await import('../src/runtime/boot');
-    const visto: string[] = [];
+    const seen: string[] = [];
 
-    whenElement('#depois', (el) => visto.push(el.id));
-    expect(visto).toEqual([]);
+    whenElement('#depois', (el) => seen.push(el.id));
+    expect(seen).toEqual([]);
 
     const el = document.createElement('div');
     el.id = 'depois';
     document.body.appendChild(el);
 
-    await esperarMontagem();
-    expect(visto).toEqual(['depois']);
+    await waitForMount();
+    expect(seen).toEqual(['depois']);
   });
 
-  it('whenElement resolve na hora quando o elemento ja existe', async () => {
+  it('whenElement resolves immediately if element already exists', async () => {
     document.body.innerHTML = '<div id="agora"></div>';
     const { whenElement } = await import('../src/runtime/boot');
 
-    let achado: Element | null = null;
+    let found: Element | null = null;
     whenElement('#agora', (el) => {
-      achado = el;
+      found = el;
     });
 
-    expect(achado).not.toBeNull();
+    expect(found).not.toBeNull();
   });
 });

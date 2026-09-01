@@ -15,9 +15,13 @@
  * crus estao ali para quem preferir nao acreditar no ajuste.
  */
 
-import { installDom, loadVoodoo } from '../harness/dom.mjs';
+import fsSync from 'node:fs';
+import pathSync from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { installDom, loadVoodoo, measuredSrcDir, compileEntry } from '../harness/dom.mjs';
 import { growthExponent, summarize } from '../harness/stats.mjs';
 import { captureEnv } from '../harness/env.mjs';
+import { buildDir } from '../harness/paths.mjs';
 
 installDom();
 const V = await loadVoodoo();
@@ -267,8 +271,99 @@ resultados.push(
   })
 );
 
-// Quantas directives existem no indice, que e a constante multiplicadora.
-console.log(`\n  directives registradas no runtime: ${V.default?.directives?.size ?? '?'}`);
+// ---------------------------------------------------------------------------
+// 4b. walker: `out.includes(el)` dentro do laco de queryDirective
+// ---------------------------------------------------------------------------
+// `queryDirective` nao e reexportado por `index.ts`, entao a sonda compila um
+// ponto de entrada proprio a partir do MESMO `src` que a suite mediu. Medir um
+// substituto e chamar de equivalente seria mentira.
+//
+// A funcao tem dois caminhos. Elementos JA processados vem do indice
+// (`directiveIndex`), e para esses `out.includes` nunca roda, porque o atributo
+// `v-*` ja saiu do HTML e o `querySelectorAll` seguinte devolve zero. Elementos
+// AINDA NAO processados so aparecem no `querySelectorAll`, e cada um deles paga
+// um `out.includes` contra tudo que ja entrou — que e o caminho quadratico.
+//
+// O A/B usa o mesmo nome de directive, o mesmo N e o mesmo DOM. A unica coisa
+// que muda e ter chamado `walk()` antes ou nao.
+const probeSrc = measuredSrcDir();
+const probeEntry = pathSync.join(buildDir, 'walker-probe-entry.ts');
+const probeOut = pathSync.join(buildDir, 'walker-probe.mjs');
+const srcPosix = probeSrc.dir.replace(/\\/g, '/');
+fsSync.writeFileSync(
+  probeEntry,
+  [
+    `import '${srcPosix}/index';`,
+    `export { queryDirective, walk, destroy } from '${srcPosix}/runtime/walker';`,
+    `export { Scope } from '${srcPosix}/runtime/scope';`,
+    `export { reactive, flushSync } from '${srcPosix}/reactivity/index';`,
+    `export { directives } from '${srcPosix}/runtime/registry';`,
+    '',
+  ].join('\n'),
+  'utf8'
+);
+await compileEntry(probeEntry, probeOut);
+const W = await import(pathToFileURL(probeOut).href);
+
+console.log(`\n  directives registradas no runtime: ${W.directives.size}`);
+
+const marcarHtml = (n) => {
+  let html = '';
+  for (let i = 0; i < n; i++) html += `<div v-text="'x'"></div>`;
+  return html;
+};
+
+/**
+ * @param {boolean} processado  quando `true`, o subarvore passa por `walk()`
+ *   antes da medicao, o que move os elementos para o indice e tira o atributo
+ *   do HTML.
+ */
+const queryCase = (processado) => (n) => ({
+  samples: 10,
+  warmup: 3,
+  setup: () => {
+    const root = document.createElement('div');
+    root.innerHTML = marcarHtml(n);
+    document.body.appendChild(root);
+    if (processado) {
+      W.walk(root, new W.Scope(W.reactive({})));
+      W.flushSync();
+    }
+    return { root, n };
+  },
+  run: (ctx) => {
+    const achados = W.queryDirective(ctx.root, 'text');
+    // Conferencia de correcao: a sonda so vale se achou os N elementos.
+    if (achados.length !== ctx.n) {
+      throw new Error(`queryDirective devolveu ${achados.length}, esperava ${ctx.n}`);
+    }
+    return achados.length;
+  },
+  teardown: (ctx) => {
+    W.destroy(ctx.root);
+    ctx.root.remove();
+  },
+});
+
+resultados.push(
+  sonda({
+    titulo: '4b. WALKER — out.includes(el) dentro do laco de queryDirective (nos NAO processados)',
+    local: 'packages/voodoojs/src/runtime/walker.ts:291  if (!out.includes(el)) out.push(el)',
+    hipotese: 'cada elemento ainda nao processado paga uma varredura de tudo que ja entrou em `out`',
+    sizes: [100, 1000, 10000],
+    make: queryCase(false),
+  })
+);
+
+resultados.push(
+  sonda({
+    titulo: '4c. WALKER — contraprova: os MESMOS nos, ja processados (vem do indice, sem includes)',
+    local: 'mesmo caminho, ramo do directiveIndex',
+    hipotese: 'pelo indice o includes nunca roda; o que sobrar aqui e o custo do sort por posicao',
+    sizes: [100, 1000, 10000],
+    make: queryCase(true),
+  })
+);
 
 // ---------------------------------------------------------------------------
 // 5. parser: cache.clear() total no estouro
