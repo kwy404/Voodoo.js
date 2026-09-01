@@ -1,6 +1,6 @@
-import { http, HttpError, request } from './chunk-YGYL43X7.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-2RPELI6L.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-QJCR6UKZ.js';
+import { http, HttpError, request } from './chunk-PJ32JPZL.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-EUQULT5T.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-PKGMG3DB.js';
 import { avisarChaveDuplicada, avisar, descreverElemento, avisarComponenteDesconhecido, avisarAlias, avisarPropObrigatoria } from './chunk-S3U6BJNJ.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-KCG2YK55.js';
 import { injectStyle, ensureTokens } from './chunk-KIG6UYIE.js';
@@ -1770,8 +1770,9 @@ defineDirective(
         used.add(key);
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
+      const reaproveitados = new Set(next);
       for (const block2 of blocks) {
-        if (used.has(block2.key) && next.includes(block2)) continue;
+        if (used.has(block2.key) && reaproveitados.has(block2)) continue;
         for (const node of block2.nodes) {
           destroy(node);
           node.remove();
@@ -10147,8 +10148,9 @@ defineDirective(
     const attr2 = (name) => el.getAttribute(`${config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
     const rawDecimals = (typeof modifiers.decimals === "string" ? modifiers.decimals : null) ?? attr2("mask-decimals");
     const decimals = rawDecimals !== null && rawDecimals !== "" ? Number(rawDecimals) : 2;
+    const prefixoDeclarado = expression.trim() ? expression : "";
     const options = {
-      prefix: modifiers.plain ? "" : expression.trim() || attr2("mask-prefix") || "R$ ",
+      prefix: modifiers.plain ? "" : prefixoDeclarado || attr2("mask-prefix") || "R$ ",
       suffix: attr2("mask-suffix") ?? "",
       decimals: Number.isFinite(decimals) ? decimals : 2,
       decimal: modifiers.dot ? "." : ",",
@@ -10180,5 +10182,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-5PZDANCQ.js.map
-//# sourceMappingURL=chunk-5PZDANCQ.js.map
+//# sourceMappingURL=chunk-TJM55GOJ.js.map
+//# sourceMappingURL=chunk-TJM55GOJ.js.map

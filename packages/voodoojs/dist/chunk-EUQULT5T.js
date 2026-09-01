@@ -1,4 +1,4 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-QJCR6UKZ.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-PKGMG3DB.js';
 import { emDesenvolvimento, avisarExpressaoInvalida, avisarDirectiveDesconhecida } from './chunk-S3U6BJNJ.js';
 import { config, directives, components } from './chunk-ZVXMGOYP.js';
 import { __publicField } from './chunk-5I3A7PYT.js';
@@ -648,9 +648,17 @@ function parse(source) {
   const cached = cache.get(source);
   if (cached) return cached;
   const node = new Parser(tokenize(source), source).parseProgram();
-  if (cache.size >= MAX_CACHE) cache.clear();
+  if (cache.size >= MAX_CACHE) evictOldest();
   cache.set(source, node);
   return node;
+}
+function evictOldest() {
+  const alvo = Math.floor(MAX_CACHE / 2);
+  let removidos = 0;
+  for (const chave of cache.keys()) {
+    cache.delete(chave);
+    if (++removidos >= alvo) break;
+  }
 }
 function clearParseCache() {
   cache.clear();
@@ -1148,11 +1156,11 @@ function addCleanup(node, fn) {
 }
 function destroy(node) {
   if (node.nodeType === 1) {
-    const children = node.childNodes;
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i];
-      if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+    const filhos = [];
+    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
+      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
     }
+    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -1228,13 +1236,20 @@ function priorityOf(attr) {
   return directives.get(attr.name)?.priority ?? 0;
 }
 var directiveIndex = /* @__PURE__ */ new Map();
+var directiveNamesOf = /* @__PURE__ */ new WeakMap();
 function indexDirective(el, name) {
   let set = directiveIndex.get(name);
   if (!set) directiveIndex.set(name, set = /* @__PURE__ */ new Set());
   set.add(el);
+  let names = directiveNamesOf.get(el);
+  if (!names) directiveNamesOf.set(el, names = /* @__PURE__ */ new Set());
+  names.add(name);
 }
 function unindexElement(el) {
-  for (const set of directiveIndex.values()) set.delete(el);
+  const names = directiveNamesOf.get(el);
+  if (!names) return;
+  for (const name of names) directiveIndex.get(name)?.delete(el);
+  directiveNamesOf.delete(el);
 }
 function hasDirective(el, name) {
   if (directiveIndex.get(name)?.has(el)) return true;
@@ -1250,10 +1265,13 @@ function queryDirective(root, name) {
       if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el);
     }
   }
+  const vistos = new Set(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (!out.includes(el)) out.push(el);
+    if (vistos.has(el)) continue;
+    vistos.add(el);
+    out.push(el);
   }
   out.sort(
     (a, b) => a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
@@ -1448,10 +1466,8 @@ function walk(node, scope) {
   if (!skipChildren.has(el)) walkChildren(el, current);
 }
 function walkChildren(el, scope) {
-  const children = el.childNodes;
   const list = [];
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
+  for (let child = el.firstChild; child; child = child.nextSibling) {
     if (child.nodeType === 1) list.push(child);
     else if (child.nodeType === 3) bindTextNode(child, scope);
   }
@@ -1617,5 +1633,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-2RPELI6L.js.map
-//# sourceMappingURL=chunk-2RPELI6L.js.map
+//# sourceMappingURL=chunk-EUQULT5T.js.map
+//# sourceMappingURL=chunk-EUQULT5T.js.map

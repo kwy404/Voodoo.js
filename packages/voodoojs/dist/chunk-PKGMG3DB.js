@@ -19,10 +19,10 @@ function nextTick(fn) {
   return fn ? p.then(fn) : p;
 }
 function queueJob(job) {
-  if (!queue.includes(job)) {
-    queue.push(job);
-    queueFlush();
-  }
+  if (job.queued) return;
+  job.queued = true;
+  queue.push(job);
+  queueFlush();
 }
 function queuePostFlush(cb) {
   postQueue.push(cb);
@@ -56,6 +56,7 @@ function flushJobs() {
       }
     }
   } finally {
+    for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
     const posts = postQueue;
@@ -117,6 +118,8 @@ var ReactiveEffect = class {
     __publicField(this, "fn", fn);
     __publicField(this, "id", effectId++);
     __publicField(this, "active", true);
+    /** `true` enquanto o efeito espera na fila do agendador. */
+    __publicField(this, "queued", false);
     __publicField(this, "deps", []);
     __publicField(this, "parent");
     __publicField(this, "scheduler");
@@ -638,5 +641,5 @@ function traverse(value, seen = /* @__PURE__ */ new Set()) {
 }
 
 export { EffectScope, ITERATE_KEY, ReactiveEffect, TriggerType, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };
-//# sourceMappingURL=chunk-QJCR6UKZ.js.map
-//# sourceMappingURL=chunk-QJCR6UKZ.js.map
+//# sourceMappingURL=chunk-PKGMG3DB.js.map
+//# sourceMappingURL=chunk-PKGMG3DB.js.map

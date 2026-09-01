@@ -22,10 +22,10 @@ function nextTick(fn) {
   return fn ? p.then(fn) : p;
 }
 function queueJob(job) {
-  if (!queue.includes(job)) {
-    queue.push(job);
-    queueFlush();
-  }
+  if (job.queued) return;
+  job.queued = true;
+  queue.push(job);
+  queueFlush();
 }
 function queuePostFlush(cb) {
   postQueue.push(cb);
@@ -59,6 +59,7 @@ function flushJobs() {
       }
     }
   } finally {
+    for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
     const posts = postQueue;
@@ -120,6 +121,8 @@ var ReactiveEffect = class {
     __publicField(this, "fn", fn);
     __publicField(this, "id", effectId++);
     __publicField(this, "active", true);
+    /** `true` enquanto o efeito espera na fila do agendador. */
+    __publicField(this, "queued", false);
     __publicField(this, "deps", []);
     __publicField(this, "parent");
     __publicField(this, "scheduler");

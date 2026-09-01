@@ -1,16 +1,16 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-5PZDANCQ.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-5PZDANCQ.js';
-export { gpu, reflectWgsl } from './chunk-TJZGGM5X.js';
-import { http } from './chunk-YGYL43X7.js';
-export { HttpError, http, request } from './chunk-YGYL43X7.js';
-import { devtoolsBus } from './chunk-WFFLLDYQ.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-WFFLLDYQ.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-2RPELI6L.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-2RPELI6L.js';
-import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-QJCR6UKZ.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-QJCR6UKZ.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-TJM55GOJ.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-TJM55GOJ.js';
+export { gpu, reflectWgsl } from './chunk-7ROVC52J.js';
+import { http } from './chunk-PJ32JPZL.js';
+export { HttpError, http, request } from './chunk-PJ32JPZL.js';
+import { devtoolsBus } from './chunk-ZMOP5QBI.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-ZMOP5QBI.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-EUQULT5T.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-EUQULT5T.js';
+import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-PKGMG3DB.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-PKGMG3DB.js';
 import { avisarAlias } from './chunk-S3U6BJNJ.js';
-import { parseDuration, uid, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, merge, escapeHtml, truncate, get, titleCase } from './chunk-KCG2YK55.js';
+import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-KCG2YK55.js';
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-KCG2YK55.js';
 import { ensureTokens, injectStyle } from './chunk-KIG6UYIE.js';
 export { ensureTokens, injectStyle } from './chunk-KIG6UYIE.js';
@@ -443,7 +443,7 @@ function configureRouter(options) {
   void enterInitialRoute();
   return router;
 }
-var router = Object.assign(configureRouter, {
+var membrosDoRouter = {
   get current() {
     return route;
   },
@@ -468,7 +468,11 @@ var router = Object.assign(configureRouter, {
   get ready() {
     return configured;
   }
-});
+};
+var router = Object.defineProperties(
+  configureRouter,
+  Object.getOwnPropertyDescriptors(membrosDoRouter)
+);
 magic("$route", () => route);
 magic("$router", () => router);
 async function loadView(url2) {

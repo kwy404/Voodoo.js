@@ -478,8 +478,14 @@ defineDirective(
       (typeof modifiers.decimals === 'string' ? modifiers.decimals : null) ?? attr('mask-decimals');
     const decimals = rawDecimals !== null && rawDecimals !== '' ? Number(rawDecimals) : 2;
 
+    // O espaco no fim do prefixo faz parte dele: `v-mask-currency="R$ "` precisa
+    // mostrar `R$ 1.234,56`, e nao `R$1.234,56`. Por isso o `trim` so decide se
+    // a expressao esta vazia; o valor usado e o texto como foi declarado, do
+    // mesmo jeito que ja acontecia em `v-mask-prefix`.
+    const prefixoDeclarado = expression.trim() ? expression : '';
+
     const options: CurrencyMaskOptions = {
-      prefix: modifiers.plain ? '' : expression.trim() || attr('mask-prefix') || 'R$ ',
+      prefix: modifiers.plain ? '' : prefixoDeclarado || attr('mask-prefix') || 'R$ ',
       suffix: attr('mask-suffix') ?? '',
       decimals: Number.isFinite(decimals) ? decimals : 2,
       decimal: modifiers.dot ? '.' : ',',

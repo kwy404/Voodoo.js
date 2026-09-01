@@ -47,11 +47,11 @@ var initialized = /* @__PURE__ */ new WeakSet();
 var nodeEffectScopes = /* @__PURE__ */ new WeakMap();
 function destroy(node) {
   if (node.nodeType === 1) {
-    const children = node.childNodes;
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i];
-      if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+    const filhos = [];
+    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
+      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
     }
+    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -70,8 +70,12 @@ function destroy(node) {
   initialized.delete(node);
 }
 var directiveIndex = /* @__PURE__ */ new Map();
+var directiveNamesOf = /* @__PURE__ */ new WeakMap();
 function unindexElement(el) {
-  for (const set of directiveIndex.values()) set.delete(el);
+  const names = directiveNamesOf.get(el);
+  if (!names) return;
+  for (const name of names) directiveIndex.get(name)?.delete(el);
+  directiveNamesOf.delete(el);
 }
 var attributeCache = /* @__PURE__ */ new WeakMap();
 function isVoodooAttribute(name) {
@@ -181,7 +185,8 @@ async function flushOfflineQueue() {
   if (!list.length) return 0;
   writeQueue([]);
   let sent = 0;
-  for (const item of list) {
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index];
     try {
       await request({
         url: item.url,
@@ -192,9 +197,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const remaining = readQueue();
-      remaining.push(item);
-      writeQueue(remaining);
+      const novos = readQueue();
+      writeQueue([...list.slice(index), ...novos]);
       break;
     }
   }

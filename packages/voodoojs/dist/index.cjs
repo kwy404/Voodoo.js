@@ -61,10 +61,10 @@ function nextTick(fn) {
   return fn ? p2.then(fn) : p2;
 }
 function queueJob(job) {
-  if (!queue.includes(job)) {
-    queue.push(job);
-    queueFlush();
-  }
+  if (job.queued) return;
+  job.queued = true;
+  queue.push(job);
+  queueFlush();
 }
 function queuePostFlush(cb) {
   postQueue.push(cb);
@@ -98,6 +98,7 @@ function flushJobs() {
       }
     }
   } finally {
+    for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
     const posts = postQueue;
@@ -368,6 +369,8 @@ var init_reactivity = __esm({
         __publicField(this, "fn", fn);
         __publicField(this, "id", effectId++);
         __publicField(this, "active", true);
+        /** `true` enquanto o efeito espera na fila do agendador. */
+        __publicField(this, "queued", false);
         __publicField(this, "deps", []);
         __publicField(this, "parent");
         __publicField(this, "scheduler");
@@ -1464,9 +1467,17 @@ function parse(source) {
   const cached = cache.get(source);
   if (cached) return cached;
   const node = new Parser(tokenize(source), source).parseProgram();
-  if (cache.size >= MAX_CACHE) cache.clear();
+  if (cache.size >= MAX_CACHE) evictOldest();
   cache.set(source, node);
   return node;
+}
+function evictOldest() {
+  const alvo = Math.floor(MAX_CACHE / 2);
+  let removidos = 0;
+  for (const chave of cache.keys()) {
+    cache.delete(chave);
+    if (++removidos >= alvo) break;
+  }
 }
 function clearParseCache() {
   cache.clear();
@@ -2044,11 +2055,11 @@ function addCleanup(node, fn) {
 }
 function destroy(node) {
   if (node.nodeType === 1) {
-    const children = node.childNodes;
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i];
-      if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+    const filhos = [];
+    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
+      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
     }
+    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -2124,13 +2135,20 @@ function priorityOf(attr2) {
   return directives.get(attr2.name)?.priority ?? 0;
 }
 var directiveIndex = /* @__PURE__ */ new Map();
+var directiveNamesOf = /* @__PURE__ */ new WeakMap();
 function indexDirective(el, name) {
   let set2 = directiveIndex.get(name);
   if (!set2) directiveIndex.set(name, set2 = /* @__PURE__ */ new Set());
   set2.add(el);
+  let names2 = directiveNamesOf.get(el);
+  if (!names2) directiveNamesOf.set(el, names2 = /* @__PURE__ */ new Set());
+  names2.add(name);
 }
 function unindexElement(el) {
-  for (const set2 of directiveIndex.values()) set2.delete(el);
+  const names2 = directiveNamesOf.get(el);
+  if (!names2) return;
+  for (const name of names2) directiveIndex.get(name)?.delete(el);
+  directiveNamesOf.delete(el);
 }
 function hasDirective(el, name) {
   if (directiveIndex.get(name)?.has(el)) return true;
@@ -2146,10 +2164,13 @@ function queryDirective(root, name) {
       if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el);
     }
   }
+  const vistos = new Set(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${exports.config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (!out.includes(el)) out.push(el);
+    if (vistos.has(el)) continue;
+    vistos.add(el);
+    out.push(el);
   }
   out.sort(
     (a, b) => a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
@@ -2344,10 +2365,8 @@ function walk(node, scope) {
   if (!skipChildren.has(el)) walkChildren(el, current2);
 }
 function walkChildren(el, scope) {
-  const children = el.childNodes;
   const list = [];
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
+  for (let child = el.firstChild; child; child = child.nextSibling) {
     if (child.nodeType === 1) list.push(child);
     else if (child.nodeType === 3) bindTextNode(child, scope);
   }
@@ -3680,7 +3699,8 @@ async function flushOfflineQueue() {
   if (!list.length) return 0;
   writeQueue([]);
   let sent = 0;
-  for (const item of list) {
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index];
     try {
       await request({
         url: item.url,
@@ -3691,9 +3711,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const remaining = readQueue();
-      remaining.push(item);
-      writeQueue(remaining);
+      const novos = readQueue();
+      writeQueue([...list.slice(index), ...novos]);
       break;
     }
   }
@@ -5112,8 +5131,9 @@ defineDirective(
         used.add(key);
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
+      const reaproveitados = new Set(next);
       for (const block2 of blocks) {
-        if (used.has(block2.key) && next.includes(block2)) continue;
+        if (used.has(block2.key) && reaproveitados.has(block2)) continue;
         for (const node of block2.nodes) {
           destroy(node);
           node.remove();
@@ -7796,7 +7816,7 @@ function configureRouter(options) {
   void enterInitialRoute();
   return router;
 }
-var router = Object.assign(configureRouter, {
+var membrosDoRouter = {
   get current() {
     return route;
   },
@@ -7821,7 +7841,11 @@ var router = Object.assign(configureRouter, {
   get ready() {
     return configured;
   }
-});
+};
+var router = Object.defineProperties(
+  configureRouter,
+  Object.getOwnPropertyDescriptors(membrosDoRouter)
+);
 magic("$route", () => route);
 magic("$router", () => router);
 async function loadView(url2) {
@@ -18782,8 +18806,9 @@ defineDirective(
     const attr2 = (name) => el.getAttribute(`${exports.config.prefix}${name}`) ?? el.getAttribute(`data-v-${name}`);
     const rawDecimals = (typeof modifiers.decimals === "string" ? modifiers.decimals : null) ?? attr2("mask-decimals");
     const decimals = rawDecimals !== null && rawDecimals !== "" ? Number(rawDecimals) : 2;
+    const prefixoDeclarado = expression.trim() ? expression : "";
     const options = {
-      prefix: modifiers.plain ? "" : expression.trim() || attr2("mask-prefix") || "R$ ",
+      prefix: modifiers.plain ? "" : prefixoDeclarado || attr2("mask-prefix") || "R$ ",
       suffix: attr2("mask-suffix") ?? "",
       decimals: Number.isFinite(decimals) ? decimals : 2,
       decimal: modifiers.dot ? "." : ",",

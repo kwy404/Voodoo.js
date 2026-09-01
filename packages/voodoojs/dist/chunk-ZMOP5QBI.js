@@ -1,4 +1,4 @@
-import { reactive } from './chunk-QJCR6UKZ.js';
+import { reactive } from './chunk-PKGMG3DB.js';
 import { avisarUmaVez } from './chunk-S3U6BJNJ.js';
 
 /**
@@ -942,5 +942,5 @@ Object.defineProperty(fabrica, "open", {
 var socket = fabrica;
 
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, devtoolsBus, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported };
-//# sourceMappingURL=chunk-WFFLLDYQ.js.map
-//# sourceMappingURL=chunk-WFFLLDYQ.js.map
+//# sourceMappingURL=chunk-ZMOP5QBI.js.map
+//# sourceMappingURL=chunk-ZMOP5QBI.js.map

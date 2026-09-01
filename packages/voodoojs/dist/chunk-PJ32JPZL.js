@@ -82,7 +82,8 @@ async function flushOfflineQueue() {
   if (!list.length) return 0;
   writeQueue([]);
   let sent = 0;
-  for (const item of list) {
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index];
     try {
       await request({
         url: item.url,
@@ -93,9 +94,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const remaining = readQueue();
-      remaining.push(item);
-      writeQueue(remaining);
+      const novos = readQueue();
+      writeQueue([...list.slice(index), ...novos]);
       break;
     }
   }
@@ -444,5 +444,5 @@ var http = {
 };
 
 export { HttpError, clearCache, flushOfflineQueue, http, request };
-//# sourceMappingURL=chunk-YGYL43X7.js.map
-//# sourceMappingURL=chunk-YGYL43X7.js.map
+//# sourceMappingURL=chunk-PJ32JPZL.js.map
+//# sourceMappingURL=chunk-PJ32JPZL.js.map

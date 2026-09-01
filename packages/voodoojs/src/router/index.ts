@@ -792,7 +792,14 @@ export interface RouterApi {
  * V.router.back()
  * ```
  */
-export const router: RouterApi = Object.assign(configureRouter, {
+/**
+ * Os membros entram por `defineProperties`, e nao por `Object.assign`, porque
+ * `Object.assign` le cada getter uma unica vez e copia o valor. Com ele
+ * `V.router.ready` ficava preso no `false` do carregamento do modulo e nunca
+ * mudava, mesmo depois de `V.router({...})`. E a mesma armadilha que o modulo
+ * de i18n ja documenta.
+ */
+const membrosDoRouter = {
   get current(): RouteLocation {
     return route;
   },
@@ -818,7 +825,12 @@ export const router: RouterApi = Object.assign(configureRouter, {
   get ready(): boolean {
     return configured;
   },
-}) as RouterApi;
+};
+
+export const router: RouterApi = Object.defineProperties(
+  configureRouter,
+  Object.getOwnPropertyDescriptors(membrosDoRouter)
+) as unknown as RouterApi;
 
 // ---------------------------------------------------------------------------
 // Variaveis magicas

@@ -202,7 +202,8 @@ export async function flushOfflineQueue(): Promise<number> {
   writeQueue([]);
 
   let sent = 0;
-  for (const item of list) {
+  for (let index = 0; index < list.length; index++) {
+    const item = list[index];
     try {
       await request({
         url: item.url,
@@ -213,10 +214,18 @@ export async function flushOfflineQueue(): Promise<number> {
       });
       sent++;
     } catch {
-      // Falhou de novo: devolve para a fila e para por aqui.
-      const remaining = readQueue();
-      remaining.push(item);
-      writeQueue(remaining);
+      // Falhou de novo: devolve para a fila o item que falhou e tambem todos os
+      // que ainda nem chegaram a ser tentados, e para por aqui.
+      //
+      // Ate aqui a devolucao era so do item da vez. Como o escoamento comeca
+      // gravando uma fila vazia, tudo que vinha depois dele era apagado sem
+      // aviso: uma fila de tres requisicoes que falhasse na segunda perdia a
+      // terceira para sempre.
+      //
+      // O que entrou na fila durante o escoamento vai no fim, porque foi
+      // enfileirado depois.
+      const novos = readQueue();
+      writeQueue([...list.slice(index), ...novos]);
       break;
     }
   }

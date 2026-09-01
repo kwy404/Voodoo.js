@@ -64,6 +64,8 @@ declare class ReactiveEffect<T = any> {
     fn: () => T;
     readonly id: number;
     active: boolean;
+    /** `true` enquanto o efeito espera na fila do agendador. */
+    queued: boolean;
     deps: Dep[];
     parent: ReactiveEffect | undefined;
     scheduler: EffectScheduler | undefined;

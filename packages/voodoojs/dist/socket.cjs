@@ -19,10 +19,10 @@ var isFlushing = false;
 var isFlushPending = false;
 var RECURSION_LIMIT = 100;
 function queueJob(job) {
-  if (!queue.includes(job)) {
-    queue.push(job);
-    queueFlush();
-  }
+  if (job.queued) return;
+  job.queued = true;
+  queue.push(job);
+  queueFlush();
 }
 function queueFlush() {
   if (isFlushing || isFlushPending) return;
@@ -52,6 +52,7 @@ function flushJobs() {
       }
     }
   } finally {
+    for (const job of queue) job.queued = false;
     queue = [];
     isFlushing = false;
     const posts = postQueue;
@@ -1310,9 +1311,17 @@ function parse(source) {
   const cached = cache.get(source);
   if (cached) return cached;
   const node = new Parser(tokenize(source), source).parseProgram();
-  if (cache.size >= MAX_CACHE) cache.clear();
+  if (cache.size >= MAX_CACHE) evictOldest();
   cache.set(source, node);
   return node;
+}
+function evictOldest() {
+  const alvo2 = Math.floor(MAX_CACHE / 2);
+  let removidos = 0;
+  for (const chave of cache.keys()) {
+    cache.delete(chave);
+    if (++removidos >= alvo2) break;
+  }
 }
 function avisarUmaVez(chave, mensagem) {
   return;

@@ -43,18 +43,33 @@ export default defineConfig({
           statements: 79,
           lines: 79,
         },
-        // O modulo `dom` e o mais fraco do nucleo hoje: a fachada encadeada de
-        // `query.ts` tem muito metodo sem teste. O limite fixa o patamar atual
-        // para nao piorar; o alvo declarado e subir junto com os testes.
+        // `dom` saiu do pior patamar do nucleo para cobertura total. Medido
+        // 100/100 de ramos e linhas; o limite fica logo abaixo, com margem
+        // para o ruido do proprio instrumentador.
         '**/packages/voodoojs/src/dom/**': {
-          branches: 48,
-          statements: 33,
-          lines: 33,
+          branches: 95,
+          statements: 95,
+          lines: 95,
         },
         '**/packages/voodoojs/src/http/**': {
-          branches: 73,
-          statements: 62,
-          lines: 62,
+          branches: 88,
+          statements: 90,
+          lines: 90,
+        },
+        '**/packages/voodoojs/src/forms/**': {
+          branches: 85,
+          statements: 88,
+          lines: 88,
+        },
+        '**/packages/voodoojs/src/router/**': {
+          branches: 88,
+          statements: 95,
+          lines: 95,
+        },
+        '**/packages/voodoojs/src/i18n/**': {
+          branches: 90,
+          statements: 95,
+          lines: 95,
         },
       },
     },

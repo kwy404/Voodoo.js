@@ -70,10 +70,10 @@ var Voodoo = (() => {
     return fn ? p2.then(fn) : p2;
   }
   function queueJob(job) {
-    if (!queue.includes(job)) {
-      queue.push(job);
-      queueFlush();
-    }
+    if (job.queued) return;
+    job.queued = true;
+    queue.push(job);
+    queueFlush();
   }
   function queuePostFlush(cb) {
     postQueue.push(cb);
@@ -107,6 +107,7 @@ var Voodoo = (() => {
         }
       }
     } finally {
+      for (const job of queue) job.queued = false;
       queue = [];
       isFlushing = false;
       const posts = postQueue;
@@ -379,6 +380,8 @@ var Voodoo = (() => {
           __publicField(this, "fn", fn);
           __publicField(this, "id", effectId++);
           __publicField(this, "active", true);
+          /** `true` enquanto o efeito espera na fila do agendador. */
+          __publicField(this, "queued", false);
           __publicField(this, "deps", []);
           __publicField(this, "parent");
           __publicField(this, "scheduler");
@@ -1488,9 +1491,17 @@ ${pointer}`);
     const cached = cache.get(source);
     if (cached) return cached;
     const node = new Parser(tokenize(source), source).parseProgram();
-    if (cache.size >= MAX_CACHE) cache.clear();
+    if (cache.size >= MAX_CACHE) evictOldest();
     cache.set(source, node);
     return node;
+  }
+  function evictOldest() {
+    const alvo = Math.floor(MAX_CACHE / 2);
+    let removidos = 0;
+    for (const chave of cache.keys()) {
+      cache.delete(chave);
+      if (++removidos >= alvo) break;
+    }
   }
   function clearParseCache() {
     cache.clear();
@@ -2067,11 +2078,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   function destroy(node) {
     if (node.nodeType === 1) {
-      const children = node.childNodes;
-      for (let i = children.length - 1; i >= 0; i--) {
-        const child = children[i];
-        if (child.nodeType === 1 || child.nodeType === 3) destroy(child);
+      const filhos = [];
+      for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
+        if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
       }
+      for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
     }
     const list = nodeCleanups.get(node);
     if (list) {
@@ -2148,13 +2159,21 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return (_b = (_a2 = directives.get(attr2.name)) == null ? void 0 : _a2.priority) != null ? _b : 0;
   }
   var directiveIndex = /* @__PURE__ */ new Map();
+  var directiveNamesOf = /* @__PURE__ */ new WeakMap();
   function indexDirective(el, name) {
     let set2 = directiveIndex.get(name);
     if (!set2) directiveIndex.set(name, set2 = /* @__PURE__ */ new Set());
     set2.add(el);
+    let names2 = directiveNamesOf.get(el);
+    if (!names2) directiveNamesOf.set(el, names2 = /* @__PURE__ */ new Set());
+    names2.add(name);
   }
   function unindexElement(el) {
-    for (const set2 of directiveIndex.values()) set2.delete(el);
+    var _a2;
+    const names2 = directiveNamesOf.get(el);
+    if (!names2) return;
+    for (const name of names2) (_a2 = directiveIndex.get(name)) == null ? void 0 : _a2.delete(el);
+    directiveNamesOf.delete(el);
   }
   var attributeCache = /* @__PURE__ */ new WeakMap();
   function isVoodooAttribute(name) {
@@ -2323,10 +2342,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   function walkChildren(el, scope) {
     var _a2;
-    const children = el.childNodes;
     const list = [];
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
+    for (let child = el.firstChild; child; child = child.nextSibling) {
       if (child.nodeType === 1) list.push(child);
       else if (child.nodeType === 3) bindTextNode(child, scope);
     }
@@ -3671,7 +3688,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (!list.length) return 0;
     writeQueue([]);
     let sent = 0;
-    for (const item of list) {
+    for (let index = 0; index < list.length; index++) {
+      const item = list[index];
       try {
         await request({
           url: item.url,
@@ -3682,9 +3700,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         });
         sent++;
       } catch (e) {
-        const remaining = readQueue();
-        remaining.push(item);
-        writeQueue(remaining);
+        const novos = readQueue();
+        writeQueue([...list.slice(index), ...novos]);
         break;
       }
     }
@@ -5142,8 +5159,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           used.add(key);
           next.push({ key, scope: childScope, nodes, data: childScope.data });
         });
+        const reaproveitados = new Set(next);
         for (const block2 of blocks) {
-          if (used.has(block2.key) && next.includes(block2)) continue;
+          if (used.has(block2.key) && reaproveitados.has(block2)) continue;
           for (const node of block2.nodes) {
             destroy(node);
             node.remove();
