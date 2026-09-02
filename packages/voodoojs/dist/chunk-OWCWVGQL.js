@@ -1,14 +1,14 @@
-import { http, HttpError, request } from './chunk-A6RPIYZI.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-YT2KJEWJ.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-IFYWVIEZ.js';
-import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-4AOINMNW.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-23VXL7PG.js';
-import { injectStyle, ensureTokens } from './chunk-DIEQKNJF.js';
-import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-PZOS2NII.js';
-import { __publicField } from './chunk-WFHZL4FY.js';
+import { http, HttpError, request } from './chunk-OURIRLLF.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-53EX3PRS.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-CAPPYWYL.js';
+import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-IECTPYBX.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-BX4PQIFG.js';
+import { injectStyle, ensureTokens } from './chunk-NZ6HG2PJ.js';
+import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-LDJQDQQN.js';
+import { __publicField } from './chunk-I7CLECQ3.js';
 
 /**
- * Voodoo.js v0.4.3
+ * Voodoo.js v0.4.4
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2645,7 +2645,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-SPNG6UFY.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-KJNDYVLH.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -2932,7 +2932,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.4.3";
+var version = "0.4.4";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -10192,5 +10192,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-SLDX3CU6.js.map
-//# sourceMappingURL=chunk-SLDX3CU6.js.map
+//# sourceMappingURL=chunk-OWCWVGQL.js.map
+//# sourceMappingURL=chunk-OWCWVGQL.js.map

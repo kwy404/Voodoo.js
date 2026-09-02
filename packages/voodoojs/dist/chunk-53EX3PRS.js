@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-IFYWVIEZ.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-4AOINMNW.js';
-import { config, directives, components } from './chunk-PZOS2NII.js';
-import { __publicField } from './chunk-WFHZL4FY.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-CAPPYWYL.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-IECTPYBX.js';
+import { config, directives, components } from './chunk-LDJQDQQN.js';
+import { __publicField } from './chunk-I7CLECQ3.js';
 
 /**
- * Voodoo.js v0.4.3
+ * Voodoo.js v0.4.4
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -671,6 +671,19 @@ var Parser = class {
         if (this.isPunct(":")) {
           this.next();
           props.push({ key, value: this.parseAssignment() });
+        } else if (this.isPunct("(")) {
+          this.next();
+          const params = [];
+          while (!this.isPunct(")")) {
+            const param = this.next();
+            if (param.type !== "ident") {
+              throw new VoodooSyntaxError("Expected a parameter name", this.source, param.start);
+            }
+            params.push(param.value);
+            if (this.isPunct(",")) this.next();
+          }
+          this.expect(")");
+          props.push({ key, value: { t: "method", params, body: this.parseArrowBody() } });
         } else {
           props.push({ key, value: { t: "id", n: key } });
         }
@@ -976,6 +989,17 @@ function evaluate(node, scope) {
       }
       assign(node.target, value, scope);
       return value;
+    }
+    case "method": {
+      const methodParams = node.params;
+      const methodBody = node.body;
+      return function(...args) {
+        const vars = {};
+        for (let i = 0; i < methodParams.length; i++) vars[methodParams[i]] = args[i];
+        const owner = this;
+        const base = owner !== null && typeof owner === "object" ? scope.child(owner) : scope;
+        return evaluate(methodBody, base.child(vars));
+      };
     }
     case "arrow": {
       const params = node.params;
@@ -1733,5 +1757,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-YT2KJEWJ.js.map
-//# sourceMappingURL=chunk-YT2KJEWJ.js.map
+//# sourceMappingURL=chunk-53EX3PRS.js.map
+//# sourceMappingURL=chunk-53EX3PRS.js.map

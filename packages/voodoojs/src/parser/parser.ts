@@ -32,6 +32,7 @@ export type Node =
   | { t: 'cond'; test: Node; cons: Node; alt: Node }
   | { t: 'assign'; op: string; target: Node; value: Node }
   | { t: 'arrow'; params: string[]; body: Node }
+  | { t: 'method'; params: string[]; body: Node }
   | { t: 'obj'; props: ObjectProperty[] }
   | { t: 'arr'; els: Array<Node | { spread: Node }> }
   | { t: 'seq'; body: Node[] };
@@ -535,6 +536,26 @@ class Parser {
         if (this.isPunct(':')) {
           this.next();
           props.push({ key, value: this.parseAssignment() });
+        } else if (this.isPunct('(')) {
+          // Method shorthand: `{ double() { return n * 2 } }`, which is the
+          // form anyone coming from Vue reaches for first and which used to
+          // fail with `Expected "}" but found "("`.
+          //
+          // It becomes the same node an arrow does. Inside `v-data` the state is
+          // already in scope by name, so the body writes `n` rather than
+          // `this.n`, and no `this` binding is needed.
+          this.next();
+          const params: string[] = [];
+          while (!this.isPunct(')')) {
+            const param = this.next();
+            if (param.type !== 'ident') {
+              throw new VoodooSyntaxError('Expected a parameter name', this.source, param.start);
+            }
+            params.push(param.value);
+            if (this.isPunct(',')) this.next();
+          }
+          this.expect(')');
+          props.push({ key, value: { t: 'method', params, body: this.parseArrowBody() } });
         } else {
           // Shorthand notation: `{ count }` is equivalent to `{ count: count }`.
           props.push({ key, value: { t: 'id', n: key } });

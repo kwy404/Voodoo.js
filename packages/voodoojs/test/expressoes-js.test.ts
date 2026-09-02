@@ -166,3 +166,48 @@ describe('the error message does not undo the sandbox', () => {
     expect(message).toContain('V.config.globals');
   });
 });
+
+describe('method shorthand in an object literal', () => {
+  it('a method can be declared and called', async () => {
+    const host = document.createElement('div');
+    host.setAttribute('v-data', '{ out: "", hi() { out = "oi" } }');
+    host.innerHTML = '<button @click="hi()">b</button><i>{ out }</i>';
+    document.body.appendChild(host);
+    walk(host, rootScope);
+    await nextTick();
+    host.querySelector('button')!.click();
+    await nextTick();
+    expect(host.querySelector('i')!.textContent).toBe('oi');
+  });
+
+  it('the method reads and writes the surrounding state by name', async () => {
+    // Inside `v-data` the state is already in scope, so the body says `n`
+    // rather than `this.n`. That is the shape the framework encourages.
+    const host = document.createElement('div');
+    host.setAttribute('v-data', '{ n: 2, double() { n = n * 2 } }');
+    host.innerHTML = '<button @click="double()">b</button><i>{ n }</i>';
+    document.body.appendChild(host);
+    walk(host, rootScope);
+    await nextTick();
+    host.querySelector('button')!.click();
+    await nextTick();
+    expect(host.querySelector('i')!.textContent).toBe('4');
+  });
+
+  it('takes parameters', () => {
+    expect(run('({ sum(a, b) { a + b } }).sum(2, 3)')).toBe(5);
+  });
+
+  it('sits alongside ordinary properties and shorthand', () => {
+    const obj = run('({ a: 1, b, greet() { "hi" } })', { b: 2 }) as Record<string, unknown>;
+    expect(obj.a).toBe(1);
+    expect(obj.b).toBe(2);
+    expect(typeof obj.greet).toBe('function');
+    expect((obj.greet as () => unknown)()).toBe('hi');
+  });
+
+  it('still accepts the explicit forms', () => {
+    expect(typeof (run('({ f: () => 1 })') as Record<string, unknown>).f).toBe('function');
+    expect(typeof (run('({ f: function () { 1 } })') as Record<string, unknown>).f).toBe('function');
+  });
+});

@@ -394,6 +394,32 @@ export function evaluate(node: Node, scope: EvalScope): any {
       return value;
     }
 
+    case 'method': {
+      // A method must see the object it belongs to.
+      //
+      // An arrow closes over the scope where it was written, and for
+      // `v-data="{ out: '', hi() { out = 'x' } }"` that is the scope OUTSIDE
+      // the one this very object is about to create. Writing `out` there
+      // created a stray variable on the parent instead of touching the state
+      // next to it, and the interpolation never changed.
+      //
+      // Calling `hi()` passes the owning object as `this`, so the body is
+      // evaluated in a scope layered on top of it: reads find the sibling
+      // state, and writes land on the same reactive object the DOM observes.
+      const methodParams = node.params;
+      const methodBody = node.body;
+      return function (this: unknown, ...args: unknown[]): unknown {
+        const vars: Record<string, unknown> = {};
+        for (let i = 0; i < methodParams.length; i++) vars[methodParams[i]] = args[i];
+        const owner = this;
+        const base =
+          owner !== null && typeof owner === 'object'
+            ? scope.child(owner as Record<string, unknown>)
+            : scope;
+        return evaluate(methodBody, base.child(vars));
+      };
+    }
+
     case 'arrow': {
       const params = node.params;
       const body = node.body;

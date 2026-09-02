@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.4.3
+ * Voodoo.js v0.4.4
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1490,6 +1490,19 @@ var Parser = class {
         if (this.isPunct(":")) {
           this.next();
           props.push({ key, value: this.parseAssignment() });
+        } else if (this.isPunct("(")) {
+          this.next();
+          const params = [];
+          while (!this.isPunct(")")) {
+            const param = this.next();
+            if (param.type !== "ident") {
+              throw new VoodooSyntaxError("Expected a parameter name", this.source, param.start);
+            }
+            params.push(param.value);
+            if (this.isPunct(",")) this.next();
+          }
+          this.expect(")");
+          props.push({ key, value: { t: "method", params, body: this.parseArrowBody() } });
         } else {
           props.push({ key, value: { t: "id", n: key } });
         }
@@ -1795,6 +1808,17 @@ function evaluate(node, scope) {
       }
       assign(node.target, value, scope);
       return value;
+    }
+    case "method": {
+      const methodParams = node.params;
+      const methodBody = node.body;
+      return function(...args) {
+        const vars = {};
+        for (let i = 0; i < methodParams.length; i++) vars[methodParams[i]] = args[i];
+        const owner = this;
+        const base = owner !== null && typeof owner === "object" ? scope.child(owner) : scope;
+        return evaluate(methodBody, base.child(vars));
+      };
     }
     case "arrow": {
       const params = node.params;
@@ -6384,7 +6408,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.4.3";
+var version = "0.4.4";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,

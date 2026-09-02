@@ -111,6 +111,10 @@ type Node$1 = {
     params: string[];
     body: Node$1;
 } | {
+    t: 'method';
+    params: string[];
+    body: Node$1;
+} | {
     t: 'obj';
     props: ObjectProperty[];
 } | {
