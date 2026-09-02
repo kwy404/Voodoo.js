@@ -133,19 +133,19 @@
     <aside class="rt-lateral">
       <div>
         <div class="rt-titulo">Sala geral</div>
-        <div class="rt-status" :data-on="$socket.conectado">
+        <div class="rt-status" :data-on="$socket.connected">
           <span class="rt-bolinha"></span>
-          <span v-text="$socket.conectado ? 'conectado' : ($socket.estado === 'reconnecting' ? 'reconectando...' : 'offline')"></span>
+          <span v-text="$socket.connected ? 'conectado' : ($socket.state === 'reconnecting' ? 'reconectando...' : 'offline')"></span>
         </div>
       </div>
 
       <div class="rt-legenda">
         Voce e <b v-text="eu ? eu.nome : '...'"></b>.
-        <span v-text="$room.membros.length"></span> na sala.
+        <span v-text="$room.members.length"></span> na sala.
       </div>
 
       <ul class="rt-membros">
-        <li class="rt-membro" v-for="m in $room.membros">
+        <li class="rt-membro" v-for="m in $room.members">
           <span v-text="m.nome"></span>
           <button class="rt-cochichar"
                   v-show="!eu || m.id !== eu.id"
@@ -171,7 +171,7 @@
       </header>
 
       <ul class="rt-lista">
-        <li class="rt-msg" v-for="m in $room.mensagens" :data-privada="m.privada ? 'true' : 'false'">
+        <li class="rt-msg" v-for="m in $room.messages" :data-privada="m.privada ? 'true' : 'false'">
           <div class="rt-autor">
             <span v-text="m.autor"></span>
             <span class="rt-selo" v-show="m.privada">privado</span>
@@ -181,7 +181,7 @@
       </ul>
 
       <form class="rt-form"
-            @submit.prevent="$room.enviar('mensagem', { texto: rascunho }, destino || undefined); rascunho = ''">
+            @submit.prevent="$room.send('mensagem', { texto: rascunho }, destino || undefined); rascunho = ''">
         <input class="v-input" v-model="rascunho" placeholder="Escreva algo..." autocomplete="off">
         <button class="v-btn v-btn--primary" type="submit">Enviar</button>
       </form>

@@ -1,19 +1,19 @@
 /**
  * @module charts
  *
- * Graficos em SVG puro, sem nenhuma dependencia externa. Todo o desenho e
- * gerado como texto e entregue de uma vez ao container, o que mantem o
- * redesenho barato mesmo com dados mudando a cada quadro.
+ * Charts in pure SVG, with no external dependencies. All drawing is
+ * generated as text and delivered to the container at once, which keeps
+ * redrawing cheap even with data changing every frame.
  *
- * O modulo segue tres compromissos:
+ * The module follows three commitments:
  *
- * - responsivo, com `viewBox`, `preserveAspectRatio` e `ResizeObserver`;
- * - acessivel, com `role="img"`, `aria-label` descritivo e `<title>` por forma;
- * - tematico, usando as variaveis `--v-*` para funcionar em claro e escuro.
+ * - responsive, with `viewBox`, `preserveAspectRatio`, and `ResizeObserver`;
+ * - accessible, with `role="img"`, descriptive `aria-label`, and `<title>` per shape;
+ * - themeable, using `--v-*` variables to work in light and dark modes.
  *
  * ```html
- * <div v-chart="{ type: 'line', data: vendas, labels: meses, smooth: true }"></div>
- * <div v-chart="vendas" v-chart-type="bar"></div>
+ * <div v-chart="{ type: 'line', data: sales, labels: months, smooth: true }"></div>
+ * <div v-chart="sales" v-chart-type="bar"></div>
  * ```
  */
 
@@ -23,8 +23,8 @@ import { readAttr } from '../runtime/walker';
 import { device, escapeHtml } from '../utils';
 
 /**
- * Preferencia do usuario por menos movimento. Ambientes de teste e renderizacao
- * no servidor nao tem `matchMedia`, entao ali a resposta e sempre `false`.
+ * User preference for reduced motion. Test and server-side rendering environments
+ * do not have `matchMedia`, so the response is always `false` there.
  */
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
@@ -32,10 +32,10 @@ function prefersReducedMotion(): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
-/** Tipos de grafico suportados. */
+/** Supported chart types. */
 export type ChartType =
   | 'line'
   | 'area'
@@ -49,10 +49,10 @@ export type ChartType =
   | 'scatter'
   | 'progress';
 
-/** Formato aplicado aos valores exibidos. */
+/** Format applied to displayed values. */
 export type ChartFormat = 'number' | 'currency' | 'percent';
 
-/** Ponto nomeado. `x` e `y` sao usados apenas por `scatter`. */
+/** Named point. `x` and `y` are used only by `scatter`. */
 export interface ChartPoint {
   label?: string;
   value?: number;
@@ -60,69 +60,69 @@ export interface ChartPoint {
   y?: number;
 }
 
-/** Serie nomeada, usada em graficos com mais de uma linha ou barra. */
+/** Named series, used in charts with multiple lines or bars. */
 export interface ChartSeriesInput {
   name: string;
   data: number[];
   color?: string;
 }
 
-/** Formatos aceitos em `options.data`. */
+/** Formats accepted in `options.data`. */
 export type ChartData = number | number[] | ChartPoint[] | ChartSeriesInput[];
 
-/** Configuracao de um grafico. */
+/** Configuration of a chart. */
 export interface ChartOptions {
-  /** Tipo do grafico. Padrao `line`. */
+  /** Chart type. Default `line`. */
   type?: ChartType;
-  /** Dados, em qualquer um dos formatos aceitos. */
+  /** Data, in any of the accepted formats. */
   data: ChartData;
-  /** Rotulos do eixo de categorias. */
+  /** Category axis labels. */
   labels?: string[];
-  /** Nome da serie unica, usado na legenda e no tooltip. */
+  /** Name of the single series, used in legend and tooltip. */
   name?: string;
-  /** Paleta. Quando ausente, usa as cores da marca. */
+  /** Palette. When absent, uses brand colors. */
   colors?: string[];
-  /** Altura em pixels. Varia conforme o tipo quando ausente. */
+  /** Height in pixels. Varies by type when absent. */
   height?: number;
-  /** Largura usada quando o container ainda nao tem medida. */
+  /** Width used when the container has no measurement yet. */
   width?: number;
-  /** Linhas de grade e rotulos do eixo de valores. Padrao `true`. */
+  /** Grid lines and value axis labels. Default `true`. */
   showGrid?: boolean;
-  /** Legenda clicavel. Padrao `true` quando faz sentido para o tipo. */
+  /** Clickable legend. Default `true` when it makes sense for the type. */
   showLegend?: boolean;
-  /** Escreve o valor de cada ponto, barra ou fatia. */
+  /** Writes the value of each point, bar, or slice. */
   showValues?: boolean;
-  /** Anima o desenho na entrada. Padrao `true`. */
+  /** Animates drawing on entry. Default `true`. */
   animate?: boolean;
-  /** Curvas suaves em linhas e areas, com Catmull-Rom em Bezier. */
+  /** Smooth curves in lines and areas, with Catmull-Rom to Bezier. */
   smooth?: boolean;
-  /** Teto da escala. Em `progress` define o valor equivalente a 100 por cento. */
+  /** Scale ceiling. In `progress` defines the value equivalent to 100 percent. */
   max?: number;
-  /** Piso da escala. */
+  /** Scale floor. */
   min?: number;
-  /** Formatacao dos valores. Padrao `number`. */
+  /** Value formatting. Default `number`. */
   format?: ChartFormat;
-  /** Tooltip ao passar o mouse. Padrao `true`. */
+  /** Tooltip on mouse over. Default `true`. */
   tooltip?: boolean;
 }
 
-/** Controle devolvido por `renderChart`. */
+/** Control returned by `renderChart`. */
 export interface ChartInstance {
-  /** Container onde o grafico foi desenhado. */
+  /** Container where the chart was drawn. */
   el: HTMLElement;
-  /** Opcoes em uso no momento. */
+  /** Options currently in use. */
   readonly options: ChartOptions;
-  /** Aplica novas opcoes e redesenha. */
+  /** Applies new options and redraws. */
   update(next: Partial<ChartOptions>): void;
-  /** Remove listeners, observadores e o conteudo gerado. */
+  /** Removes listeners, observers, and generated content. */
   destroy(): void;
 }
 
 // ---------------------------------------------------------------------------
-// Estilos
+// Styles
 // ---------------------------------------------------------------------------
 
-/** Paleta oficial da marca, usada quando `options.colors` nao vem preenchido. */
+/** Official brand palette, used when `options.colors` is not filled. */
 export const CHART_COLORS = [
   '#6D3BF5',
   '#FF3D8B',
@@ -190,10 +190,10 @@ const CSS = `
 `;
 
 // ---------------------------------------------------------------------------
-// Numeros e formatacao
+// Numbers and formatting
 // ---------------------------------------------------------------------------
 
-/** Arredonda para duas casas, o suficiente para coordenadas de SVG. */
+/** Rounds to two decimal places, sufficient for SVG coordinates. */
 function r(value: number): number {
   return Math.round(value * 100) / 100;
 }
@@ -220,8 +220,8 @@ function numberFormatter(key: string, options: Intl.NumberFormatOptions): Intl.N
 }
 
 /**
- * Formata um valor conforme `options.format`. O formato `percent` apenas
- * acrescenta o simbolo, porque em painel o dado ja chega na escala de 0 a 100.
+ * Formats a value according to `options.format`. The `percent` format only
+ * adds the symbol, because in a dashboard the data usually already comes in the 0 to 100 scale.
  */
 export function formatChartValue(value: number, format: ChartFormat = 'number'): string {
   if (!Number.isFinite(value)) return '';
@@ -237,13 +237,13 @@ export function formatChartValue(value: number, format: ChartFormat = 'number'):
 }
 
 // ---------------------------------------------------------------------------
-// Normalizacao dos dados
+// Data normalization
 // ---------------------------------------------------------------------------
 
 interface ChartSeries {
   name: string;
   values: number[];
-  /** Coordenadas horizontais proprias, usadas so por `scatter`. */
+  /** Own horizontal coordinates, used only by `scatter`. */
   xs: number[] | null;
   color: string;
 }
@@ -251,7 +251,7 @@ interface ChartSeries {
 interface ChartDataset {
   series: ChartSeries[];
   labels: string[];
-  /** Quando `true`, cada item tem cor propria e a legenda lista categorias. */
+  /** When `true`, each item has its own color and the legend lists categories. */
   categorical: boolean;
 }
 
@@ -274,7 +274,7 @@ function labelAt(labels: string[], index: number): string {
   return label === undefined || label === '' ? `#${index + 1}` : label;
 }
 
-/** Converte qualquer formato aceito de `data` em series com cor definida. */
+/** Converts any accepted `data` format into series with defined colors. */
 function normalize(options: ChartOptions, type: ChartType): ChartDataset {
   const palette = options.colors && options.colors.length > 0 ? options.colors : CHART_COLORS;
   const fromOptions = Array.isArray(options.labels);
@@ -332,7 +332,7 @@ function normalize(options: ChartOptions, type: ChartType): ChartDataset {
   return { series, labels, categorical };
 }
 
-/** Monta a legenda a partir das series ou das categorias. */
+/** Builds the legend from series or categories. */
 function buildLegend(dataset: ChartDataset, palette: string[]): LegendItem[] {
   if (dataset.categorical) {
     const first = dataset.series[0];
@@ -346,7 +346,7 @@ function buildLegend(dataset: ChartDataset, palette: string[]): LegendItem[] {
   return dataset.series.map((entry) => ({ key: entry.name, name: entry.name, color: entry.color }));
 }
 
-/** Remove series ou categorias desligadas na legenda. */
+/** Removes series or categories turned off in the legend. */
 function applyHidden(dataset: ChartDataset, hidden: Set<string>, palette: string[]): ChartDataset {
   if (hidden.size === 0) return dataset;
   if (dataset.categorical) {
@@ -376,7 +376,7 @@ function applyHidden(dataset: ChartDataset, hidden: Set<string>, palette: string
 }
 
 // ---------------------------------------------------------------------------
-// Escalas
+// Scales
 // ---------------------------------------------------------------------------
 
 interface Scale {
@@ -385,7 +385,7 @@ interface Scale {
   ticks: number[];
 }
 
-/** Numero "redondo" mais proximo, base do algoritmo classico de ticks. */
+/** Nearest "round" number, basis of the classic tick algorithm. */
 function niceNumber(range: number, round: boolean): number {
   const safe = Math.abs(range) || 1;
   const exponent = Math.floor(Math.log10(safe));
@@ -405,7 +405,7 @@ function niceNumber(range: number, round: boolean): number {
   return nice * Math.pow(10, exponent);
 }
 
-/** Gera limites e marcas legiveis para o eixo de valores. */
+/** Generates readable limits and marks for the value axis. */
 function niceScale(min: number, max: number, count = 5): Scale {
   if (min === max) {
     const spread = Math.abs(min) || 1;
@@ -423,7 +423,7 @@ function niceScale(min: number, max: number, count = 5): Scale {
   return { min: niceMin, max: niceMax, ticks };
 }
 
-/** Menor e maior valor do conjunto, considerando empilhamento e piso zero. */
+/** Smallest and largest value in the set, considering stacking and zero baseline. */
 function extentOf(
   dataset: ChartDataset,
   options: ChartOptions,
@@ -472,12 +472,12 @@ function extentOf(
 }
 
 // ---------------------------------------------------------------------------
-// Caminhos SVG
+// SVG paths
 // ---------------------------------------------------------------------------
 
 type Point = [number, number];
 
-/** Caminho reto ligando os pontos. */
+/** Straight path connecting the points. */
 function straightPath(points: Point[]): string {
   if (points.length === 0) return '';
   const parts = [`M ${r(points[0][0])} ${r(points[0][1])}`];
@@ -487,7 +487,7 @@ function straightPath(points: Point[]): string {
   return parts.join(' ');
 }
 
-/** Caminho suave por Catmull-Rom convertido em Bezier cubica. */
+/** Smooth path via Catmull-Rom converted to cubic Bezier. */
 function smoothPath(points: Point[]): string {
   if (points.length < 3) return straightPath(points);
   const parts = [`M ${r(points[0][0])} ${r(points[0][1])}`];
@@ -513,7 +513,7 @@ function polar(cx: number, cy: number, radius: number, angle: number): Point {
   return [cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius];
 }
 
-/** Setor de pizza ou de rosca, conforme `inner` seja zero ou nao. */
+/** Pie or donut sector, depending on whether `inner` is zero or not. */
 function arcPath(
   cx: number,
   cy: number,
@@ -537,7 +537,7 @@ function arcPath(
 }
 
 // ---------------------------------------------------------------------------
-// Contexto de desenho
+// Drawing context
 // ---------------------------------------------------------------------------
 
 interface HitInfo {
@@ -567,9 +567,9 @@ interface Frame {
   min: number;
   max: number;
   ticks: number[];
-  /** Converte um valor em coordenada vertical. */
+  /** Converts a value to vertical coordinate. */
   y(value: number): number;
-  /** Grade e rotulos do eixo de valores. */
+  /** Grid and value axis labels. */
   grid: string;
 }
 
@@ -581,7 +581,7 @@ function longestLabelWidth(texts: string[]): number {
   return longest * AXIS_FONT + 12;
 }
 
-/** Monta a area util e a grade horizontal de um grafico cartesiano. */
+/** Builds the usable area and horizontal grid of a Cartesian chart. */
 function buildFrame(
   ctx: RenderContext,
   settings: { stacked: boolean; baselineZero: boolean; bare: boolean }
@@ -623,7 +623,7 @@ function buildFrame(
   return { left, top, innerW, innerH, min: scale.min, max: scale.max, ticks: scale.ticks, y, grid };
 }
 
-/** Marcas igualmente espacadas, usadas quando `min` e `max` sao explicitos. */
+/** Evenly spaced marks, used when `min` and `max` are explicit. */
 function evenTicks(min: number, max: number, count: number): number[] {
   const step = (max - min) / Math.max(1, count - 1);
   const ticks: number[] = [];
@@ -631,7 +631,7 @@ function evenTicks(min: number, max: number, count: number): number[] {
   return ticks;
 }
 
-/** Rotulos do eixo de categorias, pulando itens quando o espaco aperta. */
+/** Category axis labels, skipping items when space is tight. */
 function categoryAxis(
   labels: string[],
   count: number,
@@ -660,14 +660,14 @@ function seriesLength(dataset: ChartDataset): number {
 }
 
 function emptyChart(ctx: RenderContext): string {
-  return `<text class="v-chart-empty" x="${r(ctx.width / 2)}" y="${r(ctx.height / 2)}" text-anchor="middle">Sem dados</text>`;
+  return `<text class="v-chart-empty" x="${r(ctx.width / 2)}" y="${r(ctx.height / 2)}" text-anchor="middle">No data</text>`;
 }
 
 function titleTag(label: string, value: number, format: ChartFormat): string {
   return `<title>${escapeHtml(label)}: ${escapeHtml(formatChartValue(value, format))}</title>`;
 }
 
-/** Resumo de uma serie inteira, usado no `<title>` das linhas. */
+/** Summary of an entire series, used in the `<title>` of lines. */
 function seriesSummary(entry: ChartSeries, format: ChartFormat): string {
   if (entry.values.length === 0) return entry.name;
   let min = Infinity;
@@ -679,13 +679,13 @@ function seriesSummary(entry: ChartSeries, format: ChartFormat): string {
   const first = entry.values[0];
   const last = entry.values[entry.values.length - 1];
   return (
-    `${entry.name}: de ${formatChartValue(first, format)} a ${formatChartValue(last, format)}, ` +
-    `minimo ${formatChartValue(min, format)}, maximo ${formatChartValue(max, format)}`
+    `${entry.name}: from ${formatChartValue(first, format)} to ${formatChartValue(last, format)}, ` +
+    `minimum ${formatChartValue(min, format)}, maximum ${formatChartValue(max, format)}`
   );
 }
 
 // ---------------------------------------------------------------------------
-// Linha, area e sparkline
+// Line, area, and sparkline
 // ---------------------------------------------------------------------------
 
 function renderLine(ctx: RenderContext): string {
@@ -713,8 +713,8 @@ function renderLine(ctx: RenderContext): string {
       parts.push(`<path class="v-chart-area" d="${area}" fill="${escapeHtml(entry.color)}" fill-opacity="0.16"/>`);
     }
     const dash = ctx.animated ? ' pathLength="1" stroke-dasharray="1"' : '';
-    // O `<title>` na linha inteira garante leitura acessivel mesmo no
-    // sparkline, que nao desenha os pontos individuais.
+    // The `<title>` on the entire line ensures accessible reading even in
+    // sparkline, which does not draw individual points.
     parts.push(
       `<path class="v-chart-line" d="${path}" stroke="${escapeHtml(entry.color)}"${dash}>` +
         `<title>${escapeHtml(seriesSummary(entry, ctx.format))}</title></path>`
@@ -754,7 +754,7 @@ function renderLine(ctx: RenderContext): string {
   return parts.join('');
 }
 
-/** Registra um ponto de tooltip por categoria, com todas as series juntas. */
+/** Registers a tooltip point per category, with all series together. */
 function collectBandHits(
   ctx: RenderContext,
   count: number,
@@ -776,7 +776,7 @@ function collectBandHits(
 }
 
 // ---------------------------------------------------------------------------
-// Barras verticais e empilhadas
+// Vertical and stacked bars
 // ---------------------------------------------------------------------------
 
 function renderBars(ctx: RenderContext): string {
@@ -854,7 +854,7 @@ function renderBars(ctx: RenderContext): string {
 }
 
 // ---------------------------------------------------------------------------
-// Barras horizontais
+// Horizontal bars
 // ---------------------------------------------------------------------------
 
 function renderColumns(ctx: RenderContext): string {
@@ -941,7 +941,7 @@ function renderColumns(ctx: RenderContext): string {
 }
 
 // ---------------------------------------------------------------------------
-// Pizza e rosca
+// Pie and donut
 // ---------------------------------------------------------------------------
 
 function renderPie(ctx: RenderContext): string {
@@ -1021,7 +1021,7 @@ function renderRadar(ctx: RenderContext): string {
   const angleAt = (index: number): number => -Math.PI / 2 + (Math.PI * 2 * index) / axes;
   const parts: string[] = [];
 
-  // Teia de fundo: aneis e raios.
+  // Background web: rings and spokes.
   for (let ring = 1; ring <= 4; ring++) {
     const points: Point[] = [];
     for (let i = 0; i < axes; i++) points.push(polar(cx, cy, (radius * ring) / 4, angleAt(i)));
@@ -1079,7 +1079,7 @@ function renderRadar(ctx: RenderContext): string {
 }
 
 // ---------------------------------------------------------------------------
-// Dispersao
+// Scatter
 // ---------------------------------------------------------------------------
 
 function renderScatter(ctx: RenderContext): string {
@@ -1150,7 +1150,7 @@ function renderScatter(ctx: RenderContext): string {
 }
 
 // ---------------------------------------------------------------------------
-// Anel de progresso
+// Progress ring
 // ---------------------------------------------------------------------------
 
 function renderProgress(ctx: RenderContext): string {
@@ -1191,7 +1191,7 @@ function renderProgress(ctx: RenderContext): string {
 }
 
 // ---------------------------------------------------------------------------
-// Montagem
+// Assembly
 // ---------------------------------------------------------------------------
 
 const SHAPE_HIT = new Set<ChartType>(['pie', 'donut', 'scatter', 'progress', 'radar']);
@@ -1209,24 +1209,24 @@ function legendVisible(options: ChartOptions, dataset: ChartDataset): boolean {
 }
 
 const TYPE_NAMES: Record<ChartType, string> = {
-  line: 'de linha',
-  area: 'de area',
-  bar: 'de barras',
-  column: 'de barras horizontais',
-  stacked: 'de barras empilhadas',
-  pie: 'de pizza',
-  donut: 'de rosca',
-  sparkline: 'de tendencia',
-  radar: 'de radar',
-  scatter: 'de dispersao',
-  progress: 'de progresso',
+  line: 'line',
+  area: 'area',
+  bar: 'bar',
+  column: 'horizontal bar',
+  stacked: 'stacked bar',
+  pie: 'pie',
+  donut: 'donut',
+  sparkline: 'trend',
+  radar: 'radar',
+  scatter: 'scatter',
+  progress: 'progress',
 };
 
-/** Gera a descricao lida por leitores de tela a partir dos proprios dados. */
+/** Generates the description read by screen readers from the data itself. */
 function describe(type: ChartType, dataset: ChartDataset, format: ChartFormat): string {
-  if (dataset.series.length === 0) return 'Grafico sem dados.';
-  const plural = dataset.series.length === 1 ? 'serie' : 'series';
-  const parts = [`Grafico ${TYPE_NAMES[type]} com ${dataset.series.length} ${plural}.`];
+  if (dataset.series.length === 0) return 'Chart with no data.';
+  const plural = dataset.series.length === 1 ? 'series' : 'series';
+  const parts = [`${TYPE_NAMES[type]} chart with ${dataset.series.length} ${plural}.`];
   for (const entry of dataset.series) {
     if (entry.values.length === 0) continue;
     let min = Infinity;
@@ -1239,8 +1239,8 @@ function describe(type: ChartType, dataset: ChartDataset, format: ChartFormat): 
     }
     const average = sum / entry.values.length;
     parts.push(
-      `${entry.name}: ${entry.values.length} pontos, minimo ${formatChartValue(min, format)}, ` +
-        `maximo ${formatChartValue(max, format)}, media ${formatChartValue(average, format)}.`
+      `${entry.name}: ${entry.values.length} points, minimum ${formatChartValue(min, format)}, ` +
+        `maximum ${formatChartValue(max, format)}, average ${formatChartValue(average, format)}.`
     );
   }
   return parts.join(' ');
@@ -1272,9 +1272,9 @@ interface ChartState {
   options: ChartOptions;
   hidden: Set<string>;
   hits: HitInfo[];
-  /** Quando `true`, o tooltip vem da forma sob o cursor, nao da posicao. */
+  /** When `true`, the tooltip comes from the shape under the cursor, not the position. */
   shapeHits: boolean;
-  /** Eixo comparado para achar a categoria mais proxima do cursor. */
+  /** Axis compared to find the closest category to the cursor. */
   hitAxis: 'x' | 'y';
   viewWidth: number;
   viewHeight: number;
@@ -1463,24 +1463,24 @@ function observeResize(state: ChartState): void {
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Desenha um grafico dentro de um elemento e devolve o controle da instancia.
+ * Draws a chart inside an element and returns instance control.
  *
  * ```js
- * const grafico = V.renderChart(document.querySelector('#vendas'), {
+ * const chart = V.renderChart(document.querySelector('#sales'), {
  *   type: 'area',
  *   data: [12, 19, 8, 25, 30],
- *   labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'],
+ *   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
  *   smooth: true,
  * })
- * grafico.update({ data: novosDados })
+ * chart.update({ data: newData })
  * ```
  *
- * @param el container que recebe o SVG. O conteudo anterior e substituido.
- * @param options tipo, dados e ajustes visuais
+ * @param el container that receives the SVG. Previous content is replaced.
+ * @param options type, data, and visual adjustments
  */
 export function renderChart(el: HTMLElement, options: ChartOptions): ChartInstance {
   ensureTokens();
@@ -1532,8 +1532,8 @@ export function renderChart(el: HTMLElement, options: ChartOptions): ChartInstan
 // ---------------------------------------------------------------------------
 
 function readOption(el: Element, name: string): string | null {
-  // Le pelo cache do runtime: esta funcao roda dentro do efeito reativo, ou
-  // seja, depois de os atributos sairem do HTML.
+  // Read from the runtime cache: this function runs inside the reactive effect, meaning
+  // after the attributes have left the HTML.
   return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 
@@ -1545,8 +1545,8 @@ function parseBool(raw: string | null, fallback: boolean): boolean {
 }
 
 /**
- * Le a expressao e os atributos `v-chart-*` e monta as opcoes finais. O valor
- * pode ser um objeto de opcoes completo ou apenas os dados.
+ * Reads the expression and `v-chart-*` attributes and assembles the final options. The value
+ * can be a complete options object or just the data.
  */
 function directiveOptions(el: HTMLElement, value: unknown): ChartOptions {
   const isOptionsObject =
@@ -1599,10 +1599,10 @@ function directiveOptions(el: HTMLElement, value: unknown): ChartOptions {
 }
 
 /**
- * Percorre a estrutura inteira para que o efeito reativo assine cada valor.
- * Sem isso, trocar um numero dentro do array nao redesenharia o grafico.
+ * Walks the entire structure so the reactive effect subscribes to each value.
+ * Without this, changing a number inside an array would not redraw the chart.
  *
- * @returns quantos valores foram lidos, util para depuracao
+ * @returns how many values were read, useful for debugging
  */
 function touchDeep(value: unknown, depth = 0): number {
   if (!value || typeof value !== 'object' || depth > 3) return 1;
@@ -1618,8 +1618,8 @@ function touchDeep(value: unknown, depth = 0): number {
 }
 
 /**
- * `v-chart="{ type: 'line', data: vendas }"` ou `v-chart="vendas"` combinado
- * com `v-chart-type="bar"`. Redesenha sozinho quando os dados mudam no estado.
+ * `v-chart="{ type: 'line', data: sales }"` or `v-chart="sales"` combined
+ * with `v-chart-type="bar"`. Redraws automatically when state data changes.
  */
 defineDirective('chart', ({ el, evaluate, effect, cleanup }) => {
   let instance: ChartInstance | null = null;
@@ -1638,7 +1638,7 @@ defineDirective('chart', ({ el, evaluate, effect, cleanup }) => {
   });
 });
 
-/** Tudo do modulo reunido, para expor como `V.charts`. */
+/** Everything from the module gathered, to expose as `V.charts`. */
 export const charts = {
   render: renderChart,
   format: formatChartValue,

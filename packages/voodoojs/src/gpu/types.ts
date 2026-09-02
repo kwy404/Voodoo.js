@@ -1,20 +1,20 @@
 /**
  * @module gpu/types
  *
- * Tipos minimos do WebGPU, escritos a mao.
+ * Minimal WebGPU types, hand-written.
  *
- * O projeto nao aceita dependencias novas, entao `@webgpu/types` esta fora e o
- * `lib.dom` do TypeScript ainda nao descreve `navigator.gpu`. O que existe aqui
- * e apenas a fatia da API que o modulo realmente chama: descritores ficam como
- * `any` de proposito, porque copiar o schema inteiro so criaria uma segunda
- * fonte de verdade para manter em dia.
+ * The project doesn't accept new dependencies, so `@webgpu/types` is out and
+ * TypeScript's `lib.dom` still doesn't describe `navigator.gpu`. What's here
+ * is only the slice of the API the module actually calls: descriptors stay as
+ * `any` on purpose, because copying the entire schema would just create a second
+ * source of truth to keep in sync.
  *
- * As constantes de uso tambem sao locais. Em producao elas existem como globais
- * (`GPUBufferUsage` e companhia), mas em jsdom nao existem nenhuma, e o modulo
- * precisa ser importavel em ambiente sem GPU sem estourar na primeira linha.
+ * The usage constants are also local. In production they exist as globals
+ * (`GPUBufferUsage` and company), but in jsdom they don't exist at all, and the module
+ * needs to be importable in an environment without GPU without blowing up on the first line.
  */
 
-/** Nome de formato de textura, como `bgra8unorm`. */
+/** Texture format name, like `bgra8unorm`. */
 export type GPUTextureFormat = string;
 
 export interface GPUBuffer {
@@ -36,7 +36,7 @@ export interface GPUSampler {
   readonly __sampler?: never;
 }
 
-/** Uma mensagem do compilador de WGSL. `lineNum` comeca em 1. */
+/** A WGSL compiler message. `lineNum` starts at 1. */
 export interface GPUCompilationMessage {
   readonly message: string;
   readonly type: 'error' | 'warning' | 'info';

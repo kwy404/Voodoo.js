@@ -2,9 +2,9 @@
  * Voodoo.js
  * JavaScript feels like magic.
  *
- * Ponto de entrada para bundlers. Importar este modulo nao mexe no DOM: quem
- * inicializa a pagina e `browser.ts`, usado no build de CDN, ou uma chamada
- * explicita a `V.start()`.
+ * Entry point for bundlers. Importing this module does not touch the DOM: the page
+ * is initialized by `browser.ts`, used in the CDN build, or an explicit call to
+ * `V.start()`.
  *
  * ```ts
  * import V from 'voodoojs'
@@ -22,17 +22,17 @@ import { router, route, navigate, resolve as resolveRoute } from './router';
 import { i18n, t, setLocale, getLocale } from './i18n';
 import { devtoolsBus } from './devtools/bus';
 import { magic } from './runtime/scope';
-import { avisarAlias } from './runtime/avisos';
+import { warnAlias } from './runtime/avisos';
 
-// Efeitos colaterais: registram as directives de cada modulo.
+// Side effects: register directives from each module.
 import './directives/ui';
 import './directives/forms';
 import './directives/state';
-// Registra v-sound e v-mute, mais o efeito colateral do modulo de audio.
+// Registers v-sound and v-mute, plus the audio module side effect.
 import './sound';
 import './motion';
 import './charts';
-// Registra os componentes prontos: VButton, VCard, VInput, VSelect e os demais.
+// Registers ready-to-use components: VButton, VCard, VInput, VSelect and others.
 import './ui/components';
 
 import { modal, alert, confirm, prompt, dialog } from './ui/dialog';
@@ -55,15 +55,15 @@ import { xray, enableXrayShortcut } from './devtools/xray';
 import { devtoolsWidget } from './devtools/launcher';
 
 // ---------------------------------------------------------------------------
-// Montagem do objeto chamavel
+// Building the callable object
 // ---------------------------------------------------------------------------
 
 /**
- * `V` e ao mesmo tempo uma funcao e um objeto.
+ * `V` is at once a function and an object.
  *
  * ```js
- * V('#lista .item').addClass('ativo')   // colecao encadeavel
- * V.toast.success('Pronto')             // servicos
+ * V('#list .item').addClass('active')   // chainable collection
+ * V.toast.success('Done')               // services
  * ```
  */
 export interface Voodoo extends Omit<typeof core, never> {
@@ -74,47 +74,47 @@ const V = ((input?: unknown, context?: unknown) =>
   query(input as never, context as never)) as unknown as Voodoo;
 
 /**
- * Embrulha um nome antigo que continua valendo. A funcao original e chamada sem
- * mudanca nenhuma; em desenvolvimento o console diz qual e o nome oficial.
+ * Wraps an old name that still works. The original function is called unchanged;
+ * in development the console shows which is the official name.
  */
-function comAviso<T extends (...args: any[]) => any>(alias: string, canonico: string, fn: T): T {
+function withWarning<T extends (...args: any[]) => any>(alias: string, canonical: string, fn: T): T {
   return ((...args: Parameters<T>) => {
-    avisarAlias(alias, canonico);
+    warnAlias(alias, canonical);
     return fn(...args);
   }) as T;
 }
 
 Object.assign(V, core, {
-  // DOM encadeavel
+  // Chainable DOM
   query,
   ready,
   fromHtml,
   Collection: VoodooCollection,
 
-  // Rotas
+  // Routes
   router,
   route,
   navigate,
   resolveRoute,
 
-  // Idiomas
+  // Languages
   i18n,
   t,
   setLocale,
   getLocale,
 
-  // Dialogos
+  // Dialogs
   modal,
   alert,
   confirm,
   prompt,
   dialog,
 
-  // Formularios
+  // Forms
   validator,
   validate,
-  // Apelido antigo. O nome oficial e `V.validate`.
-  validateForm: comAviso('V.validateForm', 'V.validate', validate),
+  // Old alias. The official name is `V.validate`.
+  validateForm: withWarning('V.validateForm', 'V.validate', validate),
   serializeForm,
   messages,
   showFormErrors,
@@ -126,7 +126,7 @@ Object.assign(V, core, {
   unmask,
   registerMask,
 
-  // Animacao
+  // Animation
   animate,
   spring,
   stagger,
@@ -135,9 +135,9 @@ Object.assign(V, core, {
   motion: motionPresets,
   easings,
 
-  // Graficos
-  // Apelido antigo. O nome oficial e `V.renderChart`.
-  chart: comAviso('V.chart', 'V.renderChart', renderChart),
+  // Charts
+  // Old alias. The official name is `V.renderChart`.
+  chart: withWarning('V.chart', 'V.renderChart', renderChart),
   renderChart,
   charts,
   chartColors: CHART_COLORS,
@@ -147,7 +147,7 @@ Object.assign(V, core, {
   hotkey,
   sound,
 
-  // Ferramentas de inspecao
+  // Inspection tools
   xray,
   enableXrayShortcut,
   devtoolsWidget,
@@ -160,7 +160,7 @@ export default V;
 export { V };
 
 // ---------------------------------------------------------------------------
-// Reexportacoes nomeadas, para quem prefere importar so o que usa
+// Named re-exports, for those who prefer to import only what they use
 // ---------------------------------------------------------------------------
 
 export {

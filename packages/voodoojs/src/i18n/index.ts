@@ -1,9 +1,9 @@
 /**
  * @module i18n
  *
- * Internacionalizacao reativa. Trocar o idioma nao recarrega a pagina: todo
- * texto que passou por `t()` e todo formatador de numero, moeda ou data se
- * atualiza sozinho, porque tudo le o mesmo estado reativo.
+ * Reactive internationalization. Changing the language doesn't reload the page: all text
+ * that went through `t()` and all number, currency, and date formatters update themselves
+ * because everything reads the same reactive state.
  *
  * ```js
  * V.i18n({
@@ -42,31 +42,31 @@ import {
 } from '../utils';
 
 // ---------------------------------------------------------------------------
-// Tipos
+// Types
 // ---------------------------------------------------------------------------
 
-/** Arvore de mensagens de um idioma. Aceita aninhamento em qualquer nivel. */
+/** Message tree for a language. Accepts nesting at any level. */
 export interface MessageTree {
   [key: string]: string | MessageTree;
 }
 
-/** Valores usados na interpolacao de `{chave}`. */
+/** Values used in the interpolation of `{key}`. */
 export type TranslateParams = Record<string, unknown> | number;
 
 export interface I18nOptions {
-  /** Idioma inicial. Perde para o idioma salvo e para o detectado. */
+  /** Initial language. Loses to the saved language and to the detected language. */
   locale?: string;
-  /** Idioma usado quando a chave nao existe no idioma atual. */
+  /** Language used when the key doesn't exist in the current language. */
   fallback?: string;
-  /** Mensagens por idioma. */
+  /** Messages per language. */
   messages?: Record<string, MessageTree>;
-  /** Moeda padrao de `c()`. Cai em `config.currency`. */
+  /** Default currency of `c()`. Falls to `config.currency`. */
   currency?: string;
-  /** Guarda o idioma escolhido no localStorage. Padrao `true`. */
+  /** Saves the chosen language in localStorage. Default `true`. */
   persist?: boolean | string;
-  /** Detecta o idioma do navegador quando nada foi salvo. Padrao `true`. */
+  /** Detects the browser's language when nothing was saved. Default `true`. */
   detect?: boolean;
-  /** Modelo de URL para carregamento sob demanda, com `{locale}`. */
+  /** URL template for on-demand loading, with `{locale}`. */
   loadPath?: string;
 }
 
@@ -78,10 +78,10 @@ interface I18nState {
 }
 
 // ---------------------------------------------------------------------------
-// Estado reativo
+// Reactive state
 // ---------------------------------------------------------------------------
 
-/** Chave padrao usada para guardar o idioma escolhido. */
+/** Default key used to store the chosen language. */
 const STORAGE_KEY = 'voodoo:locale';
 
 const state: I18nState = reactive<I18nState>({
@@ -96,12 +96,12 @@ let loadPath = '';
 const loading = new Map<string, Promise<void>>();
 
 // ---------------------------------------------------------------------------
-// Busca de mensagens
+// Message lookup
 // ---------------------------------------------------------------------------
 
 /**
- * Le uma chave aninhada por ponto dentro de um idioma. Aceita tanto a arvore
- * `{ comum: { salvar: 'Salvar' } }` quanto o mapa achatado
+ * Reads a key nested by dot within a language. Accepts both the tree
+ * `{ comum: { salvar: 'Salvar' } }` and the flattened map
  * `{ 'comum.salvar': 'Salvar' }`.
  */
 function lookupMessage(locale: string, key: string): string | null {
@@ -119,7 +119,7 @@ function lookupMessage(locale: string, key: string): string | null {
   return typeof current === 'string' ? current : null;
 }
 
-/** Idiomas parecidos com o pedido, do mais proximo para o mais distante. */
+/** Languages similar to the requested one, from closest to farthest. */
 function candidateLocales(locale: string): string[] {
   const out = [locale];
   const short = locale.split('-')[0];
@@ -131,7 +131,7 @@ function candidateLocales(locale: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Pluralizacao
+// Pluralization
 // ---------------------------------------------------------------------------
 
 const pluralRulesCache = new Map<string, Intl.PluralRules>();
@@ -149,11 +149,11 @@ function pluralCategory(locale: string, count: number): Intl.LDMLPluralRule {
 const CATEGORY_ORDER: Intl.LDMLPluralRule[] = ['zero', 'one', 'two', 'few', 'many', 'other'];
 
 /**
- * Escolhe a forma correta em `nenhum item | {n} item | {n} itens`.
+ * Chooses the correct form in `nenhum item | {n} item | {n} itens`.
  *
- * Duas formas seguem direto a categoria do `Intl.PluralRules`. Tres formas
- * reservam a primeira para o zero, que e o costume em portugues e em ingles.
- * Quatro ou mais formas usam a ordem oficial das categorias do CLDR.
+ * Two forms follow directly from the `Intl.PluralRules` category. Three forms
+ * reserve the first for zero, which is the custom in Portuguese and English.
+ * Four or more forms use the official order of CLDR categories.
  */
 function choosePlural(forms: string[], count: number, locale: string): string {
   if (forms.length <= 1) return forms[0] ?? '';
@@ -170,7 +170,7 @@ function choosePlural(forms: string[], count: number, locale: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Interpolacao
+// Interpolation
 // ---------------------------------------------------------------------------
 
 const PLACEHOLDER = /\{\s*([\w.$-]+)\s*\}/g;
@@ -191,21 +191,21 @@ function normalizeParams(params: TranslateParams | undefined): Record<string, un
 }
 
 // ---------------------------------------------------------------------------
-// API de traducao
+// Translation API
 // ---------------------------------------------------------------------------
 
 /**
- * Traduz uma chave no idioma atual.
+ * Translates a key in the current language.
  *
- * A busca tenta o idioma atual, depois idiomas parecidos, depois o fallback e,
- * se nada existir, devolve a propria chave, que sempre e melhor do que texto
- * vazio na tela.
+ * The search tries the current language, then similar languages, then the fallback,
+ * and if nothing exists, returns the key itself, which is always better than empty
+ * text on the screen.
  *
  * ```js
  * t('comum.salvar')              // 'Salvar'
  * t('ola', { nome: 'Ana' })      // 'Ola, Ana!'
  * t('itens', { n: 3 })           // '3 itens'
- * t('itens', 3)                  // atalho do mesmo caso
+ * t('itens', 3)                  // shortcut for the same case
  * ```
  */
 export function t(key: string, params?: TranslateParams): string {
@@ -235,7 +235,7 @@ export function t(key: string, params?: TranslateParams): string {
   return interpolate(message, values);
 }
 
-/** `true` quando a chave existe no idioma atual ou no fallback. */
+/** `true` when the key exists in the current language or in the fallback. */
 export function te(key: string, locale?: string): boolean {
   const target = locale ?? state.locale;
   for (const candidate of candidateLocales(target)) {
@@ -250,20 +250,20 @@ export function te(key: string, locale?: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Formatadores locais
+// Local formatters
 // ---------------------------------------------------------------------------
 
-/** Formata um numero no idioma atual. */
+/** Formats a number in the current language. */
 export function n(value: number | string, options: Intl.NumberFormatOptions = {}): string {
   return formatNumber(value, { ...options, locale: state.locale });
 }
 
-/** Formata um valor como moeda no idioma atual. */
+/** Formats a value as currency in the current language. */
 export function c(value: number | string, currency?: string): string {
   return formatCurrency(value, { locale: state.locale, currency: currency ?? state.currency });
 }
 
-/** Formata uma data no idioma atual. Aceita preset ou mascara textual. */
+/** Formats a date in the current language. Accepts preset or text mask. */
 export function d(
   value: Date | string | number,
   format: string | Intl.DateTimeFormatOptions = 'short'
@@ -271,33 +271,33 @@ export function d(
   return formatDate(value, format, state.locale);
 }
 
-/** Tempo relativo no idioma atual, como `ha 5 minutos`. */
+/** Relative time in the current language, like 'ha 5 minutos'. */
 export function rt(value: Date | string | number): string {
   return relativeTime(value, state.locale);
 }
 
 // ---------------------------------------------------------------------------
-// Idiomas
+// Languages
 // ---------------------------------------------------------------------------
 
-/** Idioma ativo. */
+/** Active language. */
 export function getLocale(): string {
   return state.locale;
 }
 
-/** Idiomas com mensagens carregadas. */
+/** Languages with loaded messages. */
 export function availableLocales(): string[] {
   return Object.keys(state.messages);
 }
 
-/** Mensagens de um idioma, ou do idioma atual quando nenhum for informado. */
+/** Messages of a language, or of the current language when none is provided. */
 export function messagesOf(locale?: string): MessageTree {
   return state.messages[locale ?? state.locale] ?? {};
 }
 
 /**
- * Adiciona mensagens a um idioma, mesclando com o que ja existe.
- * Retorna o proprio idioma, para encadear.
+ * Adds messages to a language, merging with what already exists.
+ * Returns the language itself, for chaining.
  */
 export function addMessages(locale: string, messages: MessageTree): string {
   const current = state.messages[locale];
@@ -307,7 +307,7 @@ export function addMessages(locale: string, messages: MessageTree): string {
 }
 
 /**
- * Carrega mensagens sob demanda.
+ * Loads messages on demand.
  *
  * ```js
  * await V.i18n.loadMessages('es', '/i18n/es.json')
@@ -343,10 +343,10 @@ export async function loadMessages(
 }
 
 /**
- * Troca o idioma ativo. A pagina inteira se atualiza na hora, sem recarregar.
+ * Changes the active language. The entire page updates immediately without reloading.
  *
- * Quando `loadPath` foi configurado e o idioma ainda nao tem mensagens, o
- * arquivo e buscado em segundo plano e a promessa resolve quando ele chega.
+ * When `loadPath` was configured and the language doesn't have messages yet, the file
+ * is fetched in the background and the promise resolves when it arrives.
  */
 export function setLocale(locale: string): Promise<void> {
   const target = locale?.trim();
@@ -370,8 +370,8 @@ export function setLocale(locale: string): Promise<void> {
 }
 
 /**
- * Escolhe o melhor idioma do navegador entre os que existem.
- * Devolve `null` quando nenhum idioma do navegador tem mensagens.
+ * Chooses the best browser language among those that exist.
+ * Returns `null` when no browser language has messages.
  */
 export function detectLocale(): string | null {
   if (typeof navigator === 'undefined') return null;
@@ -394,7 +394,7 @@ export function detectLocale(): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Configuracao
+// Configuration
 // ---------------------------------------------------------------------------
 
 function configureI18n(options: I18nOptions = {}): I18nApi {
@@ -411,7 +411,7 @@ function configureI18n(options: I18nOptions = {}): I18nApi {
   if (options.persist === false) persistKey = null;
   else if (typeof options.persist === 'string') persistKey = options.persist;
 
-  // Ordem de escolha: idioma salvo, idioma do navegador, opcao, fallback.
+  // Order of choice: saved language, browser language, option, fallback.
   const saved = persistKey ? storage.get<string>(persistKey) : undefined;
   const detected = options.detect === false ? null : detectLocale();
   const chosen = saved || detected || options.locale || state.locale || state.fallback;
@@ -430,11 +430,11 @@ function configureI18n(options: I18nOptions = {}): I18nApi {
 
 export interface I18nApi {
   (options?: I18nOptions): I18nApi;
-  /** Idioma ativo, reativo quando lido dentro de um efeito. */
+  /** Active language, reactive when read within an effect. */
   readonly locale: string;
-  /** Idioma usado quando a chave nao existe no idioma atual. */
+  /** Language used when the key doesn't exist in the current language. */
   readonly fallback: string;
-  /** Idiomas com mensagens carregadas. */
+  /** Languages with loaded messages. */
   readonly locales: string[];
   t: typeof t;
   te: typeof te;
@@ -451,8 +451,8 @@ export interface I18nApi {
 }
 
 /**
- * Modulo de internacionalizacao. Chamado como funcao configura o idioma e as
- * mensagens, e tambem carrega os utilitarios como metodos.
+ * Internationalization module. Called as a function configures the language and
+ * messages and also loads utilities as methods.
  *
  * ```js
  * V.i18n({ locale: 'pt-BR', messages: { 'pt-BR': { ola: 'Ola' } } })
@@ -461,11 +461,11 @@ export interface I18nApi {
  * ```
  */
 /**
- * Os acessos dinamicos entram por `defineProperties`, e nao por
- * `Object.assign`, porque `Object.assign` executaria cada getter uma unica vez
- * e copiaria o valor, deixando `V.i18n.locale` preso no idioma inicial.
+ * Dynamic accesses enter via `defineProperties`, not `Object.assign`, because
+ * `Object.assign` would execute each getter once and copy the value, leaving
+ * `V.i18n.locale` stuck in the initial language.
  */
-const i18nDinamicos = {
+const i18nDynamic = {
   get locale(): string {
     return state.locale;
   },
@@ -490,18 +490,18 @@ const i18nDinamicos = {
 };
 
 /**
- * O objeto i18n e uma funcao chamavel que tambem carrega a API. Os acessos
- * dinamicos sao copiados com getOwnPropertyDescriptors, o que mantem cada
- * getter vivo. Com Object.assign eles seriam executados uma unica vez e o
- * idioma ficaria congelado no valor inicial.
+ * The i18n object is a callable function that also loads the API. Dynamic accesses
+ * are copied with getOwnPropertyDescriptors, which keeps each getter alive. With
+ * Object.assign they would be executed once and the language would be frozen at
+ * the initial value.
  */
 export const i18n: I18nApi = Object.defineProperties(
   configureI18n,
-  Object.getOwnPropertyDescriptors(i18nDinamicos)
+  Object.getOwnPropertyDescriptors(i18nDynamic)
 ) as unknown as I18nApi;
 
 // ---------------------------------------------------------------------------
-// Variaveis magicas
+// Magic variables
 // ---------------------------------------------------------------------------
 
 magic('$t', () => t);
@@ -516,12 +516,12 @@ magic('$rt', () => rt);
 // Directives
 // ---------------------------------------------------------------------------
 
-/** Chave escrita direto no atributo, como `comum.salvar`. */
+/** Key written directly in the attribute, like `comum.salvar`. */
 const LITERAL_KEY = /^[A-Za-z_$][\w$-]*(\.[A-Za-z_$][\w$-]*)*$/;
 
 /**
- * Resolve o texto do atributo em uma chave. Caminho simples com pontos vale
- * como texto, qualquer outra coisa e tratada como expressao do escopo.
+ * Resolves the attribute text into a key. Simple path with dots counts as text,
+ * anything else is treated as scope expression.
  */
 function resolveKey(expression: string, evaluate: <T>(expr?: string) => T): string {
   const raw = expression.trim();
@@ -531,7 +531,7 @@ function resolveKey(expression: string, evaluate: <T>(expr?: string) => T): stri
   return typeof value === 'string' ? value : raw;
 }
 
-/** Le `v-t-params` do proprio elemento, mantendo a leitura reativa. */
+/** Reads `v-t-params` from the element itself, keeping the reading reactive. */
 function readParams(el: HTMLElement, evaluate: <T>(expr?: string) => T): Record<string, unknown> {
   const attr =
     readAttr(el, `${config.prefix}t-params`) ?? readAttr(el, 'data-v-t-params');
@@ -541,7 +541,7 @@ function readParams(el: HTMLElement, evaluate: <T>(expr?: string) => T): Record<
 }
 
 /**
- * `v-t` traduz o conteudo do elemento, e com argumento traduz um atributo.
+ * `v-t` translates the element's content, and with an argument translates an attribute.
  *
  * ```html
  * <button v-t="comum.salvar"></button>
@@ -561,14 +561,15 @@ defineDirective('t', ({ el, arg, expression, effect, evaluate }) => {
 });
 
 /**
- * `v-t-params` guarda os valores da interpolacao. Quem le e o `v-t` do mesmo
- * elemento, entao aqui basta existir para o walker nao estranhar o atributo.
+ * `v-t-params` stores the interpolation values. What reads it is the `v-t`
+ * of the same element, so it just needs to exist here so the walker doesn't find
+ * the attribute strange.
  */
 defineDirective('t-params', () => undefined);
 
 /**
- * `v-locale` troca o idioma no clique e marca o botao ativo com a classe
- * `v-locale-active`.
+ * `v-locale` changes the language on click and marks the button active with the
+ * `v-locale-active` class.
  *
  * ```html
  * <button v-locale="pt-BR">Portugues</button>

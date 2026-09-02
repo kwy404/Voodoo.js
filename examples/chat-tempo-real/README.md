@@ -43,10 +43,10 @@ quiser e escuta o evento que quiser. Está tudo explicado em [`docs/websocket.md
 
 ```html
 <div v-socket="ws://localhost:5174/chat" v-room="geral" v-on-socket:voce="eu = $event">
-  <span v-text="$socket.conectado ? 'conectado' : 'reconectando...'"></span>
-  <li v-for="m in $room.membros">{ m.nome }</li>
-  <li v-for="m in $room.mensagens">{ m.autor }: { m.texto }</li>
-  <form @submit.prevent="$room.enviar('mensagem', { texto: rascunho }, destino || undefined)">
+  <span v-text="$socket.connected ? 'conectado' : 'reconectando...'"></span>
+  <li v-for="m in $room.members">{ m.nome }</li>
+  <li v-for="m in $room.messages">{ m.autor }: { m.texto }</li>
+  <form @submit.prevent="$room.send('mensagem', { texto: rascunho }, destino || undefined)">
 </div>
 ```
 

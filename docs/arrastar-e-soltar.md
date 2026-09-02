@@ -1,86 +1,86 @@
-# Arrastar e soltar
+# Drag and drop
 
-Sistema completo de arrastar e soltar, construído sobre eventos de ponteiro. A Drag and Drop API
-do HTML5 foi deixada de lado de propósito: ela não funciona bem no toque, não deixa customizar a
-imagem arrastada e não ajuda em listas ordenáveis.
+Complete drag and drop system built on pointer events. The HTML5 Drag and Drop API was deliberately
+left aside: it doesn't work well with touch, doesn't let you customize the drag image, and doesn't
+help with sortable lists.
 
-Tudo funciona com mouse, caneta, toque e teclado.
+Everything works with mouse, pen, touch, and keyboard.
 
 ## v-sortable
 
-Lista reordenável.
+Reorderable list.
 
 ```html
 <ul v-sortable>
-  <li data-id="1">Primeiro</li>
-  <li data-id="2">Segundo</li>
-  <li data-id="3">Terceiro</li>
+  <li data-id="1">First</li>
+  <li data-id="2">Second</li>
+  <li data-id="3">Third</li>
 </ul>
 ```
 
-Os filhos diretos viram itens arrastáveis. Ao soltar, a lista dispara `voodoo:sorted`:
+Direct children become draggable items. On drop, the list fires `voodoo:sorted`:
 
 ```html
-<ul v-sortable @voodoo:sorted="salvarOrdem($detail.order)">
+<ul v-sortable @voodoo:sorted="saveOrder($detail.order)">
   <li v-for="tarefa in tarefas" :key="tarefa.id" :data-id="tarefa.id">{ tarefa.titulo }</li>
 </ul>
 ```
 
-O `detail` traz:
+The `detail` carries:
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `item` | O elemento movido |
-| `oldIndex`, `newIndex` | Posições antes e depois |
-| `from`, `to` | Listas de origem e destino |
-| `order` | Array com as chaves na ordem atual |
+| `item` | The moved element |
+| `oldIndex`, `newIndex` | Positions before and after |
+| `from`, `to` | Source and destination lists |
+| `order` | Array with keys in current order |
 
-A chave de cada item é o `data-id`, ou o `id`, ou a posição.
+Each item's key is its `data-id`, or `id`, or position.
 
-### Alça de arraste
+### Drag handle
 
-Sem alça, o item inteiro é arrastável. Com alça, só a parte escolhida:
+Without a handle, the entire item is draggable. With a handle, only the chosen part:
 
 ```html
-<ul v-sortable v-sortable-handle=".alca">
+<ul v-sortable v-sortable-handle=".handle">
   <li>
-    <span class="alca">≡</span>
-    <span>Item com alça</span>
+    <span class="handle">≡</span>
+    <span>Item with handle</span>
   </li>
 </ul>
 ```
 
-O seletor também pode vir no valor da própria directive: `v-sortable=".alca"`.
+The selector can also go in the directive's value: `v-sortable=".handle"`.
 
-## Grupos
+## Groups
 
-Listas do mesmo grupo trocam itens entre si:
+Lists in the same group exchange items with each other:
 
 ```html
 <div v-dnd-group="kanban">
-  <ul v-sortable><li>A fazer</li></ul>
-  <ul v-sortable><li>Fazendo</li></ul>
-  <ul v-sortable><li>Feito</li></ul>
+  <ul v-sortable><li>To do</li></ul>
+  <ul v-sortable><li>Doing</li></ul>
+  <ul v-sortable><li>Done</li></ul>
 </div>
 ```
 
-`v-dnd-group` define o grupo de todos os descendentes. Para declarar caso a caso, use
-`v-sortable-group`, `v-draggable-group` e `v-droppable-group`:
+`v-dnd-group` defines the group for all descendants. To declare case by case, use
+`v-sortable-group`, `v-draggable-group`, and `v-droppable-group`:
 
 ```html
-<ul v-sortable v-sortable-group="tarefas">...</ul>
-<ul v-sortable v-sortable-group="tarefas">...</ul>
-<ul v-sortable v-sortable-group="arquivos">...</ul>
+<ul v-sortable v-sortable-group="tasks">...</ul>
+<ul v-sortable v-sortable-group="tasks">...</ul>
+<ul v-sortable v-sortable-group="files">...</ul>
 ```
 
-Um item só entra em uma lista do mesmo grupo. Listas sem grupo não recebem itens de fora.
+An item only goes into a list in the same group. Lists without a group don't receive items from outside.
 
-Quando um item muda de lista, o evento `voodoo:sorted` é disparado nas duas, cada uma com a
-própria ordem.
+When an item moves between lists, the `voodoo:sorted` event fires on both, each with its own
+order.
 
 ## v-draggable
 
-Item que é arrastado até uma área de soltura, sem reordenar nada.
+Item that is dragged to a drop area, without reordering anything.
 
 ```html
 <div v-draggable v-draggable-data="produto">
@@ -88,115 +88,115 @@ Item que é arrastado até uma área de soltura, sem reordenar nada.
 </div>
 ```
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-draggable-data` | Expressão avaliada no momento do arraste. Chega ao destino |
-| `v-draggable-handle` | Seletor da alça |
-| `v-draggable-axis` | `x` ou `y`, para travar o movimento em um eixo |
-| `v-draggable-group` | Grupo do item |
+| `v-draggable-data` | Expression evaluated at drag time. Reaches the destination |
+| `v-draggable-handle` | Handle selector |
+| `v-draggable-axis` | `x` or `y`, to lock movement to one axis |
+| `v-draggable-group` | Item's group |
 
-O valor da própria directive também vale como expressão de dados: `v-draggable="produto"`.
+The directive's value also works as a data expression: `v-draggable="produto"`.
 
 ## v-droppable
 
-Área que recebe itens.
+Area that receives items.
 
 ```html
-<div v-droppable="adicionarAoCarrinho($detail.data)" v-droppable-accept=".produto">
-  Solte um produto aqui
+<div v-droppable="addToCart($detail.data)" v-droppable-accept=".product">
+  Drop a product here
 </div>
 ```
 
-A expressão recebe:
+The expression receives:
 
-| Variável | O que é |
+| Variable | What it is |
 | --- | --- |
-| `$detail.item` | O elemento solto |
-| `$detail.data` | O valor de `v-draggable-data` |
-| `$detail.from` | Lista ou elemento de origem |
-| `$detail.to` | A própria área |
-| `$detail.index` | Posição do item na lista de destino |
-| `$event` | O `CustomEvent` `voodoo:drop` |
+| `$detail.item` | The dropped element |
+| `$detail.data` | The value of `v-draggable-data` |
+| `$detail.from` | Source list or element |
+| `$detail.to` | The drop area itself |
+| `$detail.index` | Item position in destination list |
+| `$event` | The `CustomEvent` `voodoo:drop` |
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-droppable-accept` | Seletor CSS que o item precisa casar para ser aceito |
-| `v-droppable-group` | Grupo aceito |
+| `v-droppable-accept` | CSS selector the item must match to be accepted |
+| `v-droppable-group` | Accepted group |
 
-## Classes de estado
+## State classes
 
-| Classe | Quando |
+| Class | When |
 | --- | --- |
-| `v-draggable`, `v-sortable`, `v-droppable` | Aplicadas na montagem |
-| `v-drag-handle` | No item ou na alça, define o cursor |
-| `v-dragging` | No item enquanto ele é arrastado |
-| `v-drag-ghost` | No clone que acompanha o cursor |
-| `v-drag-invalid` | No clone quando o destino atual não aceita o item |
-| `v-drop-active` | Em todos os destinos compatíveis durante o arraste |
-| `v-drop-over` | No destino sob o cursor |
-| `v-grabbed` | No item pego pelo teclado |
+| `v-draggable`, `v-sortable`, `v-droppable` | Applied on mount |
+| `v-drag-handle` | On item or handle, sets cursor |
+| `v-dragging` | On item while it's being dragged |
+| `v-drag-ghost` | On the clone that follows the cursor |
+| `v-drag-invalid` | On clone when current destination doesn't accept the item |
+| `v-drop-active` | On all compatible destinations during drag |
+| `v-drop-over` | On destination under cursor |
+| `v-grabbed` | On item grabbed by keyboard |
 
-Todas usam as variáveis `--v-*`, então acompanham a paleta e o tema.
+All use `--v-*` variables, so they follow the palette and theme.
 
-## Eventos
+## Events
 
-| Evento | Onde | `detail` |
+| Event | Where | `detail` |
 | --- | --- | --- |
-| `voodoo:drag-start` | No item | `{ item, data, group }` |
-| `voodoo:drag-end` | No item | `{ item, data }` |
-| `voodoo:drag-cancel` | No item | `{ item }` |
-| `voodoo:sorted` | Na lista | `{ item, oldIndex, newIndex, from, to, order }` |
-| `voodoo:drop` | Na área de soltura | `{ item, data, from, to, index }` |
+| `voodoo:drag-start` | On item | `{ item, data, group }` |
+| `voodoo:drag-end` | On item | `{ item, data }` |
+| `voodoo:drag-cancel` | On item | `{ item }` |
+| `voodoo:sorted` | On list | `{ item, oldIndex, newIndex, from, to, order }` |
+| `voodoo:drop` | On drop area | `{ item, data, from, to, index }` |
 
-## Acessibilidade
+## Accessibility
 
-O arraste funciona inteiramente pelo teclado, com anúncio em uma região `aria-live`:
+Dragging works entirely by keyboard with announcements in an `aria-live` region:
 
-| Tecla | O que faz |
+| Key | What it does |
 | --- | --- |
-| Espaço | Pega o item. Pressione de novo para soltar |
-| Setas | Em `v-sortable`, move o item na lista. Em `v-draggable`, percorre os destinos |
-| Setas laterais | Em listas verticais de um grupo, muda de lista |
-| Escape | Cancela o arraste e devolve o item ao lugar |
+| Space | Grab item. Press again to drop |
+| Arrows | In `v-sortable`, move item in list. In `v-draggable`, cycle through destinations |
+| Side arrows | In vertical lists of a group, switch lists |
+| Escape | Cancel drag and return item to place |
 
-Cada item recebe `tabindex="0"` e `aria-grabbed`. Áreas de soltura recebem `aria-dropeffect`.
-Listas ganham `aria-label` quando não têm um. Dê um `aria-label` próprio a cada lista, para que o
-anúncio "movido para a lista 2 de 3" fique mais claro:
+Each item gets `tabindex="0"` and `aria-grabbed`. Drop areas get `aria-dropeffect`.
+Lists get `aria-label` when they don't have one. Give each list its own `aria-label` so the
+announcement "moved to list 2 of 3" is clearer:
 
 ```html
 <div v-dnd-group="kanban">
-  <ul v-sortable aria-label="A fazer">...</ul>
-  <ul v-sortable aria-label="Fazendo">...</ul>
+  <ul v-sortable aria-label="To do">...</ul>
+  <ul v-sortable aria-label="Doing">...</ul>
 </div>
 ```
 
-## Rolagem automática
+## Auto-scroll
 
-Quando o cursor chega perto da borda de um contêiner rolável, ou da janela, a rolagem acontece
-sozinha durante o arraste. O contêiner rolável mais próximo é detectado pelo `overflow`.
+When the cursor gets near the edge of a scrollable container, or the window, scrolling happens
+on its own during drag. The nearest scrollable container is detected by `overflow`.
 
-## Exemplo completo: um quadro kanban
+## Complete example: a kanban board
 
 ```html
 <div v-data="{ colunas: { fazer: [], fazendo: [], feito: [] } }" v-dnd-group="kanban">
-  <div class="quadro">
+  <div class="board">
     <section>
-      <h3>A fazer</h3>
-      <ul v-sortable aria-label="A fazer" @voodoo:sorted="salvar($detail)">
+      <h3>To do</h3>
+      <ul v-sortable aria-label="To do" @voodoo:sorted="save($detail)">
         <li v-for="c in colunas.fazer" :key="c.id" :data-id="c.id">{ c.titulo }</li>
       </ul>
     </section>
 
     <section>
-      <h3>Fazendo</h3>
-      <ul v-sortable aria-label="Fazendo" @voodoo:sorted="salvar($detail)">
+      <h3>Doing</h3>
+      <ul v-sortable aria-label="Doing" @voodoo:sorted="save($detail)">
         <li v-for="c in colunas.fazendo" :key="c.id" :data-id="c.id">{ c.titulo }</li>
       </ul>
     </section>
 
     <section>
-      <h3>Feito</h3>
-      <ul v-sortable aria-label="Feito" @voodoo:sorted="salvar($detail)">
+      <h3>Done</h3>
+      <ul v-sortable aria-label="Done" @voodoo:sorted="save($detail)">
         <li v-for="c in colunas.feito" :key="c.id" :data-id="c.id">{ c.titulo }</li>
       </ul>
     </section>
@@ -206,38 +206,38 @@ sozinha durante o arraste. O contêiner rolável mais próximo é detectado pelo
 
 ```js
 V.data({
-  salvar(detalhe) {
-    V.http.post('/api/quadro/ordem', {
-      lista: detalhe.to.getAttribute('aria-label'),
-      ordem: detalhe.order,
+  save(detail) {
+    V.http.post('/api/board/order', {
+      list: detail.to.getAttribute('aria-label'),
+      order: detail.order,
     });
   },
 });
 ```
 
-> Um detalhe importante: `v-sortable` move os elementos no DOM, mas não reordena o array do
-> `v-for`. Guarde a nova ordem no servidor ou reordene o array você mesmo dentro do
-> `voodoo:sorted`, senão a próxima renderização volta à ordem antiga.
+> Important detail: `v-sortable` moves elements in the DOM but doesn't reorder the `v-for` array.
+> Save the new order to the server or reorder the array yourself inside
+> `voodoo:sorted`, or the next render will return to the old order.
 
-## Exemplo: soltar em uma lixeira
+## Example: dropping in a trash
 
 ```html
-<div v-data="{ arquivos: [{ id: 1, nome: 'nota.pdf' }] }">
+<div v-data="{ files: [{ id: 1, nome: 'nota.pdf' }] }">
   <ul>
-    <li v-for="a in arquivos" :key="a.id" class="arquivo" v-draggable v-draggable-data="a">
+    <li v-for="a in files" :key="a.id" class="file" v-draggable v-draggable-data="a">
       { a.nome }
     </li>
   </ul>
 
-  <div class="lixeira"
-       v-droppable="arquivos = arquivos.filter(x => x.id !== $detail.data.id)"
-       v-droppable-accept=".arquivo"
-       aria-label="Lixeira">
-    Solte aqui para excluir
+  <div class="trash"
+       v-droppable="files = files.filter(x => x.id !== $detail.data.id)"
+       v-droppable-accept=".file"
+       aria-label="Trash">
+    Drop here to delete
   </div>
 </div>
 ```
 
 ---
 
-Anterior: [Interface](interface.md) · Próximo: [Animações](animacoes.md)
+Previous: [Interface](interface.md) · Next: [Animations](animacoes.md)

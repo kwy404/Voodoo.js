@@ -1,12 +1,12 @@
 /**
  * @module ui/toast
  *
- * Notificacoes temporarias. Sem dependencia, com fila, pausa ao passar o mouse,
- * barra de progresso, acao opcional e suporte a promessa.
+ * Temporary notifications. No dependencies, with queue, mouse-over pause,
+ * progress bar, optional action, and promise support.
  *
  * ```js
- * V.toast.success('Usuario salvo!')
- * V.toast.promise(salvar(), { loading: 'Salvando', success: 'Pronto', error: 'Falhou' })
+ * V.toast.success('User saved!')
+ * V.toast.promise(save(), { loading: 'Saving', success: 'Done', error: 'Failed' })
  * ```
  */
 
@@ -26,14 +26,14 @@ export interface ToastOptions {
   title?: string;
   description?: string;
   type?: ToastType;
-  /** Milissegundos ate fechar. `0` mantem aberto ate o usuario fechar. */
+  /** Milliseconds until close. `0` keeps it open until the user closes it. */
   duration?: number;
   position?: ToastPosition;
-  /** Botao de acao dentro da notificacao. */
+  /** Action button inside the notification. */
   action?: { label: string; onClick: () => void };
-  /** Mostra o botao de fechar. */
+  /** Show the close button. */
   closable?: boolean;
-  /** HTML customizado no lugar do conteudo padrao. Use com cuidado. */
+  /** Custom HTML in place of default content. Use with caution. */
   html?: string;
   onClose?: () => void;
 }
@@ -118,7 +118,7 @@ function container(position: ToastPosition): HTMLElement {
   element.className = 'v-toaster';
   element.setAttribute('data-pos', position);
   element.setAttribute('role', 'region');
-  element.setAttribute('aria-label', 'Notificacoes');
+  element.setAttribute('aria-label', 'Notifications');
   document.body.appendChild(element);
   containers.set(position, element);
   return element;
@@ -204,7 +204,7 @@ function render(options: ToastOptions): ToastHandle {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'v-toast-close';
-        button.setAttribute('aria-label', 'Fechar notificacao');
+        button.setAttribute('aria-label', 'Close notification');
         button.innerHTML = '&times;';
         button.addEventListener('click', close);
         element.appendChild(button);
@@ -224,7 +224,7 @@ function render(options: ToastOptions): ToastHandle {
   parent.appendChild(element);
   requestAnimationFrame(() => element.classList.add('v-in'));
 
-  // Limita a quantidade visivel.
+  // Limit the visible quantity.
   while (parent.children.length > settings.max) parent.firstElementChild?.remove();
 
   const schedule = (ms: number): void => {
@@ -233,7 +233,7 @@ function render(options: ToastOptions): ToastHandle {
   };
   schedule(duration);
 
-  // Pausa a contagem enquanto o ponteiro estiver sobre a notificacao.
+  // Pause the countdown while the cursor is over the notification.
   element.addEventListener('mouseenter', () => {
     if (timer) clearTimeout(timer);
   });
@@ -255,7 +255,7 @@ function normalize(input: string | ToastOptions, type: ToastType): ToastOptions 
 }
 
 export const toast = Object.assign(
-  /** Notificacao neutra. */
+  /** Neutral notification. */
   (message: string | ToastOptions, options: Partial<ToastOptions> = {}): ToastHandle =>
     render({ ...normalize(message, 'default'), ...options }),
   {
@@ -271,13 +271,13 @@ export const toast = Object.assign(
       render({ ...normalize(message, 'loading'), duration: 0, ...options }),
 
     /**
-     * Acompanha uma promessa: mostra carregando, depois sucesso ou erro.
+     * Monitor a promise: show loading, then success or error.
      *
      * ```js
-     * V.toast.promise(salvar(), {
-     *   loading: 'Salvando...',
-     *   success: (dados) => `Salvo com id ${dados.id}`,
-     *   error: 'Nao foi possivel salvar'
+     * V.toast.promise(save(), {
+     *   loading: 'Saving...',
+     *   success: (data) => `Saved with id ${data.id}`,
+     *   error: 'Failed to save'
      * })
      * ```
      */
@@ -289,14 +289,14 @@ export const toast = Object.assign(
         error?: string | ((error: unknown) => string);
       } = {}
     ): Promise<T> {
-      const handle = render({ title: messages.loading ?? 'Carregando...', type: 'loading', duration: 0 });
+      const handle = render({ title: messages.loading ?? 'Loading...', type: 'loading', duration: 0 });
       try {
         const value = await promise;
         handle.update({
           title:
             typeof messages.success === 'function'
               ? messages.success(value)
-              : messages.success ?? 'Pronto',
+              : messages.success ?? 'Done',
           type: 'success',
           duration: settings.duration,
         });
@@ -306,7 +306,7 @@ export const toast = Object.assign(
           title:
             typeof messages.error === 'function'
               ? messages.error(err)
-              : messages.error ?? 'Algo deu errado',
+              : messages.error ?? 'Something went wrong',
           type: 'error',
           duration: settings.duration,
         });
@@ -314,7 +314,7 @@ export const toast = Object.assign(
       }
     },
 
-    /** Fecha todas as notificacoes abertas. */
+    /** Close all open notifications. */
     clear(): void {
       for (const [position, element] of containers) {
         element.remove();
@@ -322,7 +322,7 @@ export const toast = Object.assign(
       }
     },
 
-    /** Ajusta duracao, posicao e limite padrao. */
+    /** Adjust default duration, position, and limit. */
     configure(options: Partial<typeof settings>): void {
       Object.assign(settings, options);
     },

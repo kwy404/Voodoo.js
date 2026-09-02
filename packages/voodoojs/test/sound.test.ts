@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { reactive } from '../src/reactivity';
 import { Scope } from '../src/runtime/scope';
 import { walk } from '../src/runtime/walker';
-import { sound, efeitos, frequenciaDaNota } from '../src/sound';
+import { sound, efeitos, getFrequencyForNote } from '../src/sound';
 import '../src/core';
 
 interface Toque {
@@ -133,18 +133,18 @@ describe('efeitos prontos', () => {
 
 describe('notas e frequencias', () => {
   it('converte nome de nota em hertz', () => {
-    expect(frequenciaDaNota('la')).toBeCloseTo(440, 1);
-    expect(frequenciaDaNota('do')).toBeCloseTo(261.63, 1);
-    expect(frequenciaDaNota('a')).toBeCloseTo(440, 1);
+    expect(getFrequencyForNote('la')).toBeCloseTo(440, 1);
+    expect(getFrequencyForNote('do')).toBeCloseTo(261.63, 1);
+    expect(getFrequencyForNote('a')).toBeCloseTo(440, 1);
   });
 
   it('a oitava dobra a frequencia', () => {
-    expect(frequenciaDaNota('la5')).toBeCloseTo(880, 1);
-    expect(frequenciaDaNota('la3')).toBeCloseTo(220, 1);
+    expect(getFrequencyForNote('la5')).toBeCloseTo(880, 1);
+    expect(getFrequencyForNote('la3')).toBeCloseTo(220, 1);
   });
 
   it('nome desconhecido devolve nulo', () => {
-    expect(frequenciaDaNota('xyz')).toBeNull();
+    expect(getFrequencyForNote('xyz')).toBeNull();
   });
 
   it('tone toca a frequencia pedida', () => {

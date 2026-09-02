@@ -1,170 +1,169 @@
-# Expressões
+# Expressions
 
-Tudo que você escreve dentro de um atributo `v-*` ou entre chaves é uma expressão. Ela não passa
-por `eval` nem por `new Function`. O texto vai para um lexer, depois para um parser Pratt e por
-fim para um interpretador de árvore, todos escritos à mão dentro da biblioteca.
+Everything you write inside a `v-*` attribute or within braces is an expression. It doesn't go
+through `eval` or `new Function`. The text goes to a lexer, then to a Pratt parser, and finally
+to a tree interpreter, all written by hand within the library.
 
-Isso tem duas consequências diretas: a biblioteca funciona com Content Security Policy restritiva,
-sem `unsafe-eval`, e a linguagem aceita apenas um subconjunto de JavaScript, escolhido de
-propósito.
+This has two direct consequences: the library works with restrictive Content Security Policy,
+without `unsafe-eval`, and the language accepts only a subset of JavaScript, chosen on purpose.
 
-## Interpolação
+## Interpolation
 
-A forma padrão é a chave simples:
-
-```html
-<p>Olá, { nome }! Você tem { itens.length } itens.</p>
-```
-
-A chave dupla também é aceita, para quem vem do Vue e para textos que precisam conter chaves
-literais em volta:
+The standard form is simple braces:
 
 ```html
-<p>{{ nome }}</p>
+<p>Hello, { name }! You have { items.length } items.</p>
 ```
 
-Regras:
+Double braces are also accepted, for those coming from Vue and for text that needs to contain
+literal braces around it:
 
-- várias interpolações no mesmo nó de texto funcionam;
-- qualquer expressão vale: `{ a + b }`, `{ total > 0 ? 'sim' : 'não' }`, `{ lista.join(', ') }`;
-- dentro de `<pre>`, `<code>`, `<script>`, `<style>` e `<textarea>` a interpolação é ignorada,
-  porque ali as chaves quase sempre são código.
+```html
+<p>{{ name }}</p>
+```
 
-Valores são convertidos assim:
+Rules:
 
-| Valor | Vira |
+- multiple interpolations in the same text node work;
+- any expression is valid: `{ a + b }`, `{ total > 0 ? 'yes' : 'no' }`, `{ list.join(', ') }`;
+- inside `<pre>`, `<code>`, `<script>`, `<style>`, and `<textarea>` interpolation is ignored,
+  because there braces are usually code.
+
+Values are converted like this:
+
+| Value | Becomes |
 | --- | --- |
-| `null` e `undefined` | texto vazio |
-| número e booleano | `String(valor)` |
+| `null` and `undefined` | empty text |
+| number and boolean | `String(value)` |
 | `Date` | `toLocaleString()` |
-| objeto e array | `JSON.stringify(valor)` |
-| qualquer outro | `String(valor)` |
+| object and array | `JSON.stringify(value)` |
+| anything else | `String(value)` |
 
-## O que é aceito
+## What is accepted
 
-**Literais**
+**Literals**
 
 ```js
 42
 0x1f            // 31
 1_000           // 1000
 3.14
-"texto"
-'texto'
-`Olá, ${nome}!`  // template literal com interpolação
+"text"
+'text'
+`Hello, ${name}!`  // template literal with interpolation
 true, false, null, undefined
 [1, 2, 3]
-{ a: 1, b: 'dois' }
-{ count }        // atalho de chave, vira { count: count }
-[...lista, 3]    // spread
+{ a: 1, b: 'two' }
+{ count }        // property shorthand, becomes { count: count }
+[...list, 3]    // spread
 { ...base, b: 2 }
 ```
 
-**Operadores**
+**Operators**
 
 ```js
-+  -  *  /  %  **                 // aritmética, com precedência correta
-==  !=  ===  !==  <  >  <=  >=    // comparação
-&&  ||  ??                        // lógica, com avaliação curta
-!  -  +  typeof  void             // unários
-? :                               // ternário
++  -  *  /  %  **                 // arithmetic, with correct precedence
+==  !=  ===  !==  <  >  <=  >=    // comparison
+&&  ||  ??                        // logical, with short-circuit evaluation
+!  -  +  typeof  void             // unary
+? :                               // ternary
 in  instanceof
-++  --                            // prefixo e sufixo
+++  --                            // prefix and postfix
 =  +=  -=  *=  /=  %=  **=  &&=  ||=  ??=
-,  ;                              // sequência de instruções
+,  ;                              // sequence of statements
 ```
 
-**Acesso e chamadas**
+**Access and calls**
 
 ```js
-usuario.nome
-lista[1]
-obj[chave]
-usuario?.perfil?.nome     // encadeamento opcional
+user.name
+list[1]
+obj[key]
+user?.profile?.name     // optional chaining
 fn?.()
-lista.filter(n => n > 1)
-lista.map(n => n * 2).join('-')
-lista.reduce((total, n) => total + n, 0)
+list.filter(n => n > 1)
+list.map(n => n * 2).join('-')
+list.reduce((total, n) => total + n, 0)
 ```
 
 **Arrow functions**
 
-Só a forma de expressão, com corpo único:
+Only expression form, with single body:
 
 ```js
 n => n * 2
 (a, b) => a + b
 ```
 
-Elas enxergam o escopo externo, como você espera.
+They see the outer scope, as you'd expect.
 
-## O que não é aceito
+## What is not accepted
 
-Por decisão de projeto, e não por falta de tempo:
+By design decision, not for lack of time:
 
 - `function`, `class`, `new`, `delete`;
 - `import`, `await`, `async`;
 - `for`, `while`, `do`, `try`, `switch`;
-- desestruturação em parâmetros e em atribuições;
-- corpo de arrow function em bloco (`n => { ... }`).
+- destructuring in parameters and assignments;
+- arrow function body in block form (`n => { ... }`).
 
-A ideia é simples: expressões de atributo devem ser curtas. Lógica maior vive em um método de
-componente, em uma função no escopo ou em um bloco `<script>`.
+The idea is simple: attribute expressions should be short. Larger logic lives in a component
+method, in a function in the scope, or in a `<script>` block.
 
 ```html
-<!-- em vez disto -->
-<button v-click="itens = itens.filter(i => !i.feito); total = itens.length; salvar()">Limpar</button>
+<!-- instead of this -->
+<button v-click="items = items.filter(i => !i.done); total = items.length; save()">Clear</button>
 
-<!-- prefira isto -->
-<button v-click="limparConcluidos">Limpar</button>
+<!-- prefer this -->
+<button v-click="clearDone">Clear</button>
 ```
 
 ```js
 V.data({
-  limparConcluidos() {
-    this.itens = this.itens.filter((i) => !i.feito);
-    this.total = this.itens.length;
-    salvar();
+  clearDone() {
+    this.items = this.items.filter((i) => !i.done);
+    this.total = this.items.length;
+    save();
   },
 });
 ```
 
-## Escopo
+## Scope
 
-Um identificador é procurado subindo a cadeia de escopos: o `v-data` mais próximo, depois os
-ancestrais, depois a raiz. Só quando nada é encontrado a busca cai nas variáveis mágicas e na
-lista de globais permitidos.
+An identifier is looked up by climbing the scope chain: the nearest `v-data`, then ancestors,
+then the root. Only when nothing is found does the search fall into magic variables and the
+list of allowed globals.
 
 ```html
-<div v-data="{ titulo: 'Voodoo' }">
+<div v-data="{ title: 'Voodoo' }">
   <div v-data="{ item: 'x' }">
-    <span>{ titulo }{ item }</span>   <!-- 'Voodoox' -->
+    <span>{ title }{ item }</span>   <!-- 'Voodoox' -->
   </div>
 </div>
 ```
 
-Escrever em um identificador escreve no escopo que já contém aquela chave:
+Writing to an identifier writes to the scope that already contains that key:
 
 ```html
-<div v-data="{ contador: 0 }">
+<div v-data="{ counter: 0 }">
   <div v-for="n in 3">
-    <button v-click="contador++">+</button>   <!-- escreve no escopo de fora -->
+    <button v-click="counter++">+</button>   <!-- writes to outer scope -->
   </div>
 </div>
 ```
 
-Uma chave nova é criada no escopo local, e não vaza para cima.
+A new key is created in the local scope and doesn't leak upward.
 
-## Globais permitidos
+## Allowed globals
 
-Identificadores que não estão em nenhum escopo são procurados em uma lista fechada:
+Identifiers not in any scope are looked up in a closed list:
 
 ```
 Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console
 ```
 
-Tudo fora dessa lista devolve `undefined`:
+Everything outside that list returns `undefined`:
 
 ```js
 window       // undefined
@@ -175,112 +174,111 @@ globalThis   // undefined
 localStorage // undefined
 ```
 
-Isso é proposital. Um atributo vindo do banco de dados não consegue alcançar a API do navegador.
-Para chegar ao DOM e a serviços, use as variáveis mágicas, que são explícitas: `$el`, `$refs`,
+This is intentional. An attribute coming from the database can't reach the browser's API.
+To reach the DOM and services, use magic variables, which are explicit: `$el`, `$refs`,
 `$http`, `$storage`, `$clipboard`.
 
-### Liberando os seus próprios globais
+### Allowing your own globals
 
 ```js
-V.config.globals.formatarCPF = (v) => V.applyMask(v, 'cpf');
-V.config.globals.APP = { versao: '2.1', ambiente: 'producao' };
+V.config.globals.formatCPF = (v) => V.applyMask(v, 'cpf');
+V.config.globals.APP = { version: '2.1', environment: 'production' };
 ```
 
 ```html
-<span>{ formatarCPF(usuario.cpf) }</span>
-<small>v{ APP.versao }</small>
+<span>{ formatCPF(user.cpf) }</span>
+<small>v{ APP.version }</small>
 ```
 
-Os globais declarados em `V.config.globals` entram em vigor quando `V.start()` roda. Se você
-adicionar depois, use a lista direto:
+Globals declared in `V.config.globals` take effect when `V.start()` runs. If you add them later,
+use the list directly:
 
 ```js
 import { allowedGlobals } from 'voodoojs';
-allowedGlobals.MinhaLib = { versao: '1.0' };
+allowedGlobals.MyLib = { version: '1.0' };
 ```
 
-## Variáveis mágicas
+## Magic variables
 
-Nomes começando com cifrão existem em qualquer expressão, sem precisar declarar nada.
+Names starting with a dollar sign exist in any expression, without declaring anything.
 
 ```html
-<button v-click="$toast.success('Salvo')">Salvar</button>
-<div v-show="$screen.mobile">Você está no celular</div>
-<p v-show="!$network.online">Você está offline.</p>
-<span>{ $store.carrinho.total }</span>
+<button v-click="$toast.success('Saved')">Save</button>
+<div v-show="$screen.mobile">You're on mobile</div>
+<p v-show="!$network.online">You're offline.</p>
+<span>{ $store.cart.total }</span>
 ```
 
-A lista completa está em [API](api.md#variáveis-mágicas). As principais:
+The complete list is in [API](api.md#magic-variables). The main ones:
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$el` | Elemento que criou o escopo |
-| `$refs` | Elementos marcados com `v-ref` |
-| `$store` | Todos os stores globais |
-| `$http` | Cliente HTTP |
-| `$toast` | Notificações |
-| `$event`, `$detail` | Dentro de manipuladores de evento |
-| `$form` | Estado do formulário mais próximo |
-| `$screen`, `$network`, `$device`, `$theme` | Ambiente reativo |
+| `$el` | Element that created the scope |
+| `$refs` | Elements marked with `v-ref` |
+| `$store` | All global stores |
+| `$http` | HTTP client |
+| `$toast` | Notifications |
+| `$event`, `$detail` | Inside event handlers |
+| `$form` | Nearest form state |
+| `$screen`, `$network`, `$device`, `$theme` | Reactive environment |
 
-## Erros
+## Errors
 
-Um erro em uma expressão nunca derruba a página. Ele é reportado ao tratador global com o texto
-original anexado:
-
-```
-VoodooRuntimeError: "salvarr" nao e uma funcao
-
-Expressao: salvarr()
-```
-
-Erros de sintaxe apontam a posição exata:
+An error in an expression never crashes the page. It's reported to the global handler with the
+original text attached:
 
 ```
-VoodooSyntaxError: Esperava ")" mas encontrou "fim da expressao"
+VoodooRuntimeError: "savee" is not a function
 
-lista.filter(n => n > 1
-                       ^
+Expression: savee()
 ```
 
-Ligue `V.config.devtools = true` para ver mais detalhes no console.
+Syntax errors point to the exact position:
+
+```
+VoodooSyntaxError: Expected ")" but found "end of expression"
+
+list.filter(n => n > 1
+                     ^
+```
+
+Turn on `V.config.devtools = true` to see more details in the console.
 
 ## Cache
 
-Cada expressão é analisada uma única vez e a árvore fica em cache. Reexecutar um efeito não
-reanalisa o texto. `V.clearParseCache()` limpa o cache, o que só é útil em testes.
+Each expression is parsed once and the tree is cached. Re-running an effect doesn't reparse the
+text. `V.clearParseCache()` clears the cache, which is only useful in tests.
 
 ## Content Security Policy
 
-A Voodoo.js funciona com uma política restritiva:
+Voodoo.js works with a restrictive policy:
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
 ```
 
-O `'unsafe-inline'` em `style-src` é necessário porque a biblioteca injeta o CSS dos componentes
-de interface em tempo de execução. Para dispensá-lo, desligue a injeção e carregue o CSS por
-conta própria:
+The `'unsafe-inline'` in `style-src` is needed because the library injects UI component CSS at
+runtime. To skip it, turn off injection and load the CSS yourself:
 
 ```html
 <script src="voodoo.min.js" data-no-styles defer></script>
 <link rel="stylesheet" href="/css/voodoo-ui.css">
 ```
 
-Nenhum `unsafe-eval` é necessário em nenhuma configuração. Veja [Segurança](seguranca.md).
+No `unsafe-eval` is needed in any configuration. See [Security](security.md).
 
-## API do parser
+## Parser API
 
-Para casos avançados, o parser está exposto:
+For advanced cases, the parser is exposed:
 
 ```js
-const arvore = V.parse('usuario.nome.toUpperCase()');
-V.evaluate(arvore, V.scope);          // avalia na raiz
-V.evaluateIn('a + b', escopo);        // analisa e avalia de uma vez
-V.tokenize('1 + 2');                  // lista de tokens
-V.stringify(valor);                   // conversão usada na interpolação
+const tree = V.parse('user.name.toUpperCase()');
+V.evaluate(tree, V.scope);          // evaluates at root
+V.evaluateIn('a + b', scope);       // parses and evaluates at once
+V.tokenize('1 + 2');                // list of tokens
+V.stringify(value);                 // conversion used in interpolation
 ```
 
 ---
 
-Anterior: [Reatividade](reatividade.md) · Próximo: [Directives](directives.md)
+Previous: [Reactivity](reactivity.md) · Next: [Directives](directives.md)

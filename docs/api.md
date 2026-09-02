@@ -1,393 +1,393 @@
 # API
 
-Referência do objeto `V`, agrupada por área. O que estiver marcado com **(completo)** só existe no
-`voodoo.full.min.js` ou em um build sob medida que inclua o módulo.
+Reference of the `V` object, grouped by area. What is marked with **(full)** only exists in
+`voodoo.full.min.js` or in a custom build that includes the module.
 
-`V` é ao mesmo tempo uma função e um objeto:
+`V` is both a function and an object:
 
 ```js
-V('#lista .item').addClass('ativo');   // coleção encadeável
-V.toast.success('Pronto');             // serviços
+V('#list .item').addClass('active');   // chainable collection
+V.toast.success('Ready');              // services
 ```
 
-`window.Voodoo` é o mesmo objeto.
+`window.Voodoo` is the same object.
 
 ---
 
-## Núcleo
+## Core
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.version` | Versão publicada |
-| `V.config` | Configuração global. Veja [Instalação](instalacao.md) |
-| `V.start(raiz?)` | Percorre e inicializa. Chamado sozinho nos builds de navegador |
-| `V.walk(no, escopo?)` | Inicializa um trecho de DOM |
-| `V.refresh(raiz?)` | Reinicializa uma raiz |
-| `V.destroy(no)` | Desmonta, parando efeitos e removendo ouvintes |
-| `V.stopObserving()` | Desliga o `MutationObserver` |
-| `V.getScope(no)` | Escopo associado ao nó, se houver |
-| `V.findScope(no)` | Escopo efetivo, subindo os ancestrais |
-| `V.addCleanup(no, fn)` | Registra limpeza para a remoção do nó |
-| `V.parseAttribute(nome, valor)` | Converte um atributo na descrição de uma directive |
-| `V.onError(fn)` | Define o tratamento de erros da aplicação inteira |
+| `V.version` | Published version |
+| `V.config` | Global configuration. See [Installation](installation.md) |
+| `V.start(root?)` | Walks and initializes. Called by itself in browser builds |
+| `V.walk(node, scope?)` | Initializes a piece of DOM |
+| `V.refresh(root?)` | Reinitializes a root |
+| `V.destroy(node)` | Unmounts, stopping effects and removing listeners |
+| `V.stopObserving()` | Turns off the `MutationObserver` |
+| `V.getScope(node)` | Scope associated with the node, if any |
+| `V.findScope(node)` | Effective scope, climbing ancestors |
+| `V.addCleanup(node, fn)` | Registers cleanup for node removal |
+| `V.parseAttribute(name, value)` | Converts an attribute to directive description |
+| `V.onError(fn)` | Sets error handling for the entire app |
 
-## Reatividade
+## Reactivity
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.reactive(objeto)` | Objeto reativo em profundidade |
-| `V.ref(valor)` | Referência reativa, em `.value` |
-| `V.shallowRef(valor)` | Referência sem profundidade |
-| `V.computed(getter)` | Valor derivado com cache. Aceita `{ get, set }` |
-| `V.effect(fn, opcoes?)` | Efeito reativo |
-| `V.watch(fonte, cb, opcoes?)` | Observa e chama no que mudar |
-| `V.watchEffect(fn)` | Efeito com limpeza entre execuções |
-| `V.nextTick(fn?)` | Espera o DOM refletir |
-| `V.flushSync()` | Aplica tudo que estiver pendente, agora |
-| `V.stop(runner)` | Encerra um efeito |
-| `V.effectScope(detached?)` | Cria um escopo de efeitos |
-| `V.EffectScope` | A classe |
-| `V.toRaw(valor)` | Objeto original por trás do proxy |
-| `V.markRaw(valor)` | Marca um objeto para nunca virar proxy |
-| `V.unref(valor)` | `valor.value` quando é ref |
+| `V.reactive(object)` | Deep reactive object |
+| `V.ref(value)` | Reactive reference, in `.value` |
+| `V.shallowRef(value)` | Shallow reference |
+| `V.computed(getter)` | Derived value with cache. Accepts `{ get, set }` |
+| `V.effect(fn, options?)` | Reactive effect |
+| `V.watch(source, cb, options?)` | Observes and calls on change |
+| `V.watchEffect(fn)` | Effect with cleanup between runs |
+| `V.nextTick(fn?)` | Waits for DOM to reflect |
+| `V.flushSync()` | Applies everything pending, now |
+| `V.stop(runner)` | Stops an effect |
+| `V.effectScope(detached?)` | Creates an effect scope |
+| `V.EffectScope` | The class |
+| `V.toRaw(value)` | Original object behind the proxy |
+| `V.markRaw(value)` | Marks an object to never become a proxy |
+| `V.unref(value)` | `value.value` when it's a ref |
 
-Veja [Reatividade](reatividade.md).
+See [Reactivity](reactivity.md).
 
-## Estado
+## State
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.data(valores)` | Coloca valores no escopo raiz |
-| `V.scope` | O escopo raiz |
-| `V.store(nome, definicao?, opcoes?)` | Cria ou recupera um store |
-| `V.stores` | Objeto com todos os stores |
-| `V.storeNames()` | Lista os nomes |
-| `V.removeStore(nome)` | Remove e para a persistência |
+| `V.data(values)` | Puts values in the root scope |
+| `V.scope` | The root scope |
+| `V.store(name, definition?, options?)` | Creates or retrieves a store |
+| `V.stores` | Object with all stores |
+| `V.storeNames()` | Lists the names |
+| `V.removeStore(name)` | Removes and stops persistence |
 
-## Componentes e directives
+## Components and directives
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.component(nome, definicao)` | Registra um componente |
-| `V.components` | `Map` com as definições |
-| `V.instances` | `Set` com as instâncias montadas |
-| `V.directive(nome, definicao)` | Registra uma directive com ciclo de vida |
-| `V.directives` | `Map` com as directives registradas |
-| `V.magic(nome, getter)` | Registra uma variável mágica |
-| `V.magics` | `Map` com as magias |
-| `V.use(plugin, opcoes?)` | Instala um plugin |
-| `V.PRIORITY` | Constantes de prioridade |
-| `V.Scope` | A classe de escopo |
+| `V.component(name, definition)` | Registers a component |
+| `V.components` | `Map` with definitions |
+| `V.instances` | `Set` with mounted instances |
+| `V.directive(name, definition)` | Registers a directive with lifecycle |
+| `V.directives` | `Map` with registered directives |
+| `V.magic(name, getter)` | Registers a magic variable |
+| `V.magics` | `Map` with magics |
+| `V.use(plugin, options?)` | Installs a plugin |
+| `V.PRIORITY` | Priority constants |
+| `V.Scope` | The scope class |
 
-Veja [Componentes](componentes.md) e [Plugins](plugins.md).
+See [Components](components.md) and [Plugins](plugins.md).
 
-## Expressões
+## Expressions
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.parse(texto)` | Analisa e devolve a árvore |
-| `V.tokenize(texto)` | Lista de tokens |
-| `V.evaluate(no, escopo)` | Avalia uma árvore |
-| `V.evaluateIn(texto, escopo, contexto?)` | Analisa e avalia, sem lançar |
-| `V.stringify(valor)` | Conversão usada na interpolação |
-| `V.clearParseCache()` | Limpa o cache de expressões |
-| `V.globals` | Lista de globais permitidos |
-| `V.VoodooSyntaxError`, `V.VoodooRuntimeError` | Classes de erro |
+| `V.parse(text)` | Parses and returns the tree |
+| `V.tokenize(text)` | List of tokens |
+| `V.evaluate(node, scope)` | Evaluates a tree |
+| `V.evaluateIn(text, scope, context?)` | Parses and evaluates, without throwing |
+| `V.stringify(value)` | Conversion used in interpolation |
+| `V.clearParseCache()` | Clears expression cache |
+| `V.globals` | List of allowed globals |
+| `V.VoodooSyntaxError`, `V.VoodooRuntimeError` | Error classes |
 
-Veja [Expressões](expressoes.md).
+See [Expressions](expressions.md).
 
-## DOM encadeável
+## Chainable DOM
 
-`V(seletor)` e `V.query(seletor, contexto?)` devolvem uma coleção.
+`V(selector)` and `V.query(selector, context?)` return a collection.
 
-**Percurso:** `find`, `closest`, `parent`, `parents`, `children`, `siblings`, `next`, `prev`,
+**Traversal:** `find`, `closest`, `parent`, `parents`, `children`, `siblings`, `next`, `prev`,
 `first`, `last`, `eq`, `filter`, `not`, `has`, `is`, `add`, `slice`, `each`, `get`, `toArray`.
 
-**Conteúdo:** `text`, `html`, `val`, `attr`, `removeAttr`, `prop`, `data`.
+**Content:** `text`, `html`, `val`, `attr`, `removeAttr`, `prop`, `data`.
 
-**Estilo:** `css`, `width`, `height`, `offset`, `position`, `scrollTop`, `addClass`,
+**Styling:** `css`, `width`, `height`, `offset`, `position`, `scrollTop`, `addClass`,
 `removeClass`, `toggleClass`, `hasClass`.
 
-**Estrutura:** `append`, `prepend`, `before`, `after`, `appendTo`, `prependTo`, `replaceWith`,
+**Structure:** `append`, `prepend`, `before`, `after`, `appendTo`, `prependTo`, `replaceWith`,
 `wrap`, `unwrap`, `remove`, `empty`, `clone`.
 
-**Eventos:** `on`, `off`, `once`, `trigger`, `emit`.
+**Events:** `on`, `off`, `once`, `trigger`, `emit`.
 
-**Visibilidade e animação:** `show`, `hide`, `toggle`, `fadeIn`, `fadeOut`, `slideUp`,
+**Visibility and animation:** `show`, `hide`, `toggle`, `fadeIn`, `fadeOut`, `slideUp`,
 `slideDown`, `slideToggle`, `animate`, `scrollIntoView`.
 
-**Formulário:** `serialize`, `serializeObject`, `focus`, `blur`, `select`.
+**Form:** `serialize`, `serializeObject`, `focus`, `blur`, `select`.
 
 **Runtime:** `walk`, `destroy`.
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.query(entrada, contexto?)` | Cria a coleção |
-| `V.ready(fn)` | Executa quando o DOM estiver pronto |
-| `V.fromHtml(html)` | Cria elementos sem inserir no documento |
-| `V.Collection` | A classe `VoodooCollection` |
+| `V.query(input, context?)` | Creates the collection |
+| `V.ready(fn)` | Executes when DOM is ready |
+| `V.fromHtml(html)` | Creates elements without inserting in document |
+| `V.Collection` | The `VoodooCollection` class |
 
-Veja [Migrando do jQuery](migrando-do-jquery.md).
+See [Migrating from jQuery](migrating-from-jquery.md).
 
 ## HTTP
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.http.get(url, opcoes?)` | Devolve os dados |
-| `V.http.post(url, corpo?, opcoes?)` | |
+| `V.http.get(url, options?)` | Returns the data |
+| `V.http.post(url, body?, options?)` | |
 | `V.http.put`, `V.http.patch`, `V.http.delete`, `V.http.head` | |
-| `V.http.request(config)` | Resposta completa |
-| `V.http.upload(url, formData, opcoes?)` | Envio com progresso |
+| `V.http.request(config)` | Full response |
+| `V.http.upload(url, formData, options?)` | Upload with progress |
 | `V.http.sse(url, handlers)` | Server-Sent Events |
-| `V.http.stream(url, onLine, opcoes?)` | Leitura linha a linha |
+| `V.http.stream(url, onLine, options?)` | Line-by-line reading |
 | `V.http.interceptors.request.use(fn)` | |
 | `V.http.interceptors.response.use(fn)` | |
 | `V.http.interceptors.error.use(fn)` | |
 | `V.http.setBaseURL(url)` | |
-| `V.http.setHeader(nome, valor)` | |
-| `V.http.setToken(token, esquema?)` | |
-| `V.http.clearCache(padrao?)` | |
+| `V.http.setHeader(name, value)` | |
+| `V.http.setToken(token, scheme?)` | |
+| `V.http.clearCache(pattern?)` | |
 | `V.http.flushOfflineQueue()` | |
-| `V.http.defaults` | Configuração padrão |
-| `V.request(config)` | O mesmo que `V.http.request` |
-| `V.HttpError` | Classe de erro |
+| `V.http.defaults` | Default configuration |
+| `V.request(config)` | Same as `V.http.request` |
+| `V.HttpError` | Error class |
 
-Veja [HTTP](http.md).
+See [HTTP](http.md).
 
-## Formulários e validação
+## Forms and validation
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.validate(alvo)` | Valida um formulário ou um campo |
-| `V.validateForm(form)` | Alias de `V.validate` |
-| `V.validator(nome, fn, mensagem?)` | Registra uma regra |
-| `V.messages` | Mensagens padrão |
-| `V.serializeForm(form, opcoes?)` | Objeto ou `FormData` |
-| `V.showFormErrors(form, erros)` | Aplica erros do servidor |
-| `V.showFieldError(campo, mensagem)` | |
+| `V.validate(target)` | Validates a form or field |
+| `V.validateForm(form)` | Alias for `V.validate` |
+| `V.validator(name, fn, message?)` | Registers a rule |
+| `V.messages` | Default messages |
+| `V.serializeForm(form, options?)` | Object or `FormData` |
+| `V.showFormErrors(form, errors)` | Applies server errors |
+| `V.showFieldError(field, message)` | |
 | `V.clearErrors(form)` | |
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.mask(valor, padrao)` | Aplica uma máscara |
-| `V.applyMask(valor, padrao)` | O mesmo |
-| `V.unmask(valor, padrao?)` | Remove a formatação |
-| `V.registerMask(nome, padraoOuFn)` | Registra uma máscara |
-| `V.masks` | `Map` com as máscaras |
+| `V.mask(value, pattern)` | Applies a mask |
+| `V.applyMask(value, pattern)` | Same |
+| `V.unmask(value, pattern?)` | Removes formatting |
+| `V.registerMask(name, patternOrFn)` | Registers a mask |
+| `V.masks` | `Map` with masks |
 
-Veja [Formulários](formularios.md), [Validação](validacao.md) e [Máscaras](mascaras.md).
+See [Forms](forms.md), [Validation](validation.md), and [Masks](masks.md).
 
 ## Interface
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.toast(mensagem, opcoes?)` | Notificação |
+| `V.toast(message, options?)` | Notification |
 | `V.toast.success`, `.error`, `.warning`, `.info`, `.loading` | |
-| `V.toast.promise(promessa, mensagens)` | |
-| `V.toast.clear()`, `V.toast.configure(opcoes)` | |
-| `V.modal.open/close/toggle/closeAll/isOpen` | Modais |
+| `V.toast.promise(promise, messages)` | |
+| `V.toast.clear()`, `V.toast.configure(options)` | |
+| `V.modal.open/close/toggle/closeAll/isOpen` | Modals |
 | `V.modal.opened`, `V.modal.count` | |
-| `V.modal.configure(opcoes)`, `V.modal.labels(textos)` | |
-| `V.dialog(opcoes)` | Diálogo genérico com botões |
-| `V.alert(mensagem, opcoes?)` | |
-| `V.confirm(mensagem, opcoes?)` | |
-| `V.prompt(rotulo, opcoes?)` | |
-| `V.hotkey(combo, handler, opcoes?)` | Atalho global de teclado |
-| `V.palette(opcoes?)` | Aplica a paleta |
+| `V.modal.configure(options)`, `V.modal.labels(texts)` | |
+| `V.dialog(options)` | Generic dialog with buttons |
+| `V.alert(message, options?)` | |
+| `V.confirm(message, options?)` | |
+| `V.prompt(label, options?)` | |
+| `V.hotkey(combo, handler, options?)` | Global keyboard shortcut |
+| `V.palette(options?)` | Applies the palette |
 | `V.palette.use/reset/scale/contrastText/contrastRatio/luminance/convert` | |
-| `V.theme.current/resolved/set/toggle/apply/init` | Tema claro e escuro |
-| `V.injectStyle(id, css)` | Injeta CSS uma única vez |
-| `V.ensureTokens()` | Garante as variáveis `--v-*` |
+| `V.theme.current/resolved/set/toggle/apply/init` | Light and dark theme |
+| `V.injectStyle(id, css)` | Injects CSS once |
+| `V.ensureTokens()` | Ensures `--v-*` variables |
 
-Veja [Interface](interface.md) e [Tema e paleta](tema-e-paleta.md).
+See [Interface](interface.md) and [Theme and palette](theme-and-palette.md).
 
-## Transições
+## Transitions
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.enter(el, opcoes?)` | Transição de entrada por classes |
-| `V.leave(el, opcoes?)` | Transição de saída |
-| `V.fadeIn(el, duracao?)`, `V.fadeOut(el, duracao?)` | |
-| `V.slideDown(el, duracao?)`, `V.slideUp(el, duracao?)` | |
-| `V.viewTransition(fn)` | Usa a View Transitions API quando existir |
+| `V.enter(el, options?)` | Entry transition via classes |
+| `V.leave(el, options?)` | Exit transition |
+| `V.fadeIn(el, duration?)`, `V.fadeOut(el, duration?)` | |
+| `V.slideDown(el, duration?)`, `V.slideUp(el, duration?)` | |
+| `V.viewTransition(fn)` | Uses View Transitions API when available |
 
-## Armazenamento
+## Storage
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.storage` | `localStorage` com JSON automático |
-| `V.session` | `sessionStorage`, mesma API |
+| `V.storage` | `localStorage` with automatic JSON |
+| `V.session` | `sessionStorage`, same API |
 | `V.cookie` | `get`, `set`, `remove`, `has` |
-| `V.cache` | Memória com expiração: `set`, `get`, `has`, `remove`, `clear`, `remember`, `size` |
+| `V.cache` | Memory with expiration: `set`, `get`, `has`, `remove`, `clear`, `remember`, `size` |
 | `V.url` | Query string: `get`, `all`, `set`, `remove`, `merge` |
 
-## Eventos globais
+## Global events
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.on(nome, handler)` | Assina. Devolve a função que cancela |
-| `V.once(nome, handler)` | Assina só a próxima ocorrência |
-| `V.off(nome, handler?)` | Cancela |
-| `V.emit(nome, payload?)` | Dispara |
+| `V.on(name, handler)` | Subscribes. Returns function that cancels |
+| `V.once(name, handler)` | Subscribes only the next time |
+| `V.off(name, handler?)` | Cancels |
+| `V.emit(name, payload?)` | Fires |
 
-## Ambiente
+## Environment
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.screen` | Objeto reativo com largura, altura e pontos de quebra |
-| `V.network` | Objeto reativo com o estado da conexão |
-| `V.clipboard` | `copy` e `read` |
-| `V.device` | Getters de toque, tamanho, movimento e tema |
-| `V.isBrowser` | Existe DOM? |
+| `V.screen` | Reactive object with width, height, and breakpoints |
+| `V.network` | Reactive object with connection state |
+| `V.clipboard` | `copy` and `read` |
+| `V.device` | Getters for touch, size, motion, and theme |
+| `V.isBrowser` | Does DOM exist? |
 
-## Utilitários
+## Utilities
 
 `uuid`, `uid`, `sleep`, `parseDuration`, `debounce`, `throttle`, `memoize`, `clone`, `merge`,
 `groupBy`, `unique`, `chunk`, `sortBy`, `get`, `set`, `random`, `sample`, `slugify`, `truncate`,
 `capitalize`, `titleCase`, `escapeHtml`, `stripTags`, `formatCurrency`, `formatNumber`,
 `formatDate`, `relativeTime`, `formatFileSize`, `formatPercent`, `setFormatDefaults`.
 
-Veja [Utilitários](utilitarios.md).
+See [Utilities](utilities.md).
 
-> `V.once` é o barramento de eventos. O utilitário `once`, que executa uma função uma única vez,
-> está no import direto: `import { once } from 'voodoojs/utils'`.
+> `V.once` is the event bus. The `once` utility, which executes a function only once,
+> is in direct import: `import { once } from 'voodoojs/utils'`.
 
-## Animação (completo)
+## Animation (full)
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.animate(alvo, keyframes, opcoes?)` | Anima elementos |
-| `V.spring(de, para, opcoes?)` | Mola entre dois números |
-| `V.stagger(alvos, keyframes, opcoes?)` | Onda entre itens |
-| `V.inView(el, cb, opcoes?)` | Dispara ao entrar na tela |
-| `V.scrollProgress(el, cb)` | Progresso de 0 a 1 na rolagem |
-| `V.motion` | Os presets prontos |
-| `V.easings` | As curvas prontas |
+| `V.animate(target, keyframes, options?)` | Animates elements |
+| `V.spring(from, to, options?)` | Spring between two numbers |
+| `V.stagger(targets, keyframes, options?)` | Wave between items |
+| `V.inView(el, cb, options?)` | Fires when entering screen |
+| `V.scrollProgress(el, cb)` | Progress from 0 to 1 on scroll |
+| `V.motion` | Ready presets |
+| `V.easings` | Ready curves |
 
-Veja [Animações](animacoes.md).
+See [Animations](animations.md).
 
-## Gráficos (completo)
+## Charts (full)
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.renderChart(el, opcoes)` | Desenha e devolve o controle |
-| `V.chart` | Alias de `V.renderChart` |
+| `V.renderChart(el, options)` | Draws and returns control |
+| `V.chart` | Alias for `V.renderChart` |
 | `V.charts` | `{ render, format, colors }` |
-| `V.chartColors` | Paleta padrão dos gráficos |
+| `V.chartColors` | Default chart palette |
 
-Veja [Gráficos](graficos.md).
+See [Charts](charts.md).
 
-## Roteador (completo)
+## Router (full)
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.router(opcoes)` | Configura o roteador |
-| `V.router.push/replace/back/forward/go` | Navegação |
+| `V.router(options)` | Configures the router |
+| `V.router.push/replace/back/forward/go` | Navigation |
 | `V.router.resolve/addRoute/removeRoute/patterns/stop/clearViewCache/ready/current` | |
-| `V.navigate(destino, opcoes?)` | Navega |
-| `V.route` | Rota atual, reativa |
-| `V.resolveRoute(destino)` | Resolve sem navegar |
+| `V.navigate(destination, options?)` | Navigates |
+| `V.route` | Current route, reactive |
+| `V.resolveRoute(destination)` | Resolves without navigating |
 
-Veja [Roteador](roteador.md).
+See [Router](router.md).
 
-## Idiomas (completo)
+## Languages (full)
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.i18n(opcoes?)` | Configura |
-| `V.i18n.t/te/n/c/d/rt` | Tradução e formatadores |
+| `V.i18n(options?)` | Configures |
+| `V.i18n.t/te/n/c/d/rt` | Translation and formatters |
 | `V.i18n.addMessages/loadMessages/messagesOf/detectLocale` | |
 | `V.i18n.locale/fallback/locales` | |
-| `V.t(chave, params?)` | Traduz |
-| `V.setLocale(idioma)`, `V.getLocale()` | |
+| `V.t(key, params?)` | Translates |
+| `V.setLocale(language)`, `V.getLocale()` | |
 
-Veja [Idiomas](idiomas.md).
+See [Languages](languages.md).
 
-## Devtools (completo)
+## Devtools (full)
 
-| Membro | Descrição |
+| Member | Description |
 | --- | --- |
-| `V.xray(force?)` | Liga e desliga o inspetor |
-| `V.enableXrayShortcut()` | Instala o `Ctrl+Shift+X` |
-| `V.devtools` | Barramento de eventos das devtools |
+| `V.xray(force?)` | Turns inspector on and off |
+| `V.enableXrayShortcut()` | Installs `Ctrl+Shift+X` |
+| `V.devtools` | Event bus for devtools |
 
-Veja [Devtools](devtools.md).
+See [Devtools](devtools.md).
 
 ---
 
-## Variáveis mágicas
+## Magic variables
 
-Disponíveis em qualquer expressão, sem declarar nada.
+Available in any expression, without declaring anything.
 
-### Contexto
+### Context
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$el` | Elemento que criou o escopo |
-| `$refs` | Elementos marcados com `v-ref`, mesclando os escopos ancestrais |
-| `$data` | Dados do escopo atual |
-| `$root` | Dados do escopo raiz |
-| `$parent` | Dados do escopo pai |
-| `$self` | Instância do componente mais próximo, ou os dados do escopo |
+| `$el` | Element that created the scope |
+| `$refs` | Elements marked with `v-ref`, merging ancestor scopes |
+| `$data` | Data of the current scope |
+| `$root` | Data of the root scope |
+| `$parent` | Data of the parent scope |
+| `$self` | Nearest component instance, or the scope data |
 
-### Estado e serviços
+### State and services
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$store` | Todos os stores globais |
-| `$http` | Cliente HTTP |
-| `$toast` | Notificações |
-| `$modal`, `$dialog`, `$alert`, `$confirm`, `$prompt` | Diálogos |
-| `$storage`, `$session`, `$cookie`, `$cache`, `$url` | Armazenamento |
-| `$clipboard` | Copiar e ler a área de transferência |
-| `$theme` | Tema claro e escuro |
-| `$form` | Estado do formulário mais próximo |
-| `$history` | Controlador de desfazer e refazer, quando há `v-history` acima |
+| `$store` | All global stores |
+| `$http` | HTTP client |
+| `$toast` | Notifications |
+| `$modal`, `$dialog`, `$alert`, `$confirm`, `$prompt` | Dialogs |
+| `$storage`, `$session`, `$cookie`, `$cache`, `$url` | Storage |
+| `$clipboard` | Copy and read clipboard |
+| `$theme` | Light and dark theme |
+| `$form` | Nearest form state |
+| `$history` | Undo/redo controller, when there's `v-history` above |
 
-### Ambiente
+### Environment
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$screen` | Largura, altura e pontos de quebra, reativo |
-| `$network` | Estado da conexão, reativo |
-| `$device` | Toque, tamanho, movimento e tema |
+| `$screen` | Width, height, and breakpoints, reactive |
+| `$network` | Connection state, reactive |
+| `$device` | Touch, size, motion, and theme |
 
-### Fluxo
+### Flow
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$nextTick` | Espera o DOM refletir |
-| `$watch(expressao, cb)` | Observa uma expressão |
-| `$dispatch(nome, detalhe?)` | Dispara um `CustomEvent` que sobe pela árvore |
-| `$log(...)` | Escreve no console com prefixo |
+| `$nextTick` | Waits for DOM to reflect |
+| `$watch(expr, cb)` | Watches an expression |
+| `$dispatch(name, detail?)` | Fires a `CustomEvent` that bubbles up the tree |
+| `$log(...)` | Writes to console with prefix |
 
-### Somente no build completo
+### Full build only
 
-| Magia | O que é |
+| Magic | What is it |
 | --- | --- |
-| `$route` | Rota atual |
-| `$router` | Controle de navegação |
-| `$t` | Traduz |
-| `$locale` | Idioma ativo |
-| `$i18n` | Módulo de idiomas |
-| `$n`, `$c`, `$d`, `$rt` | Número, moeda, data e tempo relativo |
+| `$route` | Current route |
+| `$router` | Navigation control |
+| `$t` | Translates |
+| `$locale` | Active language |
+| `$i18n` | Language module |
+| `$n`, `$c`, `$d`, `$rt` | Number, currency, date, and relative time |
 
-### Locais
+### Local
 
-Existem apenas dentro de certas expressões:
+Only exist inside certain expressions:
 
-| Variável | Onde |
+| Variable | Where |
 | --- | --- |
-| `$event` | Manipuladores de evento |
-| `$detail` | Manipuladores de evento, com o `detail` do `CustomEvent` |
-| `$value`, `$old` | `v-watch` combinado com `v-model` |
-| `$data`, `$response` | `v-on-success` e `v-on-error` de formulários |
+| `$event` | Event handlers |
+| `$detail` | Event handlers, with `CustomEvent` `detail` |
+| `$value`, `$old` | `v-watch` combined with `v-model` |
+| `$data`, `$response` | `v-on-success` and `v-on-error` of forms |
 
 ---
 
-## Importações nomeadas
+## Named imports
 
-Além do objeto `V`, tudo está disponível como importação nomeada:
+Besides the `V` object, everything is available as a named import:
 
 ```js
 import {
@@ -415,7 +415,7 @@ import {
 } from 'voodoojs';
 ```
 
-Os tipos TypeScript acompanham o pacote:
+TypeScript types come with the package:
 
 ```ts
 import type {
@@ -427,4 +427,4 @@ import type {
 
 ---
 
-Anterior: [Utilitários](utilitarios.md) · Próximo: [Segurança](seguranca.md)
+Previous: [Utilities](utilities.md) · Next: [Security](security.md)

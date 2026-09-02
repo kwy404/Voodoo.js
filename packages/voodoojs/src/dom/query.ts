@@ -1,11 +1,11 @@
 /**
  * @module dom/query
  *
- * Colecao encadeavel de elementos. A ideia e a mesma do jQuery: selecionar,
- * percorrer e manipular com poucas linhas. A diferenca esta na tipagem estrita,
- * na iteracao nativa com `for...of`, no zero de dependencias e na integracao com
- * o runtime da Voodoo: remover ou esvaziar elementos desmonta os efeitos
- * reativos ligados a eles, o que evita vazamento.
+ * Chainable collection of elements. The idea is the same as jQuery: select,
+ * traverse, and manipulate with few lines. The difference is in strict typing,
+ * native iteration with `for...of`, zero dependencies, and integration with
+ * Voodoo's runtime: removing or emptying elements unmounts the reactive effects
+ * tied to them, preventing memory leaks.
  *
  * ```js
  * V.query('.card')
@@ -25,16 +25,16 @@ import {
 } from './transition';
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
-/** Funcao executada quando o documento fica pronto. */
+/** Function executed when the document becomes ready. */
 export type ReadyCallback = () => void;
 
-/** Manipulador de evento. `this` aponta para o elemento que casou com o filtro. */
+/** Event handler. `this` points to the element that matched the filter. */
 export type QueryEventHandler = (this: HTMLElement, event: Event) => unknown;
 
-/** Tudo que `query()` aceita como entrada. */
+/** Everything that `query()` accepts as input. */
 export type QueryInput =
   | string
   | Node
@@ -47,23 +47,23 @@ export type QueryInput =
   | null
   | undefined;
 
-/** Filtro aceito por `filter`, `not` e `is`. */
+/** Filter accepted by `filter`, `not`, and `is`. */
 export type QueryFilter = string | ((el: HTMLElement, index: number) => boolean);
 
-/** Coordenadas devolvidas por `offset` e `position`. */
+/** Coordinates returned by `offset` and `position`. */
 export interface QueryPoint {
   top: number;
   left: number;
 }
 
-/** Valor aceito na escrita de atributos e propriedades simples. */
+/** Value accepted when writing simple attributes and properties. */
 export type QueryValue = string | number | boolean | null;
 
 // ---------------------------------------------------------------------------
-// Auxiliares internos
+// Internal helpers
 // ---------------------------------------------------------------------------
 
-/** Propriedades CSS que nao recebem `px` automaticamente. */
+/** CSS properties that do not receive `px` automatically. */
 const UNITLESS = new Set([
   'animation-iteration-count',
   'aspect-ratio',
@@ -87,26 +87,26 @@ const UNITLESS = new Set([
   'zoom',
 ]);
 
-/** Converte `backgroundColor` em `background-color`. */
+/** Converts `backgroundColor` to `background-color`. */
 function kebab(property: string): string {
   if (property.startsWith('--')) return property;
   return property.replace(/[A-Z]/g, (ch) => `-${ch.toLowerCase()}`);
 }
 
-/** Remove repeticoes preservando a ordem de entrada. */
+/** Removes duplicates while preserving input order. */
 function distinct(list: HTMLElement[]): HTMLElement[] {
   if (list.length < 2) return list;
   return Array.from(new Set(list));
 }
 
-/** Divide uma lista de nomes separados por espaco. */
+/** Splits a list of space-separated names. */
 function names(value: string): string[] {
   return String(value ?? '')
     .split(/\s+/)
     .filter(Boolean);
 }
 
-/** Converte uma string de HTML nos elementos correspondentes. */
+/** Converts an HTML string to its corresponding elements. */
 function parseHtml(html: string): HTMLElement[] {
   if (typeof document === 'undefined') return [];
   const template = document.createElement('template');
@@ -116,12 +116,12 @@ function parseHtml(html: string): HTMLElement[] {
   return out;
 }
 
-/** Detecta uma string que descreve HTML em vez de um seletor. */
+/** Detects a string that describes HTML instead of a selector. */
 function looksLikeHtml(text: string): boolean {
   return text.length > 2 && text.charCodeAt(0) === 60 /* < */ && text.endsWith('>');
 }
 
-/** Raizes onde o seletor sera aplicado. */
+/** Roots where the selector will be applied. */
 function contextRoots(context?: QueryInput): ParentNode[] {
   if (context == null) return typeof document === 'undefined' ? [] : [document];
   if (context instanceof VoodooCollection) return context.toArray();
@@ -132,7 +132,7 @@ function contextRoots(context?: QueryInput): ParentNode[] {
   return typeof document === 'undefined' ? [] : [document];
 }
 
-/** Normaliza qualquer entrada aceita em uma lista de elementos. */
+/** Normalizes any accepted input into a list of elements. */
 function resolve(input: QueryInput, context?: QueryInput): HTMLElement[] {
   if (input == null) return [];
 
@@ -145,7 +145,7 @@ function resolve(input: QueryInput, context?: QueryInput): HTMLElement[] {
       try {
         for (const found of Array.from(root.querySelectorAll(text))) out.push(found as HTMLElement);
       } catch {
-        // Seletor invalido devolve colecao vazia em vez de derrubar a pagina.
+        // Invalid selector returns empty collection instead of crashing the page.
       }
     }
     return distinct(out);
@@ -181,7 +181,7 @@ function resolve(input: QueryInput, context?: QueryInput): HTMLElement[] {
   return [];
 }
 
-/** Converte conteudo aceito por `append` e amigos em nos prontos para inserir. */
+/** Converts content accepted by `append` and friends to nodes ready for insertion. */
 function contentNodes(content: QueryInput): Node[] {
   if (content == null) return [];
   if (typeof content === 'string') {
@@ -202,7 +202,7 @@ function contentNodes(content: QueryInput): Node[] {
   return [];
 }
 
-/** Aplica uma propriedade de estilo cuidando da unidade padrao. */
+/** Applies a style property while handling default units. */
 function setStyle(el: HTMLElement, property: string, value: string | number | null): void {
   const name = kebab(property);
   if (value === null || value === '') {
@@ -216,12 +216,12 @@ function setStyle(el: HTMLElement, property: string, value: string | number | nu
   el.style.setProperty(name, text);
 }
 
-/** Aplica varias propriedades de uma vez. */
+/** Applies multiple properties at once. */
 function applyStyles(el: HTMLElement, values: Record<string, string | number | null>): void {
   for (const [property, value] of Object.entries(values)) setStyle(el, property, value);
 }
 
-/** Le um valor de `dataset` convertendo JSON, numero e booleano quando der. */
+/** Reads a `dataset` value, converting JSON, numbers, and booleans when possible. */
 function parseDataValue(raw: string | undefined): unknown {
   if (raw === undefined) return undefined;
   if (raw === '') return '';
@@ -240,22 +240,22 @@ function parseDataValue(raw: string | undefined): unknown {
   return raw;
 }
 
-/** Converte `minha-chave` em `minhaChave`, o formato usado por `dataset`. */
+/** Converts `my-key` to `myKey`, the format used by `dataset`. */
 function datasetKey(key: string): string {
   return key.replace(/-([a-z0-9])/g, (_all, ch: string) => ch.toUpperCase());
 }
 
-/** Display original guardado por `hide`, restaurado por `show`. */
+/** Original display value saved by `hide`, restored by `show`. */
 const savedDisplay = new WeakMap<HTMLElement, string>();
 
-/** Verifica se o elemento esta escondido no momento. */
+/** Checks if an element is currently hidden. */
 function elementHidden(el: HTMLElement): boolean {
   if (el.hasAttribute('hidden')) return true;
   if (el.style.display === 'none') return true;
   return !el.isConnected ? false : getComputedStyle(el).display === 'none';
 }
 
-/** Mostra um elemento restaurando o `display` anterior. */
+/** Shows an element by restoring its previous `display` value. */
 function showElement(el: HTMLElement): void {
   el.removeAttribute('hidden');
   const previous = savedDisplay.get(el);
@@ -264,23 +264,23 @@ function showElement(el: HTMLElement): void {
   if (el.isConnected && getComputedStyle(el).display === 'none') el.style.display = 'block';
 }
 
-/** Esconde um elemento guardando o `display` atual. */
+/** Hides an element while saving its current `display` value. */
 function hideElement(el: HTMLElement): void {
   const current = el.style.display;
   if (current && current !== 'none') savedDisplay.set(el, current);
   el.style.display = 'none';
 }
 
-/** Controles de formulario considerados por `serialize`. */
+/** Form controls considered by `serialize`. */
 const FORM_CONTROLS = 'input,select,textarea';
 
-/** Le os pares nome e valor de um formulario ou de um trecho com campos. */
+/** Reads name-value pairs from a form or a section with fields. */
 function formControls(el: HTMLElement): HTMLElement[] {
   if (el.matches(FORM_CONTROLS)) return [el];
   return Array.from(el.querySelectorAll<HTMLElement>(FORM_CONTROLS));
 }
 
-/** Indica se o controle entra na serializacao padrao de formulario. */
+/** Indicates whether a control is included in default form serialization. */
 function isSerializable(control: HTMLElement): boolean {
   const field = control as HTMLInputElement;
   if (!field.name || field.disabled) return false;
@@ -291,7 +291,7 @@ function isSerializable(control: HTMLElement): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Registro de eventos, necessario para `off` funcionar com delegacao
+// Event registry, necessary for `off` to work with delegation
 // ---------------------------------------------------------------------------
 
 interface BoundEvent {
@@ -311,21 +311,21 @@ function bindingsOf(el: HTMLElement): BoundEvent[] {
 }
 
 // ---------------------------------------------------------------------------
-// A colecao
+// The collection
 // ---------------------------------------------------------------------------
 
 /**
- * Lista imutavel de elementos com metodos encadeaveis. Instancias sao criadas
- * por `query()`, nunca com `new` no codigo do usuario.
+ * Immutable list of elements with chainable methods. Instances are created
+ * by `query()`, never with `new` in user code.
  */
 export class VoodooCollection implements Iterable<HTMLElement> {
-  /** Acesso indexado, como em `colecao[0]`. */
+  /** Indexed access, as in `collection[0]`. */
   [index: number]: HTMLElement;
 
-  /** Quantidade de elementos da colecao. */
+  /** Number of elements in the collection. */
   readonly length: number;
 
-  /** Elementos da colecao, na ordem em que foram encontrados. */
+  /** Elements of the collection, in the order they were found. */
   readonly elements: HTMLElement[];
 
   constructor(elements: HTMLElement[] = []) {
@@ -335,29 +335,29 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     for (let i = 0; i < elements.length; i++) indexed[i] = elements[i];
   }
 
-  /** Permite `for (const el of query('.item'))`. */
+  /** Enables `for (const el of query('.item'))`. */
   [Symbol.iterator](): Iterator<HTMLElement> {
     return this.elements[Symbol.iterator]();
   }
 
   // -------------------------------------------------------------------------
-  // Travessia
+  // Traversal
   // -------------------------------------------------------------------------
 
-  /** Descendentes que casam com o seletor. */
+  /** Descendants that match the selector. */
   find(selector: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
       try {
         for (const found of Array.from(el.querySelectorAll(selector))) out.push(found as HTMLElement);
       } catch {
-        // Seletor invalido nao interrompe a cadeia.
+        // Invalid selector does not interrupt the chain.
       }
     }
     return new VoodooCollection(distinct(out));
   }
 
-  /** Ancestral mais proximo, incluindo o proprio elemento. */
+  /** Nearest ancestor, including the element itself. */
   closest(selector: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -367,7 +367,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Elemento pai de cada item, opcionalmente filtrado. */
+  /** Parent element of each item, optionally filtered. */
   parent(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -377,7 +377,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Todos os ancestrais, do mais proximo ao mais distante. */
+  /** All ancestors, from nearest to farthest. */
   parents(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -390,7 +390,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Filhos diretos, opcionalmente filtrados. */
+  /** Direct children, optionally filtered. */
   children(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -401,7 +401,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Irmaos, sem incluir os proprios elementos. */
+  /** Siblings, excluding the elements themselves. */
   siblings(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -415,7 +415,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Proximo irmao de cada elemento. */
+  /** Next sibling of each element. */
   next(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -425,7 +425,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Irmao anterior de cada elemento. */
+  /** Previous sibling of each element. */
   prev(selector?: string): VoodooCollection {
     const out: HTMLElement[] = [];
     for (const el of this.elements) {
@@ -435,24 +435,24 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(distinct(out));
   }
 
-  /** Somente o primeiro elemento. */
+  /** Only the first element. */
   first(): VoodooCollection {
     return this.eq(0);
   }
 
-  /** Somente o ultimo elemento. */
+  /** Only the last element. */
   last(): VoodooCollection {
     return this.eq(-1);
   }
 
-  /** Elemento na posicao informada. Indices negativos contam do fim. */
+  /** Element at the specified position. Negative indices count from the end. */
   eq(index: number): VoodooCollection {
     const position = index < 0 ? this.elements.length + index : index;
     const el = this.elements[position];
     return new VoodooCollection(el ? [el] : []);
   }
 
-  /** Mantem apenas os elementos que passam no filtro. */
+  /** Keeps only elements that pass the filter. */
   filter(test: QueryFilter): VoodooCollection {
     const out = this.elements.filter((el, index) =>
       typeof test === 'function' ? test(el, index) : el.matches(test)
@@ -460,7 +460,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(out);
   }
 
-  /** Remove da colecao os elementos que passam no filtro. */
+  /** Removes from the collection elements that pass the filter. */
   not(test: QueryFilter): VoodooCollection {
     const out = this.elements.filter((el, index) =>
       typeof test === 'function' ? !test(el, index) : !el.matches(test)
@@ -468,7 +468,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(out);
   }
 
-  /** Mantem os elementos que contem o descendente informado. */
+  /** Keeps elements that contain the specified descendant. */
   has(target: string | Element): VoodooCollection {
     const out = this.elements.filter((el) =>
       typeof target === 'string' ? el.querySelector(target) !== null : el.contains(target)
@@ -476,19 +476,19 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return new VoodooCollection(out);
   }
 
-  /** Verifica se ao menos um elemento casa com o filtro. */
+  /** Checks if at least one element matches the filter. */
   is(test: QueryFilter): boolean {
     return this.elements.some((el, index) =>
       typeof test === 'function' ? test(el, index) : el.matches(test)
     );
   }
 
-  /** Projeta cada elemento em um valor e devolve um array comum. */
+  /** Projects each element to a value and returns a regular array. */
   map<T>(fn: (el: HTMLElement, index: number) => T): T[] {
     return this.elements.map((el, index) => fn(el, index));
   }
 
-  /** Percorre a colecao. Dentro da funcao, `this` e o elemento atual. */
+  /** Iterates over the collection. Inside the function, `this` is the current element. */
   each(fn: (this: HTMLElement, el: HTMLElement, index: number) => unknown): this {
     for (let i = 0; i < this.elements.length; i++) {
       const el = this.elements[i];
@@ -497,7 +497,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Sem argumento devolve o array; com indice devolve um elemento. */
+  /** Without arguments returns the array; with index returns an element. */
   get(): HTMLElement[];
   get(index: number): HTMLElement | undefined;
   get(...rest: unknown[]): HTMLElement[] | HTMLElement | undefined {
@@ -506,26 +506,26 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this.elements[index < 0 ? this.elements.length + index : index];
   }
 
-  /** Copia dos elementos como array comum. */
+  /** Copy of elements as a regular array. */
   toArray(): HTMLElement[] {
     return this.elements.slice();
   }
 
-  /** Junta outros elementos a colecao, sem repetir. */
+  /** Joins other elements to the collection without duplication. */
   add(input: QueryInput, context?: QueryInput): VoodooCollection {
     return new VoodooCollection(distinct([...this.elements, ...resolve(input, context)]));
   }
 
-  /** Recorte da colecao, com a mesma semantica de `Array.prototype.slice`. */
+  /** Slice of the collection with the same semantics as `Array.prototype.slice`. */
   slice(start?: number, end?: number): VoodooCollection {
     return new VoodooCollection(this.elements.slice(start, end));
   }
 
   // -------------------------------------------------------------------------
-  // Conteudo
+  // Content
   // -------------------------------------------------------------------------
 
-  /** Le o texto do primeiro elemento ou escreve em todos. */
+  /** Reads the text of the first element or writes to all. */
   text(): string;
   text(value: string | number | null): this;
   text(...rest: unknown[]): string | this {
@@ -539,7 +539,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Le o HTML interno do primeiro elemento ou escreve em todos. */
+  /** Reads the inner HTML of the first element or writes to all. */
   html(): string;
   html(value: string | null): this;
   html(...rest: unknown[]): string | this {
@@ -547,14 +547,14 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     const value = rest[0];
     const text = value == null ? '' : String(value);
     for (const el of this.elements) {
-      // Desmonta o conteudo antigo para nao deixar efeitos orfaos.
+      // Unmount old content to avoid orphaned effects.
       for (const child of Array.from(el.childNodes)) destroyNode(child);
       el.innerHTML = text;
     }
     return this;
   }
 
-  /** Le o valor do primeiro campo ou escreve em todos. */
+  /** Reads the value of the first field or writes to all. */
   val(): string | string[];
   val(value: string | number | boolean | string[] | null): this;
   val(...rest: unknown[]): string | string[] | this {
@@ -589,7 +589,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Le um atributo do primeiro elemento, ou escreve um ou varios. */
+  /** Reads an attribute of the first element, or writes one or more. */
   attr(name: string): string | undefined;
   attr(name: string, value: QueryValue): this;
   attr(values: Record<string, QueryValue>): this;
@@ -616,14 +616,14 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Remove um ou varios atributos, separados por espaco. */
+  /** Removes one or more space-separated attributes. */
   removeAttr(name: string): this {
     const list = names(name);
     for (const el of this.elements) for (const attribute of list) el.removeAttribute(attribute);
     return this;
   }
 
-  /** Le uma propriedade do primeiro elemento ou escreve em todos. */
+  /** Reads a property of the first element or writes to all. */
   prop<T = unknown>(name: string): T | undefined;
   prop(name: string, value: unknown): this;
   prop(...rest: unknown[]): unknown {
@@ -637,8 +637,8 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   /**
-   * Le e escreve em `dataset`. A leitura converte JSON, numero e booleano,
-   * entao `data-config='{"a":1}'` volta como objeto de verdade.
+   * Reads and writes `dataset`. Reading converts JSON, numbers, and booleans,
+   * so `data-config='{"a":1}'` comes back as an actual object.
    */
   data(): Record<string, unknown>;
   data(key: string): unknown;
@@ -678,7 +678,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Le um estilo computado ou aplica um ou varios estilos. */
+  /** Reads a computed style or applies one or more styles. */
   css(property: string): string;
   css(property: string, value: string | number | null): this;
   css(values: Record<string, string | number | null>): this;
@@ -702,7 +702,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Largura em pixels do primeiro elemento, ou escrita em todos. */
+  /** Width in pixels of the first element, or writes to all. */
   width(): number;
   width(value: string | number): this;
   width(...rest: unknown[]): number | this {
@@ -714,7 +714,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Altura em pixels do primeiro elemento, ou escrita em todos. */
+  /** Height in pixels of the first element, or writes to all. */
   height(): number;
   height(value: string | number): this;
   height(...rest: unknown[]): number | this {
@@ -726,7 +726,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Posicao do primeiro elemento em relacao ao documento. */
+  /** Position of the first element relative to the document. */
   offset(): QueryPoint {
     const el = this.elements[0];
     if (!el) return { top: 0, left: 0 };
@@ -734,14 +734,14 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return { top: rect.top + window.scrollY, left: rect.left + window.scrollX };
   }
 
-  /** Posicao do primeiro elemento em relacao ao ancestral posicionado. */
+  /** Position of the first element relative to the positioned ancestor. */
   position(): QueryPoint {
     const el = this.elements[0];
     if (!el) return { top: 0, left: 0 };
     return { top: el.offsetTop, left: el.offsetLeft };
   }
 
-  /** Le a rolagem vertical do primeiro elemento ou escreve em todos. */
+  /** Reads the vertical scroll of the first element or writes to all. */
   scrollTop(): number;
   scrollTop(value: number): this;
   scrollTop(...rest: unknown[]): number | this {
@@ -755,21 +755,21 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   // Classes
   // -------------------------------------------------------------------------
 
-  /** Adiciona uma ou varias classes separadas por espaco. */
+  /** Adds one or more space-separated classes. */
   addClass(value: string): this {
     const list = names(value);
     if (list.length) for (const el of this.elements) el.classList.add(...list);
     return this;
   }
 
-  /** Remove uma ou varias classes separadas por espaco. */
+  /** Removes one or more space-separated classes. */
   removeClass(value: string): this {
     const list = names(value);
     if (list.length) for (const el of this.elements) el.classList.remove(...list);
     return this;
   }
 
-  /** Alterna classes. O segundo argumento forca ligar ou desligar. */
+  /** Toggles classes. The second argument forces on or off. */
   toggleClass(value: string, force?: boolean): this {
     const list = names(value);
     for (const el of this.elements) {
@@ -781,7 +781,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Verdadeiro quando algum elemento tem todas as classes informadas. */
+  /** True when some element has all the specified classes. */
   hasClass(value: string): boolean {
     const list = names(value);
     if (!list.length) return false;
@@ -789,13 +789,13 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   // -------------------------------------------------------------------------
-  // Manipulacao de DOM
+  // DOM manipulation
   // -------------------------------------------------------------------------
 
   /**
-   * Base de `append`, `prepend`, `before` e `after`. Quando a colecao tem mais
-   * de um elemento, cada destino recebe uma copia e o ultimo fica com o
-   * original, que e o comportamento esperado por quem vem do jQuery.
+   * Base of `append`, `prepend`, `before`, and `after`. When the collection has more
+   * than one element, each destination receives a copy and the last gets the
+   * original, which is the expected behavior for those coming from jQuery.
    */
   private insert(content: QueryInput, place: (el: HTMLElement, node: Node) => void): this {
     const total = this.elements.length;
@@ -808,27 +808,27 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Insere conteudo no fim de cada elemento. */
+  /** Inserts content at the end of each element. */
   append(content: QueryInput): this {
     return this.insert(content, (el, node) => el.appendChild(node));
   }
 
-  /** Insere conteudo no inicio de cada elemento. */
+  /** Inserts content at the beginning of each element. */
   prepend(content: QueryInput): this {
     return this.insert(content, (el, node) => el.insertBefore(node, el.firstChild));
   }
 
-  /** Insere conteudo antes de cada elemento. */
+  /** Inserts content before each element. */
   before(content: QueryInput): this {
     return this.insert(content, (el, node) => el.parentNode?.insertBefore(node, el));
   }
 
-  /** Insere conteudo depois de cada elemento. */
+  /** Inserts content after each element. */
   after(content: QueryInput): this {
     return this.insert(content, (el, node) => el.parentNode?.insertBefore(node, el.nextSibling));
   }
 
-  /** Move os elementos da colecao para dentro do destino. */
+  /** Moves the collection's elements into the target. */
   appendTo(target: QueryInput): this {
     const targets = resolve(target);
     for (let i = 0; i < targets.length; i++) {
@@ -839,7 +839,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Move os elementos da colecao para o inicio do destino. */
+  /** Moves the collection's elements to the beginning of the target. */
   prependTo(target: QueryInput): this {
     const targets = resolve(target);
     for (let i = 0; i < targets.length; i++) {
@@ -852,7 +852,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Troca cada elemento pelo conteudo informado, desmontando o antigo. */
+  /** Replaces each element with the provided content, unmounting the old one. */
   replaceWith(content: QueryInput): this {
     for (const el of this.elements) {
       const parent = el.parentNode;
@@ -864,7 +864,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Envolve cada elemento com o HTML ou elemento informado. */
+  /** Wraps each element with the provided HTML or element. */
   wrap(wrapper: QueryInput): this {
     for (const el of this.elements) {
       const model = resolve(wrapper)[0];
@@ -878,7 +878,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Remove o pai de cada elemento, mantendo os filhos no lugar. */
+  /** Removes the parent of each element, keeping children in place. */
   unwrap(): this {
     const parents = new Set<HTMLElement>();
     for (const el of this.elements) {
@@ -895,7 +895,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Remove os elementos do documento e desmonta os efeitos reativos. */
+  /** Removes elements from the document and unmounts reactive effects. */
   remove(): this {
     for (const el of this.elements) {
       destroyNode(el);
@@ -904,7 +904,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Esvazia os elementos, desmontando o conteudo removido. */
+  /** Empties elements, unmounting removed content. */
   empty(): this {
     for (const el of this.elements) {
       for (const child of Array.from(el.childNodes)) destroyNode(child);
@@ -913,18 +913,18 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Copia os elementos. A copia nasce sem directives inicializadas. */
+  /** Clones elements. The clone starts without directives initialized. */
   clone(deep = true): VoodooCollection {
     return new VoodooCollection(this.elements.map((el) => el.cloneNode(deep) as HTMLElement));
   }
 
   // -------------------------------------------------------------------------
-  // Eventos
+  // Events
   // -------------------------------------------------------------------------
 
   /**
-   * Escuta eventos. Com o segundo argumento em texto, usa delegacao:
-   * `on('click', '.item', fn)` continua funcionando para itens criados depois.
+   * Listens for events. With the second argument as a string, uses delegation:
+   * `on('click', '.item', fn)` continues to work for items created later.
    */
   on(types: string, handler: QueryEventHandler, options?: AddEventListenerOptions): this;
   on(
@@ -960,8 +960,8 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   /**
-   * Remove escutas registradas por `on`. Sem argumentos remove todas, com tipo
-   * remove as daquele evento, e com seletor ou funcao afina ainda mais.
+   * Removes listeners registered by `on`. Without arguments removes all, with type
+   * removes those for that event, and with selector or function refines further.
    */
   off(types?: string, selectorOrHandler?: string | QueryEventHandler, handler?: QueryEventHandler): this {
     const wantedSelector = typeof selectorOrHandler === 'string' ? selectorOrHandler : null;
@@ -988,7 +988,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Escuta uma unica vez. Aceita delegacao igual a `on`. */
+  /** Listens only once. Accepts delegation like `on`. */
   once(types: string, handler: QueryEventHandler): this;
   once(types: string, selector: string, handler: QueryEventHandler): this;
   once(types: string, ...rest: unknown[]): this {
@@ -1009,8 +1009,8 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   /**
-   * Dispara um evento. Eventos nativos com metodo proprio, como `click` e
-   * `focus`, usam o metodo do elemento quando nao ha `detail`.
+   * Dispatches an event. Native events with their own method, like `click` and
+   * `focus`, use the element's method when there is no `detail`.
    */
   trigger(type: string, detail?: unknown): this {
     for (const el of this.elements) {
@@ -1025,7 +1025,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Dispara um evento customizado que sobe pela arvore, no estilo componente. */
+  /** Dispatches a custom event that bubbles up the tree, component-style. */
   emit(type: string, detail?: unknown): this {
     for (const el of this.elements) {
       const event = new CustomEvent(type, { detail, bubbles: true, cancelable: true });
@@ -1036,22 +1036,22 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   // -------------------------------------------------------------------------
-  // Visibilidade e animacao
+  // Visibility and animation
   // -------------------------------------------------------------------------
 
-  /** Mostra os elementos restaurando o display anterior. */
+  /** Shows elements by restoring their previous display value. */
   show(): this {
     for (const el of this.elements) showElement(el);
     return this;
   }
 
-  /** Esconde os elementos guardando o display atual. */
+  /** Hides elements while saving their current display value. */
   hide(): this {
     for (const el of this.elements) hideElement(el);
     return this;
   }
 
-  /** Alterna a visibilidade. O argumento forca mostrar ou esconder. */
+  /** Toggles visibility. The argument forces show or hide. */
   toggle(force?: boolean): this {
     for (const el of this.elements) {
       const visible = force === undefined ? elementHidden(el) : force;
@@ -1061,7 +1061,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Aparecimento com fade. */
+  /** Appearance with fade. */
   fadeIn(duration = 220): this {
     for (const el of this.elements) {
       el.removeAttribute('hidden');
@@ -1070,19 +1070,19 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Desaparecimento com fade, terminando escondido. */
+  /** Disappearance with fade, ending hidden. */
   fadeOut(duration = 220): this {
     for (const el of this.elements) void fadeOutElement(el, duration);
     return this;
   }
 
-  /** Recolhe a altura ate zero. */
+  /** Collapses height to zero. */
   slideUp(duration = 240): this {
     for (const el of this.elements) void slideUpElement(el, duration);
     return this;
   }
 
-  /** Expande a altura ate o conteudo. */
+  /** Expands height to content. */
   slideDown(duration = 240): this {
     for (const el of this.elements) {
       el.removeAttribute('hidden');
@@ -1091,7 +1091,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Alterna entre recolher e expandir. */
+  /** Toggles between collapse and expand. */
   slideToggle(duration = 240): this {
     for (const el of this.elements) {
       if (elementHidden(el)) {
@@ -1104,7 +1104,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Animacao pela Web Animations API. */
+  /** Animation via Web Animations API. */
   animate(
     keyframes: Keyframe[] | PropertyIndexedKeyframes,
     options: number | KeyframeAnimationOptions = 300
@@ -1116,17 +1116,17 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Rola a pagina ate o primeiro elemento. */
+  /** Scrolls the page to the first element. */
   scrollIntoView(options: boolean | ScrollIntoViewOptions = { behavior: 'smooth', block: 'start' }): this {
     this.elements[0]?.scrollIntoView(options as ScrollIntoViewOptions);
     return this;
   }
 
   // -------------------------------------------------------------------------
-  // Formulario
+  // Form
   // -------------------------------------------------------------------------
 
-  /** Serializa os campos do primeiro elemento no formato de query string. */
+  /** Serializes the first element's fields as a query string. */
   serialize(): string {
     const el = this.elements[0];
     if (!el) return '';
@@ -1145,9 +1145,8 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   /**
-   * Serializa os campos em um objeto. Nomes repetidos e nomes terminados em
-   * `[]` viram array, caixas de selecao viram booleano e campos numericos viram
-   * numero.
+   * Serializes fields into an object. Repeated names and names ending in
+   * `[]` become arrays, checkboxes become booleans, and numeric fields become numbers.
    */
   serializeObject(): Record<string, unknown> {
     const el = this.elements[0];
@@ -1203,19 +1202,19 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return out;
   }
 
-  /** Coloca o foco no primeiro elemento. */
+  /** Sets focus on the first element. */
   focus(options?: FocusOptions): this {
     this.elements[0]?.focus(options);
     return this;
   }
 
-  /** Tira o foco de todos os elementos. */
+  /** Removes focus from all elements. */
   blur(): this {
     for (const el of this.elements) el.blur();
     return this;
   }
 
-  /** Seleciona o texto dos campos da colecao. */
+  /** Selects the text of the collection's fields. */
   select(): this {
     for (const el of this.elements) {
       const field = el as HTMLInputElement;
@@ -1225,12 +1224,12 @@ export class VoodooCollection implements Iterable<HTMLElement> {
   }
 
   // -------------------------------------------------------------------------
-  // Integracao com o runtime da Voodoo
+  // Integration with Voodoo runtime
   // -------------------------------------------------------------------------
 
   /**
-   * Inicializa as directives dos elementos da colecao, herdando o escopo do pai.
-   * Com `force`, desmonta antes para reiniciar do zero.
+   * Initializes directives for the collection's elements, inheriting the parent's scope.
+   * With `force`, unmounts first to restart from scratch.
    */
   walk(force = false): this {
     for (const el of this.elements) {
@@ -1240,7 +1239,7 @@ export class VoodooCollection implements Iterable<HTMLElement> {
     return this;
   }
 
-  /** Desmonta efeitos, escutas e componentes, mantendo os elementos no DOM. */
+  /** Unmounts effects, listeners, and components while keeping elements in the DOM. */
   destroy(): this {
     for (const el of this.elements) destroyNode(el);
     return this;
@@ -1248,22 +1247,22 @@ export class VoodooCollection implements Iterable<HTMLElement> {
 }
 
 // ---------------------------------------------------------------------------
-// API do modulo
+// Module API
 // ---------------------------------------------------------------------------
 
 /**
- * Cria uma colecao a partir de seletor CSS, elemento, lista de elementos,
- * string de HTML ou funcao.
+ * Creates a collection from a CSS selector, element, list of elements,
+ * HTML string, or function.
  *
  * ```js
- * V.query('#lista li')          // seletor
- * V.query(document.body)        // elemento
- * V.query('<li>novo</li>')      // cria elementos
- * V.query(() => iniciar())      // equivale a V.ready
+ * V.query('#lista li')          // selector
+ * V.query(document.body)        // element
+ * V.query('<li>novo</li>')      // creates elements
+ * V.query(() => iniciar())      // equivalent to V.ready
  * ```
  *
- * @param input seletor, no, lista, HTML ou funcao de inicializacao
- * @param context raiz opcional da busca, util para escopos locais
+ * @param input selector, node, list, HTML or initialization function
+ * @param context optional search root, useful for local scopes
  */
 export function query(input?: QueryInput, context?: QueryInput): VoodooCollection {
   if (typeof input === 'function') {
@@ -1275,16 +1274,16 @@ export function query(input?: QueryInput, context?: QueryInput): VoodooCollectio
 }
 
 /**
- * Executa a funcao quando a Voodoo considerar o documento pronto, e devolve uma
- * promessa do mesmo momento. As duas escritas valem:
+ * Executes the function when Voodoo considers the document ready, and returns a
+ * promise for the same moment. Both forms work:
  *
  * ```js
  * V.ready(() => console.log('pronto'))
  * await V.ready()
  * ```
  *
- * Quem decide a hora e o agendador da propria biblioteca, que espera o corpo
- * existir e a arvore parar de crescer. Nada aqui escuta `DOMContentLoaded`.
+ * The library's own scheduler decides the time, waiting for the body to exist
+ * and the tree to stop growing. This does not listen to `DOMContentLoaded`.
  */
 export function ready(fn?: ReadyCallback): Promise<void> {
   if (typeof document === 'undefined') return Promise.resolve();
@@ -1301,7 +1300,7 @@ export function ready(fn?: ReadyCallback): Promise<void> {
   });
 }
 
-/** Cria elementos a partir de uma string de HTML, sem inseri-los no documento. */
+/** Creates elements from an HTML string without inserting them in the document. */
 export function fromHtml(html: string): VoodooCollection {
   return new VoodooCollection(parseHtml(html));
 }

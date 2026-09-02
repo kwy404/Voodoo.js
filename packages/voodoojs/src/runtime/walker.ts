@@ -1,15 +1,15 @@
 /**
  * @module runtime/walker
  *
- * Percorre o DOM, encontra atributos `v-*`, `:` e `@`, e liga cada um ao
- * sistema reativo. Este e o motor que faz o HTML virar aplicacao.
+ * Walks the DOM, finds `v-*`, `:` and `@` attributes, and connects each to the
+ * reactive system. This is the engine that turns HTML into an application.
  *
- * Regras de ordem em um mesmo elemento:
- *   1. `v-ignore` e `v-pre` cancelam o processamento.
- *   2. Directives terminais (`v-for`, `v-if`) assumem o controle da subarvore.
- *   3. `v-data` e `v-component` criam o escopo usado pelo restante.
- *   4. As demais directives rodam por prioridade decrescente.
- *   5. Os filhos sao percorridos com o escopo resultante.
+ * Order rules for a single element:
+ *   1. `v-ignore` and `v-pre` cancel processing.
+ *   2. Terminal directives (`v-for`, `v-if`) take control of the subtree.
+ *   3. `v-data` and `v-component` create the scope used by the rest.
+ *   4. Other directives run by descending priority.
+ *   5. Children are walked with the resulting scope.
  */
 
 import {
@@ -23,14 +23,14 @@ import { evaluate, allowedGlobals, stringify as stringifyValue } from '../parser
 import { parse } from '../parser/parser';
 import { config, directives, components, type DirectiveContext } from './registry';
 import {
-  avisarDirectiveDesconhecida,
-  avisarExpressaoInvalida,
-  emDesenvolvimento,
+  warnUnknownDirective,
+  warnInvalidExpression,
+  inDevelopment,
 } from './avisos';
 import { Scope, rootScope } from './scope';
 
 // ---------------------------------------------------------------------------
-// Estado por no
+// State per node
 // ---------------------------------------------------------------------------
 
 const nodeScopes = new WeakMap<Node, Scope>();
@@ -38,29 +38,29 @@ const nodeCleanups = new WeakMap<Node, Array<() => void>>();
 const initialized = new WeakSet<Node>();
 const nodeEffectScopes = new WeakMap<Node, EffectScope[]>();
 
-/** Marca um elemento como ja processado. */
+/** Marks an element as already processed. */
 export function isInitialized(node: Node): boolean {
   return initialized.has(node);
 }
 
 /**
- * Marca um no como ja tratado, para o walker nunca descer nele.
+ * Marks a node as already handled, so the walker never descends into it.
  *
- * Usado nos modelos que o `v-if` guarda fora do documento. Sem esta marca, a
- * caminhada do elemento pai, que ja tinha a lista de filhos em maos, entraria
- * no modelo e inicializaria o `v-for` de dentro dele, corrompendo o modelo
- * para todas as renderizacoes seguintes.
+ * Used on templates that `v-if` keeps outside the document. Without this mark,
+ * the parent element's walk, having the child list in hand, would enter the
+ * template and initialize the `v-for` inside it, corrupting the template for
+ * all subsequent renders.
  */
 export function markInitialized(node: Node): void {
   initialized.add(node);
 }
 
-/** Escopo associado a um no, se houver. */
+/** Scope associated with a node, if any. */
 export function getScope(node: Node): Scope | undefined {
   return nodeScopes.get(node);
 }
 
-/** Escopo efetivo de um no, subindo pelos ancestrais. */
+/** Effective scope of a node, walking up through ancestors. */
 export function findScope(node: Node | null): Scope {
   let current: Node | null = node;
   while (current) {
@@ -72,8 +72,8 @@ export function findScope(node: Node | null): Scope {
 }
 
 /**
- * Guarda o escopo de efeitos criado para um no. Serve as devtools, que
- * precisam saber quantos efeitos reativos dependem de cada elemento.
+ * Stores the effect scope created for a node. Serves devtools, which need to
+ * know how many reactive effects depend on each element.
  */
 export function trackEffectScope(node: Node, scope: EffectScope): void {
   let list = nodeEffectScopes.get(node);
@@ -82,29 +82,29 @@ export function trackEffectScope(node: Node, scope: EffectScope): void {
 }
 
 /**
- * Escopos de efeito ligados a um no, um por directive mais um por texto
- * interpolado. Usado pelo inspetor `xray` para contar e instrumentar efeitos.
+ * Effect scopes linked to a node, one per directive plus one per interpolated
+ * text. Used by the `xray` inspector to count and instrument effects.
  */
 export function getEffectScopes(node: Node): EffectScope[] {
   return nodeEffectScopes.get(node) ?? [];
 }
 
 /**
- * Nos que a propria Voodoo retira do documento de proposito, como o elemento
- * modelo de `v-for` e os ramos de `v-if`.
+ * Nodes that Voodoo itself removes from the document on purpose, like the
+ * template element for `v-for` and branches of `v-if`.
  *
- * Sem esta marca o MutationObserver enxergaria a remocao como saida de tela e
- * chamaria `destroy`, o que pararia justamente o efeito reativo que acabou de
- * ser criado para controlar a lista.
+ * Without this mark, MutationObserver would see the removal as leaving the
+ * screen and call `destroy`, which would stop the reactive effect that was just
+ * created to control the list.
  */
-const remocoesIgnoradas = new WeakSet<Node>();
+const ignoredRemovals = new WeakSet<Node>();
 
-/** Retira um no do documento sem que o observador trate como desmontagem. */
+/** Removes a node from the document without the observer treating it as unmounting. */
 export function removeQuietly(node: ChildNode): void {
-  remocoesIgnoradas.add(node);
+  ignoredRemovals.add(node);
   node.remove();
 }
-/** Registra uma funcao executada quando o no for removido do DOM. */
+/** Registers a function executed when the node is removed from the DOM. */
 export function addCleanup(node: Node, fn: () => void): void {
   let list = nodeCleanups.get(node);
   if (!list) nodeCleanups.set(node, (list = []));
@@ -112,24 +112,24 @@ export function addCleanup(node: Node, fn: () => void): void {
 }
 
 /**
- * Desmonta um no e todos os descendentes: para efeitos, remove listeners e
- * dispara os hooks `beforeUnmount` e `unmounted`.
+ * Unmounts a node and all descendants: stops effects, removes listeners, and
+ * fires the `beforeUnmount` and `unmounted` hooks.
  */
 export function destroy(node: Node): void {
   if (node.nodeType === 1) {
-    // Percorre os filhos antes, para desmontar de dentro para fora.
+    // Walk children first, to unmount inside-out.
     //
-    // A caminhada e por irmaos, e nao por `childNodes`. A lista de filhos e
-    // viva: o navegador a reconstroi a cada acesso e a invalida a cada
-    // mudanca na arvore. Em uma lista grande sendo desmontada, indexar essa
-    // lista dentro do laco passou a dominar o custo inteiro da limpeza, como
-    // o perfil de CPU mostrou. `firstChild` e `nextSibling` leem o mesmo, sem
-    // materializar coleccao nenhuma.
-    const filhos: Node[] = [];
-    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
-      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
+    // Walking is by siblings, not `childNodes`. The child list is live: the
+    // browser reconstructs it on each access and invalidates it on each tree
+    // change. In a large list being unmounted, indexing that list inside the
+    // loop dominated the entire cleanup cost, as the CPU profile showed.
+    // `firstChild` and `nextSibling` read the same thing without materializing
+    // any collection.
+    const children: Node[] = [];
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
-    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
+    for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -149,24 +149,24 @@ export function destroy(node: Node): void {
 }
 
 // ---------------------------------------------------------------------------
-// Leitura de atributos
+// Attribute reading
 // ---------------------------------------------------------------------------
 
 export interface ParsedAttribute {
-  /** Nome do atributo como escrito no HTML. */
+  /** Attribute name as written in HTML. */
   raw: string;
-  /** Nome da directive, sem prefixo, como `text`, `on`, `toast-success`. */
+  /** Directive name, without prefix, like `text`, `on`, `toast-success`. */
   name: string;
-  /** Argumento apos os dois pontos, como `click` em `v-on:click`. */
+  /** Argument after the colon, like `click` in `v-on:click`. */
   arg?: string;
   modifiers: Record<string, string | true>;
-  /** Valor do atributo. */
+  /** Attribute value. */
   expression: string;
 }
 
 /**
- * Converte um atributo do HTML na descricao de uma directive.
- * Retorna `null` quando o atributo nao pertence a Voodoo.
+ * Converts an HTML attribute into a directive description.
+ * Returns `null` when the attribute doesn't belong to Voodoo.
  *
  * ```
  * v-on:click.prevent="save"  ->  { name:'on', arg:'click', modifiers:{prevent:true} }
@@ -183,7 +183,7 @@ export function parseAttribute(name: string, value: string): ParsedAttribute | n
   } else if (name.startsWith(':') && name.length > 1) {
     body = `bind:${name.slice(1)}`;
   } else if (name.startsWith('.') && name.length > 1) {
-    // `.prop="x"` liga direto na propriedade do elemento.
+    // `.prop="x"` binds directly to the element property.
     body = `bind:${name.slice(1)}.prop`;
   } else if (name.startsWith(prefix)) {
     body = name.slice(prefix.length);
@@ -212,12 +212,12 @@ export function parseAttribute(name: string, value: string): ParsedAttribute | n
 }
 
 /**
- * Lista as directives de um elemento, ja ordenadas por prioridade.
+ * Lists the directives of an element, already sorted by priority.
  *
- * Quando o elemento ja passou pela limpeza do HTML, a leitura vem do cache.
- * E o que permite remontar um elemento depois, por exemplo quando o componente
- * dele so foi registrado mais tarde. Repor os atributos no DOM nao serviria,
- * porque nomes como `@click` sao recusados por `setAttribute`.
+ * When the element has already been through HTML cleanup, the read comes from
+ * the cache. This allows remounting an element later, for example when its
+ * component is registered after the page loads. Restoring attributes to the DOM
+ * wouldn't work because names like `@click` are rejected by `setAttribute`.
  */
 export function collectDirectives(el: Element): ParsedAttribute[] {
   const out: ParsedAttribute[] = [];
@@ -251,22 +251,22 @@ function priorityOf(attr: ParsedAttribute): number {
 }
 
 /**
- * Indice de quais elementos declararam cada directive.
+ * Index of which elements declared each directive.
  *
- * Como os atributos `v-*` saem do HTML depois de processados, seletores CSS
- * como `[v-tab]` deixariam de funcionar. Este indice guarda a informacao no
- * runtime, entao as directives estruturais continuam se encontrando.
+ * Since `v-*` attributes are removed from HTML after processing, CSS selectors
+ * like `[v-tab]` would stop working. This index stores the information at
+ * runtime, so structural directives remain discoverable.
  */
 const directiveIndex = new Map<string, Set<Element>>();
 
 /**
- * Nomes sob os quais cada elemento foi indexado.
+ * Names under which each element was indexed.
  *
- * Sem este mapa, tirar um elemento do indice obrigava a percorrer o Set de
- * todas as directives registradas, que hoje passam de oitenta. Limpar uma
- * lista de dez mil linhas custava quase um milhao de operacoes so para
- * desfazer indice. Com ele, a limpeza toca apenas os nomes que aquele elemento
- * realmente declarou, que sao dois ou tres.
+ * Without this map, removing an element from the index would require walking
+ * the Set of all registered directives, which now exceed eighty. Cleaning a
+ * list of ten thousand lines cost nearly a million operations just to undo the
+ * index. With it, cleanup only touches the names that element actually
+ * declared, which are two or three.
  */
 const directiveNamesOf = new WeakMap<Element, Set<string>>();
 
@@ -287,66 +287,66 @@ function unindexElement(el: Element): void {
   directiveNamesOf.delete(el);
 }
 
-/** `true` quando o elemento declarou a directive, mesmo ja limpa do HTML. */
+/** `true` when the element declared the directive, even if already removed from HTML. */
 export function hasDirective(el: Element, name: string): boolean {
   if (directiveIndex.get(name)?.has(el)) return true;
   return el.hasAttribute(`${config.prefix}${name}`) || el.hasAttribute(`data-v-${name}`);
 }
 
 /**
- * Descendentes de `root` que declararam a directive informada, na ordem do
- * documento. Substitui `root.querySelectorAll("[v-nome]")`.
+ * Descendants of `root` that declared the given directive, in document order.
+ * Replaces `root.querySelectorAll("[v-name]")`.
  */
 export function queryDirective(root: ParentNode, name: string): HTMLElement[] {
   const out: HTMLElement[] = [];
   const set = directiveIndex.get(name);
-  const raiz = root as Element;
+  const root_ = root as Element;
 
   if (set) {
     for (const el of set) {
       if (!el.isConnected) continue;
-      if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el as HTMLElement);
+      if (root_.contains && root_.contains(el) && el !== root_) out.push(el as HTMLElement);
     }
   }
 
-  // Elementos ainda nao processados continuam com o atributo no HTML.
-  // O conjunto evita o `includes` dentro do laco, que era quadratico.
-  const vistos = new Set<Element>(out);
+  // Elements not yet processed still have the attribute in HTML.
+  // The Set avoids the `includes` inside the loop, which was quadratic.
+  const seen = new Set<Element>(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (vistos.has(el)) continue;
-    vistos.add(el);
+    if (seen.has(el)) continue;
+    seen.add(el);
     out.push(el as HTMLElement);
   }
 
-  // Ordem do documento, para a navegacao por teclado ficar previsivel.
+  // Document order, to keep keyboard navigation predictable.
   out.sort((a, b) =>
     a.compareDocumentPosition(b) & window.Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
   );
   return out;
 }
 
-/** Ancestral mais proximo que declarou a directive, incluindo o proprio. */
+/** Nearest ancestor that declared the directive, including the element itself. */
 export function closestDirective(el: Element | null, name: string): HTMLElement | null {
-  let atual: Element | null = el;
-  while (atual) {
-    if (hasDirective(atual, name)) return atual as HTMLElement;
-    atual = atual.parentElement;
+  let current: Element | null = el;
+  while (current) {
+    if (hasDirective(current, name)) return current as HTMLElement;
+    current = current.parentElement;
   }
   return null;
 }
 // ---------------------------------------------------------------------------
-// Limpeza dos atributos depois da renderizacao
+// Attribute cleanup after rendering
 // ---------------------------------------------------------------------------
 
 /**
- * Valor original de cada atributo `v-*`, guardado antes de ele sair do HTML.
- * As directives continuam lendo pelo cache, entao o comportamento nao muda.
+ * Original value of each `v-*` attribute, stored before it leaves HTML.
+ * Directives continue reading from the cache, so behavior doesn't change.
  */
 const attributeCache = new WeakMap<Element, Map<string, string>>();
 
-/** `true` quando o nome do atributo pertence a Voodoo. */
+/** `true` when the attribute name belongs to Voodoo. */
 export function isVoodooAttribute(name: string): boolean {
   return (
     name.startsWith(config.prefix) ||
@@ -357,11 +357,10 @@ export function isVoodooAttribute(name: string): boolean {
 }
 
 /**
- * Le um atributo da Voodoo mesmo depois que ele foi retirado do HTML.
+ * Reads a Voodoo attribute even after it has been removed from HTML.
  *
- * Use esta funcao no lugar de `el.getAttribute` sempre que a leitura acontecer
- * depois da montagem, como dentro de um manipulador de evento ou de uma
- * requisicao repetida.
+ * Use this function instead of `el.getAttribute` whenever reading happens
+ * after mounting, like inside an event handler or a repeated request.
  */
 export function readAttr(el: Element, name: string): string | null {
   const cached = attributeCache.get(el)?.get(name);
@@ -369,14 +368,14 @@ export function readAttr(el: Element, name: string): string | null {
   return el.getAttribute(name);
 }
 
-/** Versao booleana de `readAttr`. */
+/** Boolean version of `readAttr`. */
 export function hasAttr(el: Element, name: string): boolean {
   const map = attributeCache.get(el);
   if (map?.has(name)) return true;
   return el.hasAttribute(name);
 }
 
-/** Todos os atributos da Voodoo que o elemento declarou originalmente. */
+/** All Voodoo attributes that the element originally declared. */
 export function originalAttributes(el: Element): Map<string, string> {
   const map = attributeCache.get(el);
   if (map) return new Map(map);
@@ -389,9 +388,9 @@ export function originalAttributes(el: Element): Map<string, string> {
 }
 
 /**
- * Guarda os atributos no cache e os retira do HTML, deixando a pagina limpa,
- * do mesmo jeito que um framework com compilador faria.
- * Controlado por `V.config.cleanAttributes`.
+ * Stores attributes in cache and removes them from HTML, leaving the page clean,
+ * just like a framework with a compiler would do.
+ * Controlled by `V.config.cleanAttributes`.
  */
 function stripAttributes(el: Element): void {
   if (!config.cleanAttributes) return;
@@ -399,45 +398,45 @@ function stripAttributes(el: Element): void {
   let map = attributeCache.get(el);
   if (!map) attributeCache.set(el, (map = new Map()));
 
-  const remover: string[] = [];
+  const toRemove: string[] = [];
   for (let i = 0; i < el.attributes.length; i++) {
     const attr = el.attributes[i];
     if (!isVoodooAttribute(attr.name)) continue;
     map.set(attr.name, attr.value);
-    remover.push(attr.name);
+    toRemove.push(attr.name);
   }
-  for (const name of remover) el.removeAttribute(name);
+  for (const name of toRemove) el.removeAttribute(name);
 }
 
 /**
- * Devolve ao HTML os atributos que a limpeza havia retirado.
+ * Restores to HTML the attributes that cleanup had removed.
  *
- * Serve para remontar um elemento, por exemplo quando um componente e
- * registrado depois que a pagina ja foi percorrida. Sem isso o elemento seria
- * percorrido de novo sem nenhum atributo para ler.
+ * Used to remount an element, for example when a component is registered after
+ * the page has been walked. Without this, the element would be walked again
+ * with no attributes to read.
  */
 export function restoreAttributes(el: Element): void {
   const map = attributeCache.get(el);
   if (!map) return;
   for (const [name, value] of map) {
     if (el.hasAttribute(name)) continue;
-    // Nomes com arroba ou dois pontos sao recusados por `setAttribute`, e nem
-    // precisam voltar: `collectDirectives` ja le do cache.
+    // Names with @ or : are rejected by `setAttribute`, and don't need to
+    // return anyway: `collectDirectives` already reads from the cache.
     try {
       el.setAttribute(name, value);
     } catch {
-      // Silencio proposital: o cache continua sendo a fonte da verdade.
+      // Intentional silence: the cache remains the source of truth.
     }
   }
 }
 /**
- * `true` quando o elemento declarou alguma directive, mesmo depois de a limpeza
- * ter retirado os atributos do HTML.
+ * `true` when the element declared some directive, even after cleanup has
+ * removed the attributes from HTML.
  *
- * `hasDirectives` olha apenas o DOM, entao com `config.cleanAttributes` ligado
- * ela responde `false` para todo elemento ja processado. Quem precisa da
- * resposta verdadeira depois da montagem, como o inspetor, deve usar esta aqui:
- * a informacao continua no cache de atributos.
+ * `hasDirectives` looks only at the DOM, so with `config.cleanAttributes` on
+ * it returns `false` for every element already processed. Anyone needing the
+ * true answer after mounting, like the inspector, should use this one: the
+ * information remains in the attribute cache.
  */
 export function hadDirectives(el: Element): boolean {
   const cache = attributeCache.get(el);
@@ -445,7 +444,7 @@ export function hadDirectives(el: Element): boolean {
   return hasDirectives(el);
 }
 
-/** Verifica se o elemento tem qualquer atributo da Voodoo. */
+/** Checks if the element has any Voodoo attributes. */
 export function hasDirectives(el: Element): boolean {
   const attrs = el.attributes;
   for (let i = 0; i < attrs.length; i++) {
@@ -463,12 +462,13 @@ export function hasDirectives(el: Element): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Avaliacao de expressoes
+// Expression evaluation
 // ---------------------------------------------------------------------------
 
 /**
- * Avalia uma expressao no escopo informado. Erros sao reportados sem quebrar a
- * pagina, porque um atributo com problema nao deve derrubar o resto do app.
+ * Evaluates an expression in the given scope. Errors are reported without
+ * breaking the page, because a problematic attribute shouldn't crash the rest
+ * of the app.
  */
 export function evaluateIn<T = any>(
   expression: string,
@@ -480,26 +480,26 @@ export function evaluateIn<T = any>(
   try {
     return evaluate(parse(expression), scope) as T;
   } catch (err) {
-    // Em desenvolvimento o aviso detalhado diz onde esta o problema; em
-    // producao o custo e a leitura de um booleano.
-    if (emDesenvolvimento()) {
-      avisarExpressaoInvalida(el ?? scope.el, context ?? 'expressao', expression, err);
+    // In development the detailed warning says where the problem is; in
+    // production the cost is just reading a boolean.
+    if (inDevelopment()) {
+      warnInvalidExpression(el ?? scope.el, context ?? 'expression', expression, err);
     }
-    handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+    handleError(err, context ? `${context} ("${expression}")` : `expression "${expression}"`);
     return undefined as T;
   }
 }
 
-/** Avalia uma expressao e propaga o erro. Usado onde a falha precisa aparecer. */
+/** Evaluates an expression and propagates the error. Used where failure must show. */
 export function evaluateStrict<T = any>(expression: string, scope: Scope): T {
   return evaluate(parse(expression), scope) as T;
 }
 
 // ---------------------------------------------------------------------------
-// Execucao de directives
+// Directive execution
 // ---------------------------------------------------------------------------
 
-/** Sinaliza que o walker nao deve descer nos filhos deste elemento. */
+/** Signals that the walker should not descend into this element's children. */
 const skipChildren = new WeakSet<Element>();
 
 export function markSkipChildren(el: Element): void {
@@ -509,10 +509,10 @@ export function markSkipChildren(el: Element): void {
 function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): void {
   const def = directives.get(attr.name);
   if (!def) {
-    // Nome escrito errado nao pode falhar em silencio para quem esta montando
-    // a pagina. Em producao o aviso nem chega a ser formatado.
-    if (emDesenvolvimento() && attr.raw.startsWith(config.prefix)) {
-      avisarDirectiveDesconhecida(el, attr.raw, attr.name);
+    // A misspelled name can't fail silently for whoever is mounting the page.
+    // In production the warning is never even formatted.
+    if (inDevelopment() && attr.raw.startsWith(config.prefix)) {
+      warnUnknownDirective(el, attr.raw, attr.name);
     }
     return;
   }
@@ -553,7 +553,7 @@ function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): voi
 // Walker
 // ---------------------------------------------------------------------------
 
-/** Callback usado por `v-component` para montar componentes. Injetado depois. */
+/** Callback used by `v-component` to mount components. Injected later. */
 let componentMounter:
   | ((el: HTMLElement, name: string, scope: Scope) => Scope | null)
   | null = null;
@@ -565,17 +565,17 @@ export function setComponentMounter(
 }
 
 /**
- * Tags que a Voodoo nunca percorre. `TEMPLATE` fica de fora da lista de
- * proposito: ele precisa aceitar `v-if` e `v-for`. O conteudo de um template
- * vive em `content`, entao `walkChildren` naturalmente nao desce nele.
+ * Tags that Voodoo never walks. `TEMPLATE` is left out of the list on purpose:
+ * it needs to accept `v-if` and `v-for`. A template's content lives in `content`,
+ * so `walkChildren` naturally doesn't descend into it.
  */
 const HTML_SKIP = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
 
 /**
- * Percorre um no aplicando as directives encontradas.
+ * Walks a node applying the directives found.
  *
- * @param node raiz do trecho a inicializar
- * @param scope escopo aplicado ao no. Quando ausente, e deduzido dos ancestrais.
+ * @param node root of the section to initialize
+ * @param scope scope applied to the node. When absent, inferred from ancestors.
  */
 export function walk(node: Node, scope?: Scope): void {
   const activeScope = scope ?? findScope(node.parentNode);
@@ -596,7 +596,7 @@ export function walk(node: Node, scope?: Scope): void {
   if (initialized.has(el)) return;
   if (HTML_SKIP.has(el.tagName)) return;
 
-  // `v-ignore` e `v-pre` desligam a Voodoo naquela subarvore.
+  // `v-ignore` and `v-pre` turn off Voodoo in that subtree.
   if (el.hasAttribute(`${config.prefix}ignore`) || el.hasAttribute(`${config.prefix}pre`)) {
     initialized.add(el);
     return;
@@ -615,7 +615,7 @@ export function walk(node: Node, scope?: Scope): void {
 
   initialized.add(el);
 
-  // Passo 1: directives terminais assumem a subarvore inteira.
+  // Step 1: terminal directives take control of the entire subtree.
   for (const attr of attrs) {
     const def = directives.get(attr.name);
     if (def?.terminal) {
@@ -624,20 +624,20 @@ export function walk(node: Node, scope?: Scope): void {
     }
   }
 
-  // Passo 2: criacao de escopo por `v-data` ou componente.
+  // Step 2: scope creation by `v-data` or component.
   const dataAttr = attrs.find((a) => a.name === 'data');
   const componentAttr = attrs.find((a) => a.name === 'component');
   const componentName: string = componentAttr
     ? componentAttr.expression || ''
     : tagComponent || '';
 
-  let montouComponente = false;
+  let mountedComponent = false;
 
   if (componentName && componentMounter) {
     const created = componentMounter(el, componentName, current);
     if (created) {
       current = created;
-      montouComponente = true;
+      mountedComponent = true;
       nodeScopes.set(el, current);
     }
   } else if (dataAttr || componentAttr) {
@@ -646,175 +646,175 @@ export function walk(node: Node, scope?: Scope): void {
     nodeScopes.set(el, current);
   }
 
-  // Passo 3: demais directives, na ordem de prioridade.
+  // Step 3: other directives, in priority order.
   //
-  // Atributos escritos na tag de um componente pertencem a quem escreveu a tag,
-  // ou seja, ao escopo de fora. E o que faz `@salvo="ultimo = $event"` gravar no
-  // estado do pai, e nao dentro do componente. O escopo criado pelo componente
-  // vale para o conteudo interno, tratado no passo 5.
-  const escopoDosAtributos = montouComponente ? activeScope : current;
+  // Attributes written in a component's tag belong to whoever wrote the tag,
+  // that is, to the outer scope. This is what makes `@saved="last = $event"`
+  // write to the parent state, not inside the component. The scope created by
+  // the component applies to the internal content, handled in step 5.
+  const attributeScope = mountedComponent ? activeScope : current;
   for (const attr of attrs) {
     if (attr.name === 'data' || attr.name === 'component') continue;
-    runDirective(el, attr, escopoDosAtributos);
+    runDirective(el, attr, attributeScope);
   }
 
-  // Passo 4: tira os atributos `v-*` do HTML, que ja cumpriram o seu papel.
-  // Os valores continuam disponiveis por `readAttr`.
+  // Step 4: remove `v-*` attributes from HTML, now that they've served their purpose.
+  // Values remain available via `readAttr`.
   stripAttributes(el);
 
-  // Passo 5: filhos.
+  // Step 5: children.
   if (!skipChildren.has(el)) walkChildren(el, current);
 }
 
 function walkChildren(el: Element, scope: Scope): void {
-  // Copia porque directives podem alterar a lista durante a caminhada, e a
-  // leitura e por irmaos pelo mesmo motivo do `destroy`: `childNodes` e uma
-  // lista viva, cara de materializar e invalidada a cada mudanca.
+  // Copy because directives can alter the list during the walk, and reading is
+  // by siblings for the same reason as `destroy`: `childNodes` is a live list,
+  // expensive to materialize and invalidated on each change.
   const list: Node[] = [];
   for (let child = el.firstChild; child; child = child.nextSibling) {
     if (child.nodeType === 1) list.push(child);
     else if (child.nodeType === 3) bindTextNode(child as Text, scope);
   }
-  // Um no com escopo proprio ja definido (conteudo de slot, por exemplo)
-  // mantem o escopo de origem em vez de herdar o do pai.
+  // A node with its own scope already set (slot content, for example) keeps
+  // its original scope instead of inheriting from the parent.
   for (const child of list) walk(child, nodeScopes.get(child) ?? scope);
 }
 
 // ---------------------------------------------------------------------------
-// Interpolacao de texto com chaves duplas
+// Text interpolation with braces
 // ---------------------------------------------------------------------------
 
 /**
- * Tamanho maximo de uma interpolacao de chave simples.
+ * Maximum size of a single-brace interpolation.
  *
- * Existe para o caso patologico: uma pagina com uma chave solta no texto e
- * outra chave muito depois. Sem o teto, a varredura tentaria interpretar o
- * paragrafo inteiro como expressao.
+ * Exists for the pathological case: a page with a brace loose in text and
+ * another brace much later. Without the cap, the scan would try to interpret
+ * the whole paragraph as an expression.
  */
-const LIMITE_EXPRESSAO = 500;
+const EXPRESSION_LIMIT = 500;
 
-/** Cache de "isto e uma expressao valida?", por texto. */
-const expressaoValida = new Map<string, boolean>();
+/** Cache of "is this a valid expression?", by text. */
+const validExpressions = new Map<string, boolean>();
 
 /**
- * Decide se o texto entre chaves e mesmo uma expressao.
+ * Decides whether text between braces is actually an expression.
  *
- * A chave simples convive com texto escrito por gente, entao ela nao pode
- * engolir qualquer coisa entre `{` e `}`. O criterio e o unico honesto: tentar
- * analisar. O que o parser aceita vira interpolacao, o resto continua sendo
- * texto, exatamente como foi escrito.
+ * Single braces coexist with text written by humans, so they can't swallow
+ * anything between `{` and `}`. The criterion is the only honest one: try to
+ * parse it. What the parser accepts becomes interpolation, the rest stays text,
+ * exactly as written.
  */
-function pareceExpressao(texto: string): boolean {
-  const limpo = texto.trim();
-  if (!limpo) return false;
+function looksLikeExpression(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
 
-  const guardado = expressaoValida.get(limpo);
-  if (guardado !== undefined) return guardado;
+  const cached = validExpressions.get(trimmed);
+  if (cached !== undefined) return cached;
 
-  let valida = true;
+  let valid = true;
   try {
-    // Uma interpolacao rende um valor so. O parser aceita varias instrucoes
-    // seguidas, e e justamente esse caso que separa expressao de prosa:
-    // `{ um texto qualquer }` analisa como tres identificadores em sequencia,
-    // e continua sendo texto que alguem escreveu.
-    valida = parse(limpo).t !== 'seq';
+    // An interpolation produces one value. The parser accepts multiple
+    // instructions in sequence, and that's exactly what separates expression
+    // from prose: `{ some arbitrary text }` parses as three identifiers in
+    // sequence, and stays text that someone wrote.
+    valid = parse(trimmed).t !== 'seq';
   } catch {
-    valida = false;
+    valid = false;
   }
-  expressaoValida.set(limpo, valida);
-  return valida;
+  validExpressions.set(trimmed, valid);
+  return valid;
 }
 
 /**
- * Acha o `}` que fecha a chave aberta em `inicio`, contando os niveis e
- * pulando o conteudo de textos entre aspas.
+ * Finds the `}` that closes the brace opened at `start`, counting levels and
+ * skipping quoted strings.
  *
- * E o que permite `{ $t('itens', { n: total }) }`, com objeto dentro da
- * expressao, e tambem uma expressao quebrada em varias linhas.
+ * This allows `{ $t('items', { n: total }) }`, with objects inside the
+ * expression, and also expressions broken across lines.
  */
-function fecharChave(fonte: string, inicio: number): number {
-  let nivel = 0;
-  let aspas: string | null = null;
+function closeBrace(source: string, start: number): number {
+  let level = 0;
+  let quote: string | null = null;
 
-  for (let i = inicio; i < fonte.length; i++) {
-    const c = fonte[i];
+  for (let i = start; i < source.length; i++) {
+    const c = source[i];
 
-    if (aspas) {
+    if (quote) {
       if (c === '\\') i++;
-      else if (c === aspas) aspas = null;
+      else if (c === quote) quote = null;
       continue;
     }
 
     if (c === '"' || c === "'" || c === '`') {
-      aspas = c;
+      quote = c;
       continue;
     }
-    if (c === '{') nivel++;
+    if (c === '{') level++;
     else if (c === '}') {
-      nivel--;
-      if (nivel === 0) return i;
+      level--;
+      if (level === 0) return i;
     }
   }
   return -1;
 }
 
 /**
- * Quebra o texto em pedacos literais e expressoes.
+ * Breaks text into literal pieces and expressions.
  *
- * Aceita as duas formas. A curta, `{ nome }`, e a padrao da Voodoo. A dupla,
- * `{{ nome }}`, existe para quem vem do Vue e para textos que precisam conter
- * chaves literais ao redor. As duas aceitam quebra de linha e objeto dentro da
- * expressao; o que nao analisa como expressao fica no texto, intacto.
+ * Accepts both forms. The short one, `{ name }`, is Voodoo's standard. The
+ * double one, `{{ name }}`, exists for those coming from Vue and for text that
+ * needs to contain literal braces around. Both accept line breaks and objects
+ * inside expressions; what doesn't parse as an expression stays in text, intact.
  */
-function fatiarTexto(raw: string): TextSegment[] {
+function sliceText(raw: string): TextSegment[] {
   const segments: TextSegment[] = [];
   let literal = '';
   let i = 0;
 
-  const guardarLiteral = (): void => {
+  const saveLiteral = (): void => {
     if (literal) segments.push({ text: literal });
     literal = '';
   };
 
   while (i < raw.length) {
-    const abre = raw.indexOf('{', i);
-    if (abre === -1) {
+    const open = raw.indexOf('{', i);
+    if (open === -1) {
       literal += raw.slice(i);
       break;
     }
 
-    literal += raw.slice(i, abre);
+    literal += raw.slice(i, open);
 
-    const duplo = raw[abre + 1] === '{';
-    const fecha = duplo ? raw.indexOf('}}', abre + 2) : fecharChave(raw, abre);
+    const double = raw[open + 1] === '{';
+    const close = double ? raw.indexOf('}}', open + 2) : closeBrace(raw, open);
 
-    if (fecha === -1) {
-      literal += raw[abre];
-      i = abre + 1;
+    if (close === -1) {
+      literal += raw[open];
+      i = open + 1;
       continue;
     }
 
-    const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
-    const fim = duplo ? fecha + 2 : fecha + 1;
+    const expression = double ? raw.slice(open + 2, close) : raw.slice(open + 1, close);
+    const end = double ? close + 2 : close + 1;
 
-    const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
-    if (cabe && pareceExpressao(expressao)) {
-      guardarLiteral();
-      segments.push({ expression: expressao.trim() });
-      i = fim;
+    const fits = double || expression.length <= EXPRESSION_LIMIT;
+    if (fits && looksLikeExpression(expression)) {
+      saveLiteral();
+      segments.push({ expression: expression.trim() });
+      i = end;
       continue;
     }
 
-    // Nao era expressao: a chave volta a ser um caractere qualquer.
-    literal += raw[abre];
-    i = abre + 1;
+    // Not an expression: the brace returns to being a regular character.
+    literal += raw[open];
+    i = open + 1;
   }
 
-  guardarLiteral();
+  saveLiteral();
   return segments;
 }
 
-/** Elementos onde chaves quase sempre sao codigo, nao interpolacao. */
+/** Elements where braces are almost always code, not interpolation. */
 const NO_INTERPOLATION = new Set(['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TEXTAREA']);
 
 interface TextSegment {
@@ -823,10 +823,10 @@ interface TextSegment {
 }
 
 /**
- * Liga `{ expressao }` dentro de um no de texto ao estado reativo.
+ * Binds `{ expression }` inside a text node to reactive state.
  *
  * ```html
- * <p>Ola, { nome }! Voce tem { itens.length } itens.</p>
+ * <p>Hello, { name }! You have { items.length } items.</p>
  * ```
  */
 export function bindTextNode(node: Text, scope: Scope): void {
@@ -834,26 +834,26 @@ export function bindTextNode(node: Text, scope: Scope): void {
   if (!raw || raw.indexOf('{') === -1) return;
   if (initialized.has(node)) return;
 
-  // Sobe pelos ancestrais por dois motivos. Primeiro, um trecho de codigo com
-  // destaque de sintaxe coloca o texto dentro de <span>, e o pai direto deixaria
-  // de ser <pre>. Segundo, v-ignore e v-pre precisam valer para a subarvore
-  // inteira, mesmo quando a caminhada entra por um filho, o que acontece quando
-  // um script reescreve o conteudo de um bloco de codigo depois da montagem.
-  let ancestral: Element | null = node.parentElement;
-  while (ancestral) {
-    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
+  // Walk up through ancestors for two reasons. First, syntax-highlighted code
+  // places text inside <span>, and the direct parent stops being <pre>. Second,
+  // v-ignore and v-pre must apply to the entire subtree, even when the walk
+  // enters through a child, which happens when a script rewrites the content
+  // of a code block after mounting.
+  let ancestor: Element | null = node.parentElement;
+  while (ancestor) {
+    if (NO_INTERPOLATION.has(ancestor.tagName)) return;
     if (
-      ancestral.hasAttribute(`${config.prefix}ignore`) ||
-      ancestral.hasAttribute(`${config.prefix}pre`) ||
-      ancestral.hasAttribute('data-v-ignore') ||
-      ancestral.hasAttribute('data-v-pre')
+      ancestor.hasAttribute(`${config.prefix}ignore`) ||
+      ancestor.hasAttribute(`${config.prefix}pre`) ||
+      ancestor.hasAttribute('data-v-ignore') ||
+      ancestor.hasAttribute('data-v-pre')
     ) {
       return;
     }
-    ancestral = ancestral.parentElement;
+    ancestor = ancestor.parentElement;
   }
 
-  const segments = fatiarTexto(raw);
+  const segments = sliceText(raw);
   if (!segments.some((s) => s.expression)) return;
 
   initialized.add(node);
@@ -866,19 +866,19 @@ export function bindTextNode(node: Text, scope: Scope): void {
     createEffect(() => {
       let out = '';
       for (const segment of segments) {
-        out += segment.text ?? stringifyValue(evaluateIn(segment.expression!, scope, 'interpolacao'));
+        out += segment.text ?? stringifyValue(evaluateIn(segment.expression!, scope, 'interpolation'));
       }
       if (node.textContent !== out) node.textContent = out;
     }, { scope: owner })
   );
 }
 
-/** Fixa o escopo de um no antes do walker chegar nele. */
+/** Sets the scope of a node before the walker reaches it. */
 export function markNodeScope(node: Node, scope: Scope): void {
   nodeScopes.set(node, scope);
 }
 
-/** Resolve `<UserCard>` e `<user-card>` para o nome registrado. */
+/** Resolves `<UserCard>` and `<user-card>` to the registered name. */
 export function resolveComponentTag(tagName: string): string | null {
   const lower = tagName.toLowerCase();
   if (components.has(lower)) return lower;
@@ -886,26 +886,26 @@ export function resolveComponentTag(tagName: string): string | null {
   return alias ?? null;
 }
 
-/** Mapa de nomes sem hifen, para aceitar tags em PascalCase. */
+/** Map of hyphen-free names, to accept PascalCase tags. */
 export const componentAliases = new Map<string, string>();
 
 // ---------------------------------------------------------------------------
-// Hooks de ciclo de vida agendados
+// Scheduled lifecycle hooks
 // ---------------------------------------------------------------------------
 
-/** Executa depois que o DOM da rodada atual foi aplicado. */
+/** Executes after the current DOM round has been applied. */
 export function onMounted(fn: () => void): void {
   queuePostFlush(fn);
 }
 
 // ---------------------------------------------------------------------------
-// Inicializacao e observacao
+// Initialization and observation
 // ---------------------------------------------------------------------------
 
 let started = false;
 let observer: MutationObserver | null = null;
 
-/** Inicializa a Voodoo em uma raiz. Chamado automaticamente no navegador. */
+/** Initializes Voodoo in a root. Called automatically in the browser. */
 export function start(root?: Element | Document): void {
   if (typeof document === 'undefined') return;
   const target = (root ?? config.root ?? document.body) as Element;
@@ -923,8 +923,8 @@ export function start(root?: Element | Document): void {
 }
 
 /**
- * Observa insercoes e remocoes no DOM. Elementos criados depois do carregamento
- * ganham suas directives sem nenhuma chamada manual.
+ * Observes insertions and removals in the DOM. Elements created after loading
+ * get their directives without any manual call.
  */
 function observeDOM(target: Element): void {
   if (typeof MutationObserver === 'undefined') return;
@@ -933,8 +933,8 @@ function observeDOM(target: Element): void {
     for (const mutation of mutations) {
       for (let i = 0; i < mutation.removedNodes.length; i++) {
         const removed = mutation.removedNodes[i];
-        if (remocoesIgnoradas.has(removed)) {
-          remocoesIgnoradas.delete(removed);
+        if (ignoredRemovals.has(removed)) {
+          ignoredRemovals.delete(removed);
           continue;
         }
         if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
@@ -951,14 +951,14 @@ function observeDOM(target: Element): void {
   observer.observe(target, { childList: true, subtree: true });
 }
 
-/** Interrompe a observacao automatica do DOM. */
+/** Stops automatic DOM observation. */
 export function stopObserving(): void {
   observer?.disconnect();
   observer = null;
   started = false;
 }
 
-/** Reinicializa a Voodoo dentro de uma raiz, util em testes. */
+/** Reinitializes Voodoo within a root, useful in tests. */
 export function refresh(root?: Element): void {
   walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
 }

@@ -1,19 +1,19 @@
 /**
  * @module ui/palette
  *
- * Paleta configuravel da Voodoo. A partir de poucas cores base a funcao gera a
- * escala completa de tons (50 a 900), a versao de tema escuro e a cor de texto
- * com melhor contraste sobre cada cor, tudo escrito como variaveis CSS no
+ * Voodoo's configurable palette. From a few base colors, the function generates
+ * the complete scale of tones (50 to 900), the dark theme version, and the text
+ * color with the best contrast over each color, all written as CSS variables in
  * `:root`.
  *
- * O calculo acontece em OKLCH, um espaco perceptualmente uniforme: degraus com
- * a mesma diferenca de luminancia parecem igualmente distantes para o olho, o
- * que nao acontece em HSL. A cor de texto usa o calculo real de luminancia
- * relativa da WCAG, entao o resultado e sempre legivel.
+ * The calculation happens in OKLCH, a perceptually uniform color space: steps with
+ * the same difference in luminance appear equally distant to the eye, which does not
+ * happen in HSL. The text color uses the real WCAG relative luminance calculation,
+ * so the result is always readable.
  *
  * ```js
  * V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' })
- * V.palette({ preset: 'oceano' })
+ * V.palette({ preset: 'ocean' })
  * ```
  */
 
@@ -22,17 +22,17 @@ import { config } from '../runtime/registry';
 import { storage } from '../storage';
 
 // ---------------------------------------------------------------------------
-// Tipos de cor
+// Color types
 // ---------------------------------------------------------------------------
 
-/** Cor no espaco sRGB, com canais de 0 a 255. */
+/** Color in sRGB space, with channels from 0 to 255. */
 export interface RgbColor {
   r: number;
   g: number;
   b: number;
 }
 
-/** Cor em OKLCH: luminancia perceptual (0 a 1), croma e matiz em graus. */
+/** Color in OKLCH: perceptual luminance (0 to 1), chroma and hue in degrees. */
 export interface OklchColor {
   l: number;
   c: number;
@@ -40,7 +40,7 @@ export interface OklchColor {
 }
 
 // ---------------------------------------------------------------------------
-// Leitura de cores escritas pelo usuario
+// Reading colors written by the user
 // ---------------------------------------------------------------------------
 
 const HEX_SHORT = /^#([0-9a-f])([0-9a-f])([0-9a-f])[0-9a-f]?$/i;
@@ -55,7 +55,7 @@ function numbers(body: string): number[] {
     .filter((value) => !Number.isNaN(value));
 }
 
-/** Converte HSL (matiz em graus, saturacao e luminancia em porcentagem) em sRGB. */
+/** Convert HSL (hue in degrees, saturation and lightness in percentages) to sRGB. */
 function hslToRgb(h: number, s: number, l: number): RgbColor {
   const hue = ((h % 360) + 360) % 360;
   const sat = clamp(s / 100, 0, 1);
@@ -77,8 +77,8 @@ function hslToRgb(h: number, s: number, l: number): RgbColor {
 }
 
 /**
- * Le uma cor escrita como `#abc`, `#aabbcc`, `rgb(...)` ou `hsl(...)`.
- * Devolve `null` quando o texto nao descreve uma cor conhecida.
+ * Read a color written as `#abc`, `#aabbcc`, `rgb(...)` or `hsl(...)`.
+ * Returns `null` when the text does not describe a known color.
  */
 export function parseColor(input: string): RgbColor | null {
   const text = String(input ?? '').trim();
@@ -120,26 +120,26 @@ export function parseColor(input: string): RgbColor | null {
 }
 
 // ---------------------------------------------------------------------------
-// sRGB, luz linear e OKLCH
+// sRGB, linear light, and OKLCH
 // ---------------------------------------------------------------------------
 
 function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
-/** Remove a curva gama do sRGB, entregando energia luminosa linear. */
+/** Remove the sRGB gamma curve, delivering linear light energy. */
 function toLinear(channel: number): number {
   const v = channel / 255;
   return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
 }
 
-/** Reaplica a curva gama do sRGB sobre um valor linear de 0 a 1. */
+/** Reapply the sRGB gamma curve to a linear value from 0 to 1. */
 function toGamma(value: number): number {
   const v = value <= 0.0031308 ? value * 12.92 : 1.055 * Math.pow(value, 1 / 2.4) - 0.055;
   return v;
 }
 
-/** Converte sRGB em OKLab, passando pelo cone LMS com raiz cubica. */
+/** Convert sRGB to OKLab, passing through the LMS cone with cube root. */
 function rgbToOklab(color: RgbColor): { l: number; a: number; b: number } {
   const r = toLinear(color.r);
   const g = toLinear(color.g);
@@ -160,7 +160,7 @@ function rgbToOklab(color: RgbColor): { l: number; a: number; b: number } {
   };
 }
 
-/** Converte OKLab em canais sRGB continuos de 0 a 1, sem recorte. */
+/** Convert OKLab to continuous sRGB channels from 0 to 1, without clipping. */
 function oklabToRaw(lab: { l: number; a: number; b: number }): { r: number; g: number; b: number } {
   const l = lab.l + 0.3963377774 * lab.a + 0.2158037573 * lab.b;
   const m = lab.l - 0.1055613458 * lab.a - 0.0638541728 * lab.b;
@@ -177,7 +177,7 @@ function oklabToRaw(lab: { l: number; a: number; b: number }): { r: number; g: n
   };
 }
 
-/** Converte sRGB em OKLCH. */
+/** Convert sRGB to OKLCH. */
 export function rgbToOklch(color: RgbColor): OklchColor {
   const lab = rgbToOklab(color);
   const c = Math.sqrt(lab.a * lab.a + lab.b * lab.b);
@@ -192,9 +192,9 @@ function oklchToRaw(color: OklchColor): { r: number; g: number; b: number } {
 }
 
 /**
- * Converte OKLCH em sRGB. Cores fora do gamut do monitor perdem croma aos
- * poucos ate caberem, o que preserva matiz e luminancia em vez de recortar os
- * canais e mudar a cor percebida.
+ * Convert OKLCH to sRGB. Colors outside the monitor's gamut gradually lose chroma
+ * until they fit, which preserves hue and luminance instead of clipping channels
+ * and changing the perceived color.
  */
 export function oklchToRgb(color: OklchColor): RgbColor {
   let chroma = Math.max(0, color.c);
@@ -221,12 +221,12 @@ function pad(value: number): string {
   return clamp(Math.round(value), 0, 255).toString(16).padStart(2, '0');
 }
 
-/** Escreve uma cor sRGB como `#rrggbb`. */
+/** Write an sRGB color as `#rrggbb`. */
 export function toHex(color: RgbColor): string {
   return `#${pad(color.r)}${pad(color.g)}${pad(color.b)}`;
 }
 
-/** Escreve uma cor sRGB como `rgba(r, g, b, alpha)`. */
+/** Write an sRGB color as `rgba(r, g, b, alpha)`. */
 export function toRgba(color: RgbColor, alpha: number): string {
   return `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${Number(alpha.toFixed(3))})`;
 }
@@ -236,15 +236,15 @@ function oklchToHex(color: OklchColor): string {
 }
 
 // ---------------------------------------------------------------------------
-// Contraste WCAG
+// WCAG Contrast
 // ---------------------------------------------------------------------------
 
-/** Luminancia relativa da WCAG 2.1, de 0 (preto) a 1 (branco). */
+/** WCAG 2.1 relative luminance, from 0 (black) to 1 (white). */
 export function relativeLuminance(color: RgbColor): number {
   return 0.2126 * toLinear(color.r) + 0.7152 * toLinear(color.g) + 0.0722 * toLinear(color.b);
 }
 
-/** Razao de contraste da WCAG entre duas cores, de 1 a 21. */
+/** WCAG contrast ratio between two colors, from 1 to 21. */
 export function contrastRatio(a: RgbColor | string, b: RgbColor | string): number {
   const first = typeof a === 'string' ? parseColor(a) : a;
   const second = typeof b === 'string' ? parseColor(b) : b;
@@ -260,8 +260,8 @@ const WHITE: RgbColor = { r: 255, g: 255, b: 255 };
 const BLACK: RgbColor = { r: 0, g: 0, b: 0 };
 
 /**
- * Escolhe preto ou branco para o texto sobre a cor informada, comparando a
- * razao de contraste real das duas opcoes.
+ * Choose black or white for text over the given color, comparing the real
+ * contrast ratio of the two options.
  */
 export function contrastText(color: RgbColor | string): string {
   const base = typeof color === 'string' ? parseColor(color) : color;
@@ -270,31 +270,31 @@ export function contrastText(color: RgbColor | string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Escalas
+// Scales
 // ---------------------------------------------------------------------------
 
-/** Degraus gerados para cada cor base. */
+/** Steps generated for each base color. */
 export const SCALE_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
 
-// Luminancia alvo de cada degrau no tema claro. A curva e mais espacada nos
-// tons claros porque o olho separa melhor as diferencas nessa faixa.
+// Target luminance for each step in the light theme. The curve is more spaced out
+// in light tones because the eye separates differences better in that range.
 const LIGHT_L = [0.973, 0.941, 0.889, 0.819, 0.732, 0.638, 0.558, 0.478, 0.399, 0.327];
-// Croma relativo ao da cor base. O degrau 500 usa exatamente o croma original.
+// Chroma relative to the base color. Step 500 uses exactly the original chroma.
 const LIGHT_C = [0.14, 0.26, 0.46, 0.68, 0.88, 1, 0.97, 0.89, 0.78, 0.65];
 
-// No tema escuro a escala inverte de papel: 50 vira o fundo suave e 900 vira o
-// texto forte. Assim o mesmo CSS funciona nos dois temas sem trocar tokens.
+// In the dark theme the scale reverses roles: 50 becomes the soft background and 900
+// becomes the strong text. So the same CSS works in both themes without swapping tokens.
 const DARK_L = [0.244, 0.286, 0.343, 0.408, 0.484, 0.588, 0.668, 0.748, 0.836, 0.928];
 const DARK_C = [0.3, 0.42, 0.6, 0.78, 0.92, 1, 0.92, 0.78, 0.57, 0.33];
 
-/** Escala de tons de uma cor, com os degraus de 50 a 900. */
+/** Scale of tones for a color, with steps from 50 to 900. */
 export type ColorScale = Record<string, string>;
 
 /**
- * Gera a escala de uma cor base.
+ * Generate the scale for a base color.
  *
- * @param color cor base em qualquer formato aceito por `parseColor`
- * @param dark quando `true`, gera a escala do tema escuro (papeis invertidos)
+ * @param color base color in any format accepted by `parseColor`
+ * @param dark when `true`, generates the dark theme scale (inverted roles)
  */
 export function colorScale(color: string | RgbColor, dark = false): ColorScale {
   const rgb = typeof color === 'string' ? parseColor(color) ?? BLACK : color;
@@ -316,7 +316,7 @@ export function colorScale(color: string | RgbColor, dark = false): ColorScale {
 // Presets
 // ---------------------------------------------------------------------------
 
-/** Conjunto de cores base de um preset. */
+/** Set of base colors for a preset. */
 export interface PaletteColors {
   primary: string;
   accent: string;
@@ -324,14 +324,14 @@ export interface PaletteColors {
   warning: string;
   danger: string;
   info: string;
-  /** Cor que tinge fundos, textos e bordas. Padrao: matiz da primaria. */
+  /** Color that tints backgrounds, texts, and borders. Default: hue of primary. */
   neutral?: string;
 }
 
-/** Nomes dos presets prontos. */
+/** Names of ready-made presets. */
 export type PresetName = 'violeta' | 'oceano' | 'floresta' | 'poente' | 'grafite';
 
-/** Presets prontos, todos com contraste verificado nos dois temas. */
+/** Ready-made presets, all with contrast verified in both themes. */
 export const presets: Record<PresetName, PaletteColors> = {
   violeta: {
     primary: '#6D3BF5',
@@ -376,34 +376,34 @@ export const presets: Record<PresetName, PaletteColors> = {
 };
 
 // ---------------------------------------------------------------------------
-// Opcoes
+// Options
 // ---------------------------------------------------------------------------
 
-/** Opcoes aceitas por `V.palette()`. */
+/** Options accepted by `V.palette()`. */
 export interface PaletteOptions extends Partial<PaletteColors> {
-  /** Preset usado como ponto de partida. As cores informadas sobrescrevem. */
+  /** Preset used as starting point. Provided colors override it. */
   preset?: PresetName;
-  /** Raio das bordas, como `12px` ou `0.75rem`. */
+  /** Border radius, like `12px` or `0.75rem`. */
   radius?: string;
-  /** Familia principal. A pagina continua responsavel por carregar a fonte. */
+  /** Primary font family. The page remains responsible for loading the font. */
   font?: string;
-  /** Familia monoespacada usada por `VCodeBlock`. */
+  /** Monospaced font family used by `VCodeBlock`. */
   monoFont?: string;
-  /** Salva a escolha em localStorage. Padrao `true`. */
+  /** Save the choice in localStorage. Default `true`. */
   persist?: boolean;
 }
 
-/** Paleta ja resolvida, com todas as escalas calculadas. */
+/** Resolved palette, with all scales calculated. */
 export interface ResolvedPalette {
   colors: PaletteColors;
   radius: string;
   font: string;
   monoFont: string;
-  /** Escalas do tema claro, por nome de cor. */
+  /** Light theme scales, by color name. */
   light: Record<string, ColorScale>;
-  /** Escalas do tema escuro, por nome de cor. */
+  /** Dark theme scales, by color name. */
   dark: Record<string, ColorScale>;
-  /** Cor de texto sobre cada cor base, calculada pela WCAG. */
+  /** Text color over each base color, calculated by WCAG. */
   contrast: Record<string, string>;
   css: string;
 }
@@ -433,7 +433,7 @@ function fontStack(font: string | undefined, fallback: string): string {
 
 const RADIUS_PATTERN = /^([\d.]+)(px|rem|em)$/;
 
-/** Deriva os raios menores e maiores a partir do raio base informado. */
+/** Derive smaller and larger radii from the provided base radius. */
 function radiusScale(radius: string): Record<string, string> {
   const text = (radius || '12px').trim();
   const match = RADIUS_PATTERN.exec(text);
@@ -464,7 +464,7 @@ interface ThemeVars {
   contrast: Record<string, string>;
 }
 
-/** Monta todas as variaveis de um tema a partir das cores base. */
+/** Build all variables of a theme from the base colors. */
 function buildTheme(colors: PaletteColors, dark: boolean): ThemeVars {
   const vars: Record<string, string> = {};
   const scales: Record<string, ColorScale> = {};
@@ -480,8 +480,8 @@ function buildTheme(colors: PaletteColors, dark: boolean): ThemeVars {
       vars[`--v-${role}-${step}`] = scale[String(step)];
     }
 
-    // No tema escuro a cor principal sobe de luminancia para nao sumir sobre o
-    // fundo. No tema claro ela permanece exatamente a cor pedida.
+    // In the dark theme the main color increases in luminance to not disappear on the
+    // background. In the light theme it remains exactly the requested color.
     const main: OklchColor = dark
       ? { l: Math.max(base.l, 0.62), c: base.c * 0.95, h: base.h }
       : base;
@@ -500,13 +500,13 @@ function buildTheme(colors: PaletteColors, dark: boolean): ThemeVars {
     vars[`--v-${role}-hover`] = toHex(hoverRgb);
     vars[`--v-${role}-active`] = toHex(activeRgb);
 
-    // Cada estado ganha a propria cor de texto, porque escurecer ou clarear o
-    // fundo pode virar a decisao entre preto e branco.
+    // Each state gets its own text color, because darkening or lightening the
+    // background can flip the decision between black and white.
     vars[`--v-${role}-contrast`] = contrastText(dark ? mainRgb : rgb);
     vars[`--v-${role}-contrast-hover`] = contrastText(hoverRgb);
     vars[`--v-${role}-contrast-active`] = contrastText(activeRgb);
 
-    // Superficie suave e o texto que fica legivel sobre ela.
+    // Soft surface and text that remains readable over it.
     const soft = scale['50'];
     const softHover = scale['100'];
     const softText = dark ? scale['800'] : scale['700'];
@@ -519,8 +519,8 @@ function buildTheme(colors: PaletteColors, dark: boolean): ThemeVars {
     contrast[role] = vars[`--v-${role}-contrast`];
   }
 
-  // Neutros tingidos com a matiz escolhida, para a interface inteira parecer
-  // parte da mesma paleta.
+  // Neutrals tinted with the chosen hue, so the entire interface looks like
+  // part of the same palette.
   const neutralRgb = parseColor(colors.neutral ?? colors.primary) ?? BLACK;
   const hue = rgbToOklch(neutralRgb).h;
   const neutral = (l: number, c: number): string => oklchToHex({ l, c, h: hue });
@@ -577,7 +577,7 @@ function block(selector: string, vars: Record<string, string>): string {
 }
 
 // ---------------------------------------------------------------------------
-// Aplicacao
+// Application
 // ---------------------------------------------------------------------------
 
 let current: ResolvedPalette | null = null;
@@ -598,7 +598,7 @@ function resolveOptions(options: PaletteOptions): { colors: PaletteColors; radiu
   for (const role of ROLES) {
     if (parseColor(colors[role])) continue;
     // eslint-disable-next-line no-console
-    console.warn(`[Voodoo] cor invalida em palette.${role}: "${colors[role]}". Usando o preset.`);
+    console.warn(`[Voodoo] invalid color in palette.${role}: "${colors[role]}". Using preset.`);
     colors[role] = preset[role];
   }
 
@@ -613,8 +613,8 @@ function resolveOptions(options: PaletteOptions): { colors: PaletteColors; radiu
 function writeStyle(css: string): void {
   if (typeof document === 'undefined') return;
   if (!config.injectStyles) return;
-  // Os tokens base entram primeiro para que a paleta, injetada depois, vença
-  // pela ordem do documento sem precisar de seletores mais especificos.
+  // Base tokens are injected first so the palette, injected later, wins
+  // by document order without needing more specific selectors.
   ensureTokens();
 
   let element = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
@@ -628,14 +628,14 @@ function writeStyle(css: string): void {
 }
 
 /**
- * Aplica uma paleta. Gera as escalas, escreve as variaveis CSS no `:root`,
- * cria as versoes de tema escuro e salva a escolha em localStorage.
+ * Apply a palette. Generates the scales, writes CSS variables to `:root`,
+ * creates dark theme versions, and saves the choice in localStorage.
  *
  * ```js
  * V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' })
  * ```
  *
- * @returns a paleta resolvida, com as escalas e o CSS gerado
+ * @returns the resolved palette, with scales and generated CSS
  */
 export function applyPalette(options: PaletteOptions = {}): ResolvedPalette {
   const { colors, radius, font, mono } = resolveOptions(options);
@@ -650,7 +650,7 @@ export function applyPalette(options: PaletteOptions = {}): ResolvedPalette {
   };
 
   const css = [
-    '/* Paleta gerada por V.palette(). Nao edite a mao. */',
+    '/* Palette generated by V.palette(). Do not edit manually. */',
     block(':root', { ...shared, ...light.vars }),
     `@media (prefers-color-scheme: dark) {\n${block(':root:not([data-theme="light"])', dark.vars)}\n}`,
     block(':root[data-theme="dark"]', dark.vars),
@@ -688,8 +688,8 @@ export function applyPalette(options: PaletteOptions = {}): ResolvedPalette {
 let initialized = false;
 
 /**
- * Aplica a paleta salva em localStorage, ou o preset padrao quando nao existe
- * escolha anterior. Chamada automaticamente pelos componentes de UI.
+ * Apply the palette saved in localStorage, or the default preset when there is no
+ * previous choice. Called automatically by UI components.
  */
 export function initPalette(): ResolvedPalette {
   if (current && initialized) return current;
@@ -699,23 +699,23 @@ export function initPalette(): ResolvedPalette {
   return applyPalette(options);
 }
 
-/** Garante que as variaveis da paleta existam antes de qualquer componente. */
+/** Ensure that palette variables exist before any component. */
 export function ensurePalette(): void {
   if (current) return;
   initPalette();
 }
 
 /**
- * Reaplica a paleta guardada em localStorage. Chamada pelo build de navegador
- * antes de iniciar a pagina, para que as cores certas apareçam de primeira.
+ * Reapply the palette saved in localStorage. Called by the browser build
+ * before starting the page, so the correct colors appear first.
  */
 export function applySavedPalette(): ResolvedPalette {
   return initPalette();
 }
 
 /**
- * Paleta da Voodoo. Chame como funcao para aplicar, ou use os utilitarios
- * anexados para inspecionar cores e contraste.
+ * Voodoo's palette. Call as a function to apply, or use the attached utilities
+ * to inspect colors and contrast.
  *
  * ```js
  * V.palette({ preset: 'oceano' })
@@ -724,45 +724,45 @@ export function applySavedPalette(): ResolvedPalette {
  * ```
  */
 export const palette = Object.assign(applyPalette, {
-  /** Presets prontos, indexados pelo nome. */
+  /** Ready-made presets, indexed by name. */
   presets,
-  /** Nomes dos presets disponiveis. */
+  /** Names of available presets. */
   get names(): PresetName[] {
     return Object.keys(presets) as PresetName[];
   },
-  /** Paleta em uso, ou `null` antes da primeira aplicacao. */
+  /** Palette in use, or `null` before the first application. */
   get current(): ResolvedPalette | null {
     return current;
   },
-  /** Opcoes usadas na ultima aplicacao. */
+  /** Options used in the last application. */
   get options(): PaletteOptions | null {
     return currentOptions;
   },
-  /** Aplica a paleta salva, ou o padrao quando nao ha nada salvo. */
+  /** Apply the saved palette, or the default when there is nothing saved. */
   init: initPalette,
-  /** Garante que as variaveis existam, sem sobrescrever o que ja foi aplicado. */
+  /** Ensure variables exist, without overwriting what has already been applied. */
   ensure: ensurePalette,
-  /** Volta ao preset padrao e apaga a escolha salva. */
+  /** Return to the default preset and clear the saved choice. */
   reset(): ResolvedPalette {
     storage.remove(STORAGE_KEY);
     return applyPalette({ persist: false });
   },
-  /** Troca apenas o preset, mantendo raio e fonte atuais. */
+  /** Change only the preset, maintaining current radius and font. */
   use(name: PresetName): ResolvedPalette {
     return applyPalette({ ...(currentOptions ?? {}), preset: name, primary: undefined, accent: undefined });
   },
-  /** Escala de tons de uma cor qualquer. */
+  /** Scale of tones for any color. */
   scale: colorScale,
-  /** Preto ou branco, conforme o melhor contraste WCAG sobre a cor. */
+  /** Black or white, depending on the best WCAG contrast over the color. */
   contrastText,
-  /** Razao de contraste WCAG entre duas cores. */
+  /** WCAG contrast ratio between two colors. */
   contrastRatio,
-  /** Luminancia relativa WCAG de uma cor. */
+  /** WCAG relative luminance of a color. */
   luminance(color: string | RgbColor): number {
     const rgb = typeof color === 'string' ? parseColor(color) : color;
     return rgb ? relativeLuminance(rgb) : 0;
   },
-  /** Conversores expostos para quem quiser gerar cores derivadas. */
+  /** Converters exposed for those who want to generate derived colors. */
   convert: { parseColor, rgbToOklch, oklchToRgb, toHex, toRgba },
 });
 

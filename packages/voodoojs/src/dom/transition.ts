@@ -1,12 +1,12 @@
 /**
  * @module dom/transition
  *
- * Transicoes de entrada e saida baseadas em classes CSS, no mesmo modelo do
- * Vue, porem sem componente wrapper: basta `v-transition` no elemento.
+ * Entry and exit transitions based on CSS classes, in the same model as Vue,
+ * but without a wrapper component: just use `v-transition` on the element.
  *
- * Ciclo de entrada:
- *   `.{nome}-enter-from` aplicado, proximo quadro troca para `.{nome}-enter-to`,
- *   ambas com `.{nome}-enter-active`, removidas ao terminar a animacao.
+ * Entry cycle:
+ *   `.{name}-enter-from` applied, next frame switches to `.{name}-enter-to`,
+ *   both with `.{name}-enter-active`, removed when animation finishes.
  */
 
 import { injectStyle } from './style';
@@ -46,9 +46,9 @@ export interface TransitionClasses {
 }
 
 export interface TransitionOptions extends TransitionClasses {
-  /** Nome base das classes. Padrao `v-fade`. */
+  /** Base name of the classes. Default `v-fade`. */
   name?: string;
-  /** Duracao forcada em ms. Quando ausente, e lida do CSS computado. */
+  /** Forced duration in ms. When absent, read from computed CSS. */
   duration?: number;
 }
 
@@ -72,7 +72,7 @@ function removeClasses(el: HTMLElement, list: string): void {
   for (const cls of list.split(/\s+/).filter(Boolean)) el.classList.remove(cls);
 }
 
-/** Le a duracao total declarada no CSS do elemento, em milissegundos. */
+/** Reads the total duration declared in the element's CSS, in milliseconds. */
 function readDuration(el: HTMLElement): number {
   const style = getComputedStyle(el);
   const parse = (value: string): number =>
@@ -87,7 +87,7 @@ function nextFrame(fn: () => void): void {
   requestAnimationFrame(() => requestAnimationFrame(fn));
 }
 
-/** Executa a transicao de entrada e resolve quando ela termina. */
+/** Executes the entry transition and resolves when it finishes. */
 export function enter(el: HTMLElement, options: TransitionOptions = {}): Promise<void> {
   injectStyle('transitions', BUILT_IN_CSS);
   const c = classesFor(options);
@@ -114,7 +114,7 @@ export function enter(el: HTMLElement, options: TransitionOptions = {}): Promise
   });
 }
 
-/** Executa a transicao de saida e resolve quando ela termina. */
+/** Executes the exit transition and resolves when it finishes. */
 export function leave(el: HTMLElement, options: TransitionOptions = {}): Promise<void> {
   injectStyle('transitions', BUILT_IN_CSS);
   const c = classesFor(options);
@@ -141,7 +141,7 @@ export function leave(el: HTMLElement, options: TransitionOptions = {}): Promise
   });
 }
 
-/** Anima altura de 0 ate o conteudo. Usado por `v-collapse`. */
+/** Animates height from 0 to content. Used by `v-collapse`. */
 export function slideDown(el: HTMLElement, duration = 240): Promise<void> {
   return new Promise((resolve) => {
     el.style.removeProperty('display');
@@ -166,7 +166,7 @@ export function slideDown(el: HTMLElement, duration = 240): Promise<void> {
   });
 }
 
-/** Anima altura ate zero e esconde o elemento. */
+/** Animates height to zero and hides the element. */
 export function slideUp(el: HTMLElement, duration = 240): Promise<void> {
   return new Promise((resolve) => {
     el.style.height = `${el.scrollHeight}px`;
@@ -189,7 +189,7 @@ export function slideUp(el: HTMLElement, duration = 240): Promise<void> {
   });
 }
 
-/** Aparecimento com fade. */
+/** Appearance with fade. */
 export function fadeIn(el: HTMLElement, duration = 220): Promise<void> {
   return new Promise((resolve) => {
     el.style.opacity = '0';
@@ -207,7 +207,7 @@ export function fadeIn(el: HTMLElement, duration = 220): Promise<void> {
   });
 }
 
-/** Desaparecimento com fade, terminando em `display:none`. */
+/** Disappearance with fade, ending in `display:none`. */
 export function fadeOut(el: HTMLElement, duration = 220): Promise<void> {
   return new Promise((resolve) => {
     el.style.transition = `opacity ${duration}ms ease`;
@@ -222,8 +222,8 @@ export function fadeOut(el: HTMLElement, duration = 220): Promise<void> {
 }
 
 /**
- * Transicoes suaves de layout usando a View Transitions API quando existir.
- * Em navegadores sem suporte, a funcao apenas executa a mudanca.
+ * Smooth layout transitions using the View Transitions API when available.
+ * On browsers without support, the function just executes the change.
  */
 export function viewTransition(update: () => void): void {
   const doc = document as Document & { startViewTransition?: (cb: () => void) => void };

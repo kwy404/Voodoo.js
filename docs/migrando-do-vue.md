@@ -1,10 +1,10 @@
-# Migrando do Vue
+# Migrating from Vue
 
-A sintaxe de template da Voodoo.js foi desenhada para ser familiar a quem vem do Vue. Directives,
-modificadores, `v-model` e o modelo de componentes seguem os mesmos nomes. A diferença de fundo é
-que **não existe compilação**: a Voodoo interpreta o HTML que já está na página.
+Voodoo.js' template syntax was designed to be familiar to those coming from Vue. Directives,
+modifiers, `v-model` and the component model follow the same names. The fundamental difference is
+that **there's no compilation**: Voodoo interprets the HTML already on the page.
 
-Isso muda o que é possível. Vale a pena ler a seção de limites antes de decidir.
+This changes what's possible. It's worth reading the limitations section before deciding.
 
 ## Template
 
@@ -178,47 +178,45 @@ V.store('carrinho', {
 As classes seguem o mesmo padrão: `v-fade-enter-from`, `v-fade-enter-active`, `v-fade-enter-to`,
 `v-fade-leave-from`, `v-fade-leave-active`, `v-fade-leave-to`.
 
-## O que não existe, e por quê
+## What doesn't exist, and why
 
-A Voodoo.js interpreta o HTML da página. Sem compilação, algumas coisas do Vue não têm como
-existir:
+Voodoo.js interprets the page's HTML. Without compilation, some Vue things can't exist:
 
-- **componentes de arquivo único** (`.vue`), que dependem de um compilador;
-- **JSX e funções de render**;
-- **`setup()` e a Composition API** dentro de componentes;
+- **single-file components** (`.vue`), which depend on a compiler;
+- **JSX and render functions**;
+- **`setup()` and Composition API** inside components;
 - **`<script setup>`**;
-- **renderização no servidor com hidratação**;
-- **slots com escopo**, que passam dados do filho para o conteúdo do pai;
-- **`provide` e `inject`**, substituídos por stores;
-- **`<KeepAlive>` e `<Suspense>`**;
-- **`v-memo`** e otimizações de compilador em geral;
-- **desembrulho automático de `ref` no template**;
-- **checagem de tipos no template**.
+- **server-side rendering with hydration**;
+- **scoped slots**, which pass data from child to parent content;
+- **`provide` and `inject`**, replaced by stores;
+- **`<KeepAlive>` and `<Suspense>`**;
+- **`v-memo`** and compiler optimizations in general;
+- **automatic ref unwrapping in templates**;
+- **type checking in templates**.
 
-As expressões também aceitam um subconjunto de JavaScript: sem `function`, `class`, `new`,
-`delete`, `await`, laços e desestruturação. Veja [Expressões](expressoes.md).
+Expressions also accept a subset of JavaScript: no `function`, `class`, `new`,
+`delete`, `await`, loops and destructuring. See [Expressions](expressoes.md).
 
-## O que você ganha
+## What you gain
 
-- **nenhum passo de build.** Nada de Vite, nada de configuração, nada de `node_modules` para
-  colocar uma página no ar;
-- **um arquivo só**, que funciona por CDN;
-- **muita coisa embutida**: HTTP declarativo, formulários com validação e máscaras, interface,
-  arrastar e soltar, armazenamento, notificações, e no build completo gráficos, animações,
-  roteador e idiomas;
-- **funciona com CSP restritiva**, sem `unsafe-eval`;
-- **convive com HTML gerado no servidor**, sem precisar assumir a página inteira.
+- **no build step.** No Vite, no configuration, no `node_modules` to get a page online;
+- **a single file**, which works from CDN;
+- **lots of things built-in**: declarative HTTP, forms with validation and masks, UI,
+  drag and drop, storage, notifications, and in the complete build charts, animations,
+  router and languages;
+- **works with restrictive CSP**, no `unsafe-eval`;
+- **coexists with server-generated HTML**, without having to take over the entire page.
 
-## Quando não trocar
+## When not to switch
 
-Se o seu projeto tem dezenas de telas, um time grande, testes de componente e tipagem estrita nos
-templates, o Vue continua sendo a escolha certa. A Voodoo.js foi feita para o outro lado da
-balança: páginas geradas no servidor, painéis administrativos, protótipos e times pequenos.
+If your project has dozens of screens, a large team, component testing and strict types in
+templates, Vue is still the right choice. Voodoo.js was made for the other side of
+the balance: server-generated pages, admin panels, prototypes and small teams.
 
-## Convivendo
+## Coexisting
 
-As duas podem rodar na mesma página, em áreas diferentes. Marque a região do Vue com `v-ignore`
-para que a Voodoo não toque nela:
+The two can run on the same page, in different areas. Mark the Vue region with `v-ignore`
+so Voodoo doesn't touch it:
 
 ```html
 <div id="app-vue" v-ignore></div>
@@ -230,4 +228,4 @@ para que a Voodoo não toque nela:
 
 ---
 
-Anterior: [Migrando do Alpine](migrando-do-alpine.md) · Próximo: [Perguntas frequentes](perguntas-frequentes.md)
+Previous: [Migrating from Alpine](migrando-do-alpine.md) · Next: [FAQ](perguntas-frequentes.md)

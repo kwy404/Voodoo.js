@@ -68,7 +68,7 @@ describe('globais fora do alcance', () => {
   it('chamar um global proibido reclama em vez de executar', () => {
     const r = tenta('eval("1+1")');
     expect(r.ok).toBe(false);
-    expect(r.erro).toContain('nao e uma funcao');
+    expect(r.erro).toContain('is not a function');
   });
 
   it('import nao e uma funcao disponivel', () => {
@@ -100,7 +100,7 @@ describe('fugas classicas pela cadeia de prototipos', () => {
     it(`bloqueia ${fuga}`, () => {
       const r = tenta(fuga, { x: { a: 1 } });
       expect(r.ok).toBe(false);
-      expect(r.erro).toContain('Acesso bloqueado');
+      expect(r.erro).toContain('Access blocked');
     });
   }
 

@@ -1,12 +1,12 @@
-# Roteador
+# Router
 
-> Este módulo vem apenas no `voodoo.full.min.js` ou em um build sob medida.
+> This module only comes in `voodoo.full.min.js` or in a custom build.
 
-Roteador de aplicação de página única, sem nenhuma dependência externa. Dois modos: `history`, que
-usa a History API e URLs limpas, e `hash`, que guarda a rota depois do `#` e funciona até abrindo
-o arquivo direto do disco.
+Single-page application router with no external dependencies. Two modes: `history`, which uses
+the History API and clean URLs, and `hash`, which stores the route after `#` and works even
+opening the file directly from disk.
 
-## Configurando
+## Configuring
 
 ```js
 V.router({
@@ -40,67 +40,67 @@ V.router({
 <main v-router-view>Carregando...</main>
 ```
 
-## Opções
+## Options
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `history` | `history` ou `hash` |
-| `base` | `/` | Prefixo comum das rotas no modo `history` |
-| `routes` | | Mapa de padrão para definição |
-| `beforeEach` | | Guard global antes de cada navegação |
-| `afterEach` | | Hook global depois de cada navegação |
-| `linkActiveClass` | `v-link-active` | Classe do `v-link` quando a rota começa com o destino |
-| `linkExactActiveClass` | `v-link-exact-active` | Classe do `v-link` quando a rota é exatamente o destino |
-| `transition` | `true` | Usa a View Transitions API na troca de tela |
-| `titleTemplate` | `%s` | Modelo do título, com `%s` no lugar do título da rota |
-| `scrollBehavior` | | Controle fino da rolagem depois de navegar |
+| `mode` | `history` | `history` or `hash` |
+| `base` | `/` | Common prefix of routes in `history` mode |
+| `routes` | | Map of pattern to definition |
+| `beforeEach` | | Global guard before each navigation |
+| `afterEach` | | Global hook after each navigation |
+| `linkActiveClass` | `v-link-active` | Class of `v-link` when the route starts with the destination |
+| `linkExactActiveClass` | `v-link-exact-active` | Class of `v-link` when the route exactly matches the destination |
+| `transition` | `true` | Uses View Transitions API on screen change |
+| `titleTemplate` | `%s` | Title template, with `%s` in place of the route title |
+| `scrollBehavior` | | Fine-grained control of scrolling after navigation |
 
-## Definição de rota
+## Route definition
 
-| Campo | O que faz |
+| Field | What it does |
 | --- | --- |
-| `component` | Nome de um componente registrado, montado dentro do `v-router-view` |
-| `view` | URL de um HTML remoto, carregado e inserido no lugar |
-| `title` | Aplicado em `document.title` ao entrar |
-| `name` | Nome da rota, disponível em `$route.name` |
-| `meta` | Dados livres, disponíveis em `$route.meta` |
-| `redirect` | Redireciona assim que a rota casa |
-| `beforeEnter` | Guard exclusivo desta rota, executado antes do global |
+| `component` | Name of a registered component, mounted inside `v-router-view` |
+| `view` | URL of remote HTML, loaded and inserted in place |
+| `title` | Applied to `document.title` on entering |
+| `name` | Route name, available in `$route.name` |
+| `meta` | Free data, available in `$route.meta` |
+| `redirect` | Redirects as soon as the route matches |
+| `beforeEnter` | Guard exclusive to this route, executed before the global one |
 
-## Padrões e especificidade
+## Patterns and specificity
 
 ```
-/usuarios          segmento fixo
-/usuarios/:id      parâmetro obrigatório
-/posts/:slug?      parâmetro opcional
-*                  curinga, entra quando nada mais casa
+/usuarios          fixed segment
+/usuarios/:id      required parameter
+/posts/:slug?      optional parameter
+*                  wildcard, matches when nothing else does
 ```
 
-A rota mais específica sempre vence: `/usuarios/novo` ganha de `/usuarios/:id`, e `*` só entra por
-último. Você não precisa se preocupar com a ordem em que declarou.
+The most specific route always wins: `/usuarios/novo` beats `/usuarios/:id`, and `*` only matches
+last. You don't need to worry about the order you declared them.
 
 ## $route
 
-O estado da rota atual é reativo. Qualquer expressão que leia `$route` se atualiza sozinha.
+The current route state is reactive. Any expression that reads `$route` updates by itself.
 
 ```html
-<h1>Usuário { $route.params.id }</h1>
-<p v-show="$route.query.novo">Cadastro recém-criado</p>
+<h1>User { $route.params.id }</h1>
+<p v-show="$route.query.new">Account just created</p>
 <small>{ $route.path } · { $route.name }</small>
 ```
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `path` | Caminho sem query e sem hash |
-| `fullPath` | Caminho completo |
-| `params` | Parâmetros do padrão, como `{ id: '42' }` |
-| `query` | Query string convertida em objeto |
-| `hash` | Âncora, sem o `#` |
-| `name` | Nome declarado na rota |
-| `meta` | Metadados da rota |
-| `matched` | O padrão que casou, ou `null` |
+| `path` | Path without query and without hash |
+| `fullPath` | Complete path |
+| `params` | Pattern parameters, like `{ id: '42' }` |
+| `query` | Query string converted to object |
+| `hash` | Anchor, without the `#` |
+| `name` | Name declared in the route |
+| `meta` | Route metadata |
+| `matched` | The pattern that matched, or `null` |
 
-Por JavaScript, o mesmo objeto está em `V.route`.
+Via JavaScript, the same object is at `V.route`.
 
 ## v-router-view
 
@@ -109,46 +109,46 @@ Por JavaScript, o mesmo objeto está em `V.route`.
 <main v-router-view.no-transition></main>
 ```
 
-Rota com `component` monta o componente registrado. Rota com `view` busca o HTML remoto e o insere
-já com as directives ligadas, guardando o resultado em cache. O conteúdo original do elemento
-volta quando nenhuma rota casa.
+Route with `component` mounts the registered component. Route with `view` fetches the remote HTML
+and inserts it with directives already attached, caching the result. The element's original
+content returns when no route matches.
 
-A troca usa a View Transitions API quando o navegador oferece. `.no-transition` desliga isso.
+The switch uses View Transitions API when the browser provides it. `.no-transition` turns it off.
 
 ## v-link
 
-Transforma qualquer `<a href>` em navegação interna.
+Transforms any `<a href>` into internal navigation.
 
 ```html
-<a v-link href="/usuarios">Usuários</a>
-<a v-link="'/usuarios/' + user.id">Detalhe</a>
-<a v-link.replace href="/login">Entrar</a>
-<a v-link.no-scroll href="/lista">Sem rolar ao topo</a>
+<a v-link href="/usuarios">Users</a>
+<a v-link="'/usuarios/' + user.id">Detail</a>
+<a v-link.replace href="/login">Sign in</a>
+<a v-link.no-scroll href="/list">Don't scroll to top</a>
 ```
 
-Continuam com o comportamento nativo do navegador: cliques com Ctrl, Command, Shift ou Alt,
-cliques que não sejam com o botão principal, links com `target`, com `download`, com
-`rel="external"` e links para outro domínio.
+They keep the browser's native behavior: clicks with Ctrl, Command, Shift or Alt, clicks that
+aren't with the primary button, links with `target`, with `download`, with `rel="external"` and
+links to another domain.
 
-O link ativo recebe as classes configuradas e `aria-current="page"` quando é exatamente a rota
-atual.
+The active link receives the configured classes and `aria-current="page"` when it exactly matches
+the current route.
 
 ## v-route-active
 
-Aplica uma classe quando a rota atual casa com um caminho. Útil em itens de menu que não são o
-próprio link.
+Applies a class when the current route matches a path. Useful for menu items that aren't the
+link itself.
 
 ```html
 <li v-route-active="/usuarios">
-  <a v-link href="/usuarios">Usuários</a>
+  <a v-link href="/usuarios">Users</a>
 </li>
 
-<li v-route-active:destaque.exact="/">Início</li>
+<li v-route-active:highlight.exact="/">Home</li>
 ```
 
-O argumento é o nome da classe, com padrão `active`. `.exact` exige o caminho idêntico.
+The argument is the class name, with default `active`. `.exact` requires the path to be identical.
 
-## Navegando por JavaScript
+## Navigating via JavaScript
 
 ```js
 await V.navigate('/usuarios/42');
@@ -163,23 +163,23 @@ V.router.forward();
 V.router.go(-2);
 ```
 
-`navigate` devolve `true` quando a navegação aconteceu, e `false` quando um guard cancelou.
+`navigate` returns `true` when navigation happened, and `false` when a guard cancelled it.
 
-Dentro do HTML você tem `$router` e `$route`:
+Inside HTML you have `$router` and `$route`:
 
 ```html
 <button v-click="$router.push('/carrinho')">Ir ao carrinho</button>
 <button v-click="$router.back()">Voltar</button>
 ```
 
-## Resolvendo sem navegar
+## Resolving without navigating
 
 ```js
 V.router.resolve('/usuarios/7').params.id;   // '7'
 V.router.resolve('/x').matched;              // padrão casado, ou null
 ```
 
-## Rotas dinâmicas
+## Dynamic routes
 
 ```js
 V.router.addRoute('/relatorios/:tipo', { component: 'relatorio' });
@@ -203,16 +203,16 @@ V.router({
 });
 ```
 
-O guard pode devolver:
+The guard can return:
 
-| Valor | Efeito |
+| Value | Effect |
 | --- | --- |
-| `true`, `undefined`, nada | Deixa seguir |
-| `false` | Cancela a navegação |
-| uma string | Redireciona para aquele caminho |
-| uma `Promise` de qualquer um dos anteriores | O mesmo, de forma assíncrona |
+| `true`, `undefined`, nothing | Allows navigation |
+| `false` | Cancels navigation |
+| a string | Redirects to that path |
+| a `Promise` of any of the above | The same, asynchronously |
 
-Guards por rota rodam antes do global:
+Per-route guards run before the global one:
 
 ```js
 routes: {
@@ -226,48 +226,48 @@ routes: {
 }
 ```
 
-Redirecionamentos encadeados têm limite, então um laço acidental para com um aviso em vez de
-travar a aba.
+Chained redirects have a limit, so an accidental loop stops with a warning instead of freezing
+the tab.
 
-## Rolagem
+## Scrolling
 
-Por padrão: rota nova volta ao topo, voltar pelo histórico restaura a posição guardada, e um hash
-rola até a âncora. Para controlar:
+By default: new route goes to top, going back in history restores the saved position, and a hash
+scrolls to the anchor. To control:
 
 ```js
 V.router({
   routes: { ... },
-  scrollBehavior(to, from, salvo) {
-    if (to.hash) return false;          // você assume a rolagem
-    if (salvo !== null) return salvo;   // restaura a posição
-    return 0;                            // topo
+  scrollBehavior(to, from, saved) {
+    if (to.hash) return false;          // you take over scrolling
+    if (saved !== null) return saved;   // restore position
+    return 0;                            // top
   },
 });
 ```
 
-## Título da página
+## Page title
 
 ```js
 V.router({
-  titleTemplate: '%s · Minha Loja',
+  titleTemplate: '%s · My Store',
   routes: {
-    '/': { component: 'home', title: 'Início' },   // "Início · Minha Loja"
+    '/': { component: 'home', title: 'Home' },   // "Home · My Store"
   },
 });
 ```
 
-## Modo hash
+## Hash mode
 
 ```js
 V.router({ mode: 'hash', routes: { '/': { component: 'home' } } });
 ```
 
-As URLs viram `/index.html#/usuarios/7`. Não exige nenhuma configuração no servidor, e funciona
-até com o arquivo aberto direto do disco.
+URLs become `/index.html#/usuarios/7`. Requires no server configuration, and works even with the
+file opened directly from disk.
 
-## Configuração de servidor para o modo history
+## Server configuration for history mode
 
-Toda rota precisa devolver o mesmo `index.html`.
+Every route must return the same `index.html`.
 
 **nginx**
 
@@ -288,4 +288,4 @@ RewriteRule . /index.html [L]
 
 ---
 
-Anterior: [Gráficos](graficos.md) · Próximo: [Idiomas](idiomas.md)
+Previous: [Charts](graficos.md) · Next: [Languages](idiomas.md)

@@ -1,7 +1,7 @@
-# Máscaras
+# Masks
 
-Máscaras de digitação que preservam a posição do cursor, inclusive quando o usuário edita o meio
-do texto ou apaga um separador.
+Input masks that preserve cursor position, even when the user edits the middle
+of the text or deletes a separator.
 
 ```html
 <input v-mask="cpf">
@@ -10,25 +10,25 @@ do texto ou apaga um separador.
 <input v-mask-currency v-mask-decimals="2">
 ```
 
-## Máscaras prontas
+## Built-in masks
 
-| Nome | Formato | Exemplo |
+| Name | Format | Example |
 | --- | --- | --- |
 | `cpf` | `999.999.999-99` | `123.456.789-01` |
 | `cnpj` | `99.999.999/9999-99` | `12.345.678/0001-90` |
-| `cpfcnpj` | Troca sozinha conforme o tamanho | `123.456.789-01` ou `12.345.678/0001-90` |
+| `cpfcnpj` | Switches automatically based on size | `123.456.789-01` or `12.345.678/0001-90` |
 | `cep` | `99999-999` | `01001-000` |
-| `phone` | `(99) 9999-9999` ou `(99) 99999-9999` | `(11) 98765-4321` |
+| `phone` | `(99) 9999-9999` or `(99) 99999-9999` | `(11) 98765-4321` |
 | `date` | `99/99/9999` | `28/08/2026` |
 | `time` | `99:99` | `14:30` |
 | `datetime` | `99/99/9999 99:99` | `28/08/2026 14:30` |
-| `currency` | Moeda, digitando da direita para a esquerda | `R$ 1.234,56` |
-| `percent` | Porcentagem, mesmo estilo | `12,50%` |
-| `card` | Cartão, com o formato certo para American Express | `4111 1111 1111 1111` |
-| `cvv` | Até quatro dígitos | `123` |
-| `plate` | Placa antiga ou Mercosul, escolhida pelo conteúdo | `ABC-1234` ou `ABC1D23` |
-| `hex` | Cor em hexadecimal | `#6D3BF5` |
-| `ip` | Endereço IPv4, com cada grupo limitado a 255 | `192.168.0.1` |
+| `currency` | Currency, typing from right to left | `R$ 1.234,56` |
+| `percent` | Percentage, same style | `12,50%` |
+| `card` | Card, with correct format for American Express | `4111 1111 1111 1111` |
+| `cvv` | Up to four digits | `123` |
+| `plate` | Old or Mercosul plate, chosen by content | `ABC-1234` or `ABC1D23` |
+| `hex` | Hexadecimal color | `#6D3BF5` |
+| `ip` | IPv4 address, each group limited to 255 | `192.168.0.1` |
 
 ```html
 <input v-mask="cpf" v-cpf>
@@ -38,9 +38,9 @@ do texto ou apaga um separador.
 <input v-mask="hex" v-model="cor">
 ```
 
-## Máscara por padrão de caracteres
+## Mask by character pattern
 
-Quando o valor não é o nome de uma máscara conhecida, ele é lido como padrão:
+When the value is not the name of a known mask, it is read as a pattern:
 
 ```html
 <input v-mask="(99) 99999-9999">
@@ -51,80 +51,80 @@ Quando o valor não é o nome de uma máscara conhecida, ele é lido como padrã
 
 Tokens:
 
-| Token | Aceita |
+| Token | Accepts |
 | --- | --- |
-| `9` | Dígito |
-| `A` | Letra, com acento |
-| `S` | Letra ou dígito |
-| `*` | Qualquer caractere |
-| `\` | Escapa o próximo caractere, tornando literal |
+| `9` | Digit |
+| `A` | Letter, with accent |
+| `S` | Letter or digit |
+| `*` | Any character |
+| `\` | Escapes the next character, making it literal |
 
-Qualquer outro caractere do padrão entra como separador fixo e só aparece quando ainda existe
-conteúdo depois dele.
+Any other character in the pattern enters as a fixed separator and only appears when there is still
+content after it.
 
-## v-model e o valor limpo
+## v-model and clean value
 
-Por padrão o estado recebe o texto formatado. Com `.unmask` (ou `.raw`), ele recebe o valor
-limpo, enquanto a tela continua mostrando a máscara:
+By default, the state receives the formatted text. With `.unmask` (or `.raw`), it receives the clean value,
+while the screen continues to show the mask:
 
 ```html
 <div v-data="{ form: { cpf: '' } }">
   <input v-mask.unmask="cpf" v-model="form.cpf">
-  <p>Vai para o servidor: { form.cpf }</p>   <!-- 12345678901 -->
+  <p>Sent to server: { form.cpf }</p>   <!-- 12345678901 -->
 </div>
 ```
 
-Para máscaras numéricas, o valor limpo é o número em texto, pronto para virar `Number`:
+For numeric masks, the clean value is the number as text, ready to become `Number`:
 
 ```html
-<input v-mask-currency.unmask v-model="produto.preco">
-<!-- na tela: R$ 1.234,56, no estado: 1234.56 -->
+<input v-mask-currency.unmask v-model="product.price">
+<!-- on screen: R$ 1.234,56, in state: 1234.56 -->
 ```
 
-`v-mask` roda antes de `v-model`, então o estado nunca vê o valor pela metade.
+`v-mask` runs before `v-model`, so the state never sees the value halfway.
 
-## Moeda e porcentagem
+## Currency and percentage
 
-`v-mask-currency` digita da direita para a esquerda, como uma calculadora:
+`v-mask-currency` types from right to left, like a calculator:
 
 ```html
 <input v-mask-currency>                      <!-- R$ 1.234,56 -->
 <input v-mask-currency="US$ ">               <!-- US$ 1.234,56 -->
 <input v-mask-currency v-mask-decimals="0">  <!-- R$ 1.234 -->
-<input v-mask-currency v-mask-suffix=" /mês">
-<input v-mask-currency.plain>                <!-- 1.234,56, sem prefixo -->
-<input v-mask-currency.dot>                  <!-- 1,234.56, no padrão americano -->
+<input v-mask-currency v-mask-suffix=" /month">
+<input v-mask-currency.plain>                <!-- 1.234,56, no prefix -->
+<input v-mask-currency.dot>                  <!-- 1,234.56, in US format -->
 ```
 
-| Ajuste | Onde |
+| Setting | Where |
 | --- | --- |
-| Prefixo | O próprio valor da directive, ou `v-mask-prefix` |
-| Sufixo | `v-mask-suffix` |
-| Casas decimais | `v-mask-decimals`. Padrão 2 |
-| Separadores invertidos | Modificador `.dot` |
-| Sem prefixo | Modificador `.plain` |
-| Valor limpo no estado | Modificador `.unmask` ou `.raw` |
+| Prefix | The directive's value itself, or `v-mask-prefix` |
+| Suffix | `v-mask-suffix` |
+| Decimal places | `v-mask-decimals`. Default 2 |
+| Inverted separators | `.dot` modifier |
+| No prefix | `.plain` modifier |
+| Clean value in state | `.unmask` or `.raw` modifier |
 
-Para porcentagem existe a máscara nomeada:
+For percentage there is a named mask:
 
 ```html
 <input v-mask="percent">
 ```
 
-## Cuidados
+## Precautions
 
-`v-mask` precisa de `<input>` ou `<textarea>` com tipo textual. Tipos como `number`, `range`,
-`date` e `color` não aceitam máscara, porque o navegador já controla o valor. Use `type="text"`
-com `inputmode`:
+`v-mask` needs `<input>` or `<textarea>` with text type. Types like `number`, `range`,
+`date`, and `color` don't accept masks because the browser already controls the value. Use `type="text"`
+with `inputmode`:
 
 ```html
 <input type="text" inputmode="numeric" v-mask="cpf">
 <input type="text" inputmode="decimal" v-mask-currency>
 ```
 
-Um valor que já vem do servidor no `value` é formatado assim que a directive monta.
+A value that already comes from the server in `value` is formatted as soon as the directive mounts.
 
-## Por JavaScript
+## Via JavaScript
 
 ```js
 V.mask('12345678901', 'cpf');        // '123.456.789-01'
@@ -137,56 +137,56 @@ V.mask.currency('123456', { prefix: '', decimals: 0, thousands: ',' });
 V.mask.percent('1250');              // '12,50%'
 ```
 
-O objeto `V.mask` é chamável e também carrega os utilitários:
+The `V.mask` object is callable and also carries the utilities:
 
-| Membro | O que é |
+| Member | What it is |
 | --- | --- |
-| `V.mask(valor, padrao)` | Aplica a máscara |
-| `V.mask.apply` | O mesmo que `V.applyMask` |
-| `V.mask.unmask` | Remove a formatação |
-| `V.mask.register` | Registra uma máscara nomeada |
-| `V.mask.currency` | Formata como moeda |
-| `V.mask.percent` | Formata como porcentagem |
-| `V.mask.presets` | O `Map` com todas as máscaras registradas |
+| `V.mask(value, pattern)` | Applies the mask |
+| `V.mask.apply` | Same as `V.applyMask` |
+| `V.mask.unmask` | Removes formatting |
+| `V.mask.register` | Registers a named mask |
+| `V.mask.currency` | Formats as currency |
+| `V.mask.percent` | Formats as percentage |
+| `V.mask.presets` | The `Map` with all registered masks |
 
-## Criando máscaras
+## Creating masks
 
-Por padrão de caracteres:
+By character pattern:
 
 ```js
-V.registerMask('processo', '9999999-99.9999.9.99.9999');
+V.registerMask('process', '9999999-99.9999.9.99.9999');
 V.registerMask('renavam', '99999999999');
 ```
 
-Por função, para casos que mudam conforme o conteúdo:
+By function, for cases that change based on content:
 
 ```js
-V.registerMask('inscricao', (valor) => {
-  const digitos = valor.replace(/\D/g, '');
-  return digitos.length <= 9
-    ? V.applyMask(digitos, '999.999.999')
-    : V.applyMask(digitos, '999.999.999.999');
+V.registerMask('registration', (value) => {
+  const digits = value.replace(/\D/g, '');
+  return digits.length <= 9
+    ? V.applyMask(digits, '999.999.999')
+    : V.applyMask(digits, '999.999.999.999');
 });
 ```
 
 ```html
-<input v-mask="processo">
-<input v-mask="inscricao">
+<input v-mask="process">
+<input v-mask="registration">
 ```
 
-## Como o cursor é tratado
+## How cursor position is handled
 
-A implementação conta os caracteres significativos antes do cursor, reformata o texto e recoloca o
-cursor depois do mesmo número de caracteres significativos. Por isso:
+The implementation counts significant characters before the cursor, reformats the text, and replaces the
+cursor after the same number of significant characters. Because of this:
 
-- editar o meio do texto não joga o cursor para o fim;
-- apagar em cima de um separador remove o caractere útil anterior, e não só o ponto;
-- máscaras numéricas mantêm o cursor no fim, antes do sufixo.
+- editing the middle of the text doesn't move the cursor to the end;
+- deleting on top of a separator removes the useful character before it, not just the dot;
+- numeric masks keep the cursor at the end, before the suffix.
 
-A propriedade `value` do input é substituída, de forma que ler `input.value` devolva o valor
-limpo quando `.unmask` está ativo, e escrever nela sempre passe pela máscara. Ao desmontar, a
-propriedade original é restaurada.
+The input's `value` property is replaced so that reading `input.value` returns the clean value
+when `.unmask` is active, and writing to it always goes through the mask. On unmount, the
+original property is restored.
 
 ---
 
-Anterior: [Validação](validacao.md) · Próximo: [Interface](interface.md)
+Previous: [Validation](validacao.md) · Next: [Interface](interface.md)

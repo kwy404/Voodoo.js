@@ -1,22 +1,22 @@
 /**
  * @module parser/parser
  *
- * Parser Pratt (precedencia de operadores) que transforma tokens em AST.
+ * Pratt parser (operator precedence) that transforms tokens to AST.
  *
- * Suporta o subconjunto de JavaScript que faz sentido dentro de um atributo:
- * literais, identificadores, acesso a membros, chamadas, operadores unarios e
- * binarios, ternario, atribuicao, incremento, objetos, arrays, arrow functions,
- * template literals, spread, encadeamento opcional e sequencias com `;`.
+ * Supports the subset of JavaScript that makes sense within an attribute:
+ * literals, identifiers, member access, function calls, unary and binary
+ * operators, ternary, assignment, increment, objects, arrays, arrow functions,
+ * template literals, spread, optional chaining and sequences with `;`.
  *
- * Nao suporta, por decisao de projeto: `function`, `class`, `new`, `delete`,
- * `import`, `await`, laco `for`, `while`, `try` e desestruturacao complexa.
- * Expressoes de atributo devem ser curtas. Logica maior vive em metodos.
+ * Does not support, by design decision: `function`, `class`, `new`, `delete`,
+ * `import`, `await`, `for` loop, `while`, `try` and complex destructuring.
+ * Attribute expressions should be short. Larger logic lives in methods.
  */
 
 import { tokenize, VoodooSyntaxError, type Token } from './lexer';
 
 // ---------------------------------------------------------------------------
-// Nos da AST
+// AST nodes
 // ---------------------------------------------------------------------------
 
 export type Node =
@@ -37,14 +37,14 @@ export type Node =
   | { t: 'seq'; body: Node[] };
 
 export interface ObjectProperty {
-  /** Nome fixo da chave, ou `null` quando a chave e computada. */
+  /** Fixed key name, or `null` when the key is computed. */
   key: string | null;
   keyExpr?: Node;
   value?: Node;
   spread?: Node;
 }
 
-/** Precedencia dos operadores binarios. Maior liga mais forte. */
+/** Precedence of binary operators. Higher binds tighter. */
 const BINARY_PRECEDENCE: Record<string, number> = {
   '??': 1,
   '||': 2,
@@ -71,12 +71,13 @@ const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '**=', '&&=', '||
 const UNARY_OPS = new Set(['!', '-', '+', 'typeof', 'void']);
 
 /**
- * Palavras que valem por si mesmas.
+ * Words that stand on their own.
  *
- * O objeto nasce sem prototipo de proposito. Com um objeto comum, `"constructor"
- * in LITERALS` seria verdadeiro por heranca, e o identificador `constructor`
- * viraria um literal com o valor de `Object`, entregando `Function` a qualquer
- * expressao. O mesmo valia para `toString`, `valueOf` e `__proto__`.
+ * The object is created without a prototype on purpose. With a regular object,
+ * `"constructor" in LITERALS` would be true by inheritance, and the identifier
+ * `constructor` would become a literal with the value of `Object`, delivering
+ * `Function` to any expression. The same went for `toString`, `valueOf` and
+ * `__proto__`.
  */
 const LITERALS: Record<string, string | number | boolean | null | undefined> =
   /* @__PURE__ */ Object.assign(Object.create(null) as Record<string, never>, {
@@ -87,25 +88,25 @@ const LITERALS: Record<string, string | number | boolean | null | undefined> =
   });
 
 /**
- * Limite de aninhamento de expressoes.
+ * Limit for nesting expressions.
  *
- * O parser e recursivo. Sem teto, uma entrada como `((((...))))` com alguns
- * milhares de niveis estoura a pilha e vaza um `RangeError` cru
- * ("Maximum call stack size exceeded") para quem escreveu o atributo. O
- * contrato aqui e o contrario: entrada absurda tem que virar VoodooSyntaxError
- * com mensagem clara. Cada nivel de aninhamento consome tres passos do contador
- * (`parseAssignment`, `parseBinary` e `parseUnary`), entao 1200 equivale a ~400
- * parenteses aninhados, muito acima de qualquer expressao de atributo real e
- * muito abaixo do ponto em que a pilha nativa acaba (~2500 niveis).
+ * The parser is recursive. Without a limit, input like `((((...))))` with
+ * thousands of levels would overflow the stack and leak a raw `RangeError`
+ * ("Maximum call stack size exceeded") to whoever wrote the attribute. The
+ * contract here is the opposite: absurd input must become VoodooSyntaxError
+ * with a clear message. Each nesting level consumes three counter steps
+ * (`parseAssignment`, `parseBinary` and `parseUnary`), so 1200 equals ~400
+ * nested parentheses, well above any real attribute expression and well below
+ * the point where the native stack runs out (~2500 levels).
  */
 const MAX_DEPTH = 1200;
 
 /**
- * Limite de templates aninhados (`` `${`${...}`}` ``).
+ * Limit for nested templates (`` `${`${...}`}` ``).
  *
- * Cada interpolacao chama `parse` de novo, criando um Parser novo com o
- * contador zerado. Sem um contador de modulo, o aninhamento de templates
- * escapava do limite acima e voltava a estourar a pilha.
+ * Each interpolation calls `parse` again, creating a new Parser with the
+ * counter reset. Without a module-level counter, template nesting would escape
+ * the limit above and stack overflow again.
  */
 const MAX_TEMPLATE_DEPTH = 32;
 let templateDepth = 0;
@@ -141,7 +142,7 @@ class Parser {
     if (!this.isPunct(value)) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Esperava "${value}" mas encontrou "${t.value || 'fim da expressao'}"`,
+        `Expected "${value}" but found "${t.value || 'end of expression'}"`,
         this.source,
         t.start
       );
@@ -149,7 +150,7 @@ class Parser {
     return this.next();
   }
 
-  /** Ponto de entrada: uma ou mais expressoes separadas por `;` ou `,` no topo. */
+  /** Entry point: one or more expressions separated by `;` or `,` at the top. */
   parseProgram(): Node {
     const body: Node[] = [];
     while (this.peek().type !== 'eof') {
@@ -165,12 +166,12 @@ class Parser {
     return this.parseAssignment();
   }
 
-  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
-  private entrar(): void {
+  /** Raises recursion level and rejects expression when exceeding limit. */
+  private enterLevel(): void {
     if (++this.depth > MAX_DEPTH) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        `Expression too deeply nested (limit of ${MAX_DEPTH} levels)`,
         this.source,
         t.start
       );
@@ -178,21 +179,21 @@ class Parser {
   }
 
   private parseAssignment(): Node {
-    this.entrar();
-    const node = this.parseAssignmentInterno();
+    this.enterLevel();
+    const node = this.parseAssignmentInternal();
     this.depth--;
     return node;
   }
 
-  private parseAssignmentInterno(): Node {
-    // Arrow function com um unico parametro sem parenteses: `x => x * 2`
+  private parseAssignmentInternal(): Node {
+    // Arrow function with single parameter without parentheses: `x => x * 2`
     if (this.peek().type === 'ident' && this.isPunct('=>', 1)) {
       const param = this.next().value;
       this.next(); // =>
       return { t: 'arrow', params: [param], body: this.parseAssignment() };
     }
 
-    // Arrow function com parenteses: `(a, b) => a + b`
+    // Arrow function with parentheses: `(a, b) => a + b`
     if (this.isPunct('(')) {
       const arrow = this.tryParseParenArrow();
       if (arrow) return arrow;
@@ -202,7 +203,7 @@ class Parser {
     const t = this.peek();
     if (t.type === 'punct' && ASSIGN_OPS.has(t.value)) {
       if (left.t !== 'id' && left.t !== 'member') {
-        throw new VoodooSyntaxError('Alvo de atribuicao invalido', this.source, t.start);
+        throw new VoodooSyntaxError('Invalid assignment target', this.source, t.start);
       }
       this.next();
       const value = this.parseAssignment();
@@ -212,8 +213,8 @@ class Parser {
   }
 
   /**
-   * Tenta ler `( params ) =>`. Se o que vem depois do parentese de fechamento
-   * nao for `=>`, volta a posicao original e deixa o caminho normal seguir.
+   * Tries to read `( params ) =>`. If what comes after the closing parenthesis
+   * is not `=>`, returns to original position and lets normal parsing continue.
    */
   private tryParseParenArrow(): Node | null {
     const start = this.pos;
@@ -259,13 +260,13 @@ class Parser {
   }
 
   private parseBinary(minPrec: number): Node {
-    this.entrar();
-    const node = this.parseBinarioInterno(minPrec);
+    this.enterLevel();
+    const node = this.parseBinaryInternal(minPrec);
     this.depth--;
     return node;
   }
 
-  private parseBinarioInterno(minPrec: number): Node {
+  private parseBinaryInternal(minPrec: number): Node {
     let left = this.parseUnary();
 
     for (;;) {
@@ -280,7 +281,7 @@ class Parser {
       if (prec === undefined || prec <= minPrec) break;
 
       this.next();
-      // `**` associa a direita, os demais a esquerda.
+      // `**` associates right, others associate left.
       const right = this.parseBinary(op === '**' ? prec - 1 : prec);
       const kind = op === '&&' || op === '||' || op === '??' ? 'logic' : 'bin';
       left = { t: kind, op, l: left, r: right } as Node;
@@ -289,17 +290,17 @@ class Parser {
   }
 
   private parseUnary(): Node {
-    this.entrar();
-    const node = this.parseUnarioInterno();
+    this.enterLevel();
+    const node = this.parseUnaryInternal();
     this.depth--;
     return node;
   }
 
-  private parseUnarioInterno(): Node {
+  private parseUnaryInternal(): Node {
     const t = this.peek();
 
     if ((t.type === 'punct' || t.type === 'ident') && UNARY_OPS.has(t.value)) {
-      // `-` e `+` como binario ja foram tratados; aqui sao prefixos.
+      // `-` and `+` as binary have already been handled; here they are prefixes.
       this.next();
       return { t: 'unary', op: t.value, a: this.parseUnary() };
     }
@@ -328,7 +329,7 @@ class Parser {
         this.next();
         const prop = this.next();
         if (prop.type !== 'ident') {
-          throw new VoodooSyntaxError('Nome de propriedade invalido', this.source, prop.start);
+          throw new VoodooSyntaxError('Invalid property name', this.source, prop.start);
         }
         expr = { t: 'member', o: expr, p: { t: 'lit', v: prop.value }, computed: false, opt: false };
       } else if (this.isPunct('?.')) {
@@ -343,7 +344,7 @@ class Parser {
         } else {
           const prop = this.next();
           if (prop.type !== 'ident') {
-            throw new VoodooSyntaxError('Nome de propriedade invalido', this.source, prop.start);
+            throw new VoodooSyntaxError('Invalid property name', this.source, prop.start);
           }
           expr = {
             t: 'member',
@@ -396,7 +397,7 @@ class Parser {
       const part = t.tpl!;
       if (templateDepth >= MAX_TEMPLATE_DEPTH) {
         throw new VoodooSyntaxError(
-          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          `Template literal too deeply nested (limit of ${MAX_TEMPLATE_DEPTH} levels)`,
           this.source,
           t.start
         );
@@ -434,7 +435,7 @@ class Parser {
     }
 
     throw new VoodooSyntaxError(
-      `Token inesperado "${t.value || 'fim da expressao'}"`,
+      `Unexpected token "${t.value || 'end of expression'}"`,
       this.source,
       t.start
     );
@@ -474,14 +475,14 @@ class Parser {
       } else {
         const keyToken = this.next();
         if (keyToken.type !== 'ident' && keyToken.type !== 'str' && keyToken.type !== 'num') {
-          throw new VoodooSyntaxError('Chave de objeto invalida', this.source, keyToken.start);
+          throw new VoodooSyntaxError('Invalid object key', this.source, keyToken.start);
         }
         const key = String(keyToken.parsed ?? keyToken.value);
         if (this.isPunct(':')) {
           this.next();
           props.push({ key, value: this.parseAssignment() });
         } else {
-          // Notacao curta: `{ count }` equivale a `{ count: count }`.
+          // Shorthand notation: `{ count }` is equivalent to `{ count: count }`.
           props.push({ key, value: { t: 'id', n: key } });
         }
       }
@@ -494,12 +495,12 @@ class Parser {
   }
 }
 
-/** Cache de AST por texto de expressao. Cada expressao e analisada uma unica vez. */
+/** AST cache by expression text. Each expression is parsed only once. */
 const cache = new Map<string, Node>();
 const MAX_CACHE = 2000;
 
 /**
- * Converte texto em AST, com cache.
+ * Converts text to AST, with caching.
  *
  * ```js
  * parse('count + 1')
@@ -518,13 +519,12 @@ export function parse(source: string): Node {
 }
 
 /**
- * Descarta a metade mais antiga do cache quando ele enche.
+ * Discards the oldest half of the cache when it fills up.
  *
- * Antes isto era `cache.clear()`. Uma pagina que passasse do teto perdia tudo
- * de uma vez, inclusive as expressoes que estavam em uso naquele instante, e
- * voltava a analisar todas elas do zero. `Map` preserva a ordem de insercao,
- * entao remover a metade mais antiga mantem no lugar o que entrou por ultimo,
- * que e o que a pagina esta usando agora.
+ * Before this was `cache.clear()`. A page that exceeded the limit would lose
+ * everything at once, including expressions currently in use, and re-analyze
+ * all of them from scratch. `Map` preserves insertion order, so removing the
+ * oldest half keeps what came in last, which is what the page is using now.
  */
 function evictOldest(): void {
   const alvo = Math.floor(MAX_CACHE / 2);
@@ -535,7 +535,7 @@ function evictOldest(): void {
   }
 }
 
-/** Limpa o cache de expressoes. Usado em testes e no hot reload. */
+/** Clears the expression cache. Used in tests and hot reload. */
 export function clearParseCache(): void {
   cache.clear();
 }

@@ -1,33 +1,33 @@
 /**
  * @module socket/protocol
  *
- * O protocolo Engine.IO/Socket.IO escrito a mao, sem a biblioteca.
+ * The Engine.IO/Socket.IO protocol written by hand, without the library.
  *
- * Vale explicar por que este arquivo existe. `socket.io-client` pesa mais de 30
- * KB comprimidos, e a Voodoo nao tem dependencia de runtime nenhuma. Acontece
- * que o pedaco do protocolo que uma pagina usa de verdade e pequeno: um
- * handshake, seis codigos de pacote e um JSON. Isso cabe em texto puro sobre o
- * WebSocket nativo, e e exatamente o que esta aqui.
+ * It's worth explaining why this file exists. `socket.io-client` weighs over 30
+ * KB compressed, and Voodoo has no runtime dependencies. It happens
+ * that the piece of the protocol a page actually uses is small: one
+ * handshake, six packet codes and some JSON. This fits in plain text over
+ * native WebSocket, and that's exactly what's here.
  *
- * Um quadro de texto do Engine.IO v4 tem a forma `<codigo><corpo>`:
+ * An Engine.IO v4 text frame has the form `<code><body>`:
  *
  * ```text
- * 0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}   abertura
- * 2                                                          ping do servidor
- * 3                                                          pong do cliente
- * 40                                                         entrar no namespace
- * 42["mensagem",{"texto":"oi"}]                              evento
- * 421["salvar",{...}]                                        evento pedindo ack 1
- * 431[{"ok":true}]                                           resposta do ack 1
+ * 0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}   open
+ * 2                                                          server ping
+ * 3                                                          client pong
+ * 40                                                         enter namespace
+ * 42["mensagem",{"texto":"oi"}]                              event
+ * 421["salvar",{...}]                                        event requesting ack 1
+ * 431[{"ok":true}]                                           ack 1 response
  * ```
  *
- * O corpo de um pacote `4` (message) e um pacote Socket.IO, que por sua vez tem
- * a forma `<tipo>[<namespace>,][<ack>]<JSON>`. As duas camadas sao decodificadas
- * aqui, em funcoes puras, porque protocolo em funcao pura e protocolo testavel.
+ * The body of a `4` (message) packet is a Socket.IO packet, which in turn has
+ * the form `<type>[<namespace>,][<ack>]<JSON>`. The two layers are decoded
+ * here, in pure functions, because pure-function protocol is testable protocol.
  *
- * O que **nao** esta implementado esta declarado em `docs/websocket.md`, e a
- * lista curta e: anexos binarios (`45`/`46`), transporte por polling e upgrade,
- * e namespaces diferentes de `/`.
+ * What **is not** implemented is declared in `docs/websocket.md`, and the
+ * short list is: binary attachments (`45`/`46`), polling transport and upgrade,
+ * and namespaces other than `/`.
  */
 
 /** Codigos de pacote do Engine.IO v4. */
@@ -52,30 +52,30 @@ export const SIO = {
   BINARY_ACK: 6,
 } as const;
 
-/** Dados que o servidor manda no pacote de abertura. */
+/** Data the server sends in the open packet. */
 export interface EngineHandshake {
   sid: string;
-  /** Intervalo entre os pings do servidor, em ms. */
+  /** Interval between server pings, in ms. */
   pingInterval: number;
-  /** Quanto o servidor espera pelo pong antes de desistir, em ms. */
+  /** How long the server waits for pong before giving up, in ms. */
   pingTimeout: number;
   upgrades?: string[];
   maxPayload?: number;
 }
 
-/** Pacote Socket.IO ja separado em suas partes. */
+/** Socket.IO packet already split into its parts. */
 export interface SocketIoPacket {
-  /** Um dos valores de `SIO`. */
+  /** One of the values of `SIO`. */
   type: number;
-  /** Namespace. Esta implementacao so fala `/`. */
+  /** Namespace. This implementation only supports `/`. */
   namespace: string;
-  /** Numero do ack, quando o pacote pede ou responde confirmacao. */
+  /** Ack number, when the packet requests or responds with acknowledgment. */
   ack?: number;
-  /** Corpo ja convertido de JSON. Para eventos, `[nome, ...argumentos]`. */
+  /** Body already converted from JSON. For events, `[name, ...args]`. */
   data?: unknown;
 }
 
-/** Pacote Engine.IO ja classificado. */
+/** Engine.IO packet already classified. */
 export type EnginePacket =
   | { kind: 'open'; handshake: EngineHandshake }
   | { kind: 'close' }
@@ -83,7 +83,7 @@ export type EnginePacket =
   | { kind: 'pong' }
   | { kind: 'message'; packet: SocketIoPacket }
   | { kind: 'noop' }
-  /** Quadro que este cliente nao sabe ler: binario, upgrade ou lixo. */
+  /** Frame this client can't read: binary, upgrade or garbage. */
   | { kind: 'unknown'; raw: string };
 
 function parseJson(text: string): unknown {
@@ -91,17 +91,17 @@ function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
   } catch {
-    // Corpo quebrado nao pode derrubar a conexao inteira.
+    // Broken body can't tear down the entire connection.
     return undefined;
   }
 }
 
 /**
- * Le o corpo de um pacote `4` (message) do Engine.IO.
+ * Reads the body of an Engine.IO `4` (message) packet.
  *
- * A ordem das partes e fixa e cada uma so aparece quando existe, entao a
- * leitura e posicional: tipo, namespace opcional terminado em virgula, ack
- * opcional em digitos, e o resto e JSON.
+ * The order of parts is fixed and each only appears when it exists, so
+ * reading is positional: type, optional namespace ending in comma, optional ack
+ * in digits, and the rest is JSON.
  */
 export function decodeSocketIo(body: string): SocketIoPacket | null {
   if (!body) return null;
@@ -111,49 +111,49 @@ export function decodeSocketIo(body: string): SocketIoPacket | null {
   let i = 1;
   let namespace = '/';
   if (body[i] === '/') {
-    const virgula = body.indexOf(',', i);
-    if (virgula === -1) {
-      // `4/admin` sem virgula e um connect ao namespace, sem corpo.
+    const comma = body.indexOf(',', i);
+    if (comma === -1) {
+      // `4/admin` without comma is a connect to the namespace, no body.
       return { type, namespace: body.slice(i) };
     }
-    namespace = body.slice(i, virgula);
-    i = virgula + 1;
+    namespace = body.slice(i, comma);
+    i = comma + 1;
   }
 
   let ack: number | undefined;
-  const inicioAck = i;
+  const ackStart = i;
   while (i < body.length && body.charCodeAt(i) >= 48 && body.charCodeAt(i) <= 57) i++;
-  if (i > inicioAck) ack = Number(body.slice(inicioAck, i));
+  if (i > ackStart) ack = Number(body.slice(ackStart, i));
 
-  const resto = body.slice(i);
-  return { type, namespace, ack, data: parseJson(resto) };
+  const rest = body.slice(i);
+  return { type, namespace, ack, data: parseJson(rest) };
 }
 
 /**
- * Classifica um quadro de texto recebido do servidor.
+ * Classifies a text frame received from the server.
  *
- * Quadros binarios chegam como `Blob` ou `ArrayBuffer` e viram `unknown`: sao
- * validos no protocolo, esta implementacao apenas nao os le.
+ * Binary frames arrive as `Blob` or `ArrayBuffer` and become `unknown`: they're
+ * valid in the protocol, this implementation just doesn't read them.
  */
 export function decodeEngine(raw: unknown): EnginePacket {
   if (typeof raw !== 'string' || !raw) return { kind: 'unknown', raw: String(raw ?? '') };
 
-  const codigo = raw[0];
-  const corpo = raw.slice(1);
+  const code = raw[0];
+  const body = raw.slice(1);
 
-  switch (codigo) {
+  switch (code) {
     case ENGINE.OPEN: {
-      const dados = parseJson(corpo) as Partial<EngineHandshake> | undefined;
+      const data = parseJson(body) as Partial<EngineHandshake> | undefined;
       return {
         kind: 'open',
         handshake: {
-          sid: dados?.sid ?? '',
-          // Os valores do servidor mandam. Os padroes aqui sao os do Engine.IO
-          // v4 e so entram em cena se o handshake vier incompleto.
-          pingInterval: Number(dados?.pingInterval) || 25_000,
-          pingTimeout: Number(dados?.pingTimeout) || 20_000,
-          upgrades: dados?.upgrades,
-          maxPayload: dados?.maxPayload,
+          sid: data?.sid ?? '',
+          // Server values take precedence. The defaults here are from Engine.IO
+          // v4 and only come into play if the handshake is incomplete.
+          pingInterval: Number(data?.pingInterval) || 25_000,
+          pingTimeout: Number(data?.pingTimeout) || 20_000,
+          upgrades: data?.upgrades,
+          maxPayload: data?.maxPayload,
         },
       };
     }
@@ -164,7 +164,7 @@ export function decodeEngine(raw: unknown): EnginePacket {
     case ENGINE.PONG:
       return { kind: 'pong' };
     case ENGINE.MESSAGE: {
-      const packet = decodeSocketIo(corpo);
+      const packet = decodeSocketIo(body);
       return packet ? { kind: 'message', packet } : { kind: 'unknown', raw };
     }
     case ENGINE.NOOP:
@@ -175,13 +175,13 @@ export function decodeEngine(raw: unknown): EnginePacket {
 }
 
 /**
- * Monta um pacote `4` (message) pronto para o fio.
+ * Builds a `4` (message) packet ready for the wire.
  *
- * `encodeSocketIo({ type: SIO.EVENT, data: ['oi', 1] })` devolve `42["oi",1]`.
+ * `encodeSocketIo({ type: SIO.EVENT, data: ['oi', 1] })` returns `42["oi",1]`.
  */
 export function encodeSocketIo(packet: SocketIoPacket): string {
   let out = ENGINE.MESSAGE + String(packet.type);
-  // O namespace so viaja quando nao e o padrao, como manda o protocolo.
+  // The namespace only travels when it's not the default, as the protocol mandates.
   if (packet.namespace && packet.namespace !== '/') out += `${packet.namespace},`;
   if (packet.ack !== undefined) out += String(packet.ack);
   if (packet.data !== undefined) out += JSON.stringify(packet.data);
@@ -189,21 +189,21 @@ export function encodeSocketIo(packet: SocketIoPacket): string {
 }
 
 /**
- * Monta a URL do endpoint Engine.IO.
+ * Builds the Engine.IO endpoint URL.
  *
- * O caminho vira `<path>?EIO=4&transport=websocket`, porque esta implementacao
- * abre direto em WebSocket e nunca passa por polling.
+ * The path becomes `<path>?EIO=4&transport=websocket`, because this implementation
+ * opens directly in WebSocket and never uses polling.
  */
 export function engineURL(base: string, path = '/socket.io/'): string {
-  const caminho = `/${path.replace(/^\/+|\/+$/g, '')}/`;
-  const consulta = 'EIO=4&transport=websocket';
+  const pathname = `/${path.replace(/^\/+|\/+$/g, '')}/`;
+  const query = 'EIO=4&transport=websocket';
   try {
     const u = new URL(base);
-    u.pathname = caminho;
-    u.search = consulta;
+    u.pathname = pathname;
+    u.search = query;
     return u.toString();
   } catch {
-    // Sem `URL` utilizavel (base relativa em ambiente sem `location`), concatena.
-    return `${base.replace(/\/+$/, '')}${caminho}?${consulta}`;
+    // No usable `URL` (relative base in environment without `location`), concatenate.
+    return `${base.replace(/\/+$/, '')}${pathname}?${query}`;
   }
 }

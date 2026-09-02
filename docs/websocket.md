@@ -1,85 +1,86 @@
-# WebSocket e tempo real
+# WebSocket and realtime
 
-> Este módulo tem entrada própria: `voodoojs/dist/socket.js`. Ele **não** vem no `voodoo.min.js`,
-> nem no `voodoo.core.min.js`, nem no `voodoo.full.min.js`. O motivo está em
-> [Tamanho e distribuição](#tamanho-e-distribuição).
+> This module has its own entry: `voodoojs/dist/socket.js`. It **does not** come in `voodoo.min.js`,
+> nor in `voodoo.core.min.js`, nor in `voodoo.full.min.js`. The reason is in
+> [Size and distribution](#size-and-distribution).
 
-Tempo real com a mesma filosofia do resto da Voodoo: o caso comum sai no HTML, o resto continua
-disponível na API `V.socket`. Dois transportes vêm na caixa — **WebSocket nativo** e o **protocolo
-Socket.IO**, este último implementado à mão sobre o WebSocket do navegador, sem
-`socket.io-client` e sem nenhuma outra dependência.
+Realtime with the same philosophy as the rest of Voodoo: the common case comes out in HTML, the
+rest stays available in the `V.socket` API. Two transports come in the box — **native WebSocket**
+and the **Socket.IO protocol**, the latter implemented by hand on the browser's WebSocket, without
+`socket.io-client` and without any other dependencies.
 
-A ergonomia é de propósito irmã da do módulo [HTTP](http.md): onde lá existe `retry`, aqui existe
-`reconnect`; onde lá existem `interceptors.request` e `interceptors.response`, aqui existem
-`interceptors.outgoing` e `interceptors.incoming`; `defaults` funciona igual nos dois.
-
----
-
-## Leia isto antes de usar salas privadas
-
-**Privacidade é responsabilidade do servidor. Sempre.**
-
-O cliente não consegue impedir que outro cliente entre numa sala. Ele apenas *pede* para entrar, e
-o servidor decide. Marcar uma sala como `privada: true` neste módulo não esconde nada de ninguém:
-é uma etiqueta que viaja junto do pedido, para o servidor poder aplicar a regra dele.
-
-Concretamente, isso significa que o **servidor** precisa:
-
-- autenticar quem conecta (token no handshake, cookie de sessão, o que for);
-- autorizar cada `join`, recusando quem não pode entrar naquela sala;
-- filtrar o que sai, mandando cada mensagem só para quem tem direito de vê-la;
-- validar o destinatário de toda mensagem direta.
-
-Qualquer coisa "privada" que dependa só do cliente é falsa. Um `if` no navegador não protege dado
-nenhum: quem abre o console do navegador entra na sala que quiser, escuta o evento que quiser e lê
-tudo que o servidor mandar. Se o servidor mandar a mensagem, o cliente vai poder lê-la, ponto.
-
-O mesmo vale para a lista de membros: `sala.membros` mostra o que o servidor mandou. Se o servidor
-mandar mais do que devia, o vazamento já aconteceu antes de o dado chegar aqui.
+The ergonomics are intentionally sister to the [HTTP](http.md) module: where there's `retry` there,
+here there's `reconnect`; where there are `interceptors.request` and `interceptors.response` there,
+here there are `interceptors.outgoing` and `interceptors.incoming`; `defaults` works the same on both.
 
 ---
 
-## Instalação
+## Read this before using private rooms
 
-Por bundler, em ESM:
+**Privacy is the server's responsibility. Always.**
+
+The client cannot prevent another client from entering a room. It merely *asks* to enter, and
+the server decides. Marking a room as `private: true` in this module hides nothing from anyone:
+it's a tag that travels with the request, so the server can apply its rule.
+
+Concretely, this means the **server** must:
+
+- authenticate who connects (token in handshake, session cookie, whatever);
+- authorize each `join`, refusing those who cannot enter that room;
+- filter what goes out, sending each message only to those who have the right to see it;
+- validate the recipient of every direct message.
+
+Anything "private" that depends only on the client is false. An `if` in the browser protects no
+data: whoever opens the browser console can enter the room they want, listen to the event they
+want, and read everything the server sends. If the server sends the message, the client will be
+able to read it, period.
+
+The same goes for the member list: `room.members` shows what the server sent. If the server sends
+more than it should, the leak already happened before the data gets here.
+
+---
+
+## Installation
+
+Via bundler, in ESM:
 
 ```js
 import V, { socket } from 'voodoojs';
-import 'voodoojs/dist/socket.js'; // registra v-socket, v-room e v-on-socket
+import 'voodoojs/dist/socket.js'; // registers v-socket, v-room and v-on-socket
 
 V.start();
-socket('wss://exemplo.com'); // ou apenas use v-socket no HTML
+socket('wss://example.com'); // or just use v-socket in HTML
 ```
 
-Repare que em ESM o `V.socket` **não** aparece sozinho: `V.use()` instala no núcleo, e o `V` que
-você importou já tinha sido montado. Use o `socket` importado, ou pendure você mesmo com
-`V.socket = socket` se preferir o nome. Pelo CDN isso não é problema, porque aí existe uma global
-para o módulo se pendurar:
+Note that in ESM, `V.socket` **doesn't** appear on its own: `V.use()` installs it in the core,
+and the `V` you imported was already mounted. Use the imported `socket`, or hang it yourself with
+`V.socket = socket` if you prefer the name. Via CDN this is not a problem, because there's a global
+there for the module to hang on:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
 <script type="module">
   import 'https://cdn.jsdelivr.net/npm/voodoojs/dist/socket.js';
-  // agora V.socket existe
+  // now V.socket exists
 </script>
 ```
 
-> **Atenção ao misturar os dois formatos.** O bundle IIFE (`voodoo.min.js`) e o módulo
-> (`dist/socket.js`) são runtimes diferentes: as directives registradas pelo módulo não aparecem no
-> registro do IIFE. Numa página, ou você usa os dois em ESM (`dist/index.js` + `dist/socket.js`,
-> que compartilham chunks), ou usa `V.socket` do IIFE sem as directives. A demo em
-> [`examples/chat-tempo-real/`](../examples/chat-tempo-real/) mostra o caminho ESM funcionando.
+> **Caution when mixing the two formats.** The IIFE bundle (`voodoo.min.js`) and the module
+> (`dist/socket.js`) are different runtimes: directives registered by the module don't appear in
+> the IIFE registry. On a page, you either use both in ESM (`dist/index.js` + `dist/socket.js`,
+> which share chunks), or you use `V.socket` from the IIFE without directives. The demo in
+> [`examples/chat-realtime/`](../examples/chat-realtime/) shows the ESM path working.
 
-## Demo completa
+## Complete demo
 
-`examples/chat-tempo-real/` é um chat de verdade — sala pública, mensagem privada, presença e
-reconexão — falando com `scripts/chat-servidor.mjs`, um servidor WebSocket sem dependência nenhuma
-(o RFC 6455 está escrito à mão ali):
+`examples/chat-realtime/` is a real chat — public room, private message, presence and reconnect —
+talking to `scripts/chat-server.mjs`, a WebSocket server with no dependencies (RFC 6455 is
+written by hand there):
 
 ```bash
 npm run build --workspace=voodoojs
-node scripts/chat-servidor.mjs
-# abra http://localhost:5174/examples/chat-tempo-real/ em duas abas
+node scripts/chat-server.mjs
+# open http://localhost:5174/examples/chat-realtime/ in two tabs
 ```
 
 ---
@@ -88,290 +89,287 @@ node scripts/chat-servidor.mjs
 
 ## v-socket
 
-Abre a conexão e publica `$socket` no escopo.
+Opens the connection and publishes `$socket` in the scope.
 
 ```html
 <div v-socket="wss://exemplo.com/chat">
-  <p v-show="!$socket.conectado">Reconectando...</p>
+  <p v-show="!$socket.connected">Reconectando...</p>
   <ul>
-    <li v-for="m in $socket.mensagens">{ m.texto }</li>
+    <li v-for="m in $socket.messages">{ m.texto }</li>
   </ul>
-  <button @click="$socket.enviar('ola', { de: 'ana' })">Enviar</button>
+  <button @click="$socket.send('ola', { de: 'ana' })">Enviar</button>
 </div>
 ```
 
-O objeto `$socket` é reativo e traz:
+The `$socket` object is reactive and brings:
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `conectado` | `true` enquanto a conexão está aberta |
-| `estado` | `connecting`, `open`, `closing`, `closed` ou `reconnecting` |
-| `mensagens` | As últimas N mensagens recebidas (padrão 50) |
-| `erro` | Texto do último erro, ou `null` |
-| `tentativas` | Reconexões seguidas sem sucesso |
-| `enviar(evento, dados)` | Manda um evento. Com um argumento só, manda a carga crua |
-| `abrir()`, `fechar()` | Controle manual |
-| `socket` | A conexão completa, para descer para a API |
+| `connected` | `true` while the connection is open |
+| `state` | `connecting`, `open`, `closing`, `closed` or `reconnecting` |
+| `messages` | The last N received messages (default 50) |
+| `error` | Text of the last error, or `null` |
+| `attempts` | Consecutive reconnections without success |
+| `send(event, data)` | Sends an event. With just one argument, sends the raw payload |
+| `open()`, `close()` | Manual control |
+| `socket` | The complete connection, to descend to the API |
 
-A URL pode ser literal (`wss://...`, `/chat`) ou uma expressão (`'wss://' + host`).
+The URL can be literal (`wss://...`, `/chat`) or an expression (`'wss://' + host`).
 
-### Modificadores
+### Modifiers
 
-| Modificador | O que faz |
+| Modifier | What it does |
 | --- | --- |
-| `.json` | Liga a conversão automática de JSON (já é o padrão) |
-| `.manual` | Cria a conexão fechada. Quem abre é `$socket.abrir()` |
-| `.no-reconnect` | Desliga a reconexão automática |
+| `.json` | Enables automatic JSON conversion (already the default) |
+| `.manual` | Creates the connection closed. `$socket.open()` opens it |
+| `.no-reconnect` | Disables automatic reconnection |
 
-> **Sobre `.reconnect=false`:** o HTML não aceita `=` dentro do *nome* de um atributo, então
-> `v-socket.reconnect=false="wss://..."` chega ao navegador quebrado — o valor vira
-> `false="wss://..."`. A forma com `=` continua sendo aceita pelo parser de atributos (útil se você
-> gera o atributo por template), mas em HTML escrito à mão use `.no-reconnect` ou o atributo
-> auxiliar `v-socket-reconnect="false"`.
+> **About `.reconnect=false`:** HTML doesn't accept `=` inside an attribute *name*, so
+> `v-socket.reconnect=false="wss://..."` reaches the browser broken — the value becomes
+> `false="wss://..."`. The form with `=` is still accepted by the attribute parser (useful if you
+> generate the attribute via template), but in hand-written HTML use `.no-reconnect` or the
+> auxiliary attribute `v-socket-reconnect="false"`.
 
-### Atributos auxiliares
+### Auxiliary attributes
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-socket-transport="socket.io"` | Troca o transporte. Padrão `ws` |
-| `v-socket-as="chat"` | Nome no escopo. Padrão `$socket` |
-| `v-socket-buffer="200"` | Quantas mensagens ficam em `$socket.mensagens` |
-| `v-socket-path="/socket.io/"` | Caminho do endpoint Engine.IO |
-| `v-socket-heartbeat="30s"` | Intervalo do ping. `0` desliga |
-| `v-socket-reconnect="false"` | Desliga a reconexão |
+| `v-socket-transport="socket.io"` | Changes the transport. Default `ws` |
+| `v-socket-as="chat"` | Name in scope. Default `$socket` |
+| `v-socket-buffer="200"` | How many messages stay in `$socket.messages` |
+| `v-socket-path="/socket.io/"` | Path of the Engine.IO endpoint |
+| `v-socket-heartbeat="30s"` | Ping interval. `0` turns it off |
+| `v-socket-reconnect="false"` | Disables reconnection |
 
-### Sem WebSocket no ambiente
+### Without WebSocket in the environment
 
-SSR, um jsdom sem a API, um navegador antigo: nada é lançado. O elemento ganha
-`data-socket="unsupported"`, dispara `voodoo:socket-unsupported`, e `$socket` existe com
-`conectado: false` e `erro` preenchido. Uma página renderizada no servidor não pode cair por causa
-de um atributo.
+SSR, a jsdom without the API, an old browser: nothing is thrown. The element gets
+`data-socket="unsupported"`, fires `voodoo:socket-unsupported`, and `$socket` exists with
+`connected: false` and `error` filled. A server-rendered page cannot crash because of an attribute.
 
 ## v-room
 
-Entra numa sala da conexão mais próxima e publica `$room`.
+Enters a room from the nearest connection and publishes `$room`.
 
 ```html
-<div v-socket="wss://exemplo.com" v-room="geral">
-  <p v-show="!$socket.conectado">Reconectando...</p>
-  <li v-for="m in $room.mensagens">{ m.autor }: { m.texto }</li>
-  <span>{ $room.membros.length } online</span>
-  <form @submit.prevent="$room.enviar('mensagem', { texto: rascunho })">
-    <input v-model="rascunho">
+<div v-socket="wss://example.com" v-room="general">
+  <p v-show="!$socket.connected">Reconnecting...</p>
+  <li v-for="m in $room.messages">{ m.author }: { m.text }</li>
+  <span>{ $room.members.length } online</span>
+  <form @submit.prevent="$room.send('message', { text: draft })">
+    <input v-model="draft">
   </form>
 </div>
 ```
 
-| Campo de `$room` | O que é |
+| Field of `$room` | What it is |
 | --- | --- |
-| `nome` | Nome da sala |
-| `estado` | `joining`, `joined` ou `left` |
-| `mensagens` | Últimas mensagens recebidas nesta sala |
-| `membros` | Quem o servidor diz que está na sala |
-| `privada` | `true` quando a sala foi pedida como privada |
-| `enviar(evento, dados, para?)` | Manda para a sala, ou só para um destinatário |
-| `sair()` | Sai da sala |
-| `sala` | A sala completa, para descer para a API |
+| `name` | Room name |
+| `state` | `joining`, `joined` or `left` |
+| `messages` | Latest messages received in this room |
+| `members` | Who the server says is in the room |
+| `private` | `true` when the room was requested as private |
+| `send(event, data, to?)` | Sends to the room, or only to a recipient |
+| `leave()` | Leaves the room |
+| `room` | The complete room, to descend to the API |
 
-Modificador `.privada` marca a sala como privada — releia o
-[aviso do começo](#leia-isto-antes-de-usar-salas-privadas). Atributos auxiliares:
-`v-room-as="chat"` e `v-room-buffer="200"`.
+The `.private` modifier marks the room as private — reread the
+[warning at the beginning](#read-this-before-using-private-rooms). Auxiliary attributes:
+`v-room-as="chat"` and `v-room-buffer="200"`.
 
-Sair do elemento sai da sala, cancela os ouvintes e limpa o estado.
+Leaving the element leaves the room, cancels listeners and clears the state.
 
 ## v-on-socket
 
-Liga um evento do socket a uma expressão, no mesmo espírito de `@evento`. A carga chega em
+Links a socket event to an expression, in the same spirit as `@event`. The payload arrives in
 `$event`.
 
 ```html
 <div v-socket="/" v-socket-transport="socket.io"
-     v-on-socket:nova-mensagem="mensagens.push($event)"></div>
+     v-on-socket:new-message="messages.push($event)"></div>
 ```
 
-A assinatura é sempre na **conexão**, mesmo dentro de um `v-room` — o nome diz `on-socket`, e a
-conexão vê tudo que chega, inclusive o que é de sala. Para o recorte já filtrado de uma sala, use
-`$room.mensagens` no HTML ou `sala.on()` no JavaScript. Quando o servidor pede confirmação daquele
-evento, a função de resposta chega em `$ack`.
+The subscription is always on the **connection**, even inside a `v-room` — the name says `on-socket`,
+and the connection sees everything that arrives, including room stuff. For the already-filtered slice
+of a room, use `$room.messages` in HTML or `room.on()` in JavaScript. When the server asks for
+confirmation of that event, the callback function arrives in `$ack`.
 
-## Eventos de DOM
+## DOM events
 
-| Evento | Quando |
+| Event | When |
 | --- | --- |
-| `voodoo:socket-open` | A conexão abriu |
-| `voodoo:socket-close` | A conexão fechou |
-| `voodoo:socket-error` | Deu erro |
-| `voodoo:socket-unsupported` | O ambiente não tem WebSocket |
-| `voodoo:room-join` | Alguém entrou na sala |
-| `voodoo:room-leave` | Alguém saiu da sala |
+| `voodoo:socket-open` | Connection opened |
+| `voodoo:socket-close` | Connection closed |
+| `voodoo:socket-error` | An error occurred |
+| `voodoo:socket-unsupported` | The environment doesn't have WebSocket |
+| `voodoo:room-join` | Someone entered the room |
+| `voodoo:room-leave` | Someone left the room |
 
 ---
 
-# A API `V.socket`
+# The `V.socket` API
 
 ```js
-const s = V.socket('wss://exemplo.com');                 // WebSocket nativo
-const io = V.socket('/', { transport: 'socket.io' });     // protocolo Socket.IO
+const s = V.socket('wss://example.com');                 // Native WebSocket
+const io = V.socket('/', { transport: 'socket.io' });     // Socket.IO protocol
 
-s.on('mensagem', (dados) => console.log(dados));
-s.emit('entrar', { sala: 'geral' });
+s.on('message', (data) => console.log(data));
+s.emit('join', { room: 'general' });
 
-s.state;      // reativo: connecting | open | closing | closed | reconnecting
-s.connected;  // reativo
-s.attempts;   // reativo
-s.queued;     // reativo
-s.error;      // reativo
+s.state;      // reactive: connecting | open | closing | closed | reconnecting
+s.connected;  // reactive
+s.attempts;   // reactive
+s.queued;     // reactive
+s.error;      // reactive
 
 s.close();
-V.socket.close(); // fecha todas as conexões
+V.socket.close(); // closes all connections
 ```
 
-`state` e `connected` são reativos de verdade: lê-los dentro de um `effect`, de um `computed` ou de
-uma expressão do HTML registra a dependência, como qualquer outro estado da Voodoo.
+`state` and `connected` are truly reactive: reading them inside an `effect`, a `computed` or an
+HTML expression registers the dependency, like any other Voodoo state.
 
-## Métodos
+## Methods
 
-| Método | O que faz |
+| Method | What it does |
 | --- | --- |
-| `on(evento, fn)` | Assina. Devolve a função que cancela |
-| `once(evento, fn)` | Assina só a próxima ocorrência |
-| `off(evento?, fn?)` | Cancela um, todos de um evento, ou todos |
-| `emit(evento, dados, ack?)` | Manda um evento nomeado |
-| `send(dados)` | Manda a carga crua, sem nome de evento |
-| `open()` / `close()` | Abre e fecha |
-| `join(nome, opções?)` | Entra numa sala |
-| `leave(nome)` | Sai de uma sala |
-| `to(destino)` | Envia direto para um destinatário |
-| `rooms` | Salas ativas |
+| `on(event, fn)` | Subscribes. Returns the function that cancels |
+| `once(event, fn)` | Subscribes only to next occurrence |
+| `off(event?, fn?)` | Cancels one, all of an event, or all |
+| `emit(event, data, ack?)` | Sends a named event |
+| `send(data)` | Sends the raw payload, without event name |
+| `open()` / `close()` | Opens and closes |
+| `join(name, options?)` | Enters a room |
+| `leave(name)` | Leaves a room |
+| `to(destination)` | Sends directly to a recipient |
+| `rooms` | Active rooms |
 
-O evento `message` recebe **tudo** que chega, com nome ou sem. Além dele, o módulo emite
-`open`, `close`, `error`, `reconnecting` e `state:<estado>`.
+The `message` event receives **everything** that arrives, with or without name. Besides it, the
+module emits `open`, `close`, `error`, `reconnecting` and `state:<state>`.
 
-## Opções e `V.socket.defaults`
+## Options and `V.socket.defaults`
 
-Os padrões valem para toda conexão nova, exatamente como em `V.http.defaults`.
+The defaults apply to every new connection, exactly like `V.http.defaults`.
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `transport` | `'ws'` | `ws` ou `socket.io` |
-| `baseURL` | `''` | Prefixo dos endereços relativos |
-| `reconnect` | `true` | Reconecta quando a conexão cai sozinha |
-| `reconnectDelay` | `500` | Primeira espera, em ms |
-| `reconnectMaxDelay` | `30000` | Teto da espera |
-| `reconnectMaxAttempts` | `Infinity` | Quantas tentativas antes de desistir |
-| `jitter` | `0.3` | Fração sorteada em cima da espera |
-| `heartbeat` | `25000` | Intervalo do ping nativo, em ms. `0` desliga |
-| `heartbeatTimeout` | `10000` | Silêncio tolerado antes de considerar morta |
-| `pingPayload` | `'ping'` | Texto do ping. `null` só observa o silêncio |
-| `pongPayload` | `'pong'` | Texto ignorado na entrega das mensagens |
-| `queueLimit` | `64` | Mensagens guardadas antes de a conexão abrir |
-| `json` | `true` | Converte JSON com volta para texto puro |
-| `path` | `'/socket.io/'` | Endpoint Engine.IO |
-| `auth` | `null` | Dados enviados no CONNECT do Socket.IO |
-| `manual` | `false` | Cria a conexão fechada |
-| `roomBuffer` | `50` | Mensagens guardadas por sala |
-| `joinEvent` / `leaveEvent` | `'join'` / `'leave'` | Eventos de entrada e saída de sala |
-| `presenceEvent` | `'room:members'` | Evento com a lista de membros |
-| `memberJoinEvent` / `memberLeaveEvent` | `'room:joined'` / `'room:left'` | Presença |
-| `WebSocket` | `null` | Implementação usada no lugar da global |
+| `transport` | `'ws'` | `ws` or `socket.io` |
+| `baseURL` | `''` | Prefix for relative addresses |
+| `reconnect` | `true` | Reconnects when connection drops on its own |
+| `reconnectDelay` | `500` | First wait, in ms |
+| `reconnectMaxDelay` | `30000` | Ceiling of wait |
+| `reconnectMaxAttempts` | `Infinity` | How many attempts before giving up |
+| `jitter` | `0.3` | Fraction randomly added on top of wait |
+| `heartbeat` | `25000` | Native ping interval, in ms. `0` turns it off |
+| `heartbeatTimeout` | `10000` | Silence tolerated before considering dead |
+| `pingPayload` | `'ping'` | Text of the ping. `null` only observes silence |
+| `pongPayload` | `'pong'` | Text ignored in message delivery |
+| `queueLimit` | `64` | Messages stored before connection opens |
+| `json` | `true` | Converts JSON with round-trip to plain text |
+| `path` | `'/socket.io/'` | Engine.IO endpoint |
+| `auth` | `null` | Data sent in Socket.IO CONNECT |
+| `manual` | `false` | Creates the connection closed |
+| `roomBuffer` | `50` | Messages stored per room |
+| `joinEvent` / `leaveEvent` | `'join'` / `'leave'` | Room entry and exit events |
+| `presenceEvent` | `'room:members'` | Event with the member list |
+| `memberJoinEvent` / `memberLeaveEvent` | `'room:joined'` / `'room:left'` | Presence |
+| `WebSocket` | `null` | Implementation used in place of the global |
 
-## Interceptadores
+## Interceptors
 
-Mesmo formato do `http.interceptors`. Devolver um objeto troca a mensagem, devolver `null` a
-descarta, não devolver nada mantém a original.
+Same format as `http.interceptors`. Returning an object changes the message, returning `null`
+discards it, returning nothing keeps the original.
 
 ```js
 V.socket.interceptors.outgoing.use((m) => ({ ...m, data: { ...m.data, token } }));
 
-const soltar = V.socket.interceptors.incoming.use((m) => {
-  if (m.event === 'debug') return null; // engole
+const drop = V.socket.interceptors.incoming.use((m) => {
+  if (m.event === 'debug') return null; // swallow
   return m;
 });
-soltar(); // cancela
+drop(); // cancel
 ```
 
-Cada mensagem chega como `{ event, data, url, raw }`. `raw` é o texto exatamente como veio do fio,
-e só existe na entrada.
+Each message arrives as `{ event, data, url, raw }`. `raw` is the text exactly as it came from
+the wire, and only exists on input.
 
 ## Devtools
 
-Toda mensagem que entra e que sai é publicada no barramento das [devtools](devtools.md) como evento
-`socket:<nome>`, e a abertura e o fechamento da conexão aparecem na aba Rede como método `WS`.
+Every message that comes in and goes out is published on the [devtools](devtools.md) bus as a
+`socket:<name>` event, and connection open and close appear in the Network tab as the `WS` method.
 
 ---
 
-# Salas e canais
+# Rooms and channels
 
 ```js
-const sala = s.join('geral');                    // pública
-const dm = s.join('dm:ana', { privada: true });  // privada
+const room = s.join('general');                    // public
+const dm = s.join('dm:ana', { private: true });  // private
 
-sala.on('mensagem', (m) => console.log(m));
-sala.emit('mensagem', { texto: 'oi' });          // vai para todos da sala
-sala.membros;                                    // reativo
-sala.mensagens;                                  // reativo
-sala.leave();
+room.on('message', (m) => console.log(m));
+room.emit('message', { text: 'hi' });          // goes to everyone in the room
+room.members;                                    // reactive
+room.messages;                                  // reactive
+room.leave();
 ```
 
-`join` e `leave` são **idempotentes**: entrar duas vezes na mesma sala devolve o mesmo objeto, sem
-duplicar ouvinte e sem abrir conexão nova; sair duas vezes não manda dois pedidos.
+`join` and `leave` are **idempotent**: entering the same room twice returns the same object, without
+duplicating listeners or opening a new connection; leaving twice doesn't send two requests.
 
-Os nomes existem em português e em inglês: `membros`/`members`, `mensagens`/`messages`,
+The names exist in Portuguese and English: `membros`/`members`, `mensagens`/`messages`,
 `estado`/`state`, `enviar`/`emit`, `sair`/`leave`.
 
-## Reentrada automática depois da reconexão
+## Automatic re-entry after reconnection
 
-Quando a conexão cai e volta, o módulo **refaz o `join` de todas as salas ativas**, antes de escoar
-a fila de envio.
+When the connection drops and comes back, the module **redoes the `join` of all active rooms**,
+before draining the send queue.
 
-Isso não é detalhe: é o erro mais comum em cliente de tempo real escrito à mão. O socket reconecta,
-a interface volta a mostrar "online", e o usuário fica fora de todas as salas — sem receber nada,
-sem nenhum aviso, olhando para uma tela que parece funcionando. Uma sala de que você saiu com
-`leave()` não volta.
+This is not a detail: it's the most common error in hand-written realtime clients. The socket
+reconnects, the interface shows "online" again, and the user is out of all rooms — receiving nothing,
+with no warning, looking at a screen that seems to work. A room you left with `leave()` won't come back.
 
-## Público, privado e mensagem direta
+## Public, private and direct message
 
-| Forma | O que significa |
+| Form | What it means |
 | --- | --- |
-| `s.join('geral')` | Sala pública: broadcast para todos que estão nela |
-| `s.join('dm:ana', { privada: true })` | Sala privada: o servidor decide quem entra |
-| `s.to('ana').emit('cochicho', dados)` | Mensagem direcionada a um destinatário |
-| `sala.to('ana').emit('mensagem', dados)` | Direcionada dentro de uma sala |
+| `s.join('general')` | Public room: broadcast to everyone in it |
+| `s.join('dm:ana', { private: true })` | Private room: the server decides who enters |
+| `s.to('ana').emit('whisper', data)` | Message addressed to a recipient |
+| `room.to('ana').emit('message', data)` | Addressed within a room |
 
-E, de novo: **isso tudo é pedido, não garantia.** Veja o
-[aviso do começo](#leia-isto-antes-de-usar-salas-privadas).
+And, again: **this is all request, not guarantee.** See the
+[warning at the beginning](#read-this-before-using-private-rooms).
 
-## Presença
+## Presence
 
-`sala.membros` é alimentado pelo que o servidor manda, e só por isso. **Se o servidor não mandar
-nada, a lista fica vazia** — o cliente não inventa presença, porque um cliente só enxerga a si
-mesmo e uma lista inventada seria bonita e mentirosa.
+`room.members` is fed by what the server sends, and only that. **If the server sends nothing, the
+list stays empty** — the client doesn't invent presence, because a client only sees itself and an
+invented list would be pretty and false.
 
-Os três eventos que o servidor precisa mandar:
+The three events the server must send:
 
 ```js
-// lista completa
-{ event: 'room:members', data: { room: 'geral', members: ['ana', 'bia'] } }
-// alguém entrou
-{ event: 'room:joined',  data: { room: 'geral', member: { id: 'ana' } } }
-// alguém saiu
-{ event: 'room:left',    data: { room: 'geral', member: 'ana' } }
+// complete list
+{ event: 'room:members', data: { room: 'general', members: ['ana', 'bia'] } }
+// someone entered
+{ event: 'room:joined',  data: { room: 'general', member: { id: 'ana' } } }
+// someone left
+{ event: 'room:left',    data: { room: 'general', member: 'ana' } }
 ```
 
-Os nomes desses eventos são configuráveis em `V.socket.defaults`. Dentro da sala eles viram os
-eventos `entrou` e `saiu`, e não entram em `sala.mensagens`.
+The names of these events are configurable in `V.socket.defaults`. Inside the room they become
+`joined` and `left` events, and they don't enter `room.messages`.
 
 ---
 
-# O que o servidor precisa fazer
+# What the server must do
 
-Esta é a parte que **não é transparente**, e não adianta fingir que é.
+This is the part that **is not transparent**, and there's no point pretending it is.
 
-## No transporte nativo
+## On the native transport
 
-O WebSocket cru não tem conceito de evento nomeado nem de sala: ele carrega texto. Para `emit`,
-`on` e as salas funcionarem, o módulo usa um envelope JSON, e **o seu servidor precisa falar esse
-mesmo envelope**:
+Raw WebSocket has no concept of named event or room: it carries text. For `emit`, `on` and rooms to
+work, the module uses a JSON envelope, and **your server must speak that same envelope**:
 
 ```jsonc
 // cliente -> servidor
@@ -388,132 +386,128 @@ mesmo envelope**:
 { "event": "leave", "data": { "room": "geral" } }
 ```
 
-Na volta, o servidor precisa **etiquetar cada mensagem com a sala** (`room`, ou `sala`), senão o
-cliente não tem como saber para qual sala rotear. Sem etiqueta, a mensagem ainda chega em
-`s.on(...)` e em `$socket.mensagens`, mas não entra em nenhuma sala.
+On the way back, the server must **tag each message with the room** (`room`, or `sala`), otherwise
+the client can't know which room to route to. Without a tag, the message still arrives at
+`s.on(...)` and `$socket.messages`, but doesn't enter any room.
 
-Quem fala com um servidor que não usa esse envelope tem `send()` e `on('message')`, que passam o
-conteúdo cru sem interpretar nome nenhum. JSON continua sendo convertido automaticamente, com volta
-para texto puro quando não é JSON — igual ao `responseType: 'auto'` do HTTP.
+Anyone talking to a server that doesn't use this envelope has `send()` and `on('message')`, which
+pass the raw content without interpreting any name. JSON continues to be converted automatically,
+round-tripping to plain text when it's not JSON — just like `responseType: 'auto'` in HTTP.
 
-## No transporte Socket.IO
+## On the Socket.IO transport
 
-O envelope é o mesmo, viajando dentro de um evento Socket.IO comum (`42["mensagem",{...}]`). O
-`join` chega como um evento `join` normal, e cabe ao servidor chamar `socket.join(room)` — que é o
-que liga o envelope aos **rooms nativos** do Socket.IO. Um servidor mínimo:
+The envelope is the same, traveling inside a common Socket.IO event (`42["message",{...}]`). The
+`join` arrives as a normal `join` event, and it's up to the server to call `socket.join(room)` —
+that's what ties the envelope to **Socket.IO native rooms**. A minimal server:
 
 ```js
 io.on('connection', (socket) => {
   socket.on('join', ({ room }) => {
-    // autorize aqui. sempre.
+    // authorize here. always.
     socket.join(room);
     io.to(room).emit('room:joined', { room, member: socket.id });
   });
   socket.on('leave', ({ room }) => socket.leave(room));
-  socket.on('mensagem', ({ room, data }) => {
-    io.to(room).emit('mensagem', { room, data });
+  socket.on('message', ({ room, data }) => {
+    io.to(room).emit('message', { room, data });
   });
 });
 ```
 
 ---
 
-# O protocolo Socket.IO implementado à mão
+# Socket.IO protocol implemented by hand
 
-`socket.io-client` pesa mais de 30 KB comprimidos, e a Voodoo não tem dependência de runtime
-nenhuma. Acontece que o pedaço do protocolo que uma página usa de verdade é pequeno, e cabe em
-texto puro sobre o WebSocket nativo.
+`socket.io-client` weighs over 30 KB compressed, and Voodoo has no runtime dependencies. It turns
+out the slice of protocol that a page really uses is small, and fits in plain text over native WebSocket.
 
-## O que está implementado
+## What is implemented
 
-- Handshake Engine.IO v4 direto em WebSocket (`?EIO=4&transport=websocket`).
-- Pacotes Engine.IO `0` (open), `1` (close), `2` (ping), `3` (pong), `4` (message), `6` (noop).
-- Resposta automática ao ping do servidor, com os tempos vindos do handshake.
-- Pacotes Socket.IO `0` (CONNECT, com `auth`), `1` (DISCONNECT), `2` (EVENT), `3` (ACK) e
+- Engine.IO v4 handshake directly on WebSocket (`?EIO=4&transport=websocket`).
+- Engine.IO packets `0` (open), `1` (close), `2` (ping), `3` (pong), `4` (message), `6` (noop).
+- Automatic response to server ping, with timings from handshake.
+- Socket.IO packets `0` (CONNECT, with `auth`), `1` (DISCONNECT), `2` (EVENT), `3` (ACK) and
   `4` (CONNECT_ERROR).
-- `emit` com ack, e resposta a eventos que pedem ack.
-- Reconexão com espera progressiva, refazendo o handshake inteiro.
+- `emit` with ack, and response to events that ask for ack.
+- Reconnection with progressive wait, redoing the entire handshake.
 
-## O que **não** está implementado
+## What **is not** implemented
 
-Dito sem suavizar, porque prometer compatibilidade que não existe custa caro depois:
+Said without sugar-coating, because promising compatibility that doesn't exist costs dearly later:
 
-- **Anexos binários.** Os pacotes `5` (BINARY_EVENT) e `6` (BINARY_ACK) e os quadros binários do
-  Engine.IO são ignorados, com aviso no console em modo desenvolvimento. Mande os dados como JSON
-  ou base64.
-- **Transporte por polling e upgrade.** A conexão abre direto em WebSocket. Sem WebSocket no
-  ambiente, nada abre — não existe caminho de reserva por long-polling.
-- **Namespaces.** Só o namespace padrão `/`. O decodificador *lê* o namespace de um pacote, mas o
-  cliente não gerencia vários namespaces ao mesmo tempo.
-- **Rooms do lado do cliente.** Rooms do Socket.IO são um conceito de servidor. O que existe aqui é
-  a convenção de `join`/`leave` e o envelope descrito acima; quem realmente coloca o socket na room
-  é o servidor.
-- **Multiplexação de vários sockets sobre uma conexão** e a **recuperação de estado da conexão**
-  (`connection state recovery`) do Socket.IO v4.
+- **Binary attachments.** Packets `5` (BINARY_EVENT) and `6` (BINARY_ACK) and Engine.IO binary
+  frames are ignored, with a warning on the console in development mode. Send data as JSON or base64.
+- **Polling transport and upgrade.** The connection opens straight in WebSocket. Without WebSocket
+  in the environment, nothing opens — there's no fallback path via long-polling.
+- **Namespaces.** Only the default namespace `/`. The decoder *reads* the namespace from a packet,
+  but the client doesn't manage multiple namespaces at once.
+- **Client-side rooms.** Socket.IO rooms are a server concept. What exists here is the convention
+  of `join`/`leave` and the envelope described above; the server is what actually puts the socket
+  in a room.
+- **Multiplexing multiple sockets over one connection** and **connection state recovery**
+  (`connection state recovery`) from Socket.IO v4.
 
-Se você precisa de qualquer item dessa lista, use `socket.io-client`. Este módulo é o suficiente
-para `emit`, `on`, ack, salas e reconexão contra um servidor Socket.IO v4 — e nada além disso.
+If you need any item from that list, use `socket.io-client`. This module is sufficient for `emit`,
+`on`, ack, rooms and reconnection against a Socket.IO v4 server — and nothing else.
 
 ---
 
-# Reconexão e conexão morta
+# Reconnection and dead connection
 
-## Espera progressiva com sorteio
+## Progressive wait with jitter
 
-A espera dobra a cada tentativa até o teto, e um sorteio (`jitter`) espalha os clientes dentro da
-janela. Com os padrões: 500 ms, 1 s, 2 s, 4 s… até 30 s, cada uma variando ±30%.
+The wait doubles with each attempt up to the ceiling, and jitter spreads the clients within the
+window. With defaults: 500 ms, 1 s, 2 s, 4 s… up to 30 s, each varying ±30%.
 
-O sorteio existe por um motivo prático: sem ele, mil abas que caem juntas voltam todas no mesmo
-milissegundo e derrubam o servidor de novo, exatamente quando ele está se recuperando.
+Jitter exists for a practical reason: without it, a thousand tabs that drop together all come back
+in the same millisecond and bring the server down again, right when it's recovering.
 
-`close()` para de vez. Uma reconexão já agendada é cancelada, e nada volta a abrir sem um `open()`
-explícito.
+`close()` stops for good. A scheduled reconnection is cancelled, and nothing opens back without
+an explicit `open()`.
 
-## Detecção de conexão morta
+## Dead connection detection
 
-**O `readyState` mente.** Quando a rede cai sem FIN — cabo arrancado, Wi-Fi que sumiu, celular que
-trocou de torre — o socket continua dizendo `OPEN` por minutos, e a página fica parecendo
-conectada enquanto nada chega.
+**`readyState` lies.** When the network drops without FIN — cable pulled, WiFi gone, phone switched towers — the socket keeps saying `OPEN` for minutes, and the page looks connected while nothing arrives.
 
-Então o módulo não confia nele:
+So the module doesn't trust it:
 
-- **Transporte nativo:** manda `pingPayload` a cada `heartbeat` ms e derruba a conexão se nada
-  chegar em `heartbeat + heartbeatTimeout`. Qualquer quadro que chegue conta como prova de vida e
-  reinicia a contagem — tráfego real é prova melhor que qualquer pong.
-- **Transporte Socket.IO:** quem manda o ping é o servidor, e a janela sai do handshake
+- **Native transport:** sends `pingPayload` every `heartbeat` ms and drops the connection if
+  nothing arrives in `heartbeat + heartbeatTimeout`. Any frame that arrives counts as proof of life
+  and restarts the count — real traffic is better proof than any pong.
+- **Socket.IO transport:** the server sends the ping, and the window comes from the handshake
   (`pingInterval + pingTimeout`).
 
-O `ping` do transporte nativo é uma convenção deste módulo, não do protocolo. Um servidor que não o
-espera pode simplesmente ignorá-lo, mas se ele atrapalhar, use `heartbeat: 0` para desligar ou
-`pingPayload` para trocar o texto. O `pongPayload` que voltar é engolido e nunca vira mensagem da
-aplicação.
+The `ping` of the native transport is a convention of this module, not of the protocol. A server
+that doesn't expect it can simply ignore it, but if it gets in the way, use `heartbeat: 0` to turn
+it off or `pingPayload` to change the text. The `pongPayload` that comes back is swallowed and
+never becomes an application message.
 
-## Fila de envio
+## Send queue
 
-`emit` antes de a conexão abrir guarda a mensagem e despacha tudo na abertura. A fila tem teto
-(`queueLimit`, padrão 64) porque uma conexão que nunca abre transformaria `emit` num vazamento
-silencioso. Cheia, a mais antiga sai: em tempo real, o dado novo vale mais que o velho.
-
----
-
-# Limpeza
-
-Destruir o elemento fecha a conexão, sai das salas, remove **todos** os ouvintes e limpa todos os
-timers. Não há exceção: uma conexão aberta por um elemento que já morreu é um vazamento que só
-aparece semanas depois, em forma de conta de servidor.
-
-`V.socket.close()` derruba todas as conexões vivas de uma vez, o que é útil ao trocar de rota ou ao
-sair da aplicação.
+`emit` before the connection opens stores the message and dispatches everything on opening. The queue
+has a ceiling (`queueLimit`, default 64) because a connection that never opens would turn `emit`
+into a silent leak. When full, the oldest goes out: in realtime, new data is worth more than old.
 
 ---
 
-# Tamanho e distribuição
+# Cleanup
 
-Com o módulo dentro do build completo, o `voodoo.full.min.js` ia de 127.58 KB para 134.22 KB
-comprimidos, contra um teto de 133 KB. Levantar a meta seria o mesmo que não ter meta, então o
-módulo virou entrada própria — a mesma decisão, pelo mesmo motivo, que a [camada GPU](gpu.md) já
-tinha tomado.
+Destroying the element closes the connection, leaves all rooms, removes **all** listeners and
+clears all timers. No exception: a connection opened by an element that's already dead is a leak
+that only shows up weeks later as a server bill.
 
-O resultado: `voodoo.core.min.js`, `voodoo.min.js` e `voodoo.full.min.js` continuam do tamanho de
-antes, e quem usa WebSocket paga por WebSocket. Em ESM os dois lados compartilham o mesmo runtime,
-porque as partes comuns saem em chunks compartilhados.
+`V.socket.close()` brings down all live connections at once, which is useful when switching routes
+or leaving the application.
+
+---
+
+# Size and distribution
+
+With the module inside the complete build, `voodoo.full.min.js` would go from 127.58 KB to 134.22 KB
+compressed, against a ceiling of 133 KB. Raising the target would be the same as not having one, so
+the module became its own entry — the same decision, for the same reason, that the [GPU layer](gpu.md)
+had already made.
+
+The result: `voodoo.core.min.js`, `voodoo.min.js` and `voodoo.full.min.js` stay the same size,
+and whoever uses WebSocket pays for WebSocket. In ESM the two sides share the same runtime, because
+common parts come out in shared chunks.

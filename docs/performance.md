@@ -1,148 +1,148 @@
-# Desempenho na prática
+# Performance in practice
 
-Esta página é sobre como escrever aplicações rápidas com a Voodoo.js. Tudo aqui descreve o
-comportamento real do código, com o arquivo que implementa cada coisa nomeado, para você
-poder conferir.
+This page is about writing fast applications with Voodoo.js. Everything here describes the
+actual behavior of code, with the file that implements each thing named, so you
+can verify it.
 
-Se você quer entender **por que** o modelo é rápido, leia
-[Desempenho](desempenho.md) primeiro. Esta página assume que você já sabe que não existe
-Virtual DOM e quer saber o que fazer com essa informação.
+If you want to understand **why** the model is fast, read
+[Performance](desempenho.md) first. This page assumes you already know there's no
+Virtual DOM and want to know what to do with that information.
 
-> **Antes de otimizar, meça.** Os benchmarks do projeto ficam em `benchmarks/`, com cenários
-> para as primitivas reativas, ligação de DOM, listas grandes e o parser, além de uma
-> linha de base em JavaScript puro. Rode com `node benchmarks/run.mjs`. Comparação de
-> número entre máquinas diferentes é ruído.
+> **Before optimizing, measure.** The project's benchmarks are in `benchmarks/`, with scenarios
+> for reactive primitives, DOM binding, large lists and the parser, plus a
+> baseline in pure JavaScript. Run with `node benchmarks/run.mjs`. Comparing
+> numbers between different machines is noise.
 
 ---
 
-## 1. Use chave em listas grandes
+## 1. Use key in large lists
 
-A regra mais importante desta página.
+The most important rule on this page.
 
-`v-for` sem `:key` usa `__index_0`, `__index_1` e assim por diante como chave
-(`directives/core.ts`). O bloco da posição zero é sempre reaproveitado para o item da
-posição zero, seja ele qual for.
+`v-for` without `:key` uses `__index_0`, `__index_1` and so on as the key
+(`directives/core.ts`). The block at position zero is always reused for the item at
+position zero, whatever it is.
 
-Enquanto a lista só cresce no fim, isso funciona. Quando você ordena, filtra, remove do
-meio ou insere no começo, cada bloco recebe dados de um item diferente. O DOM não quebra,
-mas todo efeito de todo bloco reexecuta.
+While the list only grows at the end, this works. When you sort, filter, remove from
+the middle or insert at the start, each block gets data from a different item. The DOM doesn't break,
+but every effect of every block re-executes.
 
 ```html
-<!-- Ruim em lista que muda de ordem -->
-<li v-for="produto in produtos">{ produto.nome }</li>
+<!-- Bad for list that changes order -->
+<li v-for="product in products">{ product.name }</li>
 
-<!-- Bom -->
-<li v-for="produto in produtos" :key="produto.id">{ produto.nome }</li>
+<!-- Good -->
+<li v-for="product in products" :key="product.id">{ product.name }</li>
 ```
 
-Com chave estável, o `v-for` acha o bloco anterior pelo `Map` de chaves, atualiza só as
-variáveis do escopo daquele bloco e reposiciona os nós com um cursor. Blocos cujos dados
-não mudaram não disparam efeito nenhum.
+With a stable key, `v-for` finds the previous block by the key `Map`, updates only the
+scope variables of that block and repositions the nodes with a cursor. Blocks whose data
+hasn't changed don't trigger any effect.
 
-O impacto aparece de verdade quando o bloco tem estado interno:
+The impact shows up when the block has internal state:
 
 ```html
-<!-- Sem chave, ordenar a lista embaralha qual checkbox estava marcado. -->
-<div v-for="tarefa in tarefas" :key="tarefa.id">
-  <input type="checkbox" v-model="tarefa.feita">
-  <input v-model="tarefa.texto">
+<!-- Without key, sorting the list shuffles which checkbox was checked. -->
+<div v-for="task in tasks" :key="task.id">
+  <input type="checkbox" v-model="task.done">
+  <input v-model="task.text">
 </div>
 ```
 
-**A chave precisa ser estável e única.** `:key="item.id"` é certo. `:key="index"` é o mesmo
-que não ter chave. `:key="Math.random()"` recria tudo a cada atualização, que é o pior caso
-possível.
+**The key must be stable and unique.** `:key="item.id"` is right. `:key="index"` is the same
+as having no key. `:key="Math.random()"` recreates everything on each update, which is the worst case
+possible.
 
-Chave duplicada faz a lista reaproveitar o bloco errado ao reordenar. Ligue
-`V.config.devtools = true` durante o desenvolvimento para receber o aviso.
+Duplicate key makes the list reuse the wrong block when reordering. Enable
+`V.config.devtools = true` during development to get the warning.
 
 ---
 
-## 2. Prefira `computed` a watcher
+## 2. Prefer `computed` over watcher
 
-`computed` tem cache e uma marca de sujo (`reactivity/index.ts`, `ComputedRefImpl`). Ele
-recalcula na primeira leitura depois de uma dependência mudar, e nunca antes disso. Se
-ninguém ler o valor, ele não recalcula.
+`computed` has cache and a dirty mark (`reactivity/index.ts`, `ComputedRefImpl`). It
+recalculates on the first read after a dependency changes, and never before. If
+no one reads the value, it doesn't recalculate.
 
 ```js
-// Bom: só recalcula quando itens muda, e só se alguém ler.
-V.component('carrinho', {
+// Good: recalculates only when items change, and only if someone reads.
+V.component('cart', {
   computed: {
     total() {
-      return this.itens.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
+      return this.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     },
   },
 });
 ```
 
 ```js
-// Ruim: recalcula sempre, mesmo que o total não apareça na tela.
-V.component('carrinho', {
+// Bad: recalculates always, even if total doesn't appear on screen.
+V.component('cart', {
   watch: {
-    itens() {
-      this.total = this.itens.reduce((soma, i) => soma + i.preco * i.quantidade, 0);
+    items() {
+      this.total = this.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     },
   },
 });
 ```
 
-A segunda forma tem três problemas. Ela roda mesmo quando o total não está visível, ela
-guarda um valor derivado no estado (que agora pode ficar dessincronizado), e ela cria um
-efeito a mais.
+The second form has three problems. It runs even when the total isn't visible, it
+stores a derived value in state (which can now become out of sync), and it creates one
+more effect.
 
-**Watcher é para efeito colateral**, não para valor derivado: disparar uma requisição,
-salvar no `localStorage`, chamar uma biblioteca de terceiros. Se o resultado é um valor que
-o template lê, use `computed`.
+**Watcher is for side effects**, not for derived values: trigger a request,
+save to `localStorage`, call a third-party library. If the result is a value that
+the template reads, use `computed`.
 
-O mesmo vale para expressões no HTML. Uma expressão dentro de `{ }` ou de `v-text` roda a
-cada atualização das dependências dela, sem cache:
+The same applies to expressions in HTML. An expression inside `{ }` or `v-text` runs
+on each dependency update, without cache:
 
 ```html
-<!-- Recalcula o reduce toda vez que qualquer item mudar -->
-<p>{ itens.reduce((s, i) => s + i.preco, 0) }</p>
+<!-- Recalculates reduce every time any item changes -->
+<p>{ items.reduce((s, i) => s + i.price, 0) }</p>
 
-<!-- Recalcula uma vez, e só quando itens mudar -->
+<!-- Calculates once, and only when items changes -->
 <p>{ total }</p>
 ```
 
-Para listas pequenas isso não importa. Para uma lista de mil itens dentro de um `v-for`,
-importa muito, porque a expressão roda uma vez por linha.
+For small lists this doesn't matter. For a list of a thousand items inside a `v-for`,
+it matters a lot, because the expression runs once per row.
 
 ---
 
-## 3. Cuidado com `watch` profundo
+## 3. Be careful with `watch` deep
 
-`watch(source, cb, { deep: true })` usa `traverse` (`reactivity/index.ts`), que percorre o
-objeto inteiro recursivamente e **lê cada chave**. Ler significa rastrear: o watcher passa a
-depender de cada propriedade de cada objeto aninhado.
+`watch(source, cb, { deep: true })` uses `traverse` (`reactivity/index.ts`), which walks through the
+entire object recursively and **reads every key**. Reading means tracking: the watcher starts
+depending on each property of each nested object.
 
-Em um objeto pequeno, é imperceptível. Em um array de mil objetos com dez campos cada, cada
-disparo faz dez mil leituras rastreadas.
+On a small object, it's imperceptible. On an array of a thousand objects with ten fields each, each
+trigger does ten thousand tracked reads.
 
 ```js
-// Caro: qualquer campo de qualquer pedido dispara.
-V.watch(() => this.pedidos, atualizar, { deep: true });
+// Expensive: any field of any order triggers.
+V.watch(() => this.orders, update, { deep: true });
 
-// Barato: só o que interessa.
-V.watch(() => this.pedidos.length, atualizar);
-V.watch(() => this.pedidos.filter((p) => p.status === 'pendente').length, atualizar);
+// Cheap: only what matters.
+V.watch(() => this.orders.length, update);
+V.watch(() => this.orders.filter((p) => p.status === 'pending').length, update);
 ```
 
-Watchers declarados na definição de um componente (`watch: { ... }`) **não** são profundos.
-Eles observam `proxy[chave]`, então mudanças dentro de um objeto aninhado só disparam se a
-referência trocar. Isso é o comportamento certo na maior parte dos casos, e é bom saber
-disso antes de tentar entender por que o watcher "não disparou".
+Watchers declared in a component definition (`watch: { ... }`) are **not** deep.
+They observe `proxy[key]`, so changes inside a nested object only trigger if the
+reference changes. This is the right behavior in most cases, and it's good to know
+this before trying to understand why the watcher "didn't trigger".
 
-`V.store(nome, def, { persist: true })` usa `watch` profundo internamente, para saber quando
-salvar. É a escolha correta ali, mas significa que **um store persistido grande custa mais
-que um store persistido pequeno**. Persista o que precisa sobreviver ao recarregamento, não
-o cache inteiro da aplicação.
+`V.store(name, def, { persist: true })` uses `watch` deep internally, to know when
+to save. It's the right choice there, but it means that **a large persisted store costs more
+than a small persisted store**. Persist what needs to survive reload, not
+the entire application cache.
 
 ---
 
-## 4. O hook `updated` de componente é caro
+## 4. Component `updated` hook is expensive
 
-Vale ler o código deste, porque a implicação não é óbvia (`runtime/component.ts`):
+It's worth reading the code for this, because the implication isn't obvious (`runtime/component.ts`):
 
 ```js
 queuePostFlush(() => {
@@ -150,7 +150,7 @@ queuePostFlush(() => {
   if (definition.updated) {
     owner.run(() =>
       createEffect(() => {
-        // Le todo o estado para reagir a qualquer mudanca.
+        // Read all state to react to any change.
         for (const key of Object.keys(state)) void state[key];
         callHook(definition, proxy, 'updated');
       })
@@ -159,51 +159,51 @@ queuePostFlush(() => {
 });
 ```
 
-Declarar `updated` cria um efeito que **lê todas as chaves do estado**, e portanto depende
-de todas elas. Qualquer mudança em qualquer campo dispara o hook.
+Declaring `updated` creates an effect that **reads all state keys**, and therefore depends
+on all of them. Any change in any field triggers the hook.
 
-Isso é exatamente o que "atualizou" quer dizer, então está correto. Mas é o oposto do
-resto da biblioteca, que é granular. Se você só precisa reagir a um campo, use `watch`:
+This is exactly what "updated" means, so it's correct. But it's the opposite of
+the rest of the library, which is granular. If you only need to react to one field, use `watch`:
 
 ```js
-// Roda quando qualquer coisa muda
-updated() { this.reposicionar(); }
+// Runs when anything changes
+updated() { this.reposition(); }
 
-// Roda quando o que importa muda
+// Runs when what matters changes
 watch: {
-  itens() { this.reposicionar(); }
+  items() { this.reposition(); }
 }
 ```
 
 ---
 
-## 5. Faça limpeza de integrações externas
+## 5. Clean up external integrations
 
-Cada directive recebe um `cleanup` que roda quando o elemento sai do DOM
-(`runtime/walker.ts`, `runDirective`). Efeitos criados com `ctx.effect` e listeners
-registrados pelas directives nativas são limpos sozinhos. **O que você criou por fora, não.**
+Each directive receives a `cleanup` that runs when the element leaves the DOM
+(`runtime/walker.ts`, `runDirective`). Effects created with `ctx.effect` and listeners
+registered by native directives clean up themselves. **What you created outside, doesn't.**
 
 ```js
-V.directive('mapa', {
+V.directive('map', {
   mounted(el, binding) {
-    el._mapa = new MinhaBibliotecaDeMapa(el, binding.value);
+    el._map = new MyMapLibrary(el, binding.value);
   },
   beforeUnmount(el) {
-    el._mapa?.destroy();
-    delete el._mapa;
+    el._map?.destroy();
+    delete el._map;
   },
 });
 ```
 
-O mesmo em componentes:
+The same in components:
 
 ```js
-V.component('relogio', {
-  state: () => ({ agora: new Date() }),
+V.component('clock', {
+  state: () => ({ now: new Date() }),
 
   mounted() {
-    this._timer = setInterval(() => { this.agora = new Date(); }, 1000);
-    this._onResize = () => this.recalcular();
+    this._timer = setInterval(() => { this.now = new Date(); }, 1000);
+    this._onResize = () => this.recalculate();
     window.addEventListener('resize', this._onResize);
   },
 
@@ -214,94 +214,94 @@ V.component('relogio', {
 });
 ```
 
-Sem isso, um componente montado e desmontado várias vezes deixa um timer para trás em cada
-ciclo. Em uma SPA que troca de página, isso vira vazamento de verdade.
+Without this, a component mounted and unmounted several times leaves a timer behind in each
+cycle. In an SPA that changes pages, this becomes a real leak.
 
-`V.watch` e `V.effect` chamados fora de uma directive ou componente também não são limpos
-por ninguém. Guarde o retorno e chame:
+`V.watch` and `V.effect` called outside a directive or component also aren't cleaned up
+by anyone. Store the return and call it:
 
 ```js
-const parar = V.watch(() => estado.busca, buscar);
-// mais tarde
-parar();
+const stop = V.watch(() => state.search, search);
+// later
+stop();
 ```
 
-Ou agrupe em um escopo:
+Or group in a scope:
 
 ```js
-const escopo = V.effectScope();
-escopo.run(() => {
+const scope = V.effectScope();
+scope.run(() => {
   V.watch(/* ... */);
   V.effect(/* ... */);
 });
-// uma chamada limpa tudo
-escopo.stop();
+// one call cleans everything
+scope.stop();
 ```
 
 ---
 
-## 6. `v-cloak`, e o que ele resolve
+## 6. `v-cloak`, and what it solves
 
-Entre o HTML aparecer na tela e a Voodoo.js percorrer a página, existe um instante em que
-`{ nome }` está visível como texto literal. `v-cloak` esconde o elemento até esse instante
-passar.
+Between the HTML appearing on screen and Voodoo.js walking the page, there's a moment when
+`{ name }` is visible as literal text. `v-cloak` hides the element until that moment
+passes.
 
-O CSS vem em `BASE_TOKENS` (`dom/style.ts`):
+The CSS comes in `BASE_TOKENS` (`dom/style.ts`):
 
 ```css
 [v-cloak]{display:none !important}
 ```
 
-A directive apenas remove o atributo quando o elemento é processado
+The directive simply removes the attribute when the element is processed
 (`directives/core.ts`).
 
 ```html
-<div v-data="{ nome: 'Ana' }" v-cloak>
-  <p>Olá, { nome }</p>
+<div v-data="{ name: 'Ana' }" v-cloak>
+  <p>Hi, { name }</p>
 </div>
 ```
 
-Dois detalhes que economizam uma sessão de depuração:
+Two details that save a debugging session:
 
-- **Se `V.config.injectStyles` for `false`, o CSS não é injetado** e `v-cloak` não esconde
-  nada. Declare a regra você mesmo nesse caso.
-- **O seletor é literalmente `[v-cloak]`.** Se você trocou `V.config.prefix`, a regra
-  precisa acompanhar.
+- **If `V.config.injectStyles` is `false`, CSS isn't injected** and `v-cloak` doesn't hide
+  anything. Declare the rule yourself in that case.
+- **The selector is literally `[v-cloak]`.** If you changed `V.config.prefix`, the rule
+  needs to match.
 
-Alternativa que evita o salto de layout, para blocos grandes: use `v-show` em um esqueleto
-em vez de esconder o conteúdo inteiro.
+Alternative that avoids layout jump, for large blocks: use `v-show` on a skeleton
+instead of hiding the entire content.
 
 ---
 
-## 7. `V.config.autoDiscover` e o custo do MutationObserver
+## 7. `V.config.autoDiscover` and the cost of MutationObserver
 
-Por padrão a Voodoo.js observa o documento com um `MutationObserver`
-(`{ childList: true, subtree: true }`) e inicializa qualquer elemento novo
-(`runtime/walker.ts`, `observeDOM`). É o que faz HTML inserido depois do carregamento
-ganhar suas directives sem nenhuma chamada manual.
+By default Voodoo.js observes the document with a `MutationObserver`
+(`{ childList: true, subtree: true }`) and initializes any new element
+(`runtime/walker.ts`, `observeDOM`). This is what makes HTML inserted after loading
+gain its directives without any manual call.
 
-O custo é real e proporcional à quantidade de mutações, não ao tamanho da página. Para cada
-nó adicionado o observador checa se já foi inicializado e, se não, sobe a árvore com
-`findScope` até achar o escopo. Para cada nó removido, checa se a remoção foi interna e
-chama `destroy`.
+The cost is real and proportional to the number of mutations, not to page size. For each
+node added the observer checks if it was already initialized and, if not, walks up the tree with
+`findScope` until it finds the scope. For each node removed, it checks if the removal was internal and
+calls `destroy`.
 
-Em uma página normal isso é imperceptível. Em uma página que insere milhares de nós por
-segundo (um terminal, um log ao vivo, um canvas de nós), passa a aparecer no perfil.
+On a normal page this is imperceptible. On a page that inserts thousands of nodes per
+second (a terminal, a live log, a node canvas), it starts appearing in the profile.
 
-Duas saídas.
+Two ways out.
 
-**Desligue e chame na mão.** Você paga o custo só quando quer:
+**Disable and call by hand.** You only pay the cost when you want:
 
 ```html
 <script src="voodoo.min.js" data-no-observer defer></script>
 ```
 
 ```js
-lista.insertAdjacentHTML('beforeend', html);
-V.refresh(lista);
+list.insertAdjacentHTML('beforeend', html);
+V.refresh(list);
 ```
 
-**Limite a raiz observada.** Se a Voodoo só governa uma parte da página, diga isso:
+**Limit the observed root.** If Voodoo only governs part of the page, say so:
 
 ```html
 <script src="voodoo.min.js" data-manual defer></script>
@@ -311,38 +311,38 @@ V.refresh(lista);
 </script>
 ```
 
-O observador é ligado sobre a raiz passada para `start()`, então mutações fora dela não
-custam nada.
+The observer is attached to the root passed to `start()`, so mutations outside it
+cost nothing.
 
 ---
 
-## 8. `v-pre`, `v-ignore`, `v-once`: o que cada um faz de verdade
+## 8. `v-pre`, `v-ignore`, `v-once`: what each one actually does
 
-Os três parecem otimizações parecidas e **não são a mesma coisa**. Vale ler com atenção,
-porque um deles não faz o que o nome sugere para quem vem do Vue.
+The three look like similar optimizations and **they are not the same**. Worth reading carefully,
+because one of them doesn't do what the name suggests to someone coming from Vue.
 
-### `v-pre` e `v-ignore`
+### `v-pre` and `v-ignore`
 
-Idênticos. O walker encontra o atributo, marca o elemento como inicializado e **retorna
-imediatamente** (`runtime/walker.ts`, `walk`). A subárvore inteira fica de fora: nenhuma
-directive, nenhuma interpolação, nenhum efeito.
+Identical. The walker finds the attribute, marks the element as initialized and **returns
+immediately** (`runtime/walker.ts`, `walk`). The entire subtree is left out: no
+directive, no interpolation, no effect.
 
 ```html
 <pre v-pre>
-  Exemplo de código: { isto } continua texto puro.
+  Code example: { this } stays pure text.
 </pre>
 ```
 
-Use em blocos de documentação, exemplos de código e HTML de terceiros que a Voodoo não deve
-tocar. É a otimização mais eficiente que existe, porque o custo cai a zero.
+Use on documentation blocks, code examples and third-party HTML that Voodoo shouldn't
+touch. It's the most efficient optimization that exists, because cost drops to zero.
 
-`bindTextNode` também sobe pelos ancestrais procurando `v-pre` e `v-ignore`, então a
-proteção vale mesmo quando um script reescreve o conteúdo depois da montagem.
+`bindTextNode` also walks up ancestors looking for `v-pre` and `v-ignore`, so the
+protection applies even when a script rewrites content after mounting.
 
 ### `v-once`
 
-Aqui a diferença. Em Vue, `v-once` congela uma subárvore. Na Voodoo.js **ele avalia uma
-expressão uma vez e escreve o resultado em `textContent`**:
+Here's the difference. In Vue, `v-once` freezes a subtree. In Voodoo.js **it evaluates an
+expression once and writes the result to `textContent`**:
 
 ```js
 defineDirective('once', ({ el, effect, evaluate: ev }) => {
@@ -352,138 +352,138 @@ defineDirective('once', ({ el, effect, evaluate: ev }) => {
 });
 ```
 
-Três consequências:
+Three consequences:
 
-- É um `v-text` sem reatividade, não um congelador de subárvore.
-- **Os filhos continuam sendo percorridos.** Interpolações dentro do elemento continuam
-  reativas, porque `v-once` sobrescreve o `textContent` antes disso.
-- O nome é enganoso para quem vem do Vue. Isso está registrado como questão em aberto no
+- It's a `v-text` without reactivity, not a subtree freezer.
+- **Children are still walked.** Interpolations inside the element stay
+  reactive, because `v-once` overwrites `textContent` before that.
+- The name is misleading for someone coming from Vue. This is registered as an open issue in
   [ROADMAP.md](../ROADMAP.md).
 
-Para congelar de verdade um trecho renderizado com dados que não mudam, use `v-pre` depois
-que o valor já estiver no HTML, ou não coloque a expressão ali para começo de conversa.
+To truly freeze a rendered section with data that doesn't change, use `v-pre` after
+the value is already in the HTML, or don't put the expression there in the first place.
 
 ---
 
-## 9. Cache de expressões
+## 9. Expression caching
 
-Toda expressão vira AST uma vez só. O cache é um `Map<string, Node>` em
-`parser/parser.ts`, com `MAX_CACHE = 2000`.
+Every expression becomes an AST once. The cache is a `Map<string, Node>` in
+`parser/parser.ts`, with `MAX_CACHE = 2000`.
 
-Isso significa que **expressões repetidas são grátis a partir da segunda vez**. Mil linhas
-de um `v-for` com a mesma expressão `produto.nome` compartilham a mesma AST.
+This means **repeated expressions are free from the second time on**. A thousand lines
+of a `v-for` with the same expression `product.name` share the same AST.
 
-Duas implicações práticas.
+Two practical implications.
 
-**Repetir a mesma expressão é melhor que variar.** Estes dois blocos custam diferente:
+**Repeating the same expression is better than varying.** These two blocks cost differently:
 
 ```html
-<!-- Uma entrada no cache, reusada mil vezes -->
-<li v-for="p in produtos" :key="p.id">{ p.nome }</li>
+<!-- One cache entry, reused a thousand times -->
+<li v-for="p in products" :key="p.id">{ p.name }</li>
 
-<!-- Também uma entrada: a expressao e a mesma string em todas as linhas -->
-<li v-for="p in produtos" :key="p.id">{ p.preco > 100 ? 'caro' : 'barato' }</li>
+<!-- Also one entry: the expression is the same string in all lines -->
+<li v-for="p in products" :key="p.id">{ p.price > 100 ? 'expensive' : 'cheap' }</li>
 ```
 
-O que gera entradas diferentes é HTML gerado com expressões diferentes por linha, o que
-quase nunca acontece na prática.
+What generates different entries is HTML generated with different expressions per line, which
+almost never happens in practice.
 
-**O cache é limpo por inteiro ao estourar.** Não é LRU: ao chegar em 2000 entradas, ele
-chama `clear()`. Uma aplicação que passe desse número fica reanalisando expressões
-periodicamente. Duas mil expressões distintas é muita coisa, mas se você gera HTML
-dinamicamente vale saber. `V.clearParseCache()` limpa na mão, e existe para testes.
+**The cache is cleared entirely when it overflows.** Not LRU: when it reaches 2000 entries, it
+calls `clear()`. An application that exceeds that number keeps re-analyzing expressions
+periodically. Two thousand distinct expressions is a lot, but if you generate HTML
+dynamically it's good to know. `V.clearParseCache()` clears by hand, and exists for tests.
 
-O mesmo vale para o memo de interpolação (`expressaoValida` em `runtime/walker.ts`), que
-guarda "este texto entre chaves é uma expressão?" por texto. Esse não tem limite, e cresce
-com a quantidade de trechos distintos entre chaves na página.
+The same applies to interpolation memoization (`expressionValid` in `runtime/walker.ts`), which
+stores "is this text between braces an expression?" by text. This has no limit, and grows
+with the number of distinct text fragments between braces on the page.
 
 ---
 
-## 10. Atualize em lote
+## 10. Update in batches
 
-O agendador junta tudo que acontece na mesma tarefa síncrona em um flush só
+The scheduler groups everything that happens in the same synchronous task in one flush only
 (`reactivity/index.ts`).
 
 ```js
-estado.a = 1;
-estado.b = 2;
-estado.c = 3;
-// os efeitos afetados rodam uma vez, na microtask
+state.a = 1;
+state.b = 2;
+state.c = 3;
+// affected effects run once, in the microtask
 ```
 
-Isso já acontece sozinho. O que **não** acontece sozinho é quando você intercala leitura de
-layout com escrita de estado:
+This already happens automatically. What **doesn't** happen automatically is when you mix layout reads
+with state writes:
 
 ```js
-// Ruim: força layout a cada volta
-for (const item of itens) {
-  estado.altura = elemento.offsetHeight;
-  estado.itens.push(item);
+// Bad: forces layout on each iteration
+for (const item of items) {
+  state.height = element.offsetHeight;
+  state.items.push(item);
 }
 
-// Bom: uma leitura, uma escrita
-const altura = elemento.offsetHeight;
-estado.itens.push(...itens);
-estado.altura = altura;
+// Good: one read, one write
+const height = element.offsetHeight;
+state.items.push(...items);
+state.height = height;
 ```
 
-Para substituir um array inteiro, troque a referência em vez de mexer item a item:
+To replace an entire array, swap the reference instead of changing item by item:
 
 ```js
-// Dispara uma vez
-estado.itens = novosItens;
+// Triggers once
+state.items = newItems;
 
-// Dispara varias vezes
-estado.itens.length = 0;
-for (const item of novosItens) estado.itens.push(item);
+// Triggers many times
+state.items.length = 0;
+for (const item of newItems) state.items.push(item);
 ```
 
-Os métodos `push`, `pop`, `shift`, `unshift` e `splice` já rodam com o rastreamento pausado
-internamente, então eles não são o problema. O problema é o número de disparos.
+The methods `push`, `pop`, `shift`, `unshift` and `splice` already run with tracking paused
+internally, so they're not the problem. The problem is the number of triggers.
 
-`await V.nextTick()` resolve depois que o DOM foi escrito, quando você precisa medir algo
-logo em seguida.
+`await V.nextTick()` resolves after the DOM is written, when you need to measure something
+right after.
 
 ---
 
-## 11. Debounce em entrada de texto
+## 11. Debounce on text input
 
-Todo caractere digitado em um `v-model` escreve no estado e dispara os efeitos que dependem
-dele. Quando isso alimenta uma busca, é uma requisição por tecla.
+Every typed character in a `v-model` writes to state and triggers effects that depend
+on it. When this feeds a search, it's one request per keystroke.
 
 ```html
-<!-- Uma escrita de estado por tecla -->
-<input v-model="busca">
+<!-- One state write per keystroke -->
+<input v-model="search">
 
-<!-- Uma escrita a cada 300ms de silencio -->
-<input v-model.debounce=300 v-search="/api/busca">
+<!-- One write every 300ms of silence -->
+<input v-model.debounce=300 v-search="/api/search">
 
-<!-- Escreve so ao sair do campo -->
-<input v-model.lazy="busca">
+<!-- Writes only when leaving the field -->
+<input v-model.lazy="search">
 ```
 
-`v-model` aceita `.debounce=<ms>`, `.lazy`, `.trim` e `.number`
-(`directives/core.ts`). `.lazy` troca o evento de `input` para `change`.
+`v-model` accepts `.debounce=<ms>`, `.lazy`, `.trim` and `.number`
+(`directives/core.ts`). `.lazy` switches the event from `input` to `change`.
 
-Para um campo de busca que dispara requisição, `v-search` já tem debounce próprio e
-`v-min-length`, e cancela a requisição anterior.
+For a search field that triggers requests, `v-search` already has its own debounce and
+`v-min-length`, and cancels the previous request.
 
 ---
 
-## 12. Escolha o bundle certo
+## 12. Choose the right bundle
 
-Três arquivos, do menor para o maior:
+Three files, from smallest to largest:
 
-| Arquivo                 | O que traz                                                          |
+| File                    | What it brings                                                      |
 | ----------------------- | ------------------------------------------------------------------- |
-| `voodoo.core.min.js`    | Reatividade, expressões, walker, componentes, directives principais, HTTP declarativo, coleção encadeável |
-| `voodoo.min.js`         | O anterior mais formulários, validação, máscaras, interface, diálogos, paleta, som |
-| `voodoo.full.min.js`    | O anterior mais gráficos, animação com física, roteador, idiomas, inspetor, componentes prontos |
+| `voodoo.core.min.js`    | Reactivity, expressions, walker, components, main directives, declarative HTTP, chainable collection |
+| `voodoo.min.js`         | The above plus forms, validation, masks, UI, dialogs, palette, sound |
+| `voodoo.full.min.js`    | The above plus charts, physics-based animation, router, languages, inspector, ready-made components |
 
-Se a página não usa gráfico nem roteador, o build completo é peso morto que o usuário baixa,
-analisa e executa.
+If the page doesn't use charts or router, the full build is dead weight that the user downloads,
+parses and executes.
 
-Por um bundler, importe só o que usa:
+With a bundler, import only what you use:
 
 ```js
 import { reactive, computed } from 'voodoojs/reactivity';
@@ -491,35 +491,35 @@ import { http } from 'voodoojs/http';
 import { debounce, formatCurrency } from 'voodoojs/utils';
 ```
 
-Os pontos de entrada `reactivity`, `http` e `utils` não trazem nada do DOM.
+The entry points `reactivity`, `http` and `utils` don't bring anything from the DOM.
 
-Confira o tamanho real com `npm run size`. Os limites do projeto ficam em
-`scripts/size.mjs` e o CI falha quando algum bundle passa da meta.
+Check the actual size with `npm run size`. The project's limits are in
+`scripts/size.mjs` and CI fails when any bundle exceeds the target.
 
 ---
 
-## 13. Limpeza de atributos
+## 13. Attribute cleanup
 
-`V.config.cleanAttributes` é `true` por padrão. Depois que um elemento é processado, os
-atributos `v-*`, `:`, `@` e `.prop` saem do HTML e vão para um cache em `WeakMap`
+`V.config.cleanAttributes` is `true` by default. After an element is processed, the
+`v-*`, `:`, `@` and `.prop` attributes leave the HTML and go into a `WeakMap` cache
 (`runtime/walker.ts`, `stripAttributes`).
 
-O efeito é HTML limpo no inspetor e nós de DOM um pouco menores. O efeito colateral é que
-`document.querySelectorAll('[v-tab]')` não acha mais nada.
+The effect is clean HTML in the inspector and slightly smaller DOM nodes. The side effect is that
+`document.querySelectorAll('[v-tab]')` finds nothing anymore.
 
-A biblioteca resolve isso internamente com um índice de directives (`queryDirective`,
-`hasDirective`, `closestDirective`). **Se o seu código depende de achar elementos por
-atributo da Voodoo**, use uma classe ou um `data-` próprio:
+The library solves this internally with a directive index (`queryDirective`,
+`hasDirective`, `closestDirective`). **If your code depends on finding elements by
+Voodoo attribute**, use a class or your own `data-` attribute:
 
 ```html
-<div v-modal="aberto" data-papel="dialogo-principal"></div>
+<div v-modal="open" data-role="main-dialog"></div>
 ```
 
 ```js
-document.querySelector('[data-papel="dialogo-principal"]');
+document.querySelector('[data-role="main-dialog"]');
 ```
 
-Desligar a limpeza tem custo em memória, não em velocidade:
+Disabling cleanup has a memory cost, not a speed cost:
 
 ```html
 <script src="voodoo.min.js" data-keep-attributes defer></script>
@@ -527,49 +527,48 @@ Desligar a limpeza tem custo em memória, não em velocidade:
 
 ---
 
-## 14. Quando o gargalo não é a Voodoo
+## 14. When the bottleneck isn't Voodoo
 
-Antes de otimizar a camada reativa, confirme que ela é o problema. No perfil do navegador,
-procure:
+Before optimizing the reactive layer, confirm it's the problem. In the browser profile,
+look for:
 
-- **Layout e paint dominando.** Uma lista de mil linhas é cara de desenhar em qualquer
-  biblioteca. A resposta é virtualizar, não trocar de framework.
-- **Requisições em série.** Três `await` seguidos custam três viagens. `Promise.all` custa
-  uma.
-- **Imagem sem dimensão.** Causa reflow em cascata e não tem nada a ver com reatividade.
-  `v-lazy-src` ajuda no carregamento, não no layout.
-- **CSS caro.** `box-shadow` e `filter` em muitos elementos animados custam mais que
-  qualquer efeito reativo.
-- **Biblioteca de terceiros.** Um gráfico ou um editor de texto pesado domina o perfil
-  inteiro.
+- **Layout and paint dominating.** A list of a thousand rows is expensive to draw in any
+  library. The answer is to virtualize, not switch frameworks.
+- **Requests in series.** Three `await` in a row cost three trips. `Promise.all` costs
+  one.
+- **Image without dimensions.** Causes cascading reflow and has nothing to do with reactivity.
+  `v-lazy-src` helps with loading, not layout.
+- **Expensive CSS.** `box-shadow` and `filter` on many animated elements cost more than
+  any reactive effect.
+- **Third-party library.** A chart or heavy text editor dominates the entire profile.
 
-O sinal de que o problema é reatividade: muitas execuções curtas de efeito na mesma
-microtask. O inspetor `xray` do build completo conta efeitos por elemento e é o caminho mais
-rápido para achar o elemento que está reagindo demais.
+The sign that the problem is reactivity: many short effect executions in the same
+microtask. The `xray` inspector in the full build counts effects per element and is the fastest way
+to find the element that's reacting too much.
 
 ---
 
-## Resumo
+## Summary
 
-| Faça                                                | Por quê |
-| --------------------------------------------------- | ------- |
-| `:key` estável em toda lista que reordena           | Evita reexecutar todos os efeitos de todos os blocos |
-| `computed` para valor derivado                      | Tem cache; watcher não tem |
-| `watch` só para efeito colateral                    | Watcher roda mesmo quando ninguém lê o resultado |
-| Evite `deep: true`                                  | Percorre e rastreia o objeto inteiro |
-| Prefira `watch` a `updated` em componente           | `updated` depende de todas as chaves do estado |
-| Limpe timers, listeners e bibliotecas externas      | O runtime só limpa o que ele criou |
-| `v-pre` em blocos que a Voodoo não precisa tocar    | Custo zero na subárvore inteira |
-| Desligue `autoDiscover` em páginas com muita mutação| O observador custa por mutação |
-| Troque a referência do array em vez de mutar item a item | Um disparo em vez de vários |
-| `.debounce` em campos de busca                      | Uma requisição por pausa, não por tecla |
-| Escolha o menor bundle que atende                   | O usuário baixa, analisa e executa tudo |
-| Meça antes e depois                                 | `benchmarks/`, `npm run size`, o perfil do navegador |
+| Do                                                  | Why |
+| --------------------------------------------------- | --- |
+| Stable `:key` in every reordering list              | Avoids re-executing all effects of all blocks |
+| `computed` for derived values                      | Has cache; watcher doesn't |
+| `watch` only for side effects                      | Watcher runs even when no one reads the result |
+| Avoid `deep: true`                                 | Walks and tracks the entire object |
+| Prefer `watch` to `updated` in component           | `updated` depends on all state keys |
+| Clean up timers, listeners and external libraries  | The runtime only cleans what it created |
+| `v-pre` on blocks Voodoo doesn't need to touch     | Zero cost in the entire subtree |
+| Disable `autoDiscover` on pages with lots of mutations | Observer costs per mutation |
+| Swap array reference instead of mutating item by item | One trigger instead of many |
+| `.debounce` on search fields                       | One request per pause, not per keystroke |
+| Choose the smallest bundle that fits               | User downloads, parses and executes everything |
+| Measure before and after                           | `benchmarks/`, `npm run size`, browser profile |
 
-## Leia também
+## Read also
 
-- [Desempenho](desempenho.md), o modelo por dentro
-- [Reatividade](reatividade.md)
-- [Estrutura de aplicação](application-structure.md)
-- [ARCHITECTURE.md](../ARCHITECTURE.md), o caminho completo de uma atualização
-- [QUALITY.md](../QUALITY.md), como o desempenho é medido no projeto
+- [Performance](desempenho.md), the model inside
+- [Reactivity](reatividade.md)
+- [Application structure](application-structure.md)
+- [ARCHITECTURE.md](../ARCHITECTURE.md), the complete path of an update
+- [QUALITY.md](../QUALITY.md), how performance is measured in the project

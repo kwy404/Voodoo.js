@@ -1,67 +1,68 @@
-# Reatividade
+# Reactivity
 
-O núcleo reativo da Voodoo.js é um `Proxy` com rastreamento de dependências por chave e
-agendamento em microtask. Não existe Virtual DOM. Quando `count` muda, apenas os efeitos que leram
-`count` rodam de novo, e cada efeito atualiza somente o nó do DOM que ele mesmo escreveu.
+Voodoo.js's reactive core is a `Proxy` with dependency tracking per key and microtask scheduling.
+No Virtual DOM. When `count` changes, only effects that read `count` run again, and each effect
+updates only the DOM node it created.
 
-O módulo não toca no DOM e não assume `window`, então funciona igual em Node, Bun e Deno.
+The module doesn't touch the DOM and doesn't assume `window`, so it works the same in Node, Bun,
+and Deno.
 
 ## reactive
 
-Torna um objeto reativo em profundidade.
+Makes an object reactive in depth.
 
 ```js
-const estado = V.reactive({ usuario: { nome: 'Ana' }, tags: [] });
+const state = V.reactive({ user: { name: 'Ana' }, tags: [] });
 
-estado.usuario.nome = 'Bia';  // dispara quem leu usuario.nome
-estado.tags.push('novo');     // dispara quem leu tags
+state.user.name = 'Bia';  // triggers whoever read user.name
+state.tags.push('new');     // triggers whoever read tags
 ```
 
-Objetos aninhados viram proxies na leitura, sob demanda. Arrays, `Map` e `Set` são suportados.
+Nested objects become proxies on read, on demand. Arrays, `Map`, and `Set` are supported.
 
-Detalhes que importam:
+Details that matter:
 
-- escrever o mesmo valor não dispara nada;
-- ler uma chave dentro de um efeito cria a dependência apenas daquela chave;
-- `delete` e `in` também são rastreados;
-- o mesmo objeto sempre devolve o mesmo proxy.
+- writing the same value triggers nothing;
+- reading a key inside an effect creates dependency only for that key;
+- `delete` and `in` are also tracked;
+- the same object always returns the same proxy.
 
 ## ref
 
-Referência reativa para valores primitivos. O valor fica em `.value`.
+Reactive reference for primitive values. The value lives in `.value`.
 
 ```js
-const contador = V.ref(0);
+const counter = V.ref(0);
 
-V.effect(() => console.log(contador.value));
-contador.value++;  // dispara o efeito
+V.effect(() => console.log(counter.value));
+counter.value++;  // triggers the effect
 ```
 
-`V.shallowRef` cria uma referência que não torna o conteúdo reativo em profundidade. Útil para
-guardar um objeto grande que você substitui inteiro em vez de editar por dentro.
+`V.shallowRef` creates a reference that doesn't make content reactive in depth. Useful for storing
+a large object you replace whole instead of edit inside.
 
-`V.unref(x)` devolve `x.value` quando `x` é um ref, e `x` quando não é.
+`V.unref(x)` returns `x.value` when `x` is a ref, and `x` when not.
 
 ## computed
 
-Valor derivado com cache. Só recalcula quando alguma dependência muda.
+Derived value with cache. Only recalculates when a dependency changes.
 
 ```js
-const estado = V.reactive({ primeiro: 'Ana', ultimo: 'Souza' });
-const completo = V.computed(() => `${estado.primeiro} ${estado.ultimo}`);
+const state = V.reactive({ first: 'Ana', last: 'Souza' });
+const full = V.computed(() => `${state.first} ${state.last}`);
 
-completo.value;             // 'Ana Souza'
-estado.ultimo = 'Lima';
-completo.value;             // 'Ana Lima', recalculado sob demanda
+full.value;             // 'Ana Souza'
+state.last = 'Lima';
+full.value;             // 'Ana Lima', recalculated on demand
 ```
 
-Computados aceitam getter e setter:
+Computed accepts getter and setter:
 
 ```js
 const celsius = V.ref(25);
 const fahrenheit = V.computed({
   get: () => celsius.value * 1.8 + 32,
-  set: (valor) => { celsius.value = (valor - 32) / 1.8; },
+  set: (value) => { celsius.value = (value - 32) / 1.8; },
 });
 
 fahrenheit.value = 212;
@@ -70,182 +71,183 @@ celsius.value;  // 100
 
 ## effect
 
-Cria um efeito reativo. Executa uma vez na criação e reexecuta sempre que qualquer estado lido
-dentro dele mudar.
+Creates a reactive effect. Runs once on creation and reruns whenever any state read inside it
+changes.
 
 ```js
-const estado = V.reactive({ count: 0 });
+const state = V.reactive({ count: 0 });
 
 const runner = V.effect(() => {
-  document.title = `Cliques: ${estado.count}`;
+  document.title = `Clicks: ${state.count}`;
 });
 
-estado.count++;      // agenda a reexecução
-V.stop(runner);      // encerra o efeito
+state.count++;      // schedules rerun
+V.stop(runner);      // stops the effect
 ```
 
-Opções aceitas:
+Accepted options:
 
-| Opção | O que faz |
+| Option | What it does |
 | --- | --- |
-| `lazy` | Não executa na criação. Você chama o runner quando quiser |
-| `scheduler` | Recebe o controle da reexecução em vez de agendar sozinho |
-| `scope` | Liga o efeito a um `EffectScope`, para parar tudo de uma vez |
+| `lazy` | Does not run on creation. You call the runner when you want |
+| `scheduler` | Receives control of rerun instead of scheduling itself |
+| `scope` | Ties the effect to an `EffectScope`, to stop everything at once |
 
 ## watch
 
-Observa uma fonte reativa e chama o callback quando ela muda.
+Observes a reactive source and calls the callback when it changes.
 
 ```js
-const estado = V.reactive({ busca: '', pagina: 1 });
+const state = V.reactive({ search: '', page: 1 });
 
-const parar = V.watch(
-  () => estado.busca,
-  (novo, antigo) => console.log('de', antigo, 'para', novo)
+const stop = V.watch(
+  () => state.search,
+  (newVal, oldVal) => console.log('from', oldVal, 'to', newVal)
 );
 
-parar();  // cancela
+stop();  // cancels
 ```
 
-A fonte pode ser uma função, um `ref` ou um objeto reativo:
+The source can be a function, a `ref`, or a reactive object:
 
 ```js
-V.watch(contador, (n) => console.log(n));          // ref
-V.watch(estado, () => salvar(), { deep: true });   // objeto inteiro
+V.watch(counter, (n) => console.log(n));          // ref
+V.watch(state, () => save(), { deep: true });   // entire object
 ```
 
-Opções:
+Options:
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `immediate` | `false` | Chama o callback já na criação |
-| `deep` | `false` | Percorre a estrutura inteira para observar qualquer mudança |
-| `flush` | `'pre'` | Momento da execução: `'pre'`, `'post'` ou `'sync'` |
+| `immediate` | `false` | Calls callback on creation |
+| `deep` | `false` | Walks entire structure to observe any change |
+| `flush` | `'pre'` | Moment of execution: `'pre'`, `'post'`, or `'sync'` |
 
-O terceiro argumento do callback é `onInvalidate`, chamado antes da próxima execução. Serve para
-cancelar trabalho pendente:
+The callback's third argument is `onInvalidate`, called before next run. Serves to cancel pending
+work:
 
 ```js
 V.watch(
-  () => estado.busca,
-  (termo, _antigo, onInvalidate) => {
+  () => state.search,
+  (term, _oldVal, onInvalidate) => {
     const controller = new AbortController();
     onInvalidate(() => controller.abort());
-    V.http.get('/api/buscar', { params: { q: termo }, signal: controller.signal });
+    V.http.get('/api/search', { params: { q: term }, signal: controller.signal });
   }
 );
 ```
 
 ## watchEffect
 
-Executa a função imediatamente e reexecuta quando as dependências lidas mudarem. É o `effect` com
-limpeza automática entre execuções.
+Runs the function immediately and reruns when read dependencies change. It's `effect` with
+automatic cleanup between runs.
 
 ```js
-const parar = V.watchEffect((onInvalidate) => {
-  const id = setInterval(() => console.log(estado.count), 1000);
+const stop = V.watchEffect((onInvalidate) => {
+  const id = setInterval(() => console.log(state.count), 1000);
   onInvalidate(() => clearInterval(id));
 });
 ```
 
 ## nextTick
 
-As atualizações são agendadas em microtask e aplicadas em lote. `nextTick` resolve depois que o
-DOM refletiu a mudança.
+Updates are scheduled in microtask and applied in batch. `nextTick` resolves after the DOM
+reflects the change.
 
 ```js
-estado.itens.push('novo');
+state.items.push('new');
 await V.nextTick();
-document.querySelectorAll('li').length;  // já contém o item novo
+document.querySelectorAll('li').length;  // already has the new item
 ```
 
-Também aceita um callback: `V.nextTick(() => foco())`.
+Also accepts a callback: `V.nextTick(() => focus())`.
 
-`V.flushSync()` aplica imediatamente tudo que estiver pendente. Use em testes, onde esperar uma
-microtask atrapalha a leitura do código.
+`V.flushSync()` immediately applies everything pending. Use in tests, where waiting for a
+microtask hurts code readability.
 
 ## effectScope
 
-Junta vários efeitos em um escopo e para todos com uma chamada.
+Bundles several effects in a scope and stops all with one call.
 
 ```js
-const escopo = V.effectScope();
+const scope = V.effectScope();
 
-escopo.run(() => {
-  V.effect(() => atualizarCabecalho(estado.usuario));
-  V.watch(() => estado.tema, aplicarTema);
+scope.run(() => {
+  V.effect(() => updateHeader(state.user));
+  V.watch(() => state.theme, applyTheme);
 });
 
-escopo.stop();  // encerra os dois de uma vez
+scope.stop();  // stops both at once
 ```
 
-Cada directive da Voodoo já roda dentro do próprio `EffectScope`, ligado à remoção do elemento.
-Por isso remover um nó do DOM encerra todos os efeitos daquele nó, sem vazamento.
+Each Voodoo directive already runs inside its own `EffectScope`, tied to element removal. So
+removing a DOM node stops all effects on that node, with no leaks.
 
-## toRaw, markRaw e isReactive
+## toRaw, markRaw, and isReactive
 
 ```js
-V.toRaw(estado);           // devolve o objeto original por trás do proxy
-V.markRaw(mapaDoGoogle);   // este objeto nunca vira proxy
-V.isReactive(estado);      // true
+V.toRaw(state);           // returns the original object behind the proxy
+V.markRaw(googleMap);   // this object never becomes a proxy
+V.isReactive(state);      // true
 ```
 
-`markRaw` é o caminho para guardar instâncias de bibliotecas externas, elementos de DOM ou
-qualquer coisa que não deva ser observada.
+`markRaw` is the way to store instances of external libraries, DOM elements, or anything that
+shouldn't be observed.
 
-## Como isso aparece no HTML
+## How it appears in HTML
 
-O HTML usa a mesma máquina. Cada `v-text`, cada `{ interpolação }` e cada `:atributo` é um efeito
-reativo próprio:
+HTML uses the same machine. Each `v-text`, each `{ interpolation }`, and each `:attribute` is its
+own reactive effect:
 
 ```html
-<div v-data="{ nome: 'Ana', idade: 30 }">
-  <p v-text="nome"></p>       <!-- efeito 1, depende de nome -->
-  <p v-text="idade"></p>      <!-- efeito 2, depende de idade -->
+<div v-data="{ name: 'Ana', age: 30 }">
+  <p v-text="name"></p>       <!-- effect 1, depends on name -->
+  <p v-text="age"></p>      <!-- effect 2, depends on age -->
 </div>
 ```
 
-Mudar `nome` reexecuta apenas o efeito 1. O segundo parágrafo não é tocado, não é comparado e não
-é recriado.
+Changing `name` reruns only effect 1. The second paragraph is untouched, not compared, not
+recreated.
 
-Para observar valores no próprio HTML existem duas ferramentas:
+To observe values in HTML itself there are two tools:
 
 ```html
-<div v-data="{ busca: '' }">
-  <!-- roda a expressão sempre que a dependência muda -->
-  <div v-effect="console.log('busca agora:', busca)"></div>
+<div v-data="{ search: '' }">
+  <!-- runs the expression whenever the dependency changes -->
+  <div v-effect="console.log('search now:', search)"></div>
 
-  <!-- observa o v-model do mesmo elemento -->
-  <input v-model="busca" v-watch="buscar($value, $old)">
+  <!-- observes the v-model of the same element -->
+  <input v-model="search" v-watch="perform($value, $old)">
 </div>
 ```
 
-Dentro de `v-watch` você recebe `$value` e `$old`. Também existe a magia `$watch`, que aceita uma
-expressão em texto:
+Inside `v-watch` you receive `$value` and `$old`. There's also the `$watch` magic, which accepts a
+text expression:
 
 ```html
-<div v-data="{ total: 0 }" v-init="$watch('total', (novo) => console.log(novo))"></div>
+<div v-data="{ total: 0 }" v-init="$watch('total', (newVal) => console.log(newVal))"></div>
 ```
 
-## Erros
+## Errors
 
-Um erro dentro de um efeito não derruba a página. Ele é entregue ao tratador global:
+An error inside an effect doesn't crash the page. It's delivered to the global handler:
 
 ```js
-V.onError((err, contexto) => {
-  console.error('[app]', contexto, err);
-  V.toast.error('Algo deu errado');
+V.onError((err, context) => {
+  console.error('[app]', context, err);
+  V.toast.error('Something went wrong');
 });
 ```
 
-O contexto diz de onde veio: `directive v-click`, `interpolacao`, `hook mounted`, `evento click`
-e assim por diante.
+The context tells where it came from: `directive v-click`, `interpolation`, `hook mounted`,
+`click event`, and so on.
 
-## Laços infinitos
+## Infinite loops
 
-Se um efeito escrever na mesma chave que ele lê, o agendador percebe a repetição e para com um
-aviso no console, em vez de travar a aba. Corrija a expressão em vez de contornar o aviso.
+If an effect writes to the same key it reads, the scheduler detects the repetition and stops with
+a console warning, instead of hanging the tab. Fix the expression instead of working around the
+warning.
 
 ---
 
-Anterior: [Início rápido](inicio-rapido.md) · Próximo: [Expressões](expressoes.md)
+Previous: [Quick Start](inicio-rapido.md) · Next: [Expressions](expressoes.md)

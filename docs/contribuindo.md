@@ -1,9 +1,9 @@
-# Contribuindo
+# Contributing
 
-Obrigado por querer ajudar. Este guia cobre como rodar o projeto, o que esperamos de uma mudança e
-como enviá-la.
+Thank you for wanting to help. This guide covers how to run the project, what we expect from a change and
+how to submit it.
 
-O resumo em quatro comandos:
+The summary in four commands:
 
 ```bash
 npm install
@@ -12,12 +12,12 @@ npm run typecheck
 npm run build
 ```
 
-## Requisitos
+## Requirements
 
-- Node 18 ou mais novo. O CI roda em 20 e 22.
-- npm. O projeto usa workspaces do npm.
+- Node 18 or newer. CI runs on 20 and 22.
+- npm. The project uses npm workspaces.
 
-## Rodando
+## Running
 
 ```bash
 git clone https://github.com/voodoojs/voodoo.git
@@ -25,128 +25,128 @@ cd voodoo
 npm install
 ```
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `npm test` | Roda a suíte inteira com Vitest |
-| `npm run test:watch` | Roda em modo observação |
-| `npm run coverage` | Roda com relatório de cobertura |
-| `npm run typecheck` | Confere os tipos sem gerar arquivos |
-| `npm run build` | Gera todos os bundles em `packages/voodoojs/dist` |
-| `npm run dev` | Build em modo observação |
-| `npm run size` | Mede os bundles e falha se algum estourar a meta |
-| `npm run serve` | Sobe um servidor local para abrir os exemplos |
-| `npm run format` | Aplica o Prettier |
+| `npm test` | Runs the entire suite with Vitest |
+| `npm run test:watch` | Runs in watch mode |
+| `npm run coverage` | Runs with coverage report |
+| `npm run typecheck` | Checks types without generating files |
+| `npm run build` | Generates all bundles in `packages/voodoojs/dist` |
+| `npm run dev` | Build in watch mode |
+| `npm run size` | Measures bundles and fails if any exceed the target |
+| `npm run serve` | Starts a local server to open the examples |
+| `npm run format` | Applies Prettier |
 
-Para ver uma mudança funcionando no navegador:
+To see a change working in the browser:
 
 ```bash
 npm run build
 npm run serve
 ```
 
-## Estrutura
+## Structure
 
 ```
 packages/voodoojs/src/
   reactivity/index.ts     reactive, ref, computed, effect, watch, nextTick, EffectScope
   parser/lexer.ts         tokenize
-  parser/parser.ts        parse, com cache
+  parser/parser.ts        parse, with cache
   parser/interpreter.ts   evaluate, stringify, allowedGlobals
   runtime/scope.ts        Scope, magic, magics
   runtime/registry.ts     config, defineDirective, PRIORITY, components, directives
   runtime/walker.ts       walk, destroy, addCleanup, evaluateIn, findScope, parseAttribute
   runtime/component.ts    defineComponent, mountComponent
-  runtime/magics.ts       $screen, $network, $clipboard e o registro das magias
-  dom/query.ts            a coleção encadeável
+  runtime/magics.ts       $screen, $network, $clipboard and magic registry
+  dom/query.ts            chainable collection
   dom/style.ts            injectStyle, ensureTokens
   dom/transition.ts       enter, leave, slideUp, slideDown, fadeIn, fadeOut, viewTransition
-  http/index.ts           o cliente HTTP
+  http/index.ts           HTTP client
   store/index.ts          store, allStores
   storage/index.ts        storage, session, cookie, url, cache, theme
-  forms/validate.ts       motor de validação
-  forms/mask.ts           máscaras
+  forms/validate.ts       validation engine
+  forms/mask.ts           masks
   directives/core.ts      v-text, v-html, v-show, v-if, v-for, v-model, v-bind, v-on
-  directives/http.ts      v-get, v-post, v-resource e companhia
+  directives/http.ts      v-get, v-post, v-resource and friends
   directives/forms.ts     v-submit, v-upload, v-dropzone, v-autosave, v-guard
-  directives/ui.ts        interface declarativa
-  directives/dnd.ts       arrastar e soltar
-  directives/shared.ts    base comum das directives de interface
+  directives/ui.ts        declarative UI
+  directives/dnd.ts       drag and drop
+  directives/shared.ts    common base for UI directives
   directives/state.ts     v-persist, v-sync, v-history
-  ui/toast.ts             notificações
+  ui/toast.ts             notifications
   ui/dialog.ts            modal, alert, confirm, prompt
-  ui/palette.ts           geração de paleta em OKLCH
-  ui/components.ts        os 29 componentes prontos
-  motion/index.ts         animações
-  charts/index.ts         gráficos em SVG
-  router/index.ts         roteador
-  i18n/index.ts           idiomas
-  devtools/bus.ts         barramento de eventos
-  devtools/xray.ts        inspetor visual
-  utils/index.ts          utilitários puros
-  core.ts                 monta o objeto V
-  essential.ts            build essencial
-  index.ts                build completo para bundlers
-  browser.ts              entrada do build completo de navegador
-  browser-essential.ts    entrada do build essencial de navegador
-  bootstrap.ts            leitura da configuração da tag script e início
+  ui/palette.ts           OKLCH palette generation
+  ui/components.ts        29 ready-made components
+  motion/index.ts         animations
+  charts/index.ts         SVG charts
+  router/index.ts         router
+  i18n/index.ts           languages
+  devtools/bus.ts         event bus
+  devtools/xray.ts        visual inspector
+  utils/index.ts          pure utilities
+  core.ts                 builds the V object
+  essential.ts            essential build
+  index.ts                complete build for bundlers
+  browser.ts              entry for complete browser build
+  browser-essential.ts    entry for essential browser build
+  bootstrap.ts            script tag config reading and startup
 ```
 
-`packages/cli` traz a linha de comando: `voodoo init`, `build`, `add` e `info`.
+`packages/cli` brings the command line: `voodoo init`, `build`, `add` and `info`.
 
-## Regras de estilo do repositório
+## Repository style rules
 
-Estas regras valem em todo o código e em toda a documentação:
+These rules apply to all code and all documentation:
 
-- **português do Brasil** em comentários e documentação;
-- **nunca usar travessão.** Nem `—` nem `–`. Use vírgula, dois pontos ou ponto final;
-- **TypeScript estrito**, sem `any` implícito, com JSDoc nas funções exportadas;
-- **zero dependências externas em tempo de execução**;
-- **nunca usar `eval` nem `new Function`**;
-- **nada de arquivo vazio, função vazia ou placeholder**;
-- todo CSS injetado precisa funcionar nos temas claro e escuro e respeitar
+- **Brazilian Portuguese** in comments and documentation;
+- **never use em dash.** Not `—` nor `–`. Use comma, colon or period;
+- **strict TypeScript**, no implicit `any`, with JSDoc on exported functions;
+- **zero runtime external dependencies**;
+- **never use `eval` or `new Function`**;
+- **no empty files, empty functions or placeholders**;
+- all injected CSS must work in light and dark themes and respect
   `prefers-reduced-motion`;
-- todo componente de interface precisa cuidar de papéis ARIA, foco e teclado.
+- every UI component must care for ARIA roles, focus and keyboard.
 
-O Prettier cuida da formatação:
+Prettier handles formatting:
 
 ```bash
 npm run format
 ```
 
-## Escrevendo uma directive
+## Writing a directive
 
 ```ts
 import { defineDirective, PRIORITY } from '../runtime/registry';
 
 defineDirective(
-  'minha-directive',
+  'my-directive',
   ({ el, scope, expression, arg, modifiers, evaluate, effect, cleanup, walk }) => {
     effect(() => {
       el.textContent = String(evaluate());
     });
     cleanup(() => {
-      // desfaça tudo o que a directive criou
+      // undo everything the directive created
     });
   },
   { priority: PRIORITY.DEFAULT, terminal: false }
 );
 ```
 
-Três pontos que a revisão sempre confere:
+Three points that review always checks:
 
-1. **limpeza.** Todo ouvinte, observador e temporizador precisa ser removido no `cleanup`.
-2. **leitura de atributos depois da montagem.** Os atributos `v-*` saem do HTML, então use as
-   funções de leitura do runtime que consultam o cache, e nunca `el.getAttribute` dentro de um
-   manipulador de evento ou de um efeito que roda depois.
-3. **acessibilidade.** Se a directive cria interface, ela cuida de ARIA, foco e teclado.
+1. **cleanup.** Every listener, observer and timer needs to be removed in `cleanup`.
+2. **reading attributes after mounting.** `v-*` attributes leave the HTML, so use
+   runtime read functions that consult the cache, never `el.getAttribute` inside an
+   event handler or an effect that runs later.
+3. **accessibility.** If the directive creates UI, it cares for ARIA, focus and keyboard.
 
-O nome registrado não inclui o prefixo, e não pode colidir com os nomes já ocupados. Veja a lista
-em [Plugins](plugins.md).
+The registered name doesn't include the prefix, and can't collide with already occupied names. See the list
+in [Plugins](plugins.md).
 
-## Testes
+## Tests
 
-Os testes ficam em `packages/voodoojs/test`, rodam com Vitest em ambiente jsdom, e são escritos em
-português.
+Tests live in `packages/voodoojs/test`, run with Vitest in jsdom environment, and are written in
+Portuguese.
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -163,44 +163,44 @@ function mount(html: string, data: Record<string, unknown> = {}): HTMLElement {
   return root;
 }
 
-describe('minha directive', () => {
-  it('escreve o valor no elemento', async () => {
-    const root = mount('<b v-minha-directive="valor"></b>', { valor: 'oi' });
+describe('my directive', () => {
+  it('writes the value to the element', async () => {
+    const root = mount('<b v-my-directive="value"></b>', { value: 'hi' });
     await nextTick();
-    expect(root.querySelector('b')!.textContent).toBe('oi');
+    expect(root.querySelector('b')!.textContent).toBe('hi');
   });
 });
 ```
 
-Toda mudança de comportamento precisa de teste. Correções de bug precisam de um teste que falhe
-antes da correção.
+Every behavior change needs a test. Bug fixes need a test that fails
+before the fix.
 
-## Tamanho
+## Size
 
-O projeto tem meta de tamanho por bundle, declarada em `scripts/size.mjs`. O CI roda:
+The project has a size target per bundle, declared in `scripts/size.mjs`. CI runs:
 
 ```bash
 npm run size
 ```
 
-e falha quando algum arquivo estoura o limite. Se a sua mudança aumenta o tamanho de forma
-significativa, explique o motivo na pull request. Recursos grandes devem entrar apenas no build
-completo, e não no essencial.
+and fails when any file exceeds the limit. If your change increases size significantly,
+explain why in the pull request. Large features should enter only the complete build,
+not the essential one.
 
-## Documentação
+## Documentation
 
-A documentação vive em `docs/`. Ao mudar uma API pública:
+Documentation lives in `docs/`. When changing a public API:
 
-- atualize o guia da área correspondente;
-- atualize a tabela em `docs/api.md`;
-- acrescente uma linha no `CHANGELOG.md`;
-- confira que todo exemplo novo realmente funciona.
+- update the guide for that area;
+- update the table in `docs/api.md`;
+- add a line to `CHANGELOG.md`;
+- verify that every new example actually works.
 
-Exemplo que não roda é pior do que exemplo nenhum.
+An example that doesn't run is worse than no example.
 
 ## Commits
 
-Mensagem curta, no imperativo, em português:
+Short message, in imperative, in Portuguese:
 
 ```
 Adiciona v-clipboard-read para ler a area de transferencia
@@ -208,48 +208,48 @@ Corrige v-for que perdia foco ao reordenar sem chave
 Documenta os modificadores de v-model
 ```
 
-Não use travessão na mensagem.
+Don't use em dash in the message.
 
 ## Pull requests
 
-Antes de abrir:
+Before opening:
 
-1. `npm test` passa;
-2. `npm run typecheck` passa;
-3. `npm run build` passa;
-4. `npm run size` passa;
-5. a documentação foi atualizada;
-6. o `CHANGELOG.md` tem a linha da mudança.
+1. `npm test` passes;
+2. `npm run typecheck` passes;
+3. `npm run build` passes;
+4. `npm run size` passes;
+5. documentation was updated;
+6. `CHANGELOG.md` has the change line.
 
-Na descrição, conte o que muda e por quê. Se a mudança é visual, inclua uma imagem ou um HTML
-mínimo que a demonstre.
+In the description, tell what changes and why. If the change is visual, include an image or minimal HTML
+that demonstrates it.
 
-Mudanças grandes ficam melhores quando começam por uma issue de proposta. É frustrante escrever
-mil linhas e descobrir que a direção não combina com o projeto.
+Large changes are better when they start with a proposal issue. It's frustrating to write
+a thousand lines and discover the direction doesn't match the project.
 
-## Relatando bugs
+## Reporting bugs
 
-O que ajuda de verdade:
+What really helps:
 
-- um HTML de uma página só que reproduza o problema;
-- o que você esperava e o que aconteceu;
-- versão da biblioteca, navegador e sistema;
-- qual bundle você usa, essencial ou completo;
-- a mensagem do console, se houver.
+- HTML of a single page that reproduces the problem;
+- what you expected and what happened;
+- library version, browser and OS;
+- which bundle you use, essential or complete;
+- the console message, if any.
 
-## Reportando vulnerabilidades
+## Reporting vulnerabilities
 
-Não abra issue pública. Use o contato privado indicado no repositório.
+Don't open a public issue. Use the private contact indicated in the repository.
 
-## Código de conduta
+## Code of conduct
 
-Este projeto segue o [Código de Conduta](../CODE_OF_CONDUCT.md). Ao participar, você concorda em
-respeitá-lo.
+This project follows the [Code of Conduct](../CODE_OF_CONDUCT.md). By participating, you agree to
+respect it.
 
-## Licença
+## License
 
-Ao contribuir, você concorda que a sua contribuição é licenciada sob a licença MIT do projeto.
+By contributing, you agree that your contribution is licensed under the project's MIT license.
 
 ---
 
-Anterior: [Perguntas frequentes](perguntas-frequentes.md) · [Voltar ao índice](README.md)
+Previous: [FAQ](perguntas-frequentes.md) · [Back to index](README.md)

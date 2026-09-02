@@ -1,9 +1,9 @@
 /**
  * @module directives/shared
  *
- * Base comum das directives de interface. Vive em um modulo proprio para que
- * `directives/ui` e `directives/dnd` possam usar os mesmos auxiliares sem criar
- * dependencia circular entre eles.
+ * Base common to interface directives. Lives in its own module so that
+ * `directives/ui` and `directives/dnd` can use the same helpers without
+ * creating circular dependency between them.
  */
 
 import { injectStyle } from '../dom/style';
@@ -18,39 +18,39 @@ import {
 } from '../runtime/walker';
 
 // ---------------------------------------------------------------------------
-// Leitura de atributos e registro de opcoes
+// Reading attributes and registering options
 // ---------------------------------------------------------------------------
 
 const optionValues = new WeakMap<Element, Record<string, string>>();
 
 /**
- * Le um atributo da Voodoo aceitando as grafias `v-nome` e `data-v-nome`.
+ * Reads a Voodoo attribute accepting both `v-name` and `data-v-name` spellings.
  *
- * Consulta o cache do walker, entao continua devolvendo o valor original mesmo
- * depois que o atributo saiu do HTML pela limpeza automatica.
+ * Queries the walker cache, so it continues returning the original value even
+ * after the attribute left the HTML through automatic cleanup.
  */
 export function attrOf(el: Element, name: string): string | null {
   return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
 }
 
-/** Verifica a presenca de um atributo da Voodoo, nas duas grafias. */
+/** Checks for the presence of a Voodoo attribute, in both spellings. */
 export function hasAttrOf(el: Element, name: string): boolean {
   return hasCachedAttr(el, `${config.prefix}${name}`) || hasCachedAttr(el, `data-v-${name}`);
 }
 
-/** Seletor CSS que casa com as duas grafias aceitas de um atributo. */
+/** CSS selector that matches the two accepted spellings of an attribute. */
 export function selectorFor(name: string): string {
   return `[${config.prefix}${name}],[data-v-${name}]`;
 }
 
-/** Le o valor de uma opcao, primeiro do registro e depois do atributo cru. */
+/** Reads the value of an option, first from the registry and then from the raw attribute. */
 export function readOption(el: Element, name: string): string | null {
   const bag = optionValues.get(el);
   if (bag && name in bag) return bag[name];
   return attrOf(el, name);
 }
 
-/** Guarda o valor de uma opcao lida diretamente por outra directive. */
+/** Stores the value of an option read directly by another directive. */
 export function storeOption(el: Element, name: string, value: string): void {
   const bag = optionValues.get(el) ?? {};
   bag[name] = value;
@@ -58,9 +58,10 @@ export function storeOption(el: Element, name: string, value: string): void {
 }
 
 /**
- * Registra um atributo que existe apenas para configurar outra directive, como
- * `v-tooltip-position` ou `v-drawer-side`. O valor entra no registro de opcoes,
- * o que evita reler o DOM e deixa o atributo declarado no runtime.
+ * Registers an attribute that exists only to configure another directive, like
+ * `v-tooltip-position` or `v-drawer-side`. The value goes into the options
+ * registry, which avoids rereading the DOM and leaves the attribute declared
+ * in the runtime.
  */
 export function defineOption(name: string): void {
   defineDirective(
@@ -73,24 +74,24 @@ export function defineOption(name: string): void {
 }
 
 // ---------------------------------------------------------------------------
-// Eventos e expressoes
+// Events and expressions
 // ---------------------------------------------------------------------------
 
-/** Dispara um evento customizado que sobe pela arvore. */
+/** Fires a custom event that bubbles up the tree. */
 export function dispatch(el: HTMLElement, type: string, detail: unknown): void {
   el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
 
 /**
- * Avalia a expressao de uma directive de interface e devolve o resultado.
- * Quando a expressao e apenas o nome de uma funcao, a funcao e chamada com o
- * detalhe, no mesmo estilo de `v-on`.
+ * Evaluates the expression of an interface directive and returns the result.
+ * When the expression is just the name of a function, the function is called
+ * with the detail, in the same style as `v-on`.
  *
- * @param expression texto do atributo
- * @param scope escopo ativo
- * @param el elemento que declarou a directive, exposto como `$el`
- * @param event evento de origem, exposto como `$event`
- * @param detail carga entregue a funcao e exposta como `$detail`
+ * @param expression attribute text
+ * @param scope active scope
+ * @param el element that declared the directive, exposed as `$el`
+ * @param event source event, exposed as `$event`
+ * @param detail payload delivered to the function and exposed as `$detail`
  */
 export function callExpression(
   expression: string,
@@ -109,7 +110,7 @@ export function callExpression(
 }
 
 // ---------------------------------------------------------------------------
-// Anuncio para leitores de tela
+// Announcement for screen readers
 // ---------------------------------------------------------------------------
 
 const LIVE_CSS = `
@@ -120,9 +121,9 @@ const LIVE_CSS = `
 let liveRegion: HTMLElement | null = null;
 
 /**
- * Anuncia uma mensagem curta em uma regiao `aria-live`. Usado pelas directives
- * que mudam a interface sem um texto visivel correspondente, como copiar,
- * reordenar e soltar itens.
+ * Announces a short message in an `aria-live` region. Used by directives that
+ * change the interface without a corresponding visible text, such as copy,
+ * reorder and drop items.
  */
 export function announce(message: string): void {
   if (typeof document === 'undefined') return;
@@ -138,19 +139,18 @@ export function announce(message: string): void {
 
   const region = liveRegion;
   region.textContent = '';
-  // O texto entra em uma segunda etapa, senao leitores de tela ignoram
-  // mensagens repetidas.
+  // The text enters in a second step, otherwise screen readers ignore repeated messages.
   setTimeout(() => {
     region.textContent = message;
   }, 40);
 }
 
 /**
- * Descendentes de `root` que declararam `childName` e cujo dono mais proximo
- * com `ownerName` e o proprio `root`. Serve para abas dentro de abas.
+ * Descendants of `root` that declared `childName` and whose closest owner with
+ * `ownerName` is `root` itself. Useful for tabs within tabs.
  *
- * Usa o indice de directives do runtime, entao continua funcionando depois
- * que os atributos `v-*` saem do HTML.
+ * Uses the directive index of the runtime, so it continues working after `v-*`
+ * attributes leave the HTML.
  */
 export function ownedByDirective(
   root: HTMLElement,

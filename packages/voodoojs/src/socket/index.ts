@@ -1,42 +1,42 @@
 /**
  * @module socket
  *
- * Tempo real com a mesma ergonomia do modulo `http`: padroes em um lugar so,
- * interceptadores, reconexao com espera progressiva e nenhuma dependencia.
- * Onde o `http` tem `retry`, aqui existe `reconnect`; onde ele tem
- * `interceptors.request/response`, aqui existem `interceptors.outgoing/incoming`.
+ * Real-time with the same ergonomics as the `http` module: patterns in one place,
+ * interceptors, reconnection with progressive backoff, and no dependencies.
+ * Where `http` has `retry`, here there's `reconnect`; where it has
+ * `interceptors.request/response`, here there's `interceptors.outgoing/incoming`.
  *
  * ```js
- * const s = V.socket('wss://exemplo.com')                 // WebSocket nativo
- * const chat = V.socket('/', { transport: 'socket.io' })  // protocolo Socket.IO
+ * const s = V.socket('wss://exemplo.com')                 // native WebSocket
+ * const chat = V.socket('/', { transport: 'socket.io' })  // Socket.IO protocol
  *
  * chat.on('mensagem', (dados) => console.log(dados))
  * chat.emit('entrar', { sala: 'geral' })
- * chat.state       // reativo
- * chat.connected   // reativo
+ * chat.state       // reactive
+ * chat.connected   // reactive
  * chat.close()
- * V.socket.close() // fecha todos
+ * V.socket.close() // closes all
  * ```
  *
- * ## Duas convencoes que precisam ficar claras
+ * ## Two conventions that need to be clear
  *
- * 1. **Eventos sobre WebSocket nativo.** O WebSocket cru nao tem conceito de
- *    evento nomeado: ele carrega texto. Para `emit`/`on` funcionarem nos dois
- *    transportes, o transporte nativo usa um envelope JSON,
- *    `{"event":"nome","data":...}`, na ida e na volta. Quem fala com um servidor
- *    que nao usa esse formato tem `send()` e `on('message')`, que passam o
- *    conteudo cru sem interpretar nome nenhum.
- * 2. **Heartbeat no transporte nativo.** O `readyState` mente: quando a rede cai
- *    sem FIN, ele continua dizendo `OPEN` por minutos. Entao o modulo manda um
- *    `ping` de tempos em tempos e derruba a conexao quando nada volta. O texto
- *    do ping e configuravel e `heartbeat: 0` desliga tudo. No transporte
- *    Socket.IO nada disso e usado: quem manda o ping ali e o servidor, e o
- *    protocolo ja define os tempos.
+ * 1. **Events over native WebSocket.** Raw WebSocket has no concept of
+ *    named events: it carries text. For `emit`/`on` to work on both
+ *    transports, the native transport uses a JSON envelope,
+ *    `{"event":"nome","data":...}`, going and coming back. Those talking to a server
+ *    that doesn't use this format have `send()` and `on('message')`, which pass
+ *    raw content without interpreting any event name.
+ * 2. **Heartbeat on native transport.** The `readyState` lies: when the network drops
+ *    without FIN, it keeps saying `OPEN` for minutes. So the module sends a
+ *    `ping` from time to time and tears down the connection when nothing comes back. The text
+ *    of the ping is configurable and `heartbeat: 0` disables it all. In the
+ *    Socket.IO transport none of this is used: the server sends the ping, and the
+ *    protocol already defines the timings.
  */
 
 import { reactive } from '../reactivity';
 import { devtoolsBus } from '../devtools/bus';
-import { avisarUmaVez } from '../runtime/avisos';
+import { warnOnce } from '../runtime/avisos';
 import {
   decodeEngine,
   encodeSocketIo,
@@ -47,47 +47,47 @@ import {
 } from './protocol';
 
 // ---------------------------------------------------------------------------
-// Tipos
+// Types
 // ---------------------------------------------------------------------------
 
-/** Estados possiveis da conexao, na ordem natural do ciclo de vida. */
+/** Possible connection states, in natural cycle order. */
 export type SocketState = 'connecting' | 'open' | 'closing' | 'closed' | 'reconnecting';
 
 export type SocketTransport = 'ws' | 'socket.io';
 
-/** Ciclo de vida de uma sala, do pedido de entrada ate a saida. */
+/** Room lifecycle, from join request to exit. */
 export type RoomState = 'joining' | 'joined' | 'left';
 
 /**
- * Ouvinte de um evento. O segundo parametro so aparece quando o servidor pediu
- * confirmacao (ack) daquele evento, e chama-lo responde ao servidor.
+ * Event listener. The second parameter only appears when the server requested
+ * acknowledgment (ack) for that event, and calling it sends the response to the server.
  */
 export type SocketListener = (data: unknown, ack?: (resposta: unknown) => void) => void;
 
-/** Uma mensagem entrando ou saindo, no formato visto pelos interceptadores. */
+/** A message coming in or going out, in the format seen by interceptors. */
 export interface SocketMessage {
-  /** Nome do evento. `message` quando a mensagem nao carrega nome. */
+  /** Event name. `message` when the message carries no name. */
   event: string;
-  /** Carga da mensagem. */
+  /** Message payload. */
   data: unknown;
-  /** Endereco do socket, para identificar a conexao dentro do interceptador. */
+  /** Socket address, to identify the connection within the interceptor. */
   url: string;
-  /** Texto exatamente como veio do fio. Ausente nas mensagens de saida. */
+  /** Text exactly as it came from the wire. Absent in outgoing messages. */
   raw?: string;
 }
 
 /**
- * Interceptador de mensagem. Devolver um objeto troca a mensagem, devolver
- * `null` a descarta, e nao devolver nada mantem a original.
+ * Message interceptor. Returning an object modifies the message, returning
+ * `null` discards it, and returning nothing keeps the original.
  */
 export type SocketInterceptor = (
   message: SocketMessage
 ) => SocketMessage | null | void;
 
 /**
- * Minimo que o modulo usa de um WebSocket. Existe para que um duplo de teste
- * possa entrar no lugar do nativo por `socket.defaults.WebSocket`, sem precisar
- * de rede nenhuma.
+ * Minimum of what the module needs from a WebSocket. Exists so a test double
+ * can take the place of the native one via `socket.defaults.WebSocket`, without
+ * needing any network.
  */
 export interface WebSocketLike {
   readyState: number;
@@ -102,154 +102,154 @@ export interface WebSocketLike {
 export type WebSocketCtor = new (url: string, protocols?: string | string[]) => WebSocketLike;
 
 export interface SocketOptions {
-  /** `ws` fala WebSocket puro. `socket.io` fala o protocolo Engine.IO/Socket.IO. */
+  /** `ws` uses pure WebSocket. `socket.io` uses the Engine.IO/Socket.IO protocol. */
   transport?: SocketTransport;
-  /** Subprotocolos do handshake, repassados ao construtor nativo. */
+  /** Handshake subprotocols, passed to the native constructor. */
   protocols?: string | string[];
-  /** Reconecta sozinho quando a conexao cai sem ter sido fechada por `close()`. */
+  /** Auto-reconnects when connection drops without being closed by `close()`. */
   reconnect?: boolean;
-  /** Primeira espera antes de reconectar, em ms. Dobra a cada tentativa. */
+  /** Initial wait before reconnecting, in ms. Doubles with each attempt. */
   reconnectDelay?: number;
-  /** Teto da espera entre tentativas, em ms. */
+  /** Maximum wait between attempts, in ms. */
   reconnectMaxDelay?: number;
-  /** Numero maximo de tentativas. `Infinity` tenta para sempre. */
+  /** Maximum number of attempts. `Infinity` retries forever. */
   reconnectMaxAttempts?: number;
-  /** Fracao de 0 a 1 sorteada em cima da espera, para nao sincronizar clientes. */
+  /** Fraction from 0 to 1 randomized on top of the wait, to prevent client sync. */
   jitter?: number;
-  /** Intervalo entre pings do transporte nativo, em ms. `0` desliga. */
+  /** Interval between pings on native transport, in ms. `0` disables. */
   heartbeat?: number;
-  /** Tempo sem nenhuma resposta ate considerar a conexao morta, em ms. */
+  /** Time without response before considering the connection dead, in ms. */
   heartbeatTimeout?: number;
-  /** Texto enviado como ping. `null` observa o silencio sem mandar nada. */
+  /** Text sent as ping. `null` observes silence without sending anything. */
   pingPayload?: string | null;
-  /** Texto que o servidor devolve como pong, ignorado na entrega das mensagens. */
+  /** Text the server returns as pong, ignored in message delivery. */
   pongPayload?: string | null;
-  /** Quantas mensagens ficam guardadas enquanto a conexao nao abre. */
+  /** How many messages are buffered while the connection isn't open. */
   queueLimit?: number;
-  /** Converte JSON automaticamente, com volta para texto puro quando falha. */
+  /** Auto-converts JSON, falling back to plain text on parse failure. */
   json?: boolean;
-  /** Caminho do endpoint Engine.IO. So vale para `transport: 'socket.io'`. */
+  /** Path of the Engine.IO endpoint. Only for `transport: 'socket.io'`. */
   path?: string;
-  /** Namespace Socket.IO. Esta implementacao so fala o padrao. */
+  /** Socket.IO namespace. This implementation only supports the default. */
   namespace?: string;
-  /** Dados de autenticacao enviados no pacote CONNECT do Socket.IO. */
+  /** Authentication data sent in the Socket.IO CONNECT packet. */
   auth?: Record<string, unknown> | null;
-  /** Implementacao de WebSocket usada no lugar da global. */
+  /** WebSocket implementation used instead of the global one. */
   WebSocket?: WebSocketCtor | null;
-  /** Cria a conexao fechada. Quem abre e `open()`. */
+  /** Creates the connection closed. `open()` is what opens it. */
   manual?: boolean;
 
-  /** Evento enviado ao servidor para pedir entrada numa sala. */
+  /** Event sent to the server to request joining a room. */
   joinEvent?: string;
-  /** Evento enviado ao servidor para pedir saida de uma sala. */
+  /** Event sent to the server to request leaving a room. */
   leaveEvent?: string;
-  /** Evento em que o servidor manda a lista completa de membros de uma sala. */
+  /** Event where the server sends the complete member list for a room. */
   presenceEvent?: string;
-  /** Evento em que o servidor avisa que alguem entrou. */
+  /** Event where the server announces someone joined. */
   memberJoinEvent?: string;
-  /** Evento em que o servidor avisa que alguem saiu. */
+  /** Event where the server announces someone left. */
   memberLeaveEvent?: string;
-  /** Quantas mensagens cada sala guarda em `mensagens`. */
+  /** How many messages each room buffers in `messages`. */
   roomBuffer?: number;
 }
 
-/** Configuracao de uma sala especifica. */
+/** Configuration of a specific room. */
 export interface RoomOptions {
   /**
-   * Marca a sala como privada. Isto e um pedido, nao uma garantia: quem decide
-   * quem entra e o que trafega e sempre o servidor. Veja `docs/websocket.md`.
+   * Marks the room as private. This is a request, not a guarantee: the server always
+   * decides who enters and what's transmitted. See `docs/websocket.md`.
    */
   privada?: boolean;
-  /** Mesmo que `privada`, para quem escreve a API em ingles. */
+  /** Same as `privada`, for those writing the API in English. */
   private?: boolean;
-  /** Quantas mensagens esta sala guarda. Padrao `defaults.roomBuffer`. */
+  /** How many messages this room buffers. Default `defaults.roomBuffer`. */
   buffer?: number;
 }
 
 /**
- * Uma sala (ou canal) dentro de uma conexao.
+ * A room (or channel) within a connection.
  *
- * Os nomes existem em portugues e em ingles porque a directive expoe `$room` em
- * portugues no HTML e a API programatica segue o ingles do resto do modulo.
+ * Names exist in Portuguese and English because the directive exposes `$room` in
+ * Portuguese in HTML and the programmatic API follows the English of the rest of the module.
  */
 export interface SocketRoom {
-  /** Nome da sala, como foi pedido ao servidor. */
+  /** Room name, as requested from the server. */
   readonly name: string;
-  /** `true` quando a sala foi pedida como privada. */
+  /** `true` when the room was requested as private. */
   readonly private: boolean;
   readonly privada: boolean;
-  /** Estado reativo da sala. */
+  /** Reactive state of the room. */
   readonly state: RoomState;
   readonly estado: RoomState;
-  /** Quem o servidor diz que esta na sala. Vazio se ele nao mandar nada. */
+  /** Who the server says is in the room. Empty if it sends nothing. */
   readonly members: unknown[];
   readonly membros: unknown[];
-  /** Ultimas mensagens recebidas na sala, ate o limite do buffer. */
+  /** Latest messages received in the room, up to the buffer limit. */
   readonly messages: unknown[];
   readonly mensagens: unknown[];
 
-  /** Escuta um evento desta sala. Devolve a funcao que cancela. */
+  /** Listen to an event in this room. Returns the function that cancels it. */
   on(event: string, listener: SocketListener): () => void;
-  /** Cancela um ouvinte, todos de um evento, ou todos da sala. */
+  /** Cancel a listener, all of an event, or all of the room. */
   off(event?: string, listener?: SocketListener): void;
-  /** Envia para todos os membros da sala. */
+  /** Send to all members of the room. */
   emit(event: string, data?: unknown): boolean;
   enviar(event: string, data?: unknown): boolean;
-  /** Envia so para um destinatario dentro desta sala. */
+  /** Send only to a recipient within this room. */
   to(destino: string): { emit(event: string, data?: unknown): boolean };
-  /** Sai da sala, limpa os ouvintes e para de reentrar na reconexao. */
+  /** Leave the room, clear listeners, and stop rejoining on reconnect. */
   leave(): void;
   sair(): void;
 }
 
-/** Conexao de tempo real devolvida por `V.socket()`. */
+/** Real-time connection returned by `V.socket()`. */
 export interface VoodooSocket {
-  /** Endereco final, ja resolvido e com o endpoint do transporte. */
+  /** Final address, already resolved with the transport endpoint. */
   readonly url: string;
-  /** Estado reativo da conexao. */
+  /** Reactive connection state. */
   readonly state: SocketState;
-  /** `true` enquanto a conexao esta aberta. Reativo. */
+  /** `true` while the connection is open. Reactive. */
   readonly connected: boolean;
-  /** Quantas reconexoes seguidas foram tentadas sem sucesso. Reativo. */
+  /** How many consecutive reconnection attempts have failed. Reactive. */
   readonly attempts: number;
-  /** Quantas mensagens estao esperando a conexao abrir. Reativo. */
+  /** How many messages are waiting for the connection to open. Reactive. */
   readonly queued: number;
-  /** Ultimo erro, ja em texto. Reativo. */
+  /** Last error, already as text. Reactive. */
   readonly error: string | null;
-  /** WebSocket em uso, para casos avancados. `null` enquanto fechado. */
+  /** WebSocket in use, for advanced cases. `null` while closed. */
   readonly raw: WebSocketLike | null;
 
-  /** Escuta um evento. Devolve a funcao que cancela a assinatura. */
+  /** Listen to an event. Returns the function that cancels the subscription. */
   on(event: string, listener: SocketListener): () => void;
-  /** Escuta apenas a proxima ocorrencia. */
+  /** Listen only to the next occurrence. */
   once(event: string, listener: SocketListener): () => void;
-  /** Cancela um ouvinte, todos de um evento, ou todos de todos. */
+  /** Cancel a listener, all of an event, or all listeners. */
   off(event?: string, listener?: SocketListener): void;
-  /** Envia um evento nomeado. Antes de abrir, entra na fila. */
+  /** Send a named event. Before opening, enters the queue. */
   emit(event: string, data?: unknown, ack?: (resposta: unknown) => void): boolean;
-  /** Envia uma carga crua, sem nome de evento. */
+  /** Send raw payload, without event name. */
   send(data: unknown): boolean;
-  /** Abre a conexao. Usado por `manual` e depois de um `close()`. */
+  /** Open the connection. Used by `manual` and after `close()`. */
   open(): void;
-  /** Fecha de proposito: nao reconecta, limpa timers e esvazia a fila. */
+  /** Close intentionally: doesn't reconnect, clears timers, and empties the queue. */
   close(code?: number, reason?: string): void;
 
-  /** Entra numa sala. Chamar duas vezes com o mesmo nome devolve a mesma sala. */
+  /** Join a room. Calling twice with the same name returns the same room. */
   join(name: string, options?: RoomOptions): SocketRoom;
-  /** Sai de uma sala pelo nome. */
+  /** Leave a room by name. */
   leave(name: string): void;
-  /** Salas em que esta conexao esta, ou entrando. */
+  /** Rooms this connection is in or joining. */
   readonly rooms: SocketRoom[];
-  /** Envia direto para um destinatario, fora de qualquer sala. */
+  /** Send directly to a recipient, outside any room. */
   to(destino: string): { emit(event: string, data?: unknown): boolean };
 }
 
 // ---------------------------------------------------------------------------
-// Padroes e interceptadores, no mesmo formato do modulo http
+// Defaults and interceptors, in the same format as the http module
 // ---------------------------------------------------------------------------
 
 export interface SocketDefaults extends Required<Omit<SocketOptions, 'protocols' | 'auth' | 'WebSocket'>> {
-  /** Prefixo aplicado a enderecos relativos, como o `baseURL` do http. */
+  /** Prefix applied to relative addresses, like the `baseURL` of http. */
   baseURL: string;
   auth: Record<string, unknown> | null;
   WebSocket: WebSocketCtor | null;
@@ -285,36 +285,36 @@ const defaults: SocketDefaults = {
 const incomingInterceptors: SocketInterceptor[] = [];
 const outgoingInterceptors: SocketInterceptor[] = [];
 
-function usar(lista: SocketInterceptor[], fn: SocketInterceptor): () => void {
-  lista.push(fn);
+function use(list: SocketInterceptor[], fn: SocketInterceptor): () => void {
+  list.push(fn);
   return () => {
-    const i = lista.indexOf(fn);
-    if (i > -1) lista.splice(i, 1);
+    const i = list.indexOf(fn);
+    if (i > -1) list.splice(i, 1);
   };
 }
 
-/** Roda a cadeia de interceptadores. `null` significa mensagem descartada. */
-function aplicar(lista: SocketInterceptor[], mensagem: SocketMessage): SocketMessage | null {
-  let atual: SocketMessage | null = mensagem;
-  for (const fn of lista) {
-    if (!atual) return null;
-    const resultado = fn(atual);
-    if (resultado === null) return null;
-    if (resultado) atual = resultado;
+/** Runs the interceptor chain. `null` means message is discarded. */
+function apply(list: SocketInterceptor[], message: SocketMessage): SocketMessage | null {
+  let current: SocketMessage | null = message;
+  for (const fn of list) {
+    if (!current) return null;
+    const result = fn(current);
+    if (result === null) return null;
+    if (result) current = result;
   }
-  return atual;
+  return current;
 }
 
-/** Conexoes vivas, para `V.socket.close()` derrubar todas de uma vez. */
-const abertos = new Set<VoodooSocket>();
+/** Active connections, for `V.socket.close()` to tear down all at once. */
+const openConnections = new Set<VoodooSocket>();
 
 /**
- * Compara dois membros de sala.
+ * Compares two room members.
  *
- * O servidor pode mandar `"ana"` ou `{ id: "ana", nome: "Ana" }`, e os dois
- * precisam contar como a mesma pessoa quando o `id` bate.
+ * The server can send `"ana"` or `{ id: "ana", nome: "Ana" }`, and both
+ * need to count as the same person when the `id` matches.
  */
-function mesmoMembro(a: unknown, b: unknown): boolean {
+function sameMember(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   const ida = a && typeof a === 'object' ? (a as { id?: unknown }).id : a;
   const idb = b && typeof b === 'object' ? (b as { id?: unknown }).id : b;
@@ -322,153 +322,153 @@ function mesmoMembro(a: unknown, b: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Endereco
+// Address
 // ---------------------------------------------------------------------------
 
-/** Resolve `/chat` para `ws://host/chat` e `https://x` para `wss://x`. */
+/** Resolves `/chat` to `ws://host/chat` and `https://x` to `wss://x`. */
 export function resolveSocketURL(url: string, baseURL = defaults.baseURL): string {
-  let endereco = url || '/';
+  let address = url || '/';
 
-  if (baseURL && !/^(wss?|https?):\/\//i.test(endereco) && !endereco.startsWith('//')) {
-    endereco = `${baseURL.replace(/\/$/, '')}/${endereco.replace(/^\//, '')}`;
+  if (baseURL && !/^(wss?|https?):\/\//i.test(address) && !address.startsWith('//')) {
+    address = `${baseURL.replace(/\/$/, '')}/${address.replace(/^\//, '')}`;
   }
-  if (/^wss?:\/\//i.test(endereco)) return endereco;
-  if (/^https?:\/\//i.test(endereco)) return endereco.replace(/^http/i, 'ws');
+  if (/^wss?:\/\//i.test(address)) return address;
+  if (/^https?:\/\//i.test(address)) return address.replace(/^http/i, 'ws');
 
-  if (typeof location === 'undefined' || !location.host) return endereco;
-  const protocolo = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocolo}//${location.host}${endereco.startsWith('/') ? endereco : `/${endereco}`}`;
+  if (typeof location === 'undefined' || !location.host) return address;
+  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${location.host}${address.startsWith('/') ? address : `/${address}`}`;
 }
 
-/** Construtor de WebSocket em uso, ou `null` quando o ambiente nao tem nenhum. */
-function construtor(opcoes: SocketOptions): WebSocketCtor | null {
-  const escolhido =
-    opcoes.WebSocket ??
+/** WebSocket constructor in use, or `null` when the environment doesn't have one. */
+function constructor(options: SocketOptions): WebSocketCtor | null {
+  const chosen =
+    options.WebSocket ??
     defaults.WebSocket ??
     (globalThis as { WebSocket?: WebSocketCtor }).WebSocket;
-  return typeof escolhido === 'function' ? escolhido : null;
+  return typeof chosen === 'function' ? chosen : null;
 }
 
-/** `true` quando existe alguma implementacao de WebSocket disponivel. */
+/** `true` when some WebSocket implementation is available. */
 export function socketSupported(): boolean {
-  return construtor({}) !== null;
+  return constructor({}) !== null;
 }
 
 // ---------------------------------------------------------------------------
-// Criacao de uma conexao
+// Creating a connection
 // ---------------------------------------------------------------------------
 
 /**
- * Cria uma conexao de tempo real.
+ * Creates a real-time connection.
  *
- * Sem WebSocket no ambiente (SSR, ou um jsdom sem a API), nada e lancado: volta
- * um socket inerte, permanentemente `closed`, com `error` preenchido. Uma pagina
- * renderizada no servidor nao pode quebrar por causa de um `v-socket`.
+ * Without WebSocket in the environment (SSR, or a jsdom without the API), nothing is thrown: returns
+ * an inert socket, permanently `closed`, with `error` filled. A page
+ * rendered on the server cannot break because of a `v-socket`.
  */
 export function createSocket(url: string, options: SocketOptions = {}): VoodooSocket {
-  const opcoes = { ...defaults, ...options };
-  const Impl = construtor(options);
+  const opts = { ...defaults, ...options };
+  const Impl = constructor(options);
 
-  const base = resolveSocketURL(url, opcoes.baseURL);
-  const socketIo = opcoes.transport === 'socket.io';
-  const endereco = socketIo ? engineURL(base, opcoes.path) : base;
+  const base = resolveSocketURL(url, opts.baseURL);
+  const socketIo = opts.transport === 'socket.io';
+  const address = socketIo ? engineURL(base, opts.path) : base;
 
-  // Reatividade em um objeto proprio, e nao no socket inteiro: assim `on`,
-  // `emit` e o resto continuam sendo funcoes comuns, e so o que a tela le passa
-  // pelo proxy. Ler `estado.estado` dentro de um efeito e o que faz
-  // `v-show="$socket.conectado"` reagir sozinho.
-  const estado = reactive({
-    estado: 'closed' as SocketState,
-    conectado: false,
-    tentativas: 0,
-    enfileiradas: 0,
-    erro: null as string | null,
+  // Reactivity in its own object, not on the entire socket: this way `on`,
+  // `emit` and the rest stay as regular functions, and only what the view reads goes
+  // through the proxy. Reading `state.state` inside an effect is what makes
+  // `v-show="$socket.connected"` react on its own.
+  const state = reactive({
+    state: 'closed' as SocketState,
+    connected: false,
+    attempts: 0,
+    queued: 0,
+    error: null as string | null,
   });
 
-  const ouvintes = new Map<string, Set<SocketListener>>();
-  const fila: string[] = [];
+  const listeners = new Map<string, Set<SocketListener>>();
+  const queue: string[] = [];
   const acks = new Map<number, (resposta: unknown) => void>();
-  const salas = new Map<string, SalaInterna>();
+  const rooms = new Map<string, InternalRoom>();
 
   let ws: WebSocketLike | null = null;
-  let proximoAck = 1;
-  let fechadoDeProposito = false;
+  let nextAck = 1;
+  let closedPurposefully = false;
   let handshake: EngineHandshake | null = null;
-  let abertoEm = 0;
+  let openedAt = 0;
 
-  let timerReconexao: ReturnType<typeof setTimeout> | null = null;
-  let timerHeartbeat: ReturnType<typeof setInterval> | null = null;
-  let timerVigilancia: ReturnType<typeof setTimeout> | null = null;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  let watchdogTimer: ReturnType<typeof setTimeout> | null = null;
 
   // -------------------------------------------------------------------------
-  // Ouvintes
+  // Listeners
   // -------------------------------------------------------------------------
 
-  function on(evento: string, ouvinte: SocketListener): () => void {
-    let conjunto = ouvintes.get(evento);
-    if (!conjunto) ouvintes.set(evento, (conjunto = new Set()));
-    conjunto.add(ouvinte);
+  function on(event: string, listener: SocketListener): () => void {
+    let set = listeners.get(event);
+    if (!set) listeners.set(event, (set = new Set()));
+    set.add(listener);
     return () => {
-      conjunto?.delete(ouvinte);
+      set?.delete(listener);
     };
   }
 
-  function once(evento: string, ouvinte: SocketListener): () => void {
-    const cancelar = on(evento, (dados, ack) => {
-      cancelar();
-      ouvinte(dados, ack);
+  function once(event: string, listener: SocketListener): () => void {
+    const cancel = on(event, (data, ack) => {
+      cancel();
+      listener(data, ack);
     });
-    return cancelar;
+    return cancel;
   }
 
-  function off(evento?: string, ouvinte?: SocketListener): void {
-    if (!evento) {
-      ouvintes.clear();
+  function off(event?: string, listener?: SocketListener): void {
+    if (!event) {
+      listeners.clear();
       return;
     }
-    if (!ouvinte) {
-      ouvintes.delete(evento);
+    if (!listener) {
+      listeners.delete(event);
       return;
     }
-    ouvintes.get(evento)?.delete(ouvinte);
+    listeners.get(event)?.delete(listener);
   }
 
-  /** Entrega para os ouvintes do evento e para os de `message`, sempre. */
-  function entregar(evento: string, dados: unknown, ack?: (r: unknown) => void): void {
-    for (const nome of evento === 'message' ? [evento] : [evento, 'message']) {
-      const conjunto = ouvintes.get(nome);
-      if (!conjunto) continue;
-      for (const ouvinte of [...conjunto]) {
+  /** Deliver to listeners of the event and to `message` listeners, always. */
+  function deliver(event: string, data: unknown, ack?: (r: unknown) => void): void {
+    for (const name of event === 'message' ? [event] : [event, 'message']) {
+      const set = listeners.get(name);
+      if (!set) continue;
+      for (const listener of [...set]) {
         try {
-          ouvinte(dados, ack);
+          listener(data, ack);
         } catch (err) {
-          // Um ouvinte quebrado nunca derruba a conexao nem os outros ouvintes.
+          // A broken listener never tears down the connection or other listeners.
           // eslint-disable-next-line no-console
-          console.error('[Voodoo] erro em ouvinte de socket:', err);
+          console.error('[Voodoo] error in socket listener:', err);
         }
       }
     }
   }
 
   // -------------------------------------------------------------------------
-  // Estado
+  // State
   // -------------------------------------------------------------------------
 
-  function mudarEstado(novo: SocketState): void {
-    if (estado.estado === novo) return;
-    estado.estado = novo;
-    estado.conectado = novo === 'open';
-    entregar(`state:${novo}`, novo);
+  function changeState(newState: SocketState): void {
+    if (state.state === newState) return;
+    state.state = newState;
+    state.connected = newState === 'open';
+    deliver(`state:${newState}`, newState);
   }
 
-  function registrarErro(mensagem: string): void {
-    estado.erro = mensagem;
-    entregar('error', mensagem);
+  function registerError(message: string): void {
+    state.error = message;
+    deliver('error', message);
     devtoolsBus.emit('network', {
       method: 'WS',
-      url: endereco,
+      url: address,
       ok: false,
-      error: mensagem,
+      error: message,
       source: 'socket',
     });
   }
@@ -477,871 +477,870 @@ export function createSocket(url: string, options: SocketOptions = {}): VoodooSo
   // Timers
   // -------------------------------------------------------------------------
 
-  function pararTimers(): void {
-    if (timerReconexao !== null) {
-      clearTimeout(timerReconexao);
-      timerReconexao = null;
+  function stopTimers(): void {
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     }
-    if (timerHeartbeat !== null) {
-      clearInterval(timerHeartbeat);
-      timerHeartbeat = null;
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
     }
-    if (timerVigilancia !== null) {
-      clearTimeout(timerVigilancia);
-      timerVigilancia = null;
+    if (watchdogTimer !== null) {
+      clearTimeout(watchdogTimer);
+      watchdogTimer = null;
     }
   }
 
   /**
-   * Arma o relogio da conexao morta.
+   * Arm the dead connection watchdog.
    *
-   * Qualquer quadro que chegue reinicia a contagem: trafego e prova de vida
-   * melhor que qualquer pong. Estourou, a conexao e considerada morta mesmo com
-   * o `readyState` jurando que esta aberta.
+   * Any frame that arrives restarts the countdown: traffic is better proof of life
+   * than any pong. If it times out, the connection is considered dead even though
+   * `readyState` swears it's open.
    */
-  function armarVigilancia(ms: number): void {
-    if (timerVigilancia !== null) clearTimeout(timerVigilancia);
-    timerVigilancia = null;
+  function armWatchdog(ms: number): void {
+    if (watchdogTimer !== null) clearTimeout(watchdogTimer);
+    watchdogTimer = null;
     if (!ms || ms <= 0) return;
-    timerVigilancia = setTimeout(() => {
-      timerVigilancia = null;
-      registrarErro('conexao sem resposta');
-      derrubar();
+    watchdogTimer = setTimeout(() => {
+      watchdogTimer = null;
+      registerError('connection unresponsive');
+      tearDown();
     }, ms);
   }
 
-  /** Quanto tempo de silencio ainda conta como conexao viva. */
-  function janelaDeSilencio(): number {
+  /** How much silence still counts as an active connection. */
+  function silenceWindow(): number {
     if (socketIo) {
-      // No Socket.IO quem manda o ping e o servidor, entao a janela sai do
-      // handshake: um intervalo inteiro mais a tolerancia que ele mesmo declarou.
+      // In Socket.IO the server sends the ping, so the window comes from the
+      // handshake: one full interval plus the tolerance it declared.
       const h = handshake;
       return h ? h.pingInterval + h.pingTimeout : 0;
     }
-    return opcoes.heartbeat > 0 ? opcoes.heartbeat + opcoes.heartbeatTimeout : 0;
+    return opts.heartbeat > 0 ? opts.heartbeat + opts.heartbeatTimeout : 0;
   }
 
-  function marcarVivo(): void {
-    armarVigilancia(janelaDeSilencio());
+  function markAlive(): void {
+    armWatchdog(silenceWindow());
   }
 
-  function iniciarHeartbeat(): void {
-    if (socketIo || opcoes.heartbeat <= 0) return;
-    if (timerHeartbeat !== null) clearInterval(timerHeartbeat);
-    timerHeartbeat = setInterval(() => {
-      if (opcoes.pingPayload == null) return;
-      enviarTexto(opcoes.pingPayload);
-    }, opcoes.heartbeat);
-  }
-
-  // -------------------------------------------------------------------------
-  // Reconexao
-  // -------------------------------------------------------------------------
-
-  /**
-   * Espera progressiva com sorteio.
-   *
-   * O erro classico aqui e reconectar em laco: mil abas caem juntas, todas
-   * voltam no mesmo milissegundo e derrubam o servidor de novo. A espera dobra a
-   * cada tentativa ate o teto, e o sorteio espalha as abas dentro da janela.
-   */
-  function esperaDaTentativa(n: number): number {
-    const cru = opcoes.reconnectDelay * 2 ** Math.max(0, n - 1);
-    const teto = Math.min(cru, opcoes.reconnectMaxDelay);
-    const desvio = teto * Math.min(Math.max(opcoes.jitter, 0), 1);
-    return Math.max(0, Math.round(teto - desvio + Math.random() * desvio * 2));
-  }
-
-  function agendarReconexao(): void {
-    if (fechadoDeProposito || !opcoes.reconnect) {
-      mudarEstado('closed');
-      return;
-    }
-    if (estado.tentativas >= opcoes.reconnectMaxAttempts) {
-      registrarErro(`reconexao desistiu apos ${estado.tentativas} tentativas`);
-      mudarEstado('closed');
-      return;
-    }
-
-    estado.tentativas += 1;
-    mudarEstado('reconnecting');
-    const espera = esperaDaTentativa(estado.tentativas);
-    entregar('reconnecting', { attempt: estado.tentativas, delay: espera });
-
-    if (timerReconexao !== null) clearTimeout(timerReconexao);
-    timerReconexao = setTimeout(() => {
-      timerReconexao = null;
-      // Um `close()` durante a espera cancela a tentativa: fechar de proposito
-      // precisa parar de vez, e nao so pular uma rodada.
-      if (fechadoDeProposito) return;
-      conectar();
-    }, espera);
+  function startHeartbeat(): void {
+    if (socketIo || opts.heartbeat <= 0) return;
+    if (heartbeatTimer !== null) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (opts.pingPayload == null) return;
+      sendText(opts.pingPayload);
+    }, opts.heartbeat);
   }
 
   // -------------------------------------------------------------------------
-  // Fila de envio
+  // Reconnection
   // -------------------------------------------------------------------------
 
   /**
-   * Guarda uma mensagem ate a conexao abrir.
+   * Progressive backoff with jitter.
    *
-   * A fila tem teto porque uma conexao que nunca abre transformaria `emit` num
-   * vazamento silencioso. Cheia, a mais antiga sai: em tempo real o dado novo
-   * vale mais que o velho.
+   * The classic mistake here is reconnecting in a loop: a thousand tabs drop together, all
+   * come back in the same millisecond and crash the server again. Wait time doubles
+   * with each attempt up to the cap, and jitter spreads tabs across the window.
    */
-  function enfileirar(texto: string): void {
-    if (opcoes.queueLimit <= 0) return;
-    if (fila.length >= opcoes.queueLimit) {
-      fila.shift();
-      avisarUmaVez(
-        `socket-fila:${endereco}`,
-        `A fila de envio de ${endereco} chegou ao limite de ${opcoes.queueLimit} mensagens e comecou a descartar as mais antigas. Aumente "queueLimit" ou envie menos enquanto a conexao esta fechada.`
+  function attemptDelay(n: number): number {
+    const raw = opts.reconnectDelay * 2 ** Math.max(0, n - 1);
+    const cap = Math.min(raw, opts.reconnectMaxDelay);
+    const deviation = cap * Math.min(Math.max(opts.jitter, 0), 1);
+    return Math.max(0, Math.round(cap - deviation + Math.random() * deviation * 2));
+  }
+
+  function scheduleReconnect(): void {
+    if (closedPurposefully || !opts.reconnect) {
+      changeState('closed');
+      return;
+    }
+    if (state.attempts >= opts.reconnectMaxAttempts) {
+      registerError(`reconnection gave up after ${state.attempts} attempts`);
+      changeState('closed');
+      return;
+    }
+
+    state.attempts += 1;
+    changeState('reconnecting');
+    const delay = attemptDelay(state.attempts);
+    deliver('reconnecting', { attempt: state.attempts, delay });
+
+    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      // A `close()` during the wait cancels the attempt: closing on purpose
+      // needs to stop completely, not just skip one round.
+      if (closedPurposefully) return;
+      connect();
+    }, delay);
+  }
+
+  // -------------------------------------------------------------------------
+  // Send queue
+  // -------------------------------------------------------------------------
+
+  /**
+   * Stores a message until the connection opens.
+   *
+   * The queue has a cap because a connection that never opens would turn `emit` into
+   * a silent leak. When full, the oldest goes out: in real-time new data
+   * is worth more than old.
+   */
+  function enqueue(text: string): void {
+    if (opts.queueLimit <= 0) return;
+    if (queue.length >= opts.queueLimit) {
+      queue.shift();
+      warnOnce(
+        `socket-queue:${address}`,
+        `The send queue for ${address} reached the limit of ${opts.queueLimit} messages and started discarding the oldest. Increase "queueLimit" or send less while the connection is closed.`
       );
     }
-    fila.push(texto);
-    estado.enfileiradas = fila.length;
+    queue.push(text);
+    state.queued = queue.length;
   }
 
-  function escoarFila(): void {
-    if (!fila.length) return;
-    const pendentes = fila.splice(0, fila.length);
-    estado.enfileiradas = 0;
-    for (const texto of pendentes) enviarTexto(texto);
+  function drainQueue(): void {
+    if (!queue.length) return;
+    const pending = queue.splice(0, queue.length);
+    state.queued = 0;
+    for (const text of pending) sendText(text);
   }
 
-  /** Escreve no fio, ou enfileira quando ainda nao da. */
-  function enviarTexto(texto: string): boolean {
-    // `readyState === 1` e OPEN em qualquer implementacao de WebSocket.
-    if (ws && ws.readyState === 1 && (!socketIo || estado.conectado)) {
+  /** Write to the wire, or enqueue if not ready yet. */
+  function sendText(text: string): boolean {
+    // `readyState === 1` is OPEN in any WebSocket implementation.
+    if (ws && ws.readyState === 1 && (!socketIo || state.connected)) {
       try {
-        ws.send(texto);
+        ws.send(text);
         return true;
       } catch (err) {
-        registrarErro((err as Error)?.message ?? 'falha ao enviar');
+        registerError((err as Error)?.message ?? 'send failed');
         return false;
       }
     }
-    enfileirar(texto);
+    enqueue(text);
     return false;
   }
 
   // -------------------------------------------------------------------------
-  // Envio com nome de evento
+  // Sending with event name
   // -------------------------------------------------------------------------
 
-  function emit(evento: string, dados?: unknown, ack?: (resposta: unknown) => void): boolean {
-    const mensagem = aplicar(outgoingInterceptors, { event: evento, data: dados, url: endereco });
-    if (!mensagem) return false;
+  function emit(event: string, data?: unknown, ack?: (resposta: unknown) => void): boolean {
+    const message = apply(outgoingInterceptors, { event, data, url: address });
+    if (!message) return false;
 
     devtoolsBus.emit('event', {
-      type: `socket:${mensagem.event}`,
-      detail: mensagem.data,
+      type: `socket:${message.event}`,
+      detail: message.data,
       source: 'socket:out',
     });
 
     if (socketIo) {
-      let numero: number | undefined;
+      let num: number | undefined;
       if (ack) {
-        numero = proximoAck++;
-        acks.set(numero, ack);
+        num = nextAck++;
+        acks.set(num, ack);
       }
-      const argumentos =
-        mensagem.data === undefined ? [mensagem.event] : [mensagem.event, mensagem.data];
-      return enviarTexto(
+      const args =
+        message.data === undefined ? [message.event] : [message.event, message.data];
+      return sendText(
         encodeSocketIo({
           type: SIO.EVENT,
-          namespace: opcoes.namespace,
-          ack: numero,
-          data: argumentos,
+          namespace: opts.namespace,
+          ack: num,
+          data: args,
         })
       );
     }
 
-    // Transporte nativo: o envelope `{event,data}` e a convencao do modulo.
-    return enviarTexto(
-      opcoes.json
-        ? JSON.stringify({ event: mensagem.event, data: mensagem.data })
-        : String(mensagem.data ?? mensagem.event)
+    // Native transport: the `{event,data}` envelope is the module convention.
+    return sendText(
+      opts.json
+        ? JSON.stringify({ event: message.event, data: message.data })
+        : String(message.data ?? message.event)
     );
   }
 
-  function send(dados: unknown): boolean {
-    const mensagem = aplicar(outgoingInterceptors, { event: 'message', data: dados, url: endereco });
-    if (!mensagem) return false;
+  function send(data: unknown): boolean {
+    const message = apply(outgoingInterceptors, { event: 'message', data, url: address });
+    if (!message) return false;
 
-    const carga = mensagem.data;
-    const texto = typeof carga === 'string' ? carga : JSON.stringify(carga);
+    const payload = message.data;
+    const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
     if (socketIo) {
-      return enviarTexto(
+      return sendText(
         encodeSocketIo({
           type: SIO.EVENT,
-          namespace: opcoes.namespace,
-          data: ['message', carga],
+          namespace: opts.namespace,
+          data: ['message', payload],
         })
       );
     }
-    return enviarTexto(texto);
+    return sendText(text);
   }
 
   // -------------------------------------------------------------------------
-  // Recepcao
+  // Reception
   // -------------------------------------------------------------------------
 
-  /** Passa pelos interceptadores de entrada e entrega aos ouvintes. */
-  function receber(evento: string, dados: unknown, cru?: string, ack?: (r: unknown) => void): void {
-    const mensagem = aplicar(incomingInterceptors, {
-      event: evento,
-      data: dados,
-      url: endereco,
-      raw: cru,
+  /** Passes through incoming interceptors and delivers to listeners. */
+  function receive(event: string, data: unknown, raw?: string, ack?: (r: unknown) => void): void {
+    const message = apply(incomingInterceptors, {
+      event,
+      data,
+      url: address,
+      raw,
     });
-    if (!mensagem) return;
+    if (!message) return;
 
     devtoolsBus.emit('event', {
-      type: `socket:${mensagem.event}`,
-      detail: mensagem.data,
+      type: `socket:${message.event}`,
+      detail: message.data,
       source: 'socket:in',
     });
 
-    // Presenca e mensagem de sala sao roteadas antes da entrega comum. Os
-    // ouvintes do socket continuam vendo tudo: a sala e um recorte, nao um
-    // desvio.
-    rotearPresenca(mensagem.event, mensagem.data);
-    rotearSala(mensagem.event, mensagem.data, ack);
+    // Room presence and messages are routed before common delivery. Socket
+    // listeners still see everything: a room is a slice, not a redirect.
+    routePresence(message.event, message.data);
+    routeRoom(message.event, message.data, ack);
 
-    entregar(mensagem.event, mensagem.data, ack);
+    deliver(message.event, message.data, ack);
   }
 
   // -------------------------------------------------------------------------
-  // Salas
+  // Rooms
   // -------------------------------------------------------------------------
 
-  interface SalaInterna {
-    publica: SocketRoom;
-    /** Estado reativo lido pelo HTML. */
-    estado: { estado: RoomState; membros: unknown[]; mensagens: unknown[] };
-    ouvintes: Map<string, Set<SocketListener>>;
-    privada: boolean;
+  interface InternalRoom {
+    public: SocketRoom;
+    /** Reactive state read by HTML. */
+    state: { state: RoomState; members: unknown[]; messages: unknown[] };
+    listeners: Map<string, Set<SocketListener>>;
+    private: boolean;
     buffer: number;
   }
 
-  /** Le o nome da sala escrito numa carga, aceitando os dois idiomas. */
-  function nomeDaSala(dados: unknown): string | null {
-    if (!dados || typeof dados !== 'object' || Array.isArray(dados)) return null;
-    const objeto = dados as Record<string, unknown>;
-    const nome = objeto.room ?? objeto.sala;
-    return typeof nome === 'string' && nome ? nome : null;
+  /** Reads the room name from a payload, accepting both languages. */
+  function roomName(data: unknown): string | null {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    const obj = data as Record<string, unknown>;
+    const name = obj.room ?? obj.sala;
+    return typeof name === 'string' && name ? name : null;
   }
 
-  /** Tira o envelope de sala e devolve so o que o servidor quis mandar. */
-  function cargaDaSala(dados: unknown): unknown {
-    const objeto = dados as Record<string, unknown>;
-    if ('data' in objeto) return objeto.data;
-    if ('dados' in objeto) return objeto.dados;
-    return objeto;
+  /** Strips the room envelope and returns only what the server meant to send. */
+  function roomPayload(data: unknown): unknown {
+    const obj = data as Record<string, unknown>;
+    if ('data' in obj) return obj.data;
+    if ('dados' in obj) return obj.dados;
+    return obj;
   }
 
-  function entregarNaSala(sala: SalaInterna, evento: string, dados: unknown, ack?: (r: unknown) => void): void {
-    for (const nome of evento === 'message' ? [evento] : [evento, 'message']) {
-      const conjunto = sala.ouvintes.get(nome);
-      if (!conjunto) continue;
-      for (const ouvinte of [...conjunto]) {
+  function deliverInRoom(room: InternalRoom, event: string, data: unknown, ack?: (r: unknown) => void): void {
+    for (const name of event === 'message' ? [event] : [event, 'message']) {
+      const set = room.listeners.get(name);
+      if (!set) continue;
+      for (const listener of [...set]) {
         try {
-          ouvinte(dados, ack);
+          listener(data, ack);
         } catch (err) {
           // eslint-disable-next-line no-console
-          console.error('[Voodoo] erro em ouvinte de sala:', err);
+          console.error('[Voodoo] error in room listener:', err);
         }
       }
     }
   }
 
-  function rotearSala(evento: string, dados: unknown, ack?: (r: unknown) => void): void {
-    const nome = nomeDaSala(dados);
-    if (!nome) return;
-    const sala = salas.get(nome);
-    if (!sala) return;
+  function routeRoom(event: string, data: unknown, ack?: (r: unknown) => void): void {
+    const name = roomName(data);
+    if (!name) return;
+    const room = rooms.get(name);
+    if (!room) return;
 
-    // Os eventos de presenca ja foram tratados e nao viram mensagem da sala.
+    // Presence events are already handled and don't become room messages.
     if (
-      evento === opcoes.presenceEvent ||
-      evento === opcoes.memberJoinEvent ||
-      evento === opcoes.memberLeaveEvent
+      event === opts.presenceEvent ||
+      event === opts.memberJoinEvent ||
+      event === opts.memberLeaveEvent
     ) {
       return;
     }
 
-    const carga = cargaDaSala(dados);
-    sala.estado.mensagens.push(carga);
-    // Buffer com teto: uma sala movimentada nao pode virar um vazamento lento.
-    if (sala.estado.mensagens.length > sala.buffer) {
-      sala.estado.mensagens.splice(0, sala.estado.mensagens.length - sala.buffer);
+    const payload = roomPayload(data);
+    room.state.messages.push(payload);
+    // Capped buffer: a busy room can't become a slow leak.
+    if (room.state.messages.length > room.buffer) {
+      room.state.messages.splice(0, room.state.messages.length - room.buffer);
     }
-    entregarNaSala(sala, evento, carga, ack);
+    deliverInRoom(room, event, payload, ack);
   }
 
   /**
-   * Presenca vem inteira do servidor.
+   * Presence comes entire from the server.
    *
-   * O cliente nao tem como saber quem esta numa sala: ele so ve o proprio
-   * socket. Entao se o servidor nao mandar nada, `membros` fica vazio. Inventar
-   * presenca no cliente daria uma lista bonita e mentirosa.
+   * The client can't know who's in a room: it only sees its own
+   * socket. So if the server sends nothing, `members` stays empty. Making up
+   * presence on the client would give a nice but false list.
    */
-  function rotearPresenca(evento: string, dados: unknown): void {
-    const nome = nomeDaSala(dados);
-    if (!nome) return;
-    const sala = salas.get(nome);
-    if (!sala) return;
-    const objeto = dados as Record<string, unknown>;
+  function routePresence(event: string, data: unknown): void {
+    const name = roomName(data);
+    if (!name) return;
+    const room = rooms.get(name);
+    if (!room) return;
+    const obj = data as Record<string, unknown>;
 
-    if (evento === opcoes.presenceEvent) {
-      const lista = objeto.members ?? objeto.membros;
-      if (Array.isArray(lista)) sala.estado.membros = [...lista];
+    if (event === opts.presenceEvent) {
+      const list = obj.members ?? obj.membros;
+      if (Array.isArray(list)) room.state.members = [...list];
       return;
     }
 
-    const membro = objeto.member ?? objeto.membro ?? objeto.id;
-    if (membro === undefined) return;
+    const member = obj.member ?? obj.membro ?? obj.id;
+    if (member === undefined) return;
 
-    if (evento === opcoes.memberJoinEvent) {
-      if (!sala.estado.membros.some((m) => mesmoMembro(m, membro))) {
-        sala.estado.membros.push(membro);
+    if (event === opts.memberJoinEvent) {
+      if (!room.state.members.some((m) => sameMember(m, member))) {
+        room.state.members.push(member);
       }
-      entregarNaSala(sala, 'entrou', membro);
+      deliverInRoom(room, 'entrou', member);
       return;
     }
-    if (evento === opcoes.memberLeaveEvent) {
-      const i = sala.estado.membros.findIndex((m) => mesmoMembro(m, membro));
-      if (i > -1) sala.estado.membros.splice(i, 1);
-      entregarNaSala(sala, 'saiu', membro);
+    if (event === opts.memberLeaveEvent) {
+      const i = room.state.members.findIndex((m) => sameMember(m, member));
+      if (i > -1) room.state.members.splice(i, 1);
+      deliverInRoom(room, 'saiu', member);
     }
   }
 
-  /** Pede ao servidor a entrada na sala. Refeito a cada reconexao. */
-  function pedirEntrada(sala: SalaInterna, nome: string): void {
-    sala.estado.estado = 'joining';
-    emit(opcoes.joinEvent, { room: nome, private: sala.privada });
+  /** Asks the server to join the room. Redone on each reconnect. */
+  function requestJoin(room: InternalRoom, name: string): void {
+    room.state.state = 'joining';
+    emit(opts.joinEvent, { room: name, private: room.private });
   }
 
   /**
-   * Reentra em todas as salas depois que a conexao volta.
+   * Rejoin all rooms after the connection comes back.
    *
-   * Este e o detalhe que quase toda implementacao esquece: o socket reconecta,
-   * a interface mostra "online" de novo e o usuario continua fora das salas,
-   * sem receber nada. Reentrar aqui e o que fecha esse buraco.
+   * This is the detail almost every implementation forgets: the socket reconnects,
+   * the interface shows "online" again and the user stays out of the rooms,
+   * not receiving anything. Rejoining here is what closes that gap.
    */
-  function reentrarNasSalas(): void {
-    for (const [nome, sala] of salas) {
-      if (sala.estado.estado === 'left') continue;
-      pedirEntrada(sala, nome);
+  function rejoinRooms(): void {
+    for (const [name, room] of rooms) {
+      if (room.state.state === 'left') continue;
+      requestJoin(room, name);
     }
   }
 
-  function join(nome: string, config: RoomOptions = {}): SocketRoom {
-    // Idempotente de proposito: entrar duas vezes na mesma sala devolve o mesmo
-    // objeto, sem duplicar ouvinte nem pedir entrada de novo.
-    const existente = salas.get(nome);
-    if (existente && existente.estado.estado !== 'left') return existente.publica;
+  function join(name: string, config: RoomOptions = {}): SocketRoom {
+    // Intentionally idempotent: joining twice with the same name returns the same
+    // object, without duplicating listeners or requesting entry again.
+    const existing = rooms.get(name);
+    if (existing && existing.state.state !== 'left') return existing.public;
 
-    const privada = config.privada ?? config.private ?? false;
-    const estadoSala = reactive({
-      estado: 'joining' as RoomState,
-      membros: [] as unknown[],
-      mensagens: [] as unknown[],
+    const isPrivate = config.privada ?? config.private ?? false;
+    const roomState = reactive({
+      state: 'joining' as RoomState,
+      members: [] as unknown[],
+      messages: [] as unknown[],
     });
 
-    const ouvintesSala = new Map<string, Set<SocketListener>>();
+    const roomListeners = new Map<string, Set<SocketListener>>();
 
-    const enviarNaSala = (evento: string, dados?: unknown, destino?: string): boolean =>
-      emit(evento, destino ? { room: nome, to: destino, data: dados } : { room: nome, data: dados });
+    const sendInRoom = (event: string, data?: unknown, target?: string): boolean =>
+      emit(event, target ? { room: name, to: target, data } : { room: name, data });
 
-    const publica: SocketRoom = {
+    const public_: SocketRoom = {
       get name() {
-        return nome;
+        return name;
       },
       get private() {
-        return privada;
+        return isPrivate;
       },
       get privada() {
-        return privada;
+        return isPrivate;
       },
       get state() {
-        return estadoSala.estado;
+        return roomState.state;
       },
       get estado() {
-        return estadoSala.estado;
+        return roomState.state;
       },
       get members() {
-        return estadoSala.membros;
+        return roomState.members;
       },
       get membros() {
-        return estadoSala.membros;
+        return roomState.members;
       },
       get messages() {
-        return estadoSala.mensagens;
+        return roomState.messages;
       },
       get mensagens() {
-        return estadoSala.mensagens;
+        return roomState.messages;
       },
-      on(evento, ouvinte) {
-        let conjunto = ouvintesSala.get(evento);
-        if (!conjunto) ouvintesSala.set(evento, (conjunto = new Set()));
-        conjunto.add(ouvinte);
+      on(event, listener) {
+        let set = roomListeners.get(event);
+        if (!set) roomListeners.set(event, (set = new Set()));
+        set.add(listener);
         return () => {
-          conjunto?.delete(ouvinte);
+          set?.delete(listener);
         };
       },
-      off(evento, ouvinte) {
-        if (!evento) ouvintesSala.clear();
-        else if (!ouvinte) ouvintesSala.delete(evento);
-        else ouvintesSala.get(evento)?.delete(ouvinte);
+      off(event, listener) {
+        if (!event) roomListeners.clear();
+        else if (!listener) roomListeners.delete(event);
+        else roomListeners.get(event)?.delete(listener);
       },
-      emit: (evento, dados) => enviarNaSala(evento, dados),
-      enviar: (evento, dados) => enviarNaSala(evento, dados),
-      to: (destino: string) => ({
-        emit: (evento: string, dados?: unknown) => enviarNaSala(evento, dados, destino),
+      emit: (event, data) => sendInRoom(event, data),
+      enviar: (event, data) => sendInRoom(event, data),
+      to: (target: string) => ({
+        emit: (event: string, data?: unknown) => sendInRoom(event, data, target),
       }),
-      leave: () => leave(nome),
-      sair: () => leave(nome),
+      leave: () => leave(name),
+      sair: () => leave(name),
     };
 
-    const interna: SalaInterna = {
-      publica,
-      estado: estadoSala,
-      ouvintes: ouvintesSala,
-      privada,
-      buffer: config.buffer ?? opcoes.roomBuffer,
+    const internal: InternalRoom = {
+      public: public_,
+      state: roomState,
+      listeners: roomListeners,
+      private: isPrivate,
+      buffer: config.buffer ?? opts.roomBuffer,
     };
-    salas.set(nome, interna);
+    rooms.set(name, internal);
 
-    // Sem conexao aberta o pedido entra na fila e sai assim que ela abrir.
-    pedirEntrada(interna, nome);
-    if (estado.conectado) estadoSala.estado = 'joined';
-    return publica;
+    // Without open connection the request enters the queue and exits when it opens.
+    requestJoin(internal, name);
+    if (state.connected) roomState.state = 'joined';
+    return public_;
   }
 
-  function leave(nome: string): void {
-    const sala = salas.get(nome);
-    if (!sala) return;
-    salas.delete(nome);
-    sala.estado.estado = 'left';
-    sala.ouvintes.clear();
-    sala.estado.membros = [];
-    if (estado.conectado) emit(opcoes.leaveEvent, { room: nome });
+  function leave(name: string): void {
+    const room = rooms.get(name);
+    if (!room) return;
+    rooms.delete(name);
+    room.state.state = 'left';
+    room.listeners.clear();
+    room.state.members = [];
+    if (state.connected) emit(opts.leaveEvent, { room: name });
   }
 
-  function to(destino: string): { emit(evento: string, dados?: unknown): boolean } {
+  function to(target: string): { emit(event: string, data?: unknown): boolean } {
     return {
-      emit: (evento: string, dados?: unknown) => emit(evento, { to: destino, data: dados }),
+      emit: (event: string, data?: unknown) => emit(event, { to: target, data }),
     };
   }
 
   /**
-   * Le uma mensagem do transporte nativo.
+   * Reads a message from native transport.
    *
-   * JSON automatico com volta para texto puro, igual ao `responseType: 'auto'`
-   * do http: o que parece JSON e convertido, o resto continua sendo texto.
+   * Automatic JSON with fallback to plain text, like `responseType: 'auto'`
+   * in http: what looks like JSON is converted, everything else stays text.
    */
-  function receberNativo(cru: unknown): void {
-    if (typeof cru !== 'string') {
-      receber('message', cru);
+  function receiveNative(raw: unknown): void {
+    if (typeof raw !== 'string') {
+      receive('message', raw);
       return;
     }
-    // O pong do heartbeat e conversa entre o modulo e o servidor, nao evento.
-    if (opcoes.pongPayload != null && cru === opcoes.pongPayload) return;
+    // The heartbeat pong is conversation between module and server, not an event.
+    if (opts.pongPayload != null && raw === opts.pongPayload) return;
 
-    let carga: unknown = cru;
-    if (opcoes.json) {
-      const inicio = cru.trimStart()[0];
-      if (inicio === '{' || inicio === '[') {
+    let payload: unknown = raw;
+    if (opts.json) {
+      const start = raw.trimStart()[0];
+      if (start === '{' || start === '[') {
         try {
-          carga = JSON.parse(cru);
+          payload = JSON.parse(raw);
         } catch {
-          // JSON quebrado continua valendo como texto, sem derrubar nada.
+          // Broken JSON still counts as text, without breaking anything.
         }
       }
     }
 
-    // Envelope `{event,data}`: o nome vira evento, o resto vira carga.
-    if (carga && typeof carga === 'object' && !Array.isArray(carga)) {
-      const objeto = carga as Record<string, unknown>;
-      const nome = objeto.event ?? objeto.type;
-      if (typeof nome === 'string' && nome) {
-        receber(nome, 'data' in objeto ? objeto.data : objeto, cru);
+    // `{event,data}` envelope: name becomes event, rest becomes payload.
+    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+      const obj = payload as Record<string, unknown>;
+      const name = obj.event ?? obj.type;
+      if (typeof name === 'string' && name) {
+        receive(name, 'data' in obj ? obj.data : obj, raw);
         return;
       }
     }
-    receber('message', carga, cru);
+    receive('message', payload, raw);
   }
 
-  /** Le um quadro do transporte Socket.IO. */
-  function receberSocketIo(cru: unknown): void {
-    const pacote = decodeEngine(cru);
+  /** Reads a frame from Socket.IO transport. */
+  function receiveSocketIo(raw: unknown): void {
+    const packet = decodeEngine(raw);
 
-    switch (pacote.kind) {
+    switch (packet.kind) {
       case 'open':
-        handshake = pacote.handshake;
-        // Handshake fechado: agora entra no namespace. So depois do CONNECT
-        // aceito e que a conexao conta como aberta.
-        enviarHandshakeConnect();
-        marcarVivo();
+        handshake = packet.handshake;
+        // Handshake complete: now enter the namespace. Only after CONNECT
+        // accepted does the connection count as open.
+        sendHandshakeConnect();
+        markAlive();
         return;
 
       case 'ping':
-        // O servidor perguntou. Responder e obrigatorio: sem pong ele desliga.
+        // Server is asking. Responding is mandatory: without pong it disconnects.
         ws?.send(ENGINE.PONG);
-        marcarVivo();
+        markAlive();
         return;
 
       case 'pong':
       case 'noop':
-        marcarVivo();
+        markAlive();
         return;
 
       case 'close':
-        // Desligamento pedido pelo servidor. Continua valendo reconectar.
-        derrubar();
+        // Disconnection requested by server. Reconnecting still counts.
+        tearDown();
         return;
 
       case 'message':
         break;
 
       default:
-        // Quadro binario ou desconhecido: conta como sinal de vida e nada mais.
-        marcarVivo();
-        avisarUmaVez(
-          `socket-quadro:${endereco}`,
-          `O servidor mandou um quadro que este cliente Socket.IO nao le (binario ou upgrade). Anexos binarios nao estao implementados; mande os dados como JSON ou base64.`
+        // Binary or unknown frame: counts as a sign of life and nothing more.
+        markAlive();
+        warnOnce(
+          `socket-frame:${address}`,
+          `The server sent a frame this Socket.IO client cannot read (binary or upgrade). Binary attachments are not implemented; send data as JSON or base64.`
         );
         return;
     }
 
-    const { packet } = pacote;
+    const { packet: socketPacket } = packet;
 
-    switch (packet.type) {
+    switch (socketPacket.type) {
       case SIO.CONNECT:
-        confirmarAbertura();
+        confirmOpen();
         return;
 
       case SIO.CONNECT_ERROR: {
-        const dados = packet.data as { message?: string } | undefined;
-        registrarErro(dados?.message ?? 'conexao recusada pelo servidor');
-        // Recusa de handshake nao se resolve repetindo depressa: derruba e deixa
-        // a espera progressiva cuidar do ritmo.
-        derrubar();
+        const data = socketPacket.data as { message?: string } | undefined;
+        registerError(data?.message ?? 'connection refused by server');
+        // Handshake refusal doesn't resolve by retrying fast: tear down and let
+        // progressive backoff handle the pace.
+        tearDown();
         return;
       }
 
       case SIO.DISCONNECT:
-        derrubar();
+        tearDown();
         return;
 
       case SIO.ACK: {
-        const resposta = Array.isArray(packet.data) ? packet.data[0] : packet.data;
-        if (packet.ack !== undefined) {
-          const callback = acks.get(packet.ack);
-          acks.delete(packet.ack);
-          callback?.(resposta);
+        const response = Array.isArray(socketPacket.data) ? socketPacket.data[0] : socketPacket.data;
+        if (socketPacket.ack !== undefined) {
+          const callback = acks.get(socketPacket.ack);
+          acks.delete(socketPacket.ack);
+          callback?.(response);
         }
         return;
       }
 
       case SIO.EVENT: {
-        const argumentos = Array.isArray(packet.data) ? packet.data : [];
-        const nome = typeof argumentos[0] === 'string' ? (argumentos[0] as string) : 'message';
-        const carga = argumentos.length > 2 ? argumentos.slice(1) : argumentos[1];
+        const args = Array.isArray(socketPacket.data) ? socketPacket.data : [];
+        const name = typeof args[0] === 'string' ? (args[0] as string) : 'message';
+        const payload = args.length > 2 ? args.slice(1) : args[1];
 
-        // Evento que pede confirmacao: o ouvinte ganha a funcao de responder.
+        // Event that requests confirmation: the listener gets the response function.
         let responder: ((r: unknown) => void) | undefined;
-        if (packet.ack !== undefined) {
-          const numero = packet.ack;
-          responder = (resposta: unknown) => {
-            enviarTexto(
+        if (socketPacket.ack !== undefined) {
+          const num = socketPacket.ack;
+          responder = (response: unknown) => {
+            sendText(
               encodeSocketIo({
                 type: SIO.ACK,
-                namespace: opcoes.namespace,
-                ack: numero,
-                data: [resposta],
+                namespace: opts.namespace,
+                ack: num,
+                data: [response],
               })
             );
           };
         }
-        receber(nome, carga, typeof cru === 'string' ? cru : undefined, responder);
+        receive(name, payload, typeof raw === 'string' ? raw : undefined, responder);
         return;
       }
 
       default:
-        avisarUmaVez(
-          `socket-pacote:${endereco}`,
-          `Pacote Socket.IO tipo ${packet.type} ignorado: anexos binarios nao estao implementados neste cliente.`
+        warnOnce(
+          `socket-packet:${address}`,
+          `Socket.IO packet type ${socketPacket.type} ignored: binary attachments are not implemented in this client.`
         );
     }
   }
 
-  function enviarHandshakeConnect(): void {
+  function sendHandshakeConnect(): void {
     ws?.send(
       encodeSocketIo({
         type: SIO.CONNECT,
-        namespace: opcoes.namespace,
+        namespace: opts.namespace,
         data: options.auth ?? defaults.auth ?? undefined,
       })
     );
   }
 
   // -------------------------------------------------------------------------
-  // Ciclo de vida da conexao
+  // Connection lifecycle
   // -------------------------------------------------------------------------
 
-  /** Marca a conexao como pronta de verdade e escoa o que estava esperando. */
-  function confirmarAbertura(): void {
-    estado.tentativas = 0;
-    estado.erro = null;
-    abertoEm = Date.now();
-    mudarEstado('open');
-    iniciarHeartbeat();
-    marcarVivo();
-    // A ordem importa: reentrar antes de escoar coloca o pedido de sala na
-    // frente das mensagens que estavam esperando, entao elas chegam na sala
-    // certa em vez de baterem numa conexao que ainda esta fora dela.
-    reentrarNasSalas();
-    escoarFila();
-    for (const sala of salas.values()) {
-      if (sala.estado.estado === 'joining') sala.estado.estado = 'joined';
+  /** Marks the connection as truly ready and drains what was waiting. */
+  function confirmOpen(): void {
+    state.attempts = 0;
+    state.error = null;
+    openedAt = Date.now();
+    changeState('open');
+    startHeartbeat();
+    markAlive();
+    // Order matters: rejoin before drain puts the room request ahead of waiting
+    // messages, so they arrive in the right room instead of hitting a connection
+    // still outside of it.
+    rejoinRooms();
+    drainQueue();
+    for (const room of rooms.values()) {
+      if (room.state.state === 'joining') room.state.state = 'joined';
     }
-    entregar('open', { url: endereco });
+    deliver('open', { url: address });
     devtoolsBus.emit('network', {
       method: 'WS',
-      url: endereco,
+      url: address,
       status: 101,
       ok: true,
       source: 'socket',
     });
   }
 
-  /** Solta o WebSocket atual sem deixar nenhum callback pendurado nele. */
-  function soltarWs(): WebSocketLike | null {
-    const anterior = ws;
-    if (anterior) {
-      anterior.onopen = null;
-      anterior.onclose = null;
-      anterior.onerror = null;
-      anterior.onmessage = null;
+  /** Releases the current WebSocket without leaving any callbacks dangling. */
+  function releaseWs(): WebSocketLike | null {
+    const prev = ws;
+    if (prev) {
+      prev.onopen = null;
+      prev.onclose = null;
+      prev.onerror = null;
+      prev.onmessage = null;
     }
     ws = null;
-    return anterior;
+    return prev;
   }
 
   /**
-   * Encerra a conexao atual por conta propria e decide se reconecta.
+   * Tears down the current connection and decides whether to reconnect.
    *
-   * Usado tanto pela deteccao de conexao morta quanto pelo desligamento pedido
-   * pelo servidor: nos dois casos o `onclose` nativo pode nunca chegar.
+   * Used both by dead-connection detection and server-requested shutdown: in both cases
+   * the native `onclose` might never arrive.
    */
-  function derrubar(): void {
-    const anterior = soltarWs();
+  function tearDown(): void {
+    const prev = releaseWs();
     handshake = null;
-    if (timerHeartbeat !== null) {
-      clearInterval(timerHeartbeat);
-      timerHeartbeat = null;
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
     }
-    if (timerVigilancia !== null) {
-      clearTimeout(timerVigilancia);
-      timerVigilancia = null;
+    if (watchdogTimer !== null) {
+      clearTimeout(watchdogTimer);
+      watchdogTimer = null;
     }
-    estado.conectado = false;
+    state.connected = false;
     try {
-      anterior?.close();
+      prev?.close();
     } catch {
-      // Fechar um socket ja morto pode lancar. Nao muda nada.
+      // Closing an already-dead socket can throw. Doesn't matter.
     }
-    entregar('close', { url: endereco });
-    agendarReconexao();
+    deliver('close', { url: address });
+    scheduleReconnect();
   }
 
-  function conectar(): void {
+  function connect(): void {
     if (!Impl) return;
     if (ws) return;
 
-    mudarEstado(estado.tentativas > 0 ? 'reconnecting' : 'connecting');
+    changeState(state.attempts > 0 ? 'reconnecting' : 'connecting');
 
-    let novo: WebSocketLike;
+    let newWs: WebSocketLike;
     try {
-      novo = new Impl(endereco, opcoes.protocols);
+      newWs = new Impl(address, opts.protocols);
     } catch (err) {
-      registrarErro((err as Error)?.message ?? 'falha ao abrir a conexao');
-      agendarReconexao();
+      registerError((err as Error)?.message ?? 'failed to open connection');
+      scheduleReconnect();
       return;
     }
-    ws = novo;
+    ws = newWs;
 
-    novo.onopen = () => {
-      if (ws !== novo) return;
-      // No Socket.IO o TCP abrir e so o comeco: a conexao logica so existe
-      // depois do handshake Engine.IO e do CONNECT aceito.
-      if (socketIo) marcarVivo();
-      else confirmarAbertura();
+    newWs.onopen = () => {
+      if (ws !== newWs) return;
+      // In Socket.IO, TCP opening is just the start: the logical connection only exists
+      // after the Engine.IO handshake and accepted CONNECT.
+      if (socketIo) markAlive();
+      else confirmOpen();
     };
 
-    novo.onmessage = (evento) => {
-      if (ws !== novo) return;
-      marcarVivo();
-      if (socketIo) receberSocketIo(evento?.data);
-      else receberNativo(evento?.data);
+    newWs.onmessage = (event) => {
+      if (ws !== newWs) return;
+      markAlive();
+      if (socketIo) receiveSocketIo(event?.data);
+      else receiveNative(event?.data);
     };
 
-    novo.onerror = () => {
-      if (ws !== novo) return;
-      // O evento de erro do WebSocket nao carrega motivo, por decisao do padrao.
-      registrarErro('falha na conexao');
+    newWs.onerror = () => {
+      if (ws !== newWs) return;
+      // The WebSocket error event carries no reason, by spec decision.
+      registerError('connection failed');
     };
 
-    novo.onclose = (evento) => {
-      if (ws !== novo) return;
-      soltarWs();
+    newWs.onclose = (event) => {
+      if (ws !== newWs) return;
+      releaseWs();
       handshake = null;
-      if (timerHeartbeat !== null) {
-        clearInterval(timerHeartbeat);
-        timerHeartbeat = null;
+      if (heartbeatTimer !== null) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
       }
-      if (timerVigilancia !== null) {
-        clearTimeout(timerVigilancia);
-        timerVigilancia = null;
+      if (watchdogTimer !== null) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
       }
-      estado.conectado = false;
-      const detalhe = evento as { code?: number; reason?: string } | undefined;
-      entregar('close', { url: endereco, code: detalhe?.code, reason: detalhe?.reason });
+      state.connected = false;
+      const detail = event as { code?: number; reason?: string } | undefined;
+      deliver('close', { url: address, code: detail?.code, reason: detail?.reason });
       devtoolsBus.emit('network', {
         method: 'WS',
-        url: endereco,
-        status: detalhe?.code,
+        url: address,
+        status: detail?.code,
         ok: true,
-        duration: abertoEm ? Date.now() - abertoEm : undefined,
+        duration: openedAt ? Date.now() - openedAt : undefined,
         source: 'socket',
       });
-      agendarReconexao();
+      scheduleReconnect();
     };
   }
 
-  function open(): void {
-    fechadoDeProposito = false;
+  function openConnection(): void {
+    closedPurposefully = false;
     if (!Impl) return;
-    abertos.add(instancia);
-    if (ws || timerReconexao !== null) return;
-    conectar();
+    openConnections.add(instance);
+    if (ws || reconnectTimer !== null) return;
+    connect();
   }
 
-  function close(code?: number, reason?: string): void {
-    // A partir daqui nada mais reconecta. Este e o unico jeito de parar de vez.
-    fechadoDeProposito = true;
-    pararTimers();
-    mudarEstado('closing');
+  function closeConnection(code?: number, reason?: string): void {
+    // From here on nothing reconnects. This is the only way to stop completely.
+    closedPurposefully = true;
+    stopTimers();
+    changeState('closing');
 
-    const anterior = soltarWs();
+    const prev = releaseWs();
     handshake = null;
     acks.clear();
-    fila.length = 0;
-    estado.enfileiradas = 0;
-    estado.tentativas = 0;
-    // Fechar de proposito desmonta as salas junto: nada de ouvinte de sala
-    // sobrevivendo a conexao que o alimentava.
-    for (const [nome, sala] of salas) {
-      sala.estado.estado = 'left';
-      sala.ouvintes.clear();
-      sala.estado.membros = [];
-      salas.delete(nome);
+    queue.length = 0;
+    state.queued = 0;
+    state.attempts = 0;
+    // Closing on purpose tears down rooms too: no room listener
+    // survives the connection that fed it.
+    for (const [name, room] of rooms) {
+      room.state.state = 'left';
+      room.listeners.clear();
+      room.state.members = [];
+      rooms.delete(name);
     }
     try {
-      anterior?.close(code, reason);
+      prev?.close(code, reason);
     } catch {
-      // Idem: fechar duas vezes nao e problema de quem chamou.
+      // Same: closing twice is not the caller's problem.
     }
-    abertos.delete(instancia);
-    mudarEstado('closed');
-    entregar('close', { url: endereco, code, reason });
+    openConnections.delete(instance);
+    changeState('closed');
+    deliver('close', { url: address, code, reason });
   }
 
-  const instancia: VoodooSocket = {
+  const instance: VoodooSocket = {
     get url() {
-      return endereco;
+      return address;
     },
     get state() {
-      return estado.estado;
+      return state.state;
     },
     get connected() {
-      return estado.conectado;
+      return state.connected;
     },
     get attempts() {
-      return estado.tentativas;
+      return state.attempts;
     },
     get queued() {
-      return estado.enfileiradas;
+      return state.queued;
     },
     get error() {
-      return estado.erro;
+      return state.error;
     },
     get raw() {
       return ws;
     },
     get rooms() {
-      return [...salas.values()].map((s) => s.publica);
+      return [...rooms.values()].map((r) => r.public);
     },
     on,
     once,
     off,
     emit,
     send,
-    open,
-    close,
+    open: openConnection,
+    close: closeConnection,
     join,
     leave,
     to,
   };
 
   if (!Impl) {
-    // Ambiente sem WebSocket: o socket existe, nunca abre e nunca lanca.
-    estado.erro = 'WebSocket indisponivel neste ambiente';
-    return instancia;
+    // Environment without WebSocket: the socket exists, never opens, never throws.
+    state.error = 'WebSocket unavailable in this environment';
+    return instance;
   }
 
-  if (!opcoes.manual) open();
-  else abertos.add(instancia);
-  return instancia;
+  if (!opts.manual) openConnection();
+  else openConnections.add(instance);
+  return instance;
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
 export interface SocketFactory {
   (url: string, options?: SocketOptions): VoodooSocket;
-  /** Padroes aplicados a toda conexao nova, como `http.defaults`. */
+  /** Defaults applied to every new connection, like `http.defaults`. */
   defaults: SocketDefaults;
-  /** Interceptadores de mensagem, no formato de `http.interceptors`. */
+  /** Message interceptors, in the format of `http.interceptors`. */
   interceptors: {
     incoming: { use(fn: SocketInterceptor): () => void };
     outgoing: { use(fn: SocketInterceptor): () => void };
   };
-  /** Fecha todas as conexoes abertas. */
+  /** Closes all open connections. */
   close(): void;
-  /** Conexoes vivas neste momento. */
+  /** Active connections right now. */
   readonly open: VoodooSocket[];
-  /** `true` quando o ambiente tem WebSocket. */
+  /** `true` when the environment has WebSocket. */
   supported(): boolean;
-  /** Troca a implementacao de WebSocket usada por padrao. Util em teste. */
+  /** Switches the WebSocket implementation used by default. Useful in testing. */
   setWebSocket(impl: WebSocketCtor | null): void;
 }
 
-const fabrica = ((url: string, options: SocketOptions = {}): VoodooSocket =>
+const factory = ((url: string, options: SocketOptions = {}): VoodooSocket =>
   createSocket(url, options)) as SocketFactory;
 
-Object.assign(fabrica, {
+Object.assign(factory, {
   defaults,
   interceptors: {
-    incoming: { use: (fn: SocketInterceptor) => usar(incomingInterceptors, fn) },
-    outgoing: { use: (fn: SocketInterceptor) => usar(outgoingInterceptors, fn) },
+    incoming: { use: (fn: SocketInterceptor) => use(incomingInterceptors, fn) },
+    outgoing: { use: (fn: SocketInterceptor) => use(outgoingInterceptors, fn) },
   },
   close(): void {
-    for (const s of [...abertos]) s.close();
+    for (const s of [...openConnections]) s.close();
   },
   supported: socketSupported,
   setWebSocket(impl: WebSocketCtor | null): void {
@@ -1349,15 +1348,15 @@ Object.assign(fabrica, {
   },
 });
 
-// `open` precisa continuar sendo getter, e nao valor. `Object.assign` copia o
-// resultado de um getter, nao o getter: dentro do objeto acima a lista sairia
-// congelada e vazia para sempre.
-Object.defineProperty(fabrica, 'open', {
-  get: () => [...abertos],
+// `open` needs to stay a getter, not a value. `Object.assign` copies the
+// result of a getter, not the getter itself: in the object above the list would come out
+// frozen and empty forever.
+Object.defineProperty(factory, 'open', {
+  get: () => [...openConnections],
   enumerable: true,
 });
 
-export const socket: SocketFactory = fabrica;
+export const socket: SocketFactory = factory;
 
 export type Socket = typeof socket;
 export { decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, ENGINE, SIO } from './protocol';

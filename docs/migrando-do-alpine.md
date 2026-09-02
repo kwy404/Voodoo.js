@@ -1,8 +1,8 @@
-# Migrando do Alpine
+# Migrating from Alpine
 
-A Voodoo.js e o Alpine partem da mesma ideia: comportamento declarado no HTML, sem passo de build.
-A conversão costuma ser quase mecânica. As diferenças reais aparecem no que a Voodoo traz junto,
-que no Alpine mora em plugins ou no seu próprio código.
+Voodoo.js and Alpine start from the same idea: behavior declared in HTML, with no build step.
+The conversion is usually almost mechanical. The real differences appear in what Voodoo brings along,
+which in Alpine lives in plugins or your own code.
 
 ## Tabela de equivalência
 
@@ -184,69 +184,69 @@ registrar tudo antes.
 document.addEventListener('voodoo:ready', () => console.log('pronto'));
 ```
 
-## Três diferenças que valem atenção
+## Three differences worth attention
 
-### 1. Interpolação com chave simples
+### 1. Interpolation with single brace
 
 ```html
 <!-- Alpine -->
-<span x-text="nome"></span>
+<span x-text="name"></span>
 
 <!-- Voodoo -->
-<span>{ nome }</span>
-<span v-text="nome"></span>
+<span>{ name }</span>
+<span v-text="name"></span>
 ```
 
-A Voodoo interpola texto direto. `{{ nome }}` também funciona.
+Voodoo interpolates text directly. `{{ name }}` also works.
 
-### 2. Os atributos somem do HTML
+### 2. Attributes disappear from HTML
 
-Depois de processada, a directive sai do documento. Se você tem CSS ou scripts que dependem de
-seletores como `[x-show]`, adapte para classes, ou desligue a limpeza:
+After processing, the directive leaves the document. If you have CSS or scripts that depend on
+selectors like `[x-show]`, adapt to classes, or disable cleanup:
 
 ```js
 V.config.cleanAttributes = false;
 ```
 
-### 3. v-if não precisa de template
+### 3. v-if doesn't need template
 
 ```html
 <!-- Alpine -->
-<template x-if="logado"><p>Bem-vindo</p></template>
+<template x-if="loggedIn"><p>Welcome</p></template>
 
 <!-- Voodoo -->
-<p v-if="logado">Bem-vindo</p>
+<p v-if="loggedIn">Welcome</p>
 ```
 
-O `<template>` continua funcionando quando você quer condicionar vários elementos sem um
-contêiner.
+The `<template>` still works when you want to condition multiple elements without a
+container.
 
-## O que você ganha na troca
+## What you gain in the switch
 
-Coisas que no Alpine exigem plugin, biblioteca externa ou código próprio, e que aqui já vêm
-prontas:
+Things that in Alpine require a plugin, external library or your own code, and which are already
+ready here:
 
-- requisições declarativas: `v-get`, `v-post`, `v-resource`, `v-poll`, `v-search`;
-- formulário AJAX completo com `v-submit`, validação, máscaras, upload e autosave;
-- interface: modal, gaveta, abas, dropdown, tooltip, acordeão, paleta de comandos;
-- notificações e diálogos com promessa;
-- arrastar e soltar acessível;
-- armazenamento, cookies, cache e query string;
-- no build completo: gráficos, animações com mola, roteador, idiomas e o inspetor `xray`.
+- declarative requests: `v-get`, `v-post`, `v-resource`, `v-poll`, `v-search`;
+- complete AJAX form with `v-submit`, validation, masks, upload and autosave;
+- UI: modal, drawer, tabs, dropdown, tooltip, accordion, command palette;
+- notifications and dialogs with promises;
+- accessible drag and drop;
+- storage, cookies, cache and query string;
+- in the complete build: charts, spring-based animations, router, languages and the `xray` inspector.
 
-## O que você perde
+## What you lose
 
-- o ecossistema de plugins do Alpine, que é maior e mais antigo;
-- `x-modelable`, que na Voodoo vira props com `emit`;
-- `x-transition` com sintaxe de classes utilitárias direto no atributo, que aqui usa
-  `v-enter-class` e companhia;
-- os modificadores `.camel` e `.dot` do `x-bind`.
+- Alpine's plugin ecosystem, which is larger and older;
+- `x-modelable`, which in Voodoo becomes props with `emit`;
+- `x-transition` with utility class syntax right in the attribute, which here uses
+  `v-enter-class` and friends;
+- the `.camel` and `.dot` modifiers of `x-bind`.
 
-## Migração gradual
+## Gradual migration
 
-As duas bibliotecas usam prefixos diferentes, então convivem sem colisão na mesma página. Migre
-tela por tela, trocando `x-` por `v-`, e remova o Alpine quando não sobrar nenhum.
+The two libraries use different prefixes, so they coexist without collision on the same page. Migrate
+screen by screen, swapping `x-` for `v-`, and remove Alpine when none is left.
 
 ---
 
-Anterior: [Migrando do jQuery](migrando-do-jquery.md) · Próximo: [Migrando do Vue](migrando-do-vue.md)
+Previous: [Migrating from jQuery](migrando-do-jquery.md) · Next: [Migrating from Vue](migrando-do-vue.md)

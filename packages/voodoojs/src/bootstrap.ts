@@ -1,15 +1,15 @@
 /**
  * @module bootstrap
  *
- * Inicializacao compartilhada pelos builds de navegador. Le a configuracao
- * declarada na propria tag `<script>`, publica o objeto global e inicia a
- * Voodoo quando o documento estiver pronto.
+ * Shared initialization for browser builds. Reads the configuration declared
+ * in the `<script>` tag itself, publishes the global object, and starts Voodoo
+ * when the document is ready.
  *
  * ```html
  * <script src="voodoo.min.js" defer></script>
  * ```
  *
- * Para configurar antes de iniciar, use `data-manual`:
+ * To configure before starting, use `data-manual`:
  *
  * ```html
  * <script src="voodoo.min.js" data-manual></script>
@@ -27,26 +27,26 @@ import { applySavedPalette } from './ui/palette';
 import { whenReady } from './runtime/boot';
 
 /**
- * Decide se as devtools foram pedidas.
+ * Determines whether devtools were requested.
  *
- * Aceita as formas curtas porque este e o caso em que a pessoa esta com pressa:
- * `devtools`, `devtools="true"`, `data-devtools`, ou a variavel global
- * `window.VOODOO_DEVTOOLS` definida antes do carregamento. Um `devtools="false"`
- * explicito desliga, para o atributo poder ser deixado no HTML e alternado.
+ * Accepts short forms because this is when someone is in a hurry:
+ * `devtools`, `devtools="true"`, `data-devtools`, or the global
+ * variable `window.VOODOO_DEVTOOLS` set before loading. An explicit
+ * `devtools="false"` disables it, so the attribute can be left in HTML and toggled.
  */
 function readDevtoolsFlag(script: HTMLScriptElement): boolean {
   if ((window as unknown as Record<string, unknown>).VOODOO_DEVTOOLS === true) return true;
 
-  for (const nome of ['devtools', 'data-devtools']) {
-    if (!script.hasAttribute(nome)) continue;
-    const valor = script.getAttribute(nome);
-    // Atributo vazio e atributo booleano contam como ligado.
-    return valor === null || valor === '' || valor.toLowerCase() !== 'false';
+  for (const name of ['devtools', 'data-devtools']) {
+    if (!script.hasAttribute(name)) continue;
+    const value = script.getAttribute(name);
+    // Empty attribute and boolean attribute count as enabled.
+    return value === null || value === '' || value.toLowerCase() !== 'false';
   }
   return false;
 }
 
-/** Le a configuracao declarada nos atributos da tag `<script>`. */
+/** Reads configuration declared in the `<script>` tag attributes. */
 function readScriptOptions(): { manual: boolean } {
   if (typeof document === 'undefined') return { manual: false };
 
@@ -76,13 +76,13 @@ function readScriptOptions(): { manual: boolean } {
 }
 
 /**
- * Coloca o widget das devtools na tela, quando o build carregado tiver um.
+ * Mounts the devtools widget on screen, if the loaded build has one.
  *
- * A chamada e opcional de proposito. O widget e o inspetor vivem no build
- * completo; nos builds menor e essencial `V.devtoolsWidget` simplesmente nao
- * existe, e a pessoa recebe a instrucao no console em vez de um erro. E o que
- * mantem `bootstrap.ts` compartilhado pelos tres builds sem arrastar o
- * inspetor inteiro para dentro do menor deles.
+ * The call is intentionally optional. The widget and inspector live in the full
+ * build; in the minimal and essential builds, `V.devtoolsWidget` simply doesn't
+ * exist, and the user gets instructions in the console instead of an error. This
+ * is what keeps `bootstrap.ts` shared across all three builds without dragging
+ * the entire inspector into the smallest one.
  */
 function mountDevtools(V: any): void {
   if (typeof V.devtoolsWidget === 'function') {
@@ -91,12 +91,12 @@ function mountDevtools(V: any): void {
   }
   // eslint-disable-next-line no-console
   console.info(
-    '[Voodoo] devtools pedidas, mas este build nao traz o inspetor. ' +
-      'Use voodoo.full.min.js para ganhar o widget e o painel completo.'
+    '[Voodoo] devtools requested, but this build does not include the inspector. ' +
+      'Use voodoo.full.min.js to get the widget and full devtools panel.'
   );
 }
 
-/** Publica o objeto global e agenda o inicio da Voodoo. */
+/** Publishes the global object and schedules Voodoo startup. */
 export function bootstrap(V: any): void {
   if (typeof window === 'undefined') return;
 
@@ -106,9 +106,9 @@ export function bootstrap(V: any): void {
   globalScope.V = V;
   globalScope.Voodoo = V;
 
-  // Deixa o proprio objeto alcancavel de dentro das expressoes. Sem isto,
-  // escrever @click="V.palette({ preset: 1 })" falharia, porque o avaliador so
-  // enxerga a lista fechada de globais.
+  // Makes the object reachable from within expressions. Without this, writing
+  // @click="V.palette({ preset: 1 })" would fail, because the evaluator only
+  // sees the closed list of globals.
   allowedGlobals.V = V;
   allowedGlobals.Voodoo = V;
 
@@ -117,18 +117,17 @@ export function bootstrap(V: any): void {
   if (options.manual || !config.autoStart) return;
 
   const boot = (): void => {
-    // Tema e paleta primeiro, para a pagina nao piscar com as cores erradas.
+    // Theme and palette first, to prevent the page from flashing with wrong colors.
     theme.init();
     applySavedPalette();
     V.start();
     if (config.devtools) mountDevtools(V);
   };
 
-  // Quem decide a hora e o agendador da propria Voodoo, e nao os eventos de
-  // carregamento do navegador. Ele espera duas condicoes: o corpo existir e a
-  // arvore parar de crescer. Isso cobre sozinho os casos que o `readyState`
-  // cobria mal: um script sem `defer` no `<head>`, outros scripts com `defer`
-  // que ainda vao registrar componentes, e uma pagina montada por terceiros
-  // depois que o evento ja passou.
+  // Voodoo's own scheduler decides the timing, not browser load events. It waits
+  // for two conditions: the body exists and the tree stops growing. This alone
+  // handles the cases that `readyState` handled poorly: a script without `defer`
+  // in `<head>`, other `defer` scripts that will still register components, and
+  // a page mounted by third parties after the event has already passed.
   whenReady(boot);
 }

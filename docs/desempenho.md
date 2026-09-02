@@ -1,219 +1,219 @@
-# Desempenho
+# Performance
 
-## Como as atualizações granulares funcionam
+## How granular updates work
 
-Não existe Virtual DOM. Não existe comparação de árvores. Não existe rerender de componente.
+There's no Virtual DOM. There's no tree comparison. There's no component rerender.
 
-O modelo é: **um `Proxy` que rastreia leitura por chave, e um efeito por pedaço de DOM**.
+The model is: **a `Proxy` that tracks reads by key, and one effect per piece of DOM**.
 
 ```html
-<div v-data="{ nome: 'Ana', idade: 30 }">
-  <p v-text="nome"></p>       <!-- efeito 1, depende de "nome" -->
-  <p v-text="idade"></p>      <!-- efeito 2, depende de "idade" -->
-  <p>{ nome } tem { idade }</p> <!-- efeito 3, depende dos dois -->
+<div v-data="{ name: 'Ana', age: 30 }">
+  <p v-text="name"></p>       <!-- effect 1, depends on "name" -->
+  <p v-text="age"></p>        <!-- effect 2, depends on "age" -->
+  <p>{ name } is { age }</p>   <!-- effect 3, depends on both -->
 </div>
 ```
 
-Quando `nome` muda:
+When `name` changes:
 
-1. o `set` do proxy compara o valor novo com o antigo, e para ali se forem iguais;
-2. os efeitos que leram a chave `nome` são colocados em uma fila;
-3. a fila é processada em uma microtask, com cada efeito rodando uma vez só;
-4. o efeito 1 escreve em um `textContent`, e o efeito 3 recompõe o texto dele.
+1. the proxy's `set` compares the new value with the old one, and stops if they're equal;
+2. effects that read the key `name` are queued;
+3. the queue is processed in a microtask, with each effect running only once;
+4. effect 1 writes to `textContent`, and effect 3 recomposes its text.
 
-O efeito 2 nunca é executado. O segundo parágrafo não é lido, não é comparado e não é tocado.
+Effect 2 is never executed. The second paragraph is not read, not compared, not touched.
 
-O caminho da mudança até o pixel é: `set` no proxy, fila, `textContent`. Nada mais.
+The path from change to pixel is: `set` on proxy, queue, `textContent`. Nothing more.
 
-## Lote e microtask
+## Batching and microtask
 
-Várias mudanças na mesma tarefa viram uma única passada:
+Multiple changes in the same task become a single pass:
 
 ```js
-estado.a = 1;
-estado.b = 2;
-estado.c = 3;
-// os efeitos afetados rodam uma vez só, na microtask
+state.a = 1;
+state.b = 2;
+state.c = 3;
+// affected effects run only once, in the microtask
 await V.nextTick();
 ```
 
-Efeitos duplicados são deduplicados dentro da rodada. Se um efeito reexecutar demais na mesma
-rodada, o agendador percebe o laço e para com um aviso, em vez de travar a aba.
+Duplicate effects are deduplicated within the run. If an effect re-executes too much in the same
+run, the scheduler notices the loop and stops with a warning, instead of freezing the tab.
 
-## Tamanho
+## Size
 
-| Arquivo | Cru | gzip | brotli |
+| File | Raw | gzip | brotli |
 | --- | --- | --- | --- |
-| `voodoo.min.js` | cerca de 235 KB | cerca de 75 KB | cerca de 64 KB |
-| `voodoo.full.min.js` | cerca de 399 KB | cerca de 120 KB | cerca de 100 KB |
+| `voodoo.min.js` | about 235 KB | about 75 KB | about 64 KB |
+| `voodoo.full.min.js` | about 399 KB | about 120 KB | about 100 KB |
 
-Os números mudam a cada versão. O script `npm run size` mede os arquivos reais e falha quando
-algum estoura a meta declarada, então a regressão de tamanho é pega no CI.
+The numbers change with each release. The `npm run size` script measures the actual files and fails when
+any exceeds the declared target, so size regressions are caught in CI.
 
-Para importações por bundler, tudo é tree shakeable:
+For bundler imports, everything is tree-shakeable:
 
 ```js
-import { debounce } from 'voodoojs/utils';   // só o debounce entra no seu build
+import { debounce } from 'voodoojs/utils';   // only debounce goes into your build
 import { reactive } from 'voodoojs/reactivity';
 import { http } from 'voodoojs/http';
 ```
 
-Para um bundle de navegador sob medida, com apenas os módulos que você usa:
+For a custom browser bundle, with only the modules you use:
 
 ```bash
 npx voodoo build
 ```
 
-## Boas práticas
+## Best practices
 
-### Use `:key` no v-for
+### Use `:key` in v-for
 
-Sem chave, os blocos são identificados pela posição. Com chave, eles são reaproveitados quando a
-lista muda de ordem, e o estado interno (foco, valor digitado, rolagem, animação) sobrevive.
+Without a key, blocks are identified by position. With a key, they are reused when the
+list changes order, and internal state (focus, typed value, scroll, animation) survives.
 
 ```html
-<li v-for="produto in produtos" :key="produto.id">{ produto.nome }</li>
+<li v-for="product in products" :key="product.id">{ product.name }</li>
 ```
 
-### Prefira v-show a v-if para alternância frequente
+### Prefer v-show to v-if for frequent toggling
 
-`v-if` monta e desmonta de verdade. `v-show` só troca o `display`.
+`v-if` truly mounts and unmounts. `v-show` just switches `display`.
 
 ```html
-<div v-show="abaAtiva === 'perfil'">...</div>   <!-- alterna muito -->
-<div v-if="usuario.admin">...</div>              <!-- decide uma vez -->
+<div v-show="activeTab === 'profile'">...</div>   <!-- toggles often -->
+<div v-if="user.admin">...</div>                   <!-- decides once -->
 ```
 
-### Deixe as expressões curtas
+### Keep expressions short
 
-Toda expressão de atributo é reavaliada quando uma dependência muda. Cálculos caros ficam melhores
-em um computado de componente ou em uma função.
+Every attribute expression is re-evaluated when a dependency changes. Expensive calculations are better
+in a component computed or in a function.
 
 ```html
-<!-- reavalia a lista inteira a cada mudança -->
-<span>{ pedidos.filter(p => p.pago).reduce((s, p) => s + p.total, 0) }</span>
+<!-- re-evaluates the entire list on each change -->
+<span>{ orders.filter(p => p.paid).reduce((s, p) => s + p.total, 0) }</span>
 
-<!-- calcula uma vez e reaproveita -->
-<span>{ totalPago }</span>
+<!-- calculates once and reuses -->
+<span>{ totalPaid }</span>
 ```
 
 ```js
-V.component('painel', {
+V.component('panel', {
   computed: {
-    totalPago() {
-      return this.pedidos.filter((p) => p.pago).reduce((s, p) => s + p.total, 0);
+    totalPaid() {
+      return this.orders.filter((p) => p.paid).reduce((s, p) => s + p.total, 0);
     },
   },
 });
 ```
 
-### Não crie objetos e arrays dentro de expressões reativas
+### Don't create objects and arrays inside reactive expressions
 
 ```html
-<!-- cria um objeto novo a cada avaliação -->
-<div :style="{ width: largura + 'px' }"></div>
+<!-- creates a new object on each evaluation -->
+<div :style="{ width: width + 'px' }"></div>
 ```
 
-Para um caso simples como esse não há problema. Em uma lista com centenas de itens, prefira
-calcular no estado.
+For a simple case like this there's no problem. In a list with hundreds of items, prefer
+to calculate in state.
 
-### Marque o que não precisa ser reativo
+### Mark what doesn't need to be reactive
 
 ```js
 V.data({
-  mapa: V.markRaw(new google.maps.Map(el)),
-  editor: V.markRaw(criarEditor()),
+  map: V.markRaw(new google.maps.Map(el)),
+  editor: V.markRaw(createEditor()),
 });
 ```
 
-Instâncias de bibliotecas externas, elementos de DOM e estruturas grandes que você substitui
-inteiras não ganham nada em virar proxy.
+Instances of external libraries, DOM elements and large structures that you replace
+entirely gain nothing from becoming a proxy.
 
-### Use debounce em entradas de texto
+### Use debounce on text inputs
 
 ```html
-<input v-model.debounce="busca" v-debounce="300">
-<input v-search="/api/buscar" v-debounce="400" v-min-length="3">
+<input v-model.debounce="search" v-debounce="300">
+<input v-search="/api/search" v-debounce="400" v-min-length="3">
 ```
 
-### Cachê de requisições
+### Request caching
 
 ```html
-<div v-resource="paises: /api/paises" v-cache="1h"></div>
+<div v-resource="countries: /api/countries" v-cache="1h"></div>
 ```
 
 ```js
 await V.http.get('/api/config', { cache: 300_000 });
 ```
 
-### Carregue imagens sob demanda
+### Load images on demand
 
 ```html
-<img v-lazy-src="/fotos/grande.jpg" alt="">
+<img v-lazy-src="/photos/large.jpg" alt="">
 ```
 
-### Carregue trechos da página sob demanda
+### Load page sections on demand
 
 ```html
-<section v-load-visible="/parciais/depoimentos.html">Carregando...</section>
+<section v-load-visible="/partials/testimonials.html">Loading...</section>
 ```
 
-### Prefira listas paginadas
+### Prefer paginated lists
 
-O `v-for` renderiza todos os itens da fonte, sem virtualização. Uma lista com dez mil linhas cria
-dez mil elementos. Pagine, ou use rolagem infinita:
+`v-for` renders all source items without virtualization. A list with ten thousand rows creates
+ten thousand elements. Paginate, or use infinite scroll:
 
 ```html
-<ul v-infinite-scroll="carregarProxima()">
-  <li v-for="item in itens" :key="item.id">{ item.nome }</li>
+<ul v-infinite-scroll="loadNext()">
+  <li v-for="item in items" :key="item.id">{ item.name }</li>
 </ul>
 ```
 
-### Desligue o observador quando não precisar
+### Disable the observer when you don't need it
 
-O `MutationObserver` que inicializa HTML criado depois custa pouco, mas em páginas que mexem muito
-no DOM por conta própria ele pode ser dispensado:
+The `MutationObserver` that initializes HTML created later has low cost, but on pages that manipulate
+the DOM extensively on their own it can be disabled:
 
 ```html
 <script src="voodoo.min.js" data-no-observer defer></script>
 ```
 
 ```js
-V.walk(novoElemento);  // inicialize à mão quando precisar
+V.walk(newElement);  // initialize by hand when needed
 ```
 
-### Escolha o bundle certo
+### Choose the right bundle
 
-Se a página não tem gráfico, rota, tradução nem componente pronto, use `voodoo.min.js`. São
-dezenas de kilobytes de diferença por visita.
+If the page has no chart, router, translation or ready-made component, use `voodoo.min.js`. That's
+tens of kilobytes difference per visit.
 
-## O que a biblioteca já faz por você
+## What the library already does for you
 
-- **Interpolação segmentada.** Um nó de texto com três expressões vira um único efeito que
-  recompõe apenas aquele nó.
-- **Reordenação por cursor.** O `v-for` move os blocos existentes em vez de recriar.
-- **Cache do parser.** Cada expressão é analisada uma vez, e a árvore fica guardada.
-- **CSS sob demanda.** O estilo de um componente de interface só entra no documento quando aquele
-  recurso é usado.
-- **Requisições canceladas.** Uma nova requisição do mesmo elemento aborta a anterior.
-- **Um único laço de animação.** Todas as animações ativas compartilham o mesmo
+- **Segmented interpolation.** A text node with three expressions becomes one effect that
+  recomposes only that node.
+- **Cursor-based reordering.** `v-for` moves existing blocks instead of recreating them.
+- **Parser cache.** Each expression is analyzed once, and the tree is stored.
+- **On-demand CSS.** A UI component's style only enters the document when that
+  feature is used.
+- **Canceled requests.** A new request from the same element aborts the previous one.
+- **Single animation loop.** All active animations share the same
   `requestAnimationFrame`.
-- **Limpeza automática.** Remover um elemento do DOM para os efeitos dele, remove os ouvintes e
-  encerra observadores. Não existe vazamento por esquecimento.
-- **Redesenho barato dos gráficos.** O SVG é gerado como texto e entregue de uma vez.
+- **Automatic cleanup.** Removing an element from the DOM stops its effects, removes listeners and
+  ends observers. No leaks from forgetfulness.
+- **Cheap chart redraws.** SVG is generated as text and delivered at once.
 
-## Medindo
+## Measuring
 
 ```js
-V.config.devtools = true;   // avisos e âncoras nomeadas
-V.xray();                   // aba de desempenho, com efeitos por elemento
+V.config.devtools = true;   // warnings and named anchors
+V.xray();                   // performance tab, with effects per element
 ```
 
-Na aba de desempenho do inspetor, cada elemento mostra quantos efeitos dependem dele e quantas
-vezes cada um reexecutou. Um número alto em um lugar pequeno costuma ser expressão demais em um
-bloco só.
+In the inspector's performance tab, each element shows how many effects depend on it and how many
+times each re-executed. A high number in a small place usually means too many expressions in one
+block.
 
-Para medir o tamanho no seu próprio projeto:
+To measure size in your own project:
 
 ```bash
 npm run size
@@ -221,4 +221,4 @@ npm run size
 
 ---
 
-Anterior: [Segurança](seguranca.md) · Próximo: [Migrando do jQuery](migrando-do-jquery.md)
+Previous: [Security](seguranca.md) · Next: [Migrating from jQuery](migrando-do-jquery.md)

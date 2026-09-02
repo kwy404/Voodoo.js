@@ -1,9 +1,9 @@
-# Utilitários
+# Utilities
 
-Funções puras, sem nenhuma dependência do DOM, então o módulo roda igual em navegador, Node, Bun e
-Deno. Tudo aqui é tree shakeable.
+Pure functions, with no DOM dependencies, so the module runs the same in browser, Node, Bun, and
+Deno. Everything here is tree-shakeable.
 
-Elas estão no objeto `V` e também no ponto de entrada dedicado:
+They are in the `V` object and also at the dedicated entry point:
 
 ```js
 import { debounce, formatCurrency, slugify } from 'voodoojs/utils';
@@ -11,7 +11,7 @@ import { debounce, formatCurrency, slugify } from 'voodoojs/utils';
 
 ---
 
-## Identificadores e tempo
+## Identifiers and time
 
 ### uuid
 
@@ -19,16 +19,16 @@ import { debounce, formatCurrency, slugify } from 'voodoojs/utils';
 V.uuid();  // 'f47ac10b-58cc-4372-a567-0e02b2c3d479'
 ```
 
-UUID v4. Usa `crypto.randomUUID` quando disponível, com dois planos B.
+UUID v4. Uses `crypto.randomUUID` when available, with two fallbacks.
 
 ### uid
 
 ```js
 V.uid();          // 'vk3f9a2'
-V.uid('campo-');  // 'campo-k3f9a2'
+V.uid('field-');  // 'field-k3f9a2'
 ```
 
-Identificador curto, útil para ids de elementos.
+Short identifier, useful for element ids.
 
 ### sleep
 
@@ -48,105 +48,105 @@ V.parseDuration('1h');     // 3600000
 V.parseDuration(null, 99); // 99
 ```
 
-Aceita `null` porque a origem mais comum é `getAttribute`.
+Accepts `null` because the most common source is `getAttribute`.
 
 ---
 
-## Funções de ordem superior
+## Higher-order functions
 
 ### debounce
 
-Adia a execução até parar de ser chamada.
+Delays execution until it stops being called.
 
 ```js
-const buscar = V.debounce(carregarProdutos, 300);
-buscar('cane');
-buscar('caneca');   // só esta executa
+const search = V.debounce(loadProducts, 300);
+search('cane');
+search('mug');   // only this executes
 
-buscar.cancel();    // descarta a chamada pendente
-buscar.flush();     // executa agora, sem esperar
+search.cancel();    // discards the pending call
+search.flush();     // executes now, without waiting
 ```
 
-O terceiro argumento executa na borda de entrada em vez da de saída:
+The third argument executes on the leading edge instead of the trailing edge:
 
 ```js
-const salvarAgora = V.debounce(salvar, 1000, true);
+const saveNow = V.debounce(save, 1000, true);
 ```
 
 ### throttle
 
-No máximo uma execução por intervalo.
+At most one execution per interval.
 
 ```js
-const acompanhar = V.throttle(medirRolagem, 100);
-window.addEventListener('scroll', acompanhar, { passive: true });
-acompanhar.cancel();
+const track = V.throttle(measureScroll, 100);
+window.addEventListener('scroll', track, { passive: true });
+track.cancel();
 ```
 
 ### once
 
-Executa uma única vez e memoriza o retorno.
+Executes once and memoizes the return.
 
 ```js
-const iniciar = V.once(() => criarConexao());
-iniciar();
-iniciar();  // devolve a mesma conexão
+const start = V.once(() => createConnection());
+start();
+start();  // returns the same connection
 ```
 
-> Cuidado com o nome: `V.once` no objeto global é o barramento de eventos
-> (`V.once('evento', handler)`). O utilitário está disponível no import direto:
+> Be careful with the name: `V.once` on the global object is the event bus
+> (`V.once('event', handler)`). The utility is available at direct import:
 > `import { once } from 'voodoojs/utils'`.
 
 ### memoize
 
-Cache de resultado por argumento.
+Result cache by argument.
 
 ```js
-const calcular = V.memoize((a, b) => operacaoCara(a, b));
-calcular(1, 2);
-calcular(1, 2);       // vem do cache
-calcular.cache.clear();
+const calculate = V.memoize((a, b) => expensiveOperation(a, b));
+calculate(1, 2);
+calculate(1, 2);       // comes from cache
+calculate.cache.clear();
 
-const porId = V.memoize(buscar, (id) => String(id));  // chave própria
+const byId = V.memoize(fetch, (id) => String(id));  // custom key
 ```
 
 ---
 
-## Objetos e arrays
+## Objects and arrays
 
 ### clone
 
-Cópia profunda. Usa `structuredClone` quando existir, com caminho manual para objetos com funções.
-Entende `Date`, `Map` e `Set`.
+Deep copy. Uses `structuredClone` when available, with manual path for objects with functions.
+Understands `Date`, `Map`, and `Set`.
 
 ```js
-const copia = V.clone(estadoOriginal);
+const copy = V.clone(originalState);
 ```
 
 ### merge
 
-Mescla em profundidade. Arrays são substituídos, não concatenados.
+Deep merge. Arrays are replaced, not concatenated.
 
 ```js
 V.merge({ a: { b: 1 } }, { a: { c: 2 } });  // { a: { b: 1, c: 2 } }
-V.merge(padroes, doUsuario, deQuery);
+V.merge(defaults, fromUser, fromQuery);
 ```
 
-O primeiro objeto é modificado. Passe `{}` na frente quando quiser preservar.
+The first object is modified. Pass `{}` up front when you want to preserve it.
 
 ### groupBy
 
 ```js
-V.groupBy(pedidos, 'status');
-V.groupBy(pessoas, (p) => p.idade >= 18 ? 'adulto' : 'menor');
+V.groupBy(orders, 'status');
+V.groupBy(people, (p) => p.age >= 18 ? 'adult' : 'minor');
 ```
 
 ### unique
 
 ```js
 V.unique([1, 2, 2, 3]);              // [1, 2, 3]
-V.unique(usuarios, 'id');
-V.unique(pontos, (p) => `${p.x},${p.y}`);
+V.unique(users, 'id');
+V.unique(points, (p) => `${p.x},${p.y}`);
 ```
 
 ### chunk
@@ -157,82 +157,82 @@ V.chunk([1, 2, 3, 4, 5], 2);  // [[1, 2], [3, 4], [5]]
 
 ### sortBy
 
-Ordena sem alterar o array original. Textos usam `localeCompare` com ordenação numérica, o que
-resolve `item 2` antes de `item 10`. Valores nulos vão para o fim.
+Sorts without modifying the original array. Text uses `localeCompare` with numeric sorting, which
+resolves `item 2` before `item 10`. Null values go to the end.
 
 ```js
-V.sortBy(produtos, 'preco');
-V.sortBy(produtos, 'preco', 'desc');
-V.sortBy(usuarios, (u) => u.perfil.nome);
+V.sortBy(products, 'price');
+V.sortBy(products, 'price', 'desc');
+V.sortBy(users, (u) => u.profile.name);
 ```
 
-### get e set
+### get and set
 
-Leitura e escrita de caminhos aninhados, com segurança.
+Reading and writing nested paths, safely.
 
 ```js
-V.get(dados, 'usuario.endereco.cidade');
-V.get(dados, 'lista.0.nome', 'sem nome');
+V.get(data, 'user.address.city');
+V.get(data, 'list.0.name', 'no name');
 
-V.set(form, 'endereco.rua', 'Av. Paulista');
-V.set(form, 'itens.0.qtd', 2);
+V.set(form, 'address.street', 'Main St');
+V.set(form, 'items.0.qty', 2);
 ```
 
-`set` cria os objetos do meio, e usa array quando a próxima chave é numérica.
+`set` creates intermediate objects and uses array when the next key is numeric.
 
-### random e sample
+### random and sample
 
 ```js
-V.random(1, 6);        // inteiro entre 1 e 6, inclusive
-V.sample(['a', 'b']);  // um item qualquer
+V.random(1, 6);        // integer between 1 and 6, inclusive
+V.sample(['a', 'b']);  // any item
 ```
 
 ---
 
-## Textos
+## Text
 
 ### slugify
 
 ```js
-V.slugify('Ação e Reação');       // 'acao-e-reacao'
-V.slugify('Meu Post', '_');       // 'meu_post'
+V.slugify('Action and Reaction');       // 'action-and-reaction'
+V.slugify('My Post', '_');       // 'my_post'
 ```
 
 ### truncate
 
 ```js
-V.truncate('Um texto bem longo', 10);          // 'Um text...'
-V.truncate('Um texto bem longo', 10, '…');     // 'Um texto…'
+V.truncate('A very long text', 10);          // 'A very l...'
+V.truncate('A very long text', 10, '…');     // 'A very lo…'
 ```
 
-### capitalize e titleCase
+### capitalize and titleCase
 
 ```js
 V.capitalize('voodoo');           // 'Voodoo'
 V.titleCase('JAVASCRIPT feels');  // 'Javascript Feels'
 ```
 
-### escapeHtml e stripTags
+### escapeHtml and stripTags
 
 ```js
-V.escapeHtml('<b>oi</b>');   // '&lt;b&gt;oi&lt;/b&gt;'
-V.stripTags('<b>oi</b>');    // 'oi'
+V.escapeHtml('<b>hi</b>');   // '&lt;b&gt;hi&lt;/b&gt;'
+V.stripTags('<b>hi</b>');    // 'hi'
 ```
 
-`escapeHtml` é o caminho seguro para montar HTML na mão. `stripTags` remove tags de forma
-simples, e **não** serve como sanitizador de segurança. Veja [Segurança](seguranca.md).
+`escapeHtml` is the safe way to build HTML by hand. `stripTags` removes tags simply, and **does not**
+work as a security sanitizer. See [Security](security.md).
 
 ---
 
-## Formatadores
+## Formatters
 
-Todos usam o locale e a moeda padrão, ajustáveis:
+All use the default locale and currency, adjustable:
 
 ```js
 V.setFormatDefaults('pt-BR', 'BRL');
 ```
 
-O bootstrap já configura isso a partir de `V.config.locale` e `V.config.currency`.
+Bootstrap already sets this from `V.config.locale` and `V.config.currency`.
 
 ### formatCurrency
 
@@ -253,23 +253,23 @@ V.formatNumber(1234, { minimumFractionDigits: 2 });           // '1.234,00'
 
 ```js
 V.formatDate(new Date());                     // '28/08/2026'
-V.formatDate(pedido.criadoEm, 'long');        // '28 de agosto de 2026'
-V.formatDate(pedido.criadoEm, 'full');
-V.formatDate(pedido.criadoEm, 'time');        // '14:30'
-V.formatDate(pedido.criadoEm, 'datetime');
-V.formatDate(pedido.criadoEm, 'DD/MM/YYYY HH:mm:ss');
-V.formatDate(pedido.criadoEm, { weekday: 'long', month: 'short' });
+V.formatDate(order.createdAt, 'long');        // '28 August 2026'
+V.formatDate(order.createdAt, 'full');
+V.formatDate(order.createdAt, 'time');        // '14:30'
+V.formatDate(order.createdAt, 'datetime');
+V.formatDate(order.createdAt, 'DD/MM/YYYY HH:mm:ss');
+V.formatDate(order.createdAt, { weekday: 'long', month: 'short' });
 ```
 
-Aceita `Date`, timestamp ou string ISO. Uma data inválida devolve texto vazio.
+Accepts `Date`, timestamp, or ISO string. An invalid date returns empty text.
 
-Marcadores da máscara textual: `YYYY`, `YY`, `MM`, `DD`, `HH`, `mm`, `ss`.
+Text mask markers: `YYYY`, `YY`, `MM`, `DD`, `HH`, `mm`, `ss`.
 
 ### relativeTime
 
 ```js
-V.relativeTime(Date.now() - 300_000);   // 'há 5 minutos'
-V.relativeTime(Date.now() + 172_800_000); // 'em 2 dias'
+V.relativeTime(Date.now() - 300_000);   // '5 minutes ago'
+V.relativeTime(Date.now() + 172_800_000); // 'in 2 days'
 ```
 
 ### formatFileSize
@@ -284,86 +284,86 @@ V.formatFileSize(1234, 2);    // '1.21 KB'
 
 ```js
 V.formatPercent(0.256);     // '26%'
-V.formatPercent(0.256, 1);  // '25,6%'
+V.formatPercent(0.256, 1);  // '25.6%'
 ```
 
 ---
 
-## Ambiente
+## Environment
 
 ### isBrowser
 
 ```js
-if (V.isBrowser) { /* tem DOM */ }
+if (V.isBrowser) { /* has DOM */ }
 ```
 
 ### device
 
-Objeto com getters calculados sob demanda:
+Object with on-demand calculated getters:
 
 ```js
-V.device.touch;          // aparelho com toque
-V.device.mobile;         // largura até 767px
-V.device.tablet;         // de 768px a 1023px
-V.device.desktop;        // a partir de 1024px
+V.device.touch;          // device with touch
+V.device.mobile;         // width up to 767px
+V.device.tablet;         // 768px to 1023px
+V.device.desktop;        // 1024px and up
 V.device.online;
 V.device.reducedMotion;  // prefers-reduced-motion: reduce
 V.device.darkMode;       // prefers-color-scheme: dark
 ```
 
-No HTML, use `$device`:
+In HTML, use `$device`:
 
 ```html
-<div v-show="$device.mobile">Versão para celular</div>
-<div v-show="!$device.reducedMotion" v-motion="fadeUp">Com animação</div>
+<div v-show="$device.mobile">Mobile version</div>
+<div v-show="!$device.reducedMotion" v-motion="fadeUp">With animation</div>
 ```
 
-### screen e network
+### screen and network
 
-Diferente de `device`, estes dois são **reativos**: a página se atualiza sozinha quando a janela
-muda de tamanho ou a conexão cai.
+Unlike `device`, these two are **reactive**: the page updates itself when the window
+resizes or the connection drops.
 
 ```html
-<div v-show="$screen.mobile">Celular</div>
-<div v-show="$screen.desktop">Computador</div>
-<span>{ $screen.width } por { $screen.height }</span>
-<div v-show="$screen.matches('(min-width: 1400px)')">Tela larga</div>
+<div v-show="$screen.mobile">Mobile</div>
+<div v-show="$screen.desktop">Desktop</div>
+<span>{ $screen.width } by { $screen.height }</span>
+<div v-show="$screen.matches('(min-width: 1400px)')">Wide screen</div>
 
-<div v-show="!$network.online">Você está offline</div>
-<div v-show="$network.slow">Conexão lenta, carregando a versão leve</div>
+<div v-show="!$network.online">You are offline</div>
+<div v-show="$network.slow">Slow connection, loading light version</div>
 <span>{ $network.type }</span>
 ```
 
-| Campo de `$screen` | O que é |
+| `$screen` field | What it is |
 | --- | --- |
-| `width`, `height` | Dimensões da janela |
-| `mobile` | Menos de 768px |
-| `tablet` | De 768px a 1023px |
-| `desktop` | 1024px ou mais |
-| `portrait`, `landscape` | Orientação |
-| `matches(query)` | Testa uma media query qualquer |
+| `width`, `height` | Window dimensions |
+| `mobile` | Less than 768px |
+| `tablet` | 768px to 1023px |
+| `desktop` | 1024px or more |
+| `portrait`, `landscape` | Orientation |
+| `matches(query)` | Tests any media query |
 
-| Campo de `$network` | O que é |
+| `$network` field | What it is |
 | --- | --- |
-| `online` | Estado da conexão |
-| `type` | Tipo informado pelo navegador, como `4g` |
-| `saveData` | O usuário pediu economia de dados |
-| `slow` | `2g` ou `slow-2g` |
+| `online` | Connection state |
+| `type` | Type reported by the browser, like `4g` |
+| `saveData` | User requested data savings |
+| `slow` | `2g` or `slow-2g` |
 
 ### clipboard
 
 ```js
-await V.clipboard.copy('texto');   // devolve true quando deu certo
-await V.clipboard.read();          // devolve '' quando o usuário não permite
+await V.clipboard.copy('text');   // returns true when successful
+await V.clipboard.read();          // returns '' when user doesn't allow
 ```
 
-No HTML, `$clipboard` ou a directive `v-copy`.
+In HTML, `$clipboard` or the `v-copy` directive.
 
 ---
 
-## Usando dentro do HTML
+## Using within HTML
 
-Utilitários não são globais nas expressões por padrão. Libere os que você usa:
+Utilities are not global in expressions by default. Enable the ones you use:
 
 ```js
 V.config.globals.formatCurrency = V.formatCurrency;
@@ -372,23 +372,23 @@ V.config.globals.relativeTime = V.relativeTime;
 ```
 
 ```html
-<td>{ formatCurrency(pedido.total) }</td>
-<td>{ relativeTime(pedido.criadoEm) }</td>
+<td>{ formatCurrency(order.total) }</td>
+<td>{ relativeTime(order.createdAt) }</td>
 ```
 
-Ou coloque no escopo raiz, que já é visível de qualquer lugar:
+Or put it in the root scope, which is already visible from anywhere:
 
 ```js
 V.data({
-  moeda: V.formatCurrency,
-  data: V.formatDate,
+  currency: V.formatCurrency,
+  date: V.formatDate,
 });
 ```
 
 ```html
-<td>{ moeda(pedido.total) }</td>
+<td>{ currency(order.total) }</td>
 ```
 
 ---
 
-Anterior: [Plugins](plugins.md) · Próximo: [API](api.md)
+Previous: [Plugins](plugins.md) · Next: [API](api.md)

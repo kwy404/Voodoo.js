@@ -1,295 +1,294 @@
-# Formulários
+# Forms
 
-Um formulário completo, com envio por AJAX, validação, estado de carregamento, tratamento de erro
-do servidor e notificação, cabe em um bloco de HTML:
+A complete form, with AJAX submission, validation, loading state, server error handling
+and notification, fits in a single HTML block:
 
 ```html
-<form v-submit="/api/usuarios" v-validate
-      v-toast-success="Usuário salvo!" v-reset-success v-disable-loading>
-  <input name="nome" v-required>
+<form v-submit="/api/users" v-validate
+      v-toast-success="User saved!" v-reset-success v-disable-loading>
+  <input name="name" v-required>
   <input name="email" type="email" v-required v-email>
-  <button type="submit" :disabled="$form.loading">Salvar</button>
+  <button type="submit" :disabled="$form.loading">Save</button>
 </form>
 ```
 
 ## v-submit
 
-Intercepta o `submit`, serializa os campos e envia por AJAX. O método padrão é `POST`, e ele pode
-vir do atributo `method` do formulário ou de `v-method`.
+Intercepts `submit`, serializes fields, and sends via AJAX. The default method is `POST`, and it can
+come from the form's `method` attribute or from `v-method`.
 
 ```html
-<form v-submit="/api/usuarios/7" v-method="PUT">...</form>
+<form v-submit="/api/users/7" v-method="PUT">...</form>
 ```
 
-A URL aceita interpolação de estado com chaves:
+The URL accepts state interpolation with braces:
 
 ```html
-<div v-data="{ usuario: { id: 7 } }">
-  <form v-submit="/api/usuarios/{ usuario.id }" v-method="PUT">...</form>
+<div v-data="{ user: { id: 7 } }">
+  <form v-submit="/api/users/{ user.id }" v-method="PUT">...</form>
 </div>
 ```
 
-Quando `V.config.baseURL` está definido, ele é aplicado a URLs relativas.
+When `V.config.baseURL` is defined, it is applied to relative URLs.
 
 ## $form
 
-Dentro de um formulário com `v-submit`, `v-upload`, `v-dropzone` ou `v-autosave`, a magia `$form`
-descreve o estado atual:
+Inside a form with `v-submit`, `v-upload`, `v-dropzone` or `v-autosave`, the `$form` magic
+describes the current state:
 
-| Campo | O que é |
+| Field | What it is |
 | --- | --- |
-| `loading` | `true` enquanto a requisição corre |
-| `saving` | `true` enquanto o autosave grava |
-| `success` | `true` depois de uma resposta bem sucedida |
-| `errors` | Objeto com os erros por `name` de campo |
-| `message` | Mensagem devolvida pelo servidor |
-| `data` | Corpo da última resposta |
-| `status` | Status HTTP da última resposta |
-| `dirty` | `true` quando há alterações não enviadas |
-| `progress` | Progresso do upload, de 0 a 100 |
+| `loading` | `true` while the request is running |
+| `saving` | `true` while autosave is writing |
+| `success` | `true` after a successful response |
+| `errors` | Object with errors by field `name` |
+| `message` | Message returned by the server |
+| `data` | Body of the last response |
+| `status` | HTTP status of the last response |
+| `dirty` | `true` when there are unsent changes |
+| `progress` | Upload progress, from 0 to 100 |
 
 ```html
-<form v-submit="/api/contato">
+<form v-submit="/api/contact">
   <button :disabled="$form.loading">
-    { $form.loading ? 'Enviando...' : 'Enviar' }
+    { $form.loading ? 'Sending...' : 'Send' }
   </button>
 
-  <p v-show="$form.success">{ $form.message || 'Recebemos sua mensagem.' }</p>
+  <p v-show="$form.success">{ $form.message || 'We received your message.' }</p>
   <p v-show="$form.errors.email">{ $form.errors.email }</p>
 </form>
 ```
 
-## Opções
+## Options
 
-Todas podem ser declaradas no próprio formulário. Elementos dentro do formulário herdam o valor.
+All can be declared on the form itself. Elements inside the form inherit the value.
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-method` | Verbo HTTP. Padrão `POST` |
-| `v-validate` | Liga a validação automática dos campos |
-| `v-confirm` | Pergunta antes de enviar. Veja o aviso no fim desta seção |
-| `v-toast-success` | Notificação de sucesso. Vazio usa a mensagem do servidor |
-| `v-toast-error` | Notificação de erro |
-| `v-reset-success` | Limpa o formulário depois do sucesso |
-| `v-redirect` | Navega depois do sucesso. Vazio usa `redirect` ou `url` da resposta |
-| `v-disable-loading` | Desabilita os botões de envio durante a requisição |
-| `v-loading-class` | Classes extras aplicadas ao formulário durante a requisição |
-| `v-loading` | Seletor de um elemento que só aparece durante a requisição |
-| `v-on-success` | Expressão executada no sucesso |
-| `v-on-error` | Expressão executada no erro |
-| `v-on-complete` | Expressão executada sempre, no fim |
-| `v-target` e `v-swap` | Troca um pedaço da página com o HTML devolvido |
-| `v-form-data` | Força o envio como `FormData`, mesmo sem arquivo |
+| `v-method` | HTTP verb. Default `POST` |
+| `v-validate` | Turns on automatic field validation |
+| `v-confirm` | Ask before sending. See the warning at the end of this section |
+| `v-toast-success` | Success notification. Empty uses the server message |
+| `v-toast-error` | Error notification |
+| `v-reset-success` | Clear the form after success |
+| `v-redirect` | Navigate after success. Empty uses `redirect` or `url` from the response |
+| `v-disable-loading` | Disable submit buttons during the request |
+| `v-loading-class` | Extra classes applied to the form during the request |
+| `v-loading` | Selector of an element that only appears during the request |
+| `v-on-success` | Expression executed on success |
+| `v-on-error` | Expression executed on error |
+| `v-on-complete` | Expression executed always, at the end |
+| `v-target` and `v-swap` | Replace a part of the page with the returned HTML |
+| `v-form-data` | Force sending as `FormData`, even without files |
 
-Dentro de `v-on-success` e `v-on-error` você tem `$data`, `$response`, `$form` e `$el`:
+Inside `v-on-success` and `v-on-error` you have `$data`, `$response`, `$form` and `$el`:
 
 ```html
-<form v-submit="/api/pedidos"
-      v-on-success="pedidos.unshift($data); $toast.success('Pedido ' + $data.id)"
+<form v-submit="/api/orders"
+      v-on-success="orders.unshift($data); $toast.success('Order ' + $data.id)"
       v-on-error="console.warn($data)">
 </form>
 ```
 
-> **Aviso sobre `v-confirm`.** Hoje a pergunta aparece duas vezes quando `v-confirm` está no mesmo
-> elemento de um `v-submit`: uma pela guarda de confirmação, que intercepta o clique, e outra pela
-> própria rotina de envio. Enquanto isso não é corrigido, deixe o atributo de fora e peça a
-> confirmação no botão:
+> **Warning about `v-confirm`.** Today the prompt appears twice when `v-confirm` is on the same
+> element as `v-submit`: once by the confirmation guard, which intercepts the click, and once by
+> the submission routine itself. Until this is fixed, leave the attribute out and ask for
+> confirmation on the button:
 >
 > ```html
-> <form v-submit="/api/pedidos">
->   <input name="quantidade" type="number" v-required>
+> <form v-submit="/api/orders">
+>   <input name="quantity" type="number" v-required>
 >   <button type="button"
->           v-click="$confirm('Confirmar o pedido?').then(ok => ok && $el.form.requestSubmit())">
->     Enviar
+>           v-click="$confirm('Confirm the order?').then(ok => ok && $el.form.requestSubmit())">
+>     Send
 >   </button>
 > </form>
 > ```
 
-## Serialização
+## Serialization
 
-O corpo é montado a partir dos campos com `name`. Nomes com colchetes viram estruturas:
+The body is built from fields with `name`. Names with brackets become nested structures:
 
 ```html
-<input name="usuario[nome]">
-<input name="usuario[endereco][rua]">
+<input name="user[name]">
+<input name="user[address][street]">
 <input name="tags[]" value="a">
 <input name="tags[]" value="b">
 ```
 
-vira
+becomes
 
 ```json
-{ "usuario": { "nome": "...", "endereco": { "rua": "..." } }, "tags": ["a", "b"] }
+{ "user": { "name": "...", "address": { "street": "..." } }, "tags": ["a", "b"] }
 ```
 
-Regras:
+Rules:
 
-- campos desabilitados ficam de fora;
-- textos passam por `trim`;
-- `type="number"` e `type="range"` viram número;
-- um checkbox sozinho vira booleano; vários com o mesmo `name` viram lista dos marcados;
-- radio envia apenas o escolhido;
-- select múltiplo vira lista;
-- quando existe arquivo selecionado, o corpo inteiro vira `FormData`.
+- disabled fields are omitted;
+- text goes through `trim`;
+- `type="number"` and `type="range"` become numbers;
+- a single checkbox becomes boolean; multiple with the same `name` become a list of checked items;
+- radio sends only the selected one;
+- multiple select becomes a list;
+- when a file is selected, the entire body becomes `FormData`.
 
-Por JavaScript:
+Via JavaScript:
 
 ```js
-const dados = V.serializeForm(document.forms[0]);
-const comArquivos = V.serializeForm(form, { formData: true });
+const data = V.serializeForm(document.forms[0]);
+const withFiles = V.serializeForm(form, { formData: true });
 V.serializeForm(form, { includeDisabled: true, trim: false, numbers: false });
 ```
 
-E na coleção de DOM:
+And on the DOM collection:
 
 ```js
-V('#formulario').serialize();        // 'nome=ana&email=a%40b.com'
-V('#formulario').serializeObject();  // { nome: 'ana', email: 'a@b.com' }
+V('#form').serialize();        // 'name=ana&email=a%40b.com'
+V('#form').serializeObject();  // { name: 'ana', email: 'a@b.com' }
 ```
 
-## Erros do servidor
+## Server errors
 
-Uma resposta 422, ou qualquer resposta com um mapa de erros, é distribuída de volta para os campos
-certos. Formatos entendidos:
+A 422 response, or any response with an error map, is distributed back to the correct fields. Supported formats:
 
 ```json
-{ "errors": { "email": "Já cadastrado" } }
-{ "email": ["Já cadastrado"] }
-{ "message": "Dados inválidos", "errors": { "cpf": "Inválido" } }
+{ "errors": { "email": "Already registered" } }
+{ "email": ["Already registered"] }
+{ "message": "Invalid data", "errors": { "cpf": "Invalid" } }
 ```
 
-Mensagens sem campo correspondente aparecem em um resumo no topo do formulário. O foco vai para o
-primeiro campo com erro.
+Messages without a corresponding field appear in a summary at the top of the form. Focus goes to the
+first field with an error.
 
-## Troca de HTML na resposta
+## HTML replacement in response
 
-Se o servidor devolve HTML em vez de JSON:
+If the server returns HTML instead of JSON:
 
 ```html
-<form v-submit="/api/comentarios" v-target="#comentarios" v-swap="append" v-reset-success>
-  <textarea name="texto"></textarea>
-  <button>Comentar</button>
+<form v-submit="/api/comments" v-target="#comments" v-swap="append" v-reset-success>
+  <textarea name="text"></textarea>
+  <button>Comment</button>
 </form>
 
-<ul id="comentarios"></ul>
+<ul id="comments"></ul>
 ```
 
-Modos de `v-swap`: `innerHTML` (padrão), `inner`, `outer`, `outerHTML`, `replace`, `append`,
+Modes for `v-swap`: `innerHTML` (default), `inner`, `outer`, `outerHTML`, `replace`, `append`,
 `beforeend`, `prepend`, `afterbegin`, `beforebegin`, `afterend`, `text`, `none`.
 
-O HTML recebido é percorrido pela Voodoo, então ele pode trazer novas directives.
+The received HTML is walked through Voodoo, so it can bring new directives.
 
-## Upload de arquivo
+## File upload
 
 ```html
-<form v-submit="/api/perfil">
-  <input type="file" name="foto" v-upload="/api/upload">
+<form v-submit="/api/profile">
+  <input type="file" name="photo" v-upload="/api/upload">
 </form>
 ```
 
-`v-upload` envia assim que o arquivo é escolhido, com progresso real. Uma barra é criada logo
-depois do input, a menos que você aponte a sua com `v-progress`:
+`v-upload` sends as soon as the file is chosen, with real progress. A progress bar is created right
+after the input, unless you point to your own with `v-progress`:
 
 ```html
-<input type="file" name="anexo" v-upload="/api/upload" v-progress="#barra">
-<progress id="barra" max="100" value="0"></progress>
+<input type="file" name="attachment" v-upload="/api/upload" v-progress="#bar">
+<progress id="bar" max="100" value="0"></progress>
 ```
 
-O progresso também está em `$form.progress`:
+Progress is also in `$form.progress`:
 
 ```html
-<div class="barra" :style="{ width: $form.progress + '%' }"></div>
+<div class="bar" :style="{ width: $form.progress + '%' }"></div>
 ```
 
-Campos comuns do formulário em volta acompanham o arquivo no envio.
+Regular form fields around the upload accompany the file in sending.
 
 ## Dropzone
 
 ```html
-<div v-dropzone="/api/upload" v-field="anexos" accept="image/*" multiple>
-  Arraste imagens aqui ou clique para escolher
+<div v-dropzone="/api/upload" v-field="attachments" accept="image/*" multiple>
+  Drag images here or click to select
 </div>
 ```
 
-A área ganha papel de botão, foco por teclado (Enter e espaço abrem o seletor), destaque ao
-arrastar por cima e as classes `v-dropzone-over`, `v-dropzone-busy` e `v-dropzone-error`.
+The area gains button role, keyboard focus (Enter and space open the selector), highlight when dragging over,
+and the classes `v-dropzone-over`, `v-dropzone-busy`, and `v-dropzone-error`.
 
-| Atributo | O que faz |
+| Attribute | What it does |
 | --- | --- |
-| `v-field` | Nome do campo enviado. Padrão `file` |
-| `accept` | Tipos aceitos, repassados ao seletor nativo |
-| `multiple` | Permite vários arquivos |
-| `v-progress` | Seletor da barra de progresso |
+| `v-field` | Name of the field sent. Default `file` |
+| `accept` | Accepted types, passed to the native selector |
+| `multiple` | Allow multiple files |
+| `v-progress` | Progress bar selector |
 
 ## Autosave
 
-Salva sozinho enquanto o usuário digita:
+Saves automatically as the user types:
 
 ```html
-<form v-autosave="/api/rascunhos/7" v-method="PUT">
-  <input name="titulo">
-  <textarea name="corpo"></textarea>
+<form v-autosave="/api/drafts/7" v-method="PUT">
+  <input name="title">
+  <textarea name="body"></textarea>
 </form>
 ```
 
-Um indicador de estado é criado dentro do formulário, mostrando "Salvando...", "Alterações
-salvas" ou "Não foi possível salvar". Aponte o seu com `v-autosave-status="#estado"`.
+A status indicator is created inside the form, showing "Saving...", "Changes saved"
+or "Failed to save". Point to yours with `v-autosave-status="#status"`.
 
-O intervalo padrão é 1000 ms. Para mudar:
+The default interval is 1000 ms. To change:
 
 ```html
-<form v-autosave="/api/rascunhos/7" v-autosave-delay="3s">...</form>
-<form v-autosave.2s="/api/rascunhos/7">...</form>
+<form v-autosave="/api/drafts/7" v-autosave-delay="3s">...</form>
+<form v-autosave.2s="/api/drafts/7">...</form>
 ```
 
-## Aviso ao sair da página
+## Warning when leaving the page
 
 ```html
-<form v-submit="/api/artigos" v-guard="Você tem alterações não salvas.">
+<form v-submit="/api/articles" v-guard="You have unsaved changes.">
   ...
 </form>
 ```
 
-`v-guard` marca o formulário como sujo a cada alteração e pede confirmação antes de fechar a aba.
-O estado volta a limpo depois de um envio bem sucedido ou de um `reset`.
+`v-guard` marks the form as dirty on each change and asks for confirmation before closing the tab.
+The state returns to clean after a successful submission or a `reset`.
 
-## Eventos
+## Events
 
 ```html
 <form v-submit="/api/x"
-      @voodoo:submit="console.log('enviando', $detail.url)"
-      @voodoo:invalid="console.log('erros', $detail.errors)"
+      @voodoo:submit="console.log('sending', $detail.url)"
+      @voodoo:invalid="console.log('errors', $detail.errors)"
       @voodoo:success="console.log($detail.data)"
       @voodoo:error="console.log($detail.status)"
-      @voodoo:complete="console.log('fim')">
+      @voodoo:complete="console.log('done')">
 </form>
 ```
 
-| Evento | Quando |
+| Event | When |
 | --- | --- |
-| `voodoo:submit` | Depois de validar, antes de enviar |
-| `voodoo:invalid` | Validação reprovou |
-| `voodoo:success` | Resposta bem sucedida |
-| `voodoo:error` | Falha |
-| `voodoo:complete` | Sempre, no fim |
-| `voodoo:upload` | Início de um envio de arquivos |
-| `voodoo:progress` | A cada avanço do upload |
-| `voodoo:autosave` | Gravação automática concluída |
-| `voodoo:field-validated` | Um campo foi validado |
+| `voodoo:submit` | After validation, before sending |
+| `voodoo:invalid` | Validation failed |
+| `voodoo:success` | Successful response |
+| `voodoo:error` | Failure |
+| `voodoo:complete` | Always, at the end |
+| `voodoo:upload` | Start of a file upload |
+| `voodoo:progress` | On each upload progress |
+| `voodoo:autosave` | Autosave completed |
+| `voodoo:field-validated` | A field was validated |
 
-## Formulário sem AJAX
+## Form without AJAX
 
-`v-model` funciona em qualquer formulário, com ou sem `v-submit`:
+`v-model` works in any form, with or without `v-submit`:
 
 ```html
-<div v-data="{ form: { nome: '', email: '' } }">
-  <input v-model.trim="form.nome">
+<div v-data="{ form: { name: '', email: '' } }">
+  <input v-model.trim="form.name">
   <input v-model.trim="form.email">
   <pre>{ form }</pre>
-  <button v-click="$http.post('/api/x', form)">Enviar à mão</button>
+  <button v-click="$http.post('/api/x', form)">Send manually</button>
 </div>
 ```
 
 ---
 
-Anterior: [HTTP](http.md) · Próximo: [Validação](validacao.md)
+Previous: [HTTP](http.md) · Next: [Validation](validacao.md)

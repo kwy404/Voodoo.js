@@ -1,20 +1,19 @@
 # Interface
 
-Componentes de interface declarativos. Tudo aqui funciona escrevendo apenas HTML: nenhuma linha de
-JavaScript é necessária para ter menu suspenso, abas, gaveta lateral, tooltip, paleta de comandos
-e o resto.
+Declarative interface components. Everything here works by writing HTML only: no JavaScript
+is needed to have dropdowns, tabs, sidebars, tooltips, command palettes, and the rest.
 
-Acessibilidade não é opcional neste módulo: cada componente cuida de papéis ARIA, navegação por
-teclado, foco visível, fechamento por Escape e `prefers-reduced-motion`.
+Accessibility is not optional in this module: each component handles ARIA roles, keyboard
+navigation, visible focus, Escape close, and `prefers-reduced-motion`.
 
-O CSS é injetado sob demanda, apenas quando o recurso é usado. Todas as cores vêm das variáveis
-`--v-*`, então tudo funciona nos temas claro e escuro. Veja [Tema e paleta](tema-e-paleta.md).
+CSS is injected on demand, only when the feature is used. All colors come from
+`--v-*` variables, so everything works in light and dark themes. See [Theme and palette](tema-e-paleta.md).
 
 ---
 
 ## v-toggle
 
-Mostra e esconde um alvo.
+Shows and hides a target.
 
 ```html
 <button v-toggle="#detalhes">Ver detalhes</button>
@@ -23,19 +22,19 @@ Mostra e esconde um alvo.
 <button v-toggle.instant="#painel">Sem animação</button>
 ```
 
-Sem seletor, o alvo é o irmão seguinte:
+Without a selector, the target is the next sibling:
 
 ```html
 <button v-toggle>Alternar</button>
 <div style="display:none">Conteúdo</div>
 ```
 
-O botão recebe `aria-controls` e `aria-expanded`, atualizados a cada clique, e dispara
-`voodoo:toggle` com `{ target, open }`.
+The button receives `aria-controls` and `aria-expanded`, updated on each click, and fires
+`voodoo:toggle` with `{ target, open }`.
 
-## v-collapse e v-collapse-toggle
+## v-collapse and v-collapse-toggle
 
-Painel que abre e fecha com animação de altura.
+Panel that opens and closes with height animation.
 
 ```html
 <button v-collapse-toggle="#faq-1">O que é a Voodoo?</button>
@@ -47,12 +46,12 @@ Painel que abre e fecha com animação de altura.
 <div v-collapse v-collapse-duration="400">Animação mais lenta</div>
 ```
 
-Vários gatilhos podem controlar o mesmo painel. Cada um recebe `aria-expanded` e `aria-controls`.
-O painel dispara `voodoo:collapse` com `{ open }`.
+Multiple triggers can control the same panel. Each receives `aria-expanded` and `aria-controls`.
+The panel fires `voodoo:collapse` with `{ open }`.
 
-## v-dropdown e v-dropdown-menu
+## v-dropdown and v-dropdown-menu
 
-Menu suspenso com posicionamento inteligente e navegação por setas.
+Dropdown menu with smart positioning and arrow key navigation.
 
 ```html
 <button v-dropdown="#acoes">Ações</button>
@@ -64,16 +63,16 @@ Menu suspenso com posicionamento inteligente e navegação por setas.
 </div>
 ```
 
-O que acontece sozinho:
+What happens automatically:
 
-- o menu vira `role="menu"` e cada filho clicável vira `role="menuitem"`;
-- setas para cima e para baixo navegam, `Home` e `End` vão para as pontas;
-- `Escape` fecha e devolve o foco ao gatilho;
-- clicar fora fecha;
-- o menu é movido para o `body` enquanto aberto, então nenhum `overflow: hidden` o corta;
-- ele vira para o lado oposto quando não cabe, e nunca sai da tela.
+- the menu becomes `role="menu"` and each clickable child becomes `role="menuitem"`;
+- up and down arrows navigate, `Home` and `End` go to the ends;
+- `Escape` closes and returns focus to the trigger;
+- clicking outside closes;
+- the menu is moved to `body` while open, so no `overflow: hidden` cuts it off;
+- it flips to the opposite side when it doesn't fit, and never goes off-screen.
 
-`v-dropdown-position` escolhe o lado preferido: `top`, `bottom`, `left`, `right`.
+`v-dropdown-position` chooses the preferred side: `top`, `bottom`, `left`, `right`.
 
 ```html
 <button v-dropdown="#menu" v-dropdown-position="top">Abrir para cima</button>
@@ -81,8 +80,8 @@ O que acontece sozinho:
 
 ## v-popover
 
-Igual ao dropdown, porém com `role="dialog"` e foco preso dentro do painel. Use quando o conteúdo
-tiver campos ou mais de um elemento interativo.
+Like dropdown, but with `role="dialog"` and focus trapped inside the panel. Use when the content
+has form fields or more than one interactive element.
 
 ```html
 <button v-popover="#filtros">Filtros</button>
@@ -94,7 +93,7 @@ tiver campos ou mais de um elemento interativo.
 </div>
 ```
 
-`v-popover-position` funciona como no dropdown.
+`v-popover-position` works like dropdown.
 
 ## v-tooltip
 
@@ -106,10 +105,10 @@ tiver campos ou mais de um elemento interativo.
 <span v-tooltip="Calculado sobre o valor bruto" v-tooltip-delay="600">?</span>
 ```
 
-Aparece no mouse e no foco de teclado, some no Escape. Usa `role="tooltip"` e `aria-describedby`.
-O atraso padrão é 200 ms.
+Appears on mouse hover and keyboard focus, disappears on Escape. Uses `role="tooltip"` and `aria-describedby`.
+Default delay is 200 ms.
 
-## v-tabs, v-tab e v-tab-panel
+## v-tabs, v-tab and v-tab-panel
 
 ```html
 <div v-tabs>
@@ -125,24 +124,24 @@ O atraso padrão é 200 ms.
 </div>
 ```
 
-Papéis `tab`, `tablist` e `tabpanel` são aplicados, a navegação por setas funciona nos dois eixos,
-`Home` e `End` vão para as pontas e a aba ativa recebe a classe `v-active`.
+`tab`, `tablist`, and `tabpanel` roles are applied, arrow key navigation works on both axes,
+`Home` and `End` go to the ends, and the active tab receives the `v-active` class.
 
-Para guardar a aba na URL:
+To save the tab in the URL:
 
 ```html
 <div v-tabs v-tabs-url="secao">...</div>
 ```
 
-A aba escolhida vira `?secao=perfil`, sem recarregar a página.
+The chosen tab becomes `?secao=perfil`, without reloading the page.
 
-Abas dentro de abas funcionam: cada `v-tab` pertence ao `v-tabs` mais próximo.
+Tabs within tabs work: each `v-tab` belongs to the closest `v-tabs`.
 
-O evento `voodoo:tab` é disparado com `{ id }` a cada troca.
+The `voodoo:tab` event is fired with `{ id }` on each change.
 
-## v-accordion e v-accordion-item
+## v-accordion and v-accordion-item
 
-Cada item precisa ter dois filhos: o primeiro é o cabeçalho, o último é o painel.
+Each item needs two children: the first is the header, the last is the panel.
 
 ```html
 <div v-accordion v-accordion-single>
@@ -158,12 +157,12 @@ Cada item precisa ter dois filhos: o primeiro é o cabeçalho, o último é o pa
 </div>
 ```
 
-`v-accordion-single` mantém apenas um item aberto por vez. `v-accordion-item="open"` começa
-aberto. As setas navegam entre os cabeçalhos e a seta indicadora gira sozinha, via CSS.
+`v-accordion-single` keeps only one item open at a time. `v-accordion-item="open"` starts
+open. Arrows navigate between headers and the indicator arrow rotates automatically via CSS.
 
-## v-drawer, v-drawer-content e v-drawer-close
+## v-drawer, v-drawer-content and v-drawer-close
 
-Gaveta lateral com fundo escurecido, trava de rolagem e foco preso.
+Sidebar with darkened backdrop, scroll lock, and trapped focus.
 
 ```html
 <button v-drawer="#menu-lateral">Abrir menu</button>
@@ -174,11 +173,11 @@ Gaveta lateral com fundo escurecido, trava de rolagem e foco preso.
 </aside>
 ```
 
-`v-drawer-side` aceita `left` (padrão `right`), `right`, `top` e `bottom`. `v-offcanvas` é um
-alias de `v-drawer`.
+`v-drawer-side` accepts `left` (default `right`), `right`, `top`, and `bottom`. `v-offcanvas` is an
+alias for `v-drawer`.
 
-Escape fecha, Tab circula dentro do painel, o foco volta para o gatilho ao fechar e o evento
-`voodoo:drawer` é disparado com `{ open }`.
+Escape closes, Tab cycles within the panel, focus returns to the trigger on close, and the
+`voodoo:drawer` event fires with `{ open }`.
 
 ## Modal
 
@@ -195,43 +194,43 @@ Escape fecha, Tab circula dentro do painel, o foco volta para o gatilho ao fecha
 </div>
 ```
 
-`v-modal-content` esconde o bloco até que ele seja adotado por um modal. Modificadores de
-`v-modal`: `.close` fecha em vez de abrir, `.toggle` alterna.
+`v-modal-content` hides the block until it's adopted by a modal. Modifiers for
+`v-modal`: `.close` closes instead of opening, `.toggle` toggles.
 
-Por JavaScript:
+Via JavaScript:
 
 ```js
 V.modal.open('#login', { size: 'sm' });
 V.modal.close('#login');
 V.modal.toggle('#login');
 V.modal.closeAll();
-V.modal.isOpen();          // algum aberto
+V.modal.isOpen();          // any open
 V.modal.isOpen('#login');
-V.modal.opened;            // lista dos abertos
-V.modal.count;             // quantos estão abertos
+V.modal.opened;            // list of open ones
+V.modal.count;             // how many are open
 ```
 
-Opções comuns a qualquer diálogo:
+Options common to any dialog:
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
 | `size` | `md` | `sm`, `md`, `lg`, `xl`, `full` |
-| `position` | `center` | `center` ou `top` |
-| `closeOnBackdrop` | `true` | Fecha ao clicar no fundo |
-| `closeOnEscape` | `true` | Fecha no Escape |
-| `lockScroll` | `true` | Trava a rolagem da página |
-| `restoreFocus` | `true` | Devolve o foco ao fechar |
-| `closable` | `true` | Mostra o botão de fechar |
-| `plain` | `false` | Remove fundo, borda e sombra do painel |
-| `className` | | Classes extras no painel |
-| `initialFocus` | | Seletor ou elemento que recebe o foco |
-| `ariaLabel` | | Rótulo quando não há título visível |
+| `position` | `center` | `center` or `top` |
+| `closeOnBackdrop` | `true` | Close when clicking the backdrop |
+| `closeOnEscape` | `true` | Close on Escape |
+| `lockScroll` | `true` | Lock page scrolling |
+| `restoreFocus` | `true` | Restore focus on close |
+| `closable` | `true` | Show close button |
+| `plain` | `false` | Remove background, border, and shadow |
+| `className` | | Extra classes on the panel |
+| `initialFocus` | | Selector or element that receives focus |
+| `ariaLabel` | | Label when there's no visible title |
 | `onOpen`, `onClose` | | Callbacks |
 
-`V.modal.open` devolve um controle com `close(resultado)` e `closed`, uma promessa resolvida
-quando o diálogo termina de fechar.
+`V.modal.open` returns a control with `close(result)` and `closed`, a promise resolved
+when the dialog finishes closing.
 
-## alert, confirm e prompt
+## alert, confirm and prompt
 
 ```js
 await V.alert('Pedido enviado com sucesso.', { icon: 'success' });
@@ -245,10 +244,10 @@ const nome = await V.prompt('Como devemos te chamar?', {
 });
 ```
 
-`prompt` aceita `type` com `text`, `password`, `email`, `number` e `textarea`. Uma validação que
-devolve texto mantém o diálogo aberto com a mensagem.
+`prompt` accepts `type` with `text`, `password`, `email`, `number`, and `textarea`. Validation that
+returns text keeps the dialog open with the message.
 
-Diálogo genérico, com botões próprios:
+Generic dialog with custom buttons:
 
 ```js
 const escolha = await V.dialog({
@@ -263,22 +262,22 @@ const escolha = await V.dialog({
 });
 ```
 
-Ícones: `info`, `success`, `warning`, `danger`, `question`, `none`. Tons: `default`, `success`,
+Icons: `info`, `success`, `warning`, `danger`, `question`, `none`. Tones: `default`, `success`,
 `warning`, `danger`.
 
-Para trocar os textos padrão dos botões:
+To change default button text:
 
 ```js
 V.modal.labels({ confirm: 'Sim, pode', cancel: 'Voltar', ok: 'Entendi' });
 ```
 
-Tudo isso também existe como magia: `$modal`, `$dialog`, `$alert`, `$confirm`, `$prompt`.
+All of this also exists as magic: `$modal`, `$dialog`, `$alert`, `$confirm`, `$prompt`.
 
 ## v-confirm
 
-Intercepta o clique, faz a pergunta e só libera a ação depois do sim. Funciona junto de
-`v-click`, `@click`, links e botões de envio no mesmo elemento, porque a guarda roda na fase de
-captura, antes de qualquer outro ouvinte.
+Intercepts the click, asks the question, and only allows the action after confirmation. Works with
+`v-click`, `@click`, links, and submit buttons on the same element, because the guard runs in the
+capture phase, before any other listener.
 
 ```html
 <button v-confirm="Excluir mesmo?" v-click="excluir()">Excluir</button>
@@ -286,37 +285,37 @@ captura, antes de qualquer outro ouvinte.
 <a v-confirm="Sair da sua conta?" href="/logout">Sair</a>
 ```
 
-> Não combine `v-confirm` com `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` ou `v-submit` no
-> mesmo elemento: hoje a pergunta aparece duas vezes, porque essas directives também leem o mesmo
-> atributo. Prefira `v-click` com `$http`, como no exemplo acima, ou peça a confirmação com
-> `$confirm(...)` dentro da própria expressão.
+> Don't combine `v-confirm` with `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete`, or `v-submit` on
+> the same element: the question appears twice because those directives also read the same
+> attribute. Prefer `v-click` with `$http`, like in the example above, or ask for confirmation with
+> `$confirm(...)` inside the expression itself.
 
-## Notificações
+## Notifications
 
 ```js
-V.toast('Mensagem neutra');
-V.toast.success('Usuário salvo!');
-V.toast.error('Não foi possível salvar');
-V.toast.warning('Sua sessão expira em 5 minutos');
-V.toast.info('Nova versão disponível');
-const carregando = V.toast.loading('Enviando...');
-carregando.update({ title: 'Enviado!', type: 'success', duration: 3000 });
+V.toast('Neutral message');
+V.toast.success('User saved!');
+V.toast.error('Could not save');
+V.toast.warning('Your session expires in 5 minutes');
+V.toast.info('New version available');
+const carregando = V.toast.loading('Sending...');
+carregando.update({ title: 'Sent!', type: 'success', duration: 3000 });
 carregando.close();
 
 await V.toast.promise(salvar(), {
-  loading: 'Salvando...',
-  success: (dados) => `Salvo com id ${dados.id}`,
-  error: 'Não foi possível salvar',
+  loading: 'Saving...',
+  success: (dados) => `Saved with id ${dados.id}`,
+  error: 'Could not save',
 });
 
 V.toast.clear();
 V.toast.configure({ duration: 6000, position: 'bottom-right', max: 3 });
 ```
 
-Opções: `title`, `description`, `type`, `duration` (`0` mantém aberto), `position`,
+Options: `title`, `description`, `type`, `duration` (`0` keeps it open), `position`,
 `action: { label, onClick }`, `closable`, `html`, `onClose`.
 
-Posições: `top-right` (padrão), `top-left`, `top-center`, `bottom-right`, `bottom-left`,
+Positions: `top-right` (default), `top-left`, `top-center`, `bottom-right`, `bottom-left`,
 `bottom-center`.
 
 ```js
@@ -327,84 +326,83 @@ V.toast.success({
 });
 ```
 
-No HTML, use `$toast`:
+In HTML, use `$toast`:
 
 ```html
-<button v-click="$toast.success('Copiado!')">Copiar</button>
+<button v-click="$toast.success('Copied!')">Copy</button>
 ```
 
-## Paleta de comandos
+## Command palette
 
 ```html
-<button v-command="mod+k">Buscar comandos</button>
+<button v-command="mod+k">Search commands</button>
 
-<button v-command-item="Ir para o painel" v-command-hint="Ctrl+D" v-click="ir('/painel')">...</button>
-<button v-command-item="Criar novo pedido" v-click="novoPedido()">...</button>
-<button v-command-item="Alternar tema" v-theme-toggle>...</button>
+<button v-command-item="Go to dashboard" v-command-hint="Ctrl+D" v-click="ir('/painel')">...</button>
+<button v-command-item="Create new order" v-click="novoPedido()">...</button>
+<button v-command-item="Toggle theme" v-theme-toggle>...</button>
 ```
 
-`v-command` liga o atalho global e o clique. Os itens são indexados na hora em que a paleta abre,
-então elementos criados por `v-for` também entram. A busca ignora acentos e caixa. Setas navegam,
-Enter executa (clicando no elemento original), Escape fecha.
+`v-command` activates the global shortcut and click. Items are indexed when the palette opens,
+so elements created by `v-for` are included too. Search ignores accents and case. Arrows navigate,
+Enter executes (clicking the original element), Escape closes.
 
-Sem valor, o atalho padrão é `mod+k`. `v-command-key` também define a combinação.
+Without a value, the default shortcut is `mod+k`. `v-command-key` also sets the combination.
 
-## Foco
+## Focus
 
 ```html
-<input v-focus>                          <!-- foca ao montar -->
-<input v-focus.select>                   <!-- foca e seleciona o texto -->
-<input v-focus.quiet>                    <!-- foca sem rolar a página -->
-<input v-focus="painelAberto">           <!-- foca quando a expressão fica verdadeira -->
+<input v-focus>                          <!-- focus on mount -->
+<input v-focus.select>                   <!-- focus and select text -->
+<input v-focus.quiet>                    <!-- focus without scrolling -->
+<input v-focus="painelAberto">           <!-- focus when expression is true -->
 
-<div v-focus-trap="modalAberto">...</div>  <!-- prende o Tab dentro -->
+<div v-focus-trap="modalAberto">...</div>  <!-- trap Tab inside -->
 ```
 
-## Reagindo a clique fora e a Escape
+## Reacting to clicks outside and Escape
 
 ```html
 <div v-click-outside="aberto = false">...</div>
 <div v-escape="fechar()">...</div>
 ```
 
-Diferente de `@outside`, essas duas escutam `pointerdown` e `keydown` em `document`, e funcionam
-mesmo quando o elemento não tem estado próprio.
+Unlike `@outside`, these two listen to `pointerdown` and `keydown` on `document`, and work
+even when the element doesn't have its own state.
 
-## Rolagem
+## Scrolling
 
 ```html
-<a href="#precos" v-scroll-to v-scroll-offset="80">Preços</a>
-<button v-scroll-to="top">Voltar ao topo</button>
-<button v-scroll-to="#rodape">Ir ao rodapé</button>
+<a href="#precos" v-scroll-to v-scroll-offset="80">Pricing</a>
+<button v-scroll-to="top">Back to top</button>
+<button v-scroll-to="#rodape">Go to footer</button>
 
 <nav v-scrollspy v-scrollspy-class="ativo" v-scroll-offset="80">
-  <a href="#sobre">Sobre</a>
-  <a href="#precos">Preços</a>
+  <a href="#sobre">About</a>
+  <a href="#precos">Pricing</a>
 </nav>
 
 <header v-sticky="0">...</header>
 ```
 
-`v-scroll-to` respeita `prefers-reduced-motion` e move o foco para a seção, o que mantém a
-navegação por teclado coerente. `v-scrollspy` marca o link da seção visível com a classe escolhida
-e com `aria-current`. `v-sticky` aplica `position: sticky` e adiciona `v-stuck` quando o elemento
-gruda.
+`v-scroll-to` respects `prefers-reduced-motion` and moves focus to the section, keeping
+keyboard navigation coherent. `v-scrollspy` marks the visible section's link with the chosen class
+and `aria-current`. `v-sticky` applies `position: sticky` and adds `v-stuck` when the element sticks.
 
-## Entrada na tela e rolagem infinita
+## Entering screen and infinite scroll
 
 ```html
-<div v-visible="animar()">Anima quando entra</div>
-<div v-visible.repeat="contar()">Toda vez que entra</div>
+<div v-visible="animar()">Animate on enter</div>
+<div v-visible.repeat="contar()">Every time it enters</div>
 
 <ul v-infinite-scroll="carregarMais()" v-infinite-distance="400px">
   <li v-for="item in itens">{ item.nome }</li>
 </ul>
 ```
 
-`v-infinite-scroll` insere uma sentinela invisível no fim da lista, marca `aria-busy` enquanto
-carrega e espera a promessa devolvida pela expressão antes de disparar de novo.
+`v-infinite-scroll` inserts an invisible sentinel at the end of the list, marks `aria-busy` while
+loading, and waits for the promise returned by the expression before firing again.
 
-## Imagens sob demanda
+## Lazy images
 
 ```html
 <img v-lazy-src="/fotos/grande.jpg" alt="Praia">
@@ -412,87 +410,86 @@ carrega e espera a promessa devolvida pela expressão antes de disparar de novo.
 <img v-lazy-src="/fotos/x.jpg" v-lazy-error="/fotos/placeholder.png" alt="">
 ```
 
-A imagem só é buscada quando o elemento chega a 200 pixels da área visível. As classes `v-lazy`,
-`v-lazy-loaded` e `v-lazy-failed` controlam a transição.
+The image is only fetched when the element is within 200 pixels of the viewport. The `v-lazy`,
+`v-lazy-loaded`, and `v-lazy-failed` classes control the transition.
 
-## Esqueleto de carregamento
+## Loading skeleton
 
 ```html
 <div v-skeleton="carregando">
   <p>{ usuario.nome }</p>
 </div>
 
-<div v-skeleton>Preenchido depois por uma requisição</div>
+<div v-skeleton>Filled later by a request</div>
 ```
 
-Com expressão, o esqueleto acompanha o valor. Sem expressão, ele aparece enquanto o elemento
-estiver vazio e some sozinho quando algum conteúdo chega.
+With an expression, the skeleton follows the value. Without an expression, it appears while the element
+is empty and disappears when content arrives.
 
-## Copiar, imprimir, compartilhar, baixar e tela cheia
+## Copy, print, share, download and fullscreen
 
 ```html
-<button v-copy="PROMO10">Copiar cupom</button>
-<button v-copy-from="#chave-da-api">Copiar chave</button>
-<button v-copy="PROMO10" v-copy-label="Copiado com sucesso!">Copiar</button>
+<button v-copy="PROMO10">Copy coupon</button>
+<button v-copy-from="#chave-da-api">Copy key</button>
+<button v-copy="PROMO10" v-copy-label="Copied successfully!">Copy</button>
 
-<button v-print>Imprimir a página</button>
-<button v-print="#recibo">Imprimir só o recibo</button>
+<button v-print>Print page</button>
+<button v-print="#recibo">Print only receipt</button>
 
-<button v-share v-share-title="Veja isto" v-share-text="Achei interessante">Compartilhar</button>
+<button v-share v-share-title="Check this out" v-share-text="I found this interesting">Share</button>
 
-<button v-download="/arquivos/relatorio.pdf" v-download-name="relatorio-2026.pdf">Baixar</button>
+<button v-download="/arquivos/relatorio.pdf" v-download-name="relatorio-2026.pdf">Download</button>
 
-<button v-fullscreen="#player">Tela cheia</button>
+<button v-fullscreen="#player">Fullscreen</button>
 ```
 
-`v-copy` usa a API moderna com plano B para navegadores antigos, mostra uma confirmação visual e
-anuncia em uma região `aria-live`. `v-share` usa a API nativa quando existe, e cai para copiar o
-link quando não existe. `v-print` imprime só o trecho pedido, herdando o CSS da página.
+`v-copy` uses the modern API with a fallback for older browsers, shows visual confirmation, and
+announces via an `aria-live` region. `v-share` uses the native API when available, and falls back to copying the
+link when not. `v-print` prints only the requested section, inheriting the page's CSS.
 
-## Redimensionar
+## Resize
 
 ```html
-<div v-resizable>Arraste a borda</div>
-<div v-resizable="horizontal">Só na largura</div>
-<div v-resizable="vertical">Só na altura</div>
+<div v-resizable>Drag edge</div>
+<div v-resizable="horizontal">Width only</div>
+<div v-resizable="vertical">Height only</div>
 ```
 
-As alças aceitam teclado: com foco nelas, as setas mudam o tamanho em passos de 16 pixels, ou 4
-com Shift. O evento `voodoo:resized` traz `{ width, height }`.
+Handles accept keyboard: with focus on them, arrow keys change size in 16-pixel steps, or 4-pixel
+with Shift. The `voodoo:resized` event carries `{ width, height }`.
 
-## Tema
+## Theme
 
 ```html
-<button v-theme-toggle>Alternar tema</button>
+<button v-theme-toggle>Toggle theme</button>
 ```
 
-O botão recebe `aria-pressed`, `aria-label` e `data-v-theme` com o tema atual. Veja
-[Tema e paleta](tema-e-paleta.md).
+The button receives `aria-pressed`, `aria-label`, and `data-v-theme` with the current theme. See
+[Theme and palette](tema-e-paleta.md).
 
-## Inatividade e conexão
+## Inactivity and connection
 
 ```html
-<div v-idle="mostrarAvisoDeSessao()" v-idle-after="5m"></div>
+<div v-idle="showSessionWarning()" v-idle-after="5m"></div>
 
-<div v-online="$toast.success('Conexão restaurada')"></div>
-<div v-offline="$toast.warning('Você está offline')"></div>
-<div v-offline.no-immediate="avisar()"></div>
-<div v-online.immediate="sincronizar()"></div>
+<div v-online="$toast.success('Connection restored')"></div>
+<div v-offline="$toast.warning('You are offline')"></div>
+<div v-offline.no-immediate="warn()"></div>
+<div v-online.immediate="sync()"></div>
 ```
 
-`v-idle` dispara depois de 60 segundos sem atividade, por padrão. `v-offline` dispara também na
-montagem quando o navegador já está offline, e `.no-immediate` desliga esse primeiro disparo.
-`v-online` só dispara na montagem com `.immediate`.
+`v-idle` fires after 60 seconds without activity by default. `v-offline` also fires on mount when the browser is already offline, and `.no-immediate` disables that first fire.
+`v-online` only fires on mount with `.immediate`.
 
-## Transições
+## Transitions
 
-`v-transition` liga classes de entrada e saída em `v-if` e `v-show`:
+`v-transition` adds enter and exit classes to `v-if` and `v-show`:
 
 ```html
 <div v-show="aberto" v-transition="fade" v-duration="300">...</div>
 ```
 
-Por JavaScript, existem atalhos prontos:
+Via JavaScript, there are ready-made shortcuts:
 
 ```js
 V.fadeIn(el);
@@ -501,9 +498,9 @@ V.slideDown(el, 300);
 V.slideUp(el, 300);
 V.enter(el, { name: 'v-fade' });
 V.leave(el, { name: 'v-fade' });
-V.viewTransition(() => trocarConteudo());
+V.viewTransition(() => changeContent());
 ```
 
 ---
 
-Anterior: [Máscaras](mascaras.md) · Próximo: [Arrastar e soltar](arrastar-e-soltar.md)
+Previous: [Masks](mascaras.md) · Next: [Drag and drop](arrastar-e-soltar.md)

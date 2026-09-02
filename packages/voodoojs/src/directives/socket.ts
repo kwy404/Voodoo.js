@@ -1,35 +1,63 @@
 /**
  * @module directives/socket
  *
- * Tempo real declarado no HTML, no mesmo espirito de `v-get` e `v-resource`:
- * o caso comum sai por atributo, o resto continua disponivel em `V.socket()`.
+ * Real-time declared in HTML, in the same spirit as `v-get` and `v-resource`:
+ * the common case goes through attributes, the rest stays available in `V.socket()`.
  *
  * ```html
- * <div v-socket="wss://exemplo.com/chat" v-room="geral">
- *   <p v-show="!$socket.conectado">Reconectando...</p>
+ * <div v-socket="wss://example.com/chat" v-room="general">
+ *   <p v-show="!$socket.connected">Reconnecting...</p>
  *   <ul>
- *     <li v-for="m in $room.mensagens">{ m.autor }: { m.texto }</li>
+ *     <li v-for="m in $room.messages">{ m.author }: { m.text }</li>
  *   </ul>
- *   <span>{ $room.membros.length } online</span>
- *   <form @submit.prevent="$room.enviar('mensagem', { texto: rascunho })">
- *     <input v-model="rascunho">
+ *   <span>{ $room.members.length } online</span>
+ *   <form @submit.prevent="$room.send('message', { text: draft })">
+ *     <input v-model="draft">
  *   </form>
  * </div>
  *
  * <div v-socket="/" v-socket-transport="socket.io"
- *      v-on-socket:nova-mensagem="mensagens.push($event)"></div>
+ *      v-on-socket:new-message="messages.push($event)"></div>
  * ```
  *
- * Sair do DOM fecha a conexao, sai das salas e remove todos os ouvintes. Sem
- * excecao: uma conexao aberta por um elemento que ja morreu e um vazamento que
- * so aparece semanas depois, em forma de conta de servidor.
+ * Leaving the DOM closes the connection, leaves rooms, and removes all listeners. No
+ * exceptions: a connection opened by an element that's already gone is a leak that
+ * only shows up weeks later, as a server bill.
  */
 
+import { warnAlias } from '../runtime/avisos';
 import { reactive } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import { evaluateIn, readAttr } from '../runtime/walker';
 import { parseDuration } from '../utils';
+
+/**
+ * Keeps the old Portuguese property names working.
+ *
+ * `$socket.conectado` and `$room.membros` were the published names in 0.3.0.
+ * The translation to English renamed them, which is a breaking change for
+ * anyone who already wrote them in HTML. These aliases are accessors onto the
+ * same reactive object, so both spellings read the same value and stay in sync.
+ * They warn in development only, and are meant to be removed in the next major.
+ */
+function aliasLegacy(view: Record<string, any>, pairs: Array<[string, string]>): void {
+  for (const [old, canonical] of pairs) {
+    Object.defineProperty(view, old, {
+      enumerable: false,
+      configurable: true,
+      get() {
+        warnAlias(old, canonical);
+        return view[canonical];
+      },
+      set(value: unknown) {
+        warnAlias(old, canonical);
+        view[canonical] = value;
+      },
+    });
+  }
+}
+
 import {
   createSocket,
   socketSupported,
@@ -39,55 +67,55 @@ import {
 } from '../socket';
 
 // ---------------------------------------------------------------------------
-// Leitura dos atributos auxiliares
+// Reading auxiliary attributes
 // ---------------------------------------------------------------------------
 
-function attr(el: Element, nome: string): string | null {
-  return readAttr(el, `${config.prefix}${nome}`);
+function attr(el: Element, name: string): string | null {
+  return readAttr(el, `${config.prefix}${name}`);
 }
 
 /**
- * Conexoes criadas por `v-socket`, indexadas pelo elemento.
+ * Connections created by `v-socket`, indexed by element.
  *
- * `v-room` e `v-on-socket` sobem a arvore ate encontrar uma, que e o que faz o
- * exemplo do topo funcionar sem repetir a URL em cada filho.
+ * `v-room` and `v-on-socket` walk up the tree to find one, which is what makes
+ * the example at the top work without repeating the URL on each child.
  */
-const conexoes = new WeakMap<Element, VoodooSocket>();
+const connections = new WeakMap<Element, VoodooSocket>();
 
-function maisProximo<T>(el: Element, mapa: WeakMap<Element, T>): T | null {
-  let atual: Element | null = el;
-  while (atual) {
-    const encontrado = mapa.get(atual);
-    if (encontrado) return encontrado;
-    atual = atual.parentElement;
+function closest<T>(el: Element, map: WeakMap<Element, T>): T | null {
+  let current: Element | null = el;
+  while (current) {
+    const found = map.get(current);
+    if (found) return found;
+    current = current.parentElement;
   }
   return null;
 }
 
 /**
- * Resolve um valor que tanto pode estar escrito ali quanto vir do estado.
+ * Resolves a value that can be written there or come from state.
  *
- * `wss://exemplo.com` e `geral` sao literais. `'dm:' + id` e expressao. Um
- * identificador solto, como `salaAtual`, e tentado no estado primeiro e so vira
- * literal quando o estado nao tem nada com aquele nome.
+ * `wss://example.com` and `general` are literals. `'dm:' + id` is an expression. A
+ * bare identifier, like `currentRoom`, is tried in state first and only becomes
+ * a literal when state has nothing with that name.
  */
-function resolverTexto(expressao: string, scope: Scope, contexto: string): string {
-  const texto = expressao.trim();
-  if (!texto) return '';
+function resolveText(expression: string, scope: Scope, context: string): string {
+  const text = expression.trim();
+  if (!text) return '';
 
-  if (/^[A-Za-z_$][\w$]*$/.test(texto)) {
-    const valor = scope.has(texto) ? scope.get(texto) : undefined;
-    return typeof valor === 'string' && valor ? valor : texto;
+  if (/^[A-Za-z_$][\w$]*$/.test(text)) {
+    const value = scope.has(text) ? scope.get(text) : undefined;
+    return typeof value === 'string' && value ? value : text;
   }
-  // Literal puro: endereco, caminho ou nome de sala como `dm:ana`.
-  if (/^(wss?|https?):\/\//i.test(texto) || /^[\w:.\-/]+$/.test(texto)) return texto;
+  // Pure literal: address, path, or room name like `dm:ana`.
+  if (/^(wss?|https?):\/\//i.test(text) || /^[\w:.\-/]+$/.test(text)) return text;
 
-  const valor = evaluateIn<string>(texto, scope, contexto);
-  return typeof valor === 'string' && valor ? valor : texto;
+  const value = evaluateIn<string>(text, scope, context);
+  return typeof value === 'string' && value ? value : text;
 }
 
-function disparar(el: Element, tipo: string, detalhe: unknown): void {
-  el.dispatchEvent(new CustomEvent(tipo, { detail: detalhe, bubbles: true }));
+function dispatch(el: Element, type: string, detail: unknown): void {
+  el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
 
 // ---------------------------------------------------------------------------
@@ -97,107 +125,119 @@ function disparar(el: Element, tipo: string, detalhe: unknown): void {
 defineDirective(
   'socket',
   ({ el, scope, expression, modifiers, cleanup, effect }) => {
-    const nome = attr(el, 'socket-as') || '$socket';
+    const name = attr(el, 'socket-as') || '$socket';
 
-    // Sem WebSocket no ambiente nada e lancado. O elemento apenas diz que nao
-    // deu, e quem monta a pagina pode reagir por CSS ou pelo evento.
+    // Without WebSocket in the environment nothing is thrown. The element just says it didn't work,
+    // and whoever builds the page can react via CSS or the event.
     if (!socketSupported()) {
       el.setAttribute('data-socket', 'unsupported');
       scope.set(
-        nome,
+        name,
         reactive({
-          conectado: false,
-          estado: 'closed',
-          erro: 'WebSocket indisponivel neste ambiente',
-          tentativas: 0,
-          mensagens: [] as unknown[],
-          enviar: () => false,
-          abrir: () => undefined,
-          fechar: () => undefined,
+          connected: false,
+          state: 'closed',
+          error: 'WebSocket unavailable in this environment',
+          attempts: 0,
+          messages: [] as unknown[],
+          send: () => false,
+          open: () => undefined,
+          close: () => undefined,
           socket: null,
         })
       );
-      disparar(el, 'voodoo:socket-unsupported', { url: expression });
+      dispatch(el, 'voodoo:socket-unsupported', { url: expression });
       return;
     }
 
-    const limite = Number(attr(el, 'socket-buffer') ?? 50);
-    const transporte = (attr(el, 'socket-transport') || 'ws') as SocketTransport;
+    const limit = Number(attr(el, 'socket-buffer') ?? 50);
+    const transport = (attr(el, 'socket-transport') || 'ws') as SocketTransport;
 
-    // Tres formas de desligar a reconexao, e o motivo de serem tres: o HTML nao
-    // aceita `=` dentro de nome de atributo, entao `v-socket.reconnect=false`
-    // chega ao navegador quebrado. `.no-reconnect` e o atributo auxiliar sao os
-    // que funcionam em HTML escrito a mao; a forma com `=` continua valendo
-    // para quem gera o atributo por template.
-    const reconectar =
+    // Three ways to turn off reconnection, and the reason there are three: HTML doesn't
+    // accept `=` in attribute names, so `v-socket.reconnect=false`
+    // reaches the browser broken. `.no-reconnect` and the auxiliary attribute are the
+    // ones that work in hand-written HTML; the form with `=` still works
+    // for those who generate the attribute by template.
+    const reconnect =
       !modifiers['no-reconnect'] &&
       modifiers.reconnect !== 'false' &&
       attr(el, 'socket-reconnect') !== 'false';
 
-    const opcoes: SocketOptions = {
-      transport: transporte === 'socket.io' ? 'socket.io' : 'ws',
+    const options: SocketOptions = {
+      transport: transport === 'socket.io' ? 'socket.io' : 'ws',
       manual: !!modifiers.manual,
-      reconnect: reconectar,
+      reconnect,
     };
-    if (modifiers.json) opcoes.json = modifiers.json !== 'false';
-    const caminho = attr(el, 'socket-path');
-    if (caminho) opcoes.path = caminho;
-    const batida = attr(el, 'socket-heartbeat');
-    if (batida !== null) opcoes.heartbeat = parseDuration(batida, 25_000);
+    if (modifiers.json) options.json = modifiers.json !== 'false';
+    const path = attr(el, 'socket-path');
+    if (path) options.path = path;
+    const heartbeat = attr(el, 'socket-heartbeat');
+    if (heartbeat !== null) options.heartbeat = parseDuration(heartbeat, 25_000);
 
-    const s = createSocket(resolverTexto(expression, scope, 'v-socket') || '/', opcoes);
-    conexoes.set(el, s);
+    const s = createSocket(resolveText(expression, scope, 'v-socket') || '/', options);
+    connections.set(el, s);
     el.setAttribute('data-socket', 'ready');
 
-    /** `enviar('evento', dados)` manda um evento; `enviar(dados)` manda cru. */
-    function enviar(evento: unknown, ...resto: unknown[]): boolean {
-      if (typeof evento !== 'string') return s.send(evento);
-      return resto.length ? s.emit(evento, resto[0]) : s.emit(evento);
+
+
+    /** `send('event', data)` sends an event; `send(data)` sends raw. */
+    function send(event: unknown, ...rest: unknown[]): boolean {
+      if (typeof event !== 'string') return s.send(event);
+      return rest.length ? s.emit(event, rest[0]) : s.emit(event);
     }
 
-    const vista = reactive({
-      conectado: s.connected,
-      estado: s.state as string,
-      erro: s.error,
-      tentativas: s.attempts,
-      mensagens: [] as unknown[],
-      enviar,
-      abrir: () => s.open(),
-      fechar: () => s.close(),
+    const view = reactive({
+      connected: s.connected,
+      state: s.state as string,
+      error: s.error,
+      attempts: s.attempts,
+      messages: [] as unknown[],
+      send,
+      open: () => s.open(),
+      close: () => s.close(),
       socket: s,
     });
-    scope.set(nome, vista);
+    aliasLegacy(view, [
+      ['conectado', 'connected'],
+      ['estado', 'state'],
+      ['mensagens', 'messages'],
+      ['erro', 'error'],
+      ['tentativas', 'attempts'],
+      ['enviar', 'send'],
+      ['abrir', 'open'],
+      ['fechar', 'close'],
+    ]);
+    scope.set(name, view);
 
-    // Um efeito so, espelhando o estado reativo do socket no objeto do HTML.
-    // Assim `v-show="$socket.conectado"` funciona sem nenhum listener manual.
+    // One effect, mirroring the socket's reactive state in the HTML object.
+    // So `v-show="$socket.connected"` works without any manual listener.
     effect(() => {
-      vista.conectado = s.connected;
-      vista.estado = s.state;
-      vista.erro = s.error;
-      vista.tentativas = s.attempts;
+      view.connected = s.connected;
+      view.state = s.state;
+      view.error = s.error;
+      view.attempts = s.attempts;
     });
 
-    const cancelar = [
-      s.on('message', (dados) => {
-        vista.mensagens.push(dados);
-        // Buffer com teto: uma pagina aberta o dia inteiro nao pode crescer sem
-        // parar so porque o servidor e falante.
-        if (vista.mensagens.length > limite) {
-          vista.mensagens.splice(0, vista.mensagens.length - limite);
+    const unsubscribe = [
+      s.on('message', (data) => {
+        view.messages.push(data);
+        // Buffer with a ceiling: a page open all day can't grow endlessly
+        // just because the server is chatty.
+        if (view.messages.length > limit) {
+          view.messages.splice(0, view.messages.length - limit);
         }
       }),
-      s.on('open', () => disparar(el, 'voodoo:socket-open', { url: s.url })),
-      s.on('close', (d) => disparar(el, 'voodoo:socket-close', d)),
-      s.on('error', (d) => disparar(el, 'voodoo:socket-error', d)),
+      s.on('open', () => dispatch(el, 'voodoo:socket-open', { url: s.url })),
+      s.on('close', (d) => dispatch(el, 'voodoo:socket-close', d)),
+      s.on('error', (d) => dispatch(el, 'voodoo:socket-error', d)),
     ];
 
     cleanup(() => {
-      for (const parar of cancelar) parar();
-      // `off()` sem argumento apaga todo ouvinte, inclusive os que `v-room` e
-      // `v-on-socket` registraram. `close()` derruba timers e a reconexao.
+      for (const stop of unsubscribe) stop();
+      // `off()` with no argument clears all listeners, including those that `v-room` and
+      // `v-on-socket` registered. `close()` tears down timers and reconnection.
       s.off();
       s.close();
-      conexoes.delete(el);
+      connections.delete(el);
     });
   },
   { priority: PRIORITY.DATA }
@@ -208,92 +248,101 @@ defineDirective(
 // ---------------------------------------------------------------------------
 
 /**
- * `v-room="geral"` entra numa sala da conexao mais proxima e publica `$room`.
+ * `v-room="general"` joins a room in the nearest connection and publishes `$room`.
  *
- * O modificador `.privada` marca a sala como privada. Repetindo o que a
- * documentacao diz em destaque: isso e um pedido ao servidor, nunca uma
- * garantia. O cliente nao consegue impedir ninguem de entrar numa sala.
+ * The `.private` modifier marks the room as private. Repeating what the
+ * documentation says prominently: this is a request to the server, never a
+ * guarantee. The client cannot prevent anyone from entering a room.
  */
 defineDirective(
   'room',
   ({ el, scope, expression, modifiers, cleanup, effect }) => {
-    const s = maisProximo(el, conexoes);
+    const s = closest(el, connections);
     if (!s) return;
 
-    const nomeSala = resolverTexto(expression, scope, 'v-room');
-    if (!nomeSala) return;
+    const roomName = resolveText(expression, scope, 'v-room');
+    if (!roomName) return;
 
-    const sala = s.join(nomeSala, {
-      privada: !!modifiers.privada || !!modifiers.private,
+    const room = s.join(roomName, {
+      private: !!modifiers.private || !!modifiers.privada,
       buffer: Number(attr(el, 'room-buffer') ?? 50),
     });
 
-    const vista = reactive({
-      nome: nomeSala,
-      privada: sala.privada,
-      estado: sala.estado as string,
-      membros: sala.membros,
-      mensagens: sala.mensagens,
-      /** Envia para a sala. Com `para`, so para aquele destinatario. */
-      enviar: (evento: string, dados?: unknown, para?: string): boolean =>
-        para ? sala.to(para).emit(evento, dados) : sala.emit(evento, dados),
-      sair: () => sala.leave(),
-      sala,
+    const view = reactive({
+      name: roomName,
+      private: room.private,
+      state: room.state as string,
+      members: room.members,
+      messages: room.messages,
+      /** Sends to the room. With `to`, only to that recipient. */
+      send: (event: string, data?: unknown, to?: string): boolean =>
+        to ? room.to(to).emit(event, data) : room.emit(event, data),
+      leave: () => room.leave(),
+      room,
     });
-    scope.set(attr(el, 'room-as') || '$room', vista);
+    aliasLegacy(view, [
+      ['membros', 'members'],
+      ['mensagens', 'messages'],
+      ['estado', 'state'],
+      ['nome', 'name'],
+      ['privada', 'private'],
+      ['enviar', 'send'],
+      ['sair', 'leave'],
+    ]);
+    scope.set(attr(el, 'room-as') || '$room', view);
 
     effect(() => {
-      vista.estado = sala.estado;
-      vista.membros = sala.membros;
-      vista.mensagens = sala.mensagens;
+      view.state = room.state;
+      view.members = room.members;
+      view.messages = room.messages;
     });
 
-    const cancelar = [
-      sala.on('entrou', (m) => disparar(el, 'voodoo:room-join', m)),
-      sala.on('saiu', (m) => disparar(el, 'voodoo:room-leave', m)),
+    const unsubscribe = [
+      room.on('joined', (m) => dispatch(el, 'voodoo:room-join', m)),
+      room.on('left', (m) => dispatch(el, 'voodoo:room-leave', m)),
     ];
 
     cleanup(() => {
-      for (const parar of cancelar) parar();
-      sala.off();
-      sala.leave();
+      for (const stop of unsubscribe) stop();
+      room.off();
+      room.leave();
     });
   },
-  // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
+  // After `v-socket`, so the connection exists when the room asks to join.
   { priority: PRIORITY.DATA - 1 }
 );
 
 // ---------------------------------------------------------------------------
-// v-on-socket:<evento>
+// v-on-socket:<event>
 // ---------------------------------------------------------------------------
 
 /**
- * `v-on-socket:nova-mensagem="mensagens.push($event)"`.
+ * `v-on-socket:new-message="messages.push($event)"`.
  *
- * Mesmo espirito de `@evento`: a carga chega em `$event`.
+ * Same spirit as `@event`: the payload arrives in `$event`.
  *
- * A assinatura e sempre na **conexao**, mesmo dentro de um `v-room`. O nome diz
- * `on-socket`, e a conexao ve tudo que chega, inclusive o que e de sala. Quem
- * quer o recorte ja filtrado de uma sala tem `$room.mensagens` no HTML e
- * `sala.on()` no JavaScript; misturar os dois aqui deixaria o mesmo atributo
- * escutando alvos diferentes dependendo de onde ele foi escrito.
+ * The signature is always on the **connection**, even inside a `v-room`. The name says
+ * `on-socket`, and the connection sees everything that arrives, including what comes from rooms. Whoever
+ * wants the filtered slice of a room has `$room.messages` in HTML and
+ * `room.on()` in JavaScript; mixing the two here would leave the same attribute
+ * listening to different targets depending on where it was written.
  */
 defineDirective('on-socket', ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo = maisProximo(el, conexoes);
-  if (!alvo) return;
+  const target = closest(el, connections);
+  if (!target) return;
 
-  const cancelar = alvo.on(arg, (dados: unknown, ack?: (r: unknown) => void) => {
-    const local = scope.child({ $event: dados, $ack: ack, $el: el });
-    const valor = evaluateIn(expression, local, `v-on-socket:${arg}`);
-    if (typeof valor === 'function') valor.call(scope.data, dados);
+  const unsubscribe = target.on(arg, (data: unknown, ack?: (r: unknown) => void) => {
+    const local = scope.child({ $event: data, $ack: ack, $el: el });
+    const value = evaluateIn(expression, local, `v-on-socket:${arg}`);
+    if (typeof value === 'function') value.call(scope.data, data);
   });
 
-  cleanup(cancelar);
+  cleanup(unsubscribe);
 });
 
 // ---------------------------------------------------------------------------
-// Atributos auxiliares, registrados para nao virarem "directive desconhecida"
+// Auxiliary attributes, registered to not become "unknown directive"
 // ---------------------------------------------------------------------------
 
 for (const nome of [

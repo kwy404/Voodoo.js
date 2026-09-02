@@ -1,9 +1,9 @@
 /**
  * @module gpu
  *
- * Camada WebGPU da Voodoo, no espirito do vgpu: funcoes soltas que recebem o
- * contexto como primeiro argumento, sem estado global escondido e sem classe
- * nenhuma para instanciar.
+ * Voodoo's WebGPU layer, in the spirit of vgpu: loose functions that receive
+ * context as the first argument, with no hidden global state and no classes
+ * to instantiate.
  *
  * ```js
  * const gpu = await V.gpu.init()
@@ -12,17 +12,17 @@
  * const parar = V.gpu.frameLoop(gpu, (frame) => frame.pass(tela, ondas))
  * ```
  *
- * A regra que manda em tudo: **nunca lancar quando nao existe WebGPU**.
- * `supported()` devolve `false`, `init()` devolve `null` e todo o resto aceita
- * `null` no lugar do contexto e vira operacao vazia. Uma pagina que usa GPU
- * para enfeite nao pode quebrar num navegador que ainda nao tem GPU.
+ * The rule that governs everything: **never throw when WebGPU doesn't exist**.
+ * `supported()` returns `false`, `init()` returns `null` and everything else accepts
+ * `null` in place of context and becomes a no-op. A page using GPU
+ * for decoration can't break in a browser that doesn't have GPU yet.
  *
- * Os bindings do shader nao sao declarados a mao: `gpu/wgsl` le a fonte e monta
- * o bind group layout, o tamanho do buffer e o deslocamento de cada uniform.
+ * Shader bindings are not declared by hand: `gpu/wgsl` reads the source and builds
+ * the bind group layout, buffer size and offset of each uniform.
  */
 
 import { handleError } from '../reactivity';
-import { avisar } from '../runtime/avisos';
+import { warn } from '../runtime/avisos';
 import {
   BUFFER_USAGE,
   SHADER_STAGE,
@@ -60,41 +60,41 @@ export * from './wgsl';
 export type * from './types';
 
 // ---------------------------------------------------------------------------
-// Contexto
+// Context
 // ---------------------------------------------------------------------------
 
-/** Qualquer coisa que ocupa memoria na GPU e sabe se soltar. */
+/** Anything that occupies GPU memory and knows how to release itself. */
 interface Disposable {
   destroy(): void;
 }
 
-/** Contexto devolvido por `init()`. E o primeiro argumento de tudo. */
+/** Context returned by `init()`. It's the first argument to everything. */
 export interface GpuContext {
   adapter: GPUAdapter;
   device: GPUDevice;
   queue: GPUDevice['queue'];
-  /** Formato preferido do canvas neste dispositivo. */
+  /** Preferred canvas format on this device. */
   format: GPUTextureFormat;
-  /** Recursos abertos, para que `destroy(gpu)` nao esqueca nenhum. */
+  /** Open resources, so `destroy(gpu)` doesn't forget any. */
   readonly resources: Set<Disposable>;
-  /** Vira `true` depois de `destroy(gpu)`. Toda operacao passa a ser vazia. */
+  /** Becomes `true` after `destroy(gpu)`. All operations become no-ops. */
   destroyed: boolean;
 }
 
-/** Opcoes de `init()`. */
+/** Options for `init()`. */
 export interface GpuInitOptions {
-  /** Preferencia de adaptador: `low-power` economiza bateria. */
+  /** Adapter preference: `low-power` saves battery. */
   powerPreference?: 'low-power' | 'high-performance';
-  /** Recursos opcionais pedidos ao dispositivo. Os indisponiveis sao ignorados. */
+  /** Optional features requested from the device. Unavailable ones are ignored. */
   features?: string[];
-  /** Limites minimos desejados. */
+  /** Desired minimum limits. */
   limits?: Record<string, number>;
   label?: string;
 }
 
 /**
- * `true` quando o navegador expoe WebGPU. Nunca lanca, nem em Node, nem em
- * jsdom, nem em navegador antigo.
+ * `true` when the browser exposes WebGPU. Never throws, not in Node,
+ * not in jsdom, not in old browsers.
  */
 export function supported(): boolean {
   try {
@@ -110,14 +110,14 @@ function navigatorGpu(): GPUNavigator | null {
 }
 
 /**
- * Abre o adaptador e o dispositivo.
+ * Opens the adapter and device.
  *
  * ```js
  * const gpu = await V.gpu.init()
  * if (!gpu) mostrarVersaoSemGpu()
  * ```
  *
- * @returns o contexto, ou `null` quando nao ha WebGPU ou o adaptador recusou
+ * @returns the context, or `null` when there's no WebGPU or the adapter refused
  */
 export async function init(options: GpuInitOptions = {}): Promise<GpuContext | null> {
   const api = navigatorGpu();
@@ -129,8 +129,8 @@ export async function init(options: GpuInitOptions = {}): Promise<GpuContext | n
     );
     if (!adapter) return null;
 
-    // Pedir um recurso que o adaptador nao tem faz `requestDevice` rejeitar,
-    // entao a lista e filtrada antes em vez de deixar a promessa quebrar.
+    // Requesting a feature the adapter doesn't have makes `requestDevice` reject,
+    // so the list is filtered beforehand instead of letting the promise break.
     const features = (options.features ?? []).filter((name) => adapter.features.has(name));
     const device = await adapter.requestDevice({
       label: options.label ?? 'voodoo',
@@ -148,24 +148,24 @@ export async function init(options: GpuInitOptions = {}): Promise<GpuContext | n
       destroyed: false,
     };
 
-    // Perder o dispositivo (troca de GPU, aba suspensa) nao pode derrubar a
-    // pagina: o contexto so passa a se comportar como se nunca tivesse existido.
+    // Losing the device (GPU switch, suspended tab) can't break the page:
+    // the context just starts behaving as if it never existed.
     device.lost
       ?.then((info) => {
         gpu.destroyed = true;
-        avisar(`o dispositivo WebGPU foi perdido (${info.reason}): ${info.message}`);
+        warn(`WebGPU device was lost (${info.reason}): ${info.message}`);
       })
       .catch(() => undefined);
 
     return gpu;
   } catch (err) {
-    // Um adaptador que recusa e um caso previsto, nao um erro da aplicacao.
-    avisar(`WebGPU disponivel mas o dispositivo nao abriu: ${String(err)}`);
+    // An adapter that refuses is an expected case, not an application error.
+    warn(`WebGPU available but device failed to open: ${String(err)}`);
     return null;
   }
 }
 
-/** `true` quando o contexto existe e ainda vale. */
+/** `true` when the context exists and is still valid. */
 function live(gpu: GpuContext | null | undefined): gpu is GpuContext {
   return !!gpu && !gpu.destroyed;
 }
@@ -179,50 +179,50 @@ function untrack(gpu: GpuContext | null, resource: Disposable): void {
 }
 
 // ---------------------------------------------------------------------------
-// Contexto compartilhado
+// Shared context
 // ---------------------------------------------------------------------------
 
 let sharedContext: Promise<GpuContext | null> | null = null;
 
 /**
- * Contexto unico da pagina, criado na primeira chamada.
+ * Single context for the page, created on first call.
  *
- * Um dispositivo por aba basta: e o que a directive `v-shader` usa, para que
- * dez canvas na mesma pagina nao abram dez dispositivos.
+ * One device per tab is enough: it's what the `v-shader` directive uses, so
+ * ten canvases on the same page don't open ten devices.
  */
 export function shared(options?: GpuInitOptions): Promise<GpuContext | null> {
   if (!sharedContext) sharedContext = init(options);
   return sharedContext;
 }
 
-/** Esquece o contexto compartilhado. Usado por `destroy()` e pelos testes. */
+/** Forgets the shared context. Used by `destroy()` and by tests. */
 export function resetShared(): void {
   sharedContext = null;
 }
 
 // ---------------------------------------------------------------------------
-// Superficie de desenho
+// Drawing surface
 // ---------------------------------------------------------------------------
 
-/** Opcoes de `surface()`. */
+/** Options for `surface()`. */
 export interface GpuSurfaceOptions {
-  /** Faixa aceita de `devicePixelRatio`, como `[1, 2]`. Padrao `[1, 2]`. */
+  /** Accepted range of `devicePixelRatio`, like `[1, 2]`. Default `[1, 2]`. */
   dpr?: [number, number];
-  /** Formato do canvas. Padrao o preferido do dispositivo. */
+  /** Canvas format. Default the device's preferred one. */
   format?: GPUTextureFormat;
-  /** Deixa o canvas transparente. Padrao `false`. */
+  /** Makes the canvas transparent. Default `false`. */
   alpha?: boolean;
 }
 
-/** Canvas configurado para receber quadros da GPU. */
+/** Canvas configured to receive frames from the GPU. */
 export interface GpuSurface {
   readonly canvas: HTMLCanvasElement | null;
   readonly format: GPUTextureFormat;
   readonly width: number;
   readonly height: number;
-  /** View do quadro atual. `null` quando nao ha GPU. */
+  /** View of the current frame. `null` when there's no GPU. */
   view(): GPUTextureView | null;
-  /** Remede o canvas e reconfigura o contexto. */
+  /** Remeasures the canvas and reconfigures the context. */
   resize(): void;
   destroy(): void;
 }
@@ -238,11 +238,11 @@ const NO_SURFACE: GpuSurface = {
 };
 
 /**
- * Prepara um `<canvas>` para receber quadros.
+ * Prepares a `<canvas>` to receive frames.
  *
- * O tamanho do buffer acompanha o tamanho em CSS multiplicado pelo
- * `devicePixelRatio`, limitado pela faixa de `dpr` e pelo maior tamanho de
- * textura do dispositivo. Um `ResizeObserver` mantem isso em dia sozinho.
+ * The buffer size follows the CSS size multiplied by
+ * `devicePixelRatio`, capped by the `dpr` range and the device's maximum texture size.
+ * A `ResizeObserver` keeps this up to date automatically.
  */
 export function surface(
   gpu: GpuContext | null,
@@ -284,7 +284,7 @@ export function surface(
     height = next.h;
     canvas.width = width;
     canvas.height = height;
-    // Reconfigurar depois de mexer no tamanho evita um quadro esticado.
+    // Reconfiguring after resizing avoids a stretched frame.
     context.configure({ device: gpu.device, format, alphaMode });
   };
 
@@ -333,10 +333,10 @@ export function surface(
 }
 
 // ---------------------------------------------------------------------------
-// Alvo fora da tela
+// Off-screen target
 // ---------------------------------------------------------------------------
 
-/** Opcoes de `target()`. */
+/** Options for `target()`. */
 export interface GpuTargetOptions {
   width: number;
   height: number;
@@ -344,7 +344,7 @@ export interface GpuTargetOptions {
   label?: string;
 }
 
-/** Textura usada como destino de um passe, para encadear efeitos. */
+/** Texture used as a render pass target, to chain effects. */
 export interface GpuTarget {
   readonly texture: GPUTexture | null;
   readonly width: number;
@@ -363,7 +363,7 @@ const NO_TARGET: GpuTarget = {
   destroy: () => undefined,
 };
 
-/** Cria uma textura de destino, para renderizar fora da tela. */
+/** Creates a target texture for off-screen rendering. */
 export function target(gpu: GpuContext | null, options: GpuTargetOptions): GpuTarget {
   if (!live(gpu)) return NO_TARGET;
 
@@ -410,14 +410,14 @@ export function target(gpu: GpuContext | null, options: GpuTargetOptions): GpuTa
 // Uniforms
 // ---------------------------------------------------------------------------
 
-/** Buffer de uniforms com layout conhecido. */
+/** Uniform buffer with known layout. */
 export interface GpuUniforms {
-  /** Layout em uso, venha ele da reflexao ou dos valores iniciais. */
+  /** Layout in use, whether from reflection or initial values. */
   readonly struct: WgslStruct;
   readonly buffer: GPUBuffer | null;
-  /** Ultimos valores aplicados. */
+  /** Last applied values. */
   readonly values: Record<string, unknown>;
-  /** Atualiza os campos informados e envia o buffer. */
+  /** Updates the given fields and sends the buffer. */
   set(values: Record<string, unknown>): void;
   destroy(): void;
 }
@@ -487,16 +487,16 @@ function uniformsFromStruct(
 }
 
 /**
- * Cria um buffer de uniforms a partir dos valores iniciais.
+ * Creates a uniform buffer from initial values.
  *
  * ```js
  * const u = V.gpu.uniforms(gpu, { time: 0, tint: '#ff3d8b' })
  * u.set({ time: 1.5 })
  * ```
  *
- * Sem shader para consultar, o layout vem da ordem das chaves do objeto. Quando
- * existe shader, `V.gpu.effect` prefere a reflexao, que nao depende de ninguem
- * lembrar a ordem certa.
+ * Without a shader to consult, the layout comes from the object's key order. When
+ * there's a shader, `V.gpu.effect` prefers reflection, which doesn't depend on anyone
+ * remembering the right order.
  */
 export function uniforms(
   gpu: GpuContext | null,
@@ -506,25 +506,25 @@ export function uniforms(
 }
 
 // ---------------------------------------------------------------------------
-// Relogio
+// Clock
 // ---------------------------------------------------------------------------
 
-/** Tempo do laco de quadros, em segundos. */
+/** Time in the frame loop, in seconds. */
 export interface GpuClock {
-  /** Segundos desde o primeiro quadro. */
+  /** Seconds since the first frame. */
   readonly time: number;
-  /** Segundos desde o quadro anterior. */
+  /** Seconds since the previous frame. */
   readonly delta: number;
-  /** Numero do quadro atual, comecando em zero. */
+  /** Current frame number, starting at zero. */
   readonly frame: number;
-  /** Avanca o relogio. O laco de quadros chama sozinho. */
+  /** Advances the clock. The frame loop calls it automatically. */
   tick(now?: number): void;
   reset(): void;
 }
 
 /**
- * Cria um relogio. O contexto entra por simetria com o resto da API: o relogio
- * funciona igual com ou sem GPU, o que deixa a directive escrever um caminho so.
+ * Creates a clock. The context comes in for symmetry with the rest of the API: the clock
+ * works the same with or without GPU, so the directive can write one path.
  */
 export function clock(_gpu?: GpuContext | null): GpuClock {
   let start = -1;
@@ -571,11 +571,11 @@ export function clock(_gpu?: GpuContext | null): GpuClock {
 // ---------------------------------------------------------------------------
 
 /**
- * Vertex embutido do `effect`: um triangulo que cobre a tela inteira.
+ * Built-in vertex for `effect`: a triangle covering the whole screen.
  *
- * Um triangulo grande sai mais barato que dois triangulos formando um quadrado,
- * porque a GPU nao processa duas vezes os pixels da diagonal. A `uv` ja vem com
- * o eixo Y para baixo, que e como todo mundo espera ler uma imagem.
+ * A large triangle is cheaper than two triangles forming a square,
+ * because the GPU doesn't process the diagonal's pixels twice. The `uv` already comes
+ * with Y axis pointing down, which is how everyone expects to read an image.
  */
 const FULLSCREEN_VERTEX = `
 struct VoodooFullscreenOut {
@@ -598,7 +598,7 @@ fn voodooFullscreen(@builtin(vertex_index) indice: u32) -> VoodooFullscreenOut {
 }
 `;
 
-/** Monta as entradas de bind group layout a partir da reflexao. */
+/** Builds bind group layout entries from reflection. */
 function layoutEntries(bindings: WgslBinding[], visibility: number): unknown[] {
   const entries: unknown[] = [];
   for (const binding of bindings) {
@@ -678,7 +678,7 @@ function bindFromReflection(
       entries: layoutEntries(bindings, visibility),
     });
   } catch (err) {
-    avisar(`a reflexao do shader "${label}" nao montou o bind group layout: ${String(err)}`);
+    warn(`shader reflection for "${label}" failed to build bind group layout: ${String(err)}`);
     return { layout: null, group: null, uniforms: uniformValues, sampler: null, fromReflection: false };
   }
 
@@ -718,61 +718,61 @@ function bindFromReflection(
     });
     return { layout, group, uniforms: uniformValues, sampler, fromReflection: true };
   } catch (err) {
-    avisar(`a reflexao do shader "${label}" nao montou o bind group: ${String(err)}`);
+    warn(`shader reflection for "${label}" failed to build bind group: ${String(err)}`);
     return { layout, group: null, uniforms: uniformValues, sampler, fromReflection: false };
   }
 }
 
 /**
- * Pede o log do compilador e reporta os erros com a linha do WGSL.
+ * Fetches the compiler log and reports errors with the WGSL line.
  *
- * Roda depois do pipeline porque um shader com erro ainda cria um modulo: e o
- * `getCompilationInfo` que conta a historia inteira.
+ * Runs after pipeline creation because a shader with errors still creates a module: it's
+ * `getCompilationInfo` that tells the full story.
  */
 function reportCompilation(module: GPUShaderModule, label: string, source: string): void {
   if (typeof module.getCompilationInfo !== 'function') return;
-  const linhas = source.split('\n');
+  const lines = source.split('\n');
 
   module
     .getCompilationInfo()
     .then((info) => {
-      const erros = info.messages.filter((m) => m.type === 'error');
-      if (erros.length === 0) return;
-      const detalhe = erros
-        .map((m) => `  linha ${m.lineNum}: ${m.message}\n  > ${(linhas[m.lineNum - 1] ?? '').trim()}`)
+      const errors = info.messages.filter((m) => m.type === 'error');
+      if (errors.length === 0) return;
+      const detail = errors
+        .map((m) => `  line ${m.lineNum}: ${m.message}\n  > ${(lines[m.lineNum - 1] ?? '').trim()}`)
         .join('\n');
-      handleError(new Error(`shader "${label}" nao compilou:\n${detalhe}`), 'V.gpu shader');
+      handleError(new Error(`shader "${label}" did not compile:\n${detail}`), 'V.gpu shader');
     })
     .catch(() => undefined);
 }
 
 // ---------------------------------------------------------------------------
-// Efeito de tela cheia
+// Full-screen effect
 // ---------------------------------------------------------------------------
 
-/** Opcoes de `effect()`. */
+/** Options for `effect()`. */
 export interface GpuEffectOptions {
-  /** Valores iniciais dos uniforms. */
+  /** Initial uniform values. */
   set?: Record<string, unknown>;
-  /** Nome do `@fragment`. Padrao o primeiro encontrado na fonte. */
+  /** Name of `@fragment`. Default the first found in the source. */
   entry?: string;
-  /** Formato do destino. Padrao o formato preferido do canvas. */
+  /** Destination format. Default the canvas's preferred format. */
   format?: GPUTextureFormat;
-  /** Views ligadas aos bindings de textura, por nome da variavel no WGSL. */
+  /** Views bound to texture bindings, by variable name in WGSL. */
   textures?: Record<string, GPUTextureView>;
   label?: string;
 }
 
-/** Um shader de tela cheia pronto para desenhar. */
+/** A full-screen shader ready to draw. */
 export interface GpuEffect {
-  /** O que a reflexao encontrou na fonte. Funciona mesmo sem GPU. */
+  /** What reflection found in the source. Works even without GPU. */
   readonly reflection: WgslReflection;
-  /** `false` quando o pipeline nao subiu. Desenhar vira operacao vazia. */
+  /** `false` when the pipeline didn't come up. Drawing becomes a no-op. */
   readonly ok: boolean;
   readonly uniforms: GpuUniforms;
-  /** Atualiza uniforms sem recriar o pipeline. */
+  /** Updates uniforms without recreating the pipeline. */
   set(values: Record<string, unknown>): void;
-  /** Grava os comandos de desenho. Chamado por `frame.pass`. */
+  /** Records the draw commands. Called by `frame.pass`. */
   draw(pass: GPURenderPassEncoder): void;
   destroy(): void;
 }
@@ -789,15 +789,15 @@ function noEffect(reflection: WgslReflection): GpuEffect {
 }
 
 /**
- * Compila um shader de tela cheia.
+ * Compiles a full-screen shader.
  *
- * Quando a fonte nao traz `@vertex`, a Voodoo acrescenta um triangulo que cobre
- * a tela e entrega `@location(0) uv` ao fragmento. Escrever so o `@fragment` e o
- * caso comum, e e o que a directive `v-shader` espera.
+ * When the source doesn't bring `@vertex`, Voodoo adds a triangle covering
+ * the screen and delivers `@location(0) uv` to the fragment. Writing just the `@fragment` is
+ * the common case, and what the `v-shader` directive expects.
  *
  * ```js
  * const efeito = V.gpu.effect(gpu, wgsl, { set: { speed: 1.2 } })
- * efeito.set({ speed: 2 })   // nao recompila nada
+ * efeito.set({ speed: 2 })   // doesn't recompile anything
  * ```
  */
 export function effect(
@@ -809,13 +809,13 @@ export function effect(
   if (!live(gpu) || !wgsl) return noEffect(reflection);
 
   const label = options.label ?? 'voodoo-effect';
-  const temVertex = !!findEntry(reflection, 'vertex');
-  const source = temVertex ? wgsl : `${FULLSCREEN_VERTEX}\n${wgsl}`;
-  const vertexEntry = temVertex ? findEntry(reflection, 'vertex')!.name : 'voodooFullscreen';
+  const hasVertex = !!findEntry(reflection, 'vertex');
+  const source = hasVertex ? wgsl : `${FULLSCREEN_VERTEX}\n${wgsl}`;
+  const vertexEntry = hasVertex ? findEntry(reflection, 'vertex')!.name : 'voodooFullscreen';
   const fragmentEntry = options.entry ?? findEntry(reflection, 'fragment')?.name;
 
   if (!fragmentEntry) {
-    avisar(`o shader "${label}" nao declara nenhuma funcao @fragment.`);
+    warn(`shader "${label}" does not declare a @fragment function.`);
     return noEffect(reflection);
   }
 
@@ -899,26 +899,26 @@ export function effect(
 }
 
 // ---------------------------------------------------------------------------
-// Computacao
+// Computation
 // ---------------------------------------------------------------------------
 
-/** Opcoes de `compute()`. */
+/** Options for `compute()`. */
 export interface GpuComputeOptions {
   set?: Record<string, unknown>;
   entry?: string;
-  /** Quantos workgroups despachar. Padrao `[1, 1, 1]`. */
+  /** How many workgroups to dispatch. Default `[1, 1, 1]`. */
   workgroups?: [number, number?, number?];
   textures?: Record<string, GPUTextureView>;
   label?: string;
 }
 
-/** Um shader de computacao pronto para despachar. */
+/** A compute shader ready to dispatch. */
 export interface GpuCompute {
   readonly reflection: WgslReflection;
   readonly ok: boolean;
   readonly uniforms: GpuUniforms;
   set(values: Record<string, unknown>): void;
-  /** Grava o despacho. Chamado por `frame.compute`. */
+  /** Records the dispatch. Called by `frame.compute`. */
   dispatch(pass: GPUComputePassEncoder, workgroups?: [number, number?, number?]): void;
   destroy(): void;
 }
@@ -934,7 +934,7 @@ function noCompute(reflection: WgslReflection): GpuCompute {
   };
 }
 
-/** Compila um shader de computacao. */
+/** Compiles a compute shader. */
 export function compute(
   gpu: GpuContext | null,
   wgsl: string,
@@ -946,7 +946,7 @@ export function compute(
   const label = options.label ?? 'voodoo-compute';
   const entry = options.entry ?? findEntry(reflection, 'compute')?.name;
   if (!entry) {
-    avisar(`o shader "${label}" nao declara nenhuma funcao @compute.`);
+    warn(`shader "${label}" does not declare a @compute function.`);
     return noCompute(reflection);
   }
 
@@ -994,7 +994,7 @@ export function compute(
     }
   }
 
-  const padrao = options.workgroups ?? [1, 1, 1];
+  const default_ = options.workgroups ?? [1, 1, 1];
   let alive = true;
 
   const handle: GpuCompute = {
@@ -1006,7 +1006,7 @@ export function compute(
     },
     dispatch(pass: GPUComputePassEncoder, workgroups?: [number, number?, number?]): void {
       if (!alive || !pipeline) return;
-      const [x, y, z] = workgroups ?? padrao;
+      const [x, y, z] = workgroups ?? default_;
       pass.setPipeline(pipeline);
       if (bound.group) pass.setBindGroup(0, bound.group);
       pass.dispatchWorkgroups(Math.max(1, x), y ?? 1, z ?? 1);
@@ -1025,25 +1025,25 @@ export function compute(
 }
 
 // ---------------------------------------------------------------------------
-// Quadros
+// Frames
 // ---------------------------------------------------------------------------
 
-/** Destino aceito por `frame.pass`. */
+/** Target accepted by `frame.pass`. */
 export type GpuPassTarget = GpuSurface | GpuTarget | null;
 
-/** Cor de limpeza, como `[r, g, b, a]` de 0 a 1. */
+/** Clear color, like `[r, g, b, a]` from 0 to 1. */
 export type GpuClearColor = [number, number, number, number];
 
-/** O quadro em construcao, entregue ao callback de `frame` e `frameLoop`. */
+/** The frame being built, delivered to the callback of `frame` and `frameLoop`. */
 export interface GpuFrame {
   readonly encoder: GPUCommandEncoder | null;
-  /** Relogio do laco. Fora do laco, marca sempre o quadro zero. */
+  /** Loop clock. Outside the loop, always marks frame zero. */
   readonly clock: GpuClock;
-  /** Abre um passe de renderizacao no destino e executa os efeitos em ordem. */
+  /** Opens a render pass on the target and executes effects in order. */
   pass(destino: GpuPassTarget, ...operacoes: Array<GpuEffect | null | undefined>): void;
-  /** Abre um passe de computacao e despacha as operacoes em ordem. */
+  /** Opens a compute pass and dispatches operations in order. */
   compute(...operacoes: Array<GpuCompute | null | undefined>): void;
-  /** Cor usada ao limpar o destino. Padrao transparente. */
+  /** Color used when clearing the target. Default transparent. */
   clear: GpuClearColor;
 }
 
@@ -1098,7 +1098,7 @@ function buildFrame(gpu: GpuContext, encoder: GPUCommandEncoder, relogio: GpuClo
 }
 
 /**
- * Grava e envia um quadro.
+ * Records and submits a frame.
  *
  * ```js
  * V.gpu.frame(gpu, (frame) => frame.pass(tela, ondas))
@@ -1123,7 +1123,7 @@ export function frame(
 }
 
 /**
- * Laco de quadros com `requestAnimationFrame`.
+ * Frame loop with `requestAnimationFrame`.
  *
  * ```js
  * const parar = V.gpu.frameLoop(gpu, (frame) => {
@@ -1132,7 +1132,7 @@ export function frame(
  * })
  * ```
  *
- * @returns funcao que encerra o laco. Sem GPU, o laco nem comeca.
+ * @returns function that stops the loop. Without GPU, the loop never starts.
  */
 export function frameLoop(
   gpu: GpuContext | null,
@@ -1163,13 +1163,13 @@ export function frameLoop(
 }
 
 // ---------------------------------------------------------------------------
-// Fim de vida
+// End of life
 // ---------------------------------------------------------------------------
 
 /**
- * Solta tudo que o contexto abriu e encerra o dispositivo.
+ * Releases everything the context opened and shuts down the device.
  *
- * Chamar duas vezes nao faz mal, e chamar com `null` tambem nao.
+ * Calling twice does no harm, and calling with `null` doesn't either.
  */
 export function destroy(gpu: GpuContext | null): void {
   if (!gpu || gpu.destroyed) return;
@@ -1187,12 +1187,12 @@ export function destroy(gpu: GpuContext | null): void {
   try {
     gpu.device.destroy();
   } catch {
-    // Dispositivo ja perdido. O objetivo era exatamente este.
+    // Device already lost. That was the goal.
   }
 
-  // Se o contexto compartilhado morreu, a proxima chamada abre outro.
-  sharedContext?.then((atual) => {
-    if (atual === gpu) resetShared();
+  // If the shared context died, the next call opens another.
+  sharedContext?.then((current) => {
+    if (current === gpu) resetShared();
   });
 }
 
@@ -1201,8 +1201,8 @@ export function destroy(gpu: GpuContext | null): void {
 // ---------------------------------------------------------------------------
 
 /**
- * Tudo do modulo reunido, para expor como `V.gpu` sem colidir com nomes de
- * outros modulos, como o `effect` da reatividade.
+ * Everything from the module grouped, to expose as `V.gpu` without clashing with names of
+ * other modules, like the `effect` from reactivity.
  */
 export const gpu = {
   supported,
@@ -1217,6 +1217,6 @@ export const gpu = {
   frame,
   frameLoop,
   destroy,
-  /** Leitura de WGSL, util sozinha para inspecionar um shader. */
+  /** WGSL reading, useful on its own for inspecting a shader. */
   reflect: reflectWgsl,
 };

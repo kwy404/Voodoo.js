@@ -1,14 +1,14 @@
 /**
  * @module runtime/magics
  *
- * Variaveis magicas: valores globais disponiveis dentro de qualquer expressao
- * `v-*`, sem precisar declarar nada.
+ * Magic variables: global values available inside any `v-*` expression,
+ * without needing to declare anything.
  *
  * ```html
- * <button v-click="$toast.success('Salvo!')">Salvar</button>
- * <div v-show="$screen.mobile">Voce esta no celular</div>
- * <p v-show="!$network.online">Voce esta offline.</p>
- * <span>{ $store.carrinho.total }</span>
+ * <button v-click="$toast.success('Saved!')">Save</button>
+ * <div v-show="$screen.mobile">You're on mobile</div>
+ * <p v-show="!$network.online">You're offline.</p>
+ * <span>{ $store.cart.total }</span>
  * ```
  */
 
@@ -22,7 +22,7 @@ import { device } from '../utils';
 import { evaluateIn } from './walker';
 
 // ---------------------------------------------------------------------------
-// $screen: pontos de quebra reativos
+// $screen: reactive breakpoints
 // ---------------------------------------------------------------------------
 
 export const screen = reactive({
@@ -33,7 +33,7 @@ export const screen = reactive({
   desktop: false,
   portrait: false,
   landscape: false,
-  /** Verifica uma media query arbitraria. */
+  /** Check an arbitrary media query. */
   matches(query: string): boolean {
     return typeof matchMedia !== 'undefined' && matchMedia(query).matches;
   },
@@ -51,14 +51,14 @@ function updateScreen(): void {
 }
 
 // ---------------------------------------------------------------------------
-// $network: estado da conexao
+// $network: connection state
 // ---------------------------------------------------------------------------
 
 export const network = reactive({
   online: true,
-  /** Tipo de conexao informado pelo navegador, quando disponivel. */
+  /** Connection type reported by the browser, when available. */
   type: 'unknown' as string,
-  /** `true` quando o usuario pediu economia de dados. */
+  /** `true` when the user requested data saving mode. */
   saveData: false,
   slow: false,
 });
@@ -79,7 +79,7 @@ function updateNetwork(): void {
 // ---------------------------------------------------------------------------
 
 export const clipboard = {
-  /** Copia texto, com fallback para navegadores sem a API moderna. */
+  /** Copy text, with fallback for browsers without the modern API. */
   async copy(text: string): Promise<boolean> {
     try {
       if (navigator.clipboard?.writeText) {
@@ -87,7 +87,7 @@ export const clipboard = {
         return true;
       }
     } catch {
-      // Cai no metodo antigo abaixo.
+      // Falls back to the legacy method below.
     }
     try {
       const area = document.createElement('textarea');
@@ -104,7 +104,7 @@ export const clipboard = {
     }
   },
 
-  /** Le o conteudo da area de transferencia, quando o usuario permitir. */
+  /** Read clipboard content, when the user allows. */
   async read(): Promise<string> {
     try {
       return await navigator.clipboard.readText();
@@ -115,17 +115,17 @@ export const clipboard = {
 };
 
 // ---------------------------------------------------------------------------
-// Registro
+// Registry
 // ---------------------------------------------------------------------------
 
 let installed = false;
 
-/** Registra todas as variaveis magicas e liga os observadores do navegador. */
+/** Register all magic variables and connect browser observers. */
 export function installMagics(): void {
   if (installed) return;
   installed = true;
 
-  // Contexto do elemento e do escopo.
+  // Element and scope context.
   magic('$el', (scope: Scope) => scope.el);
   magic('$refs', (scope: Scope) => scope.allRefs);
   magic('$data', (scope: Scope) => scope.data);
@@ -133,10 +133,10 @@ export function installMagics(): void {
   magic('$parent', (scope: Scope) => scope.parent?.data ?? null);
   magic('$self', (scope: Scope) => scope.owner?.component ?? scope.data);
 
-  // Estado global.
+  // Global state.
   magic('$store', () => allStores);
 
-  // Servicos.
+  // Services.
   magic('$http', () => http);
   magic('$toast', () => toast);
   magic('$clipboard', () => clipboard);
@@ -148,11 +148,11 @@ export function installMagics(): void {
   magic('$theme', () => theme);
   magic('$device', () => device);
 
-  // Ambiente reativo.
+  // Reactive environment.
   magic('$screen', () => screen);
   magic('$network', () => network);
 
-  // Utilidades de fluxo.
+  // Flow utilities.
   magic('$nextTick', () => nextTick);
   magic('$watch', (scope: Scope) => (expression: string, callback: (v: unknown, o: unknown) => void) =>
     watch(() => evaluateIn(expression, scope, '$watch'), callback)

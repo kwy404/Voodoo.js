@@ -1,12 +1,12 @@
 /**
  * @module http
  *
- * Cliente HTTP construido sobre `fetch`, com a ergonomia do Axios e nenhuma
- * dependencia. Suporta interceptadores, timeout, retry com espera progressiva,
- * cache de resposta, cancelamento, progresso de upload e fila offline.
+ * HTTP client built on `fetch`, with Axios ergonomics and no dependencies.
+ * Supports interceptors, timeout, retry with progressive backoff, response
+ * caching, cancellation, upload progress, and offline queue.
  *
- * O retry automatico so vale para `GET`, `HEAD` e `OPTIONS`. Nos metodos que
- * mudam estado ele exige opt-in explicito. Veja {@link podeRepetir}.
+ * Automatic retry only applies to `GET`, `HEAD`, and `OPTIONS`. For methods
+ * that change state, it requires explicit opt-in. See {@link podeRepetir}.
  *
  * ```ts
  * const users = await V.http.get<User[]>('/api/users')
@@ -15,46 +15,46 @@
  */
 
 import { parseDuration } from '../utils';
-import { avisarUmaVez } from '../runtime/avisos';
+import { warnOnce } from '../runtime/avisos';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 
 export interface RequestConfig {
   url: string;
   method?: HttpMethod;
-  /** Corpo. Objetos viram JSON, `FormData` e enviado como esta. */
+  /** Body. Objects become JSON, `FormData` is sent as-is. */
   body?: unknown;
-  /** Parametros de query adicionados a URL. */
+  /** Query parameters added to the URL. */
   params?: Record<string, string | number | boolean | null | undefined>;
   headers?: Record<string, string>;
-  /** Milissegundos ate abortar. `0` desliga o timeout. */
+  /** Milliseconds before aborting. `0` disables timeout. */
   timeout?: number;
   /**
-   * Tentativas extras em caso de falha de rede ou erro 5xx.
+   * Extra attempts on network failure or 5xx errors.
    *
-   * Vale sozinho apenas para `GET`, `HEAD` e `OPTIONS`. Nos demais metodos e
-   * preciso liberar a repeticao com `retryUnsafe` ou com um cabecalho
-   * `Idempotency-Key`. Veja {@link podeRepetir}.
+   * Works alone only for `GET`, `HEAD`, and `OPTIONS`. For other methods,
+   * retry must be enabled with `retryUnsafe` or an `Idempotency-Key` header.
+   * See {@link podeRepetir}.
    */
   retry?: number;
-  /** Espera entre tentativas, dobrada a cada rodada. */
+  /** Wait between attempts, doubled each round. */
   retryDelay?: number;
   /**
-   * Libera o `retry` em metodos que mudam estado (`POST`, `PATCH`, `PUT`,
-   * `DELETE`). Use somente quando o servidor tratar a repeticao com seguranca,
-   * seja porque a operacao e naturalmente idempotente, seja porque ela e
-   * desduplicada por uma chave. Enviar `Idempotency-Key` tem o mesmo efeito.
+   * Enables `retry` on state-changing methods (`POST`, `PATCH`, `PUT`,
+   * `DELETE`). Use only when the server handles repetition safely, either
+   * because the operation is naturally idempotent or it is deduplicated by a
+   * key. Sending `Idempotency-Key` has the same effect.
    */
   retryUnsafe?: boolean;
-  /** Tempo de cache da resposta, em ms. Somente para GET. */
+  /** Response cache duration in ms. GET only. */
   cache?: number;
   signal?: AbortSignal;
   credentials?: RequestCredentials;
-  /** Tipo esperado. `auto` decide pelo cabecalho de resposta. */
+  /** Expected type. `auto` decides by response header. */
   responseType?: 'auto' | 'json' | 'text' | 'blob' | 'arrayBuffer' | 'formData';
-  /** Callback de progresso de download, quando o servidor informa o tamanho. */
+  /** Download progress callback when the server reports size. */
   onProgress?: (loaded: number, total: number) => void;
-  /** Guarda a requisicao quando o navegador esta offline e reenvia depois. */
+  /** Queue the request when browser is offline and resend later. */
   offlineQueue?: boolean;
 }
 
@@ -64,7 +64,7 @@ export interface HttpResponse<T = unknown> {
   statusText: string;
   headers: Headers;
   ok: boolean;
-  /** Resposta original, para casos avancados. */
+  /** Original response for advanced cases. */
   raw: Response;
   config: RequestConfig;
 }
@@ -84,7 +84,7 @@ export class HttpError<T = unknown> extends Error {
     return this.response?.status ?? 0;
   }
 
-  /** `true` quando o erro foi de rede, timeout ou cancelamento. */
+  /** `true` when error is network, timeout, or cancellation. */
   get isNetworkError(): boolean {
     return !this.response;
   }
@@ -105,9 +105,9 @@ export interface HttpDefaults {
   retry: number;
   retryDelay: number;
   credentials: RequestCredentials;
-  /** Nome do meta tag lido para enviar o token CSRF automaticamente. */
+  /** Meta tag name read to send CSRF token automatically. */
   csrfMeta: string;
-  /** Cabecalho usado para enviar o token CSRF. */
+  /** Header used to send CSRF token. */
   csrfHeader: string;
 }
 
@@ -127,7 +127,7 @@ const responseInterceptors: ResponseInterceptor[] = [];
 const errorInterceptors: ErrorInterceptor[] = [];
 
 // ---------------------------------------------------------------------------
-// Cache de resposta
+// Response caching
 // ---------------------------------------------------------------------------
 
 interface CacheEntry {
@@ -141,7 +141,7 @@ function cacheKey(config: RequestConfig): string {
   return `${config.method ?? 'GET'} ${buildURL(config)}`;
 }
 
-/** Limpa o cache inteiro ou apenas as entradas que combinam com o padrao. */
+/** Clears entire cache or only entries matching the pattern. */
 export function clearCache(pattern?: string | RegExp): void {
   if (!pattern) {
     responseCache.clear();
@@ -152,7 +152,7 @@ export function clearCache(pattern?: string | RegExp): void {
 }
 
 // ---------------------------------------------------------------------------
-// Fila offline
+// Offline queue
 // ---------------------------------------------------------------------------
 
 const OFFLINE_KEY = 'voodoo:offline-queue';
@@ -177,7 +177,7 @@ function writeQueue(list: QueuedRequest[]): void {
   try {
     localStorage.setItem(OFFLINE_KEY, JSON.stringify(list));
   } catch {
-    // Armazenamento cheio ou bloqueado: a fila simplesmente nao persiste.
+    // Storage full or blocked: the queue simply won't persist.
   }
 }
 
@@ -194,7 +194,7 @@ function enqueueOffline(config: RequestConfig): void {
   writeQueue(list);
 }
 
-/** Reenvia tudo que foi guardado enquanto o navegador estava offline. */
+/** Resends everything queued while the browser was offline. */
 export async function flushOfflineQueue(): Promise<number> {
   if (typeof localStorage === 'undefined') return 0;
   const list = readQueue();
@@ -214,18 +214,18 @@ export async function flushOfflineQueue(): Promise<number> {
       });
       sent++;
     } catch {
-      // Falhou de novo: devolve para a fila o item que falhou e tambem todos os
-      // que ainda nem chegaram a ser tentados, e para por aqui.
+      // Failed again: return the failed item to the queue plus all items that
+      // haven't been attempted yet, then stop.
       //
-      // Ate aqui a devolucao era so do item da vez. Como o escoamento comeca
-      // gravando uma fila vazia, tudo que vinha depois dele era apagado sem
-      // aviso: uma fila de tres requisicoes que falhasse na segunda perdia a
-      // terceira para sempre.
+      // Previously, only the current item was returned. Since flushing starts
+      // by writing an empty queue, everything after it was silently deleted: a
+      // queue of three requests failing on the second one would lose the third
+      // forever.
       //
-      // O que entrou na fila durante o escoamento vai no fim, porque foi
-      // enfileirado depois.
-      const novos = readQueue();
-      writeQueue([...list.slice(index), ...novos]);
+      // Anything added to the queue during flushing goes to the end because it
+      // was enqueued after.
+      const newItems = readQueue();
+      writeQueue([...list.slice(index), ...newItems]);
       break;
     }
   }
@@ -239,7 +239,7 @@ if (typeof window !== 'undefined') {
 }
 
 // ---------------------------------------------------------------------------
-// Montagem da requisicao
+// Request building
 // ---------------------------------------------------------------------------
 
 function buildURL(config: RequestConfig): string {
@@ -309,38 +309,37 @@ async function parseResponse(response: Response, type: RequestConfig['responseTy
 }
 
 /**
- * Metodos que a especificacao define como idempotentes e sem efeito de escrita:
- * repetir um deles chega ao mesmo estado de repetir zero vezes.
+ * Methods that the specification defines as idempotent with no write side effects:
+ * repeating one of them reaches the same state as repeating zero times.
  */
 const METODOS_SEGUROS = new Set<HttpMethod>(['GET', 'HEAD', 'OPTIONS']);
 
-/** `true` quando a requisicao carrega uma chave de desduplicacao. */
+/** `true` when request carries a deduplication key. */
 function temChaveDeIdempotencia(headers: Record<string, string>): boolean {
-  for (const [nome, valor] of Object.entries(headers)) {
-    if (nome.toLowerCase() === 'idempotency-key' && String(valor).trim() !== '') return true;
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === 'idempotency-key' && String(value).trim() !== '') return true;
   }
   return false;
 }
 
 /**
- * Decide se a requisicao pode ser repetida sozinha.
+ * Decides whether the request can retry automatically.
  *
- * Ate a versao 0.2.1 o `retry` valia para qualquer metodo. Isso e perigoso de
- * um jeito silencioso: numa falha de rede o cliente nao sabe se o servidor
- * processou a requisicao e so a resposta se perdeu. Repetir um `POST /pagamento`
- * nessa situacao cobra duas vezes. O prejuizo de repetir demais e maior que o de
- * repetir de menos, entao a repeticao automatica ficou restrita aos metodos que
- * a especificacao garante idempotentes.
+ * Until version 0.2.1, `retry` applied to any method. That is silently
+ * dangerous: on network failure the client doesn't know if the server processed
+ * the request or only the response was lost. Retrying a `POST /payment` in that
+ * situation charges twice. The cost of retrying too much exceeds not retrying
+ * enough, so automatic retry is now limited to methods the specification
+ * guarantees as idempotent.
  *
- * `PUT` e `DELETE` sao idempotentes no papel, mas na pratica muita API os
- * implementa com contador, log de auditoria ou efeito colateral em cada
- * chamada. Por isso eles tambem exigem opt-in, ainda que por uma margem menor
- * de risco.
+ * `PUT` and `DELETE` are idempotent on paper, but in practice many APIs
+ * implement them with counters, audit logs, or side effects on each call.
+ * They also require opt-in, though with lower risk margin.
  *
- * O opt-in tem duas formas: `retryUnsafe: true`, que e quem chama assumindo a
- * responsabilidade, ou um cabecalho `Idempotency-Key`, que e o servidor
- * prometendo desduplicar. Quem depende do comportamento antigo passa
- * `retryUnsafe: true` e volta a ter exatamente o que tinha.
+ * Opt-in has two forms: `retryUnsafe: true`, where the caller assumes
+ * responsibility, or an `Idempotency-Key` header, where the server promises
+ * deduplication. Code relying on the old behavior can pass `retryUnsafe: true`
+ * to get exactly what it had.
  */
 function podeRepetir(
   method: HttpMethod,
@@ -352,19 +351,19 @@ function podeRepetir(
   if (config.retryUnsafe === true) return true;
   if (temChaveDeIdempotencia(headers)) return true;
   if ((config.retry ?? 0) > 0) {
-    avisarUmaVez(
-      `http:retry-inseguro:${method} ${url}`,
-      `retry ignorado em ${method} ${url}: repetir um metodo que muda estado pode ` +
-        'aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. ' +
-        'Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.'
+    warnOnce(
+      `http:retry-unsafe:${method} ${url}`,
+      `retry ignored on ${method} ${url}: retrying a method that changes state may ` +
+        'apply the same operation twice if the response is lost in transit. ' +
+        'Allow with retryUnsafe: true or send an Idempotency-Key header.'
     );
   }
   return false;
 }
 
 /**
- * Executa uma requisicao com toda a pipeline: interceptadores, timeout, retry,
- * cache e tratamento de erro.
+ * Executes a request through the entire pipeline: interceptors, timeout, retry,
+ * cache, and error handling.
  */
 export async function request<T = unknown>(input: RequestConfig): Promise<HttpResponse<T>> {
   let config: RequestConfig = {
@@ -384,13 +383,13 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
 
   const method = (config.method ?? 'GET').toUpperCase() as HttpMethod;
 
-  // Cache somente para leituras.
+  // Cache for reads only.
   if (config.cache && method === 'GET') {
     const entry = responseCache.get(cacheKey(config));
     if (entry && entry.expires > Date.now()) return entry.value as HttpResponse<T>;
   }
 
-  // Offline: guarda e devolve resposta sintetica.
+  // Offline: queue and return synthetic response.
   if (
     config.offlineQueue &&
     typeof navigator !== 'undefined' &&
@@ -424,10 +423,9 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = new AbortController();
 
-    // Sinal vindo de quem chamou. `AbortSignal.any` nao existe em todo motor,
-    // e o caminho de reserva antigo simplesmente ignorava o sinal externo, ou
-    // seja, cancelar a requisicao nao cancelava nada. Repassar o aborto a mao
-    // funciona em qualquer lugar.
+    // Signal from the caller. `AbortSignal.any` doesn't exist in all engines,
+    // and the old fallback simply ignored the external signal—canceling the
+    // request did nothing. Manually forwarding the abort works everywhere.
     const externo = config.signal;
     let repassarAborto: (() => void) | null = null;
     if (externo) {
@@ -472,13 +470,13 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
       };
 
       if (!response.ok) {
-        // 5xx merece nova tentativa. 4xx nao.
+        // 5xx deserves a retry. 4xx does not.
         if (response.status >= 500 && attempt < attempts - 1) {
           await wait((config.retryDelay ?? 500) * 2 ** attempt);
           continue;
         }
         const error = new HttpError(
-          `Requisicao falhou com status ${response.status}`,
+          `Request failed with status ${response.status}`,
           result as HttpResponse,
           config
         );
@@ -515,8 +513,8 @@ export async function request<T = unknown>(input: RequestConfig): Promise<HttpRe
 
   const message =
     (lastError as Error)?.name === 'TimeoutError'
-      ? `Tempo esgotado apos ${config.timeout}ms`
-      : `Falha de rede ao acessar ${url}`;
+      ? `Timeout after ${config.timeout}ms`
+      : `Network failure accessing ${url}`;
   const error = new HttpError(message, undefined, config, lastError);
   for (const interceptor of errorInterceptors) interceptor(error);
   throw error;
@@ -527,12 +525,12 @@ function wait(ms: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
 type ShortcutOptions = Omit<RequestConfig, 'url' | 'method' | 'body'>;
 
-/** Devolve apenas os dados. Use `http.request` quando precisar da resposta completa. */
+/** Returns only the data. Use `http.request` when you need the full response. */
 async function shortcut<T>(config: RequestConfig): Promise<T> {
   const response = await request<T>(config);
   return response.data;
@@ -560,10 +558,10 @@ export const http = {
     return shortcut({ ...options, url, method: 'HEAD' });
   },
 
-  /** Requisicao completa, com status e cabecalhos. */
+  /** Full request with status and headers. */
   request,
 
-  /** Envia arquivos com progresso real, usando XMLHttpRequest. */
+  /** Upload files with real progress using XMLHttpRequest. */
   upload<T = unknown>(
     url: string,
     data: FormData,
@@ -580,7 +578,7 @@ export const http = {
       xhr.open(options.method ?? 'POST', finalUrl);
 
       for (const [key, value] of Object.entries({ ...defaults.headers, ...options.headers })) {
-        if (key.toLowerCase() === 'content-type') continue; // o navegador define o boundary
+        if (key.toLowerCase() === 'content-type') continue; // browser sets boundary
         xhr.setRequestHeader(key, value);
       }
       const token = csrfToken();
@@ -602,22 +600,22 @@ export const http = {
           try {
             data = JSON.parse(xhr.responseText);
           } catch {
-            // Mantem o texto quando o JSON vier quebrado.
+            // Keep text when JSON is malformed.
           }
         }
         if (xhr.status >= 200 && xhr.status < 300) resolve(data as T);
-        else reject(new HttpError(`Upload falhou com status ${xhr.status}`));
+        else reject(new HttpError(`Upload failed with status ${xhr.status}`));
       });
 
-      xhr.addEventListener('error', () => reject(new HttpError('Falha de rede no upload')));
-      xhr.addEventListener('abort', () => reject(new HttpError('Upload cancelado')));
+      xhr.addEventListener('error', () => reject(new HttpError('Network failure during upload')));
+      xhr.addEventListener('abort', () => reject(new HttpError('Upload canceled')));
       options.signal?.addEventListener('abort', () => xhr.abort());
 
       xhr.send(data);
     });
   },
 
-  /** Server-Sent Events com reconexao automatica do proprio navegador. */
+  /** Server-Sent Events with automatic reconnection by the browser. */
   sse(
     url: string,
     handlers: { message?: (data: unknown, event: MessageEvent) => void; error?: (e: Event) => void } = {}
@@ -628,7 +626,7 @@ export const http = {
       try {
         data = JSON.parse(event.data);
       } catch {
-        // Mantem texto puro.
+        // Keep plain text.
       }
       handlers.message?.(data, event);
     });
@@ -636,7 +634,7 @@ export const http = {
     return source;
   },
 
-  /** Le uma resposta em streaming, linha a linha (NDJSON). */
+  /** Read a streaming response line by line (NDJSON). */
   async stream(
     url: string,
     onLine: (line: string) => void,
@@ -691,13 +689,13 @@ export const http = {
     },
   },
 
-  /** Define cabecalhos enviados em toda requisicao. */
+  /** Set headers sent on every request. */
   setHeader(name: string, value: string | null): void {
     if (value === null) delete defaults.headers[name];
     else defaults.headers[name] = value;
   },
 
-  /** Atalho para autenticacao por token. */
+  /** Shortcut for token-based authentication. */
   setToken(token: string | null, scheme = 'Bearer'): void {
     this.setHeader('Authorization', token ? `${scheme} ${token}` : null);
   },

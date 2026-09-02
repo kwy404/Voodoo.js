@@ -1,15 +1,15 @@
 /**
  * @module directives/forms
  *
- * Formulario AJAX declarativo: envia, valida, mostra estado de carregamento,
- * trata erros de validacao do servidor, troca pedacos da pagina, envia arquivos
- * com barra de progresso, salva rascunho sozinho e avisa antes de sair.
+ * Declarative AJAX form: sends, validates, shows loading state,
+ * handles server validation errors, swaps page sections, uploads files
+ * with progress bar, auto-saves drafts, and warns before leaving.
  *
  * ```html
  * <form v-submit="/api/users" v-method="POST" v-validate
- *       v-toast-success="Usuario salvo!" v-reset-success v-redirect="/usuarios">
- *   <input name="nome" v-required>
- *   <button type="submit" :disabled="$form.loading">Salvar</button>
+ *       v-toast-success="User saved!" v-reset-success v-redirect="/users">
+ *   <input name="name" v-required>
+ *   <button type="submit" :disabled="$form.loading">Save</button>
  * </form>
  * ```
  */
@@ -41,27 +41,27 @@ import {
 } from '../forms/validate';
 
 // ---------------------------------------------------------------------------
-// Estado reativo do formulario
+// Reactive form state
 // ---------------------------------------------------------------------------
 
 export interface FormState {
-  /** `true` enquanto uma requisicao do formulario esta em andamento. */
+  /** `true` while a form request is in progress. */
   loading: boolean;
-  /** `true` enquanto o autosave esta gravando. */
+  /** `true` while autosave is saving. */
   saving: boolean;
-  /** `true` depois de uma resposta bem sucedida. */
+  /** `true` after a successful response. */
   success: boolean;
-  /** Campos com erro, indexados pelo `name`. */
+  /** Fields with errors, indexed by `name`. */
   errors: Record<string, string>;
-  /** Mensagem devolvida pelo servidor. */
+  /** Message returned by the server. */
   message: string;
-  /** Corpo da ultima resposta. */
+  /** Body of the last response. */
   data: unknown;
-  /** Status HTTP da ultima resposta. */
+  /** HTTP status of the last response. */
   status: number;
-  /** `true` quando existem alteracoes ainda nao enviadas. */
+  /** `true` when there are unsent changes. */
   dirty: boolean;
-  /** Progresso do upload, de 0 a 100. */
+  /** Upload progress, from 0 to 100. */
   progress: number;
 }
 
@@ -83,7 +83,7 @@ const formStates = new WeakMap<HTMLElement, FormState>();
 const scopeStates = new WeakMap<Scope, FormState>();
 const neutralState = createState();
 
-/** Devolve o estado reativo do elemento, criando na primeira chamada. */
+/** Returns the reactive state of the element, creating one on first call. */
 export function ensureFormState(host: HTMLElement): FormState {
   let state = formStates.get(host);
   if (!state) {
@@ -93,7 +93,7 @@ export function ensureFormState(host: HTMLElement): FormState {
   return state;
 }
 
-/** Estado ja existente do elemento, sem criar um novo. */
+/** Existing state of the element, without creating a new one. */
 export function getFormState(host: HTMLElement): FormState | undefined {
   return formStates.get(host);
 }
@@ -116,7 +116,7 @@ function resolveFormState(scope: Scope): FormState {
     current = current.parent;
   }
 
-  // Ultimo recurso: um unico formulario com estado na pagina.
+  // Last resort: a single form with state on the page.
   if (typeof document !== 'undefined') {
     for (const form of Array.from(document.forms)) {
       const found = formStates.get(form);
@@ -126,18 +126,18 @@ function resolveFormState(scope: Scope): FormState {
   return neutralState;
 }
 
-/** `$form.loading`, `$form.errors`, `$form.success` e companhia. */
+/** `$form.loading`, `$form.errors`, `$form.success` and companions. */
 magic('$form', (scope) => resolveFormState(scope));
 
 // ---------------------------------------------------------------------------
-// Opcoes declaradas em atributos
+// Options declared in attributes
 // ---------------------------------------------------------------------------
 
 const declaredOptions = new WeakMap<HTMLElement, Record<string, string>>();
 
 /**
- * Directives que disparam requisicao. Alem das deste modulo, entram as do
- * modulo `directives/http`, que compartilham as mesmas opcoes.
+ * Directives that trigger requests. Besides those in this module, those in
+ * the `directives/http` module are included, which share the same options.
  */
 const REQUEST_DIRECTIVES = [
   'submit',
@@ -162,8 +162,8 @@ function isRequestHost(el: Element): boolean {
 }
 
 /**
- * Le uma opcao do proprio elemento, do formulario que o contem ou do valor
- * guardado quando a directive de opcao foi processada.
+ * Reads an option from the element itself, from the containing form, or from
+ * the value saved when the option directive was processed.
  */
 export function readOption(el: HTMLElement, name: string): string | null {
   const own = readDirectiveAttr(el, name);
@@ -179,14 +179,14 @@ export function readOption(el: HTMLElement, name: string): string | null {
   return cached ?? null;
 }
 
-/** `true` quando a opcao existe, mesmo sem valor. */
+/** `true` when the option exists, even without a value. */
 export function hasOption(el: HTMLElement, name: string): boolean {
   return readOption(el, name) !== null;
 }
 
 /**
- * Registra uma directive de opcao: ela guarda o valor para o motor de envio e
- * avisa quando foi usada longe de um formulario que faz requisicao.
+ * Registers an option directive: it stores the value for the send engine and
+ * warns when used far from a form that makes requests.
  */
 function defineFormOption(name: string, validate?: (value: string) => string | null): void {
   defineDirective(name, ({ el, expression }) => {
@@ -197,8 +197,8 @@ function defineFormOption(name: string, validate?: (value: string) => string | n
 
     if (!isRequestHost(owner) && !isRequestHost(el)) {
       warn(
-        `${config.prefix}${name} precisa de um elemento com ${config.prefix}submit, ` +
-          `${config.prefix}upload, ${config.prefix}dropzone ou ${config.prefix}autosave.`
+        `${config.prefix}${name} needs an element with ${config.prefix}submit, ` +
+          `${config.prefix}upload, ${config.prefix}dropzone, or ${config.prefix}autosave.`
       );
       return;
     }
@@ -211,7 +211,7 @@ const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'
 
 defineFormOption('method', (value) =>
   value && !HTTP_METHODS.includes(value.trim().toUpperCase())
-    ? `${config.prefix}method recebeu um verbo desconhecido: ${value}`
+    ? `${config.prefix}method received an unknown verb: ${value}`
     : null
 );
 defineFormOption('redirect');
@@ -226,7 +226,7 @@ defineFormOption('toast-error');
 defineFormOption('confirm');
 defineFormOption('form-data');
 
-/** `v-loading` esconde o elemento apontado ate a proxima requisicao comecar. */
+/** `v-loading` hides the pointed element until the next request starts. */
 defineDirective('loading', ({ el, expression }) => {
   const owner = (el.closest('form') as HTMLElement | null) ?? el;
   const bag = declaredOptions.get(owner) ?? {};
@@ -235,14 +235,14 @@ defineDirective('loading', ({ el, expression }) => {
 
   const target = loadingTarget(expression);
   if (!target) {
-    warn(`Elemento de ${config.prefix}loading nao encontrado: ${expression}`);
+    warn(`${config.prefix}loading element not found: ${expression}`);
     return;
   }
   toggleLoadingTarget(target, false);
 });
 
 // ---------------------------------------------------------------------------
-// Estilos
+// Styles
 // ---------------------------------------------------------------------------
 
 const CSS = `
@@ -282,13 +282,13 @@ function ensureStyles(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Auxiliares de requisicao
+// Request helpers
 // ---------------------------------------------------------------------------
 
 interface RequestContext {
-  /** Elemento que declarou a directive e carrega as opcoes. */
+  /** Element that declared the directive and carries the options. */
   host: HTMLElement;
-  /** Formulario usado para serializar e mostrar erros. */
+  /** Form used to serialize and display errors. */
   form: HTMLElement;
   scope: Scope;
   state: FormState;
@@ -298,7 +298,7 @@ function emit(el: Element, name: string, detail: Record<string, unknown>): void 
   el.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
 }
 
-/** Resolve `/api/users/{ user.id }` no escopo atual e aplica a `baseURL`. */
+/** Resolves `/api/users/{ user.id }` in current scope and applies `baseURL`. */
 function resolveUrl(raw: string, scope: Scope): string {
   let url = raw.trim();
   if (url.includes('{')) {
@@ -321,7 +321,7 @@ function messageFrom(data: unknown): string {
   return typeof found === 'string' ? found : '';
 }
 
-/** Achata um objeto em parametros de query, mantendo colchetes nas chaves. */
+/** Flattens an object into query parameters, keeping brackets in keys. */
 function toParams(
   value: unknown,
   prefix = '',
@@ -393,7 +393,7 @@ function setLoading(ctx: RequestContext, on: boolean): void {
   }
 }
 
-/** Executa `v-on-success`, `v-on-error` e `v-on-complete`. */
+/** Executes `v-on-success`, `v-on-error`, and `v-on-complete`. */
 function runCallback(
   ctx: RequestContext,
   option: string,
@@ -416,7 +416,7 @@ function runCallback(
 }
 
 // ---------------------------------------------------------------------------
-// Troca de conteudo com v-target e v-swap
+// Swapping content with v-target and v-swap
 // ---------------------------------------------------------------------------
 
 function swapContent(ctx: RequestContext, data: unknown): void {
@@ -425,7 +425,7 @@ function swapContent(ctx: RequestContext, data: unknown): void {
 
   const target = document.querySelector(selector);
   if (!target) {
-    warn(`Destino de ${config.prefix}target nao encontrado: ${selector}`);
+    warn(`${config.prefix}target destination not found: ${selector}`);
     return;
   }
 
@@ -469,16 +469,16 @@ function swapContent(ctx: RequestContext, data: unknown): void {
       target.replaceWith(...nodes);
       break;
     default:
-      warn(`Modo desconhecido em ${config.prefix}swap: ${mode}`);
+      warn(`Unknown mode in ${config.prefix}swap: ${mode}`);
       return;
   }
 
-  // O HTML recebido tambem ganha directives.
+  // The received HTML also gets directives.
   for (const node of nodes) if (node.nodeType === 1) walk(node, scope);
 }
 
 // ---------------------------------------------------------------------------
-// Resultado da requisicao
+// Request result handling
 // ---------------------------------------------------------------------------
 
 function handleSuccess(ctx: RequestContext, data: unknown, status: number): void {
@@ -499,7 +499,7 @@ function handleSuccess(ctx: RequestContext, data: unknown, status: number): void
 
   const successToast = readOption(host, 'toast-success');
   if (successToast !== null) {
-    toast.success(successToast || state.message || 'Tudo certo!');
+    toast.success(successToast || state.message || 'All set!');
   }
 
   runCallback(ctx, 'on-success', data, { status });
@@ -538,7 +538,7 @@ function handleFailure(ctx: RequestContext, error: unknown): void {
 
   const errorToast = readOption(host, 'toast-error');
   if (errorToast !== null) {
-    toast.error(errorToast || messageFrom(data) || 'Nao foi possivel enviar o formulario.');
+    toast.error(errorToast || messageFrom(data) || 'Could not submit the form.');
   }
 
   runCallback(ctx, 'on-error', data, httpError);
@@ -572,7 +572,7 @@ async function sendForm(ctx: RequestContext, rawUrl: string): Promise<void> {
 
   const confirmMessage = readOption(host, 'confirm');
   if (confirmMessage !== null && typeof window !== 'undefined') {
-    if (!window.confirm(confirmMessage || 'Confirma esta acao?')) return;
+    if (!window.confirm(confirmMessage || 'Confirm this action?')) return;
   }
 
   if (isValidatedForm(form)) {
@@ -627,8 +627,8 @@ defineDirective(
     const form = el;
     const state = ensureFormState(form);
 
-    // Torna `$form` visivel para o conteudo do formulario, mesmo quando o
-    // escopo de dados foi criado por um elemento ancestral.
+    // Makes `$form` visible to the form's content, even when the
+    // data scope was created by an ancestor element.
     const formScope = scope.child({ $form: state }, form);
     scopeStates.set(formScope, state);
     scopeStates.set(scope, state);
@@ -667,7 +667,7 @@ defineDirective(
 );
 
 // ---------------------------------------------------------------------------
-// Barra de progresso
+// Progress bar
 // ---------------------------------------------------------------------------
 
 function progressElement(host: HTMLElement): HTMLElement | null {
@@ -675,11 +675,11 @@ function progressElement(host: HTMLElement): HTMLElement | null {
   if (selector) {
     const found = document.querySelector<HTMLElement>(selector);
     if (found) return found;
-    warn(`Barra de ${config.prefix}progress nao encontrada: ${selector}`);
+    warn(`${config.prefix}progress bar not found: ${selector}`);
     return null;
   }
 
-  // Sem seletor, a Voodoo cria uma barra logo depois do elemento.
+  // Without a selector, Voodoo creates a bar right after the element.
   const existing = host.nextElementSibling;
   if (existing && existing.classList.contains('v-progress')) return existing as HTMLElement;
 
@@ -715,7 +715,7 @@ function paintProgress(target: HTMLElement | null, percent: number, state?: stri
 }
 
 // ---------------------------------------------------------------------------
-// v-upload e v-dropzone
+// v-upload and v-dropzone
 // ---------------------------------------------------------------------------
 
 function buildFileData(host: HTMLElement, files: File[], fieldName: string): FormData {
@@ -724,7 +724,7 @@ function buildFileData(host: HTMLElement, files: File[], fieldName: string): For
   const name = multiple ? (fieldName.endsWith('[]') ? fieldName : `${fieldName}[]`) : fieldName;
   for (const file of files) data.append(name, file);
 
-  // Campos comuns do formulario acompanham o arquivo.
+  // Common form fields accompany the file.
   const owner = host.closest('form');
   if (owner) {
     const extra = serializeForm(owner, { formData: true });
@@ -744,7 +744,7 @@ async function sendFiles(ctx: RequestContext, rawUrl: string, files: File[], fie
 
   const url = resolveUrl(rawUrl, ctx.scope);
   if (!url) {
-    warn(`${config.prefix}upload precisa da URL de destino.`);
+    warn(`${config.prefix}upload needs a destination URL.`);
     return;
   }
 
@@ -784,7 +784,7 @@ async function sendFiles(ctx: RequestContext, rawUrl: string, files: File[], fie
 defineDirective('upload', ({ el, scope, expression, cleanup }) => {
   const input = el as HTMLInputElement;
   if (input.tagName !== 'INPUT' || (input.getAttribute('type') || '').toLowerCase() !== 'file') {
-    warn(`${config.prefix}upload precisa de um <input type="file">.`);
+    warn(`${config.prefix}upload needs an <input type="file">.`);
     return;
   }
   ensureStyles();
@@ -808,7 +808,7 @@ defineDirective('dropzone', ({ el, scope, expression, cleanup }) => {
   el.classList.add('v-dropzone');
   if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
   if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
-  if (!el.textContent?.trim()) el.textContent = 'Arraste arquivos aqui ou clique para escolher';
+  if (!el.textContent?.trim()) el.textContent = 'Drag files here or click to choose';
 
   const form = (el.closest('form') as HTMLElement | null) ?? el;
   const state = ensureFormState(form);
@@ -833,7 +833,7 @@ defineDirective('dropzone', ({ el, scope, expression, cleanup }) => {
     });
   };
 
-  // O contador evita que passar por cima de um filho remova o destaque.
+  // The counter prevents hovering over a child from removing the highlight.
   let depth = 0;
 
   const onDragEnter = (event: DragEvent): void => {
@@ -897,9 +897,9 @@ defineDirective('dropzone', ({ el, scope, expression, cleanup }) => {
 
 const AUTOSAVE_TEXTS: Record<string, string> = {
   idle: '',
-  saving: 'Salvando...',
-  saved: 'Alteracoes salvas',
-  error: 'Nao foi possivel salvar',
+  saving: 'Saving...',
+  saved: 'Changes saved',
+  error: 'Could not save',
 };
 
 function autosaveStatusElement(host: HTMLElement): HTMLElement {
@@ -907,7 +907,7 @@ function autosaveStatusElement(host: HTMLElement): HTMLElement {
   if (selector) {
     const found = document.querySelector<HTMLElement>(selector);
     if (found) return found;
-    warn(`Elemento de ${config.prefix}autosave-status nao encontrado: ${selector}`);
+    warn(`${config.prefix}autosave-status element not found: ${selector}`);
   }
   const existing = host.querySelector<HTMLElement>('.v-autosave-status');
   if (existing) return existing;
@@ -941,7 +941,7 @@ defineDirective('autosave', ({ el, scope, expression, modifiers, cleanup }) => {
   const save = async (): Promise<void> => {
     const url = resolveUrl(expression, scope);
     if (!url) {
-      warn(`${config.prefix}autosave precisa da URL de destino.`);
+      warn(`${config.prefix}autosave needs a destination URL.`);
       return;
     }
     if (state.loading) return;
@@ -997,7 +997,7 @@ defineDirective('autosave', ({ el, scope, expression, modifiers, cleanup }) => {
 defineDirective('guard', ({ el, expression, cleanup }) => {
   const form = (el.tagName === 'FORM' ? el : (el.closest('form') as HTMLElement | null)) ?? el;
   const state = ensureFormState(form);
-  const message = expression.trim() || 'Existem alteracoes que ainda nao foram salvas.';
+  const message = expression.trim() || 'There are unsaved changes.';
 
   const onChange = (): void => {
     state.dirty = true;
@@ -1008,7 +1008,7 @@ defineDirective('guard', ({ el, expression, cleanup }) => {
   const onBeforeUnload = (event: BeforeUnloadEvent): void => {
     if (!state.dirty || state.loading) return;
     event.preventDefault();
-    // Os navegadores atuais mostram um texto proprio, mas exigem o valor.
+    // Modern browsers show their own text, but require the value.
     event.returnValue = message;
   };
 

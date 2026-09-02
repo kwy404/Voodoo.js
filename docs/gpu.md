@@ -1,50 +1,51 @@
 # GPU
 
-> Este módulo tem entrada própria: `voodoojs/dist/gpu.js`. Ele **não** vem no `voodoo.min.js`, nem
-> no `voodoo.core.min.js`, nem no `voodoo.full.min.js`. O motivo está em [Tamanho e
-> distribuição](#tamanho-e-distribuição).
+> This module has its own entry: `voodoojs/dist/gpu.js`. It **does not** come in `voodoo.min.js`,
+> nor in `voodoo.core.min.js`, nor in `voodoo.full.min.js`. The reason is in [Size and
+> distribution](#size-and-distribution).
 
-Uma camada WebGPU para a Voodoo, em duas alturas.
+A WebGPU layer for Voodoo, in two heights.
 
-Em cima, HTML: um `<canvas v-shader>` resolve o caso comum sem uma linha de JavaScript. Embaixo,
-a API `V.gpu`, funções soltas que recebem o contexto como primeiro argumento — sem estado global
-escondido, sem classe para instanciar, sem ordem secreta de inicialização. Você escreve no HTML até
-onde o HTML dá conta, e desce para o JavaScript exatamente onde precisa de controle.
+On top, HTML: a `<canvas v-shader>` solves the common case without a line of JavaScript. Below,
+the `V.gpu` API, loose functions that take the context as the first argument — no hidden global
+state, no class to instantiate, no secret initialization order. You write in HTML as far as HTML
+can go, and drop to JavaScript exactly where you need control.
 
-A regra que manda em tudo: **nada quebra quando não existe WebGPU.** `supported()` devolve `false`,
-`init()` devolve `null`, e todo o resto aceita `null` no lugar do contexto e vira operação vazia.
-Uma página que usa GPU para enfeite não pode cair num navegador que ainda não tem GPU.
+The rule that rules everything: **nothing breaks when WebGPU doesn't exist.** `supported()` returns
+`false`, `init()` returns `null`, and everything else accepts `null` in place of context and
+becomes an empty operation. A page that uses GPU for decoration cannot crash on a browser that
+doesn't yet have GPU.
 
-## Instalação
+## Installation
 
 ```js
 import V from 'voodoojs';
-import 'voodoojs/dist/gpu.js'; // registra v-shader e liga V.gpu
+import 'voodoojs/dist/gpu.js'; // registers v-shader and enables V.gpu
 ```
 
-Ou como plugin, se você preferir declarar:
+Or as a plugin, if you prefer to declare:
 
 ```js
 import { voodooGpu } from 'voodoojs/dist/gpu.js';
 V.use(voodooGpu);
 ```
 
-Para usar só a API, sem a directive, `import { gpu } from 'voodoojs'` já basta e é removido pelo
-tree shaking quando você não usa.
+To use just the API, without the directive, `import { gpu } from 'voodoojs'` is enough and is
+removed by tree shaking when you don't use it.
 
 ## v-shader
 
 ```html
-<canvas v-shader="ondas.wgsl" :set="{ speed: velocidade, tint: cor }"></canvas>
+<canvas v-shader="waves.wgsl" :set="{ speed: speed, tint: color }"></canvas>
 ```
 
-O valor do atributo aceita três origens, decididas por eliminação:
+The attribute value accepts three sources, decided by elimination:
 
-| Escrita | Origem |
+| Writing | Source |
 | --- | --- |
-| `v-shader="ondas.wgsl"` | endereço, buscado com `V.http` |
-| `v-shader="#meu-shader"` | seletor de elemento; o texto de dentro é o shader |
-| `v-shader="@fragment fn f() { ... }"` | WGSL escrito ali mesmo |
+| `v-shader="waves.wgsl"` | address, fetched with `V.http` |
+| `v-shader="#my-shader"` | element selector; text inside is the shader |
+| `v-shader="@fragment fn f() { ... }"` | WGSL written right there |
 
 ```html
 <canvas v-shader="#meu-shader"></canvas>
@@ -66,317 +67,317 @@ O valor do atributo aceita três origens, decididas por eliminação:
 </script>
 ```
 
-Repare no que **não** foi preciso escrever: nenhum `createBuffer`, nenhum `bindGroupLayout`, nenhum
-deslocamento em bytes. A Voodoo lê o WGSL e monta tudo a partir dele.
+Notice what **didn't** need to be written: no `createBuffer`, no `bindGroupLayout`, no byte
+offsets. Voodoo reads the WGSL and builds everything from it.
 
-O `@vertex` também não aparece: quando a fonte não traz um, a Voodoo acrescenta um triângulo que
-cobre a tela inteira e entrega `@location(0) uv` ao fragmento, com o eixo Y para baixo, que é como
-todo mundo espera ler uma imagem. Se você declarar seu próprio `@vertex`, ele é usado no lugar.
+The `@vertex` also doesn't appear: when the source doesn't bring one, Voodoo adds a triangle that
+covers the entire screen and delivers `@location(0) uv` to the fragment, with the Y axis down,
+which is how everyone expects to read an image. If you declare your own `@vertex`, it's used instead.
 
-### :set liga os uniforms ao estado
+### :set binds uniforms to state
 
 ```html
-<div v-data="{ velocidade: 1, cor: '#ff3d8b' }">
-  <canvas v-shader="ondas.wgsl" :set="{ speed: velocidade, tint: cor }"></canvas>
-  <input type="range" min="0" max="4" step="0.1" v-model.number="velocidade" />
+<div v-data="{ speed: 1, color: '#ff3d8b' }">
+  <canvas v-shader="waves.wgsl" :set="{ speed: speed, tint: color }"></canvas>
+  <input type="range" min="0" max="4" step="0.1" v-model.number="speed" />
 </div>
 ```
 
-Quando `velocidade` muda, o uniform é reescrito no buffer e mais nada acontece: o pipeline não é
-recriado, o shader não é recompilado, o canvas não pisca. Cores em hexadecimal (`#ff3d8b`, `#f0a`,
-`#ff00aa80`) viram vetor de canais de 0 a 1 automaticamente, e um número solto preenche o vetor
-inteiro — `escala: 2` chega como `vec3(2, 2, 2)`.
+When `speed` changes, the uniform is rewritten to the buffer and nothing else happens: the pipeline
+isn't recreated, the shader isn't recompiled, the canvas doesn't flicker. Hex colors (`#ff3d8b`,
+`#f0a`, `#ff00aa80`) become a vector of channels 0 to 1 automatically, and a bare number fills the
+whole vector — `scale: 2` arrives as `vec3(2, 2, 2)`.
 
-> `:set` é `v-bind:set`, então o `v-bind` da Voodoo também espelha o valor num atributo `set` no
-> canvas. Ele é inerte, mas aparece no inspetor. Se isso incomodar, use `v-shader-set="{ ... }"`,
-> que faz exatamente a mesma coisa sem tocar no DOM.
+> `:set` is `v-bind:set`, so Voodoo's `v-bind` also mirrors the value to a `set` attribute on the
+> canvas. It's inert, but appears in the inspector. If that bothers you, use `v-shader-set="{ ... }"`,
+> which does exactly the same thing without touching the DOM.
 
-### Relógio implícito
+### Implicit clock
 
-Um shader que declarar qualquer um destes campos no `struct` de uniforms recebe o valor a cada
-quadro, sem configuração nenhuma:
+A shader that declares any of these fields in the uniforms `struct` receives the value every
+frame, with no configuration:
 
-| Campo | Tipo | Valor |
+| Field | Type | Value |
 | --- | --- | --- |
-| `time` | `f32` | segundos desde o primeiro quadro |
-| `delta` | `f32` | segundos desde o quadro anterior, limitado a 0.25 |
-| `frame` | `u32` ou `f32` | número do quadro |
-| `resolution` | `vec2<f32>` | tamanho do buffer do canvas, em pixels reais |
+| `time` | `f32` | seconds since the first frame |
+| `delta` | `f32` | seconds since the previous frame, capped at 0.25 |
+| `frame` | `u32` or `f32` | frame number |
+| `resolution` | `vec2<f32>` | canvas buffer size, in actual pixels |
 
-O limite no `delta` existe para que voltar à aba depois de um minuto não faça a simulação dar um
-salto absurdo. O relógio não zera quando o laço pausa e volta: a animação continua de onde parou.
+The cap on `delta` exists so that coming back to the tab after a minute doesn't make the simulation
+jump absurdly. The clock doesn't reset when the loop pauses and resumes: animation continues from
+where it left off.
 
-### Modificadores
+### Modifiers
 
-| Modificador | Efeito |
+| Modifier | Effect |
 | --- | --- |
-| `.once` | renderiza um quadro só, sem laço |
-| `.visible` | só roda quando o canvas está na viewport, via `IntersectionObserver` |
-| `.paused` | começa parado |
+| `.once` | renders one frame only, no loop |
+| `.visible` | only runs when the canvas is in the viewport, via `IntersectionObserver` |
+| `.paused` | starts paused |
 
 ```html
-<canvas v-shader.visible="fundo.wgsl"></canvas>
+<canvas v-shader.visible="background.wgsl"></canvas>
 <canvas v-shader.once="poster.wgsl"></canvas>
 ```
 
-`.visible` é a diferença entre um fundo animado e uma bateria vazia: um shader de tela cheia rodando
-fora da viewport é trabalho jogado fora. Use sempre que o canvas não for o assunto principal da tela.
+`.visible` is the difference between an animated background and an empty battery: a fullscreen shader
+running outside the viewport is wasted work. Use it whenever the canvas isn't the main focus of the
+screen.
 
-Para pausar a partir do estado, use `v-shader-paused`:
+To pause from state, use `v-shader-paused`:
 
 ```html
-<canvas v-shader="ondas.wgsl" v-shader-paused="!tocando"></canvas>
+<canvas v-shader="waves.wgsl" v-shader-paused="!playing"></canvas>
 ```
 
-### Outros atributos
+### Other attributes
 
-| Atributo | Padrão | Efeito |
+| Attribute | Default | Effect |
 | --- | --- | --- |
-| `v-shader-set` | — | mesmo que `:set`, sem espelhar nada no DOM |
-| `v-shader-paused` | — | expressão reativa que pausa o laço |
-| `v-shader-dpr` | `1,2` | faixa aceita de `devicePixelRatio` |
+| `v-shader-set` | — | same as `:set`, without mirroring anything to the DOM |
+| `v-shader-paused` | — | reactive expression that pauses the loop |
+| `v-shader-dpr` | `1,2` | accepted range of `devicePixelRatio` |
 
-### O estado do canvas
+### Canvas state
 
-A directive escreve o andamento em `data-gpu`, o que dá um gancho de CSS de graça:
+The directive writes the progress to `data-gpu`, which gives a CSS hook for free:
 
-| Valor | Significado |
+| Value | Meaning |
 | --- | --- |
-| `loading` | resolvendo a fonte e abrindo o dispositivo |
-| `ready` | rodando |
-| `paused` | pausado, ou fora da viewport com `.visible` |
-| `error` | fonte não encontrada, ou shader que não compilou |
-| `unsupported` | não há WebGPU |
+| `loading` | resolving the source and opening the device |
+| `ready` | running |
+| `paused` | paused, or outside viewport with `.visible` |
+| `error` | source not found, or shader that didn't compile |
+| `unsupported` | no WebGPU |
 
 ```css
 canvas[data-gpu='loading'] { opacity: 0.4; }
 canvas[data-gpu='error'] { outline: 2px solid var(--v-danger); }
 ```
 
-## Quando não há WebGPU
+## When there's no WebGPU
 
-Este é o caminho mais importante do módulo, porque é o que mais gente vai ver.
+This is the most important path in the module, because it's what most people will see.
 
-1. O canvas ganha `data-gpu="unsupported"`.
-2. O evento `voodoo:gpu-unsupported` sobe pela árvore, com `{ motivo, el }` no `detail`.
-3. O conteúdo que estava **dentro** do `<canvas>` passa a aparecer.
-4. Nada é agendado: nenhum `requestAnimationFrame`, nenhum observador, nenhuma requisição. Nem o
-   `.wgsl` é buscado — não há para quê.
-5. O console recebe um aviso só em modo desenvolvimento (`V.config.devtools = true`). Em produção,
-   silêncio.
+1. The canvas gets `data-gpu="unsupported"`.
+2. The `voodoo:gpu-unsupported` event bubbles up the tree, with `{ reason, el }` in `detail`.
+3. The content that was **inside** the `<canvas>` starts to appear.
+4. Nothing is scheduled: no `requestAnimationFrame`, no observers, no requests. Not even the
+   `.wgsl` is fetched — no point.
+5. The console gets a warning only in development mode (`V.config.devtools = true`). In production,
+   silence.
 
 ```html
-<canvas v-shader="ondas.wgsl">
-  <img src="ondas.png" alt="Ondas coloridas em movimento" />
+<canvas v-shader="waves.wgsl">
+  <img src="waves.png" alt="Colorful waves in motion" />
 </canvas>
 ```
 
-Sobre o item 3, vale explicar o truque: o navegador só mostra os filhos de um `<canvas>` quando ele
-não sabe desenhar canvas nenhum, e não é esse o caso aqui — o canvas funciona, o que falta é WebGPU.
-Então a Voodoo move os filhos para um `<div data-gpu-fallback>` logo depois do canvas e esconde o
-canvas. O conteúdo revelado continua sendo HTML da Voodoo: interpolação e directives ali dentro
-funcionam normalmente. Ao destruir o elemento, tudo volta exatamente para onde estava.
+On point 3, it's worth explaining the trick: the browser only shows children of a `<canvas>` when it
+can't draw canvas at all, and that's not the case here — the canvas works, what's missing is WebGPU.
+So Voodoo moves the children to a `<div data-gpu-fallback>` right after the canvas and hides the
+canvas. The revealed content is still Voodoo HTML: interpolation and directives inside work normally.
+When destroying the element, everything goes back exactly where it was.
 
-Para oferecer outra coisa no lugar:
+To offer something else instead:
 
 ```js
 document.addEventListener('voodoo:gpu-unsupported', (e) => {
-  V.toast.info('Seu navegador ainda não tem WebGPU. Mostrando a versão em vídeo.');
+  V.toast.info('Your browser doesn\'t have WebGPU yet. Showing the video version.');
 });
 ```
 
-### Shader que não compila
+### Shader that doesn't compile
 
-O erro é reportado por `handleError` — o mesmo caminho de `V.onError` — com o log do WGSL, o
-elemento e a linha:
+The error is reported by `handleError` — the same path as `V.onError` — with the WGSL log, the
+element, and the line:
 
 ```
-[Voodoo] erro em V.gpu shader: Error: shader "v-shader <canvas#fundo>" nao compilou:
-  linha 14: unresolved identifier 'sinn'
-  > let onda = sinn(uv.x * 12.0);
+[Voodoo] error in V.gpu shader: Error: shader "v-shader <canvas#background>" did not compile:
+  line 14: unresolved identifier 'sinn'
+  > let wave = sinn(uv.x * 12.0);
 ```
 
-A página não cai. O canvas fica em `data-gpu="error"`.
+The page doesn't crash. The canvas ends up in `data-gpu="error"`.
 
-## A API `V.gpu`
+## The `V.gpu` API
 
 ```js
-V.gpu.supported()                          // boolean, nunca lança
-await V.gpu.init(options?)                 // -> contexto, ou null se não suportado
+V.gpu.supported()                          // boolean, never throws
+await V.gpu.init(options?)                 // -> context, or null if not supported
 V.gpu.surface(gpu, canvas, { dpr?, format?, alpha? })
-V.gpu.effect(gpu, wgsl, { set?, entry? })  // shader de tela cheia; effect.set({ ... })
+V.gpu.effect(gpu, wgsl, { set?, entry? })  // fullscreen shader; effect.set({ ... })
 V.gpu.compute(gpu, wgsl, { set?, workgroups? })
-V.gpu.uniforms(gpu, valoresIniciais)       // .set({ ... }), .destroy()
+V.gpu.uniforms(gpu, initialValues)         // .set({ ... }), .destroy()
 V.gpu.clock(gpu)                           // { time, delta, frame }
 V.gpu.target(gpu, { width, height, format })
-V.gpu.frame(gpu, (frame) => { frame.pass(alvo, ...operacoes) })
-V.gpu.frameLoop(gpu, (frame) => { ... })   // devolve stop()
+V.gpu.frame(gpu, (frame) => { frame.pass(target, ...operations) })
+V.gpu.frameLoop(gpu, (frame) => { ... })   // returns stop()
 V.gpu.destroy(gpu)
-V.gpu.reflect(wgsl)                        // leitura pura do WGSL, sem GPU
+V.gpu.reflect(wgsl)                        // pure WGSL reading, no GPU
 ```
 
-Um exemplo completo:
+A complete example:
 
 ```js
 const gpu = await V.gpu.init();
-if (!gpu) return mostrarVersaoEmVideo();
+if (!gpu) return showVideoVersion();
 
-const tela = V.gpu.surface(gpu, document.querySelector('#fundo'), { dpr: [1, 2], alpha: true });
-const ondas = V.gpu.effect(gpu, wgsl, { set: { speed: 1.4, tint: '#ff3d8b' } });
+const screen = V.gpu.surface(gpu, document.querySelector('#background'), { dpr: [1, 2], alpha: true });
+const waves = V.gpu.effect(gpu, wgsl, { set: { speed: 1.4, tint: '#ff3d8b' } });
 
-const parar = V.gpu.frameLoop(gpu, (frame) => {
-  ondas.set({ time: frame.clock.time });
-  frame.pass(tela, ondas);
+const stop = V.gpu.frameLoop(gpu, (frame) => {
+  waves.set({ time: frame.clock.time });
+  frame.pass(screen, waves);
 });
 
-// mais tarde
-parar();
+// later
+stop();
 V.gpu.destroy(gpu);
 ```
 
 ### surface
 
-`dpr: [min, max]` limita o `devicePixelRatio`: `[1, 2]` significa "acompanhe a tela, mas não passe
-de 2x". O tamanho do buffer é o tamanho em CSS vezes esse fator, sempre dentro do
-`maxTextureDimension2D` do dispositivo. Um `ResizeObserver` mantém isso em dia sozinho — você não
-escuta `resize` nem chama nada.
+`dpr: [min, max]` limits `devicePixelRatio`: `[1, 2]` means "follow the screen, but don't go over 2x".
+The buffer size is the CSS size times that factor, always within the device's `maxTextureDimension2D`.
+A `ResizeObserver` keeps it up to date on its own — you don't listen to `resize` or call anything.
 
-`alpha: true` deixa o canvas transparente (`alphaMode: 'premultiplied'`).
+`alpha: true` makes the canvas transparent (`alphaMode: 'premultiplied'`).
 
-### effect e compute
+### effect and compute
 
-Os dois compilam a partir da fonte, montam o bind group pela reflexão e devolvem um objeto com
-`set()`, `destroy()` e um `reflection` com tudo que foi lido do shader. `ok` diz se o pipeline subiu;
-quando é `false`, desenhar vira operação vazia em vez de exceção.
+Both compile from the source, build the bind group via reflection and return an object with
+`set()`, `destroy()` and a `reflection` with everything read from the shader. `ok` says if the
+pipeline came up; when it's `false`, drawing becomes an empty operation instead of an exception.
 
-`entry` escolhe o ponto de entrada quando o shader tem mais de um. Sem ele, vale o primeiro
-`@fragment` (ou `@compute`) encontrado na fonte.
+`entry` chooses the entry point when the shader has more than one. Without it, the first
+`@fragment` (or `@compute`) found in the source wins.
 
-### frame e frameLoop
+### frame and frameLoop
 
-`frame` grava um encoder, chama o seu callback e envia. `frame.pass(alvo, ...efeitos)` abre um passe
-de renderização no destino — uma `surface` ou um `target` — e executa os efeitos na ordem.
-`frame.compute(...calculos)` faz o mesmo para computação. `frame.clear` é a cor de limpeza, `[r, g,
-b, a]` de 0 a 1, transparente por padrão.
+`frame` records an encoder, calls your callback and sends it. `frame.pass(target, ...effects)` opens
+a render pass on the target — a `surface` or a `target` — and executes the effects in order.
+`frame.compute(...calculations)` does the same for compute. `frame.clear` is the clear color, `[r, g,
+b, a]` from 0 to 1, transparent by default.
 
-`frameLoop` é o mesmo dentro de um `requestAnimationFrame`, e devolve o `stop()`.
+`frameLoop` is the same inside a `requestAnimationFrame`, and returns `stop()`.
 
-## Reflexão de WGSL
+## WGSL reflection
 
-O coração do módulo, e a razão de você não declarar binding na mão. `V.gpu.reflect(wgsl)` é função
-pura sobre texto: não toca no DOM, não precisa de GPU, e roda em qualquer lugar.
+The heart of the module, and the reason you don't declare bindings by hand. `V.gpu.reflect(wgsl)`
+is a pure function on text: it doesn't touch the DOM, doesn't need GPU, and runs anywhere.
 
 ```js
-const info = V.gpu.reflect(fonte);
+const info = V.gpu.reflect(source);
 info.uniform.struct.fields; // [{ name: 'time', offset: 0, type: {...} }, ...]
 info.bindings;              // [{ group: 0, binding: 0, kind: 'uniform', ... }]
-info.entries;               // [{ stage: 'fragment', name: 'pintar' }]
+info.entries;               // [{ stage: 'fragment', name: 'paint' }]
 ```
 
-### O que ela cobre
+### What it covers
 
-- `struct` declarado no próprio arquivo, com o deslocamento de cada campo calculado pelas regras do
-  endereço `uniform` do WGSL. Inclusive a pegadinha clássica: `vec3<f32>` ocupa 12 bytes mas alinha
-  em 16.
-- Escalares (`f32`, `i32`, `u32`, `f16`, `bool`), vetores, matrizes `matCxR` com o preenchimento
-  entre colunas, e arrays de tamanho fixo com passo múltiplo de 16.
-- Os apelidos curtos: `vec3f`, `vec2u`, `mat4x4f`.
-- `@group` e `@binding` nas duas ordens, para `var<uniform>`, `var<storage, read>`,
-  `var<storage, read_write>`, `sampler`, `sampler_comparison`, `texture_*` (com dimensão, tipo de
-  amostragem, profundidade e multisample) e `texture_storage_*`.
-- Structs que citam outros structs, resolvidos em passadas sucessivas.
-- Pontos de entrada `@vertex`, `@fragment` e `@compute`, com `@workgroup_size` antes ou depois do
+- `struct` declared in the file itself, with each field's offset calculated by WGSL `uniform`
+  addressing rules. Including the classic gotcha: `vec3<f32>` takes 12 bytes but aligns to 16.
+- Scalars (`f32`, `i32`, `u32`, `f16`, `bool`), vectors, `matCxR` matrices with padding between
+  columns, and fixed-size arrays with stride multiple of 16.
+- The short aliases: `vec3f`, `vec2u`, `mat4x4f`.
+- `@group` and `@binding` in both orders, for `var<uniform>`, `var<storage, read>`,
+  `var<storage, read_write>`, `sampler`, `sampler_comparison`, `texture_*` (with dimension, sampling
+  type, depth and multisample) and `texture_storage_*`.
+- Structs that reference other structs, resolved in successive passes.
+- Entry points `@vertex`, `@fragment` and `@compute`, with `@workgroup_size` before or after
   `@compute`.
-- Comentários de linha e de bloco, inclusive aninhados, removidos antes de tudo — e sem mexer na
-  contagem de linhas, para o número no erro do compilador continuar batendo com o arquivo.
+- Line and block comments, including nested ones, removed before everything — and without touching
+  line count, so the compiler error number stays in sync with the file.
 
-### O que ela não cobre
+### What it doesn't cover
 
-Isto é limite real, não promessa para depois:
+This is a real limit, not a promise for later:
 
-- **`@align` e `@size` nos membros do struct.** Se você reposicionar campos à mão, os deslocamentos
-  calculados não vão bater. Não use esses atributos em structs que a Voodoo preenche.
-- **Aliases de tipo** (`alias Cor = vec4<f32>;`). O tipo aparece como desconhecido e o campo é
-  ignorado. Escreva o tipo por extenso.
-- **Somente o grupo 0.** Bindings em `@group(1)` e acima são lidos e aparecem em `reflection`, mas o
-  bind group montado automaticamente é só o do grupo 0.
-- **Layout de `storage` usa as regras de `uniform`.** O WGSL é mais frouxo ali (passo de array sem o
-  arredondamento para 16). A reflexão identifica o binding corretamente, mas não escreva buffers de
-  storage a partir dos deslocamentos calculados.
-- **Arrays sem tamanho** dentro de um uniform. O WGSL também não permite, então isso é mais aviso
-  que limite.
-- **Texturas não são ligadas sozinhas.** A reflexão sabe que o shader pede uma textura; qual textura
-  é você quem diz, em `effect(gpu, wgsl, { textures: { nomeNoWgsl: view } })`. O `sampler`, esse sim,
-  é criado sozinho, linear e `clamp-to-edge`.
-- **Formato fixo em `texture_storage`.** O layout gerado assume `rgba8unorm`.
+- **`@align` and `@size` on struct members.** If you reposition fields by hand, the calculated
+  offsets won't match. Don't use these attributes on structs that Voodoo fills.
+- **Type aliases** (`alias Color = vec4<f32>;`). The type appears as unknown and the field is
+  ignored. Write the type out in full.
+- **Only group 0.** Bindings in `@group(1)` and above are read and appear in `reflection`, but the
+  automatically built bind group is only for group 0.
+- **`storage` layout uses `uniform` rules.** WGSL is looser there (array stride without rounding to
+  16). Reflection identifies the binding correctly, but don't write storage buffers from calculated
+  offsets.
+- **Unsized arrays** inside a uniform. WGSL doesn't allow that either, so this is more warning than
+  limit.
+- **Textures aren't bound automatically.** Reflection knows the shader asks for a texture; you say
+  which one, in `effect(gpu, wgsl, { textures: { nameInWgsl: view } })`. The `sampler`, that yes,
+  is created automatically, linear and `clamp-to-edge`.
+- **Fixed format in `texture_storage`.** The generated layout assumes `rgba8unorm`.
 
-Quando a reflexão não dá conta de um shader, o pipeline **não é recusado**: ele volta para o modo
-`layout: 'auto'` do próprio WebGPU. Você perde a inferência automática dos uniforms, mas o shader
-roda. É melhor perder a mágica do que recusar um shader que o driver aceitaria sem reclamar.
+When reflection can't handle a shader, the pipeline **is not refused**: it falls back to WebGPU's own
+`layout: 'auto'` mode. You lose automatic uniform inference, but the shader runs. It's better to lose
+the magic than to refuse a shader that the driver would accept without complaining.
 
-## Modelo de limpeza
+## Cleanup model
 
-Tudo que aloca sabe se soltar, e o contrato é o mesmo do resto da Voodoo
-(`packages/voodoojs/test/cleanup-contract.test.ts`):
+Everything that allocates knows how to free itself, and the contract is the same as the rest of
+Voodoo (`packages/voodoojs/test/cleanup-contract.test.ts`):
 
-| Recurso | Como solta |
+| Resource | How it frees |
 | --- | --- |
-| buffer de uniforms | `uniforms.destroy()` |
-| textura de destino | `target.destroy()` |
-| `ResizeObserver` da superfície | `surface.destroy()` |
-| pipeline e bind group | `effect.destroy()` / `compute.destroy()` |
-| `requestAnimationFrame` | `stop()`, devolvido por `frameLoop` |
-| `IntersectionObserver` de `.visible` | limpeza da directive |
-| dispositivo inteiro | `V.gpu.destroy(gpu)` |
+| uniforms buffer | `uniforms.destroy()` |
+| target texture | `target.destroy()` |
+| surface `ResizeObserver` | `surface.destroy()` |
+| pipeline and bind group | `effect.destroy()` / `compute.destroy()` |
+| `requestAnimationFrame` | `stop()`, returned by `frameLoop` |
+| `.visible` `IntersectionObserver` | directive cleanup |
+| entire device | `V.gpu.destroy(gpu)` |
 
-O contexto guarda tudo que abriu em `gpu.resources`, então `V.gpu.destroy(gpu)` não esquece nada,
-mesmo que você tenha esquecido. Chamar duas vezes não faz mal, e chamar com `null` também não.
+The context keeps track of everything it opened in `gpu.resources`, so `V.gpu.destroy(gpu)` doesn't
+forget anything, even if you did. Calling twice doesn't hurt, and calling with `null` doesn't either.
 
-Ao destruir o elemento de um `v-shader`, o laço para, o observador fecha, o efeito e a superfície se
-soltam, o `data-gpu` some e o DOM volta ao estado original. A directive registra a limpeza antes de
-qualquer alocação, então ela vale igualmente para o caminho com GPU, para o fallback e para o shader
-que nem chegou a compilar.
+When destroying a `v-shader` element, the loop stops, the observer closes, the effect and surface
+free themselves, `data-gpu` disappears, and the DOM returns to its original state. The directive
+registers cleanup before any allocation, so it applies equally to the GPU path, the fallback, and
+the shader that didn't even compile.
 
-O dispositivo é um só por aba: dez canvas com `v-shader` na mesma página compartilham o mesmo
-contexto. Se o dispositivo for perdido — troca de GPU, aba suspensa —, o contexto passa a se
-comportar como se nunca tivesse existido, com um aviso em modo desenvolvimento e nada mais.
+The device is one per tab: ten canvases with `v-shader` on the same page share the same context.
+If the device is lost — GPU switch, tab suspended —, the context starts behaving as if it never
+existed, with a warning in development mode and nothing else.
 
-## Suporte dos navegadores
+## Browser support
 
-Com honestidade, em agosto de 2026:
+Honestly, as of August 2026:
 
-| Navegador | Situação |
+| Browser | Status |
 | --- | --- |
-| Chrome e Edge, desktop | desde a 113, ligado por padrão |
-| Chrome, Android | desde a 121 |
-| Safari 26, macOS e iOS | ligado por padrão |
-| Firefox, Windows | desde a 141 |
-| Firefox, macOS e Linux | atrás de flag em boa parte das versões |
-| Navegadores em máquinas sem driver moderno | sem WebGPU, independente da versão |
+| Chrome and Edge, desktop | since 113, on by default |
+| Chrome, Android | since 121 |
+| Safari 26, macOS and iOS | on by default |
+| Firefox, Windows | since 141 |
+| Firefox, macOS and Linux | behind flag in many versions |
+| Browsers on machines without modern driver | no WebGPU, regardless of version |
 
-Ou seja: a maioria tem, uma fatia real não tem, e essa fatia não é ruído. É por isso que o fallback
-não é detalhe de acabamento neste módulo — ele é metade do projeto.
+That is: most have it, a real chunk doesn't, and that chunk isn't noise. That's why the fallback
+isn't a finishing detail in this module — it's half the project.
 
-## Tamanho e distribuição
+## Size and distribution
 
-Medido no build de 0.2.0, comprimido com gzip:
+Measured in the 0.2.0 build, compressed with gzip:
 
-| Arquivo | Com GPU | Sem GPU |
+| File | With GPU | Without GPU |
 | --- | --- | --- |
 | `voodoo.core.min.js` | — | 44.25 KB |
 | `voodoo.min.js` | — | 80.90 KB |
 | `voodoo.full.min.js` | 135.99 KB | 127.58 KB |
-| `dist/gpu.js` (ESM, código próprio) | 3.07 KB | — |
+| `dist/gpu.js` (ESM, own code) | 3.07 KB | — |
 
-A camada custa **8.41 KB gzip**, e o build completo tem 133 KB de teto. Colocar WebGPU lá dentro
-faria toda página que usa `voodoo.full.min.js` pagar por um recurso de nicho, e estouraria o
-orçamento. Por isso ela tem entrada própria: quem paga por ela é quem usa.
+The layer costs **8.41 KB gzip**, and the complete build has a 133 KB ceiling. Putting WebGPU in
+there would make every page using `voodoo.full.min.js` pay for a niche resource, and would blow
+the budget. That's why it has its own entry: whoever uses it pays for it.
 
-Nos builds ESM as partes comuns saem em chunks compartilhados, então importar `voodoojs` e
-`voodoojs/dist/gpu.js` juntos não duplica o runtime — é um registro de directives só, uma
-reatividade só.
+In ESM builds, common parts come out in shared chunks, so importing `voodoojs` and
+`voodoojs/dist/gpu.js` together doesn't duplicate the runtime — it's one directive registry only,
+one reactivity only.
 
-A consequência honesta: **nos bundles de CDN (`voodoo.min.js` e `voodoo.full.min.js`) a directive
-`v-shader` não existe.** Para usá-la hoje é preciso um bundler. Se a camada GPU passar a valer o
-espaço no build completo, o orçamento é revisto e ela entra — mas isso é uma decisão a tomar com
-número na mão, não de improviso.
+The honest consequence: **in CDN bundles (`voodoo.min.js` and `voodoo.full.min.js`) the `v-shader`
+directive doesn't exist.** To use it today you need a bundler. If the GPU layer ever becomes worth
+the space in the complete build, the budget gets reviewed and it enters — but that's a decision to
+make with numbers in hand, not on the fly.

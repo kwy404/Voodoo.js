@@ -1,77 +1,76 @@
-# Validação
+# Validation
 
-A validação acontece no HTML, com mensagens em português, apresentação automática dos erros e
-suporte a regras assíncronas.
+Validation happens in HTML, with automatic error presentation and support for async rules.
 
 ```html
-<form v-submit="/api/usuarios" v-validate>
-  <label>E-mail <input name="email" v-required v-email></label>
-  <label>CPF <input name="cpf" v-cpf v-error-message="Informe um CPF real."></label>
-  <button>Salvar</button>
+<form v-submit="/api/users" v-validate>
+  <label>Email <input name="email" v-required v-email></label>
+  <label>CPF <input name="cpf" v-cpf v-error-message="Provide a real CPF."></label>
+  <button>Save</button>
 </form>
 ```
 
-## Como funciona
+## How it works
 
-`v-validate` no formulário liga a validação automática de todos os campos que declaram alguma
-regra. A validação nativa do navegador é desligada, para que as mensagens sejam as suas.
+`v-validate` on the form turns on automatic validation for all fields that declare a rule.
+The browser's native validation is disabled so that the messages are yours.
 
-Cada campo é validado quando perde o foco. Depois do primeiro erro, ele passa a revalidar a cada
-tecla, o que dá retorno imediato sem incomodar quem ainda está digitando.
+Each field is validated when it loses focus. After the first error, it revalidates on each keystroke,
+giving immediate feedback without bothering those still typing.
 
-No envio, o formulário inteiro é validado. Se algo reprovar, o envio para, o foco vai para o
-primeiro campo com problema e o evento `voodoo:invalid` é disparado.
+On submission, the entire form is validated. If anything fails, submission stops, focus goes to the
+first field with a problem, and the `voodoo:invalid` event is fired.
 
-Um campo isolado, fora de um formulário validado, também funciona: basta declarar a regra ou usar
-`v-validate` no próprio campo.
+An isolated field, outside a validated form, also works: just declare the rule or use
+`v-validate` on the field itself.
 
-## O que aparece na tela
+## What appears on screen
 
-Quando um campo reprova:
+When a field fails:
 
-- ele ganha a classe `v-invalid` e `aria-invalid="true"`;
-- uma mensagem com `role="alert"` é inserida logo depois dele, com a classe `v-field-error`;
-- `aria-describedby` aponta para a mensagem.
+- it gains the `v-invalid` class and `aria-invalid="true"`;
+- a message with `role="alert"` is inserted right after it, with the `v-field-error` class;
+- `aria-describedby` points to the message.
 
-Quando aprova, ganha `v-valid` e a mensagem é removida. Para mandar a mensagem para outro lugar:
+When it passes, it gains `v-valid` and the message is removed. To send the message elsewhere:
 
 ```html
-<input name="email" v-required v-email v-error-target="#erro-do-email">
-<span id="erro-do-email"></span>
+<input name="email" v-required v-email v-error-target="#email-error">
+<span id="email-error"></span>
 ```
 
-## Regras
+## Rules
 
-Todas existem como directive (`v-nome`) e como `v-validate-nome`.
+All exist as directives (`v-name`) and as `v-validate-name`.
 
-### Presença e formato
+### Presence and format
 
-| Regra | Aceita | O que valida |
+| Rule | Accepts | What it validates |
 | --- | --- | --- |
-| `v-required` | | Campo preenchido. Em checkbox e radio, marcado. Em arquivo, algum escolhido |
-| `v-email` | | Formato de e-mail |
-| `v-url` | | URL válida. Aceita sem protocolo |
-| `v-number` | | Número, entendendo vírgula decimal e separador de milhar |
-| `v-integer` | | Número inteiro |
-| `v-validate-decimal` | casas | Decimal, com no máximo N casas |
-| `v-validate-alpha` | | Apenas letras, com acento |
-| `v-validate-alphanumeric` | | Apenas letras e números |
-| `v-regex` | expressão | Casa com a expressão regular |
+| `v-required` | | Field filled. On checkbox and radio, checked. On file, some chosen |
+| `v-email` | | Email format |
+| `v-url` | | Valid URL. Accepts without protocol |
+| `v-number` | | Number, understanding decimal comma and thousands separator |
+| `v-integer` | | Integer number |
+| `v-validate-decimal` | places | Decimal, with at most N places |
+| `v-validate-alpha` | | Letters only, with accents |
+| `v-validate-alphanumeric` | | Letters and numbers only |
+| `v-regex` | expression | Matches the regular expression |
 
 ```html
 <input v-validate-decimal="2">
-<input v-regex="^[A-Z]{3}-\d{4}$" v-regex-flags="i" v-error-message="Placa inválida.">
+<input v-regex="^[A-Z]{3}-\d{4}$" v-regex-flags="i" v-error-message="Invalid plate.">
 ```
 
-### Tamanho e faixa
+### Size and range
 
-| Regra | Aceita | O que valida |
+| Rule | Accepts | What it validates |
 | --- | --- | --- |
-| `v-minlength` | número | Mínimo de caracteres |
-| `v-maxlength` | número | Máximo de caracteres |
-| `v-min` | número ou data | Valor mínimo |
-| `v-max` | número ou data | Valor máximo |
-| `v-validate-between` | `min,max` | Valor dentro da faixa |
+| `v-minlength` | number | Minimum number of characters |
+| `v-maxlength` | number | Maximum number of characters |
+| `v-min` | number or date | Minimum value |
+| `v-max` | number or date | Maximum value |
+| `v-validate-between` | `min,max` | Value within range |
 
 ```html
 <input v-minlength="3" v-maxlength="60">
@@ -79,46 +78,46 @@ Todas existem como directive (`v-nome`) e como `v-validate-nome`.
 <input v-validate-between="10,100">
 ```
 
-### Comparação
+### Comparison
 
-| Regra | Aceita | O que valida |
+| Rule | Accepts | What it validates |
 | --- | --- | --- |
-| `v-match` | nome, id ou seletor | Igual a outro campo |
-| `v-validate-same` | nome, id ou seletor | Igual a outro campo |
-| `v-validate-different` | nome, id ou seletor | Diferente de outro campo |
-| `v-validate-in` | lista | O valor está entre as opções |
-| `v-validate-notin` | lista | O valor não está entre as opções |
+| `v-match` | name, id or selector | Equal to another field |
+| `v-validate-same` | name, id or selector | Equal to another field |
+| `v-validate-different` | name, id or selector | Different from another field |
+| `v-validate-in` | list | The value is among the options |
+| `v-validate-notin` | list | The value is not among the options |
 
 ```html
-<input type="password" name="senha" v-required>
-<input type="password" name="confirmacao" v-match="senha" v-error-message="As senhas não conferem.">
-<input v-validate-in="pequeno, medio, grande">
+<input type="password" name="password" v-required>
+<input type="password" name="confirm" v-match="password" v-error-message="Passwords don't match.">
+<input v-validate-in="small, medium, large">
 ```
 
-### Datas
+### Dates
 
-| Regra | Aceita | O que valida |
+| Rule | Accepts | What it validates |
 | --- | --- | --- |
-| `v-date` | | Data válida em `dd/mm/aaaa`, `aaaa-mm-dd` ou o que o navegador entender |
-| `v-validate-after` | data, `hoje` ou outro campo | Posterior à referência |
-| `v-validate-before` | data, `hoje` ou outro campo | Anterior à referência |
+| `v-date` | | Valid date in `dd/mm/yyyy`, `yyyy-mm-dd` or what the browser understands |
+| `v-validate-after` | date, `today` or another field | After the reference |
+| `v-validate-before` | date, `today` or another field | Before the reference |
 
 ```html
-<input v-mask="date" v-date v-validate-before="hoje" v-label="Data de nascimento">
-<input name="inicio" v-date>
-<input name="fim" v-date v-validate-after="inicio">
+<input v-mask="date" v-date v-validate-before="today" v-label="Date of birth">
+<input name="start" v-date>
+<input name="end" v-date v-validate-after="start">
 ```
 
-`hoje`, `today`, `now` e `agora` são aceitos como referência.
+`today`, `now` are accepted as reference.
 
-### Brasil
+### Brazil
 
-| Regra | O que valida |
+| Rule | What it validates |
 | --- | --- |
-| `v-cpf` | CPF com cálculo real dos dígitos verificadores |
-| `v-cnpj` | CNPJ com cálculo real dos dígitos verificadores |
-| `v-cep` | CEP com oito dígitos |
-| `v-phone` | Telefone fixo ou celular, com DDD válido |
+| `v-cpf` | CPF with real check digit calculation |
+| `v-cnpj` | CNPJ with real check digit calculation |
+| `v-cep` | CEP with eight digits |
+| `v-phone` | Landline or mobile phone, with valid area code |
 
 ```html
 <input v-mask="cpf" v-cpf>
@@ -127,29 +126,28 @@ Todas existem como directive (`v-nome`) e como `v-validate-nome`.
 <input v-mask="phone" v-phone>
 ```
 
-### Outras
+### Others
 
-| Regra | Aceita | O que valida |
+| Rule | Accepts | What it validates |
 | --- | --- | --- |
-| `v-accepted` | | Caixa marcada, ou valor `1`, `true`, `on`, `yes`, `sim` |
-| `v-validate-creditcard` | | Número de cartão pelo algoritmo de Luhn |
-| `v-strong-password` | mínimo de caracteres | Maiúscula, minúscula, número e símbolo. Padrão 8 |
-| `v-validate-unique` | URL | Consulta o servidor para saber se o valor já existe |
+| `v-accepted` | | Checked box, or value `1`, `true`, `on`, `yes` |
+| `v-validate-creditcard` | | Card number by Luhn algorithm |
+| `v-strong-password` | minimum characters | Uppercase, lowercase, number and symbol. Default 8 |
+| `v-validate-unique` | URL | Queries the server to know if the value already exists |
 
 ```html
-<input type="checkbox" name="termos" v-accepted v-error-message="Você precisa aceitar os termos.">
+<input type="checkbox" name="terms" v-accepted v-error-message="You must accept the terms.">
 <input v-mask="card" v-validate-creditcard>
 <input type="password" v-strong-password="10">
 ```
 
-### Apelidos aceitos
+### Accepted aliases
 
-`strong-password`, `credit-card`, `min-length`, `max-length`, `not-in`, `obrigatorio` e
-`nao-vazio` funcionam como sinônimos das regras correspondentes.
+`strong-password`, `credit-card`, `min-length`, `max-length`, `not-in` work as synonyms for the corresponding rules.
 
-## Atributos nativos também valem
+## Native attributes also count
 
-A biblioteca lê os atributos padrão do HTML e transforma em regras:
+The library reads standard HTML attributes and transforms them into rules:
 
 ```html
 <input required minlength="3" maxlength="20" pattern="[a-z]+">
@@ -158,137 +156,137 @@ A biblioteca lê os atributos padrão do HTML e transforma em regras:
 <input type="url">
 ```
 
-## Desligando uma regra
+## Turning off a rule
 
-`v-required="false"` desliga a regra sem que você precise remover o atributo. Isso ajuda quando o
-HTML é gerado no servidor e a condição é conhecida ali:
+`v-required="false"` turns off the rule without requiring you to remove the attribute. This helps when the
+HTML is generated on the server and the condition is known there:
 
 ```html
 <input name="cnpj" v-cnpj v-required="false">
 ```
 
-O valor é lido do atributo original, então a chave é decidida na renderização e não muda depois.
-Para uma regra que liga e desliga em tempo real, escreva uma regra própria que consulte o estado:
+The value is read from the original attribute, so the decision is made at render time and doesn't change after.
+For a rule that toggles in real time, write your own rule that consults the state:
 
 ```js
-V.validator('cnpjQuandoEmpresa', (valor) => {
-  if (V.scope.tipo !== 'empresa') return true;
-  return valor.trim() !== '' || 'Informe o CNPJ da empresa.';
+V.validator('cnpjWhenCompany', (value) => {
+  if (V.scope.type !== 'company') return true;
+  return value.trim() !== '' || 'Provide the company CNPJ.';
 });
 ```
 
-## Mensagens
+## Messages
 
-As mensagens padrão ficam em `V.messages`, e podem ser trocadas uma a uma ou em bloco:
+Default messages are in `V.messages`, and can be changed one by one or in bulk:
 
 ```js
 Object.assign(V.messages, {
-  required: 'Campo obrigatório.',
-  email: 'Confira o e-mail digitado.',
-  minlength: 'Escreva pelo menos {param} caracteres.',
+  required: 'Required field.',
+  email: 'Check the email you entered.',
+  minlength: 'Write at least {param} characters.',
 });
 ```
 
-Dentro do texto você pode usar:
+Inside the text you can use:
 
-| Marcador | Vira |
+| Marker | Becomes |
 | --- | --- |
-| `{param}` | O parâmetro da regra |
-| `{field}` | O rótulo do campo |
-| `{value}` | O valor digitado |
-| `{min}` e `{max}` | As duas partes de um parâmetro como `10,100` |
+| `{param}` | The rule parameter |
+| `{field}` | The field label |
+| `{value}` | The entered value |
+| `{min}` and `{max}` | The two parts of a parameter like `10,100` |
 
-O rótulo do campo é descoberto nesta ordem: `v-label`, o `<label for>` correspondente, o texto do
-`<label>` em volta, `aria-label`, `placeholder` e por fim o `name`.
+The field label is discovered in this order: `v-label`, the corresponding `<label for>`, the text of the
+`<label>` around it, `aria-label`, `placeholder`, and finally the `name`.
 
-Para uma mensagem específica de um campo:
+For a field-specific message:
 
 ```html
-<input v-cpf v-error-message="Este CPF não confere.">
+<input v-cpf v-error-message="This CPF is invalid.">
 ```
 
-Lista completa das mensagens padrão: `required`, `email`, `url`, `number`, `integer`, `decimal`,
+Full list of default messages: `required`, `email`, `url`, `number`, `integer`, `decimal`,
 `alpha`, `alphanumeric`, `minlength`, `maxlength`, `min`, `max`, `between`, `match`, `regex`,
 `date`, `after`, `before`, `accepted`, `same`, `different`, `in`, `notin`, `phone`, `cpf`, `cnpj`,
 `cep`, `creditcard`, `strongpassword`, `unique`, `invalid`.
 
-## Validação assíncrona
+## Async validation
 
-A regra `unique` consulta o servidor:
-
-```html
-<input name="email" type="email" v-required v-email v-validate-unique="/api/checar-email">
-```
-
-Ou com o atributo dedicado:
+The `unique` rule queries the server:
 
 ```html
-<input name="apelido" v-validate-unique v-unique-url="/api/checar-apelido">
+<input name="email" type="email" v-required v-email v-validate-unique="/api/check-email">
 ```
 
-A biblioteca chama `GET /api/checar-email?value=...&field=email` e espera:
+Or with the dedicated attribute:
 
-- `{ "available": true }` para liberar;
-- `{ "available": false }` para reprovar;
-- resposta vazia ou `null` para liberar;
-- qualquer outro corpo para reprovar, entendendo que o registro existe;
-- status 404 para liberar.
+```html
+<input name="nickname" v-validate-unique v-unique-url="/api/check-nickname">
+```
 
-Falhas de rede nunca travam o envio: a regra libera e deixa o servidor decidir na hora do POST.
+The library calls `GET /api/check-email?value=...&field=email` and expects:
 
-## Regras próprias
+- `{ "available": true }` to pass;
+- `{ "available": false }` to fail;
+- empty response or `null` to pass;
+- any other body to fail, understanding that the record exists;
+- status 404 to pass.
+
+Network failures never block submission: the rule passes and lets the server decide at POST time.
+
+## Custom rules
 
 ```js
-V.validator('par', (valor) => Number(valor) % 2 === 0, 'Informe um número par.');
+V.validator('even', (value) => Number(value) % 2 === 0, 'Provide an even number.');
 ```
 
 ```html
-<input v-validate-par>
+<input v-validate-even>
 ```
 
-A função recebe `(valor, parametro, elemento)` e pode devolver:
+The function receives `(value, parameter, element)` and can return:
 
-- `true` para aprovar;
-- `false` para reprovar com a mensagem padrão;
-- um texto para reprovar com aquela mensagem;
-- uma `Promise` de qualquer um dos três.
+- `true` to pass;
+- `false` to fail with the default message;
+- text to fail with that message;
+- a `Promise` of any of the three.
 
 ```js
-V.validator('cnpjAtivo', async (valor) => {
-  if (!valor) return true;
-  const dados = await V.http.get(`/api/cnpj/${V.unmask(valor)}`);
-  return dados.ativo ? true : 'Este CNPJ está inativo na Receita.';
+V.validator('cnpjActive', async (value) => {
+  if (!value) return true;
+  const data = await V.http.get(`/api/cnpj/${V.unmask(value)}`);
+  return data.active ? true : 'This CNPJ is inactive on the revenue service.';
 });
 ```
 
 ```js
-V.validator('depoisDe', (valor, param, el) => {
-  const outro = document.querySelector(`[name="${param}"]`);
-  return !outro || valor > outro.value || 'Precisa ser depois de ' + outro.value;
+V.validator('after', (value, param, el) => {
+  const other = document.querySelector(`[name="${param}"]`);
+  return !other || value > other.value || 'Must be after ' + other.value;
 });
 ```
 
-Registrar uma regra cria automaticamente a directive `v-validate-<nome>`.
+Registering a rule automatically creates the `v-validate-<name>` directive.
 
-## API por JavaScript
+## JavaScript API
 
 ```js
-const resultado = await V.validate(document.forms[0]);
+const result = await V.validate(document.forms[0]);
 // { valid: true, errors: {} }
 
-const campo = await V.validate(document.querySelector('#email'));
-// { valid: false, message: 'Informe um e-mail válido.', rule: 'email' }
+const field = await V.validate(document.querySelector('#email'));
+// { valid: false, message: 'Provide a valid email.', rule: 'email' }
 
-V.showFieldError(input, 'Mensagem específica');
-V.showFormErrors(form, { email: 'Já cadastrado' });
+V.showFieldError(input, 'Specific message');
+V.showFormErrors(form, { email: 'Already registered' });
 V.clearErrors(form);
 ```
 
-`V.validateForm` é um alias de `V.validate` para formulários.
+`V.validateForm` is an alias of `V.validate` for forms.
 
-## Combinando com máscaras
+## Combining with masks
 
-Máscara e validação se completam. A máscara guia a digitação, a regra confere o conteúdo:
+Mask and validation complement each other. The mask guides typing, the rule validates the content:
 
 ```html
 <input v-mask="cpf" v-cpf v-required>
@@ -297,23 +295,23 @@ Máscara e validação se completam. A máscara guia a digitação, a regra conf
 <input v-mask="date" v-date>
 ```
 
-Com o modificador `.unmask`, o `v-model` recebe o valor limpo enquanto a tela mostra o formatado:
+With the `.unmask` modifier, `v-model` receives the clean value while the screen shows the formatted one:
 
 ```html
 <input v-mask.unmask="cpf" v-model="form.cpf" v-cpf>
 ```
 
-## Acessibilidade
+## Accessibility
 
-O que a biblioteca faz sozinha:
+What the library does automatically:
 
-- `aria-invalid` no campo reprovado;
-- `aria-describedby` ligando o campo à mensagem;
-- `role="alert"` e `aria-live="polite"` na mensagem;
-- foco no primeiro campo com erro depois de um envio reprovado, com rolagem suave que respeita
+- `aria-invalid` on the failed field;
+- `aria-describedby` linking the field to the message;
+- `role="alert"` and `aria-live="polite"` on the message;
+- focus on the first field with error after a failed submission, with smooth scrolling that respects
   `prefers-reduced-motion`;
-- resumo com `role="alert"` no topo quando um erro do servidor não tem campo correspondente.
+- summary with `role="alert"` at the top when a server error has no corresponding field.
 
 ---
 
-Anterior: [Formulários](formularios.md) · Próximo: [Máscaras](mascaras.md)
+Previous: [Forms](formularios.md) · Next: [Masks](mascaras.md)

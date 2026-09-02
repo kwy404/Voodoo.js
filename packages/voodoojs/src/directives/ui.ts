@@ -1,19 +1,18 @@
 /**
  * @module directives/ui
  *
- * Componentes de interface declarativos. Tudo aqui funciona escrevendo apenas
- * HTML: nenhuma linha de JavaScript e necessaria para ter menu suspenso, abas,
- * gaveta lateral, tooltip, paleta de comandos e o resto.
+ * Declarative UI components. Everything here works by writing HTML only:
+ * no JavaScript needed to have dropdowns, tabs, sidebars, tooltips, command palette and more.
  *
  * ```html
- * <button v-dropdown="#menu">Acoes</button>
+ * <button v-dropdown="#menu">Actions</button>
  * <div id="menu" v-dropdown-menu>
- *   <button v-copy="PROMO10">Copiar cupom</button>
+ *   <button v-copy="PROMO10">Copy coupon</button>
  * </div>
  * ```
  *
- * Acessibilidade nao e opcional neste modulo: cada componente cuida de papeis
- * ARIA, navegacao por teclado, foco visivel e fechamento por Escape.
+ * Accessibility is not optional in this module: each component manages ARIA roles,
+ * keyboard navigation, focus visibility, and Escape key closure.
  */
 
 import { queuePostFlush } from '../reactivity';
@@ -38,12 +37,12 @@ import {
   storeOption,
 } from './shared';
 
-// Efeito colateral: registra o sistema de arrastar e soltar, que compartilha os
-// auxiliares de `directives/shared`. Ver `directives/dnd.ts`.
+// Side effect: registers the drag-and-drop system, which shares
+// helpers from `directives/shared`. See `directives/dnd.ts`.
 import './dnd';
 
 // ---------------------------------------------------------------------------
-// Estilos
+// Styles
 // ---------------------------------------------------------------------------
 
 const UI_CSS = `
@@ -153,17 +152,17 @@ const UI_CSS = `
 }
 `;
 
-/** Garante tokens e CSS dos componentes de UI antes do primeiro uso. */
+/** Ensures tokens and CSS for UI components before first use. */
 function ensureUi(): void {
   ensureTokens();
   injectStyle('ui', UI_CSS);
 }
 
 // ---------------------------------------------------------------------------
-// Auxiliares de DOM
+// DOM helpers
 // ---------------------------------------------------------------------------
 
-/** Resolve o alvo de uma directive: seletor informado ou o irmao seguinte. */
+/** Resolves a directive target: specified selector or next sibling. */
 function resolveTarget(el: HTMLElement, expression: string): HTMLElement | null {
   const text = expression.trim();
   if (text) {
@@ -171,19 +170,19 @@ function resolveTarget(el: HTMLElement, expression: string): HTMLElement | null 
       const found = document.querySelector(text);
       if (found) return found as HTMLElement;
     } catch {
-      // Seletor invalido cai no irmao seguinte.
+      // Invalid selector falls back to next sibling.
     }
   }
   return (el.nextElementSibling as HTMLElement | null) ?? null;
 }
 
-/** Garante que o elemento tenha um id, criando um estavel quando faltar. */
+/** Ensures the element has an id, creating a stable one if missing. */
 function ensureId(el: Element, prefix: string): string {
   if (!el.id) el.id = uid(`${prefix}-`);
   return el.id;
 }
 
-/** Descendentes que casam com o seletor e pertencem a esta raiz, sem aninhados. */
+/** Descendants matching the selector that belong to this root, not nested. */
 function ownedBy(root: HTMLElement, childSelector: string, ownerSelector: string): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(childSelector)).filter(
     (el) => el.closest(ownerSelector) === root
@@ -195,14 +194,14 @@ const FOCUSABLE =
   'select:not([disabled]),textarea:not([disabled]),iframe,object,embed,summary,' +
   '[contenteditable="true"],[tabindex]:not([tabindex="-1"])';
 
-/** Elementos focaveis e visiveis dentro de uma raiz. */
+/** Focusable and visible elements within a root. */
 function focusableIn(root: HTMLElement): HTMLElement[] {
   return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
     (el) => !el.hasAttribute('disabled') && el.getClientRects().length > 0
   );
 }
 
-/** Prende o foco dentro da raiz enquanto o usuario navega com Tab. */
+/** Traps focus within the root while user navigates with Tab. */
 function trapTab(root: HTMLElement, event: KeyboardEvent): void {
   const items = focusableIn(root);
   if (!items.length) {
@@ -225,7 +224,7 @@ function trapTab(root: HTMLElement, event: KeyboardEvent): void {
   }
 }
 
-/** Torna clicavel por teclado um elemento que nao e botao nativo. */
+/** Makes keyboard-clickable an element that is not a native button. */
 function makeInteractive(el: HTMLElement, cleanup: (fn: () => void) => void): void {
   const tag = el.tagName;
   if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SUMMARY') {
@@ -248,7 +247,7 @@ function makeInteractive(el: HTMLElement, cleanup: (fn: () => void) => void): vo
 let scrollLocks = 0;
 let savedPaddingRight = '';
 
-/** Trava a rolagem do body compensando a largura da barra de rolagem. */
+/** Locks body scrolling, compensating for scrollbar width. */
 function lockScroll(): void {
   if (scrollLocks++ > 0) return;
   const gap = window.innerWidth - document.documentElement.clientWidth;
@@ -257,7 +256,7 @@ function lockScroll(): void {
   document.body.classList.add('v-scroll-lock');
 }
 
-/** Libera a rolagem quando a ultima camada aberta fecha. */
+/** Unlocks scrolling when the last open layer closes. */
 function unlockScroll(): void {
   if (scrollLocks === 0) return;
   if (--scrollLocks > 0) return;
@@ -265,14 +264,14 @@ function unlockScroll(): void {
   document.body.style.paddingRight = savedPaddingRight;
 }
 
-/** Verifica se um elemento esta escondido no momento. */
+/** Checks if an element is currently hidden. */
 function isHidden(el: HTMLElement): boolean {
   if (el.hasAttribute('hidden')) return true;
   if (el.style.display === 'none') return true;
   return el.isConnected ? getComputedStyle(el).display === 'none' : false;
 }
 
-/** Mostra um elemento, com fade quando o usuario aceita animacao. */
+/** Shows an element, with fade when user prefers animation. */
 function showElement(el: HTMLElement, animated = true): void {
   el.removeAttribute('hidden');
   if (animated && !device.reducedMotion) {
@@ -283,7 +282,7 @@ function showElement(el: HTMLElement, animated = true): void {
   if (getComputedStyle(el).display === 'none') el.style.display = 'block';
 }
 
-/** Esconde um elemento, com fade quando o usuario aceita animacao. */
+/** Hides an element, with fade when user prefers animation. */
 function hideElement(el: HTMLElement, animated = true): void {
   if (animated && !device.reducedMotion) {
     void fadeOut(el);
@@ -292,13 +291,11 @@ function hideElement(el: HTMLElement, animated = true): void {
   el.style.display = 'none';
 }
 
-/**
-/**
 // ---------------------------------------------------------------------------
-// Posicionamento flutuante
+// Floating positioning
 // ---------------------------------------------------------------------------
 
-/** Lados aceitos por tooltip, popover e menu suspenso. */
+/** Sides accepted by tooltip, popover, and dropdown menu. */
 export type FloatingPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 const OPPOSITE: Record<FloatingPlacement, FloatingPlacement> = {
@@ -308,7 +305,7 @@ const OPPOSITE: Record<FloatingPlacement, FloatingPlacement> = {
   right: 'left',
 };
 
-/** Normaliza o texto de um atributo de posicao. */
+/** Normalizes placement attribute text. */
 function parsePlacement(value: string | null, fallback: FloatingPlacement): FloatingPlacement {
   const text = (value || '').trim().toLowerCase();
   if (text === 'top' || text === 'bottom' || text === 'left' || text === 'right') return text;
@@ -316,8 +313,8 @@ function parsePlacement(value: string | null, fallback: FloatingPlacement): Floa
 }
 
 /**
- * Posiciona um elemento flutuante junto de uma ancora. Se nao couber no lado
- * preferido, vira para o lado oposto, e no fim gruda dentro da tela.
+ * Positions a floating element next to an anchor. If it doesn't fit on the
+ * preferred side, flips to the opposite, and finally sticks within the viewport.
  */
 function placeFloating(
   anchor: HTMLElement,
@@ -354,7 +351,7 @@ function placeFloating(
     if (room[other] >= need[other]) {
       side = other;
     } else {
-      // Nenhum lado cabe: fica com o que tem mais folga.
+      // No side fits: pick the one with most clearance.
       for (const key of Object.keys(room) as FloatingPlacement[]) {
         if (room[key] - need[key] > room[side] - need[side]) side = key;
       }
@@ -383,7 +380,7 @@ function placeFloating(
 }
 
 // ---------------------------------------------------------------------------
-// Atalhos de teclado globais
+// Global keyboard shortcuts
 // ---------------------------------------------------------------------------
 
 interface ParsedCombo {
@@ -396,9 +393,9 @@ interface ParsedCombo {
 }
 
 export interface HotkeyOptions {
-  /** Dispara mesmo com o foco dentro de um campo de texto. Padrao `false`. */
+  /** Fires even when focus is in a text field. Default `false`. */
   allowInInput?: boolean;
-  /** Cancela o comportamento padrao do navegador. Padrao `true`. */
+  /** Prevents browser default behavior. Default `true`. */
   preventDefault?: boolean;
 }
 
@@ -431,11 +428,11 @@ const KEY_NAMES: Record<string, string> = {
   question: '?',
 };
 
-/** Verdadeiro em teclados Apple, onde `mod` significa a tecla Command. */
+/** True on Apple keyboards, where `mod` means the Command key. */
 const IS_APPLE =
   typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 
-/** Converte `ctrl+shift+p` na descricao usada na comparacao. */
+/** Converts `ctrl+shift+p` to the description used in comparison. */
 function parseCombo(text: string): ParsedCombo | null {
   const parts = text
     .trim()
@@ -472,20 +469,20 @@ function parseCombo(text: string): ParsedCombo | null {
   return combo;
 }
 
-/** Compara a tecla pressionada com um combo ja interpretado. */
+/** Compares a pressed key with an already-parsed combo. */
 function comboMatches(combo: ParsedCombo, event: KeyboardEvent): boolean {
   if (combo.ctrl !== event.ctrlKey) return false;
   if (combo.alt !== event.altKey) return false;
   if (combo.meta !== event.metaKey) return false;
   if (event.key.toLowerCase() !== combo.key) return false;
 
-  // Simbolos como `?` so existem com Shift, entao a checagem e relaxada.
+  // Symbols like `?` only exist with Shift, so the check is relaxed.
   const shiftImplied = combo.key.length === 1 && !/^[a-z0-9 ]$/.test(combo.key);
   if (shiftImplied) return combo.shift ? event.shiftKey : true;
   return combo.shift === event.shiftKey;
 }
 
-/** Descobre se o foco esta em um campo onde digitar tem prioridade. */
+/** Discovers if focus is in a field where typing has priority. */
 function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null;
   if (!el || typeof el.tagName !== 'string') return false;
@@ -493,7 +490,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return el.isContentEditable === true;
 }
 
-/** Texto para `aria-keyshortcuts`, no formato que os leitores de tela esperam. */
+/** Text for `aria-keyshortcuts`, in the format screen readers expect. */
 function ariaShortcut(combo: ParsedCombo): string {
   const parts: string[] = [];
   if (combo.ctrl) parts.push('Control');
@@ -508,7 +505,7 @@ function onGlobalKeyDown(event: KeyboardEvent): void {
   if (event.defaultPrevented) return;
   const typing = isTypingTarget(event.target);
 
-  // Copia a lista porque um atalho pode registrar ou remover outro.
+  // Copy the list because a hotkey can register or remove another.
   for (const entry of [...hotkeyEntries]) {
     for (const combo of entry.combos) {
       if (!comboMatches(combo, event)) continue;
@@ -521,22 +518,21 @@ function onGlobalKeyDown(event: KeyboardEvent): void {
 }
 
 /**
- * Registra um atalho global de teclado.
+ * Registers a global keyboard shortcut.
  *
  * ```js
- * const parar = V.hotkey('ctrl+k', () => abrirBusca())
- * parar() // remove o atalho
+ * const stop = V.hotkey('ctrl+k', () => openSearch())
+ * stop() // removes the shortcut
  * ```
  *
- * Aceita combinacoes (`ctrl+shift+p`, `alt+1`, `meta+k`, `mod+s`), teclas
- * isoladas (`?`, `Escape`) e varios combos separados por virgula. Combos sem
- * modificador nao disparam quando o foco esta em um campo de texto, para nao
- * atrapalhar quem esta digitando.
+ * Accepts combinations (`ctrl+shift+p`, `alt+1`, `meta+k`, `mod+s`), isolated keys
+ * (`?`, `Escape`) and multiple combos separated by comma. Unmodified combos don't
+ * fire when focus is in a text field, to avoid interfering with typing.
  *
- * @param combo combinacao de teclas
- * @param handler funcao executada quando o atalho e acionado
- * @param options ajustes de comportamento
- * @returns funcao que remove o atalho
+ * @param combo key combination
+ * @param handler function executed when the shortcut is triggered
+ * @param options behavior adjustments
+ * @returns function that removes the shortcut
  */
 export function hotkey(
   combo: string,
@@ -579,12 +575,12 @@ defineDirective('toggle', ({ el, expression, modifiers, cleanup }) => {
   el.setAttribute('aria-controls', ensureId(target, 'v-toggle'));
   makeInteractive(el, cleanup);
 
-  // Estado pretendido, guardado aqui em vez de relido do DOM.
+  // Intended state, stored here instead of re-read from the DOM.
   //
-  // Com animacao, `hideElement` so aplica `display: none` quando o fade
-  // termina. Reler o DOM logo depois do clique devolvia o estado antigo, e o
-  // `aria-expanded` anunciava "expandido" para um painel que o usuario acabara
-  // de fechar. Dois cliques rapidos tambem se anulavam pelo mesmo motivo.
+  // With animation, `hideElement` only applies `display: none` when the fade
+  // completes. Re-reading the DOM right after click returned old state, and
+  // `aria-expanded` would announce "expanded" for a panel the user just closed.
+  // Two rapid clicks also canceled each other for the same reason.
   let aberto = className ? target.classList.contains(className) : !isHidden(target);
 
   const sync = (): void => {
@@ -613,10 +609,10 @@ defineDirective('toggle', ({ el, expression, modifiers, cleanup }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-collapse e v-collapse-toggle
+// v-collapse and v-collapse-toggle
 // ---------------------------------------------------------------------------
 
-/** Controle de um painel que abre e fecha com animacao de altura. */
+/** Controller for a panel that opens and closes with height animation. */
 class Collapse {
   readonly panel: HTMLElement;
   readonly triggers = new Set<HTMLElement>();
@@ -635,7 +631,7 @@ class Collapse {
     this.sync();
   }
 
-  /** Atualiza `aria-expanded` dos gatilhos e avisa quem observa. */
+  /** Updates trigger's `aria-expanded` and notifies observers. */
   sync(): void {
     for (const trigger of this.triggers) {
       trigger.setAttribute('aria-expanded', String(this.open));
@@ -671,7 +667,7 @@ class Collapse {
 
 const collapses = new WeakMap<HTMLElement, Collapse>();
 
-/** Devolve o controle do painel, criando na primeira chamada. */
+/** Returns the panel's controller, creating on first call. */
 function collapseOf(panel: HTMLElement): Collapse {
   let controller = collapses.get(panel);
   if (!controller) collapses.set(panel, (controller = new Collapse(panel)));
@@ -707,10 +703,10 @@ defineDirective('collapse-toggle', ({ el, expression, cleanup }) => {
 defineOption('collapse-duration');
 
 // ---------------------------------------------------------------------------
-// v-dropdown, v-dropdown-menu e v-popover
+// v-dropdown, v-dropdown-menu, and v-popover
 // ---------------------------------------------------------------------------
 
-/** Camada flutuante ligada a um gatilho, base do menu e do popover. */
+/** Floating layer tied to a trigger, base for menu and popover. */
 class Popup {
   readonly trigger: HTMLElement;
   readonly panel: HTMLElement;
@@ -718,7 +714,7 @@ class Popup {
   readonly placement: FloatingPlacement;
   open = false;
   private lastFocus: HTMLElement | null = null;
-  /** Lugar original do painel, para devolver quando a directive e desmontada. */
+  /** Original location of the panel, to restore when directive is unmounted. */
   private readonly homeParent: HTMLElement | null;
   private readonly homeNext: Node | null;
 
@@ -744,7 +740,7 @@ class Popup {
     trigger.setAttribute('aria-expanded', 'false');
   }
 
-  /** Itens navegaveis pelas setas, apenas no modo menu. */
+  /** Items navigable with arrow keys, menu mode only. */
   items(): HTMLElement[] {
     return Array.from(this.panel.querySelectorAll<HTMLElement>('[role="menuitem"]'));
   }
@@ -843,7 +839,7 @@ class Popup {
     else this.show();
   }
 
-  /** Remove listeners e devolve o painel para onde ele estava. */
+  /** Removes listeners and returns the panel to its original location. */
   dispose(): void {
     this.hide();
     document.removeEventListener('pointerdown', this.onDocumentPointerDown, true);
@@ -860,7 +856,7 @@ class Popup {
   }
 }
 
-/** Prepara um menu suspenso: papeis ARIA e itens focaveis. */
+/** Prepares a dropdown menu: ARIA roles and focusable items. */
 function prepareMenu(menu: HTMLElement): void {
   ensureUi();
   menu.classList.add('v-dropdown-menu');
@@ -1197,12 +1193,12 @@ defineOption('accordion-item');
 defineOption('accordion-single');
 
 // ---------------------------------------------------------------------------
-// v-drawer, v-drawer-content, v-drawer-close e v-offcanvas
+// v-drawer, v-drawer-content, v-drawer-close, and v-offcanvas
 // ---------------------------------------------------------------------------
 
-/** Gaveta lateral com backdrop, trava de rolagem e foco preso. */
+/** Sidebar drawer with backdrop, scroll lock, and focus trap. */
 class Drawer {
-  /** Marca o lugar de origem do painel enquanto ele fica no corpo do documento. */
+  /** Marks the original location of the panel while it's in the document body. */
   private origem: Comment | null = null;
 
   readonly panel: HTMLElement;
@@ -1240,7 +1236,7 @@ class Drawer {
     this.hide();
   };
 
-  /** Mantem `aria-expanded` dos gatilhos em dia. */
+  /** Keeps trigger's `aria-expanded` up to date. */
   sync(): void {
     for (const trigger of this.triggers) {
       trigger.setAttribute('aria-expanded', String(this.open));
@@ -1259,10 +1255,10 @@ class Drawer {
     this.backdrop.addEventListener('click', () => this.hide());
     document.body.appendChild(this.backdrop);
 
-    // Leva o painel para o corpo do documento enquanto estiver aberto. Um
-    // ancestral com filter, backdrop-filter, transform, perspective ou contain
-    // vira o bloco de referencia de um elemento fixo, o que desloca a gaveta e
-    // ainda aplica o desfoque do ancestral sobre ela.
+    // Move the panel to the document body while open. An ancestor with
+    // filter, backdrop-filter, transform, perspective, or contain becomes
+    // the containing block for a fixed element, which misaligns the drawer and
+    // applies the ancestor's blur on top of it.
     if (this.panel.parentElement !== document.body) {
       this.origem = document.createComment(' v-drawer ');
       this.panel.parentNode?.insertBefore(this.origem, this.panel);
@@ -1299,7 +1295,7 @@ class Drawer {
       this.backdrop?.remove();
       this.backdrop = null;
 
-      // Devolve o painel para onde ele estava escrito no HTML.
+      // Returns the panel to where it was written in the HTML.
       if (this.origem && this.origem.parentNode) {
         this.origem.parentNode.insertBefore(this.panel, this.origem);
         this.origem.remove();
@@ -1323,7 +1319,7 @@ class Drawer {
 
 const drawers = new WeakMap<HTMLElement, Drawer>();
 
-/** Devolve o controle da gaveta, criando na primeira chamada. */
+/** Returns the drawer's controller, creating on first call. */
 function drawerOf(panel: HTMLElement): Drawer {
   let controller = drawers.get(panel);
   if (!controller) drawers.set(panel, (controller = new Drawer(panel)));
@@ -1335,7 +1331,7 @@ defineDirective('drawer-content', ({ el }) => {
   drawerOf(el);
 });
 
-/** Instala um gatilho que abre e fecha uma gaveta. */
+/** Installs a trigger that opens and closes a drawer. */
 function setupDrawerTrigger(
   el: HTMLElement,
   expression: string,
@@ -1378,7 +1374,7 @@ defineDirective('drawer-close', ({ el, expression, cleanup }) => {
 
   makeInteractive(el, cleanup);
   if (!el.hasAttribute('aria-label') && !el.textContent?.trim()) {
-    el.setAttribute('aria-label', 'Fechar');
+    el.setAttribute('aria-label', 'Close');
   }
 
   const onClick = (event: Event): void => {
@@ -1403,7 +1399,7 @@ defineDirective('theme-toggle', ({ el, cleanup }) => {
     el.setAttribute('aria-pressed', String(dark));
     el.dataset.vTheme = theme.resolved;
     if (!el.hasAttribute('aria-label')) {
-      el.setAttribute('aria-label', dark ? 'Mudar para tema claro' : 'Mudar para tema escuro');
+      el.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
     }
   };
 
@@ -1547,7 +1543,7 @@ defineDirective('scroll-to', ({ el, expression, cleanup }) => {
 
     const top = target.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior });
-    // Move o foco para a secao, senao o teclado continua no menu.
+    // Move focus to the section, otherwise keyboard stays in the menu.
     const focusTarget = target as HTMLElement;
     if (!focusTarget.hasAttribute('tabindex')) focusTarget.setAttribute('tabindex', '-1');
     focusTarget.focus({ preventScroll: true });
@@ -1637,7 +1633,7 @@ defineDirective('sticky', ({ el, expression, cleanup }) => {
 defineOption('sticky-offset');
 
 // ---------------------------------------------------------------------------
-// v-visible e v-infinite-scroll
+// v-visible and v-infinite-scroll
 // ---------------------------------------------------------------------------
 
 defineDirective('visible', ({ el, expression, scope, modifiers, cleanup }) => {
@@ -1681,7 +1677,7 @@ defineDirective('infinite-scroll', ({ el, expression, scope, cleanup }) => {
     const result = callExpression(expression, scope, el, undefined, { page: 'next' });
     const done = (): void => {
       el.removeAttribute('aria-busy');
-      // Pequeno intervalo evita disparo duplo enquanto o DOM cresce.
+      // Small delay prevents double-fire while DOM grows.
       setTimeout(release, 120);
     };
 
@@ -1717,10 +1713,10 @@ defineDirective('infinite-scroll', ({ el, expression, scope, cleanup }) => {
 defineOption('infinite-distance');
 
 // ---------------------------------------------------------------------------
-// v-lazy-src e v-lazy-bg
+// v-lazy-src and v-lazy-bg
 // ---------------------------------------------------------------------------
 
-/** Carrega uma imagem quando o elemento chega perto da area visivel. */
+/** Loads an image when the element gets close to the visible area. */
 function setupLazy(
   el: HTMLElement,
   source: string,
@@ -1824,10 +1820,10 @@ defineDirective('skeleton', ({ el, expression, effect, evaluate, cleanup }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-copy e v-copy-from
+// v-copy and v-copy-from
 // ---------------------------------------------------------------------------
 
-/** Copia texto usando a API moderna, com plano B para navegadores antigos. */
+/** Copies text using the modern API, with fallback for older browsers. */
 async function copyText(text: string): Promise<boolean> {
   try {
     if (navigator.clipboard?.writeText) {
@@ -1835,7 +1831,7 @@ async function copyText(text: string): Promise<boolean> {
       return true;
     }
   } catch {
-    // Sem permissao ou fora de contexto seguro: cai no plano B.
+    // No permission or outside secure context: fall back to plan B.
   }
   try {
     const area = document.createElement('textarea');
@@ -1852,17 +1848,17 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-/** Mostra a confirmacao visual e sonora da copia por um instante. */
+/** Shows visual and audio confirmation of copy for a moment. */
 function flashCopied(el: HTMLElement, ok: boolean): void {
   ensureUi();
-  const label = readOption(el, 'copy-label') || (ok ? 'Copiado!' : 'Nao foi possivel copiar');
+  const label = readOption(el, 'copy-label') || (ok ? 'Copied!' : 'Could not copy');
   el.dataset.vCopyLabel = label;
   el.classList.add(ok ? 'v-copied' : 'v-copy-failed');
   announce(label);
   setTimeout(() => el.classList.remove('v-copied', 'v-copy-failed'), 1600);
 }
 
-/** Le o texto que deve ir para a area de transferencia. */
+/** Reads the text to copy to the clipboard. */
 function copySource(el: HTMLElement, expression: string): string {
   const from = readOption(el, 'copy-from');
   if (from) {
@@ -1898,7 +1894,7 @@ defineDirective('copy-from', ({ el, expression, cleanup }) => {
   ensureUi();
   storeOption(el, 'copy-from', expression);
 
-  // Sem `v-copy` no mesmo elemento, `v-copy-from` sozinho ja funciona.
+  // Without `v-copy` on the same element, `v-copy-from` alone works fine.
   if (hasAttrOf(el, 'copy')) return;
   makeInteractive(el, cleanup);
 
@@ -1922,11 +1918,11 @@ defineOption('copy-label');
 // v-print
 // ---------------------------------------------------------------------------
 
-/** Imprime somente o trecho informado, herdando o CSS da pagina. */
+/** Prints only the specified portion, inheriting the page's CSS. */
 function printElement(target: HTMLElement, title: string): void {
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
-  frame.setAttribute('title', 'Impressao');
+  frame.setAttribute('title', 'Print');
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
 
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"],style'))
@@ -2157,7 +2153,7 @@ defineDirective('resizable', ({ el, expression, cleanup }) => {
       'aria-orientation',
       direction === 'bottom' ? 'horizontal' : 'vertical'
     );
-    handle.setAttribute('aria-label', 'Redimensionar');
+    handle.setAttribute('aria-label', 'Resize');
     startResize(handle, direction);
     el.appendChild(handle);
     handles.push(handle);
@@ -2169,7 +2165,7 @@ defineDirective('resizable', ({ el, expression, cleanup }) => {
 });
 
 // ---------------------------------------------------------------------------
-// v-command e v-command-item
+// v-command and v-command-item
 // ---------------------------------------------------------------------------
 
 interface CommandOption {
@@ -2178,7 +2174,7 @@ interface CommandOption {
   el: HTMLElement;
 }
 
-/** Remove acentos e caixa para comparar textos de busca. */
+/** Removes accents and case for comparing search terms. */
 function normalizeSearch(text: string): string {
   return text
     .normalize('NFD')
@@ -2186,7 +2182,7 @@ function normalizeSearch(text: string): string {
     .toLowerCase();
 }
 
-/** Reune os comandos declarados na pagina com `v-command-item`. */
+/** Collects commands declared on the page with `v-command-item`. */
 function collectCommands(): CommandOption[] {
   const out: CommandOption[] = [];
   for (const item of queryDirective(document, 'command-item')) {
@@ -2199,8 +2195,8 @@ function collectCommands(): CommandOption[] {
 }
 
 /**
- * Abre a paleta de comandos, indexando na hora os elementos marcados com
- * `v-command-item`. Chamar de novo com a paleta aberta nao duplica nada.
+ * Opens the command palette, indexing on-the-fly elements marked with
+ * `v-command-item`. Calling again when palette is open doesn't duplicate.
  */
 export function commandPalette(): void {
   ensureUi();
@@ -2213,7 +2209,7 @@ export function commandPalette(): void {
   overlay.className = 'v-command';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Paleta de comandos');
+  overlay.setAttribute('aria-label', 'Command palette');
 
   const box = document.createElement('div');
   box.className = 'v-command-box';
@@ -2221,8 +2217,8 @@ export function commandPalette(): void {
   const input = document.createElement('input');
   input.className = 'v-command-input';
   input.type = 'search';
-  input.placeholder = 'Buscar comando...';
-  input.setAttribute('aria-label', 'Buscar comando');
+  input.placeholder = 'Search command...';
+  input.setAttribute('aria-label', 'Search command');
   input.setAttribute('role', 'combobox');
   input.setAttribute('aria-expanded', 'true');
   input.setAttribute('autocomplete', 'off');
@@ -2260,7 +2256,7 @@ export function commandPalette(): void {
     if (!visible.length) {
       const empty = document.createElement('li');
       empty.className = 'v-command-empty';
-      empty.textContent = 'Nenhum comando encontrado';
+      empty.textContent = 'No command found';
       list.appendChild(empty);
       return;
     }
@@ -2405,7 +2401,7 @@ defineDirective('idle', ({ el, expression, scope, cleanup }) => {
 
   const onActivity = (): void => {
     if (fired) {
-      // Depois de disparar, so rearma quando o usuario volta a interagir.
+      // After firing, only rearms when the user interacts again.
       reset();
       return;
     }
@@ -2426,10 +2422,10 @@ defineDirective('idle', ({ el, expression, scope, cleanup }) => {
 defineOption('idle-after');
 
 // ---------------------------------------------------------------------------
-// v-online e v-offline
+// v-online and v-offline
 // ---------------------------------------------------------------------------
 
-/** Instala a reacao a mudanca de conexao. */
+/** Installs a reaction to connection change. */
 function setupConnection(
   el: HTMLElement,
   expression: string,
@@ -2454,6 +2450,6 @@ defineDirective('online', ({ el, expression, scope, modifiers, cleanup }) => {
 });
 
 defineDirective('offline', ({ el, expression, scope, modifiers, cleanup }) => {
-  // Dispara na montagem por padrao. `.no-immediate` desliga esse primeiro disparo.
+  // Fires on mount by default. `.no-immediate` disables this first firing.
   setupConnection(el, expression, scope, cleanup, 'offline', modifiers['no-immediate'] !== true);
 });

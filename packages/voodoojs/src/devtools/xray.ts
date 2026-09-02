@@ -1,23 +1,23 @@
 /**
  * @module devtools/xray
  *
- * Inspetor visual de reatividade da Voodoo. Roda dentro da propria pagina, sem
- * extensao de navegador e sem servidor.
+ * Visual reactivity inspector for Voodoo. Runs inside the page itself, without
+ * browser extension or server.
  *
- * Ligado, ele contorna todo elemento que tem directives, mostra um cartao com o
- * escopo daquele elemento, abre um painel com abas de estado, componentes,
- * stores, eventos, rede e desempenho, e faz o elemento piscar toda vez que um
- * efeito reativo escreve nele. Esse e o efeito raio-x: da para ver a
- * reatividade acontecendo.
+ * When enabled, it outlines every element with directives, shows a card with
+ * that element's scope, opens a panel with tabs for state, components, stores,
+ * events, network and performance, and flashes the element every time a
+ * reactive effect writes to it. That's the x-ray effect: you can see reactivity
+ * happening.
  *
  * ```js
- * V.xray()            // liga e desliga
- * V.xray(true)        // forca ligar
+ * V.xray()            // toggle
+ * V.xray(true)        // force enable
  * ```
  *
- * O modulo nao registra nada ao ser importado. Nenhum listener, nenhum estilo e
- * nenhum timer existe antes da primeira chamada, entao ele e tree shakeable e
- * nao custa nada em producao.
+ * The module registers nothing when imported. No listeners, no styles, and no
+ * timers exist before the first call, so it's tree-shakeable and costs nothing
+ * in production.
  */
 
 import type { EffectScope, ReactiveEffect } from '../reactivity';
@@ -50,7 +50,7 @@ export type {
 } from './bus';
 
 // ---------------------------------------------------------------------------
-// Tipos internos
+// Internal types
 // ---------------------------------------------------------------------------
 
 type TabName = 'estado' | 'componentes' | 'stores' | 'eventos' | 'rede' | 'desempenho';
@@ -90,7 +90,7 @@ interface ScopeEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Estado do inspetor
+// Inspector state
 // ---------------------------------------------------------------------------
 
 const FLASH_CLASS = 'v-xray-flash';
@@ -127,7 +127,7 @@ let frameRequest = 0;
 let hoverTarget: Element | null = null;
 
 // ---------------------------------------------------------------------------
-// CSS do painel
+// Panel CSS
 // ---------------------------------------------------------------------------
 
 const XRAY_CSS = `
@@ -445,7 +445,7 @@ const XRAY_CSS = `
 `;
 
 // ---------------------------------------------------------------------------
-// Utilitarios de DOM
+// DOM utilities
 // ---------------------------------------------------------------------------
 
 function h<K extends keyof HTMLElementTagNameMap>(
@@ -459,16 +459,16 @@ function h<K extends keyof HTMLElementTagNameMap>(
   return el;
 }
 
-/** `true` quando o no faz parte do proprio inspetor. */
+/** `true` when the node is part of the inspector itself. */
 function isXrayNode(node: Node | null): boolean {
   if (!node || !refs) return false;
   const el = node.nodeType === 1 ? (node as Element) : node.parentElement;
   return !!el && refs.root.contains(el);
 }
 
-/** Descricao curta de um elemento, no formato `div.card#topo`. */
+/** Short description of an element, formatted like `div.card#top`. */
 function describeElement(el: Element | null): string {
-  if (!el) return '(sem elemento)';
+  if (!el) return '(no element)';
   const tag = el.tagName.toLowerCase();
   const id = el.id ? `#${el.id}` : '';
   const cls = typeof el.className === 'string' && el.className
@@ -477,12 +477,12 @@ function describeElement(el: Element | null): string {
   return `${tag}${id}${cls}`;
 }
 
-/** Texto curto para exibir qualquer valor sem quebrar o painel. */
+/** Short text to display any value without breaking the panel. */
 function preview(value: unknown, max = 64): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   const type = typeof value;
-  if (type === 'function') return 'funcao()';
+  if (type === 'function') return 'function()';
   if (type === 'string') return `"${truncate(value as string, max)}"`;
   if (type === 'number' || type === 'boolean') return String(value);
   if (type === 'symbol') return String(value);
@@ -496,7 +496,7 @@ function preview(value: unknown, max = 64): string {
   }
 }
 
-/** Valor mostrado dentro do campo editavel. */
+/** Value shown inside the editable field. */
 function editable(value: unknown): string {
   if (typeof value === 'string') return value;
   try {
@@ -506,7 +506,7 @@ function editable(value: unknown): string {
   }
 }
 
-/** Converte o texto digitado no painel de volta para um valor. */
+/** Converts text typed in the panel back to a value. */
 function parseEdited(raw: string, previous: unknown): unknown {
   if (typeof previous === 'string') return raw;
   try {
@@ -523,7 +523,7 @@ function timeLabel(at: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Efeitos: contagem e instrumentacao
+// Effects: counting and instrumentation
 // ---------------------------------------------------------------------------
 
 function collectEffects(scope: EffectScope, out: ReactiveEffect[]): void {
@@ -531,7 +531,7 @@ function collectEffects(scope: EffectScope, out: ReactiveEffect[]): void {
   for (const child of scope.children) collectEffects(child, out);
 }
 
-/** Efeitos reativos ligados a um no, incluindo os dos escopos filhos. */
+/** Reactive effects bound to a node, including those from child scopes. */
 function effectsOf(node: Node): ReactiveEffect[] {
   const out: ReactiveEffect[] = [];
   for (const scope of getEffectScopes(node)) collectEffects(scope, out);
@@ -539,8 +539,8 @@ function effectsOf(node: Node): ReactiveEffect[] {
 }
 
 /**
- * Quantos efeitos reativos dependem de um elemento. Conta os efeitos das
- * directives do proprio elemento e os dos textos interpolados filhos diretos.
+ * How many reactive effects depend on an element. Counts effects from the
+ * element's own directives and from text interpolations in direct children.
  */
 export function countEffects(el: Element): number {
   let total = effectsOf(el).length;
@@ -550,7 +550,7 @@ export function countEffects(el: Element): number {
   return total;
 }
 
-/** Faz o elemento piscar, deixando a atualizacao reativa visivel. */
+/** Makes the element flash, making the reactive update visible. */
 function flash(el: Element | null): void {
   if (!el || !enabled || isXrayNode(el)) return;
   const previous = flashTimers.get(el);
@@ -562,16 +562,16 @@ function flash(el: Element | null): void {
   const timer = window.setTimeout(() => {
     el.classList.remove(FLASH_CLASS);
     flashTimers.delete(el);
-    // Sai do conjunto so no proximo ciclo, para o observer ignorar a remocao.
+    // Leaves the set only in the next cycle, so the observer ignores the removal.
     window.setTimeout(() => flashing.delete(el), 0);
   }, 460);
   flashTimers.set(el, timer);
 }
 
 /**
- * Envolve a funcao de cada efeito do no para contar execucoes e piscar o
- * elemento correspondente. A funcao original e guardada e devolvida quando o
- * inspetor e desligado.
+ * Wraps each effect's function on a node to count executions and flash the
+ * corresponding element. The original function is saved and returned when the
+ * inspector is disabled.
  */
 function instrument(node: Node, owner: Element): void {
   for (const item of effectsOf(node)) {
@@ -591,7 +591,7 @@ function restoreEffects(): void {
   patchedEffects.clear();
 }
 
-/** Percorre a pagina instrumentando efeitos novos e limpando os mortos. */
+/** Scans the page instrumenting new effects and cleaning up dead ones. */
 function scanDocument(): void {
   if (!enabled || typeof document === 'undefined') return;
 
@@ -608,7 +608,7 @@ function scanDocument(): void {
     if (node.nodeType === 1) {
       const el = node as Element;
       if (refs && refs.root.contains(el)) {
-        // Nao inspeciona o proprio inspetor.
+        // Don't inspect the inspector itself.
         node = skipSubtree(walker);
         continue;
       }
@@ -622,7 +622,7 @@ function scanDocument(): void {
   refreshOutlines();
 }
 
-/** Pula a subarvore atual do TreeWalker e devolve o proximo no. */
+/** Skips the current subtree in the TreeWalker and returns the next node. */
 function skipSubtree(walker: TreeWalker): Node | null {
   const current = walker.currentNode;
   let next = walker.nextSibling();
@@ -638,32 +638,32 @@ function skipSubtree(walker: TreeWalker): Node | null {
 }
 
 // ---------------------------------------------------------------------------
-// Contornos
+// Outlines
 // ---------------------------------------------------------------------------
 
-/** Lista os elementos inspecionaveis: os que declaram alguma directive. */
+/** Lists inspectable elements: those that declare some directive. */
 function inspectableElements(): Element[] {
   const out: Element[] = [];
   const all = document.body.querySelectorAll('*');
   for (let i = 0; i < all.length && out.length < MAX_OUTLINES; i++) {
     const el = all[i];
     if (refs && refs.root.contains(el)) continue;
-    // `hadDirectives` e nao `hasDirectives`: com a limpeza de atributos ligada
-    // o HTML ja nao tem mais os `v-*`, e so o cache sabe quem tinha.
+    // `hadDirectives` not `hasDirectives`: with attribute cleanup enabled,
+    // the HTML no longer has the `v-*`, and only the cache knows who had them.
     if (!hadDirectives(el)) continue;
     out.push(el);
   }
   return out;
 }
 
-/** Nomes das directives declaradas em um elemento, sem prefixo. */
+/** Names of directives declared on an element, without prefix. */
 function directiveNames(el: Element): string[] {
   return collectDirectives(el).map((attr) =>
     attr.arg ? `${attr.name}:${attr.arg}` : attr.name
   );
 }
 
-/** Recria as caixas de contorno a partir do DOM atual. */
+/** Recreates outline boxes from the current DOM. */
 function refreshOutlines(): void {
   if (!enabled || !refs) return;
   const overlay = refs.overlay;
@@ -683,7 +683,7 @@ function refreshOutlines(): void {
   positionOutlines();
 }
 
-/** Reposiciona as caixas sobre os elementos. Chamado em scroll e resize. */
+/** Repositions boxes over elements. Called on scroll and resize. */
 function positionOutlines(): void {
   if (!enabled) return;
   for (const item of outlined) {
@@ -713,10 +713,10 @@ function scheduleReposition(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Cartao de inspecao
+// Inspection card
 // ---------------------------------------------------------------------------
 
-/** Variaveis visiveis em um escopo, subindo toda a cadeia ate a raiz. */
+/** Variables visible in a scope, walking the entire chain to the root. */
 function visibleVariables(scope: Scope, limit = 40): Array<[string, unknown]> {
   const seen = new Set<string>();
   const out: Array<[string, unknown]> = [];
@@ -736,7 +736,7 @@ function visibleVariables(scope: Scope, limit = 40): Array<[string, unknown]> {
       try {
         value = current.data[key];
       } catch {
-        value = '(erro de leitura)';
+        value = '(read error)';
       }
       out.push([key, value]);
       if (out.length >= limit) break;
@@ -760,25 +760,25 @@ function buildCard(el: Element): void {
   card.appendChild(h('span', 'v-xray-section', 'Directives'));
   const names = collectDirectives(el);
   if (!names.length) {
-    card.appendChild(h('div', 'v-xray-val', 'nenhuma'));
+    card.appendChild(h('div', 'v-xray-val', 'none'));
   } else {
     for (const attr of names) {
       const row = h('div', 'v-xray-row');
       row.appendChild(h('span', 'v-xray-key', attr.raw));
-      row.appendChild(h('span', 'v-xray-val', attr.expression || '(sem valor)'));
+      row.appendChild(h('span', 'v-xray-val', attr.expression || '(no value)'));
       card.appendChild(row);
     }
   }
 
-  card.appendChild(h('span', 'v-xray-section', 'Componente'));
+  card.appendChild(h('span', 'v-xray-section', 'Component'));
   card.appendChild(
-    h('div', 'v-xray-val', owner ? `${owner.$name} em ${describeElement(owner.$el)}` : 'nenhum')
+    h('div', 'v-xray-val', owner ? `${owner.$name} in ${describeElement(owner.$el)}` : 'none')
   );
 
-  card.appendChild(h('span', 'v-xray-section', 'Escopo'));
+  card.appendChild(h('span', 'v-xray-section', 'Scope'));
   const variables = visibleVariables(scope);
   if (!variables.length) {
-    card.appendChild(h('div', 'v-xray-val', 'escopo raiz vazio'));
+    card.appendChild(h('div', 'v-xray-val', 'root scope empty'));
   } else {
     for (const [key, value] of variables) {
       const row = h('div', 'v-xray-row');
@@ -788,9 +788,9 @@ function buildCard(el: Element): void {
     }
   }
 
-  card.appendChild(h('span', 'v-xray-section', 'Reatividade'));
+  card.appendChild(h('span', 'v-xray-section', 'Reactivity'));
   card.appendChild(
-    h('div', 'v-xray-val', `${countEffects(el)} efeito(s) dependem deste elemento`)
+    h('div', 'v-xray-val', `${countEffects(el)} effect(s) depend on this element`)
   );
 }
 
@@ -833,10 +833,10 @@ function onPointerMove(event: MouseEvent): void {
 }
 
 // ---------------------------------------------------------------------------
-// Aba Estado
+// State tab
 // ---------------------------------------------------------------------------
 
-/** Todos os escopos presentes na pagina, em ordem de documento. */
+/** All scopes present on the page, in document order. */
 function collectScopes(): ScopeEntry[] {
   const owners = new Map<Element, Scope>();
   const all = document.body.querySelectorAll('*');
@@ -860,7 +860,7 @@ function collectScopes(): ScopeEntry[] {
   return out;
 }
 
-/** Linha de chave e valor, editavel quando o valor e simples. */
+/** Key-value row, editable when the value is simple. */
 function valueRow(
   key: string,
   value: unknown,
@@ -870,7 +870,7 @@ function valueRow(
   row.appendChild(h('span', 'v-xray-key', key));
 
   if (typeof value === 'function') {
-    row.appendChild(h('span', 'v-xray-val', 'funcao()'));
+    row.appendChild(h('span', 'v-xray-val', 'function()'));
     return row;
   }
 
@@ -898,7 +898,7 @@ function renderStateTab(): DocumentFragment {
   const scopes = collectScopes();
 
   if (!scopes.length) {
-    frag.appendChild(h('span', 'v-xray-empty', 'Nenhum escopo na pagina. Use v-data ou um componente.'));
+    frag.appendChild(h('span', 'v-xray-empty', 'No scopes on the page. Use v-data or a component.'));
     return frag;
   }
 
@@ -907,7 +907,7 @@ function renderStateTab(): DocumentFragment {
     group.style.marginLeft = `${Math.min(entry.depth, 4) * 8}px`;
 
     const head = h('div', 'v-xray-group-head');
-    head.appendChild(h('span', 'v-xray-badge', entry.scope.component ? 'componente' : 'escopo'));
+    head.appendChild(h('span', 'v-xray-badge', entry.scope.component ? 'component' : 'scope'));
     head.appendChild(h('span', undefined, describeElement(entry.el)));
     head.addEventListener('click', () => highlight(entry.el));
     group.appendChild(head);
@@ -921,7 +921,7 @@ function renderStateTab(): DocumentFragment {
     }
 
     if (!keys.length) {
-      rows.appendChild(h('span', 'v-xray-empty', 'sem variaveis'));
+      rows.appendChild(h('span', 'v-xray-empty', 'no variables'));
     } else {
       for (const key of keys) {
         let value: unknown;
@@ -946,7 +946,7 @@ function renderStateTab(): DocumentFragment {
 }
 
 // ---------------------------------------------------------------------------
-// Aba Componentes
+// Components tab
 // ---------------------------------------------------------------------------
 
 function renderComponentsTab(): DocumentFragment {
@@ -954,7 +954,7 @@ function renderComponentsTab(): DocumentFragment {
   const list = [...instances];
 
   if (!list.length) {
-    frag.appendChild(h('span', 'v-xray-empty', 'Nenhum componente montado.'));
+    frag.appendChild(h('span', 'v-xray-empty', 'No components mounted.'));
     return frag;
   }
 
@@ -964,7 +964,7 @@ function renderComponentsTab(): DocumentFragment {
     head.appendChild(h('span', 'v-xray-badge', instance.$name));
     head.appendChild(h('span', undefined, describeElement(instance.$el)));
     head.appendChild(
-      h('span', 'v-xray-badge', `${countEffects(instance.$el)} efeitos`)
+      h('span', 'v-xray-badge', `${countEffects(instance.$el)} effects`)
     );
     (head.lastChild as HTMLElement).dataset.tone = 'mute';
     head.addEventListener('click', () => highlight(instance.$el));
@@ -992,7 +992,7 @@ function renderComponentsTab(): DocumentFragment {
       stateKeys = [];
     }
     if (stateKeys.length) {
-      rows.appendChild(h('span', 'v-xray-section', 'Estado'));
+      rows.appendChild(h('span', 'v-xray-section', 'State'));
       for (const key of stateKeys) {
         let value: unknown;
         try {
@@ -1016,7 +1016,7 @@ function renderComponentsTab(): DocumentFragment {
 }
 
 // ---------------------------------------------------------------------------
-// Aba Stores
+// Stores tab
 // ---------------------------------------------------------------------------
 
 function renderStoresTab(): DocumentFragment {
@@ -1024,7 +1024,7 @@ function renderStoresTab(): DocumentFragment {
   const names = storeNames();
 
   if (!names.length) {
-    frag.appendChild(h('span', 'v-xray-empty', 'Nenhum store global. Crie um com V.store().'));
+    frag.appendChild(h('span', 'v-xray-empty', 'No global stores. Create one with V.store().'));
     return frag;
   }
 
@@ -1040,7 +1040,7 @@ function renderStoresTab(): DocumentFragment {
     const rows = h('div', 'v-xray-rows');
     const keys = data ? Object.keys(data) : [];
     if (!keys.length) {
-      rows.appendChild(h('span', 'v-xray-empty', 'store vazio'));
+      rows.appendChild(h('span', 'v-xray-empty', 'empty store'));
     } else {
       for (const key of keys) {
         rows.appendChild(
@@ -1058,7 +1058,7 @@ function renderStoresTab(): DocumentFragment {
 }
 
 // ---------------------------------------------------------------------------
-// Abas de log: Eventos e Rede
+// Log tabs: Events and Network
 // ---------------------------------------------------------------------------
 
 function logLine(time: string, main: string, tail?: string, tone?: 'ok' | 'fail'): HTMLElement {
@@ -1074,7 +1074,7 @@ function logLine(time: string, main: string, tail?: string, tone?: 'ok' | 'fail'
 
 function renderEventsTab(): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const clear = h('button', 'v-xray-btn', 'limpar log');
+  const clear = h('button', 'v-xray-btn', 'clear log');
   clear.addEventListener('click', () => {
     eventLog.length = 0;
     renderActiveTab();
@@ -1082,13 +1082,13 @@ function renderEventsTab(): DocumentFragment {
   frag.appendChild(clear);
 
   if (!eventLog.length) {
-    frag.appendChild(h('span', 'v-xray-empty', 'Nenhum evento ainda. Interaja com a pagina.'));
+    frag.appendChild(h('span', 'v-xray-empty', 'No events yet. Interact with the page.'));
     return frag;
   }
 
   for (const entry of [...eventLog].reverse()) {
     frag.appendChild(
-      logLine(timeLabel(entry.at), `${entry.type} em ${entry.target}`, entry.detail || entry.source)
+      logLine(timeLabel(entry.at), `${entry.type} on ${entry.target}`, entry.detail || entry.source)
     );
   }
   return frag;
@@ -1096,7 +1096,7 @@ function renderEventsTab(): DocumentFragment {
 
 function renderNetworkTab(): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const clear = h('button', 'v-xray-btn', 'limpar log');
+  const clear = h('button', 'v-xray-btn', 'clear log');
   clear.addEventListener('click', () => {
     networkLog.length = 0;
     renderActiveTab();
@@ -1105,7 +1105,7 @@ function renderNetworkTab(): DocumentFragment {
 
   if (!networkLog.length) {
     frag.appendChild(
-      h('span', 'v-xray-empty', 'Nenhuma requisicao. v-get, v-post e V.http aparecem aqui.')
+      h('span', 'v-xray-empty', 'No requests yet. v-get, v-post and V.http show up here.')
     );
     return frag;
   }
@@ -1124,7 +1124,7 @@ function renderNetworkTab(): DocumentFragment {
 }
 
 // ---------------------------------------------------------------------------
-// Aba Desempenho
+// Performance tab
 // ---------------------------------------------------------------------------
 
 function renderPerformanceTab(): DocumentFragment {
@@ -1132,17 +1132,17 @@ function renderPerformanceTab(): DocumentFragment {
 
   const updates = h('div', 'v-xray-metric');
   updates.appendChild(h('span', 'v-xray-metric-value', String(metrics.updatesPerSecond)));
-  updates.appendChild(h('span', undefined, 'atualizacoes de DOM por segundo'));
+  updates.appendChild(h('span', undefined, 'DOM updates per second'));
   frag.appendChild(updates);
 
   const effects = h('div', 'v-xray-metric');
   effects.appendChild(h('span', 'v-xray-metric-value', String(metrics.effectsPerSecond)));
-  effects.appendChild(h('span', undefined, 'efeitos reativos disparados por segundo'));
+  effects.appendChild(h('span', undefined, 'reactive effects triggered per second'));
   frag.appendChild(effects);
 
   const total = h('div', 'v-xray-metric');
   total.appendChild(h('span', 'v-xray-metric-value', String(metrics.effects)));
-  total.appendChild(h('span', undefined, 'efeitos disparados desde que o raio-x ligou'));
+  total.appendChild(h('span', undefined, 'effects triggered since x-ray was enabled'));
   frag.appendChild(total);
 
   const chart = h('div', 'v-xray-chart');
@@ -1151,19 +1151,19 @@ function renderPerformanceTab(): DocumentFragment {
     const bar = h('div', 'v-xray-bar');
     const value = Math.max(item.effects, item.updates);
     bar.style.height = `${Math.max(2, Math.round((value / peak) * 46))}px`;
-    bar.title = `${item.effects} efeitos, ${item.updates} atualizacoes`;
+    bar.title = `${item.effects} effects, ${item.updates} updates`;
     chart.appendChild(bar);
   }
   frag.appendChild(chart);
   frag.appendChild(
-    h('span', 'v-xray-hint', `${patchedEffects.size} efeitos instrumentados, pico de ${peak} por segundo`)
+    h('span', 'v-xray-hint', `${patchedEffects.size} effects instrumented, peak of ${peak} per second`)
   );
 
   return frag;
 }
 
 // ---------------------------------------------------------------------------
-// Painel
+// Panel
 // ---------------------------------------------------------------------------
 
 const TABS: Array<{ id: TabName; label: string }> = [
@@ -1178,7 +1178,7 @@ const TABS: Array<{ id: TabName; label: string }> = [
 function renderActiveTab(): void {
   if (!refs) return;
   const active = document.activeElement;
-  // Nao redesenha enquanto alguem esta digitando dentro do painel.
+  // Don't redraw while someone is typing inside the panel.
   if (active instanceof HTMLInputElement && refs.body.contains(active)) return;
 
   refs.body.textContent = '';
@@ -1209,11 +1209,11 @@ function renderActiveTab(): void {
   }
 
   refs.status.textContent =
-    `${outlined.length} elementos com directives, ${instances.size} componentes, ` +
-    `${patchedEffects.size} efeitos observados`;
+    `${outlined.length} elements with directives, ${instances.size} components, ` +
+    `${patchedEffects.size} effects observed`;
 }
 
-/** Destaca um elemento da pagina e rola ate ele. */
+/** Highlights an element on the page and scrolls to it. */
 function highlight(el: Element): void {
   el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   flash(el);
@@ -1223,7 +1223,7 @@ function buildPanel(): PanelRefs {
   const root = h('div', 'v-xray-root');
   root.setAttribute(`${config.prefix}ignore`, '');
   root.setAttribute('role', 'complementary');
-  root.setAttribute('aria-label', 'Inspetor Voodoo x-ray');
+  root.setAttribute('aria-label', 'Voodoo x-ray inspector');
   if (theme !== 'auto') root.dataset.vXrayTheme = theme;
 
   const overlay = h('div', 'v-xray-overlay');
@@ -1241,7 +1241,7 @@ function buildPanel(): PanelRefs {
   brand.appendChild(document.createTextNode('Voodoo x-ray'));
   header.appendChild(brand);
 
-  const themeButton = h('button', 'v-xray-btn', 'tema');
+  const themeButton = h('button', 'v-xray-btn', 'theme');
   themeButton.addEventListener('click', () => {
     theme = theme === 'auto' ? 'dark' : theme === 'dark' ? 'light' : 'auto';
     if (theme === 'auto') delete root.dataset.vXrayTheme;
@@ -1249,7 +1249,7 @@ function buildPanel(): PanelRefs {
   });
   header.appendChild(themeButton);
 
-  const closeButton = h('button', 'v-xray-btn', 'fechar');
+  const closeButton = h('button', 'v-xray-btn', 'close');
   closeButton.addEventListener('click', () => disableXray());
   header.appendChild(closeButton);
   panel.appendChild(header);
@@ -1270,7 +1270,7 @@ function buildPanel(): PanelRefs {
   const body = h('div', 'v-xray-body');
   panel.appendChild(body);
 
-  const status = h('div', 'v-xray-status', 'iniciando');
+  const status = h('div', 'v-xray-status', 'starting');
   panel.appendChild(status);
 
   root.appendChild(panel);
@@ -1280,7 +1280,7 @@ function buildPanel(): PanelRefs {
 }
 
 // ---------------------------------------------------------------------------
-// Captura de eventos e de rede
+// Event and network capture
 // ---------------------------------------------------------------------------
 
 const BASE_EVENTS = [
@@ -1310,7 +1310,7 @@ function pushNetwork(entry: NetworkEntry): void {
   if (activeTab === 'rede') renderActiveTab();
 }
 
-/** Procura, subindo poucos niveis, quem declarou uma directive para o evento. */
+/** Searches up a few levels to find who declared a directive for the event. */
 function declaringElement(target: Element | null, type: string): Element | null {
   let current: Element | null = target;
   for (let depth = 0; current && depth < 6; depth++) {
@@ -1323,7 +1323,7 @@ function declaringElement(target: Element | null, type: string): Element | null 
   return null;
 }
 
-/** Nomes de eventos citados em atributos `v-on:` e `@` da pagina. */
+/** Names of events mentioned in `v-on:` and `@` attributes on the page. */
 function declaredEventNames(): string[] {
   const names = new Set(BASE_EVENTS);
   const all = document.body.querySelectorAll('*');
@@ -1351,7 +1351,7 @@ function listenEvents(): void {
       at: Date.now(),
       type: event.type,
       target: describeElement(owner ?? target),
-      detail: custom ? 'emit de componente' : '',
+      detail: custom ? 'component emit' : '',
       source: custom ? 'component' : 'v-on',
     });
   };
@@ -1405,7 +1405,7 @@ function listenNetwork(): void {
       pushNetwork({
         at: Date.now(),
         method: (requestConfig?.method ?? 'GET').toUpperCase(),
-        url: requestConfig?.url ?? '(desconhecida)',
+        url: requestConfig?.url ?? '(unknown)',
         status: error.status,
         ok: false,
         duration: performance.now() - started,
@@ -1431,7 +1431,7 @@ function listenNetwork(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Observacao do DOM e metricas
+// DOM observation and metrics
 // ---------------------------------------------------------------------------
 
 let observer: MutationObserver | null = null;
@@ -1448,7 +1448,7 @@ function observeMutations(): void {
         target.nodeType === 1 &&
         flashing.has(target as Element)
       ) {
-        // Ignora a propria piscada, senao a contagem entra em laco.
+        // Ignores the flash itself, otherwise the count loops.
         continue;
       }
       metrics.mutations++;
@@ -1496,10 +1496,10 @@ let lastEffectCount = 0;
 let lastMutationCount = 0;
 
 // ---------------------------------------------------------------------------
-// Ligar e desligar
+// Enable and disable
 // ---------------------------------------------------------------------------
 
-/** Liga o inspetor. Chamar duas vezes nao duplica nada. */
+/** Enables the inspector. Calling twice doesn't duplicate anything. */
 export function enableXray(): void {
   if (enabled || typeof document === 'undefined' || !document.body) return;
   enabled = true;
@@ -1533,7 +1533,7 @@ export function enableXray(): void {
   renderActiveTab();
 }
 
-/** Desliga o inspetor e devolve a pagina ao estado original. */
+/** Disables the inspector and returns the page to its original state. */
 export function disableXray(): void {
   if (!enabled) return;
   enabled = false;
@@ -1542,7 +1542,7 @@ export function disableXray(): void {
     try {
       dispose();
     } catch {
-      // Uma limpeza com problema nao pode impedir as outras.
+      // Broken cleanup must not prevent others.
     }
   }
 
@@ -1570,15 +1570,15 @@ export function disableXray(): void {
   refs = null;
 }
 
-/** `true` quando o inspetor esta ligado. */
+/** `true` when the inspector is enabled. */
 export function isXrayEnabled(): boolean {
   return enabled;
 }
 
 /**
- * Instala apenas o atalho `Ctrl+Shift+X`, sem abrir o painel.
- * Util para deixar o inspetor a um toque de distancia em ambiente de
- * desenvolvimento, sem custo nenhum enquanto ninguem aperta as teclas.
+ * Installs only the `Ctrl+Shift+X` shortcut, without opening the panel.
+ * Useful for keeping the inspector one keystroke away in development, with no
+ * cost at all while no one presses the keys.
  */
 export function enableXrayShortcut(): void {
   if (shortcutInstalled || typeof document === 'undefined') return;
@@ -1592,18 +1592,18 @@ export function enableXrayShortcut(): void {
 }
 
 /**
- * Liga e desliga o inspetor visual de reatividade.
+ * Enables and disables the visual reactivity inspector.
  *
  * ```js
- * V.xray()        // alterna
- * V.xray(true)    // liga
- * V.xray(false)   // desliga
+ * V.xray()        // toggle
+ * V.xray(true)    // enable
+ * V.xray(false)   // disable
  * ```
  *
- * A primeira chamada tambem instala o atalho `Ctrl+Shift+X`.
+ * The first call also installs the `Ctrl+Shift+X` shortcut.
  *
- * @param force ligue ou desligue explicitamente. Sem argumento, alterna.
- * @returns o estado depois da chamada.
+ * @param force enable or disable explicitly. Without argument, toggles.
+ * @returns the state after the call.
  */
 export function xray(force?: boolean): boolean {
   enableXrayShortcut();

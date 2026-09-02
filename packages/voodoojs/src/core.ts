@@ -1,11 +1,11 @@
 /**
  * @module core
  *
- * Monta o objeto `V`, liga as pecas do runtime e expoe a API publica.
+ * Assembles the `V` object, connects the runtime pieces, and exposes the public API.
  *
- * Este arquivo nao inicializa nada por conta propria. Quem chama `start()` e o
- * `browser.ts`, que so roda quando existe DOM. Assim o pacote continua seguro
- * para importar em Node, Bun e Deno.
+ * This file does not initialize anything on its own. The `browser.ts` module
+ * calls `start()`, which only runs when the DOM exists. This keeps the package
+ * safe to import in Node, Bun, and Deno.
  */
 
 import {
@@ -84,12 +84,12 @@ import {
 } from './dom/transition';
 import * as utils from './utils';
 
-// Efeitos colaterais: registram as directives nativas.
+// Side effects: register built-in directives.
 import './directives/core';
 import './directives/http';
 
 // ---------------------------------------------------------------------------
-// Ligacao entre os modulos do runtime
+// Connecting runtime modules
 // ---------------------------------------------------------------------------
 
 setComponentMounter(mountComponent);
@@ -98,13 +98,13 @@ setDirectiveRegistrar(directive);
 installMagics();
 
 // ---------------------------------------------------------------------------
-// Barramento de eventos
+// Event bus
 // ---------------------------------------------------------------------------
 
 type EventHandler = (payload?: any) => void;
 const eventBus = new Map<string, Set<EventHandler>>();
 
-/** Assina um evento global. Devolve a funcao que cancela a assinatura. */
+/** Subscribes to a global event. Returns a function that cancels the subscription. */
 function on(name: string, handler: EventHandler): () => void {
   let set = eventBus.get(name);
   if (!set) eventBus.set(name, (set = new Set()));
@@ -112,7 +112,7 @@ function on(name: string, handler: EventHandler): () => void {
   return () => set!.delete(handler);
 }
 
-/** Assina um evento global apenas para a proxima ocorrencia. */
+/** Subscribes to a global event for only the next occurrence. */
 function onceEvent(name: string, handler: EventHandler): () => void {
   const off = on(name, (payload) => {
     off();
@@ -121,7 +121,7 @@ function onceEvent(name: string, handler: EventHandler): () => void {
   return off;
 }
 
-/** Dispara um evento global. */
+/** Emits a global event. */
 function emit(name: string, payload?: unknown): void {
   const set = eventBus.get(name);
   if (!set) return;
@@ -129,7 +129,7 @@ function emit(name: string, payload?: unknown): void {
     try {
       handler(payload);
     } catch (err) {
-      handleError(err, `evento "${name}"`);
+      handleError(err, `event "${name}"`);
     }
   }
 }
@@ -143,11 +143,11 @@ function off(name: string, handler?: EventHandler): void {
 }
 
 // ---------------------------------------------------------------------------
-// Directives customizadas com ciclo de vida
+// Custom directives with lifecycle hooks
 // ---------------------------------------------------------------------------
 
 /**
- * Registra uma directive personalizada.
+ * Registers a custom directive.
  *
  * ```js
  * V.directive('highlight', {
@@ -157,10 +157,10 @@ function off(name: string, handler?: EventHandler): void {
  * ```
  *
  * ```html
- * <div v-highlight="'yellow'">Destaque</div>
+ * <div v-highlight="'yellow'">Highlight</div>
  * ```
  *
- * Tambem aceita uma funcao curta, chamada em `mounted` e em `updated`:
+ * Also accepts a short function, called in both `mounted` and `updated`:
  *
  * ```js
  * V.directive('highlight', (el, binding) => { el.style.background = binding.value })
@@ -219,26 +219,26 @@ function directive<T = any>(
 }
 
 // ---------------------------------------------------------------------------
-// Estado global declarado por JavaScript
+// Global state declared by JavaScript
 // ---------------------------------------------------------------------------
 
 /**
- * Coloca valores no escopo raiz, visiveis para qualquer expressao da pagina.
+ * Places values in the root scope, visible to any expression on the page.
  *
  * ```js
- * V.data({ usuario: null, carregando: false })
+ * V.data({ user: null, loading: false })
  * ```
  */
 function data<T extends Record<string, unknown>>(values: T): T {
-  // Copia por descritor pelo mesmo motivo do store: `Object.assign` chamaria o
-  // getter e guardaria o resultado, transformando um valor derivado em numero
-  // fixo. Com os descritores, `get total() { ... }` continua recalculando.
+  // Copy by descriptor for the same reason as store: `Object.assign` would call
+  // the getter and store the result, turning a derived value into a fixed number.
+  // With descriptors, `get total() { ... }` keeps recalculating.
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data as T;
 }
 
 // ---------------------------------------------------------------------------
-// Objeto V
+// V object
 // ---------------------------------------------------------------------------
 
 export interface VoodooStatic {
@@ -247,21 +247,21 @@ export interface VoodooStatic {
   config: VoodooConfig;
 }
 
-/** Versao publicada. */
+/** Published version. */
 export const version = '0.3.0';
 
 /**
- * Nucleo da Voodoo. O objeto exportado tambem e chamavel: `V('#app')` devolve
- * uma colecao encadeavel de elementos.
+ * Core of Voodoo. The exported object is also callable: `V('#app')` returns
+ * a chainable collection of elements.
  */
 export const core = {
-  // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
+  // Utilities first: Voodoo's own names can override.
   ...utils,
 
   version,
   config,
 
-  // Reatividade
+  // Reactivity
   reactive,
   ref,
   shallowRef,
@@ -278,7 +278,7 @@ export const core = {
   EffectScope,
   flushSync,
 
-  // Estado
+  // State
   data,
   store,
   stores: allStores,
@@ -286,7 +286,7 @@ export const core = {
   storeNames,
   scope: rootScope,
 
-  // Componentes e directives
+  // Components and directives
   component: defineComponent,
   components,
   directive,
@@ -294,10 +294,10 @@ export const core = {
   magic,
   magics,
 
-  // Modo aplicacao
+  // Application mode
   createApp,
 
-  // Ciclo de vida do DOM
+  // DOM lifecycle
   start,
   whenReady,
   whenElement,
@@ -310,7 +310,7 @@ export const core = {
   addCleanup,
   parseAttribute,
 
-  // Expressoes
+  // Expressions
   parse,
   tokenize,
   evaluate,
@@ -319,11 +319,11 @@ export const core = {
   clearParseCache,
   globals: allowedGlobals,
 
-  // Servicos
+  // Services
   http,
   request,
   HttpError,
-  /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+  /** Reactive resource via JavaScript, equivalent to `v-resource`. */
   resource: createResource,
   toast,
   storage,
@@ -336,7 +336,7 @@ export const core = {
   screen,
   network,
 
-  // Animacao
+  // Animation
   enter,
   leave,
   fadeIn,
@@ -345,11 +345,11 @@ export const core = {
   slideDown,
   viewTransition,
 
-  // Estilo
+  // Styling
   injectStyle,
   ensureTokens,
 
-  // Eventos globais
+  // Global events
   on,
   once: onceEvent,
   off,
@@ -360,12 +360,12 @@ export const core = {
     usePlugin(core, plugin, options);
   },
 
-  /** Define o tratamento de erros da aplicacao inteira. */
+  /** Defines error handling for the entire application. */
   onError(handler: (err: unknown, context: string) => void): void {
     setErrorHandler(handler);
   },
 
-  /** Instancias de componente montadas, para inspecao. */
+  /** Mounted component instances for inspection. */
   instances,
 
   Scope,
@@ -374,8 +374,8 @@ export const core = {
   VoodooRuntimeError,
 };
 
-// A aplicacao criada por `createApp` precisa alcancar o proprio `V` para
-// instalar plugins com `app.use(...)`.
+// The application created by `createApp` needs to reach `V` itself to
+// install plugins with `app.use(...)`.
 setAppHost(core);
 
 export type Core = typeof core;

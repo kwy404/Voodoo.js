@@ -1,6 +1,6 @@
 /**
- * Ponto de entrada do build minimo para navegador.
- * Publica `window.V` e inicializa a pagina quando o documento fica pronto.
+ * Entry point for the minimal build for browsers.
+ * Publishes `window.V` and initializes the page when the document is ready.
  */
 
 import V from './minimo';

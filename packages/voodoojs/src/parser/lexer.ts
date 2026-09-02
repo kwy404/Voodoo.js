@@ -1,34 +1,34 @@
 /**
  * @module parser/lexer
  *
- * Tokenizador do subconjunto de JavaScript aceito dentro de atributos `v-*`.
+ * Tokenizer for the JavaScript subset accepted within `v-*` attributes.
  *
- * A Voodoo nao usa `eval` nem `new Function`. Todo o texto de uma expressao
- * passa por este lexer, depois pelo parser e por fim por um interpretador de
- * arvore. Isso mantem a biblioteca compativel com Content Security Policy
- * restritiva, sem `unsafe-eval`.
+ * Voodoo does not use `eval` or `new Function`. All expression text
+ * goes through this lexer, then the parser, and finally through a tree
+ * interpreter. This keeps the library compatible with restrictive Content
+ * Security Policy, without `unsafe-eval`.
  */
 
 export type TokenType = 'num' | 'str' | 'tpl' | 'ident' | 'punct' | 'eof';
 
 export interface TemplatePart {
-  /** Trechos literais entre as interpolacoes. Sempre tem 1 item a mais que `exprs`. */
+  /** Literal chunks between interpolations. Always has 1 more item than `exprs`. */
   quasis: string[];
-  /** Codigo fonte de cada `${...}`. */
+  /** Source code of each `${...}`. */
   exprs: string[];
 }
 
 export interface Token {
   type: TokenType;
   value: string;
-  /** Valor ja convertido para numero ou string, quando aplicavel. */
+  /** Value already converted to number or string, when applicable. */
   parsed?: number | string;
   tpl?: TemplatePart;
   start: number;
   end: number;
 }
 
-/** Erro de sintaxe com posicao dentro da expressao original. */
+/** Syntax error with position within the original expression. */
 export class VoodooSyntaxError extends Error {
   constructor(
     message: string,
@@ -41,7 +41,7 @@ export class VoodooSyntaxError extends Error {
   }
 }
 
-/** Operadores com mais de um caractere, do mais longo para o mais curto. */
+/** Multi-character operators, from longest to shortest. */
 const PUNCTUATORS = [
   '>>>=',
   '===',
@@ -92,7 +92,7 @@ const PUNCTUATORS = [
   ';',
 ];
 
-// Aceita letras acentuadas em nomes de variaveis, util para codigo em portugues.
+// Accepts accented letters in variable names, useful for Portuguese code.
 const IDENT_START = /[A-Za-z_$À-￿]/;
 const IDENT_PART = /[A-Za-z0-9_$À-￿]/;
 
@@ -119,9 +119,9 @@ const ESCAPES: Record<string, string> = {
 };
 
 /**
- * Converte uma expressao em uma lista de tokens.
+ * Converts an expression to a list of tokens.
  *
- * @throws {VoodooSyntaxError} quando encontra um caractere invalido.
+ * @throws {VoodooSyntaxError} when it encounters an invalid character.
  */
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
@@ -131,27 +131,27 @@ export function tokenize(source: string): Token[] {
   while (i < len) {
     const ch = source[i];
 
-    // Espacos em branco e quebras de linha.
+    // Whitespace and line breaks.
     if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r' || ch === '\f' || ch === '\v') {
       i++;
       continue;
     }
 
-    // Comentarios de linha e de bloco.
+    // Line and block comments.
     if (ch === '/' && source[i + 1] === '/') {
       while (i < len && source[i] !== '\n') i++;
       continue;
     }
     if (ch === '/' && source[i + 1] === '*') {
       const end = source.indexOf('*/', i + 2);
-      if (end === -1) throw new VoodooSyntaxError('Comentario de bloco nao fechado', source, i);
+      if (end === -1) throw new VoodooSyntaxError('Unclosed block comment', source, i);
       i = end + 2;
       continue;
     }
 
     const start = i;
 
-    // Numeros: decimal, hexadecimal, binario, notacao cientifica e separador _.
+    // Numbers: decimal, hexadecimal, binary, scientific notation and _ separator.
     if (isDigit(ch) || (ch === '.' && isDigit(source[i + 1]))) {
       let raw = '';
       if (ch === '0' && (source[i + 1] === 'x' || source[i + 1] === 'X')) {
@@ -175,12 +175,12 @@ export function tokenize(source: string): Token[] {
         }
       }
       const parsed = Number(raw.replace(/_/g, ''));
-      if (Number.isNaN(parsed)) throw new VoodooSyntaxError('Numero invalido', source, start);
+      if (Number.isNaN(parsed)) throw new VoodooSyntaxError('Invalid number', source, start);
       tokens.push({ type: 'num', value: raw, parsed, start, end: i });
       continue;
     }
 
-    // Strings com aspas simples ou duplas.
+    // Strings with single or double quotes.
     if (ch === '"' || ch === "'") {
       i++;
       let out = '';
@@ -190,44 +190,44 @@ export function tokenize(source: string): Token[] {
           const esc = source[i];
           if (esc === 'u') {
             if (source[i + 1] === '{') {
-              // Sem o `}` o `indexOf` devolve -1, e o codigo antigo fazia
-              // `i = close + 1`, ou seja, voltava o cursor para o inicio da
-              // fonte e reanalisava tudo com posicoes erradas.
+              // Without the `}` the `indexOf` returns -1, and the old code did
+              // `i = close + 1`, that is, it moved the cursor to the beginning of
+              // the source and re-analyzed everything with wrong positions.
               const close = source.indexOf('}', i);
               if (close === -1)
-                throw new VoodooSyntaxError('Escape unicode nao fechado', source, start);
-              const digitos = source.slice(i + 2, close);
-              // `String.fromCodePoint` lanca RangeError cru para NaN e para
-              // valores acima de 0x10FFFF. Validar aqui mantem o contrato de
-              // que toda entrada invalida vira VoodooSyntaxError.
-              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 0x10ffff)
+                throw new VoodooSyntaxError('Unclosed Unicode escape', source, start);
+              const digits = source.slice(i + 2, close);
+              // `String.fromCodePoint` throws raw RangeError for NaN and for
+              // values above 0x10FFFF. Validating here keeps the contract that
+              // every invalid input becomes VoodooSyntaxError.
+              if (!/^[0-9a-fA-F]+$/.test(digits) || parseInt(digits, 16) > 0x10ffff)
                 throw new VoodooSyntaxError(
-                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  `Invalid Unicode escape "\\u{${digits}}"`,
                   source,
                   i - 1
                 );
-              out += String.fromCodePoint(parseInt(digitos, 16));
+              out += String.fromCodePoint(parseInt(digits, 16));
               i = close + 1;
             } else {
-              const digitos = source.slice(i + 1, i + 5);
-              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+              const digits = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digits))
                 throw new VoodooSyntaxError(
-                  'Escape unicode invalido: \\u precisa de 4 digitos hexadecimais',
+                  'Invalid Unicode escape: \\u needs 4 hexadecimal digits',
                   source,
                   i - 1
                 );
-              out += String.fromCharCode(parseInt(digitos, 16));
+              out += String.fromCharCode(parseInt(digits, 16));
               i += 5;
             }
           } else if (esc === 'x') {
-            const digitos = source.slice(i + 1, i + 3);
-            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+            const digits = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digits))
               throw new VoodooSyntaxError(
-                'Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais',
+                'Invalid hexadecimal escape: \\x needs 2 hexadecimal digits',
                 source,
                 i - 1
               );
-            out += String.fromCharCode(parseInt(digitos, 16));
+            out += String.fromCharCode(parseInt(digits, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -237,13 +237,13 @@ export function tokenize(source: string): Token[] {
           out += source[i++];
         }
       }
-      if (i >= len) throw new VoodooSyntaxError('String nao fechada', source, start);
-      i++; // aspas de fechamento
+      if (i >= len) throw new VoodooSyntaxError('Unclosed string', source, start);
+      i++; // closing quote
       tokens.push({ type: 'str', value: out, parsed: out, start, end: i });
       continue;
     }
 
-    // Template literals com interpolacao.
+    // Template literals with interpolation.
     if (ch === '`') {
       i++;
       const quasis: string[] = [];
@@ -269,7 +269,7 @@ export function tokenize(source: string): Token[] {
               depth--;
               if (depth === 0) break;
             } else if (c === '"' || c === "'" || c === '`') {
-              // Copia a string interna inteira para nao contar chaves dentro dela.
+              // Copies the entire inner string to not count braces inside it.
               const quote = c;
               expr += source[i++];
               while (i < len && source[i] !== quote) {
@@ -280,15 +280,15 @@ export function tokenize(source: string): Token[] {
             expr += source[i++];
           }
           if (depth !== 0)
-            throw new VoodooSyntaxError('Interpolacao de template nao fechada', source, start);
-          i++; // fecha a chave
+            throw new VoodooSyntaxError('Unclosed template interpolation', source, start);
+          i++; // close brace
           exprs.push(expr);
           continue;
         }
         current += source[i++];
       }
-      if (i >= len) throw new VoodooSyntaxError('Template literal nao fechado', source, start);
-      i++; // crase final
+      if (i >= len) throw new VoodooSyntaxError('Unclosed template literal', source, start);
+      i++; // closing backtick
       quasis.push(current);
       tokens.push({
         type: 'tpl',
@@ -300,7 +300,7 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
-    // Identificadores e palavras reservadas.
+    // Identifiers and reserved words.
     if (isIdentStart(ch)) {
       let name = '';
       while (i < len && isIdentPart(source[i])) name += source[i++];
@@ -308,11 +308,11 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
-    // Operadores e pontuacao.
+    // Operators and punctuation.
     let matched: string | undefined;
     for (const p of PUNCTUATORS) {
       if (source.startsWith(p, i)) {
-        // `?.` seguido de digito e o operador ternario com numero, nao encadeamento opcional.
+        // `?.` followed by digit is the ternary operator with number, not optional chaining.
         if (p === '?.' && isDigit(source[i + 2])) continue;
         matched = p;
         break;
@@ -324,7 +324,7 @@ export function tokenize(source: string): Token[] {
       continue;
     }
 
-    throw new VoodooSyntaxError(`Caractere inesperado "${ch}"`, source, i);
+    throw new VoodooSyntaxError(`Unexpected character "${ch}"`, source, i);
   }
 
   tokens.push({ type: 'eof', value: '', start: len, end: len });

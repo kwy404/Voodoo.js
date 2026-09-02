@@ -1,110 +1,110 @@
-# Animações
+# Animations
 
-> Este módulo vem apenas no `voodoo.full.min.js` ou em um build sob medida.
+> This module comes only in `voodoo.full.min.js` or in a custom build.
 
-Motor de animação próprio, no espírito do Framer Motion, escrito em vanilla. O núcleo é um único
-laço de `requestAnimationFrame` compartilhado por todas as animações ativas, com dois modos de
-progresso: tween, com duração fixa e curva de easing, e mola, com integração numérica real de
-rigidez, atrito e massa.
+Custom animation engine in the spirit of Framer Motion, written in vanilla. The core is a single
+`requestAnimationFrame` loop shared by all active animations, with two progress modes: tween, with
+fixed duration and easing curve, and spring, with real numerical integration of stiffness, damping,
+and mass.
 
-Tudo respeita `prefers-reduced-motion: reduce`. Nesse caso o estado final é aplicado na hora, sem
-quadros intermediários.
+Everything respects `prefers-reduced-motion: reduce`. In that case the final state is applied immediately,
+without intermediate frames.
 
 ## v-motion
 
-Anima o elemento assim que ele é inicializado.
+Animates the element as soon as it's initialized.
 
 ```html
-<div v-motion="fadeUp">Aparece subindo</div>
-<div v-motion="{ opacity: [0, 1], y: [24, 0], duration: 400 }">Com valores próprios</div>
-<div v-motion="{ scale: [0.8, 1], spring: { stiffness: 300, damping: 20 } }">Com mola</div>
+<div v-motion="fadeUp">Appears moving up</div>
+<div v-motion="{ opacity: [0, 1], y: [24, 0], duration: 400 }">With custom values</div>
+<div v-motion="{ scale: [0.8, 1], spring: { stiffness: 300, damping: 20 } }">With spring</div>
 ```
 
 ## Presets
 
-| Nome | O que faz |
+| Name | What it does |
 | --- | --- |
-| `fadeIn` | Só opacidade |
-| `fadeUp` | Sobe alguns pixels enquanto aparece. O mais usado em listas |
-| `fadeDown` | Desce enquanto aparece |
-| `scaleIn` | Cresce de dentro para fora, com um leve exagero no fim |
-| `slideLeft` | Entra deslizando da direita |
-| `slideRight` | Entra deslizando da esquerda |
-| `pop` | Estoura no lugar, com mola bem viva |
-| `blurIn` | Sai do desfoque até ficar nítido |
-| `flip` | Gira no eixo horizontal, como uma carta virando |
+| `fadeIn` | Opacity only |
+| `fadeUp` | Moves up a few pixels while appearing. Most used in lists |
+| `fadeDown` | Moves down while appearing |
+| `scaleIn` | Grows from inside out, with slight overshoot at the end |
+| `slideLeft` | Enters sliding from the right |
+| `slideRight` | Enters sliding from the left |
+| `pop` | Pops in place with lively spring |
+| `blurIn` | Comes out of blur until sharp |
+| `flip` | Rotates on the horizontal axis, like a card flipping |
 
-Os presets também estão em `V.motion`:
+The presets are also in `V.motion`:
 
 ```js
 V.animate('.card', V.motion.fadeUp);
 V.motion.pop;  // { opacity: [0,1], scale: [0.6,1], spring: { stiffness: 420, damping: 18 } }
 ```
 
-## Propriedades animáveis
+## Animatable properties
 
-Qualquer propriedade CSS numérica funciona. Além delas, existem atalhos que alimentam um único
-`transform` por elemento, então várias animações convivem sem sobrescrever umas às outras:
+Any numeric CSS property works. Beyond those, there are shortcuts that feed into a single
+`transform` per element, so multiple animations coexist without overwriting each other:
 
 ```
 x  y  z  scale  scaleX  scaleY  rotate  rotateX  rotateY  skewX  skewY
 ```
 
-E atalhos de filtro:
+And filter shortcuts:
 
 ```
 blur  brightness  contrast  grayscale  saturate
 ```
 
-Cores são interpoladas de verdade, entendendo `#fff`, `#112233aa`, `rgb()`, `rgba()`, `hsl()`,
-`hsla()` e `transparent`.
+Colors are truly interpolated, understanding `#fff`, `#112233aa`, `rgb()`, `rgba()`, `hsl()`,
+`hsla()`, and `transparent`.
 
 ```html
 <div v-motion="{ x: [-40, 0], rotate: [-8, 0], backgroundColor: ['#fff', '#6D3BF5'] }"></div>
 ```
 
-Um valor único usa o estado atual como ponto de partida. Um par `[de, para]` define os dois
-extremos.
+A single value uses the current state as the starting point. A `[from, to]` pair defines both
+extremes.
 
-## Opções
+## Options
 
-| Opção | Padrão | O que faz |
+| Option | Default | What it does |
 | --- | --- | --- |
-| `duration` | 400 | Duração em milissegundos. Ignorada com mola |
-| `delay` | 0 | Espera antes de começar |
-| `easing` | `easeOut` | Nome de um easing ou função própria |
-| `spring` | | `true` para os padrões, ou `{ stiffness, damping, mass, velocity }` |
-| `repeat` | 0 | Repetições extras. `2` executa três vezes |
-| `repeatType` | `loop` | `loop`, `reverse` ou `mirror` |
-| `force` | `false` | Ignora `prefers-reduced-motion`. Reserve para animações essenciais |
-| `onUpdate` | | Recebe o progresso a cada quadro |
-| `onComplete` | | Chamado no fim |
+| `duration` | 400 | Duration in milliseconds. Ignored with spring |
+| `delay` | 0 | Wait before starting |
+| `easing` | `easeOut` | Name of an easing or custom function |
+| `spring` | | `true` for defaults, or `{ stiffness, damping, mass, velocity }` |
+| `repeat` | 0 | Extra repeats. `2` runs three times |
+| `repeatType` | `loop` | `loop`, `reverse`, or `mirror` |
+| `force` | `false` | Ignores `prefers-reduced-motion`. Reserve for essential animations |
+| `onUpdate` | | Receives progress each frame |
+| `onComplete` | | Called at the end |
 
-Curvas prontas: `linear`, `easeIn`, `easeOut`, `easeInOut`, `easeOutBack`, `easeOutExpo`,
-`anticipate`, `bounce`. Todas estão em `V.easings`.
+Built-in curves: `linear`, `easeIn`, `easeOut`, `easeInOut`, `easeOutBack`, `easeOutExpo`,
+`anticipate`, `bounce`. All are in `V.easings`.
 
 ## v-motion-scroll
 
-Anima quando o elemento entra na área visível.
+Animates when the element enters the viewport.
 
 ```html
-<section v-motion-scroll="fadeUp">Anima ao aparecer</section>
-<section v-motion-scroll.repeat="fadeIn">Anima toda vez que aparece</section>
-<section v-motion-scroll="scaleIn" v-motion-scroll-amount="0.5">Metade visível</section>
-<section v-motion-scroll="fadeUp" v-motion-scroll-margin="-100px">Com margem</section>
+<section v-motion-scroll="fadeUp">Animate on appear</section>
+<section v-motion-scroll.repeat="fadeIn">Animate every time it appears</section>
+<section v-motion-scroll="scaleIn" v-motion-scroll-amount="0.5">Half visible</section>
+<section v-motion-scroll="fadeUp" v-motion-scroll-margin="-100px">With margin</section>
 ```
 
-O estado inicial é aplicado na montagem, então o elemento já nasce escondido e não pisca.
+The initial state is applied on mount, so the element is born hidden and doesn't flash.
 
 ## v-motion-stagger
 
-Cria uma onda entre os filhos diretos que usam `v-motion` ou `v-motion-scroll`.
+Creates a wave among direct children that use `v-motion` or `v-motion-scroll`.
 
 ```html
 <ul v-motion-stagger="80">
-  <li v-motion="fadeUp">Um</li>
-  <li v-motion="fadeUp">Dois</li>
-  <li v-motion="fadeUp">Três</li>
+  <li v-motion="fadeUp">One</li>
+  <li v-motion="fadeUp">Two</li>
+  <li v-motion="fadeUp">Three</li>
 </ul>
 
 <ul v-motion-stagger="60" v-motion-stagger-from="center">
@@ -112,65 +112,64 @@ Cria uma onda entre os filhos diretos que usam `v-motion` ou `v-motion-scroll`.
 </ul>
 ```
 
-`v-motion-stagger-from` aceita `first` (padrão), `last` e `center`. O índice é apurado na hora,
-então filhos criados depois por `v-for` também entram na onda.
+`v-motion-stagger-from` accepts `first` (default), `last`, and `center`. The index is computed on the fly,
+so children created later by `v-for` are also included in the wave.
 
-## v-motion-hover e v-motion-tap
+## v-motion-hover and v-motion-tap
 
 ```html
 <button v-motion-hover="{ scale: 1.05, y: -2 }" v-motion-tap="{ scale: 0.96 }">
-  Passe o mouse
+  Hover over me
 </button>
 ```
 
-`v-motion-hover` também responde ao foco de teclado, o que mantém o retorno visual para quem
-navega com Tab. `v-motion-tap` anima enquanto o elemento está pressionado. Os dois guardam o
-estado original e voltam a ele na saída.
+`v-motion-hover` also responds to keyboard focus, which maintains visual feedback for Tab navigation.
+`v-motion-tap` animates while the element is pressed. Both preserve the original state and return to it on exit.
 
 ## v-parallax
 
-Desloca o elemento conforme a rolagem.
+Moves the element based on scroll.
 
 ```html
 <img v-parallax="0.3" src="/fundo.jpg" alt="">
 <img v-parallax="-0.2" src="/frente.png" alt="">
 ```
 
-Valores negativos invertem o sentido. Com `prefers-reduced-motion`, a directive não faz nada.
+Negative values reverse the direction. With `prefers-reduced-motion`, the directive does nothing.
 
 ## v-flip
 
-Guarda a posição do elemento e, quando ela muda entre atualizações, anima suavemente do lugar
-antigo para o novo. É a técnica FLIP.
+Saves the element's position and, when it changes between updates, smoothly animates from the old
+to the new position. This is the FLIP technique.
 
 ```html
 <li v-for="item in itensOrdenados" :key="item.id" v-flip>{ item.nome }</li>
 <li v-flip="{ duration: 300, easing: 'easeInOut' }">...</li>
 ```
 
-Sem opções, usa uma mola com `stiffness: 340` e `damping: 34`. Combine com `:key` para que os
-elementos sejam reaproveitados em vez de recriados.
+Without options, uses a spring with `stiffness: 340` and `damping: 34`. Combine with `:key` so
+elements are reused instead of recreated.
 
 ## v-count
 
-Anima um número até o valor e escreve no elemento.
+Animates a number to the value and writes it in the element.
 
 ```html
 <span v-count="1250"></span>
 <span v-count="receita" v-count-format="currency"></span>
 <span v-count="taxa" v-count-format="percent" v-count-decimals="1"></span>
-<span v-count="total" v-count-duration="2s" v-count-prefix="+" v-count-suffix=" vendas"></span>
+<span v-count="total" v-count-duration="2s" v-count-prefix="+" v-count-suffix=" sales"></span>
 ```
 
-| Atributo | Padrão |
+| Attribute | Default |
 | --- | --- |
 | `v-count-duration` | 1400 ms |
 | `v-count-decimals` | 0 |
-| `v-count-format` | `number`, `currency` ou `percent` |
-| `v-count-prefix`, `v-count-suffix` | vazio |
+| `v-count-format` | `number`, `currency`, or `percent` |
+| `v-count-prefix`, `v-count-suffix` | empty |
 
-O formato usa `V.config.locale` e `V.config.currency`. Mudanças reativas no valor reanimam a
-partir do número exibido, e não do zero.
+Format uses `V.config.locale` and `V.config.currency`. Reactive changes to the value re-animate from
+the displayed number, not from zero.
 
 ## v-typewriter
 
@@ -179,10 +178,10 @@ partir do número exibido, e não do zero.
 <h1 v-typewriter="frase" v-typewriter-speed="30"></h1>
 ```
 
-Escreve letra por letra. `v-typewriter-speed` é o tempo de cada caractere, com padrão 45 ms. Um
-texto solto é usado como está, e uma expressão é reativa.
+Types letter by letter. `v-typewriter-speed` is the time per character, defaulting to 45 ms. Loose
+text is used as-is, and an expression is reactive.
 
-## API por JavaScript
+## API via JavaScript
 
 ### animate
 
@@ -192,7 +191,7 @@ await controle.finished;
 controle.stop();
 ```
 
-O alvo pode ser um elemento, uma lista, um `NodeList` ou um seletor CSS.
+The target can be an element, a list, a `NodeList`, or a CSS selector.
 
 ```js
 V.animate(botao, { scale: 1.2 }, { spring: { stiffness: 300 } });
@@ -202,19 +201,19 @@ V.animate(el, { rotate: 360 }, { repeat: Infinity, easing: 'linear', duration: 2
 
 ### spring
 
-Integra uma mola real entre dois números e entrega o valor a cada quadro. Não toca no DOM, então
-serve para estilos, contadores, rolagem suave ou qualquer outro valor numérico.
+Integrates a real spring between two numbers and delivers the value each frame. Doesn't touch the DOM,
+so it works for styles, counters, smooth scrolling, or any other numeric value.
 
 ```js
 V.spring(0, 320, {
   stiffness: 210,
   damping: 22,
   onUpdate: (v) => { barra.style.width = `${v}px`; },
-  onComplete: () => console.log('parou'),
+  onComplete: () => console.log('stopped'),
 });
 ```
 
-Padrões: `stiffness: 170`, `damping: 26`, `mass: 1`.
+Defaults: `stiffness: 170`, `damping: 26`, `mass: 1`.
 
 ### stagger
 
@@ -222,7 +221,7 @@ Padrões: `stiffness: 170`, `damping: 26`, `mass: 1`.
 V.stagger('.card', V.motion.fadeUp, { delay: 70, from: 'center', start: 200 });
 ```
 
-`delay` é o passo entre itens, `start` é o atraso da onda inteira, `from` é `first`, `last` ou
+`delay` is the step between items, `start` is the delay for the entire wave, `from` is `first`, `last`, or
 `center`.
 
 ### inView
@@ -230,17 +229,17 @@ V.stagger('.card', V.motion.fadeUp, { delay: 70, from: 'center', start: 200 });
 ```js
 const parar = V.inView(secao, (entry) => {
   secao.classList.add('ativa');
-  return () => secao.classList.remove('ativa');  // limpeza ao sair da tela
+  return () => secao.classList.remove('ativa');  // cleanup when leaving screen
 }, { once: false, amount: 0.5, margin: '-80px' });
 
 parar();
 ```
 
-`amount` aceita um número de 0 a 1, `any` ou `all`.
+`amount` accepts a number from 0 to 1, `any`, or `all`.
 
 ### scrollProgress
 
-Reporta de 0 a 1 conforme o elemento atravessa a tela.
+Reports 0 to 1 as the element moves through the screen.
 
 ```js
 const parar = V.scrollProgress(artigo, (p) => {
@@ -248,7 +247,7 @@ const parar = V.scrollProgress(artigo, (p) => {
 });
 ```
 
-## Combinando com o resto
+## Combining with everything else
 
 ```html
 <ul v-motion-stagger="60">
@@ -260,13 +259,13 @@ const parar = V.scrollProgress(artigo, (p) => {
 </ul>
 ```
 
-## Acessibilidade
+## Accessibility
 
-Nunca use animação para transmitir informação que não exista de outra forma. Quem liga
-`prefers-reduced-motion: reduce` recebe o estado final imediatamente, sem quadros intermediários,
-e `v-parallax` simplesmente não roda. Use `force: true` apenas quando a animação for o próprio
-conteúdo, como uma barra de progresso.
+Never use animation to convey information that doesn't exist otherwise. People who enable
+`prefers-reduced-motion: reduce` get the final state immediately, without intermediate frames,
+and `v-parallax` simply doesn't run. Use `force: true` only when the animation is the content itself,
+like a progress bar.
 
 ---
 
-Anterior: [Arrastar e soltar](arrastar-e-soltar.md) · Próximo: [Gráficos](graficos.md)
+Previous: [Drag and drop](arrastar-e-soltar.md) · Next: [Charts](graficos.md)

@@ -1,207 +1,204 @@
-# Perguntas frequentes
+# FAQ
 
-## Geral
+## General
 
-### A Voodoo.js precisa de build?
+### Does Voodoo.js need a build?
 
-Não. Uma tag `<script>` e o HTML já funcionam. O pacote no npm existe para quem prefere importar
-por bundler, mas nada obriga.
+No. A `<script>` tag and the HTML already work. The npm package exists for those who prefer to
+import via bundler, but nothing requires it.
 
-### Qual bundle eu escolho?
+### Which bundle do I choose?
 
-Comece pelo `voodoo.min.js`. Ele já traz reatividade, directives, componentes, HTTP, formulários,
-validação, máscaras, interface, arrastar e soltar, notificações, diálogos e armazenamento. Troque
-para `voodoo.full.min.js` no dia em que precisar de gráfico, animação com mola, roteador, idiomas,
-inspetor ou os 29 componentes prontos.
+Start with `voodoo.min.js`. It already brings reactivity, directives, components, HTTP, forms,
+validation, masks, interface, drag and drop, notifications, dialogs, and storage. Switch to
+`voodoo.full.min.js` the day you need a chart, spring animation, router, languages, inspector,
+or the 29 ready-made components.
 
-### Por que a interpolação usa chave simples?
+### Why does interpolation use single braces?
 
-Porque é o que a maioria das pessoas tenta escrever primeiro. `{ nome }` é a forma padrão da
-Voodoo. `{{ nome }}` também funciona, para quem vem do Vue e para textos que precisam de chaves
-literais em volta.
+Because that's what most people try to write first. `{ name }` is Voodoo's standard form.
+`{{ name }}` also works, for those coming from Vue and for text that needs literal braces around it.
 
-### Onde os meus atributos `v-*` foram parar?
+### Where did my `v-*` attributes go?
 
-Eles são removidos do HTML depois de processados, de propósito, para deixar o DOM limpo no
-inspetor. O comportamento continua funcionando porque os valores ficam guardados no runtime. Para
-manter:
+They're removed from HTML after processing, on purpose, to keep the DOM clean in the inspector.
+Behavior keeps working because values are stored in the runtime. To keep them:
 
 ```js
 V.config.cleanAttributes = false;
 ```
 
-Ou use `data-keep-attributes` na tag `<script>`.
+Or use `data-keep-attributes` on the `<script>` tag.
 
-### Meu CSS parou de funcionar depois de atualizar
+### My CSS stopped working after updating
 
-Provavelmente ele dependia de um seletor de atributo, como `[v-tab] { ... }`. Como os atributos
-saem do HTML, esses seletores deixam de casar. Use classes. As directives de interface já aplicam
-classes próprias: `v-tab`, `v-active`, `v-drawer-panel`, `v-dropzone` e assim por diante.
+It probably depended on an attribute selector like `[v-tab] { ... }`. Since attributes leave the
+HTML, those selectors stop matching. Use classes. Interface directives already apply their own
+classes: `v-tab`, `v-active`, `v-drawer-panel`, `v-dropzone`, and so on.
 
-### `el.getAttribute('v-algo')` devolve null
+### `el.getAttribute('v-something')` returns null
 
-Mesmo motivo. Se você precisa ler o valor original de dentro de uma directive própria, use as
-funções de leitura do runtime, que consultam o cache. De fora, guarde o valor em um `data-`
-comum.
+Same reason. If you need to read the original value from inside a custom directive, use the
+runtime's read functions, which consult the cache. From outside, store the value in a common
+`data-` attribute.
 
-### Funciona com Content Security Policy restritiva?
+### Does it work with restrictive Content Security Policy?
 
-Sim, sem `unsafe-eval`. As expressões passam por um parser e um interpretador próprios. Só o
-`style-src` precisa de `'unsafe-inline'`, por causa do CSS injetado, e isso pode ser dispensado
-com `data-no-styles`. Veja [Segurança](seguranca.md).
+Yes, without `unsafe-eval`. Expressions go through a custom parser and interpreter. Only
+`style-src` needs `'unsafe-inline'`, because of injected CSS, and that can be dispensed with
+`data-no-styles`. See [Security](seguranca.md).
 
-### Quais navegadores são suportados?
+### Which browsers are supported?
 
-Os builds têm alvo `es2018` e usam APIs modernas como `Proxy`, `fetch`, `IntersectionObserver`,
-`MutationObserver` e `AbortController`. Na prática: qualquer navegador atualizado dos últimos
-anos. Não há suporte a Internet Explorer, e nem haverá.
+The builds target `es2018` and use modern APIs like `Proxy`, `fetch`, `IntersectionObserver`,
+`MutationObserver`, and `AbortController`. In practice: any updated browser from the last few
+years. No Internet Explorer support, and there won't be.
 
-### Funciona em Node?
+### Does it work in Node?
 
-Os módulos puros sim: reatividade, HTTP, utilitários e o parser não tocam no DOM. O que depende de
-DOM só roda no navegador. Não existe renderização no servidor.
+Pure modules do: reactivity, HTTP, utilities, and the parser don't touch the DOM. What depends on
+DOM only runs in the browser. There is no server-side rendering.
 
-### A biblioteca tem dependências?
+### Does the library have dependencies?
 
-Nenhuma em tempo de execução. Em desenvolvimento existem `tsup`, `typescript`, `vitest`, `jsdom` e
+None at runtime. In development there are `tsup`, `typescript`, `vitest`, `jsdom`, and
 `prettier`.
 
-## Uso do dia a dia
+## Everyday use
 
-### Como faço algo assim que a página carrega?
+### How do I do something as soon as the page loads?
 
 ```html
-<div v-data="{ dados: null }" v-init="carregar()"></div>
+<div v-data="{ data: null }" v-init="load()"></div>
 ```
 
-Ou `V.ready(fn)` em JavaScript, ou o evento `voodoo:ready`.
+Or `V.ready(fn)` in JavaScript, or the `voodoo:ready` event.
 
-### Como acesso um elemento?
+### How do I access an element?
 
 ```html
-<input v-ref="busca">
-<button v-click="$refs.busca.focus()">Focar</button>
+<input v-ref="search">
+<button v-click="$refs.search.focus()">Focus</button>
 ```
 
-Dentro de manipuladores, `$el` é o elemento que declarou a directive.
+Inside handlers, `$el` is the element that declared the directive.
 
-### Como faço uma requisição sem escrever JavaScript?
+### How do I make a request without writing JavaScript?
 
 ```html
-<button v-get="/api/usuarios" v-target="#lista">Carregar</button>
-<div id="lista"></div>
+<button v-get="/api/users" v-target="#list">Load</button>
+<div id="list"></div>
 ```
 
-Para guardar no estado em vez de escrever no DOM, use `v-as`. Para ter estado completo com
-carregando e erro, use `v-resource`.
+To store in state instead of writing to the DOM, use `v-as`. To have full state with loading and
+error, use `v-resource`.
 
-### Como sei se uma requisição está em andamento?
+### How do I know if a request is in progress?
 
-Com `v-resource`, é `recurso.loading`. Em formulários, é `$form.loading`. Nas directives de verbo,
-use `v-loading="#spinner"` e `v-disable-loading`.
+With `v-resource`, it's `resource.loading`. In forms, it's `$form.loading`. In verb directives,
+use `v-loading="#spinner"` and `v-disable-loading`.
 
-### Meu `v-for` perde o foco do campo quando a lista muda
+### My `v-for` loses focus when the list changes
 
-Falta `:key`. Sem chave os blocos são identificados pela posição e recriados. Com chave eles são
-reaproveitados.
+Missing `:key`. Without a key, blocks are identified by position and recreated. With a key they're
+reused.
 
 ```html
-<li v-for="item in itens" :key="item.id">...</li>
+<li v-for="item in items" :key="item.id">...</li>
 ```
 
-### `v-if` e `v-for` no mesmo elemento não funcionam
+### `v-if` and `v-for` on the same element don't work
 
-Os dois são terminais, então um assume o controle e o outro não roda. Coloque o `v-if` em um
-filho:
+Both are terminal, so one takes control and the other doesn't run. Put `v-if` in a child:
 
 ```html
-<div v-for="n in lista">
+<div v-for="n in list">
   <span v-if="n % 2 === 0">{ n }</span>
 </div>
 ```
 
-### Como escrevo uma função com várias linhas em um atributo?
+### How do I write a multi-line function in an attribute?
 
-Não escreva. O parser aceita expressões, não blocos. Coloque a lógica em um método:
+Don't. The parser accepts expressions, not blocks. Put the logic in a method:
 
 ```js
-V.data({ limpar() { this.itens = []; this.total = 0; } });
+V.data({ clear() { this.items = []; this.total = 0; } });
 ```
 
 ```html
-<button v-click="limpar">Limpar</button>
+<button v-click="clear">Clear</button>
 ```
 
-### `window`, `document` e `fetch` são `undefined` nas expressões
+### `window`, `document`, and `fetch` are `undefined` in expressions
 
-É proposital. Apenas uma lista fechada de globais é liberada. Para chegar ao DOM e a serviços, use
-as magias: `$el`, `$refs`, `$http`, `$storage`, `$clipboard`. Para liberar algo seu:
+Intentional. Only a closed list of globals is allowed. To reach the DOM and services, use magics:
+`$el`, `$refs`, `$http`, `$storage`, `$clipboard`. To release something of your own:
 
 ```js
-V.config.globals.minhaFuncao = minhaFuncao;
+V.config.globals.myFunction = myFunction;
 ```
 
-### Como faço debounce com um tempo diferente de 250 ms?
+### How do I debounce with a different time than 250 ms?
 
-Nos eventos, faça o debounce na função:
+In events, debounce in the function:
 
 ```js
-V.data({ buscar: V.debounce((t) => carregar(t), 600) });
+V.data({ search: V.debounce((t) => load(t), 600) });
 ```
 
-No `v-model`, use o atributo:
+In `v-model`, use the attribute:
 
 ```html
-<input v-model.debounce="busca" v-debounce="600">
+<input v-model.debounce="search" v-debounce="600">
 ```
 
-Nas directives HTTP, `v-debounce` funciona direto.
+In HTTP directives, `v-debounce` works directly.
 
-### Elementos criados por JavaScript ganham directives?
+### Do elements created by JavaScript get directives?
 
-Sim. Um `MutationObserver` inicializa o que aparece no DOM depois do carregamento. Se você
-desligou com `data-no-observer`, chame `V.walk(elemento)` à mão.
+Yes. A `MutationObserver` initializes what appears in the DOM after loading. If you turned it off
+with `data-no-observer`, call `V.walk(element)` manually.
 
-### Como faço uma máscara e mando o valor limpo para o servidor?
+### How do I make a mask and send the clean value to the server?
 
 ```html
 <input v-mask.unmask="cpf" v-model="form.cpf" v-cpf>
 ```
 
-A tela mostra `123.456.789-01` e o estado guarda `12345678901`.
+The screen shows `123.456.789-01` and the state stores `12345678901`.
 
-### Como troco as mensagens de validação?
+### How do I change validation messages?
 
 ```js
-Object.assign(V.messages, { required: 'Campo obrigatório.' });
+Object.assign(V.messages, { required: 'Required field.' });
 ```
 
-Para um campo específico, `v-error-message="..."`.
+For a specific field, `v-error-message="..."`.
 
-### Como valido no servidor e mostro o erro no campo certo?
+### How do I validate on the server and show the error on the right field?
 
-Devolva 422 com `{ "errors": { "email": "Já cadastrado" } }`. O `v-submit` distribui as mensagens
-para os campos pelo `name`, e as que não têm campo correspondente aparecem em um resumo no topo.
+Return 422 with `{ "errors": { "email": "Already registered" } }`. `v-submit` distributes
+messages to fields by `name`, and ones with no corresponding field appear in a summary at the top.
 
-### O `v-sortable` reordena o meu array?
+### Does `v-sortable` reorder my array?
 
-Não. Ele move os elementos no DOM. Escute `voodoo:sorted` e reordene o array, ou salve a ordem no
-servidor. Sem isso, a próxima renderização volta à ordem antiga.
+No. It moves elements in the DOM. Listen to `voodoo:sorted` and reorder the array, or save the
+order on the server. Without this, the next render goes back to the old order.
 
-### Dá para usar junto com Bootstrap, Tailwind ou o meu CSS?
+### Can I use it together with Bootstrap, Tailwind, or my CSS?
 
-Sim. A Voodoo não impõe estilo. As directives de interface injetam apenas o mínimo, e você pode
-desligar com `data-no-styles`. Para o Tailwind, aponte as cores do tema para as variáveis
-`--v-*` e as duas coisas passam a andar juntas.
+Yes. Voodoo doesn't impose style. Interface directives inject only the minimum, and you can turn it
+off with `data-no-styles`. For Tailwind, point the theme colors to `--v-*` variables and the two
+work together.
 
-### Dá para usar junto com jQuery, Alpine ou Vue?
+### Can I use it together with jQuery, Alpine, or Vue?
 
-Sim, todas usam o DOM padrão. Marque a região de outra biblioteca com `v-ignore` para que a Voodoo
-não toque nela.
+Yes, they all use standard DOM. Mark the other library's region with `v-ignore` so Voodoo doesn't
+touch it.
 
-### Como faço testes?
+### How do I test?
 
-O núcleo funciona em jsdom. O padrão do projeto é montar um trecho, percorrer e conferir:
+The core works in jsdom. The project pattern is to mount a snippet, walk, and verify:
 
 ```js
 import { walk } from 'voodoojs';
@@ -212,85 +209,83 @@ await V.nextTick();
 expect(document.querySelector('b').textContent).toBe('0');
 ```
 
-`V.flushSync()` aplica tudo que está pendente sem esperar microtask.
+`V.flushSync()` applies everything pending without waiting for a microtask.
 
-## Erros comuns
+## Common errors
 
-### Nada acontece, o HTML aparece cru
+### Nothing happens, the HTML appears raw
 
-Confira se o script carregou e se ele não está com `data-manual` sem uma chamada a `V.start()`.
-Confira também o console: erros de sintaxe em expressões aparecem lá com a posição exata.
+Check if the script loaded and if it isn't set to `data-manual` without a call to `V.start()`.
+Also check the console: syntax errors in expressions appear there with the exact position.
 
-### O conteúdo pisca antes de renderizar
+### Content flashes before rendering
 
-Use `v-cloak` com a regra de CSS:
+Use `v-cloak` with the CSS rule:
 
 ```html
 <style>[v-cloak] { display: none !important; }</style>
 <div v-cloak v-data="{}">...</div>
 ```
 
-### `Maximum call stack` ou aviso de laço no console
+### `Maximum call stack` or loop warning in console
 
-Algum efeito está escrevendo na mesma chave que lê. O agendador para a repetição e avisa. Reveja
-a expressão, geralmente um `v-effect` que atribui a uma variável que ele mesmo lê.
+Some effect is writing to the same key it reads. The scheduler stops the repetition and warns.
+Review the expression, usually a `v-effect` that assigns to a variable it reads.
 
-### O componente não enxerga o `v-data` que está em volta
+### The component doesn't see the surrounding `v-data`
 
-É o comportamento padrão: componentes isolam o escopo, para não dependerem por acidente do lugar
-onde foram colados. Passe por props, ou ligue `inheritScope: true` na definição.
+It's default behavior: components isolate scope so they don't accidentally depend on where they're
+pasted. Pass via props, or turn on `inheritScope: true` in the definition.
 
-### O slot não enxerga o estado do componente
+### The slot doesn't see the component's state
 
-Também é o comportamento esperado, e é igual ao do Vue: o conteúdo do slot pertence ao escopo do
-pai. Slots com escopo não existem.
+Also expected behavior, and same as Vue: slot content belongs to the parent's scope. Scoped slots
+don't exist.
 
-### A tradução some ao trocar de idioma
+### Translation disappears when switching language
 
-Se você usou `v-t-params`, os valores são lidos apenas na primeira renderização. Use a
-interpolação reativa:
+If you used `v-t-params`, values are only read on first render. Use reactive interpolation:
 
 ```html
-<span>{ $t('itens', { n: total }) }</span>
+<span>{ $t('items', { n: total }) }</span>
 ```
 
-### A confirmação aparece duas vezes
+### Confirmation appears twice
 
-Isso acontece quando `v-confirm` está no mesmo elemento de um `v-get`, `v-post`, `v-put`,
-`v-patch`, `v-delete` ou `v-submit`: as duas camadas leem o mesmo atributo. Deixe a pergunta em um
-lugar só:
+This happens when `v-confirm` is on the same element as `v-get`, `v-post`, `v-put`, `v-patch`,
+`v-delete`, or `v-submit`: both layers read the same attribute. Leave the prompt in one place:
 
 ```html
-<button v-confirm="Excluir?" v-click="$http.delete('/api/x').then(() => lista.reload())">
-  Excluir
+<button v-confirm="Delete?" v-click="$http.delete('/api/x').then(() => list.reload())">
+  Delete
 </button>
 ```
 
-### O gráfico volta a ser de linha quando os dados mudam
+### Chart goes back to line when data changes
 
-Os atributos `v-chart-*` são lidos na montagem. Com dados reativos, declare tudo no objeto:
+`v-chart-*` attributes are read on mount. With reactive data, declare everything in the object:
 
 ```html
-<div v-chart="{ type: 'bar', data: vendas }"></div>
+<div v-chart="{ type: 'bar', data: sales }"></div>
 ```
 
-## Projeto
+## Project
 
-### Qual é a licença?
+### What's the license?
 
 MIT.
 
-### Como reporto um bug?
+### How do I report a bug?
 
-Abra uma issue com um exemplo mínimo que reproduza o problema, de preferência um HTML de uma
-página só. Veja [Contribuindo](contribuindo.md).
+Open an issue with a minimal example that reproduces the problem, preferably a single-page HTML.
+See [Contributing](contribuindo.md).
 
-### Como peço um recurso novo?
+### How do I request a new feature?
 
-Abra uma issue de proposta explicando o problema antes da solução. O que está fora do escopo hoje
-está listado no roadmap da [Introdução](introducao.md).
+Open a proposal issue explaining the problem before the solution. What's out of scope today is
+listed in the [Introduction](introducao.md)'s roadmap.
 
-### Como contribuo com código?
+### How do I contribute code?
 
 ```bash
 npm install
@@ -300,8 +295,8 @@ npm run build
 npm run size
 ```
 
-O guia completo está em [Contribuindo](contribuindo.md).
+The full guide is in [Contributing](contribuindo.md).
 
 ---
 
-Anterior: [Migrando do Vue](migrando-do-vue.md) · Próximo: [Contribuindo](contribuindo.md)
+Previous: [Migrating from Vue](migrando-do-vue.md) · Next: [Contributing](contribuindo.md)

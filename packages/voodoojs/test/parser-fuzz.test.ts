@@ -1,24 +1,24 @@
 /**
- * Fuzz / property-based testing do parser.
+ * Fuzz / property-based testing of the parser.
  *
- * O parser e uma fronteira de seguranca: a Voodoo nao usa `eval` nem
- * `new Function`, entao todo texto de atributo passa por lexer -> parser ->
- * interpretador. Um teste de exemplo cobre o que alguem lembrou de escrever;
- * este arquivo cobre o que ninguem lembrou.
+ * The parser is a security boundary: Voodoo doesn't use `eval` or
+ * `new Function`, so all attribute text passes through lexer -> parser ->
+ * interpreter. A unit test covers what someone remembered to write;
+ * this file covers what nobody remembered.
  *
- * A ideia nao e comparar valores, e verificar PROPRIEDADES que precisam valer
- * para qualquer entrada:
+ * The idea is not to compare values, but to verify PROPERTIES that must
+ * hold for any input:
  *
- *   1. `parse()` sempre termina (nada de laco infinito).
- *   2. Aninhamento profundo termina com erro previsivel, nunca com `RangeError`
- *      cru de estouro de pilha.
- *   3. Entrada invalida sempre lanca `VoodooSyntaxError`, nunca `TypeError`
- *      ou outro erro generico do JavaScript.
- *   4. O cache e idempotente, inclusive no estouro de `MAX_CACHE`.
- *   5. Round-trip: expressao valida do subconjunto seguro avalia sem lancar.
+ *   1. `parse()` always terminates (no infinite loops).
+ *   2. Deep nesting terminates with predictable error, never raw `RangeError`
+ *      from stack overflow.
+ *   3. Invalid input always throws `VoodooSyntaxError`, never `TypeError`
+ *      or other generic JavaScript error.
+ *   4. The cache is idempotent, even on `MAX_CACHE` overflow.
+ *   5. Round-trip: valid expression from safe subset evaluates without throwing.
  *
- * Tudo e deterministico. A semente e fixa, o gerador e um mulberry32 e nao ha
- * `Math.random` em lugar nenhum: uma falha se reproduz sempre igual.
+ * Everything is deterministic. The seed is fixed, the generator is mulberry32,
+ * and there's no `Math.random` anywhere: a failure always reproduces the same way.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -28,79 +28,79 @@ import { evaluate } from '../src/parser/interpreter';
 import { Scope } from '../src/runtime/scope';
 import { reactive } from '../src/reactivity';
 import {
-  Aleatorio,
-  casosGigantes,
-  casosLimite,
-  dadosControlados,
-  geraExpressaoSegura,
-  geraExpressaoValida,
-  geraPrograma,
-  muta,
+  Random,
+  hugeCases,
+  edgeCases,
+  controlledData,
+  generateSafeExpression,
+  generateValidExpression,
+  generateProgram,
+  mutate,
 } from './helpers/gerador-expressoes';
 
-/** Semente fixa. Mudar este numero muda todo o corpus. */
-const SEMENTE = 0xc0ffee;
+/** Fixed seed. Changing this number changes the entire corpus. */
+const SEED = 0xc0ffee;
 
-/** Teto por expressao. Uma expressao curta que passe disso e um defeito. */
-const LIMITE_MS = 1000;
+/** Time ceiling per expression. A short expression exceeding this is a defect. */
+const LIMIT_MS = 1000;
 
-/** Teto para as entradas gigantes, que legitimamente custam mais. */
-const LIMITE_MS_GIGANTE = 4000;
+/** Ceiling for huge inputs, which legitimately cost more. */
+const LIMIT_MS_HUGE = 4000;
 
-interface Violacao {
-  fonte: string;
-  motivo: string;
+interface Violation {
+  source: string;
+  reason: string;
 }
 
-function resumo(fonte: string): string {
-  const curta = fonte.length > 80 ? `${fonte.slice(0, 80)}… (${fonte.length} chars)` : fonte;
-  return JSON.stringify(curta);
+function summary(source: string): string {
+  const short = source.length > 80 ? `${source.slice(0, 80)}… (${source.length} chars)` : source;
+  return JSON.stringify(short);
 }
 
 /**
- * Analisa uma expressao e devolve a violacao de contrato, se houver.
+ * Analyzes an expression and returns the contract violation, if any.
  *
- * Contrato: ou `parse` devolve uma AST, ou lanca `VoodooSyntaxError`. Qualquer
- * outro erro (`TypeError`, `RangeError`, string solta) e bug. Estourar o tempo
- * tambem e bug.
+ * Contract: either `parse` returns an AST or throws `VoodooSyntaxError`.
+ * Any other error (`TypeError`, `RangeError`, bare string) is a bug.
+ * Exceeding time limit is also a bug.
  */
-function verificaContrato(fonte: string, limiteMs = LIMITE_MS): Violacao | null {
-  const inicio = Date.now();
-  let no: unknown;
-  let erro: unknown;
+function verifyContract(source: string, limitMs = LIMIT_MS): Violation | null {
+  const start = Date.now();
+  let node: unknown;
+  let error: unknown;
   try {
-    no = parse(fonte);
+    node = parse(source);
   } catch (err) {
-    erro = err;
+    error = err;
   }
-  const gasto = Date.now() - inicio;
+  const spent = Date.now() - start;
 
-  if (gasto > limiteMs) {
-    return { fonte, motivo: `demorou ${gasto}ms (limite ${limiteMs}ms)` };
+  if (spent > limitMs) {
+    return { source, reason: `took ${spent}ms (limit ${limitMs}ms)` };
   }
-  if (erro !== undefined) {
-    if (!(erro instanceof VoodooSyntaxError)) {
-      const nome = erro instanceof Error ? `${erro.name}: ${erro.message.split('\n')[0]}` : typeof erro;
-      return { fonte, motivo: `lancou ${nome} em vez de VoodooSyntaxError` };
+  if (error !== undefined) {
+    if (!(error instanceof VoodooSyntaxError)) {
+      const name = error instanceof Error ? `${error.name}: ${error.message.split('\n')[0]}` : typeof error;
+      return { source, reason: `threw ${name} instead of VoodooSyntaxError` };
     }
-    if (!erro.message || erro.message.length === 0) {
-      return { fonte, motivo: 'VoodooSyntaxError sem mensagem' };
+    if (!error.message || error.message.length === 0) {
+      return { source, reason: 'VoodooSyntaxError without message' };
     }
     return null;
   }
-  if (typeof no !== 'object' || no === null || typeof (no as { t?: unknown }).t !== 'string') {
-    return { fonte, motivo: `devolveu AST invalida: ${String(no)}` };
+  if (typeof node !== 'object' || node === null || typeof (node as { t?: unknown }).t !== 'string') {
+    return { source, reason: `returned invalid AST: ${String(node)}` };
   }
   return null;
 }
 
-function relata(violacoes: Violacao[]): void {
-  if (violacoes.length === 0) return;
-  const lista = violacoes
+function report(violations: Violation[]): void {
+  if (violations.length === 0) return;
+  const list = violations
     .slice(0, 10)
-    .map((v) => ` - ${resumo(v.fonte)} => ${v.motivo}`)
+    .map((v) => ` - ${summary(v.source)} => ${v.reason}`)
     .join('\n');
-  throw new Error(`${violacoes.length} entrada(s) quebraram o contrato do parser:\n${lista}`);
+  throw new Error(`${violations.length} input(s) broke parser contract:\n${list}`);
 }
 
 beforeEach(() => {
@@ -108,157 +108,156 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// 1 e 3: termina sempre, e erro sempre e VoodooSyntaxError
+// 1 and 3: always terminates, error is always VoodooSyntaxError
 // ---------------------------------------------------------------------------
 
-describe('fuzz: o parser termina e erra de forma previsivel', () => {
-  it('2000 expressoes geradas pela gramatica', () => {
-    const r = new Aleatorio(SEMENTE);
-    const violacoes: Violacao[] = [];
+describe('fuzz: parser terminates and errors predictably', () => {
+  it('2000 expressions generated by grammar', () => {
+    const r = new Random(SEED);
+    const violations: Violation[] = [];
     for (let i = 0; i < 2000; i++) {
-      const fonte = geraExpressaoValida(r, 1 + r.inteiro(5));
-      const v = verificaContrato(fonte);
-      if (v) violacoes.push(v);
+      const source = generateValidExpression(r, 1 + r.integer(5));
+      const v = verifyContract(source);
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('500 programas com varias expressoes separadas por ;', () => {
-    const r = new Aleatorio(SEMENTE ^ 0x5eed);
-    const violacoes: Violacao[] = [];
+  it('500 programs with multiple expressions separated by ;', () => {
+    const r = new Random(SEED ^ 0x5eed);
+    const violations: Violation[] = [];
     for (let i = 0; i < 500; i++) {
-      const v = verificaContrato(geraPrograma(r, 1 + r.inteiro(4)));
-      if (v) violacoes.push(v);
+      const v = verifyContract(generateProgram(r, 1 + r.integer(4)));
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('3000 mutacoes destrutivas de expressoes validas', () => {
-    const r = new Aleatorio(SEMENTE ^ 0xbadc0de);
-    const violacoes: Violacao[] = [];
+  it('3000 destructive mutations of valid expressions', () => {
+    const r = new Random(SEED ^ 0xbadc0de);
+    const violations: Violation[] = [];
     for (let i = 0; i < 3000; i++) {
-      let fonte = geraExpressaoValida(r, 1 + r.inteiro(4));
-      const rodadas = 1 + r.inteiro(3);
-      for (let m = 0; m < rodadas; m++) fonte = muta(r, fonte);
-      const v = verificaContrato(fonte);
-      if (v) violacoes.push(v);
+      let source = generateValidExpression(r, 1 + r.integer(4));
+      const rounds = 1 + r.integer(3);
+      for (let m = 0; m < rounds; m++) source = mutate(r, source);
+      const v = verifyContract(source);
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('1000 sequencias aleatorias de caracteres de pontuacao', () => {
-    const r = new Aleatorio(SEMENTE ^ 0x1234);
-    const alfabeto = `()[]{}<>+-*/%!?:;.,'"\`\\|&^~=$_ \n\t0123456789abz😀áΩ`;
-    const violacoes: Violacao[] = [];
+  it('1000 random sequences of punctuation characters', () => {
+    const r = new Random(SEED ^ 0x1234);
+    const alphabet = `()[]{}<>+-*/%!?:;.,'"\`\\|&^~=$_ \n\t0123456789abz😀áΩ`;
+    const violations: Violation[] = [];
     for (let i = 0; i < 1000; i++) {
-      const n = 1 + r.inteiro(40);
-      let fonte = '';
-      for (let c = 0; c < n; c++) fonte += alfabeto[r.inteiro(alfabeto.length)];
-      const v = verificaContrato(fonte);
-      if (v) violacoes.push(v);
+      const n = 1 + r.integer(40);
+      let source = '';
+      for (let c = 0; c < n; c++) source += alphabet[r.integer(alphabet.length)];
+      const v = verifyContract(source);
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('casos limite escritos a mao', () => {
-    const violacoes: Violacao[] = [];
-    for (const fonte of casosLimite()) {
-      const v = verificaContrato(fonte);
-      if (v) violacoes.push(v);
+  it('hand-written edge cases', () => {
+    const violations: Violation[] = [];
+    for (const source of edgeCases()) {
+      const v = verifyContract(source);
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('entradas gigantes terminam dentro do orcamento', () => {
-    const violacoes: Violacao[] = [];
-    for (const fonte of casosGigantes()) {
-      const v = verificaContrato(fonte, LIMITE_MS_GIGANTE);
-      if (v) violacoes.push(v);
+  it('huge inputs complete within budget', () => {
+    const violations: Violation[] = [];
+    for (const source of hugeCases()) {
+      const v = verifyContract(source, LIMIT_MS_HUGE);
+      if (v) violations.push(v);
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('o lexer sozinho obedece ao mesmo contrato', () => {
-    const r = new Aleatorio(SEMENTE ^ 0xfeed);
-    const violacoes: Violacao[] = [];
-    const corpus = [...casosLimite()];
-    for (let i = 0; i < 500; i++) corpus.push(muta(r, geraExpressaoValida(r, 3)));
-    for (const fonte of corpus) {
+  it('lexer alone obeys the same contract', () => {
+    const r = new Random(SEED ^ 0xfeed);
+    const violations: Violation[] = [];
+    const corpus = [...edgeCases()];
+    for (let i = 0; i < 500; i++) corpus.push(mutate(r, generateValidExpression(r, 3)));
+    for (const source of corpus) {
       try {
-        tokenize(fonte);
+        tokenize(source);
       } catch (err) {
         if (!(err instanceof VoodooSyntaxError)) {
-          violacoes.push({
-            fonte,
-            motivo: `tokenize lancou ${err instanceof Error ? err.name : typeof err}`,
+          violations.push({
+            source,
+            reason: `tokenize threw ${err instanceof Error ? err.name : typeof err}`,
           });
         }
       }
     }
-    relata(violacoes);
+    report(violations);
   });
 });
 
 // ---------------------------------------------------------------------------
-// 2: aninhamento profundo (regressoes encontradas pelo fuzz)
+// 2: deep nesting (regressions found by fuzz)
 // ---------------------------------------------------------------------------
 
-describe('fuzz: aninhamento profundo nao estoura a pilha', () => {
-  // BUG ENCONTRADO PELO FUZZ: `((((...))))` com alguns milhares de niveis
-  // vazava `RangeError: Maximum call stack size exceeded`, um erro cru do
-  // motor, no lugar de um erro de sintaxe da Voodoo. Corrigido com o limite
-  // MAX_DEPTH em src/parser/parser.ts.
-  const profundos: Array<[string, string]> = [
-    ['parenteses', `${'('.repeat(5000)}1${')'.repeat(5000)}`],
+describe('fuzz: deep nesting does not overflow the stack', () => {
+  // BUG FOUND BY FUZZ: `((((...))))` with thousands of levels leaked
+  // `RangeError: Maximum call stack size exceeded`, raw engine error,
+  // instead of Voodoo syntax error. Fixed with MAX_DEPTH limit in src/parser/parser.ts.
+  const deep: Array<[string, string]> = [
+    ['parentheses', `${'('.repeat(5000)}1${')'.repeat(5000)}`],
     ['arrays', `${'['.repeat(5000)}${']'.repeat(5000)}`],
-    ['objetos', `${'{a:'.repeat(5000)}1${'}'.repeat(5000)}`],
-    ['unarios', `${'!'.repeat(20000)}1`],
-    ['ternarios', `${'a?1:'.repeat(20000)}2`],
+    ['objects', `${'{a:'.repeat(5000)}1${'}'.repeat(5000)}`],
+    ['unary', `${'!'.repeat(20000)}1`],
+    ['ternary', `${'a?1:'.repeat(20000)}2`],
     ['arrows', `${'x=>'.repeat(20000)}1`],
-    ['exponenciacao', `${'2**'.repeat(20000)}2`],
-    ['chamadas', `f${'('.repeat(5000)}1${')'.repeat(5000)}`],
+    ['exponentiation', `${'2**'.repeat(20000)}2`],
+    ['calls', `f${'('.repeat(5000)}1${')'.repeat(5000)}`],
     ['templates', `${'`${'.repeat(5000)}1${'}`'.repeat(5000)}`],
     ['spreads', `[${'...['.repeat(5000)}1${']'.repeat(5000)}]`],
   ];
 
-  for (const [nome, fonte] of profundos) {
-    it(`${nome} aninhados milhares de vezes viram VoodooSyntaxError`, () => {
-      let erro: unknown;
+  for (const [name, source] of deep) {
+    it(`${name} nested thousands of times become VoodooSyntaxError`, () => {
+      let error: unknown;
       try {
-        parse(fonte);
+        parse(source);
       } catch (err) {
-        erro = err;
+        error = err;
       }
-      expect(erro).toBeInstanceOf(VoodooSyntaxError);
-      expect(String((erro as Error).message)).toMatch(/aninhad/i);
+      expect(error).toBeInstanceOf(VoodooSyntaxError);
+      expect(String((error as Error).message)).toMatch(/nested/i);
     });
   }
 
-  it('300 niveis de parenteses continuam validos', () => {
-    // O limite existe para conter absurdo, nao para apertar o uso real.
-    const fonte = `${'('.repeat(300)}1${')'.repeat(300)}`;
-    expect(parse(fonte)).toEqual({ t: 'lit', v: 1 });
+  it('300 levels of parentheses remain valid', () => {
+    // The limit exists to contain absurdity, not to constrain real usage.
+    const source = `${'('.repeat(300)}1${')'.repeat(300)}`;
+    expect(parse(source)).toEqual({ t: 'lit', v: 1 });
   });
 
-  it('template aninhado de verdade continua funcionando', () => {
+  it('truly nested template continues working', () => {
     expect(() => parse('`${`${`${a}`}`}`')).not.toThrow();
   });
 
-  it('cadeia longa mas rasa nao esbarra no limite', () => {
-    const soma = Array.from({ length: 5000 }, () => '1').join(' + ');
-    expect(() => parse(soma)).not.toThrow();
+  it('long but shallow chain does not hit limit', () => {
+    const sum = Array.from({ length: 5000 }, () => '1').join(' + ');
+    expect(() => parse(sum)).not.toThrow();
     expect(() => parse(`a${'.b'.repeat(5000)}`)).not.toThrow();
   });
 });
 
 // ---------------------------------------------------------------------------
-// 3: bugs pontuais achados pelo fuzz nos escapes do lexer
+// 3: specific bugs found by fuzz in lexer escapes
 // ---------------------------------------------------------------------------
 
-describe('escapes invalidos em string sao erro de sintaxe, nao RangeError', () => {
-  // BUG ENCONTRADO PELO FUZZ: `String.fromCodePoint` lanca `RangeError` cru
-  // para NaN e para valores acima de 0x10FFFF, e o lexer nao validava nada.
-  const casos = [
+describe('invalid escapes in string are syntax error, not RangeError', () => {
+  // BUG FOUND BY FUZZ: `String.fromCodePoint` throws raw `RangeError`
+  // for NaN and values above 0x10FFFF, and the lexer didn't validate anything.
+  const cases = [
     '"\\u{ZZ}"',
     '"\\u{}"',
     '"\\u{110000}"',
@@ -269,38 +268,38 @@ describe('escapes invalidos em string sao erro de sintaxe, nao RangeError', () =
     '"\\xZZ"',
     '"\\x4"',
   ];
-  for (const fonte of casos) {
-    it(`recusa ${fonte}`, () => {
-      expect(() => parse(fonte)).toThrow(VoodooSyntaxError);
+  for (const source of cases) {
+    it(`rejects ${source}`, () => {
+      expect(() => parse(source)).toThrow(VoodooSyntaxError);
     });
   }
 
-  // BUG ENCONTRADO PELO FUZZ: sem o `}` o `indexOf` devolvia -1 e o lexer
-  // fazia `i = close + 1`, voltando o cursor para o inicio da fonte e
-  // reanalisando tudo com posicoes erradas.
-  it('escape unicode sem chave de fechamento nao rebobina o cursor', () => {
-    let erro: VoodooSyntaxError | undefined;
+  // BUG FOUND BY FUZZ: without the `}`, `indexOf` returned -1 and the lexer
+  // did `i = close + 1`, moving the cursor back to source start and
+  // reanalyzing everything with wrong positions.
+  it('unicode escape without closing brace does not rewind cursor', () => {
+    let error: VoodooSyntaxError | undefined;
     try {
       tokenize('+"\\u{41ZZZ');
     } catch (err) {
-      erro = err as VoodooSyntaxError;
+      error = err as VoodooSyntaxError;
     }
-    expect(erro).toBeInstanceOf(VoodooSyntaxError);
-    expect(erro!.message).toContain('nao fechado');
-    // A posicao aponta para a string, nao para o comeco da expressao.
-    expect(erro!.position).toBe(1);
+    expect(error).toBeInstanceOf(VoodooSyntaxError);
+    expect(error!.message).toContain('Unclosed');
+    // Position points to the string, not the start of the expression.
+    expect(error!.position).toBe(1);
   });
 
-  // O fuzz gerou `++null` (dois `+` colados) e mostrou que o parser aceita
-  // incremento sobre literal: a AST sai pronta e so o interpretador reclama,
-  // com VoodooRuntimeError. O JavaScript recusa isso ainda na analise, e o
-  // parser ja recusa `1 = 2` com "Alvo de atribuicao invalido". Falta a mesma
-  // checagem em `++`/`--`. Nao mexi agora porque muda o momento do erro
-  // (analise em vez de avaliacao) e o interpretador esta sendo editado em
-  // paralelo; o erro atual continua tipado, entao nao ha vazamento de erro cru.
-  it.todo('++ e -- sobre literal deveriam ser recusados ainda na analise');
+  // Fuzz generated `++null` (two `+` stuck together) and showed that the parser
+  // accepts increment on literal: the AST comes out and only the interpreter
+  // complains with VoodooRuntimeError. JavaScript rejects this at parse time,
+  // and the parser already rejects `1 = 2` with "Invalid assignment target".
+  // Missing the same check in `++`/`--`. Didn't touch it now because it changes
+  // when the error occurs (parsing vs evaluation) and the interpreter is being
+  // edited in parallel; the current error is still typed, so no raw error leak.
+  it.todo('++ and -- on literal should be rejected at parse time');
 
-  it('escapes validos continuam funcionando', () => {
+  it('valid escapes continue working', () => {
     expect(parse('"\\u0041"')).toEqual({ t: 'lit', v: 'A' });
     expect(parse('"\\u{1F600}"')).toEqual({ t: 'lit', v: '😀' });
     expect(parse('"\\x41"')).toEqual({ t: 'lit', v: 'A' });
@@ -309,90 +308,90 @@ describe('escapes invalidos em string sao erro de sintaxe, nao RangeError', () =
 });
 
 // ---------------------------------------------------------------------------
-// 4: idempotencia do cache
+// 4: cache idempotence
 // ---------------------------------------------------------------------------
 
-describe('fuzz: o cache e idempotente', () => {
-  it('parse duas vezes devolve a mesma AST para 800 expressoes', () => {
-    const r = new Aleatorio(SEMENTE ^ 0xcafe);
+describe('fuzz: cache is idempotent', () => {
+  it('parsing twice returns same AST for 800 expressions', () => {
+    const r = new Random(SEED ^ 0xcafe);
     for (let i = 0; i < 800; i++) {
-      const fonte = geraExpressaoValida(r, 1 + r.inteiro(4));
-      let primeiro: unknown;
+      const source = generateValidExpression(r, 1 + r.integer(4));
+      let first: unknown;
       try {
-        primeiro = parse(fonte);
+        first = parse(source);
       } catch {
-        // Entrada invalida: tem que continuar invalida na segunda chamada.
-        expect(() => parse(fonte)).toThrow(VoodooSyntaxError);
+        // Invalid input: must remain invalid on second call.
+        expect(() => parse(source)).toThrow(VoodooSyntaxError);
         continue;
       }
-      const segundo = parse(fonte);
-      expect(segundo).toBe(primeiro);
-      expect(segundo).toEqual(primeiro);
+      const second = parse(source);
+      expect(second).toBe(first);
+      expect(second).toEqual(first);
     }
   });
 
-  it('o estouro de MAX_CACHE nao muda o resultado de nenhuma expressao', () => {
-    const referencia = parse('a.b + c');
-    const copia = JSON.parse(JSON.stringify(referencia));
-    // MAX_CACHE e 2000; 2600 expressoes distintas forcam a limpeza.
+  it('MAX_CACHE overflow does not change result of any expression', () => {
+    const reference = parse('a.b + c');
+    const copy = JSON.parse(JSON.stringify(reference));
+    // MAX_CACHE is 2000; 2600 distinct expressions force cleanup.
     for (let i = 0; i < 2600; i++) parse(`v${i} + ${i}`);
-    const depois = parse('a.b + c');
-    expect(JSON.parse(JSON.stringify(depois))).toEqual(copia);
+    const after = parse('a.b + c');
+    expect(JSON.parse(JSON.stringify(after))).toEqual(copy);
     expect(parse('v0 + 0')).toEqual(parse('v0 + 0'));
   });
 
-  it('a AST em cache nao e compartilhada entre fontes diferentes', () => {
+  it('cached AST is not shared between different sources', () => {
     expect(parse('a + b')).not.toBe(parse('a + c'));
   });
 
-  it('erro de sintaxe nao entra no cache', () => {
+  it('syntax error does not enter cache', () => {
     expect(() => parse('a +')).toThrow(VoodooSyntaxError);
     expect(() => parse('a +')).toThrow(VoodooSyntaxError);
   });
 });
 
 // ---------------------------------------------------------------------------
-// 5: round-trip com avaliacao
+// 5: round-trip with evaluation
 // ---------------------------------------------------------------------------
 
-describe('fuzz: round-trip parse + avaliacao', () => {
-  it('1000 expressoes do subconjunto seguro avaliam sem lancar', () => {
-    const r = new Aleatorio(SEMENTE ^ 0xa11ce);
-    const violacoes: Violacao[] = [];
+describe('fuzz: round-trip parse + evaluation', () => {
+  it('1000 expressions from safe subset evaluate without throwing', () => {
+    const r = new Random(SEED ^ 0xa11ce);
+    const violations: Violation[] = [];
     for (let i = 0; i < 1000; i++) {
-      const fonte = geraExpressaoSegura(r, 1 + r.inteiro(4));
-      const escopo = new Scope(reactive(dadosControlados()));
+      const source = generateSafeExpression(r, 1 + r.integer(4));
+      const scope = new Scope(reactive(controlledData()));
       try {
-        const valor = evaluate(parse(fonte), escopo);
-        // Avaliar de novo com o mesmo escopo tem que dar o mesmo tipo.
-        const outra = evaluate(parse(fonte), new Scope(reactive(dadosControlados())));
-        if (typeof valor !== typeof outra) {
-          violacoes.push({ fonte, motivo: `tipo instavel: ${typeof valor} vs ${typeof outra}` });
+        const value = evaluate(parse(source), scope);
+        // Evaluate again with fresh scope must give same type.
+        const other = evaluate(parse(source), new Scope(reactive(controlledData())));
+        if (typeof value !== typeof other) {
+          violations.push({ source, reason: `unstable type: ${typeof value} vs ${typeof other}` });
         }
       } catch (err) {
-        violacoes.push({
-          fonte,
-          motivo: `avaliacao lancou ${err instanceof Error ? `${err.name}: ${err.message.split('\n')[0]}` : typeof err}`,
+        violations.push({
+          source,
+          reason: `evaluation threw ${err instanceof Error ? `${err.name}: ${err.message.split('\n')[0]}` : typeof err}`,
         });
       }
     }
-    relata(violacoes);
+    report(violations);
   });
 
-  it('avaliar qualquer expressao gerada so lanca Error de verdade', () => {
-    const r = new Aleatorio(SEMENTE ^ 0xf00d);
-    const violacoes: Violacao[] = [];
+  it('evaluating any generated expression only throws true Error', () => {
+    const r = new Random(SEED ^ 0xf00d);
+    const violations: Violation[] = [];
     for (let i = 0; i < 800; i++) {
-      const fonte = geraExpressaoValida(r, 1 + r.inteiro(4));
-      const escopo = new Scope(reactive(dadosControlados()));
+      const source = generateValidExpression(r, 1 + r.integer(4));
+      const scope = new Scope(reactive(controlledData()));
       try {
-        evaluate(parse(fonte), escopo);
+        evaluate(parse(source), scope);
       } catch (err) {
         if (!(err instanceof Error)) {
-          violacoes.push({ fonte, motivo: `lancou nao-Error: ${typeof err}` });
+          violations.push({ source, reason: `threw non-Error: ${typeof err}` });
         }
       }
     }
-    relata(violacoes);
+    report(violations);
   });
 });

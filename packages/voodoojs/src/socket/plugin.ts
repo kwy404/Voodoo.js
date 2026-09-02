@@ -1,14 +1,13 @@
 /**
  * @module socket/plugin
  *
- * Entrada separada da camada de tempo real.
+ * Separate entry for the real-time layer.
  *
- * O motivo e medido, nao estetico: com o modulo dentro do build completo o
- * arquivo foi de 127.58 KB para 134.22 KB comprimidos, e o teto e 133. Em vez
- * de levantar a meta, que e o mesmo que nao ter meta, o modulo virou entrada
- * propria, como a camada GPU ja tinha feito pelo mesmo motivo. Quem usa
- * WebSocket paga por WebSocket; quem nao usa continua com o arquivo do tamanho
- * de antes.
+ * The reason is measured, not aesthetic: with the module in the complete build,
+ * the file went from 127.58 KB to 134.22 KB compressed, and the ceiling is 133. Instead
+ * of raising the target, which is the same as having no target, the module became its own
+ * entry, as the GPU layer already had for the same reason. Those using
+ * WebSocket pay for WebSocket; those not using it keep the file the same size as before.
  *
  * ```html
  * <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
@@ -19,16 +18,16 @@
  *
  * ```js
  * import V from 'voodoojs'
- * import 'voodoojs/dist/socket.js'   // registra v-socket, v-room e liga V.socket
+ * import 'voodoojs/dist/socket.js'   // registers v-socket, v-room and sets up V.socket
  * ```
  *
- * Importar este arquivo tem dois efeitos: registra as directives `v-socket`,
- * `v-room` e `v-on-socket`, e deixa `V.socket` disponivel. Nos builds ESM os
- * dois lados compartilham o mesmo runtime, porque as partes comuns saem em
- * chunks compartilhados.
+ * Importing this file has two effects: registers the `v-socket`,
+ * `v-room` and `v-on-socket` directives, and makes `V.socket` available. In ESM builds
+ * both sides share the same runtime, because common parts go out in
+ * shared chunks.
  */
 
-// Efeito colateral: registra v-socket, v-room e v-on-socket.
+// Side effect: registers v-socket, v-room and v-on-socket.
 import '../directives/socket';
 
 import { socket } from './index';
@@ -37,7 +36,7 @@ export { socket };
 export * from './index';
 
 /**
- * Plugin no formato aceito por `V.use()`.
+ * Plugin in the format accepted by `V.use()`.
  *
  * ```js
  * import { voodooSocket } from 'voodoojs/dist/socket.js'
@@ -51,9 +50,9 @@ export const voodooSocket = {
   },
 };
 
-// Quando o objeto global ja existe, ligar `V.socket` sozinho evita um passo a
-// mais de configuracao para quem so quer usar a directive.
-const alvo = (globalThis as Record<string, any>).V;
-if (alvo && typeof alvo === 'object' && !alvo.socket) alvo.socket = socket;
+// When the global object already exists, linking `V.socket` alone avoids one more
+// configuration step for those who just want to use the directive.
+const target = (globalThis as Record<string, any>).V;
+if (target && typeof target === 'object' && !target.socket) target.socket = socket;
 
 export default voodooSocket;

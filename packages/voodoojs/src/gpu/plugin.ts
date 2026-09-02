@@ -1,23 +1,23 @@
 /**
  * @module gpu/plugin
  *
- * Entrada separada da camada GPU.
+ * Separate entry for the GPU layer.
  *
- * O modulo nao entra nos bundles de CDN por um motivo medido, nao por gosto:
- * ele custa cerca de 8 KB comprimidos, e o build completo tem 133 KB de teto.
- * WebGPU e recurso de nicho, entao quem paga por ele e quem usa.
+ * The module doesn't go into CDN bundles for a measured reason, not a preference:
+ * it costs around 8 KB compressed, and the complete build has a 133 KB ceiling.
+ * WebGPU is a niche feature, so those who pay for it are those who use it.
  *
  * ```js
  * import V from 'voodoojs'
- * import 'voodoojs/dist/gpu.js'   // registra v-shader e liga V.gpu
+ * import 'voodoojs/dist/gpu.js'   // registers v-shader and sets up V.gpu
  * ```
  *
- * Importar este arquivo tem dois efeitos: registra a directive `v-shader` e
- * deixa `V.gpu` disponivel. Nos builds ESM os dois lados compartilham o mesmo
- * runtime, porque as partes comuns saem em chunks compartilhados.
+ * Importing this file has two effects: registers the `v-shader` directive and
+ * makes `V.gpu` available. In ESM builds both sides share the same
+ * runtime, because common parts go out in shared chunks.
  */
 
-// Efeito colateral: registra v-shader no registro de directives.
+// Side effect: registers v-shader in the directives registry.
 import '../directives/gpu';
 
 import { gpu } from './index';
@@ -27,7 +27,7 @@ export * from './index';
 export { classifyShaderSource, resolveShaderSource } from '../directives/gpu';
 
 /**
- * Plugin no formato aceito por `V.use()`.
+ * Plugin in the format accepted by `V.use()`.
  *
  * ```js
  * import { voodooGpu } from 'voodoojs/dist/gpu.js'
@@ -41,9 +41,9 @@ export const voodooGpu = {
   },
 };
 
-// Quando o objeto global ja existe, ligar `V.gpu` sozinho evita um passo a mais
-// de configuracao para quem so quer usar a directive.
-const alvo = (globalThis as Record<string, any>).V;
-if (alvo && typeof alvo === 'object' && !alvo.gpu) alvo.gpu = gpu;
+// When the global object already exists, linking `V.gpu` alone avoids one more
+// configuration step for those who just want to use the directive.
+const target = (globalThis as Record<string, any>).V;
+if (target && typeof target === 'object' && !target.gpu) target.gpu = gpu;
 
 export default voodooGpu;

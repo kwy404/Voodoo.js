@@ -1,56 +1,56 @@
-# Segurança
+# Security
 
-## Por que não usa eval
+## Why not eval
 
-Muita biblioteca que interpreta expressões dentro de atributos usa `new Function('with(scope){ ... }')`.
-É rápido de escrever e funciona bem, mas traz duas consequências: a página precisa de
-`unsafe-eval` na Content Security Policy, e qualquer texto que chegue a um atributo vira código
-executável com acesso a tudo.
+Many libraries that interpret expressions in attributes use `new Function('with(scope){ ... }')`.
+It's quick to write and works well, but brings two consequences: the page needs
+`unsafe-eval` in Content Security Policy, and any text that reaches an attribute becomes
+executable code with access to everything.
 
-A Voodoo.js não faz isso. Toda expressão passa por três etapas escritas à mão dentro da
-biblioteca:
+Voodoo.js does not do this. Every expression goes through three hand-written stages inside the
+library:
 
-1. um **lexer**, que quebra o texto em tokens;
-2. um **parser Pratt**, que monta a árvore sintática;
-3. um **interpretador de árvore**, que avalia nó a nó, dentro do escopo.
+1. a **lexer**, which breaks the text into tokens;
+2. a **Pratt parser**, which builds the syntax tree;
+3. a **tree interpreter**, which evaluates node by node, within scope.
 
-Nenhum `eval`, nenhum `new Function`, nenhum `setTimeout` com string.
+No `eval`, no `new Function`, no `setTimeout` with string.
 
 ## Content Security Policy
 
-A biblioteca funciona com uma política restritiva:
+The library works with a restrictive policy:
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
 ```
 
-O `'unsafe-inline'` em `style-src` existe porque o CSS dos componentes de interface é injetado em
-tempo de execução. Para dispensá-lo, desligue a injeção e carregue o CSS por conta própria:
+The `'unsafe-inline'` in `style-src` exists because CSS from UI components is injected at
+runtime. To remove it, disable injection and load the CSS yourself:
 
 ```html
 <script src="voodoo.min.js" data-no-styles defer></script>
 <link rel="stylesheet" href="/css/voodoo-ui.css">
 ```
 
-Com isso a política pode ficar assim:
+Then the policy can be:
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 ```
 
-`unsafe-eval` nunca é necessário, em nenhuma configuração.
+`unsafe-eval` is never necessary, in any configuration.
 
-## Superfície de acesso das expressões
+## Expression access surface
 
-Um identificador dentro de uma expressão é procurado no escopo. Quando não existe em nenhum
-escopo, a busca cai em uma lista fechada de globais:
+An identifier within an expression is looked up in scope. When it doesn't exist in any
+scope, the search falls to a closed list of globals:
 
 ```
 Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console
 ```
 
-Tudo fora dessa lista devolve `undefined`:
+Everything outside that list returns `undefined`:
 
 ```js
 window       // undefined
@@ -61,137 +61,135 @@ globalThis   // undefined
 localStorage // undefined
 ```
 
-Um atributo com `v-text="document.cookie"` não lê nada. Isso reduz bastante o estrago possível
-quando um atributo é montado a partir de dados que você não controla, mas **não é uma sandbox**.
-Continua valendo a regra de sempre: nunca coloque conteúdo de usuário dentro de um atributo `v-*`
-sem escapar.
+An attribute with `v-text="document.cookie"` reads nothing. This greatly reduces the damage possible
+when an attribute is built from data you don't control, but **it's not a sandbox**.
+The usual rule still applies: never put user content inside a `v-*` attribute
+without escaping.
 
-O acesso a serviços é explícito, pelas variáveis mágicas: `$el`, `$refs`, `$http`, `$storage`,
-`$clipboard`. Elas são opt-in por design, então dá para auditar o que uma página consegue fazer
-lendo os próprios atributos.
+Access to services is explicit, through magic variables: `$el`, `$refs`, `$http`, `$storage`,
+`$clipboard`. They are opt-in by design, so you can audit what a page can do
+by reading the attributes themselves.
 
-## v-html e XSS
+## v-html and XSS
 
-`v-html` insere HTML sem escapar. Ele existe porque conteúdo vindo de um editor de texto rico
-precisa disso, e não tem outro jeito honesto de resolver.
+`v-html` inserts HTML without escaping. It exists because content from a rich text editor
+needs this, and there's no other honest way to solve it.
 
-**Nunca use `v-html` com conteúdo que veio do usuário sem sanitizar antes.**
+**Never use `v-html` with content from the user without sanitizing first.**
 
 ```html
-<!-- perigoso -->
-<div v-html="comentario.texto"></div>
+<!-- dangerous -->
+<div v-html="comment.text"></div>
 
-<!-- seguro -->
-<div v-text="comentario.texto"></div>
+<!-- safe -->
+<div v-text="comment.text"></div>
 ```
 
-Quando o HTML é realmente necessário, sanitize no servidor ou no cliente com uma biblioteca
-dedicada:
+When HTML is truly necessary, sanitize on the server or client with a dedicated library:
 
 ```js
 import DOMPurify from 'dompurify';
 
-V.config.globals.limpar = (html) => DOMPurify.sanitize(html);
+V.config.globals.sanitize = (html) => DOMPurify.sanitize(html);
 ```
 
 ```html
-<div v-html="limpar(artigo.corpo)"></div>
+<div v-html="sanitize(article.body)"></div>
 ```
 
-Um detalhe importante: o HTML inserido por `v-html` **é percorrido pela Voodoo**, então ele pode
-trazer directives. Um `v-html` com conteúdo de usuário permite injetar `v-click`, `v-init` e
-qualquer outro atributo. Isso reforça a regra acima.
+An important detail: HTML inserted by `v-html` **is walked by Voodoo**, so it can
+bring directives. A `v-html` with user content allows injecting `v-click`, `v-init` and
+any other attribute. This reinforces the rule above.
 
-O mesmo vale para respostas HTML de `v-get`, `v-post` e `v-target`: o conteúdo é inicializado
-pela biblioteca. Confie apenas em respostas do seu próprio servidor.
+The same applies to HTML responses from `v-get`, `v-post` and `v-target`: content is initialized
+by the library. Trust only responses from your own server.
 
-A opção `html` das notificações (`V.toast({ html })`) também insere sem escapar. Use só com
-conteúdo próprio.
+The `html` option of notifications (`V.toast({ html })`) also inserts without escaping. Use only with
+your own content.
 
-## srcdoc em iframe
+## srcdoc in iframe
 
-`srcdoc` recebe um documento HTML inteiro e o navegador o executa, com scripts. Ligar um valor ali
-é tão perigoso quanto `v-html`, mas a sintaxe não deixava isso óbvio: parecia um atributo comum.
+`srcdoc` receives an entire HTML document and the browser executes it, with scripts. Binding a value there
+is as dangerous as `v-html`, but the syntax didn't make it obvious: it looked like a common attribute.
 
-Por isso `:srcdoc` é recusado, e o atributo é removido do elemento:
+For this reason, `:srcdoc` is rejected, and the attribute is removed from the element:
 
 ```html
-<!-- recusado, com aviso no console -->
-<iframe :srcdoc="htmlDoUsuario"></iframe>
+<!-- rejected, with warning in console -->
+<iframe :srcdoc="userHtml"></iframe>
 ```
 
-Quando o conteúdo é de fato seu e você quer isso, o perigo precisa estar escrito:
+When the content is truly yours and you want this, the danger must be explicit:
 
 ```html
-<iframe :srcdoc.dangerous="meuHtmlControlado"></iframe>
+<iframe :srcdoc.dangerous="myControlledHtml"></iframe>
 ```
 
-O modificador não sanitiza nada. Ele existe para que ninguém injete um documento executável por
-descuido, e para que uma revisão de código consiga encontrar todos os pontos perigosos procurando
-por uma palavra.
+The modifier doesn't sanitize anything. It exists so no one injects an executable document by
+accident, and so code review can find all dangerous points by searching for one word.
 
-O bloqueio vale também para `.prop` e para a forma sem argumento, `v-bind="{ srcdoc }"`, e pode ser
-desligado inteiro com `V.config.sanitizeUrls = false` — o que não recomendo.
+The block also applies to `.prop` and the argument-less form, `v-bind="{ srcdoc }"`, and can be
+disabled entirely with `V.config.sanitizeUrls = false` — which I don't recommend.
 
-## O que a biblioteca escapa sozinha
+## What the library escapes automatically
 
-| Situação | Comportamento |
+| Situation | Behavior |
 | --- | --- |
-| `{ interpolacao }` | Escrita como texto, nunca como HTML |
-| `v-text` | Escrita como texto |
-| Resposta JSON renderizada por `v-get` | Todos os valores passam por `escapeHtml` |
-| Mensagens de validação | Escritas como texto |
-| Conteúdo de toast, alert, confirm e prompt | Escrito como texto, salvo quando você usa `html` |
-| Rótulos e valores dos gráficos | Escritos como texto do SVG |
-| `V.escapeHtml(texto)` | Disponível quando você monta HTML na mão |
+| `{ interpolation }` | Written as text, never as HTML |
+| `v-text` | Written as text |
+| JSON response rendered by `v-get` | All values pass through `escapeHtml` |
+| Validation messages | Written as text |
+| Content of toast, alert, confirm and prompt | Written as text, except when you use `html` |
+| Labels and values of charts | Written as SVG text |
+| `V.escapeHtml(text)` | Available when you build HTML by hand |
 
 ## CSRF
 
-Requisições que escrevem (`POST`, `PUT`, `PATCH`, `DELETE`) enviam automaticamente o token lido de
-uma meta tag:
+Write requests (`POST`, `PUT`, `PATCH`, `DELETE`) automatically send the token read from
+a meta tag:
 
 ```html
 <meta name="csrf-token" content="{{ token }}">
 ```
 
-O cabeçalho enviado é `X-CSRF-TOKEN`. Os dois nomes são configuráveis:
+The header sent is `X-CSRF-TOKEN`. Both names are configurable:
 
 ```js
-V.http.defaults.csrfMeta = 'meu-token';
-V.http.defaults.csrfHeader = 'X-Meu-Token';
+V.http.defaults.csrfMeta = 'my-token';
+V.http.defaults.csrfHeader = 'X-My-Token';
 ```
 
-Toda requisição também leva `X-Requested-With: XMLHttpRequest`, o que ajuda o servidor a
-distinguir chamadas AJAX.
+Every request also carries `X-Requested-With: XMLHttpRequest`, which helps the server
+distinguish AJAX calls.
 
-O padrão de `credentials` é `same-origin`, então cookies não vazam para outra origem sem que você
-peça.
+The default for `credentials` is `same-origin`, so cookies don't leak to another origin unless you
+ask for it.
 
-## Dados sensíveis no armazenamento
+## Sensitive data in storage
 
-`V.storage`, `V.session` e `v-persist` gravam no armazenamento do navegador, que é legível por
-qualquer script da mesma origem. Não guarde ali tokens de longa duração, dados de cartão ou
-qualquer coisa que não possa ser lida por uma extensão instalada no navegador do usuário.
+`V.storage`, `V.session` and `v-persist` write to browser storage, which is readable by
+any script from the same origin. Don't store long-lived tokens, card data, or
+anything that can't be read by an extension installed in the user's browser.
 
-Para tokens, prefira cookies com `HttpOnly` definidos pelo servidor. Quando isso não for possível,
-use `V.session`, que morre com a aba, em vez de `V.storage`.
+For tokens, prefer cookies with `HttpOnly` set by the server. When that's not possible,
+use `V.session`, which dies with the tab, instead of `V.storage`.
 
 ```js
-V.cookie.set('preferencia', 'escuro', { secure: true, sameSite: 'Strict' });
+V.cookie.set('preference', 'dark', { secure: true, sameSite: 'Strict' });
 ```
 
-Lembre também que `v-sync` publica o estado do escopo em um `BroadcastChannel`, visível para
-qualquer aba da mesma origem. Não sincronize dados sensíveis.
+Also remember that `v-sync` publishes scope state in a `BroadcastChannel`, visible to
+any tab from the same origin. Don't sync sensitive data.
 
 ## Uploads
 
-`v-upload` e `v-dropzone` enviam o que o usuário escolher. Todas as validações que importam
-(tipo, tamanho, conteúdo real do arquivo) precisam acontecer no servidor. Os atributos `accept` e
-`multiple` são conveniência de interface, não segurança.
+`v-upload` and `v-dropzone` send what the user chooses. All validations that matter
+(type, size, actual file content) must happen on the server. The `accept` and
+`multiple` attributes are interface convenience, not security.
 
-## Terceiros no CDN
+## Third parties on CDN
 
-Ao carregar do CDN, fixe a versão e considere usar integridade de sub-recurso:
+When loading from CDN, pin the version and consider using subresource integrity:
 
 ```html
 <script
@@ -202,10 +200,10 @@ Ao carregar do CDN, fixe a versão e considere usar integridade de sub-recurso:
 ></script>
 ```
 
-O hash correto acompanha cada versão publicada. Em ambientes com política mais rígida, sirva o
-arquivo do seu próprio domínio.
+The correct hash comes with each published version. In environments with stricter policy, serve the
+file from your own domain.
 
-## Cabeçalhos recomendados
+## Recommended headers
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
@@ -214,11 +212,11 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), microphone=(), camera=()
 ```
 
-## Reportando uma vulnerabilidade
+## Reporting a vulnerability
 
-Não abra uma issue pública. Descreva o problema, com passos para reproduzir, em um contato privado
-do projeto. Veja [Contribuindo](contribuindo.md).
+Don't open a public issue. Describe the problem, with steps to reproduce, in a private contact
+with the project. See [Contributing](contribuindo.md).
 
 ---
 
-Anterior: [API](api.md) · Próximo: [Desempenho](desempenho.md)
+Previous: [API](api.md) · Next: [Performance](desempenho.md)

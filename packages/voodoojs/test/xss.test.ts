@@ -12,7 +12,7 @@ import { reactive, nextTick } from '../src/reactivity';
 import { Scope } from '../src/runtime/scope';
 import { walk } from '../src/runtime/walker';
 import { config } from '../src/runtime/registry';
-import { limparAvisos } from '../src/runtime/avisos';
+import { clearWarnings } from '../src/runtime/avisos';
 import '../src/core';
 
 const PAYLOAD = '<img src=x onerror="window.__invadido = true">';
@@ -33,7 +33,7 @@ async function settle(n = 3): Promise<void> {
 beforeEach(() => {
   document.body.innerHTML = '';
   delete (window as Record<string, unknown>).__invadido;
-  limparAvisos();
+  clearWarnings();
 });
 
 describe('v-text escapa sempre', () => {
@@ -278,7 +278,7 @@ describe('avisos de recusa', () => {
 
   beforeEach(() => {
     config.devtools = true;
-    limparAvisos();
+    clearWarnings();
     aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
 

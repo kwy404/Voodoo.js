@@ -99,6 +99,42 @@ export function buildInfo() {
   return lastBuild;
 }
 
+/**
+ * Diretorio `src` que esta efetivamente sendo medido: a arvore de trabalho, ou
+ * a copia materializada do commit pedido em `--ref`.
+ *
+ * Existe para as sondas que precisam compilar um ponto de entrada proprio e
+ * ainda assim medir exatamente o mesmo codigo que a suite mediu.
+ */
+export function measuredSrcDir(ref = resolveRef()) {
+  if (!ref) return { dir: srcRoot, sha: null, source: 'working tree' };
+  const { dir, sha } = materializeRef(ref);
+  return { dir, sha, source: `git ref ${ref}` };
+}
+
+/**
+ * Compila um ponto de entrada arbitrario para um ESM unico.
+ *
+ * `index.ts` nao reexporta tudo — `queryDirective` e o mapa de directives, por
+ * exemplo, sao internos. Uma sonda que precise deles compila um ponto de
+ * entrada proprio em vez de medir um substituto e chamar de equivalente.
+ */
+export async function compileEntry(entryFile, outfile) {
+  const esbuild = await import('esbuild');
+  await esbuild.build({
+    entryPoints: [entryFile],
+    bundle: true,
+    format: 'esm',
+    platform: 'neutral',
+    target: 'es2020',
+    outfile,
+    sourcemap: false,
+    minify: false,
+    logLevel: 'silent',
+  });
+  return outfile;
+}
+
 async function compile(entryDir, outfile) {
   const esbuild = await import('esbuild');
   const t0 = process.hrtime.bigint();

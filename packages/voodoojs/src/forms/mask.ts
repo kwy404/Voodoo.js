@@ -1,8 +1,8 @@
 /**
  * @module forms/mask
  *
- * Mascaras de digitacao que preservam a posicao do cursor, inclusive quando o
- * usuario edita o meio do texto ou apaga um separador.
+ * Input masks that preserve cursor position, even when the user edits the middle
+ * of text or deletes a separator.
  *
  * ```html
  * <input v-mask="cpf">
@@ -16,20 +16,20 @@ import { warn } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 
 // ---------------------------------------------------------------------------
-// Tipos e registro
+// Types and registration
 // ---------------------------------------------------------------------------
 
-/** Funcao que formata um valor cru. Usada por mascaras dinamicas. */
+/** Function that formats a raw value. Used by dynamic masks. */
 export type MaskResolver = (value: string) => string;
 
-/** Uma mascara e um padrao de caracteres ou uma funcao de formatacao. */
+/** A mask is either a character pattern or a formatting function. */
 export type MaskPattern = string | MaskResolver;
 
-/** Mascaras nomeadas disponiveis para `v-mask` e `applyMask`. */
+/** Named masks available for `v-mask` and `applyMask`. */
 export const masks = new Map<string, MaskPattern>();
 
 /**
- * Registra uma mascara nomeada.
+ * Registers a named mask.
  *
  * ```js
  * V.registerMask('processo', '9999999-99.9999.9.99.9999')
@@ -40,7 +40,7 @@ export function registerMask(name: string, patternOrFn: MaskPattern): void {
   masks.set(name.trim().toLowerCase(), patternOrFn);
 }
 
-/** Tokens aceitos nos padroes de mascara. */
+/** Tokens accepted in mask patterns. */
 const TOKENS: Record<string, RegExp> = {
   '9': /\d/,
   A: /[A-Za-zÀ-ÖØ-öø-ÿ]/,
@@ -50,11 +50,11 @@ const TOKENS: Record<string, RegExp> = {
 
 const RELEVANT = /[0-9A-Za-zÀ-ÖØ-öø-ÿ]/;
 
-/** Mascaras que representam numero e por isso digitam da direita para a esquerda. */
+/** Masks that represent numbers and type right-to-left. */
 const RIGHT_TO_LEFT = new Set(['currency', 'percent']);
 
 // ---------------------------------------------------------------------------
-// Formatacao por padrao de caracteres
+// Formatting by character pattern
 // ---------------------------------------------------------------------------
 
 function formatWithPattern(value: string, pattern: string): string {
@@ -65,7 +65,7 @@ function formatWithPattern(value: string, pattern: string): string {
     const char = pattern[i];
 
     if (char === '\\') {
-      // Escape: o proximo caractere entra como literal.
+      // Escape: next character enters as literal.
       const literal = pattern[++i];
       if (literal === undefined) break;
       if (index >= value.length) break;
@@ -75,14 +75,14 @@ function formatWithPattern(value: string, pattern: string): string {
 
     const token = TOKENS[char];
     if (token) {
-      // Pula tudo que nao serve para esta posicao, como letra em campo de digito.
+      // Skip anything unsuitable for this position, like a letter in a digit field.
       while (index < value.length && !token.test(value[index])) index++;
       if (index >= value.length) break;
       out += value[index++];
       continue;
     }
 
-    // Literal do padrao: so entra quando ainda existe conteudo depois dele.
+    // Pattern literal: only enters if content still follows it.
     if (index >= value.length) break;
     if (value[index] === char) index++;
     out += char;
@@ -92,24 +92,24 @@ function formatWithPattern(value: string, pattern: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Mascaras numericas
+// Numeric masks
 // ---------------------------------------------------------------------------
 
 export interface CurrencyMaskOptions {
-  /** Texto antes do numero. Padrao `R$ `. */
+  /** Text before the number. Default `R$ `. */
   prefix?: string;
-  /** Texto depois do numero. */
+  /** Text after the number. */
   suffix?: string;
-  /** Casas decimais. Padrao `2`. */
+  /** Decimal places. Default `2`. */
   decimals?: number;
-  /** Separador decimal. Padrao `,`. */
+  /** Decimal separator. Default `,`. */
   decimal?: string;
-  /** Separador de milhar. Padrao `.`. */
+  /** Thousands separator. Default `.`. */
   thousands?: string;
 }
 
 /**
- * Formata um valor como moeda, digitando da direita para a esquerda.
+ * Formats a value as currency, typing right-to-left.
  *
  * ```js
  * V.maskCurrency('123456')  // 'R$ 1.234,56'
@@ -136,13 +136,13 @@ export function maskCurrency(value: string, options: CurrencyMaskOptions = {}): 
   return `${negative ? '-' : ''}${prefix}${grouped}${decimals ? decimal + fraction : ''}${suffix}`;
 }
 
-/** Formata porcentagem com duas casas, no mesmo estilo da moeda. */
+/** Formats percentage with two decimal places in the same style as currency. */
 export function maskPercent(value: string, decimals = 2): string {
   return maskCurrency(value, { prefix: '', suffix: '%', decimals });
 }
 
 // ---------------------------------------------------------------------------
-// Mascaras nomeadas
+// Named masks
 // ---------------------------------------------------------------------------
 
 registerMask('cpf', '999.999.999-99');
@@ -168,7 +168,7 @@ registerMask('percent', (value) => maskPercent(value));
 
 registerMask('card', (value) => {
   const digits = value.replace(/\D/g, '').slice(0, 19);
-  // American Express usa quatro, seis e cinco digitos.
+  // American Express uses four, six, and five digits.
   if (/^3[47]/.test(digits)) return formatWithPattern(digits, '9999 999999 99999');
   if (digits.length > 16) return formatWithPattern(digits, '9999 9999 9999 9999 999');
   return formatWithPattern(digits, '9999 9999 9999 9999');
@@ -176,7 +176,7 @@ registerMask('card', (value) => {
 
 registerMask('plate', (value) => {
   const clean = value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 7);
-  // Placa antiga tem digito na quinta posicao, a Mercosul tem letra.
+  // Old plates have a digit in the fifth position; Mercosul plates have a letter.
   const oldFormat = clean.length >= 5 && /\d/.test(clean[4]);
   return formatWithPattern(clean, oldFormat ? 'AAA-9999' : 'AAA9A99');
 });
@@ -201,14 +201,14 @@ registerMask('ip', (value) => {
 });
 
 // ---------------------------------------------------------------------------
-// API publica de formatacao
+// Public formatting API
 // ---------------------------------------------------------------------------
 
 /**
- * Aplica uma mascara a um valor. O padrao pode ser o nome de uma mascara
- * registrada ou um padrao de caracteres.
+ * Applies a mask to a value. The pattern can be a registered mask name or
+ * a character pattern.
  *
- * Tokens: `9` digito, `A` letra, `S` alfanumerico, `*` qualquer, `\` escape.
+ * Tokens: `9` digit, `A` letter, `S` alphanumeric, `*` any character, `\` escape.
  *
  * ```js
  * V.applyMask('12345678901', 'cpf')      // '123.456.789-01'
@@ -225,8 +225,8 @@ export function applyMask(value: string, pattern: string): string {
 }
 
 /**
- * Remove a formatacao. Para mascaras numericas devolve o numero em texto,
- * pronto para virar `Number`.
+ * Removes formatting. For numeric masks, returns the number as text,
+ * ready to become a `Number`.
  *
  * ```js
  * V.unmask('123.456.789-01')             // '12345678901'
@@ -250,8 +250,8 @@ export function unmask(value: string, pattern?: string): string {
 }
 
 /**
- * Atalho publico das mascaras. Pode ser chamado como funcao e tambem carrega os
- * utilitarios do modulo.
+ * Public shortcut to masks. Can be called as a function and also loads the
+ * module utilities.
  *
  * ```js
  * V.mask('12345678901', 'cpf')      // '123.456.789-01'
@@ -272,14 +272,14 @@ export const mask = Object.assign(
 );
 
 // ---------------------------------------------------------------------------
-// Instalacao no input, com controle de cursor
+// Installing on input with cursor control
 // ---------------------------------------------------------------------------
 
 function isRelevant(char: string | undefined): boolean {
   return char !== undefined && RELEVANT.test(char);
 }
 
-/** Quantidade de caracteres significativos antes de uma posicao. */
+/** Count of significant characters before a position. */
 function countRelevant(text: string, upTo: number): number {
   let total = 0;
   const limit = Math.min(upTo, text.length);
@@ -287,7 +287,7 @@ function countRelevant(text: string, upTo: number): number {
   return total;
 }
 
-/** Posicao logo depois do enesimo caractere significativo. */
+/** Position right after the nth significant character. */
 function caretForCount(text: string, count: number): number {
   if (count <= 0) return 0;
   let seen = 0;
@@ -300,13 +300,13 @@ function caretForCount(text: string, count: number): number {
 }
 
 interface MaskInstallOptions {
-  /** Formata o valor cru digitado. */
+  /** Formats the raw typed value. */
   format: MaskResolver;
-  /** Devolve o valor limpo quando `v-model` ler `input.value`. */
+  /** Returns clean value when `v-model` reads `input.value`. */
   clean?: (value: string) => string;
-  /** Mascaras numericas mantem o cursor no fim, antes do sufixo. */
+  /** Numeric masks keep cursor at end, before suffix. */
   rightToLeft?: boolean;
-  /** Tamanho do sufixo fixo, como o `%` da porcentagem. */
+  /** Length of fixed suffix, like `%` in percentage. */
   suffixLength?: number;
 }
 
@@ -338,12 +338,12 @@ function installMask(
     try {
       input.setSelectionRange(position, position);
     } catch {
-      // Alguns tipos de input nao aceitam selecao. Nada a fazer.
+      // Some input types don't accept selection. Nothing to do.
     }
   };
 
-  // Substitui a propriedade `value` para que `v-model` leia o valor limpo e
-  // escreva sempre passando pela mascara.
+  // Replace the `value` property so `v-model` reads the clean value and
+  // always writes by passing through the mask.
   if (nativeGet && nativeSet) {
     Object.defineProperty(input, 'value', {
       configurable: true,
@@ -375,7 +375,7 @@ function installMask(
 
   const onInput = (): void => reformat();
 
-  // Apagar em cima de um separador precisa remover o caractere util anterior.
+  // Deleting over a separator needs to remove the previous useful character.
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.key !== 'Backspace') return;
     const start = input.selectionStart ?? 0;
@@ -405,20 +405,20 @@ function installMask(
     input.removeEventListener('keydown', onKeyDown);
   });
 
-  // Valor que ja veio do servidor tambem entra formatado.
+  // Value already from the server also enters formatted.
   const initial = readRaw();
   if (initial) writeRaw(options.format(initial));
 }
 
 function maskableInput(el: HTMLElement, directive: string): HTMLInputElement | null {
   if (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA') {
-    warn(`${config.prefix}${directive} so funciona em input ou textarea.`);
+    warn(`${config.prefix}${directive} only works on input or textarea.`);
     return null;
   }
   const input = el as HTMLInputElement;
   const type = (input.getAttribute('type') || 'text').toLowerCase();
   if (type === 'number' || type === 'range' || type === 'date' || type === 'color') {
-    warn(`${config.prefix}${directive} nao combina com input type="${type}". Use type="text".`);
+    warn(`${config.prefix}${directive} doesn't work with input type="${type}". Use type="text".`);
     return null;
   }
   return input;
@@ -429,8 +429,8 @@ function maskableInput(el: HTMLElement, directive: string): HTMLInputElement | n
 // ---------------------------------------------------------------------------
 
 /**
- * `v-mask` roda antes de `v-model` para que o estado receba o texto ja
- * formatado, ou o valor limpo quando o modificador `.unmask` estiver presente.
+ * `v-mask` runs before `v-model` so the state receives already-formatted text,
+ * or clean value when the `.unmask` modifier is present.
  */
 defineDirective(
   'mask',
@@ -440,7 +440,7 @@ defineDirective(
 
     const pattern = expression.trim();
     if (!pattern) {
-      warn(`${config.prefix}mask precisa de um padrao ou do nome de uma mascara.`);
+      warn(`${config.prefix}mask needs a pattern or mask name.`);
       return;
     }
 
@@ -462,8 +462,8 @@ defineDirective(
 );
 
 /**
- * `v-mask-currency` aceita o prefixo no proprio valor e ajustes finos em
- * `v-mask-decimals`, `v-mask-suffix` e nos modificadores `.decimals=0` e `.plain`.
+ * `v-mask-currency` accepts the prefix in its own value and fine-tuning in
+ * `v-mask-decimals`, `v-mask-suffix` and the `.decimals=0` and `.plain` modifiers.
  */
 defineDirective(
   'mask-currency',
@@ -478,10 +478,10 @@ defineDirective(
       (typeof modifiers.decimals === 'string' ? modifiers.decimals : null) ?? attr('mask-decimals');
     const decimals = rawDecimals !== null && rawDecimals !== '' ? Number(rawDecimals) : 2;
 
-    // O espaco no fim do prefixo faz parte dele: `v-mask-currency="R$ "` precisa
-    // mostrar `R$ 1.234,56`, e nao `R$1.234,56`. Por isso o `trim` so decide se
-    // a expressao esta vazia; o valor usado e o texto como foi declarado, do
-    // mesmo jeito que ja acontecia em `v-mask-prefix`.
+    // The space at the end of the prefix is part of it: `v-mask-currency="R$ "` needs to
+    // show `R$ 1.234,56`, not `R$1.234,56`. That's why `trim` only decides if
+    // the expression is empty; the value used is the text as declared,
+    // the same way it already worked in `v-mask-prefix`.
     const prefixoDeclarado = expression.trim() ? expression : '';
 
     const options: CurrencyMaskOptions = {

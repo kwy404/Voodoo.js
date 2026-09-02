@@ -1,16 +1,16 @@
 /**
  * @module sound
  *
- * Som nativo, sem arquivo e sem dependencia.
+ * Native sound, no files, no dependencies.
  *
- * Os efeitos sao sintetizados na hora com a Web Audio API, entao nao existe
- * download, nao existe pasta de audio e o custo em bytes e proximo de zero.
- * Tambem da para tocar um arquivo proprio quando voce quiser.
+ * Effects are synthesized on the fly with the Web Audio API, so there is no
+ * download, no audio folder, and the cost in bytes is nearly zero.
+ * You can also play your own file whenever you want.
  *
  * ```html
- * <button v-sound="click">Salvar</button>
- * <button v-sound="success" v-post="/api/pedidos">Finalizar</button>
- * <a v-sound:mouseenter="hover" href="/precos">Precos</a>
+ * <button v-sound="click">Save</button>
+ * <button v-sound="success" v-post="/api/orders">Complete</button>
+ * <a v-sound:mouseenter="hover" href="/prices">Prices</a>
  * <input v-sound:input="type">
  * ```
  *
@@ -22,13 +22,13 @@
  * V.sound.mute()
  * ```
  *
- * Regras de bom comportamento que o modulo segue sozinho:
+ * Rules of good behavior that the module follows on its own:
  *
- * - navegador nenhum deixa tocar audio antes de a pessoa interagir, entao o
- *   contexto so e criado no primeiro gesto;
- * - quem liga `prefers-reduced-motion` costuma preferir menos estimulo, entao o
- *   volume padrao cai pela metade nesse caso;
- * - a preferencia de silencio fica guardada e vale nas proximas visitas.
+ * - no browser lets audio play before the user interacts, so the
+ *   context is only created on the first gesture;
+ * - those who enable `prefers-reduced-motion` usually prefer less stimulation, so the
+ *   default volume drops by half in that case;
+ * - the mute preference is saved and applies on future visits.
  */
 
 import { defineDirective } from '../runtime/registry';
@@ -36,151 +36,151 @@ import { magic } from '../runtime/scope';
 import { storage } from '../storage';
 
 // ---------------------------------------------------------------------------
-// Contexto de audio
+// Audio context
 // ---------------------------------------------------------------------------
 
-type ContextoDeAudio = AudioContext & { resume(): Promise<void> };
+type AudioContextType = AudioContext & { resume(): Promise<void> };
 
-let contexto: ContextoDeAudio | null = null;
-let volumeGeral = 0.35;
-let silenciado = false;
-let carregouPreferencia = false;
+let audioContext: AudioContextType | null = null;
+let masterVolume = 0.35;
+let isMuted = false;
+let hasLoadedPreference = false;
 
-const CHAVE_VOLUME = 'voodoo:sound:volume';
-const CHAVE_SILENCIO = 'voodoo:sound:muted';
+const VOLUME_KEY = 'voodoo:sound:volume';
+const MUTE_KEY = 'voodoo:sound:muted';
 
-function carregarPreferencia(): void {
-  if (carregouPreferencia) return;
-  carregouPreferencia = true;
+function loadPreference(): void {
+  if (hasLoadedPreference) return;
+  hasLoadedPreference = true;
 
-  const salvo = storage.get<number>(CHAVE_VOLUME);
-  if (typeof salvo === 'number' && salvo >= 0 && salvo <= 1) volumeGeral = salvo;
+  const savedVolume = storage.get<number>(VOLUME_KEY);
+  if (typeof savedVolume === 'number' && savedVolume >= 0 && savedVolume <= 1) masterVolume = savedVolume;
 
-  const mudo = storage.get<boolean>(CHAVE_SILENCIO);
-  if (typeof mudo === 'boolean') silenciado = mudo;
+  const savedMute = storage.get<boolean>(MUTE_KEY);
+  if (typeof savedMute === 'boolean') isMuted = savedMute;
 
-  // Menos movimento costuma significar menos estimulo. Baixa o volume, mas nao
-  // silencia, para quem pediu um som ainda ouvir o retorno da acao.
+  // Reduced motion usually means less stimulation. Lower the volume, but do not
+  // mute, so users who requested sound can still hear the action feedback.
   if (
     typeof matchMedia !== 'undefined' &&
     matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    storage.get<number>(CHAVE_VOLUME) === undefined
+    storage.get<number>(VOLUME_KEY) === undefined
   ) {
-    volumeGeral = 0.18;
+    masterVolume = 0.18;
   }
 }
 
 /**
- * Devolve o contexto de audio, criando na primeira vez.
- * Retorna `null` quando o navegador nao tem suporte.
+ * Returns the audio context, creating it the first time.
+ * Returns `null` when the browser does not support it.
  */
-function obterContexto(): ContextoDeAudio | null {
+function getAudioContext(): AudioContextType | null {
   if (typeof window === 'undefined') return null;
-  if (contexto) {
-    // O navegador suspende o contexto quando a aba perde o foco.
-    if (contexto.state === 'suspended') void contexto.resume();
-    return contexto;
+  if (audioContext) {
+    // The browser suspends the context when the tab loses focus.
+    if (audioContext.state === 'suspended') void audioContext.resume();
+    return audioContext;
   }
 
-  const Construtor =
+  const Constructor =
     (window as unknown as { AudioContext?: typeof AudioContext }).AudioContext ??
     (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
 
-  if (!Construtor) return null;
+  if (!Constructor) return null;
 
   try {
-    contexto = new Construtor() as ContextoDeAudio;
-    return contexto;
+    audioContext = new Constructor() as AudioContextType;
+    return audioContext;
   } catch {
     return null;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Sintese
+// Synthesis
 // ---------------------------------------------------------------------------
 
-export type FormaDeOnda = 'sine' | 'square' | 'sawtooth' | 'triangle';
+export type WaveformShape = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
-export interface Camada {
-  /** Frequencia inicial em hertz. */
+export interface Layer {
+  /** Initial frequency in hertz. */
   frequencia: number;
-  /** Frequencia final, para o som deslizar. Ausente mantem a inicial. */
+  /** Final frequency, for the sound to slide. Absent keeps the initial. */
   ate?: number;
-  /** Duracao em segundos. */
+  /** Duration in seconds. */
   duracao: number;
-  /** Volume relativo da camada, de 0 a 1. */
+  /** Relative volume of the layer, from 0 to 1. */
   volume?: number;
-  forma?: FormaDeOnda;
-  /** Atraso em segundos desde o inicio do efeito. */
+  forma?: WaveformShape;
+  /** Delay in seconds from the start of the effect. */
   atraso?: number;
-  /** Tempo de subida do volume, em segundos. */
+  /** Volume rise time, in seconds. */
   ataque?: number;
 }
 
-/** Toca uma camada isolada. */
-function tocarCamada(ctx: ContextoDeAudio, camada: Camada, volumeDoEfeito: number): void {
-  const inicio = ctx.currentTime + (camada.atraso ?? 0);
-  const fim = inicio + camada.duracao;
+/** Plays an isolated layer. */
+function playLayer(ctx: AudioContextType, layer: Layer, effectVolume: number): void {
+  const start = ctx.currentTime + (layer.atraso ?? 0);
+  const end = start + layer.duracao;
 
-  const oscilador = ctx.createOscillator();
-  oscilador.type = camada.forma ?? 'sine';
-  oscilador.frequency.setValueAtTime(camada.frequencia, inicio);
-  if (camada.ate !== undefined && camada.ate !== camada.frequencia) {
-    oscilador.frequency.exponentialRampToValueAtTime(Math.max(1, camada.ate), fim);
+  const oscillator = ctx.createOscillator();
+  oscillator.type = layer.forma ?? 'sine';
+  oscillator.frequency.setValueAtTime(layer.frequencia, start);
+  if (layer.ate !== undefined && layer.ate !== layer.frequencia) {
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, layer.ate), end);
   }
 
-  const ganho = ctx.createGain();
-  const pico = volumeGeral * volumeDoEfeito * (camada.volume ?? 1);
-  const ataque = camada.ataque ?? 0.008;
+  const gain = ctx.createGain();
+  const peak = masterVolume * effectVolume * (layer.volume ?? 1);
+  const attack = layer.ataque ?? 0.008;
 
-  // Envelope simples: sobe rapido e cai suave, o que evita o estalo que
-  // aparece quando o volume corta de uma vez.
-  ganho.gain.setValueAtTime(0.0001, inicio);
-  ganho.gain.exponentialRampToValueAtTime(Math.max(0.0001, pico), inicio + ataque);
-  ganho.gain.exponentialRampToValueAtTime(0.0001, fim);
+  // Simple envelope: rises quickly and falls smoothly, avoiding the click that
+  // happens when the volume cuts off at once.
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), start + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, end);
 
-  oscilador.connect(ganho);
-  ganho.connect(ctx.destination);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
 
-  oscilador.start(inicio);
-  oscilador.stop(fim + 0.02);
+  oscillator.start(start);
+  oscillator.stop(end + 0.02);
 }
 
 // ---------------------------------------------------------------------------
-// Efeitos prontos
+// Ready-made effects
 // ---------------------------------------------------------------------------
 
-export interface Efeito {
-  camadas: Camada[];
-  /** Volume do efeito inteiro, de 0 a 1. */
+export interface Effect {
+  camadas: Layer[];
+  /** Volume of the entire effect, from 0 to 1. */
   volume?: number;
 }
 
 /**
- * Biblioteca de efeitos. Cada um foi desenhado para ser curto e discreto:
- * som de interface existe para confirmar uma acao, nao para chamar atencao.
+ * Library of effects. Each one was designed to be short and discrete:
+ * interface sound exists to confirm an action, not to draw attention.
  */
-export const efeitos: Record<string, Efeito> = {
-  /** Toque seco de confirmacao, para botoes comuns. */
+export const efeitos: Record<string, Effect> = {
+  /** Dry confirmation tap, for common buttons. */
   click: {
     volume: 0.5,
     camadas: [{ frequencia: 660, ate: 440, duracao: 0.06, forma: 'triangle' }],
   },
 
-  /** Estalo curto e agudo, bom para alternar algo. */
+  /** Short, high-pitched pop, good for toggling. */
   pop: {
     volume: 0.5,
     camadas: [{ frequencia: 880, ate: 1320, duracao: 0.07, forma: 'sine' }],
   },
 
-  /** Roce leve, para passar o mouse por cima. */
+  /** Gentle brush, for passing the mouse over. */
   hover: {
     volume: 0.22,
     camadas: [{ frequencia: 1200, duracao: 0.035, forma: 'sine' }],
   },
 
-  /** Duas notas subindo, para dar certo. */
+  /** Two rising notes, for success. */
   success: {
     volume: 0.6,
     camadas: [
@@ -189,7 +189,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Tres notas subindo, para conclusao de fluxo. */
+  /** Three rising notes, for flow completion. */
   complete: {
     volume: 0.6,
     camadas: [
@@ -199,7 +199,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Duas notas descendo, para erro. */
+  /** Two falling notes, for error. */
   error: {
     volume: 0.6,
     camadas: [
@@ -208,7 +208,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Aviso curto de atencao. */
+  /** Short warning alert. */
   warning: {
     volume: 0.55,
     camadas: [
@@ -217,7 +217,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Sino discreto, para notificacao que chega. */
+  /** Discrete bell, for incoming notification. */
   notify: {
     volume: 0.5,
     camadas: [
@@ -226,25 +226,25 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Toque bem curto para digitacao. */
+  /** Very short tap for typing. */
   type: {
     volume: 0.18,
     camadas: [{ frequencia: 2200, duracao: 0.018, forma: 'square' }],
   },
 
-  /** Deslizar de abertura, para painel, gaveta e modal. */
+  /** Slide up for opening a panel, drawer, or modal. */
   open: {
     volume: 0.4,
     camadas: [{ frequencia: 330, ate: 660, duracao: 0.14, forma: 'sine' }],
   },
 
-  /** Deslizar de fechamento. */
+  /** Slide down for closing. */
   close: {
     volume: 0.4,
     camadas: [{ frequencia: 660, ate: 330, duracao: 0.14, forma: 'sine' }],
   },
 
-  /** Recusa curta, para acao bloqueada. */
+  /** Short denial, for blocked action. */
   deny: {
     volume: 0.5,
     camadas: [
@@ -253,7 +253,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Moeda, para pontuacao e recompensa. */
+  /** Coin, for score and reward. */
   coin: {
     volume: 0.45,
     camadas: [
@@ -262,7 +262,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Passagem de nivel, mais festiva. */
+  /** Level up, more festive. */
   levelup: {
     volume: 0.55,
     camadas: [
@@ -273,7 +273,7 @@ export const efeitos: Record<string, Efeito> = {
     ],
   },
 
-  /** Batida grave, para arrastar e soltar. */
+  /** Deep hit, for drag and drop. */
   drop: {
     volume: 0.5,
     camadas: [{ frequencia: 180, ate: 90, duracao: 0.12, forma: 'triangle' }],
@@ -281,11 +281,11 @@ export const efeitos: Record<string, Efeito> = {
 };
 
 // ---------------------------------------------------------------------------
-// Notas musicais
+// Musical notes
 // ---------------------------------------------------------------------------
 
-/** Frequencia das notas da quarta oitava, em hertz. */
-const NOTAS: Record<string, number> = {
+/** Frequency of fourth octave notes, in hertz. */
+const NOTES: Record<string, number> = {
   do: 261.63,
   'do#': 277.18,
   re: 293.66,
@@ -298,7 +298,7 @@ const NOTAS: Record<string, number> = {
   la: 440.0,
   'la#': 466.16,
   si: 493.88,
-  // Nomes em ingles, para quem prefere.
+  // English names, for those who prefer.
   c: 261.63,
   d: 293.66,
   e: 329.63,
@@ -309,60 +309,60 @@ const NOTAS: Record<string, number> = {
 };
 
 /**
- * Converte um nome de nota em frequencia.
- * Aceita oitava no fim, como `do5` ou `la3`.
+ * Converts a note name to frequency.
+ * Accepts octave at the end, like `do5` or `la3`.
  */
-export function frequenciaDaNota(nome: string): number | null {
-  const limpo = String(nome).trim().toLowerCase();
-  const casamento = /^([a-z]+#?)(\d)?$/.exec(limpo);
-  if (!casamento) return null;
+export function getFrequencyForNote(name: string): number | null {
+  const clean = String(name).trim().toLowerCase();
+  const match = /^([a-z]+#?)(\d)?$/.exec(clean);
+  if (!match) return null;
 
-  const base = NOTAS[casamento[1]];
+  const base = NOTES[match[1]];
   if (base === undefined) return null;
 
-  const oitava = casamento[2] ? Number(casamento[2]) : 4;
-  return base * 2 ** (oitava - 4);
+  const octave = match[2] ? Number(match[2]) : 4;
+  return base * 2 ** (octave - 4);
 }
 
 // ---------------------------------------------------------------------------
-// Arquivos de audio
+// Audio files
 // ---------------------------------------------------------------------------
 
-const arquivos = new Map<string, HTMLAudioElement>();
+const audioFiles = new Map<string, HTMLAudioElement>();
 
-/** Toca um arquivo de audio, reaproveitando o elemento entre as chamadas. */
-function tocarArquivo(url: string, volume: number): void {
-  let elemento = arquivos.get(url);
-  if (!elemento) {
-    elemento = new Audio(url);
-    elemento.preload = 'auto';
-    arquivos.set(url, elemento);
+/** Plays an audio file, reusing the element between calls. */
+function playAudioFile(url: string, volume: number): void {
+  let element = audioFiles.get(url);
+  if (!element) {
+    element = new Audio(url);
+    element.preload = 'auto';
+    audioFiles.set(url, element);
   }
-  elemento.volume = Math.max(0, Math.min(1, volumeGeral * volume));
-  elemento.currentTime = 0;
-  void elemento.play().catch(() => {
-    // O navegador recusa audio antes do primeiro gesto. Sem alarde.
+  element.volume = Math.max(0, Math.min(1, masterVolume * volume));
+  element.currentTime = 0;
+  void element.play().catch(() => {
+    // The browser refuses audio before the first gesture. No fanfare.
   });
 }
 
-function pareceCaminho(valor: string): boolean {
-  return /^(https?:)?\/\//.test(valor) || /^[./]/.test(valor) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(valor);
+function looksLikePath(value: string): boolean {
+  return /^(https?:)?\/\//.test(value) || /^[./]/.test(value) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(value);
 }
 
 // ---------------------------------------------------------------------------
-// API publica
+// Public API
 // ---------------------------------------------------------------------------
 
-export interface OpcoesDeToque {
-  /** Volume relativo, de 0 a 1. Multiplica o volume geral. */
+export interface PlayOptions {
+  /** Relative volume, from 0 to 1. Multiplies the master volume. */
   volume?: number;
-  /** Multiplica a frequencia de todas as camadas, deixando o som mais agudo. */
+  /** Multiplies the frequency of all layers, making the sound higher. */
   tom?: number;
 }
 
 export const sound = {
   /**
-   * Toca um efeito pelo nome, ou um arquivo pelo caminho.
+   * Plays an effect by name, or a file by path.
    *
    * ```js
    * V.sound.play('success')
@@ -370,156 +370,156 @@ export const sound = {
    * V.sound.play('click', { volume: 0.5 })
    * ```
    */
-  play(nome: string, opcoes: OpcoesDeToque = {}): void {
-    carregarPreferencia();
-    if (silenciado || !nome) return;
+  play(name: string, options: PlayOptions = {}): void {
+    loadPreference();
+    if (isMuted || !name) return;
 
-    const valor = String(nome).trim();
-    const volume = opcoes.volume ?? 1;
+    const value = String(name).trim();
+    const volume = options.volume ?? 1;
 
-    if (pareceCaminho(valor)) {
-      tocarArquivo(valor, volume);
+    if (looksLikePath(value)) {
+      playAudioFile(value, volume);
       return;
     }
 
-    const efeito = efeitos[valor];
-    if (!efeito) {
-      // Nome desconhecido pode ser uma nota, como `la` ou `do5`.
-      const frequencia = frequenciaDaNota(valor);
-      if (frequencia !== null) this.tone(frequencia, 200, { volume });
+    const effect = efeitos[value];
+    if (!effect) {
+      // Unknown name could be a note, like `la` or `do5`.
+      const frequency = getFrequencyForNote(value);
+      if (frequency !== null) this.tone(frequency, 200, { volume });
       return;
     }
 
-    const ctx = obterContexto();
+    const ctx = getAudioContext();
     if (!ctx) return;
 
-    const tom = opcoes.tom ?? 1;
-    const volumeDoEfeito = (efeito.volume ?? 1) * volume;
+    const pitch = options.tom ?? 1;
+    const effectVolume = (effect.volume ?? 1) * volume;
 
-    for (const camada of efeito.camadas) {
-      tocarCamada(
+    for (const layer of effect.camadas) {
+      playLayer(
         ctx,
-        tom === 1
-          ? camada
+        pitch === 1
+          ? layer
           : {
-              ...camada,
-              frequencia: camada.frequencia * tom,
-              ate: camada.ate === undefined ? undefined : camada.ate * tom,
+              ...layer,
+              frequencia: layer.frequencia * pitch,
+              ate: layer.ate === undefined ? undefined : layer.ate * pitch,
             },
-        volumeDoEfeito
+        effectVolume
       );
     }
   },
 
   /**
-   * Toca uma frequencia pura.
+   * Plays a pure frequency.
    *
    * ```js
    * V.sound.tone(440, 300)
    * ```
    *
-   * @param frequencia hertz
-   * @param duracao milissegundos
+   * @param frequency hertz
+   * @param duration milliseconds
    */
-  tone(frequencia: number, duracao = 200, opcoes: OpcoesDeToque & { forma?: FormaDeOnda } = {}): void {
-    carregarPreferencia();
-    if (silenciado) return;
-    const ctx = obterContexto();
+  tone(frequency: number, duration = 200, options: PlayOptions & { forma?: WaveformShape } = {}): void {
+    loadPreference();
+    if (isMuted) return;
+    const ctx = getAudioContext();
     if (!ctx) return;
 
-    tocarCamada(
+    playLayer(
       ctx,
-      { frequencia, duracao: duracao / 1000, forma: opcoes.forma ?? 'sine' },
-      opcoes.volume ?? 0.5
+      { frequencia: frequency, duracao: duration / 1000, forma: options.forma ?? 'sine' },
+      options.volume ?? 0.5
     );
   },
 
   /**
-   * Toca uma nota pelo nome.
+   * Plays a note by name.
    *
    * ```js
    * V.sound.note('la', 300)
    * V.sound.note('do5', 200)
    * ```
    */
-  note(nome: string, duracao = 250, opcoes: OpcoesDeToque = {}): void {
-    const frequencia = frequenciaDaNota(nome);
-    if (frequencia === null) return;
-    this.tone(frequencia, duracao, opcoes);
+  note(name: string, duration = 250, options: PlayOptions = {}): void {
+    const frequency = getFrequencyForNote(name);
+    if (frequency === null) return;
+    this.tone(frequency, duration, options);
   },
 
   /**
-   * Toca uma sequencia de notas.
+   * Plays a sequence of notes.
    *
    * ```js
    * V.sound.melody(['do', 'mi', 'sol', 'do5'], 140)
    * ```
    *
-   * @param notas nomes de nota, ou frequencias em hertz
-   * @param intervalo milissegundos entre uma nota e a seguinte
+   * @param notes note names, or frequencies in hertz
+   * @param interval milliseconds between one note and the next
    */
-  melody(notas: Array<string | number>, intervalo = 150, opcoes: OpcoesDeToque = {}): void {
-    carregarPreferencia();
-    if (silenciado) return;
+  melody(notes: Array<string | number>, interval = 150, options: PlayOptions = {}): void {
+    loadPreference();
+    if (isMuted) return;
 
-    notas.forEach((nota, indice) => {
-      const frequencia = typeof nota === 'number' ? nota : frequenciaDaNota(nota);
-      if (frequencia === null) return;
-      setTimeout(() => this.tone(frequencia, intervalo * 1.6, opcoes), indice * intervalo);
+    notes.forEach((note, index) => {
+      const frequency = typeof note === 'number' ? note : getFrequencyForNote(note);
+      if (frequency === null) return;
+      setTimeout(() => this.tone(frequency, interval * 1.6, options), index * interval);
     });
   },
 
   /**
-   * Le ou ajusta o volume geral, de 0 a 1. A escolha fica guardada.
+   * Reads or adjusts the master volume, from 0 to 1. The choice is saved.
    *
    * ```js
-   * V.sound.volume()      // le
-   * V.sound.volume(0.6)   // ajusta
+   * V.sound.volume()      // read
+   * V.sound.volume(0.6)   // adjust
    * ```
    */
-  volume(valor?: number): number {
-    carregarPreferencia();
-    if (valor === undefined) return volumeGeral;
-    volumeGeral = Math.max(0, Math.min(1, valor));
-    storage.set(CHAVE_VOLUME, volumeGeral);
-    return volumeGeral;
+  volume(value?: number): number {
+    loadPreference();
+    if (value === undefined) return masterVolume;
+    masterVolume = Math.max(0, Math.min(1, value));
+    storage.set(VOLUME_KEY, masterVolume);
+    return masterVolume;
   },
 
-  /** Silencia. Passe `false` para voltar a tocar. */
-  mute(valor = true): void {
-    carregarPreferencia();
-    silenciado = valor;
-    storage.set(CHAVE_SILENCIO, silenciado);
+  /** Mutes sound. Pass `false` to unmute. */
+  mute(value = true): void {
+    loadPreference();
+    isMuted = value;
+    storage.set(MUTE_KEY, isMuted);
   },
 
-  /** Volta a tocar. */
+  /** Unmutes sound. */
   unmute(): void {
     this.mute(false);
   },
 
-  /** Alterna entre silencio e som, e devolve o novo estado. */
+  /** Toggles between muted and unmuted, and returns the new state. */
   toggle(): boolean {
-    carregarPreferencia();
-    this.mute(!silenciado);
-    return silenciado;
+    loadPreference();
+    this.mute(!isMuted);
+    return isMuted;
   },
 
-  /** `true` quando esta silenciado. */
+  /** `true` when muted. */
   get muted(): boolean {
-    carregarPreferencia();
-    return silenciado;
+    loadPreference();
+    return isMuted;
   },
 
-  /** Nomes de todos os efeitos disponiveis. */
+  /** Names of all available effects. */
   get names(): string[] {
     return Object.keys(efeitos);
   },
 
   /**
-   * Registra um efeito proprio.
+   * Registers a custom effect.
    *
    * ```js
-   * V.sound.define('meuAviso', {
+   * V.sound.define('myWarning', {
    *   volume: 0.5,
    *   camadas: [
    *     { frequencia: 700, duracao: 0.1 },
@@ -528,17 +528,17 @@ export const sound = {
    * })
    * ```
    */
-  define(nome: string, efeito: Efeito): void {
-    efeitos[nome] = efeito;
+  define(name: string, effect: Effect): void {
+    efeitos[name] = effect;
   },
 
-  /** Carrega um arquivo antes da hora, para nao atrasar no primeiro toque. */
+  /** Preloads a file to avoid delay on first play. */
   preload(...urls: string[]): void {
     for (const url of urls) {
-      if (arquivos.has(url)) continue;
-      const elemento = new Audio(url);
-      elemento.preload = 'auto';
-      arquivos.set(url, elemento);
+      if (audioFiles.has(url)) continue;
+      const element = new Audio(url);
+      element.preload = 'auto';
+      audioFiles.set(url, element);
     }
   },
 };
@@ -550,72 +550,72 @@ export type Sound = typeof sound;
 // ---------------------------------------------------------------------------
 
 /**
- * `v-sound` toca um efeito quando o elemento e acionado.
+ * `v-sound` plays an effect when the element is triggered.
  *
  * ```html
- * <button v-sound="click">Salvar</button>
- * <button v-sound="success" v-post="/api/pedidos">Finalizar</button>
- * <a v-sound:mouseenter="hover" href="/precos">Precos</a>
+ * <button v-sound="click">Save</button>
+ * <button v-sound="success" v-post="/api/orders">Complete</button>
+ * <a v-sound:mouseenter="hover" href="/prices">Prices</a>
  * <input v-sound:input="type">
- * <div v-sound:voodoo:success="complete" v-get="/api/dados"></div>
+ * <div v-sound:voodoo:success="complete" v-get="/api/data"></div>
  * ```
  *
- * O valor pode ser o nome de um efeito, o caminho de um arquivo, o nome de uma
- * nota ou uma expressao que devolva qualquer um desses.
+ * The value can be the name of an effect, the path to a file, the name of a
+ * note, or an expression that returns any of these.
  */
 defineDirective('sound', ({ el, arg, expression, modifiers, scope, cleanup, evaluate }) => {
-  const evento = arg || 'click';
+  const event = arg || 'click';
 
-  const resolver = (): string => {
-    const bruto = expression.trim();
-    if (!bruto) return 'click';
-    // Nome direto de efeito, de nota ou caminho de arquivo dispensa avaliacao.
-    if (efeitos[bruto] || pareceCaminho(bruto) || frequenciaDaNota(bruto) !== null) return bruto;
-    const valor = evaluate<unknown>();
-    return typeof valor === 'string' ? valor : bruto;
+  const resolve = (): string => {
+    const raw = expression.trim();
+    if (!raw) return 'click';
+    // Direct effect name, note, or file path does not need evaluation.
+    if (efeitos[raw] || looksLikePath(raw) || getFrequencyForNote(raw) !== null) return raw;
+    const value = evaluate<unknown>();
+    return typeof value === 'string' ? value : raw;
   };
 
   const volume = modifiers.volume !== undefined ? Number(modifiers.volume) : undefined;
 
-  const tocar = (): void => {
-    sound.play(resolver(), volume === undefined ? {} : { volume });
+  const play = (): void => {
+    sound.play(resolve(), volume === undefined ? {} : { volume });
   };
 
-  el.addEventListener(evento, tocar);
-  cleanup(() => el.removeEventListener(evento, tocar));
+  el.addEventListener(event, play);
+  cleanup(() => el.removeEventListener(event, play));
   void scope;
 });
 
 /**
- * `v-mute` alterna o silencio ao clicar, e mantem o estado no proprio elemento.
+ * `v-mute` toggles mute on click, and keeps the state on the element itself.
  *
  * ```html
- * <button v-mute>Som</button>
+ * <button v-mute>Sound</button>
  * ```
  *
- * O elemento recebe `aria-pressed` e a classe `v-muted` quando esta silenciado.
+ * The element receives `aria-pressed` and the `v-muted` class when muted.
  */
 defineDirective('mute', ({ el, cleanup }) => {
-  const sincronizar = (): void => {
-    const mudo = sound.muted;
-    el.setAttribute('aria-pressed', String(mudo));
-    el.classList.toggle('v-muted', mudo);
+  const sync = (): void => {
+    const isMuted = sound.muted;
+    el.setAttribute('aria-pressed', String(isMuted));
+    el.classList.toggle('v-muted', isMuted);
   };
 
-  const alternar = (): void => {
+  const toggle = (): void => {
     sound.toggle();
-    sincronizar();
-    // Um toque curto confirma que o som voltou.
+    sync();
+    // A short tap confirms that sound is back.
     if (!sound.muted) sound.play('pop');
   };
 
-  el.addEventListener('click', alternar);
-  sincronizar();
-  cleanup(() => el.removeEventListener('click', alternar));
+  el.addEventListener('click', toggle);
+  sync();
+  cleanup(() => el.removeEventListener('click', toggle));
 });
 
 // ---------------------------------------------------------------------------
-// Variavel magica
+// Magic variable
 // ---------------------------------------------------------------------------
 
 magic('$sound', () => sound);

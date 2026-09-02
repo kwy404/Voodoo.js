@@ -1,8 +1,8 @@
 /**
  * @module forms/validate
  *
- * Motor de validacao com registro extensivel de regras, mensagens em portugues
- * e apresentacao automatica dos erros no proprio HTML.
+ * Validation engine with extensible rule registration, messages in Portuguese,
+ * and automatic error presentation in HTML.
  *
  * ```html
  * <form v-submit="/api/users" v-validate>
@@ -20,16 +20,16 @@ import { http, HttpError } from '../http';
 import { uid } from '../utils';
 
 // ---------------------------------------------------------------------------
-// Tipos
+// Types
 // ---------------------------------------------------------------------------
 
-/** Elementos que a validacao entende como campo de formulario. */
+/** Elements that validation understands as form fields. */
 export type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
-/** Resultado de uma regra: `true` aprova, `false` reprova, texto reprova com mensagem. */
+/** Rule result: `true` approves, `false` rejects, text rejects with message. */
 export type ValidatorResult = boolean | string;
 
-/** Funcao de uma regra. Recebe o valor em texto, o parametro e o proprio campo. */
+/** Rule function. Receives the value as text, parameter, and the field itself. */
 export type ValidatorFn = (
   value: string,
   param: string | undefined,
@@ -39,7 +39,7 @@ export type ValidatorFn = (
 export interface RuleDefinition {
   name: string;
   fn: ValidatorFn;
-  /** Mensagem usada quando a regra devolve `false` sem texto proprio. */
+  /** Message used when the rule returns `false` without its own text. */
   message?: string;
 }
 
@@ -55,23 +55,23 @@ export interface FormValidationResult {
 }
 
 export interface SerializeOptions {
-  /** Forca a saida em `FormData`, mesmo sem arquivos. */
+  /** Force output as `FormData`, even without files. */
   formData?: boolean;
-  /** Inclui campos desabilitados. Padrao `false`. */
+  /** Include disabled fields. Default `false`. */
   includeDisabled?: boolean;
-  /** Remove espacos nas pontas dos textos. Padrao `true`. */
+  /** Remove spaces at text ends. Default `true`. */
   trim?: boolean;
-  /** Converte campos numericos para `number`. Padrao `true`. */
+  /** Convert numeric fields to `number`. Default `true`. */
   numbers?: boolean;
 }
 
 // ---------------------------------------------------------------------------
-// Mensagens
+// Messages
 // ---------------------------------------------------------------------------
 
 /**
- * Mensagens padrao. Podem ser trocadas em tempo de execucao, uma a uma ou em
- * bloco, por exemplo `Object.assign(V.messages, { required: 'Campo obrigatorio' })`.
+ * Default messages. Can be changed at runtime, one at a time or in bulk,
+ * for example `Object.assign(V.messages, { required: 'Campo obrigatorio' })`.
  */
 export const messages: Record<string, string> = {
   required: 'Preencha este campo.',
@@ -107,7 +107,7 @@ export const messages: Record<string, string> = {
   invalid: 'Valor invalido.',
 };
 
-/** Troca `{param}`, `{field}`, `{value}`, `{min}` e `{max}` dentro da mensagem. */
+/** Replaces `{param}`, `{field}`, `{value}`, `{min}` and `{max}` in the message. */
 export function formatMessage(
   template: string,
   data: { field?: string; param?: string; value?: string }
@@ -116,7 +116,7 @@ export function formatMessage(
   const parts = param.split(',');
   const replacements: Record<string, string> = {
     param,
-    field: data.field ?? 'campo',
+    field: data.field ?? 'field',
     value: data.value ?? '',
     min: (parts[0] ?? '').trim(),
     max: (parts[1] ?? parts[0] ?? '').trim(),
@@ -127,14 +127,14 @@ export function formatMessage(
 }
 
 // ---------------------------------------------------------------------------
-// Registro de regras
+// Rule registration
 // ---------------------------------------------------------------------------
 
-/** Regras conhecidas pelo motor, indexadas pelo nome. */
+/** Rules known by the engine, indexed by name. */
 export const rules = new Map<string, RuleDefinition>();
 
 /**
- * Registra uma regra de validacao e cria a directive `v-validate-<nome>`.
+ * Registers a validation rule and creates the `v-validate-<name>` directive.
  *
  * ```js
  * V.validator('par', (value) => Number(value) % 2 === 0, 'Informe um numero par.')
@@ -150,12 +150,12 @@ export function validator(name: string, fn: ValidatorFn, defaultMessage?: string
 }
 
 // ---------------------------------------------------------------------------
-// Leitura de atributos e de campos
+// Reading attributes and fields
 // ---------------------------------------------------------------------------
 
 /**
- * Le um atributo da Voodoo aceitando tanto `v-nome` quanto `data-v-nome`.
- * Usa `readAttr` porque o walker retira os atributos do HTML depois de montar.
+ * Reads a Voodoo attribute accepting both `v-name` and `data-v-name`.
+ * Uses `readAttr` because the walker removes attributes from HTML after mounting.
  */
 export function readDirectiveAttr(el: Element, name: string): string | null {
   return readAttr(el, `${config.prefix}${name}`) ?? readAttr(el, `data-v-${name}`);
@@ -168,7 +168,7 @@ function hasDirectiveAttr(el: Element, name: string): boolean {
 const FIELD_TAGS = new Set(['INPUT', 'SELECT', 'TEXTAREA']);
 const IGNORED_TYPES = new Set(['submit', 'button', 'reset', 'image']);
 
-/** `true` quando o elemento e um input, select ou textarea. */
+/** `true` when the element is an input, select, or textarea. */
 export function isFormField(el: unknown): el is FormField {
   return !!el && typeof el === 'object' && FIELD_TAGS.has((el as Element).tagName ?? '');
 }
@@ -179,7 +179,7 @@ function fieldType(el: FormField): string {
   return (el.getAttribute('type') || 'text').toLowerCase();
 }
 
-/** Valor do campo em texto, ja tratando checkbox, radio e arquivo. */
+/** Field value as text, already handling checkbox, radio, and file. */
 export function fieldValue(el: FormField): string {
   const type = fieldType(el);
   if (type === 'checkbox' || type === 'radio') {
@@ -192,12 +192,12 @@ export function fieldValue(el: FormField): string {
   return el.value ?? '';
 }
 
-/** Nome usado como chave nos erros: `name`, depois `id`, depois um apelido. */
+/** Name used as key in errors: `name`, then `id`, then a default. */
 export function fieldKey(el: FormField): string {
-  return el.name || el.id || `campo-${el.tagName.toLowerCase()}`;
+  return el.name || el.id || `field-${el.tagName.toLowerCase()}`;
 }
 
-/** Rotulo amigavel do campo, usado nas mensagens. */
+/** Friendly label for the field, used in messages. */
 export function fieldLabel(el: FormField): string {
   const custom = readDirectiveAttr(el, 'label');
   if (custom) return custom;
@@ -209,7 +209,7 @@ export function fieldLabel(el: FormField): string {
   const wrapper = el.closest('label');
   const wrapperText = wrapper?.textContent?.trim();
   if (wrapperText) return wrapperText.replace(/\s*\*$/, '');
-  return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.name || 'campo';
+  return el.getAttribute('aria-label') || el.getAttribute('placeholder') || el.name || 'field';
 }
 
 function cssEscape(value: string): string {
@@ -218,7 +218,7 @@ function cssEscape(value: string): string {
   return value.replace(/["'\\\]\[]/g, '\\$&');
 }
 
-/** Procura outro campo pelo nome, pelo id ou por um seletor CSS. */
+/** Finds another field by name, id, or CSS selector. */
 export function findRelatedField(el: FormField, reference: string): FormField | null {
   const ref = reference.trim();
   if (!ref || typeof document === 'undefined') return null;
@@ -234,13 +234,13 @@ export function findRelatedField(el: FormField, reference: string): FormField | 
 }
 
 // ---------------------------------------------------------------------------
-// Regras nativas
+// Native rules
 // ---------------------------------------------------------------------------
 
 const RE_EMAIL = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 const RE_INTEGER = /^-?\d+$/;
 const RE_DECIMAL = /^-?\d+(?:[.,]\d+)?$/;
-// As faixas acentuadas pulam os sinais de multiplicacao e divisao.
+// Accented ranges skip multiplication and division signs.
 const RE_ALPHA = /^[A-Za-zÀ-ÖØ-öø-ɏ]+$/;
 const RE_ALPHANUM = /^[A-Za-z0-9À-ÖØ-öø-ɏ]+$/;
 
@@ -252,7 +252,7 @@ function toNumber(value: string): number {
   return Number(String(value).replace(/\s/g, '').replace(/\.(?=\d{3}\b)/g, '').replace(',', '.'));
 }
 
-/** Calculo real dos digitos verificadores do CPF. */
+/** Actual calculation of CPF check digits. */
 export function isValidCPF(value: string): boolean {
   const digits = digitsOf(value);
   if (digits.length !== 11) return false;
@@ -271,7 +271,7 @@ export function isValidCPF(value: string): boolean {
   return second === Number(digits[10]);
 }
 
-/** Calculo real dos digitos verificadores do CNPJ. */
+/** Actual calculation of CNPJ check digits. */
 export function isValidCNPJ(value: string): boolean {
   const digits = digitsOf(value);
   if (digits.length !== 14) return false;
@@ -291,7 +291,7 @@ export function isValidCNPJ(value: string): boolean {
   return check(12) === Number(digits[12]) && check(13) === Number(digits[13]);
 }
 
-/** Algoritmo de Luhn, usado nos numeros de cartao de credito. */
+/** Luhn algorithm, used in credit card numbers. */
 export function isValidLuhn(value: string): boolean {
   const digits = digitsOf(value);
   if (digits.length < 13 || digits.length > 19) return false;
@@ -309,7 +309,7 @@ export function isValidLuhn(value: string): boolean {
   return sum % 10 === 0;
 }
 
-/** Telefone brasileiro fixo ou celular, com DDD valido. */
+/** Brazilian landline or mobile phone with valid area code. */
 export function isValidPhoneBR(value: string): boolean {
   const digits = digitsOf(value);
   if (digits.length !== 10 && digits.length !== 11) return false;
@@ -319,7 +319,7 @@ export function isValidPhoneBR(value: string): boolean {
   return true;
 }
 
-/** Aceita `dd/mm/aaaa`, `aaaa-mm-dd` e o que o navegador souber ler. */
+/** Accepts `dd/mm/yyyy`, `yyyy-mm-dd`, and whatever the browser can parse. */
 export function parseDateValue(value: string): Date | null {
   const text = value.trim();
   if (!text) return null;
@@ -342,7 +342,7 @@ export function parseDateValue(value: string): Date | null {
   return Number.isNaN(time) ? null : new Date(time);
 }
 
-/** Resolve o parametro de `after` e `before`: data, `hoje` ou outro campo. */
+/** Resolves the parameter for `after` and `before`: date, `today`, or another field. */
 function referenceDate(param: string | undefined, el: FormField): Date | null {
   if (!param) return null;
   const key = param.trim().toLowerCase();
@@ -444,7 +444,7 @@ validator('regex', (value, param, el) => {
   try {
     return new RegExp(param, flags).test(value);
   } catch {
-    warn(`Expressao regular invalida em ${config.prefix}regex: ${param}`);
+    warn(`Invalid regular expression in ${config.prefix}regex: ${param}`);
     return true;
   }
 });
@@ -507,21 +507,21 @@ validator('unique', async (value, param, el) => {
     if (data && typeof data === 'object' && 'available' in data) {
       return data.available === true ? true : messages.unique;
     }
-    // Sem o campo `available` a resposta e tratada como registro existente.
+    // Without the `available` field, the response is treated as existing record.
     return data ? messages.unique : true;
   } catch (err) {
     if (err instanceof HttpError) {
-      // 404 significa que ninguem usa esse valor ainda.
+      // 404 means no one uses this value yet.
       if (err.status === 404) return true;
       if (err.status >= 400 && err.status < 500) return messages.unique;
     }
-    // Falha de rede nao pode travar o envio do formulario.
+    // Network failure shouldn't block form submission.
     return true;
   }
 });
 
 // ---------------------------------------------------------------------------
-// Coleta das regras declaradas no campo
+// Collecting declared rules from a field
 // ---------------------------------------------------------------------------
 
 export interface FieldRule {
@@ -529,7 +529,7 @@ export interface FieldRule {
   param: string;
 }
 
-/** Nomes alternativos aceitos nos atributos. */
+/** Alternative names accepted in attributes. */
 const RULE_ALIASES: Record<string, string> = {
   'strong-password': 'strongpassword',
   'credit-card': 'creditcard',
@@ -540,7 +540,7 @@ const RULE_ALIASES: Record<string, string> = {
   obrigatorio: 'required',
 };
 
-/** Regras que rodam mesmo com o campo vazio. */
+/** Rules that run even with empty field. */
 const RUN_WHEN_EMPTY = new Set(['required', 'accepted']);
 
 function ruleNameFromAttribute(attrName: string): string | null {
@@ -558,7 +558,7 @@ function ruleNameFromAttribute(attrName: string): string | null {
   return rules.has(name) ? name : null;
 }
 
-/** Lista as regras declaradas em um campo, incluindo os atributos nativos. */
+/** Lists the rules declared in a field, including native attributes. */
 export function fieldRules(el: FormField): FieldRule[] {
   const found: FieldRule[] = [];
   const seen = new Set<string>();
@@ -569,12 +569,12 @@ export function fieldRules(el: FormField): FieldRule[] {
     found.push({ name, param });
   };
 
-  // `originalAttributes` devolve os atributos declarados, mesmo os que o
-  // walker ja retirou do HTML.
+  // `originalAttributes` returns the declared attributes, even those the
+  // walker has already removed from HTML.
   for (const [attrName, attrValue] of originalAttributes(el)) {
     const name = ruleNameFromAttribute(attrName);
     if (!name) continue;
-    // `v-required="false"` desliga a regra sem precisar remover o atributo.
+    // `v-required="false"` disables the rule without needing to remove the attribute.
     if (attrValue.trim() === 'false') {
       seen.add(name);
       continue;
@@ -599,13 +599,13 @@ export function fieldRules(el: FormField): FieldRule[] {
   const pattern = el.getAttribute('pattern');
   if (pattern) push('regex', pattern);
 
-  // `required` sempre roda primeiro para nao mostrar erro de formato em branco.
+  // `required` always runs first to avoid showing format errors on blank.
   found.sort((a, b) => (a.name === 'required' ? -1 : b.name === 'required' ? 1 : 0));
   return found;
 }
 
 // ---------------------------------------------------------------------------
-// Estilos dos erros
+// Error styles
 // ---------------------------------------------------------------------------
 
 const CSS = `
@@ -631,7 +631,7 @@ function ensureStyles(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Apresentacao dos erros
+// Error presentation
 // ---------------------------------------------------------------------------
 
 function errorHost(el: FormField): { parent: Element; anchor: Element | null } | null {
@@ -640,7 +640,7 @@ function errorHost(el: FormField): { parent: Element; anchor: Element | null } |
     const host =
       (el.form ?? el.closest('form'))?.querySelector(selector) ?? document.querySelector(selector);
     if (host) return { parent: host, anchor: null };
-    warn(`Destino de ${config.prefix}error-target nao encontrado: ${selector}`);
+    warn(`Target for ${config.prefix}error-target not found: ${selector}`);
   }
   const parent = el.parentElement;
   return parent ? { parent, anchor: el } : null;
@@ -656,7 +656,7 @@ function findErrorElement(el: FormField): HTMLElement | null {
   return host.parent.querySelector<HTMLElement>('.v-field-error');
 }
 
-/** Mostra a mensagem de erro logo abaixo do campo e marca o estado invalido. */
+/** Shows error message just below the field and marks the invalid state. */
 export function showFieldError(el: FormField, message: string): void {
   ensureStyles();
   el.classList.add('v-invalid');
@@ -684,7 +684,7 @@ export function showFieldError(el: FormField, message: string): void {
   el.setAttribute('aria-describedby', describedBy.join(' '));
 }
 
-/** Marca o campo como valido e remove a mensagem que estiver na tela. */
+/** Marks the field as valid and removes any message on screen. */
 export function clearFieldError(el: FormField, markValid = false): void {
   el.classList.remove('v-invalid');
   el.classList.toggle('v-valid', markValid);
@@ -701,7 +701,7 @@ export function clearFieldError(el: FormField, markValid = false): void {
   }
 }
 
-/** Limpa todos os erros visiveis de um formulario. */
+/** Clears all visible errors from a form. */
 export function clearErrors(form: HTMLElement): void {
   for (const field of collectFields(form, false)) clearFieldError(field);
   for (const leftover of Array.from(form.querySelectorAll('.v-field-error'))) leftover.remove();
@@ -714,8 +714,8 @@ export function clearErrors(form: HTMLElement): void {
 }
 
 /**
- * Normaliza o corpo de erro devolvido pelo servidor.
- * Aceita `{ campo: 'msg' }`, `{ campo: ['msg'] }` e `{ errors: { ... } }`.
+ * Normalizes the error body returned by the server.
+ * Accepts `{ field: 'msg' }`, `{ field: ['msg'] }` and `{ errors: { ... } }`.
  */
 export function normalizeErrors(payload: unknown): Record<string, string> {
   const out: Record<string, string> = {};
@@ -747,8 +747,8 @@ function findFieldByName(form: HTMLElement, key: string): FormField | null {
 }
 
 /**
- * Aplica no HTML os erros vindos do servidor. Mensagens sem campo
- * correspondente aparecem em um resumo no topo do formulario.
+ * Applies server errors to the HTML. Messages without a corresponding field
+ * appear in a summary at the top of the form.
  */
 export function showFormErrors(form: HTMLElement, errors: unknown): Record<string, string> {
   const normalized = normalizeErrors(errors);
@@ -764,7 +764,7 @@ export function showFormErrors(form: HTMLElement, errors: unknown): Record<strin
   return normalized;
 }
 
-/** Mostra um resumo de erros no topo do formulario. */
+/** Shows an error summary at the top of the form. */
 export function showFormSummary(form: HTMLElement, list: string[]): void {
   ensureStyles();
   let box = form.querySelector<HTMLElement>('.v-form-error');
@@ -788,7 +788,7 @@ export function showFormSummary(form: HTMLElement, list: string[]): void {
   box.appendChild(ul);
 }
 
-/** Leva o foco ate o primeiro campo com erro. Devolve `false` se nao houver. */
+/** Moves focus to the first field with an error. Returns `false` if there is none. */
 export function focusFirstError(form: HTMLElement): boolean {
   const field = form.querySelector<HTMLElement>('.v-invalid');
   if (!field) return false;
@@ -801,7 +801,7 @@ export function focusFirstError(form: HTMLElement): boolean {
     typeof window !== 'undefined' &&
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // Nem todo ambiente implementa a rolagem suave, entao a chamada e protegida.
+  // Not all environments implement smooth scrolling, so the call is guarded.
   if (typeof field.scrollIntoView === 'function') {
     field.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
   }
@@ -809,10 +809,10 @@ export function focusFirstError(form: HTMLElement): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Validacao
+// Validation
 // ---------------------------------------------------------------------------
 
-/** Campos de um formulario. Com `onlyWithRules`, ignora quem nao tem regra. */
+/** Form fields. With `onlyWithRules`, ignores fields without rules. */
 export function collectFields(form: HTMLElement, onlyWithRules = true): FormField[] {
   const source: Element[] =
     form.tagName === 'FORM'
@@ -831,8 +831,8 @@ export function collectFields(form: HTMLElement, onlyWithRules = true): FormFiel
 }
 
 /**
- * Valida um campo, aplica as classes e mostra a mensagem.
- * Use `{ silent: true }` para apenas consultar o resultado.
+ * Validates a field, applies classes and shows the message.
+ * Use `{ silent: true }` to only check the result.
  */
 export async function validateField(
   el: FormField,
@@ -859,8 +859,8 @@ export async function validateField(
     try {
       outcome = await definition.fn(value, rule.param || undefined, el);
     } catch (err) {
-      // Uma regra quebrada nunca deve impedir o usuario de enviar o formulario.
-      warn(`Regra "${rule.name}" falhou ao executar`, err);
+      // A broken rule should never prevent the user from submitting the form.
+      warn(`Rule "${rule.name}" failed to execute`, err);
       continue;
     }
     if (outcome === true) continue;
@@ -891,8 +891,8 @@ export async function validateField(
 }
 
 /**
- * Atalho geral: valida um formulario inteiro ou um campo isolado, decidindo
- * pelo tipo do elemento recebido.
+ * General shortcut: validates an entire form or a single field, deciding
+ * based on the element type received.
  *
  * ```js
  * await V.validate(document.forms[0])          // { valid, errors }
@@ -906,7 +906,7 @@ export function validate(
   return validateForm(target);
 }
 
-/** Valida todos os campos com regra e devolve os erros indexados pelo nome. */
+/** Validates all fields with rules and returns errors indexed by name. */
 export async function validateForm(form: HTMLElement): Promise<FormValidationResult> {
   const fields = collectFields(form);
   const results = await Promise.all(fields.map((field) => validateField(field)));
@@ -930,7 +930,7 @@ function emitFieldResult(el: FormField, result: FieldValidationResult): void {
 }
 
 // ---------------------------------------------------------------------------
-// Serializacao
+// Serialization
 // ---------------------------------------------------------------------------
 
 interface SerializedEntry {
@@ -938,7 +938,7 @@ interface SerializedEntry {
   value: unknown;
 }
 
-/** Quebra `user[endereco][rua]` em `['user','endereco','rua']`. */
+/** Breaks `user[address][street]` into `['user','address','street']`. */
 function parseFieldName(name: string): string[] {
   const start = name.indexOf('[');
   if (start === -1) return [name];
@@ -1002,7 +1002,7 @@ function collectEntries(form: HTMLElement, options: SerializeOptions): Serialize
   const fields = collectFields(form, false);
   const entries: SerializedEntry[] = [];
 
-  // Conta os checkboxes por nome para decidir entre booleano e lista.
+  // Count checkboxes by name to decide between boolean and list.
   const checkboxCount = new Map<string, number>();
   for (const field of fields) {
     if (fieldType(field) === 'checkbox' && field.name) {
@@ -1092,9 +1092,9 @@ function appendToFormData(data: FormData, name: string, value: unknown): void {
 }
 
 /**
- * Transforma o formulario em objeto JavaScript, respeitando nomes como
- * `user[endereco][rua]` e `tags[]`. Devolve `FormData` quando houver arquivo
- * selecionado ou quando `options.formData` for verdadeiro.
+ * Transforms the form into a JavaScript object, respecting names like
+ * `user[address][street]` and `tags[]`. Returns `FormData` when a file is
+ * selected or when `options.formData` is true.
  */
 export function serializeForm(
   form: HTMLElement,
@@ -1114,7 +1114,7 @@ export function serializeForm(
 }
 
 // ---------------------------------------------------------------------------
-// Ligacao com o DOM
+// Binding to the DOM
 // ---------------------------------------------------------------------------
 
 const boundFields = new WeakSet<Element>();
@@ -1127,12 +1127,12 @@ async function runFieldValidation(el: FormField): Promise<void> {
 }
 
 /**
- * Liga um campo aos eventos de validacao: valida ao sair e, depois do primeiro
- * erro, revalida a cada digitacao.
+ * Binds a field to validation events: validates on blur and, after the first
+ * error, revalidates on each keystroke.
  */
 export function bindFieldValidation(el: FormField, cleanup: (fn: () => void) => void): void {
   if (!isFormField(el)) {
-    warn(`${config.prefix}validate so funciona em input, select ou textarea.`);
+    warn(`${config.prefix}validate only works on input, select, or textarea.`);
     return;
   }
   if (boundFields.has(el)) return;
@@ -1160,10 +1160,10 @@ export function bindFieldValidation(el: FormField, cleanup: (fn: () => void) => 
   });
 }
 
-/** Formularios que declararam `v-validate`. */
+/** Forms that declared `v-validate`. */
 const validatedForms = new WeakSet<HTMLElement>();
 
-/** `true` quando o formulario pediu validacao automatica. */
+/** `true` when the form requested automatic validation. */
 export function isValidatedForm(form: HTMLElement): boolean {
   return validatedForms.has(form) || hasDirectiveAttr(form, 'validate');
 }
@@ -1171,7 +1171,7 @@ export function isValidatedForm(form: HTMLElement): boolean {
 function setupFormValidation(form: HTMLElement, cleanup: (fn: () => void) => void): void {
   validatedForms.add(form);
   ensureStyles();
-  // A validacao da Voodoo substitui a caixa nativa do navegador.
+  // Voodoo validation replaces the browser's native validation box.
   if (form.tagName === 'FORM') (form as HTMLFormElement).noValidate = true;
 
   const onFocusOut = (event: Event): void => {
@@ -1212,7 +1212,7 @@ defineDirective('validate', ({ el, cleanup }) => {
   bindFieldValidation(el as FormField, cleanup);
 });
 
-/** Directives de campo citadas na documentacao publica. */
+/** Field directives cited in public documentation. */
 const FIELD_DIRECTIVES = [
   'required',
   'email',
@@ -1240,7 +1240,7 @@ for (const name of FIELD_DIRECTIVES) {
   });
 }
 
-/** Configuracoes de campo que tambem ligam a validacao automatica. */
+/** Field configurations that also enable automatic validation. */
 for (const name of ['error-message', 'error-target', 'regex-flags', 'unique-url']) {
   defineDirective(name, ({ el, cleanup }) => {
     if (!isFormField(el)) return;
