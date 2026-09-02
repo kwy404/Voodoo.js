@@ -232,7 +232,12 @@ defineDirective(
  * Clones a template, inserts before the anchor and initializes. Supports
  * `<template>` with multiple children.
  */
-function renderTemplate(source: Element, anchor: Node, scope: Scope): Node[] {
+function renderTemplate(
+  source: Element,
+  anchor: Node,
+  scope: Scope,
+  batch?: { fragment: DocumentFragment; pending: Array<[Node, Scope]> }
+): Node[] {
   const parent = anchor.parentNode;
   if (!parent) return [];
 
@@ -251,10 +256,23 @@ function renderTemplate(source: Element, anchor: Node, scope: Scope): Node[] {
     }
   } else {
     const clone = source.cloneNode(true) as Element;
-    parent.insertBefore(clone, anchor);
     nodes.push(clone);
     markNodeScope(clone, scope);
-    walk(clone, scope);
+
+    if (batch) {
+      // Batched: the row goes into the fragment, outside the document.
+      // Inserting a thousand rows one at a time makes the DOM redo the child
+      // list's index bookkeeping on every call, which the CPU profile showed
+      // dominating creation. The fragment turns that into a single insert.
+      //
+      // Walking still happens AFTER the node is connected, in the same order
+      // as before, because a directive may depend on being in the document.
+      batch.fragment.appendChild(clone);
+      batch.pending.push([clone, scope]);
+    } else {
+      parent.insertBefore(clone, anchor);
+      walk(clone, scope);
+    }
   }
 
   return nodes;
@@ -329,6 +347,10 @@ defineDirective(
 
       const next: ForBlock[] = [];
       const used = new Set<unknown>();
+      const batch = {
+        fragment: document.createDocumentFragment(),
+        pending: [] as Array<[Node, Scope]>,
+      };
 
       entries.forEach((vars, index) => {
         const key = keyExpression
@@ -348,10 +370,14 @@ defineDirective(
         }
 
         const childScope = scope.reactiveChild(vars);
-        const nodes = renderTemplate(template, anchor, childScope);
+        const nodes = renderTemplate(template, anchor, childScope, batch);
         used.add(key);
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
+
+      // One insert for every new row, and only then the walk.
+      if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
+      for (const [node, escopo] of batch.pending) walk(node, escopo);
 
       // Removes blocks that left the list.
       // The set keeps track of who was reused by identity. Previously this was

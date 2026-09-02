@@ -1689,7 +1689,7 @@ defineDirective(
   },
   { priority: PRIORITY.IF, terminal: true }
 );
-function renderTemplate(source, anchor, scope) {
+function renderTemplate(source, anchor, scope, batch) {
   const parent = anchor.parentNode;
   if (!parent) return [];
   const nodes = [];
@@ -1706,10 +1706,15 @@ function renderTemplate(source, anchor, scope) {
     }
   } else {
     const clone = source.cloneNode(true);
-    parent.insertBefore(clone, anchor);
     nodes.push(clone);
     markNodeScope(clone, scope);
-    walk(clone, scope);
+    if (batch) {
+      batch.fragment.appendChild(clone);
+      batch.pending.push([clone, scope]);
+    } else {
+      parent.insertBefore(clone, anchor);
+      walk(clone, scope);
+    }
   }
   return nodes;
 }
@@ -1755,6 +1760,10 @@ defineDirective(
       for (const block2 of blocks) previous.set(block2.key, block2);
       const next = [];
       const used = /* @__PURE__ */ new Set();
+      const batch = {
+        fragment: document.createDocumentFragment(),
+        pending: []
+      };
       entries.forEach((vars, index) => {
         const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
         if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
@@ -1766,10 +1775,12 @@ defineDirective(
           return;
         }
         const childScope = scope.reactiveChild(vars);
-        const nodes = renderTemplate(template, anchor, childScope);
+        const nodes = renderTemplate(template, anchor, childScope, batch);
         used.add(key);
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
+      if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
+      for (const [node, escopo] of batch.pending) walk(node, escopo);
       const reaproveitados = new Set(next);
       for (const block2 of blocks) {
         if (used.has(block2.key) && reaproveitados.has(block2)) continue;
@@ -10181,5 +10192,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-RVCO4YO2.js.map
-//# sourceMappingURL=chunk-RVCO4YO2.js.map
+//# sourceMappingURL=chunk-PTRFAQ2N.js.map
+//# sourceMappingURL=chunk-PTRFAQ2N.js.map

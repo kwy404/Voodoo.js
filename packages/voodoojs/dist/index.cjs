@@ -5050,7 +5050,7 @@ defineDirective(
   },
   { priority: exports.PRIORITY.IF, terminal: true }
 );
-function renderTemplate(source, anchor, scope) {
+function renderTemplate(source, anchor, scope, batch) {
   const parent = anchor.parentNode;
   if (!parent) return [];
   const nodes = [];
@@ -5067,10 +5067,15 @@ function renderTemplate(source, anchor, scope) {
     }
   } else {
     const clone2 = source.cloneNode(true);
-    parent.insertBefore(clone2, anchor);
     nodes.push(clone2);
     markNodeScope(clone2, scope);
-    walk(clone2, scope);
+    if (batch) {
+      batch.fragment.appendChild(clone2);
+      batch.pending.push([clone2, scope]);
+    } else {
+      parent.insertBefore(clone2, anchor);
+      walk(clone2, scope);
+    }
   }
   return nodes;
 }
@@ -5116,6 +5121,10 @@ defineDirective(
       for (const block2 of blocks) previous.set(block2.key, block2);
       const next = [];
       const used = /* @__PURE__ */ new Set();
+      const batch = {
+        fragment: document.createDocumentFragment(),
+        pending: []
+      };
       entries.forEach((vars, index) => {
         const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
         if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
@@ -5127,10 +5136,12 @@ defineDirective(
           return;
         }
         const childScope = scope.reactiveChild(vars);
-        const nodes = renderTemplate(template, anchor, childScope);
+        const nodes = renderTemplate(template, anchor, childScope, batch);
         used.add(key);
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
+      if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
+      for (const [node, escopo] of batch.pending) walk(node, escopo);
       const reaproveitados = new Set(next);
       for (const block2 of blocks) {
         if (used.has(block2.key) && reaproveitados.has(block2)) continue;
