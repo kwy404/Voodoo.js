@@ -1,6 +1,6 @@
-import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
 
 /**
  * @module parser/lexer
@@ -518,9 +518,16 @@ declare const theme: {
     readonly resolved: "light" | "dark";
     set(value: ThemeName): void;
     toggle(): "light" | "dark";
+    /** `true` once the visitor has actually picked a theme. */
+    readonly chosen: boolean;
     /** Writes `data-theme` on the root element and notifies the page. */
     apply(): void;
-    /** Applies the saved theme as soon as the page loads. */
+    /**
+     * Applies the saved theme as soon as the page loads.
+     *
+     * Does nothing when the visitor never chose one, which is the common case on
+     * a page that simply included the script.
+     */
     init(): void;
 };
 
@@ -1211,6 +1218,7 @@ declare const core: {
         readonly resolved: "light" | "dark";
         set(value: ThemeName): void;
         toggle(): "light" | "dark";
+        readonly chosen: boolean;
         apply(): void;
         init(): void;
     };

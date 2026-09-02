@@ -273,9 +273,25 @@ export const theme = {
     return next;
   },
 
+  /** `true` once the visitor has actually picked a theme. */
+  get chosen(): boolean {
+    return storage.get<ThemeName>(THEME_KEY) != null;
+  },
+
   /** Writes `data-theme` on the root element and notifies the page. */
   apply(): void {
     if (typeof document === 'undefined') return;
+
+    // Nobody picked a theme, so the page is left exactly as its author wrote
+    // it. Importing a library must never repaint someone's site because the
+    // visitor's operating system happens to be in dark mode, and it must not
+    // strip a `data-theme` the author put in their own markup.
+    //
+    // Setting `colorScheme` was the worst of it: it makes the browser render
+    // the background, the scrollbars and every form control dark, across the
+    // whole document, for a page that asked for none of that.
+    if (!this.chosen) return;
+
     const value = this.current;
     const root = document.documentElement;
     if (value === 'system') root.removeAttribute('data-theme');
@@ -286,7 +302,12 @@ export const theme = {
     );
   },
 
-  /** Applies the saved theme as soon as the page loads. */
+  /**
+   * Applies the saved theme as soon as the page loads.
+   *
+   * Does nothing when the visitor never chose one, which is the common case on
+   * a page that simply included the script.
+   */
   init(): void {
     if (typeof document === 'undefined') return;
     this.apply();

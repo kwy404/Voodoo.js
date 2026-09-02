@@ -1,25 +1,25 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-MPYWCGEB.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-MPYWCGEB.js';
-export { gpu, reflectWgsl } from './chunk-7NH7NOTT.js';
-import { http } from './chunk-7C5ZZ7B5.js';
-export { HttpError, http, request } from './chunk-7C5ZZ7B5.js';
-import { devtoolsBus } from './chunk-NXGXPE5Q.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-NXGXPE5Q.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-IVTMYVWQ.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-IVTMYVWQ.js';
-import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-2P6ZNPMO.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-2P6ZNPMO.js';
-import { warnAlias } from './chunk-BFZ6IVJ2.js';
-import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-JUDHTE7Z.js';
-export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-JUDHTE7Z.js';
-import { ensureTokens, injectStyle } from './chunk-AZQE7TB5.js';
-export { ensureTokens, injectStyle } from './chunk-AZQE7TB5.js';
-import { defineDirective, PRIORITY, config } from './chunk-54Y37JIN.js';
-export { PRIORITY, config, defineDirective } from './chunk-54Y37JIN.js';
-import './chunk-X55TLYJX.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-GRZVVV2Z.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-GRZVVV2Z.js';
+export { gpu, reflectWgsl } from './chunk-ZJVIDHHM.js';
+import { http } from './chunk-PQZEVFVZ.js';
+export { HttpError, http, request } from './chunk-PQZEVFVZ.js';
+import { devtoolsBus } from './chunk-GTP64V6Z.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-GTP64V6Z.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-EHXWLNEJ.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-EHXWLNEJ.js';
+import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-CJTLXVLF.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-CJTLXVLF.js';
+import { warnAlias } from './chunk-A2UOVQBP.js';
+import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-234ZLC6W.js';
+export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-234ZLC6W.js';
+import { ensureTokens, injectStyle } from './chunk-U76IRJKH.js';
+export { ensureTokens, injectStyle } from './chunk-U76IRJKH.js';
+import { defineDirective, PRIORITY, config } from './chunk-5777LJVW.js';
+export { PRIORITY, config, defineDirective } from './chunk-5777LJVW.js';
+import './chunk-E27NRARW.js';
 
 /**
- * Voodoo.js v0.4.5
+ * Voodoo.js v0.4.6
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */

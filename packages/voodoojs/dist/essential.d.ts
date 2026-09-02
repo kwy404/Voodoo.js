@@ -1,4 +1,4 @@
-import { c as core, V as VoodooCollection } from './query-BSftzJXi.js';
+import { c as core, V as VoodooCollection } from './query-CYZhqtNx.js';
 import './http.js';
 import './utils.js';
 import './reactivity.js';

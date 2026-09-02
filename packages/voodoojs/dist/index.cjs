@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.4.5
+ * Voodoo.js v0.4.6
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2241,7 +2241,18 @@ function destroy(node) {
   nodeEffectScopes.delete(node);
   initialized.delete(node);
 }
+var parsedAttributes = /* @__PURE__ */ new Map();
+var MAX_PARSED_ATTRIBUTES = 4e3;
 function parseAttribute(name, value) {
+  const cacheKey2 = `${name}\0${value}`;
+  const hit = parsedAttributes.get(cacheKey2);
+  if (hit !== void 0) return hit;
+  const parsed = parseAttributeUncached(name, value);
+  if (parsedAttributes.size >= MAX_PARSED_ATTRIBUTES) parsedAttributes.clear();
+  parsedAttributes.set(cacheKey2, parsed);
+  return parsed;
+}
+function parseAttributeUncached(name, value) {
   const prefix = exports.config.prefix;
   let body;
   if (name.startsWith("@")) {
@@ -4675,9 +4686,14 @@ var theme = {
     this.set(next);
     return next;
   },
+  /** `true` once the visitor has actually picked a theme. */
+  get chosen() {
+    return storage.get(THEME_KEY) != null;
+  },
   /** Writes `data-theme` on the root element and notifies the page. */
   apply() {
     if (typeof document === "undefined") return;
+    if (!this.chosen) return;
     const value = this.current;
     const root = document.documentElement;
     if (value === "system") root.removeAttribute("data-theme");
@@ -4687,7 +4703,12 @@ var theme = {
       new CustomEvent("voodoo:theme", { detail: { theme: value, resolved: this.resolved } })
     );
   },
-  /** Applies the saved theme as soon as the page loads. */
+  /**
+   * Applies the saved theme as soon as the page loads.
+   *
+   * Does nothing when the visitor never chose one, which is the common case on
+   * a page that simply included the script.
+   */
   init() {
     if (typeof document === "undefined") return;
     this.apply();
@@ -6481,7 +6502,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.4.5";
+var version = "0.4.6";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,

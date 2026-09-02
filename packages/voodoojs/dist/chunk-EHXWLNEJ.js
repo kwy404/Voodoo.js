@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-2P6ZNPMO.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-BFZ6IVJ2.js';
-import { config, directives, components } from './chunk-54Y37JIN.js';
-import { __publicField } from './chunk-X55TLYJX.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-CJTLXVLF.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-A2UOVQBP.js';
+import { config, directives, components } from './chunk-5777LJVW.js';
+import { __publicField } from './chunk-E27NRARW.js';
 
 /**
- * Voodoo.js v0.4.5
+ * Voodoo.js v0.4.6
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1342,7 +1342,18 @@ function destroy(node) {
   nodeEffectScopes.delete(node);
   initialized.delete(node);
 }
+var parsedAttributes = /* @__PURE__ */ new Map();
+var MAX_PARSED_ATTRIBUTES = 4e3;
 function parseAttribute(name, value) {
+  const cacheKey = `${name}\0${value}`;
+  const hit = parsedAttributes.get(cacheKey);
+  if (hit !== void 0) return hit;
+  const parsed = parseAttributeUncached(name, value);
+  if (parsedAttributes.size >= MAX_PARSED_ATTRIBUTES) parsedAttributes.clear();
+  parsedAttributes.set(cacheKey, parsed);
+  return parsed;
+}
+function parseAttributeUncached(name, value) {
   const prefix = config.prefix;
   let body;
   if (name.startsWith("@")) {
@@ -1819,5 +1830,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-IVTMYVWQ.js.map
-//# sourceMappingURL=chunk-IVTMYVWQ.js.map
+//# sourceMappingURL=chunk-EHXWLNEJ.js.map
+//# sourceMappingURL=chunk-EHXWLNEJ.js.map
