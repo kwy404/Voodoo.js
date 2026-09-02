@@ -1,9 +1,9 @@
-# Contribuindo com a Voodoo.js
+# Contributing to Voodoo.js
 
-Obrigado por querer ajudar. Este arquivo é o guia prático. O guia narrativo, com mais
-exemplos, está em [docs/contribuindo.md](docs/contribuindo.md).
+Thank you for wanting to help. This file is the quick reference. The narrative guide with more
+examples is in [docs/contribuindo.md](docs/contribuindo.md).
 
-## Começando
+## Getting Started
 
 ```bash
 git clone https://github.com/kwy404/Voodoo.js.git
@@ -12,160 +12,159 @@ npm install
 npm test
 ```
 
-Requisitos: Node 18 ou mais novo, e npm. O CI roda em Node 20 e 22.
+Requirements: Node 18 or newer, and npm. CI runs on Node 20 and 22.
 
-## Comandos
+## Commands
 
-| Comando | O que faz |
+| Command | What it does |
 | --- | --- |
-| `npm test` | Roda a suíte inteira com Vitest |
-| `npm run test:watch` | Roda em modo observação |
-| `npm run coverage` | Roda com relatório de cobertura |
-| `npm run typecheck` | Confere os tipos com `tsc --noEmit` |
-| `npm run build` | Gera os bundles com tsup |
-| `npm run dev` | Build em modo observação |
-| `npm run size` | Mede os bundles e falha se algum estourar a meta |
-| `npm run quality` | Roda os doze critérios e escreve `QUALITY_REPORT.md`. Os checks ficam em `scripts/quality/` e ainda estão sendo completados; o que não tem check reporta `SKIP` |
-| `npm run serve` | Sobe um servidor local para os exemplos |
-| `npm run format` | Aplica o Prettier |
+| `npm test` | Runs the full suite with Vitest |
+| `npm run test:watch` | Runs in watch mode |
+| `npm run coverage` | Runs with coverage report |
+| `npm run typecheck` | Checks types with `tsc --noEmit` |
+| `npm run build` | Generates bundles with tsup |
+| `npm run dev` | Build in watch mode |
+| `npm run size` | Measures bundles and fails if any exceed the target |
+| `npm run quality` | Runs twelve criteria and writes `QUALITY_REPORT.md`. Checks live in `scripts/quality/` and are still being completed; checks not yet implemented report `SKIP` |
+| `npm run serve` | Starts a local server for examples |
+| `npm run format` | Applies Prettier |
 
-Para rodar os benchmarks:
+To run benchmarks:
 
 ```bash
 node benchmarks/run.mjs
 ```
 
-## Mapa do código
+## Code Map
 
 ```
 packages/voodoojs/src/
-├── parser/      lexer, parser Pratt, interpretador de árvore
-├── reactivity/  Proxy, efeitos, escopos, agendador
-├── runtime/     walker, escopos, componentes, registro, boot, magics
+├── parser/      lexer, Pratt parser, tree interpreter
+├── reactivity/  Proxy, effects, scopes, scheduler
+├── runtime/     walker, scopes, components, registry, boot, magics
 ├── directives/  core, http, forms, ui, state, dnd
 ├── http/ store/ storage/ forms/ ui/ dom/ router/ i18n/ motion/ charts/ sound/ devtools/ utils/
-├── core.ts      monta o objeto V
-└── index.ts essential.ts minimo.ts browser*.ts   pontos de entrada
+├── core.ts      assembles the V object
+└── index.ts essential.ts minimo.ts browser*.ts   entry points
 ```
 
-A visão completa, com o caminho de uma atualização e as fronteiras entre módulos, está em
+The full picture, with the upgrade path and module boundaries, is in
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Regras do repositório
+## Repository Rules
 
-- Português do Brasil em comentários de código e na documentação de `docs/`.
-- Inglês nos arquivos de raiz (`ARCHITECTURE.md`, `CONVENTIONS.md`, `SECURITY.md`,
-  `BROWSER_SUPPORT.md`, `QUALITY.md`, `ROADMAP.md`, `README.pt-BR.md`) e em `docs/en/`.
-- **Nunca usar travessão.** Nem `—` nem `–`. Use vírgula, dois pontos ou ponto final.
-- TypeScript estrito, sem `any` implícito, com JSDoc nas funções exportadas.
-- Zero dependências externas em tempo de execução.
-- Nunca usar `eval` nem `new Function`.
-- Nada de arquivo vazio, função vazia ou placeholder.
-- Todo CSS injetado precisa funcionar nos temas claro e escuro e respeitar
+- Brazilian Portuguese in code comments and documentation in `docs/`.
+- English in root files (`ARCHITECTURE.md`, `CONVENTIONS.md`, `SECURITY.md`,
+  `BROWSER_SUPPORT.md`, `QUALITY.md`, `ROADMAP.md`, `README.pt-BR.md`) and in `docs/en/`.
+- **Never use dashes.** Not `—` nor `–`. Use commas, colons, or periods instead.
+- Strict TypeScript, no implicit `any`, with JSDoc on exported functions.
+- Zero external runtime dependencies.
+- Never use `eval` or `new Function`.
+- No empty files, empty functions, or placeholders.
+- All injected CSS must work in light and dark themes and respect
   `prefers-reduced-motion`.
-- Todo componente de interface precisa cuidar de papéis ARIA, foco e teclado.
-- Nunca escrever número de tamanho de bundle, de benchmark ou de quantidade de teste dentro
-  da documentação. Aponte para `npm run size`, `benchmarks/` e `npm test`.
+- All UI components must handle ARIA roles, focus, and keyboard navigation.
+- Never write bundle size numbers, benchmark numbers, or test count numbers directly in
+  documentation. Point to `npm run size`, `benchmarks/`, and `npm test` instead.
 
-As convenções de nome da API pública, os níveis de estabilidade e a política de depreciação
-estão em [CONVENTIONS.md](CONVENTIONS.md).
+Public API naming conventions, stability levels, and deprecation policy are in
+[CONVENTIONS.md](CONVENTIONS.md).
 
-## Convenção de commits
+## Commit Convention
 
 [Conventional Commits](https://www.conventionalcommits.org/).
 
 ```
-<tipo>(<escopo>): <assunto>
+<type>(<scope>): <subject>
 
-<corpo>
+<body>
 
-<rodapé>
+<footer>
 ```
 
-Tipos: `feat` `fix` `perf` `refactor` `docs` `test` `build` `ci` `chore`.
+Types: `feat` `fix` `perf` `refactor` `docs` `test` `build` `ci` `chore`.
 
-Escopos seguem as pastas de `src/`: `reactivity`, `parser`, `runtime`, `walker`,
+Scopes follow the folders in `src/`: `reactivity`, `parser`, `runtime`, `walker`,
 `component`, `directives`, `http`, `forms`, `ui`, `router`, `i18n`, `motion`, `charts`,
 `store`, `storage`, `dom`, `utils`, `devtools`, `build`, `docs`.
 
-Assunto em modo imperativo, minúsculo, sem ponto final, até 72 caracteres.
+Subject in imperative mood, lowercase, no period, up to 72 characters.
 
-Mudança que quebra compatibilidade leva `!` depois do escopo **e** um rodapé
-`BREAKING CHANGE:`:
+A breaking change includes `!` after the scope **and** a `BREAKING CHANGE:` footer:
 
 ```
-feat(component)!: remove o gancho `destroyed`
+feat(component)!: remove `destroyed` hook
 
-BREAKING CHANGE: `destroyed` deixa de rodar. Use `unmounted`, que dispara
-junto com ele desde a 0.1.0.
+BREAKING CHANGE: `destroyed` no longer runs. Use `unmounted`, which has fired
+alongside it since 0.1.0.
 ```
 
-## Como acrescentar uma directive
+## How to Add a Directive
 
-Antes de escrever código, confira a regra "não transforme tudo em atributo" em
-[CONVENTIONS.md](CONVENTIONS.md). Uma directive só existe quando resolve um problema
-declarativo real.
+Before writing code, check the "don't turn everything into an attribute" rule in
+[CONVENTIONS.md](CONVENTIONS.md). A directive only exists when it solves a real
+declarative problem.
 
-1. **Escolha o arquivo.** `directives/core.ts` para o que é fundamental,
-   `directives/ui.ts` para interface, `directives/forms.ts` para formulário,
-   `directives/http.ts` para requisição, `directives/state.ts` para estado,
-   `directives/dnd.ts` para arrastar e soltar. Um recurso grande merece módulo próprio.
+1. **Choose the file.** `directives/core.ts` for fundamentals,
+   `directives/ui.ts` for UI, `directives/forms.ts` for forms,
+   `directives/http.ts` for requests, `directives/state.ts` for state,
+   `directives/dnd.ts` for drag and drop. A large feature deserves its own module.
 
-2. **Registre.**
+2. **Register it.**
 
    ```ts
    import { defineDirective, PRIORITY } from '../runtime/registry';
 
    defineDirective(
-     'minha-coisa',
+     'my-thing',
      ({ el, scope, expression, arg, modifiers, evaluate, effect, cleanup, walk }) => {
        effect(() => {
-         el.dataset.valor = String(evaluate());
+         el.dataset.value = String(evaluate());
        });
 
-       const aoClicar = () => { /* ... */ };
-       el.addEventListener('click', aoClicar);
-       cleanup(() => el.removeEventListener('click', aoClicar));
+       const onClick = () => { /* ... */ };
+       el.addEventListener('click', onClick);
+       cleanup(() => el.removeEventListener('click', onClick));
      },
      { priority: PRIORITY.DEFAULT, terminal: false }
    );
    ```
 
-3. **Use `ctx.effect` e `ctx.cleanup`.** Efeitos criados por `ctx.effect` pertencem ao
-   escopo do elemento e morrem com ele. Qualquer listener, timer ou observer que você criar
-   por fora precisa de `ctx.cleanup`.
+3. **Use `ctx.effect` and `ctx.cleanup`.** Effects created with `ctx.effect` belong to
+   the element's scope and die with it. Any listener, timer, or observer you create
+   outside of `ctx.effect` needs `ctx.cleanup`.
 
-4. **Leia atributos com `readAttr`, nunca com `getAttribute`.** Depois da montagem os
-   atributos `v-*` saem do HTML pela limpeza automática. Use `readAttr` e `hasAttr` de
-   `runtime/walker.ts`, ou `attrOf` e `readOption` de `directives/shared.ts`.
+4. **Read attributes with `readAttr`, never `getAttribute`.** After mounting,
+   `v-*` attributes are removed from the HTML by automatic cleanup. Use `readAttr` and `hasAttr` from
+   `runtime/walker.ts`, or `attrOf` and `readOption` from `directives/shared.ts`.
 
-5. **Não procure elementos com seletor de atributo.** `querySelectorAll('[v-tab]')` deixa de
-   funcionar pelo mesmo motivo. Use `queryDirective`, `hasDirective` e `closestDirective`.
+5. **Do not query elements by attribute selector.** `querySelectorAll('[v-tab]')` stops
+   working for the same reason. Use `queryDirective`, `hasDirective`, and `closestDirective`.
 
-6. **Atributo que só configura outra directive** usa `defineOption('minha-coisa-posicao')`,
-   e é documentado como opção, não como directive.
+6. **An attribute that only configures another directive** uses `defineOption('my-thing-position')`,
+   and is documented as an option, not a directive.
 
-7. **Prioridade.** Deixe em `PRIORITY.DEFAULT` a não ser que a ordem importe. Directives
-   que criam escopo, que assumem a subárvore ou que precisam rodar por último têm
-   constantes próprias em `runtime/registry.ts`.
+7. **Priority.** Leave it at `PRIORITY.DEFAULT` unless order matters. Directives
+   that create scope, that take over the subtree, or that must run last have
+   their own constants in `runtime/registry.ts`.
 
-8. **Se a directive vier de um módulo opcional**, importe o módulo no ponto de entrada
-   certo (`core.ts`, `essential.ts` ou `index.ts`), para ela entrar no build certo.
+8. **If the directive comes from an optional module**, import the module at the
+   right entry point (`core.ts`, `essential.ts`, or `index.ts`), so it enters the right build.
 
-9. **Documente** em `docs/directives.md` e, se for parte do núcleo, em
+9. **Document it** in `docs/directives.md` and, if it's part of the core, in
    `docs/en/directives.md`.
 
-10. **Teste.**
+10. **Test it.**
 
-## Como acrescentar um teste
+## How to Add a Test
 
-Os testes ficam em `packages/voodoojs/test/`, rodam com Vitest sobre jsdom.
+Tests live in `packages/voodoojs/test/`, running with Vitest over jsdom.
 
 ```ts
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import V from '../src/index';
 
-describe('v-minha-coisa', () => {
+describe('v-my-thing', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -175,10 +174,10 @@ describe('v-minha-coisa', () => {
     V.clearParseCache();
   });
 
-  it('escreve o valor no dataset', async () => {
+  it('writes value to dataset', async () => {
     document.body.innerHTML = `
       <div v-data="{ n: 1 }">
-        <span v-minha-coisa="n"></span>
+        <span v-my-thing="n"></span>
       </div>
     `;
 
@@ -186,92 +185,92 @@ describe('v-minha-coisa', () => {
     await V.nextTick();
 
     const span = document.querySelector('span')!;
-    expect(span.dataset.valor).toBe('1');
+    expect(span.dataset.value).toBe('1');
   });
 
-  it('reage a mudanca de estado', async () => {
-    document.body.innerHTML = `<div v-data="{ n: 1 }"><span v-minha-coisa="n"></span></div>`;
+  it('reacts to state change', async () => {
+    document.body.innerHTML = `<div v-data="{ n: 1 }"><span v-my-thing="n"></span></div>`;
     V.start(document.body);
     await V.nextTick();
 
-    const escopo = V.getScope(document.querySelector('div')!)!;
-    escopo.data.n = 2;
+    const scope = V.getScope(document.querySelector('div')!)!;
+    scope.data.n = 2;
     await V.nextTick();
 
-    expect(document.querySelector('span')!.dataset.valor).toBe('2');
+    expect(document.querySelector('span')!.dataset.value).toBe('2');
   });
 });
 ```
 
-Pontos que economizam tempo:
+Time-saving tips:
 
-- Sempre `await V.nextTick()` depois de mexer no estado. O agendador roda em microtask.
-- Limpe entre testes: `V.stopObserving()` e `V.clearParseCache()`.
-- Lembre que jsdom não tem `IntersectionObserver`, `ResizeObserver`, `BroadcastChannel`,
-  `matchMedia` nem a Web Animations API. Isso é proposital: os caminhos de fallback ficam
-  testados a cada rodada. Comportamento que depende de motor real precisa de teste de
-  navegador, que ainda está no [ROADMAP.md](ROADMAP.md).
-- Correção de bug precisa de um teste que falhe antes da correção.
-- Toda mudança de comportamento precisa de teste.
+- Always `await V.nextTick()` after changing state. The scheduler runs on microtasks.
+- Clean up between tests: `V.stopObserving()` and `V.clearParseCache()`.
+- Remember that jsdom does not have `IntersectionObserver`, `ResizeObserver`, `BroadcastChannel`,
+  `matchMedia`, or the Web Animations API. This is intentional: fallback paths stay
+  tested each run. Behavior that depends on a real engine needs browser tests, which are still on
+  the [ROADMAP.md](ROADMAP.md).
+- A bug fix needs a test that fails before the fix.
+- Every behavior change needs a test.
 
-## Antes de abrir uma pull request
+## Before Opening a Pull Request
 
-1. `npm test` passa;
-2. `npm run typecheck` passa;
-3. `npm run build` passa;
-4. `npm run size` passa;
-5. `npm run quality` não piorou;
-6. a documentação em `docs/` foi atualizada, e `docs/en/` também quando a mudança atinge o
-   núcleo;
-7. o `CHANGELOG.md` tem a linha da mudança.
+1. `npm test` passes;
+2. `npm run typecheck` passes;
+3. `npm run build` passes;
+4. `npm run size` passes;
+5. `npm run quality` did not regress;
+6. documentation in `docs/` has been updated, and `docs/en/` as well when the change touches the
+   core;
+7. `CHANGELOG.md` has the line for your change.
 
-## Processo de release
+## Release Process
 
-1. Confirme que `main` está verde no CI.
-2. `npm run quality` e leia o `QUALITY_REPORT.md`.
-3. Atualize a versão em `package.json`, em `packages/voodoojs/package.json`, na constante
-   `version` de `packages/voodoojs/src/core.ts` e no banner de
-   `packages/voodoojs/tsup.config.ts`. Os quatro precisam bater.
-4. Feche a seção do `CHANGELOG.md`: a versão, a data e a lista de mudanças por tipo. Toda
-   remoção precisa aparecer com a substituta.
-5. `npm run build` e `npm run size`.
-6. Confira o conteúdo do pacote com `npm pack --dry-run --workspace=voodoojs`.
-7. Commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push com as tags.
+1. Confirm that `main` is green in CI.
+2. `npm run quality` and read `QUALITY_REPORT.md`.
+3. Update the version in `package.json`, in `packages/voodoojs/package.json`, in the
+   `version` constant of `packages/voodoojs/src/core.ts`, and in the banner of
+   `packages/voodoojs/tsup.config.ts`. All four must match.
+4. Close the section in `CHANGELOG.md`: the version, date, and list of changes by type. Every
+   removal must appear with its replacement.
+5. `npm run build` and `npm run size`.
+6. Check the package contents with `npm pack --dry-run --workspace=voodoojs`.
+7. Commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push with tags.
 8. `npm publish --workspace=voodoojs`.
-9. Publique a release no GitHub com as notas do changelog e o hash de integridade do
+9. Publish the release on GitHub with the changelog notes and the integrity hash of
    `voodoo.min.js`.
 
-Regras de versão: remover ou renomear símbolo `stable`, mudar o significado de um atributo,
-mudar um padrão de `V.config` ou mudar prioridade de directive são `major`. Acrescentar
-directive, componente, magia ou membro de `V` é `minor`. Correção sem mudança de API é
-`patch`. A tabela completa está em [CONVENTIONS.md](CONVENTIONS.md).
+Versioning rules: removing or renaming a `stable` symbol, changing the meaning of an attribute,
+changing a `V.config` default, or changing directive priority are `major`. Adding a
+directive, component, magic, or `V` member is `minor`. A fix with no API change is
+`patch`. The full table is in [CONVENTIONS.md](CONVENTIONS.md).
 
-Enquanto a versão for `0.x`, releases `minor` podem quebrar compatibilidade.
+While the version is `0.x`, `minor` releases may break compatibility.
 
-## Relatando bugs
+## Reporting Bugs
 
-Abra uma issue com o template de bug. Precisa de um HTML de uma página só que reproduza o
-problema, o que você esperava, o que aconteceu, a versão da biblioteca, o navegador e qual
-bundle você usa.
+Open an issue with the bug template. You need a single-page HTML that reproduces the
+problem, what you expected, what happened, the library version, the browser, and which
+bundle you use.
 
-## Propondo recursos
+## Proposing Features
 
-Abra uma issue de proposta antes de escrever código. Explique o problema antes da solução.
-O que já está previsto está no [ROADMAP.md](ROADMAP.md), inclusive o que está explicitamente
-fora de escopo.
+Open a feature proposal issue before writing code. Explain the problem before the solution.
+What is already planned is in [ROADMAP.md](ROADMAP.md), including what is explicitly
+out of scope.
 
-## Vulnerabilidades
+## Security
 
-Não abra issue pública. Use o reporte privado do GitHub:
-<https://github.com/kwy404/Voodoo.js/security/advisories/new>. O procedimento completo está
-em [SECURITY.md](SECURITY.md).
+Do not open a public issue. Use GitHub's private security report:
+<https://github.com/kwy404/Voodoo.js/security/advisories/new>. The full procedure is
+in [SECURITY.md](SECURITY.md).
 
-## Código de conduta
+## Code of Conduct
 
-Este projeto segue o [Código de Conduta](CODE_OF_CONDUCT.md). Ao participar, você concorda
-em respeitá-lo.
+This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree
+to respect it.
 
-## Licença
+## License
 
-Ao contribuir, você concorda que a sua contribuição é licenciada sob a licença MIT do
-projeto.
+By contributing, you agree that your contribution is licensed under the project's MIT
+license.

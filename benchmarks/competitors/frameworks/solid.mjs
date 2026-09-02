@@ -9,9 +9,18 @@
  * Nota de honestidade: por nao passar pelo compilador, este fixture nao recebe
  * as otimizacoes de compilacao do Solid. O numero aqui e um piso do que o Solid
  * faz, e o relatorio diz isso.
+ *
+ * O estado usa `createStore`, e nao `createSignal`, de proposito. Com um sinal
+ * de objetos simples, mudar uma linha obriga a clonar o array inteiro e trocar
+ * o sinal, o que desliga justamente a reatividade granular que e a razao de ser
+ * do Solid: o `<For>` teria de reconciliar as mil linhas de novo. Com o store,
+ * `setRows('lista', i, 'label', ...)` atinge so aquela linha, que e como um app
+ * Solid de verdade escreveria. A versao anterior deste arquivo clonava tudo e
+ * media o Solid no pior caminho possivel.
  */
 
-import { createSignal, For } from 'solid-js';
+import { For } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { render, template, insert, createComponent } from 'solid-js/web';
 import { version } from 'solid-js/package.json';
 
@@ -28,7 +37,7 @@ const ulTpl = template('<ul></ul>');
 const linhaTpl = template('<li><span></span></li>');
 
 export function create(container) {
-  const [rows, setRows] = createSignal([]);
+  const [rows, setRows] = createStore({ lista: [] });
   let dispose = null;
   let host = null;
 
@@ -45,7 +54,7 @@ export function create(container) {
           ul,
           createComponent(For, {
             get each() {
-              return rows();
+              return rows.lista;
             },
             children: (row) => {
               const li = linhaTpl();
@@ -58,15 +67,17 @@ export function create(container) {
       }, host);
     },
     async setRows(next) {
-      setRows(next.map((r) => ({ ...r })));
+      setRows('lista', next.map((r) => ({ ...r })));
     },
     async updateEvery10th() {
-      const atuais = rows().map((r) => ({ ...r }));
-      for (let i = 0; i < atuais.length; i += 10) atuais[i].label = atuais[i].label + ' !!!';
-      setRows(atuais);
+      // Atualizacao cirurgica: so as linhas alvo sao tocadas, e o `<For>` nao
+      // reconcilia o resto.
+      for (let i = 0; i < rows.lista.length; i += 10) {
+        setRows('lista', i, 'label', (label) => label + ' !!!');
+      }
     },
     async clear() {
-      setRows([]);
+      setRows('lista', []);
     },
     async unmount() {
       dispose?.();

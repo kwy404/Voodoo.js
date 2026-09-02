@@ -6,8 +6,8 @@ All frameworks were bundled **production + minified** (`NODE_ENV=production`, es
 
 | Field | Value |
 | --- | --- |
-| Date | 2026-08-31T18:23:41.230Z |
-| Commit | f3320f1 |
+| Date | 2026-09-02T00:37:58.448Z |
+| Commit | a38022c |
 | CPU | Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz (4 logical cores) |
 | RAM | 16268 MB |
 | OS | win32 10.0.19045 |
@@ -22,54 +22,54 @@ All frameworks were bundled **production + minified** (`NODE_ENV=production`, es
 | Framework | version | minified bundle |
 | --- | --- | ---: |
 | vanilla | n/a (hand-written) | 0.6 KB |
-| voodoo | workspace | 410.0 KB |
+| voodoo | workspace | 411.9 KB |
 | alpine | 3.17.1 | 55.2 KB |
 | vue | 3.5.42 | 62.5 KB |
 | preact | 10.29.8 | 10.7 KB |
 | react | 19.2.8 | 189.3 KB |
-| solid | 1.9.15 | 13.0 KB |
+| solid | 1.9.15 | 16.7 KB |
 
 ## create 1000 rows
 
 | Framework | median (ms) | p95 (ms) | CV % | vs vanilla | samples |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| vanilla | **43.76** | 48.49 | 9.5 | 1.00x | 30 |
-| solid \* | **90.09** | 198.36 | 43.8 | 2.06x | 30 |
-| react | **109.72** | 150.05 | 18.3 | 2.51x | 30 |
-| preact | **131.79** | 276.45 | 39.5 | 3.01x | 30 |
-| vue | **136.91** | 366.12 | 59.9 | 3.13x | 30 |
-| alpine | **174.68** | 278.39 | 20.2 | 3.99x | 30 |
-| voodoo | **222.83** | 535.82 | 41.0 | 5.09x | 30 |
+| vanilla | **40.09** | 45.51 | 9.6 | 1.00x | 30 |
+| preact | **75.78** | 100.01 | 14.9 | 1.89x | 30 |
+| vue | **83.06** | 90.82 | 6.0 | 2.07x | 30 |
+| react | **91.38** | 207.31 | 41.5 | 2.28x | 30 |
+| solid \* | **98.75** | 184.26 | 30.6 | 2.46x | 30 |
+| alpine | **162.28** | 174.94 | 4.4 | 4.05x | 30 |
+| voodoo | **183.01** | 225.30 | 9.2 | 4.57x | 30 |
 
-In the create 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **222.83 ms**, **5.09x** the hand-written vanilla baseline. Faster than Voodoo here: vanilla (43.76 ms), solid (90.09 ms), react (109.72 ms), preact (131.79 ms), vue (136.91 ms), alpine (174.68 ms). 
+In the create 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **183.01 ms**, **4.57x** the hand-written vanilla baseline. Faster than Voodoo here: vanilla (40.09 ms), preact (75.78 ms), vue (83.06 ms), react (91.38 ms), solid (98.75 ms), alpine (162.28 ms). 
 
 ## update every 10th of 1000 rows
 
 | Framework | median (ms) | p95 (ms) | CV % | vs vanilla | samples |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| preact | **2.89** | 9.08 | 67.3 | 0.37x | 30 |
-| react | **5.09** | 10.98 | 45.1 | 0.64x | 30 |
-| voodoo | **5.78** | 7.67 | 14.8 | 0.73x | 30 |
-| vanilla | **7.89** | 10.09 | 12.1 | 1.00x | 30 |
-| vue | **18.30** | 38.49 | 46.3 | 2.32x | 30 |
-| alpine | **99.13** | 147.27 | 48.2 | 12.56x | 30 |
-| solid \* | **512.95** | 664.43 | 25.6 | 64.98x | 30 |
+| solid \* | **0.86** | 0.96 | 7.2 | 0.13x | 30 |
+| preact | **2.71** | 4.18 | 29.4 | 0.40x | 30 |
+| react | **4.63** | 5.04 | 6.9 | 0.69x | 30 |
+| vanilla | **6.70** | 7.19 | 6.7 | 1.00x | 30 |
+| voodoo | **12.21** | 13.79 | 27.1 | 1.82x | 30 |
+| vue | **14.66** | 40.26 | 58.7 | 2.19x | 30 |
+| alpine | **94.93** | 117.64 | 14.3 | 14.17x | 30 |
 
-In the update every 10th of 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **5.78 ms**, **0.73x** the hand-written vanilla baseline. Faster than Voodoo here: preact (2.89 ms), react (5.09 ms). Slower than Voodoo here: vanilla (7.89 ms), vue (18.30 ms), alpine (99.13 ms), solid (512.95 ms).
+In the update every 10th of 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **12.21 ms**, **1.82x** the hand-written vanilla baseline. Faster than Voodoo here: solid (0.86 ms), preact (2.71 ms), react (4.63 ms), vanilla (6.70 ms). Slower than Voodoo here: vue (14.66 ms), alpine (94.93 ms).
 
 ## clear 1000 rows
 
 | Framework | median (ms) | p95 (ms) | CV % | vs vanilla | samples |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| vanilla | **22.26** | 59.83 | 54.4 | 1.00x | 30 |
-| solid \* | **23.54** | 40.01 | 28.7 | 1.06x | 30 |
-| vue | **29.40** | 32.90 | 8.2 | 1.32x | 30 |
-| preact | **29.45** | 46.36 | 33.8 | 1.32x | 30 |
-| alpine | **31.34** | 42.75 | 25.4 | 1.41x | 30 |
-| react | **34.48** | 59.33 | 29.7 | 1.55x | 30 |
-| voodoo | **92.93** | 103.64 | 16.8 | 4.17x | 30 |
+| solid \* | **18.60** | 20.25 | 11.9 | 0.92x | 30 |
+| vanilla | **20.31** | 22.24 | 9.4 | 1.00x | 30 |
+| alpine | **23.98** | 33.40 | 21.4 | 1.18x | 30 |
+| preact | **26.65** | 28.46 | 5.5 | 1.31x | 30 |
+| vue | **28.61** | 31.42 | 17.8 | 1.41x | 30 |
+| react | **30.39** | 31.99 | 7.2 | 1.50x | 30 |
+| voodoo | **30.77** | 37.97 | 10.4 | 1.51x | 30 |
 
-In the clear 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **92.93 ms**, **4.17x** the hand-written vanilla baseline. Faster than Voodoo here: vanilla (22.26 ms), solid (23.54 ms), vue (29.40 ms), preact (29.45 ms), alpine (31.34 ms), react (34.48 ms). 
+In the clear 1000 rows benchmark, Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz, jsdom 25.0.1, Node v24.16.0, 30 samples: Voodoo.js median **30.77 ms**, **1.51x** the hand-written vanilla baseline. Faster than Voodoo here: solid (18.60 ms), vanilla (20.31 ms), alpine (23.98 ms), preact (26.65 ms), vue (28.61 ms), react (30.39 ms). 
 
 ## Caveats — read before quoting any of this
 
