@@ -25,11 +25,39 @@
  * only shows up weeks later, as a server bill.
  */
 
+import { warnAlias } from '../runtime/avisos';
 import { reactive } from '../reactivity';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import { evaluateIn, readAttr } from '../runtime/walker';
 import { parseDuration } from '../utils';
+
+/**
+ * Keeps the old Portuguese property names working.
+ *
+ * `$socket.conectado` and `$room.membros` were the published names in 0.3.0.
+ * The translation to English renamed them, which is a breaking change for
+ * anyone who already wrote them in HTML. These aliases are accessors onto the
+ * same reactive object, so both spellings read the same value and stay in sync.
+ * They warn in development only, and are meant to be removed in the next major.
+ */
+function aliasLegacy(view: Record<string, any>, pairs: Array<[string, string]>): void {
+  for (const [old, canonical] of pairs) {
+    Object.defineProperty(view, old, {
+      enumerable: false,
+      configurable: true,
+      get() {
+        warnAlias(old, canonical);
+        return view[canonical];
+      },
+      set(value: unknown) {
+        warnAlias(old, canonical);
+        view[canonical] = value;
+      },
+    });
+  }
+}
+
 import {
   createSocket,
   socketSupported,
@@ -149,6 +177,8 @@ defineDirective(
     connections.set(el, s);
     el.setAttribute('data-socket', 'ready');
 
+
+
     /** `send('event', data)` sends an event; `send(data)` sends raw. */
     function send(event: unknown, ...rest: unknown[]): boolean {
       if (typeof event !== 'string') return s.send(event);
@@ -166,6 +196,16 @@ defineDirective(
       close: () => s.close(),
       socket: s,
     });
+    aliasLegacy(view, [
+      ['conectado', 'connected'],
+      ['estado', 'state'],
+      ['mensagens', 'messages'],
+      ['erro', 'error'],
+      ['tentativas', 'attempts'],
+      ['enviar', 'send'],
+      ['abrir', 'open'],
+      ['fechar', 'close'],
+    ]);
     scope.set(name, view);
 
     // One effect, mirroring the socket's reactive state in the HTML object.
@@ -240,6 +280,15 @@ defineDirective(
       leave: () => room.leave(),
       room,
     });
+    aliasLegacy(view, [
+      ['membros', 'members'],
+      ['mensagens', 'messages'],
+      ['estado', 'state'],
+      ['nome', 'name'],
+      ['privada', 'private'],
+      ['enviar', 'send'],
+      ['sair', 'leave'],
+    ]);
     scope.set(attr(el, 'room-as') || '$room', view);
 
     effect(() => {
