@@ -496,29 +496,32 @@ Mediana de 30 amostras, em milissegundos, menor é melhor. Voodoo.js em negrito:
 
 | | criar 1k | atualizar 1 em 10 | limpar 1k | minificado |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 47,19 | 6,59 | 20,48 | 0,6 KB |
-| Solid 1.9.15 | 86,37 | 0,90 | 19,33 | 16,7 KB |
-| Preact 10.29.8 | 72,18 | 2,56 | 29,64 | 10,7 KB |
-| React 19.2.8 | 84,04 | 4,96 | 32,65 | 189,3 KB |
-| Vue 3.5.42 | 81,44 | 14,17 | 31,89 | 62,5 KB |
-| Alpine 3.17.1 | 173,52 | 90,18 | 27,99 | 55,2 KB |
-| **Voodoo.js** | **117,62** | **6,63** | **33,04** | **412,1 KB** |
+| vanilla JS | 41,59 | 6,60 | 19,63 | 0,6 KB |
+| Solid 1.9.15 | 85,58 | 0,91 | 18,89 | 16,7 KB |
+| Preact 10.29.8 | 78,29 | 2,19 | 27,65 | 10,7 KB |
+| React 19.2.8 | 85,89 | 4,46 | 30,60 | 189,3 KB |
+| Vue 3.5.42 | 81,88 | 13,91 | 29,35 | 62,5 KB |
+| Alpine 3.17.1 | 169,71 | 90,64 | 27,31 | 55,2 KB |
+| **Voodoo.js** | **119,55** | **4,82** | **31,16** | **412,4 KB** |
 
-Lendo com honestidade. A Voodoo fica **no mesmo nível do vanilla escrito à mão na atualização**
-(6,63 contra 6,59 ms) e é cerca de **13x mais rápida que o Alpine** ali, que é a comparação mais
-justa: o Alpine também é HTML-first e também interpreta expressões em tempo de execução, em vez
-de compilá-las. Na criação fica em sexto de sete, à frente do Alpine mas atrás dos frameworks
-compilados e dos de Virtual DOM. Na limpeza é a **última**, e isso não melhorou.
+Lendo com honestidade. Na atualização a Voodoo fica na mesma faixa do vanilla escrito à mão e é
+cerca de **19x mais rápida que o Alpine**, que é a comparação justa: o Alpine também é HTML-first
+e também interpreta expressões em tempo de execução, em vez de compilá-las. Esse número de
+atualização teve **coeficiente de variação de 49,1%**, então é uma faixa, não uma classificação —
+não estamos afirmando ganhar do vanilla com base numa amostra ruidosa.
+
+Na criação a Voodoo é **sexta de sete**, à frente do Alpine mas atrás de todos os frameworks
+compilados e de Virtual DOM. Na limpeza é a **última**. Nenhum dos dois é bom resultado, e nenhum
+está escondido aqui.
 
 O Solid ganha a atualização com folga larga porque um compilador gera o caminho de atualização
 dele. A Voodoo não tem passo de build, e essa é a troca que ela faz.
 
-Duas ressalvas que preferimos declarar a esconder. O número de atualização teve coeficiente de
-variação de 45,7% nesta rodada, ou seja, é ruidoso: leia "no nível do vanilla" como faixa, e não
-como resultado fechado. E o jsdom não é um navegador — sem layout, sem pintura, sem compositor —
-então leia isto como formato relativo, e não como verdade absoluta. O método, os adaptadores de
+Vale dizer com todas as letras: **a Voodoo é de longe o maior bundle desta tabela.** Se tamanho é
+a sua principal restrição, Alpine e Preact são a recomendação honesta. O método, os adaptadores de
 cada framework e as estatísticas completas estão em
-[`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md).
+[`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md); o jsdom não tem layout nem
+pintura, então leia isto como formato relativo, e não como verdade absoluta.
 
 **Tamanho dos bundles**, medido sobre os builds versionados em `8e765d2`:
 

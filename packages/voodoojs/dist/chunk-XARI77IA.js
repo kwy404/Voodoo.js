@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-LVNOUMWT.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-P3MN7HO6.js';
-import { config, directives, components } from './chunk-U4ZRVL2E.js';
-import { __publicField } from './chunk-F62A4EMT.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-3MG773JD.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-3DK5HG37.js';
+import { config, directives, components } from './chunk-U5C24RIK.js';
+import { __publicField } from './chunk-MFABP4D6.js';
 
 /**
- * Voodoo.js v0.4.1
+ * Voodoo.js v0.4.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1538,7 +1538,11 @@ function sliceText(raw) {
     const fits = double || expression.length <= EXPRESSION_LIMIT;
     if (fits && looksLikeExpression(expression)) {
       saveLiteral();
-      segments.push({ expression: expression.trim() });
+      segments.push({
+        expression: expression.trim(),
+        raw: raw.slice(open, end),
+        explicit: double
+      });
       i = end;
       continue;
     }
@@ -1549,6 +1553,19 @@ function sliceText(raw) {
   return segments;
 }
 var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
+function keepsLiteral(segment, value, scope) {
+  if (segment.explicit || segment.raw === void 0) return false;
+  let node;
+  try {
+    node = parse(segment.expression);
+  } catch {
+    return true;
+  }
+  if (node.t === "lit") return true;
+  if (value !== void 0) return false;
+  if (node.t === "id") return scope.lookup(node.n) === void 0 && !(node.n in allowedGlobals);
+  return false;
+}
 function bindTextNode(node, scope) {
   const raw = node.textContent;
   if (!raw || raw.indexOf("{") === -1) return;
@@ -1571,7 +1588,12 @@ function bindTextNode(node, scope) {
     () => effect(() => {
       let out = "";
       for (const segment of segments) {
-        out += segment.text ?? stringify(evaluateIn(segment.expression, scope, "interpolation"));
+        if (segment.text !== void 0) {
+          out += segment.text;
+          continue;
+        }
+        const value = evaluateIn(segment.expression, scope, "interpolation");
+        out += keepsLiteral(segment, value, scope) ? segment.raw : stringify(value);
       }
       if (node.textContent !== out) node.textContent = out;
     }, { scope: owner })
@@ -1633,5 +1655,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-5EAFVNZ7.js.map
-//# sourceMappingURL=chunk-5EAFVNZ7.js.map
+//# sourceMappingURL=chunk-XARI77IA.js.map
+//# sourceMappingURL=chunk-XARI77IA.js.map

@@ -800,7 +800,11 @@ function sliceText(raw: string): TextSegment[] {
     const fits = double || expression.length <= EXPRESSION_LIMIT;
     if (fits && looksLikeExpression(expression)) {
       saveLiteral();
-      segments.push({ expression: expression.trim() });
+      segments.push({
+        expression: expression.trim(),
+        raw: raw.slice(open, end),
+        explicit: double,
+      });
       i = end;
       continue;
     }
@@ -820,6 +824,56 @@ const NO_INTERPOLATION = new Set(['PRE', 'CODE', 'SCRIPT', 'STYLE', 'TEXTAREA'])
 interface TextSegment {
   text?: string;
   expression?: string;
+  /**
+   * The original `{ ... }` source, kept so a single-brace segment can fall back
+   * to the literal text it came from instead of rendering nothing.
+   */
+  raw?: string;
+  /** `true` when written as `{{ ... }}`, which is an explicit interpolation. */
+  explicit?: boolean;
+}
+
+/**
+ * Decides whether a single-brace segment should stay as the text it was.
+ *
+ * `{ count }` and `{ chaves }` are indistinguishable to the parser: both are one
+ * valid identifier. So prose like `use { chaves } assim` used to render as
+ * `use  assim`, because the unknown name evaluated to undefined and undefined
+ * stringifies to nothing. The paragraph lost a word with no error anywhere, and
+ * `rac{1}{2}` lost its braces the same way.
+ *
+ * Two cases fall back to the literal, and only for single braces:
+ *
+ *   - A bare identifier that resolves nowhere, neither in the scope chain nor in
+ *     the allowed globals. A real interpolation names something that exists.
+ *   - A lone literal, as in `{1}`. Nobody writes `{ 1 }` to display "1", but
+ *     LaTeX and templating syntaxes are full of them.
+ *
+ * `{{ ... }}` is left alone: it is Voodoo's explicit form, so an empty result
+ * there is what the author asked for.
+ *
+ * The trade is action at a distance: text reading `{ total }` starts
+ * interpolating the day something defines `total`. That is accepted because the
+ * alternative is silently deleting text people wrote, which is worse and much
+ * harder to notice.
+ */
+function keepsLiteral(segment: TextSegment, value: unknown, scope: Scope): boolean {
+  if (segment.explicit || segment.raw === undefined) return false;
+
+  let node;
+  try {
+    node = parse(segment.expression!);
+  } catch {
+    return true;
+  }
+
+  // A lone literal is checked before the value, because `{1}` evaluates to 1
+  // perfectly well: the point is that nobody writes it meaning to print "1".
+  if (node.t === 'lit') return true;
+
+  if (value !== undefined) return false;
+  if (node.t === 'id') return scope.lookup(node.n) === undefined && !(node.n in allowedGlobals);
+  return false;
 }
 
 /**
@@ -866,7 +920,14 @@ export function bindTextNode(node: Text, scope: Scope): void {
     createEffect(() => {
       let out = '';
       for (const segment of segments) {
-        out += segment.text ?? stringifyValue(evaluateIn(segment.expression!, scope, 'interpolation'));
+        if (segment.text !== undefined) {
+          out += segment.text;
+          continue;
+        }
+        const value = evaluateIn(segment.expression!, scope, 'interpolation');
+        out += keepsLiteral(segment, value, scope)
+          ? segment.raw!
+          : stringifyValue(value);
       }
       if (node.textContent !== out) node.textContent = out;
     }, { scope: owner })

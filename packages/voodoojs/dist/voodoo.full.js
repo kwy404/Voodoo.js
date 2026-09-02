@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.4.1
+ * Voodoo.js v0.4.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2469,7 +2469,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       const fits = double || expression.length <= EXPRESSION_LIMIT;
       if (fits && looksLikeExpression(expression)) {
         saveLiteral();
-        segments.push({ expression: expression.trim() });
+        segments.push({
+          expression: expression.trim(),
+          raw: raw.slice(open, end),
+          explicit: double
+        });
         i = end;
         continue;
       }
@@ -2480,6 +2484,19 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     return segments;
   }
   var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
+  function keepsLiteral(segment, value, scope) {
+    if (segment.explicit || segment.raw === void 0) return false;
+    let node;
+    try {
+      node = parse(segment.expression);
+    } catch (e) {
+      return true;
+    }
+    if (node.t === "lit") return true;
+    if (value !== void 0) return false;
+    if (node.t === "id") return scope.lookup(node.n) === void 0 && !(node.n in allowedGlobals);
+    return false;
+  }
   function bindTextNode(node, scope) {
     const raw = node.textContent;
     if (!raw || raw.indexOf("{") === -1) return;
@@ -2500,10 +2517,14 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     trackEffectScope(node, owner);
     owner.run(
       () => effect(() => {
-        var _a2;
         let out = "";
         for (const segment of segments) {
-          out += (_a2 = segment.text) != null ? _a2 : stringify(evaluateIn(segment.expression, scope, "interpolation"));
+          if (segment.text !== void 0) {
+            out += segment.text;
+            continue;
+          }
+          const value = evaluateIn(segment.expression, scope, "interpolation");
+          out += keepsLiteral(segment, value, scope) ? segment.raw : stringify(value);
         }
         if (node.textContent !== out) node.textContent = out;
       }, { scope: owner })
@@ -6401,7 +6422,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.4.1";
+  var version = "0.4.2";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
