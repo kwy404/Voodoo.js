@@ -211,41 +211,41 @@ interface WgslStruct {
     size: number;
     align: number;
 }
-/** Papel de um recurso ligado ao shader. */
+/** Role of a resource bound to the shader. */
 type WgslBindingKind = 'uniform' | 'storage' | 'texture' | 'storage-texture' | 'sampler' | 'unknown';
-/** Um `@group(x) @binding(y) var ...` encontrado na fonte. */
+/** A `@group(x) @binding(y) var ...` found in the source. */
 interface WgslBinding {
     group: number;
     binding: number;
     name: string;
     kind: WgslBindingKind;
-    /** Texto do tipo, como `texture_2d<f32>`. */
+    /** Type text, like `texture_2d<f32>`. */
     typeText: string;
-    /** Acesso declarado em `var<storage, read_write>`. */
+    /** Access declared in `var<storage, read_write>`. */
     access: 'read' | 'read-write' | 'write';
-    /** Struct dos uniforms, quando o tipo aponta para um struct conhecido. */
+    /** Struct of the uniforms, when the type points to a known struct. */
     struct?: WgslStruct;
-    /** `true` para `sampler_comparison` e texturas de profundidade. */
+    /** `true` for `sampler_comparison` and depth textures. */
     comparison?: boolean;
-    /** Dimensao da textura, como `2d`, `cube` ou `3d`. */
+    /** Texture dimension, like `2d`, `cube`, or `3d`. */
     viewDimension?: string;
-    /** Tipo de amostragem da textura: `float`, `unfilterable-float`, `depth`... */
+    /** Texture sample type: `float`, `unfilterable-float`, `depth`... */
     sampleType?: string;
     multisampled?: boolean;
 }
-/** Um ponto de entrada declarado com `@vertex`, `@fragment` ou `@compute`. */
+/** An entry point declared with `@vertex`, `@fragment`, or `@compute`. */
 interface WgslEntry {
     stage: 'vertex' | 'fragment' | 'compute';
     name: string;
-    /** Tamanho do workgroup, apenas para `@compute`. */
+    /** Workgroup size, only for `@compute`. */
     workgroupSize?: [number, number, number];
 }
-/** Resultado completo da leitura de um shader. */
+/** Complete result of reading a shader. */
 interface WgslReflection {
     structs: Record<string, WgslStruct>;
     bindings: WgslBinding[];
     entries: WgslEntry[];
-    /** Atalho para o primeiro binding de uniform encontrado. */
+    /** Shortcut to the first uniform binding found. */
     uniform?: WgslBinding;
 }
 /**
@@ -277,47 +277,47 @@ declare function describeWgslType(text: string, structs?: Record<string, WgslStr
  * without becoming a dependency graph.
  */
 declare function reflectStructs(source: string): Record<string, WgslStruct>;
-/** Le os `@group @binding var ...` da fonte. */
+/** Reads the `@group @binding var ...` from the source. */
 declare function reflectBindings(source: string, structs: Record<string, WgslStruct>): WgslBinding[];
-/** Le os `@vertex`, `@fragment` e `@compute` da fonte. */
+/** Reads the `@vertex`, `@fragment`, and `@compute` from the source. */
 declare function reflectEntries(source: string): WgslEntry[];
 /**
- * Le um shader inteiro e devolve tudo que o runtime precisa para monta-lo.
+ * Reads a complete shader and returns everything the runtime needs to set it up.
  *
  * ```js
  * const info = V.gpu.reflect(wgsl)
  * info.uniform.struct.fields  // [{ name: 'time', offset: 0, ... }]
  * ```
  *
- * A funcao nunca lanca: fonte vazia ou invalida devolve uma reflexao vazia, e
- * quem chama decide o que fazer. Um shader quebrado quem reprova e o driver,
- * com mensagem de erro muito melhor que a nossa.
+ * The function never throws: empty or invalid source returns an empty reflection, and
+ * the caller decides what to do. A broken shader is rejected by the driver,
+ * with a much better error message than ours.
  */
 declare function reflectWgsl(source: string): WgslReflection;
-/** Procura o nome do ponto de entrada de um estagio. */
+/** Looks for the entry point name of a stage. */
 declare function findEntry(reflection: WgslReflection, stage: WgslEntry['stage']): WgslEntry | undefined;
 /**
- * Monta um struct a partir de um objeto de valores, quando nao existe shader
- * para consultar. E o caminho de `V.gpu.uniforms(gpu, { ... })`.
+ * Builds a struct from a values object when there's no shader to consult. This is
+ * the path for `V.gpu.uniforms(gpu, { ... })`.
  *
- * A ordem das chaves do objeto vira a ordem dos campos, entao o objeto precisa
- * espelhar o `struct` do shader. Quando existe shader, prefira sempre a
- * reflexao: ela nao depende de ninguem lembrar a ordem certa.
+ * The order of the object's keys becomes the order of the fields, so the object needs
+ * to mirror the shader's `struct`. When a shader exists, always prefer reflection:
+ * it doesn't depend on anyone remembering the correct order.
  */
 declare function inferStruct(values: Record<string, unknown>, name?: string): WgslStruct;
-/** Transforma um valor solto na lista de escalares que ele representa. */
+/** Transforms a loose value into the list of scalars it represents. */
 declare function flattenValue(value: unknown, components: number): number[];
-/** Escreve um campo no buffer, respeitando o passo entre colunas da matriz. */
+/** Writes a field to the buffer, respecting the stride between matrix columns. */
 declare function writeField(view: DataView, field: WgslField, value: unknown): boolean;
 /**
- * Escreve um objeto de valores dentro de um buffer que segue o layout do
- * struct. Campos ausentes ficam como estavam, o que permite atualizar so o que
- * mudou sem reenviar o resto.
+ * Writes an object of values into a buffer following the struct layout. Missing
+ * fields remain as they were, which allows updating only what changed without
+ * resending the rest.
  *
- * @returns os nomes dos campos que foram realmente escritos
+ * @returns the names of the fields that were actually written
  */
 declare function writeStruct(buffer: ArrayBuffer, struct: WgslStruct, values: Record<string, unknown>): string[];
-/** Cria o buffer do struct ja com os valores iniciais escritos. */
+/** Creates the struct buffer already with initial values written. */
 declare function packStruct(struct: WgslStruct, values?: Record<string, unknown>): ArrayBuffer;
 
 /**

@@ -44,7 +44,7 @@ function flag(value: unknown): boolean {
   if (value === false || value === null || value === undefined) return false;
   if (typeof value === 'number') return value !== 0;
   const text = String(value).trim().toLowerCase();
-  return text === '' || text === 'true' || text === '1' || text === 'sim' || text === 'yes';
+  return text === '' || text === 'true' || text === '1' || text === 'yes';
 }
 
 /** Generate `isX` computed properties from the provided boolean props. */
@@ -1240,8 +1240,8 @@ register('v-select', {
       get: () => this.currentValue,
       set: (next: unknown) => {
         if (flag(this.multiple)) {
-          // O `v-model` do runtime entrega texto. Uma lista chega como
-          // "a,b", entao voltamos ao array separando pelas virgulas.
+          // The runtime's `v-model` hands over text. A list arrives as
+          // "a,b", so we rebuild the array by splitting on the commas.
           this.selectedList = Array.isArray(next)
             ? next.map(String)
             : splitList(String(next ?? ''));

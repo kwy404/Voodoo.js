@@ -485,24 +485,28 @@ Median of 30 samples, in milliseconds, lower is better. Voodoo.js in bold:
 
 | | create 1k | update every 10th | clear 1k | minified |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 40.09 | 6.70 | 20.31 | 0.6 KB |
-| Solid 1.9.15 | 98.75 | 0.86 | 18.60 | 16.7 KB |
-| Preact 10.29.8 | 75.78 | 2.71 | 26.65 | 10.7 KB |
-| React 19.2.8 | 91.38 | 4.63 | 30.39 | 189.3 KB |
-| Vue 3.5.42 | 83.06 | 14.66 | 28.61 | 62.5 KB |
-| Alpine 3.17.1 | 162.28 | 94.93 | 23.98 | 55.2 KB |
-| **Voodoo.js** | **183.01** | **12.21** | **30.77** | **411.9 KB** |
+| vanilla JS | 47.19 | 6.59 | 20.48 | 0.6 KB |
+| Solid 1.9.15 | 86.37 | 0.90 | 19.33 | 16.7 KB |
+| Preact 10.29.8 | 72.18 | 2.56 | 29.64 | 10.7 KB |
+| React 19.2.8 | 84.04 | 4.96 | 32.65 | 189.3 KB |
+| Vue 3.5.42 | 81.44 | 14.17 | 31.89 | 62.5 KB |
+| Alpine 3.17.1 | 173.52 | 90.18 | 27.99 | 55.2 KB |
+| **Voodoo.js** | **117.62** | **6.63** | **33.04** | **412.1 KB** |
 
-Read honestly: **Voodoo is last on create and on clear**, and fifth of seven on update, where it
-beats Vue and Alpine. Against Alpine — the closest architecture, also HTML-first and also
-interpreting expressions at runtime — Voodoo is 8x faster at updating and slightly ahead on
-create, but loses on teardown. Solid wins the update benchmark by a wide margin because a
-compiler generates its update code; Voodoo has no build step, which is the trade it makes.
+Read honestly. Voodoo lands **level with hand-written vanilla on update** (6.63 vs 6.59 ms) and
+is roughly **13x faster than Alpine** there, which is the closest comparison: Alpine is also
+HTML-first and also interprets expressions at runtime rather than compiling them. On create it
+sits sixth of seven, ahead of Alpine but behind the compiled and VDOM frameworks. On clear it is
+**last**, and that has not improved.
 
-These numbers are from before the current optimisation pass and will be re-measured. The method,
-the caveats and the per-framework adapters are in
-[`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md); jsdom is not a browser,
-so treat this as relative shape rather than absolute truth.
+Solid wins the update benchmark by a wide margin because a compiler generates its update path.
+Voodoo has no build step, and that is the trade it makes.
+
+Two caveats worth stating rather than burying. The update figure carried a 45.7% coefficient of
+variation in this run, so it is noisy: treat "level with vanilla" as a range, not a result. And
+jsdom is not a browser — no layout, no paint, no compositor — so read this as relative shape
+rather than absolute truth. Method, per-framework adapters and full statistics are in
+[`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md).
 
 **Bundle size**, measured on the committed builds at `8e765d2`:
 

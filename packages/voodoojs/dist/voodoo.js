@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.4.0
+ * Voodoo.js v0.4.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -696,7 +696,7 @@ var Voodoo = (() => {
         }
         set value(v) {
           if (this.setter) this.setter(v);
-          else warn("computed e somente leitura quando nao ha setter.");
+          else warn("computed is read-only when there is no setter.");
         }
         stop() {
           this.effect.stop();
@@ -6392,7 +6392,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.4.0";
+  var version = "0.4.1";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Voodoo.js v0.4.0
+ * Voodoo.js v0.4.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -570,7 +570,7 @@ var ComputedRefImpl = class {
   }
   set value(v) {
     if (this.setter) this.setter(v);
-    else warn("computed e somente leitura quando nao ha setter.");
+    else warn("computed is read-only when there is no setter.");
   }
   stop() {
     this.effect.stop();

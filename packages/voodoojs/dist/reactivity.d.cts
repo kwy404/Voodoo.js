@@ -123,19 +123,19 @@ declare function markRaw<T extends object>(value: T): T;
 declare function toRaw<T>(observed: T): T;
 declare function isReactive(value: unknown): boolean;
 /**
- * Torna um objeto reativo em profundidade.
+ * Makes an object deeply reactive.
  *
  * ```js
  * const state = V.reactive({ user: { name: 'Ana' }, tags: [] })
- * state.user.name = 'Bia'  // dispara efeitos que leram user.name
- * state.tags.push('novo')  // dispara efeitos que leram tags
+ * state.user.name = 'Bia'  // triggers effects that read user.name
+ * state.tags.push('novo')  // triggers effects that read tags
  * ```
  */
 declare function reactive<T extends object>(target: T): T;
 declare function hasChanged(value: unknown, oldValue: unknown): boolean;
 declare function isRef<T>(r: unknown): r is Ref<T>;
 /**
- * Referencia reativa para valores primitivos.
+ * Reactive reference for primitive values.
  *
  * ```js
  * const count = V.ref(0)
@@ -147,7 +147,7 @@ declare function ref<T>(value: T): Ref<T>;
 declare function shallowRef<T>(value: T): Ref<T>;
 declare function unref<T>(value: T | Ref<T>): T;
 /**
- * Valor derivado com cache. So recalcula quando alguma dependencia muda.
+ * Derived value with cache. Only recalculates when a dependency changes.
  *
  * ```js
  * const full = V.computed(() => `${state.first} ${state.last}`)
@@ -161,14 +161,14 @@ declare function computed<T>(getterOrOptions: (() => T) | {
 type WatchSource<T = any> = Ref<T> | (() => T) | object;
 type WatchCallback<T = any> = (value: T, oldValue: T | undefined, onInvalidate: (fn: () => void) => void) => void;
 /**
- * Observa uma fonte reativa e chama o callback quando ela muda.
+ * Watches a reactive source and calls the callback when it changes.
  *
  * ```js
- * V.watch(() => state.search, (novo, antigo) => buscar(novo))
+ * V.watch(() => state.search, (newValue, oldValue) => search(newValue))
  * ```
  */
 declare function watch<T>(source: WatchSource<T>, cb: WatchCallback<T>, options?: WatchOptions): WatchStopHandle;
-/** Executa o efeito imediatamente e reexecuta quando dependencias mudam. */
+/** Executes the effect immediately and re-executes when dependencies change. */
 declare function watchEffect(fn: (onInvalidate: (c: () => void) => void) => void): WatchStopHandle;
 
 export { type ComputedRef, type Dep, type EffectOptions, type EffectRunner, type EffectScheduler, EffectScope, ITERATE_KEY, ReactiveEffect, type Ref, TriggerType, type WatchCallback, type WatchOptions, type WatchSource, type WatchStopHandle, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };

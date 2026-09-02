@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.4.0
+ * Voodoo.js v0.4.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -683,7 +683,7 @@ var init_reactivity = __esm({
       }
       set value(v) {
         if (this.setter) this.setter(v);
-        else warn("computed e somente leitura quando nao ha setter.");
+        else warn("computed is read-only when there is no setter.");
       }
       stop() {
         this.effect.stop();
@@ -6295,7 +6295,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.4.0";
+var version = "0.4.1";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -7901,7 +7901,7 @@ defineDirective(
         try {
           html = await loadView(record.view);
         } catch (err) {
-          handleError(err, `v-router-view ao carregar "${record.view}"`);
+          handleError(err, `v-router-view loading "${record.view}"`);
           html = "";
         } finally {
           el.classList.remove("v-router-loading");
@@ -15631,7 +15631,7 @@ function flag(value) {
   if (value === false || value === null || value === void 0) return false;
   if (typeof value === "number") return value !== 0;
   const text = String(value).trim().toLowerCase();
-  return text === "" || text === "true" || text === "1" || text === "sim" || text === "yes";
+  return text === "" || text === "true" || text === "1" || text === "yes";
 }
 function flags(...names2) {
   const out = {};

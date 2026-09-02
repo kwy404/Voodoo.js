@@ -20,7 +20,7 @@
  */
 
 // ---------------------------------------------------------------------------
-// Tipos publicos
+// Public types
 // ---------------------------------------------------------------------------
 
 /** Family of a WGSL type. */
@@ -70,7 +70,7 @@ export interface WgslStruct {
   align: number;
 }
 
-/** Papel de um recurso ligado ao shader. */
+/** Role of a resource bound to the shader. */
 export type WgslBindingKind =
   | 'uniform'
   | 'storage'
@@ -79,46 +79,46 @@ export type WgslBindingKind =
   | 'sampler'
   | 'unknown';
 
-/** Um `@group(x) @binding(y) var ...` encontrado na fonte. */
+/** A `@group(x) @binding(y) var ...` found in the source. */
 export interface WgslBinding {
   group: number;
   binding: number;
   name: string;
   kind: WgslBindingKind;
-  /** Texto do tipo, como `texture_2d<f32>`. */
+  /** Type text, like `texture_2d<f32>`. */
   typeText: string;
-  /** Acesso declarado em `var<storage, read_write>`. */
+  /** Access declared in `var<storage, read_write>`. */
   access: 'read' | 'read-write' | 'write';
-  /** Struct dos uniforms, quando o tipo aponta para um struct conhecido. */
+  /** Struct of the uniforms, when the type points to a known struct. */
   struct?: WgslStruct;
-  /** `true` para `sampler_comparison` e texturas de profundidade. */
+  /** `true` for `sampler_comparison` and depth textures. */
   comparison?: boolean;
-  /** Dimensao da textura, como `2d`, `cube` ou `3d`. */
+  /** Texture dimension, like `2d`, `cube`, or `3d`. */
   viewDimension?: string;
-  /** Tipo de amostragem da textura: `float`, `unfilterable-float`, `depth`... */
+  /** Texture sample type: `float`, `unfilterable-float`, `depth`... */
   sampleType?: string;
   multisampled?: boolean;
 }
 
-/** Um ponto de entrada declarado com `@vertex`, `@fragment` ou `@compute`. */
+/** An entry point declared with `@vertex`, `@fragment`, or `@compute`. */
 export interface WgslEntry {
   stage: 'vertex' | 'fragment' | 'compute';
   name: string;
-  /** Tamanho do workgroup, apenas para `@compute`. */
+  /** Workgroup size, only for `@compute`. */
   workgroupSize?: [number, number, number];
 }
 
-/** Resultado completo da leitura de um shader. */
+/** Complete result of reading a shader. */
 export interface WgslReflection {
   structs: Record<string, WgslStruct>;
   bindings: WgslBinding[];
   entries: WgslEntry[];
-  /** Atalho para o primeiro binding de uniform encontrado. */
+  /** Shortcut to the first uniform binding found. */
   uniform?: WgslBinding;
 }
 
 // ---------------------------------------------------------------------------
-// Limpeza da fonte
+// Source cleanup
 // ---------------------------------------------------------------------------
 
 /**
@@ -181,7 +181,7 @@ export function stripWgslComments(source: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Tipos e regras de layout
+// Types and layout rules
 // ---------------------------------------------------------------------------
 
 const SCALAR_SIZE: Record<string, number> = { f32: 4, i32: 4, u32: 4, f16: 2, bool: 4 };
@@ -415,7 +415,7 @@ const BINDING_RE =
 const GROUP_RE = /@group\s*\(\s*(\d+)\s*\)/;
 const BINDING_INDEX_RE = /@binding\s*\(\s*(\d+)\s*\)/;
 
-/** Le os `@group @binding var ...` da fonte. */
+/** Reads the `@group @binding var ...` from the source. */
 export function reflectBindings(
   source: string,
   structs: Record<string, WgslStruct>
@@ -435,7 +435,7 @@ export function reflectBindings(
     out.push(describeBinding(group, binding, space, name, typeText, structs));
   }
 
-  // A ordem do arquivo nao importa para a GPU, mas importa para quem le o log.
+  // File order doesn't matter to the GPU, but it matters to anyone reading the log.
   return out.sort((a, b) => a.group - b.group || a.binding - b.binding);
 }
 
@@ -531,14 +531,14 @@ function describeBinding(
 }
 
 // ---------------------------------------------------------------------------
-// Pontos de entrada
+// Entry points
 // ---------------------------------------------------------------------------
 
 const ENTRY_RE =
   /@(vertex|fragment|compute)\s*((?:@\w+\s*(?:\([^)]*\)\s*)?)*)fn\s+([A-Za-z_]\w*)/g;
 const WORKGROUP_RE = /@workgroup_size\s*\(([^)]*)\)/;
 
-/** Le os `@vertex`, `@fragment` e `@compute` da fonte. */
+/** Reads the `@vertex`, `@fragment`, and `@compute` from the source. */
 export function reflectEntries(source: string): WgslEntry[] {
   const out: WgslEntry[] = [];
   ENTRY_RE.lastIndex = 0;
@@ -549,7 +549,7 @@ export function reflectEntries(source: string): WgslEntry[] {
     const entry: WgslEntry = { stage, name: match[3] };
 
     if (stage === 'compute') {
-      // O `@workgroup_size` pode vir antes ou depois do `@compute`.
+      // The `@workgroup_size` can come before or after `@compute`.
       const around = source.slice(Math.max(0, match.index - 120), match.index + match[0].length);
       const sizes = WORKGROUP_RE.exec(around)?.[1];
       const parts = sizes ? splitTopLevel(sizes).map((n) => Number(n) || 1) : [];
@@ -562,20 +562,20 @@ export function reflectEntries(source: string): WgslEntry[] {
 }
 
 // ---------------------------------------------------------------------------
-// Reflexao completa
+// Complete reflection
 // ---------------------------------------------------------------------------
 
 /**
- * Le um shader inteiro e devolve tudo que o runtime precisa para monta-lo.
+ * Reads a complete shader and returns everything the runtime needs to set it up.
  *
  * ```js
  * const info = V.gpu.reflect(wgsl)
  * info.uniform.struct.fields  // [{ name: 'time', offset: 0, ... }]
  * ```
  *
- * A funcao nunca lanca: fonte vazia ou invalida devolve uma reflexao vazia, e
- * quem chama decide o que fazer. Um shader quebrado quem reprova e o driver,
- * com mensagem de erro muito melhor que a nossa.
+ * The function never throws: empty or invalid source returns an empty reflection, and
+ * the caller decides what to do. A broken shader is rejected by the driver,
+ * with a much better error message than ours.
  */
 export function reflectWgsl(source: string): WgslReflection {
   if (typeof source !== 'string' || !source.trim()) {
@@ -595,16 +595,16 @@ export function reflectWgsl(source: string): WgslReflection {
   };
 }
 
-/** Procura o nome do ponto de entrada de um estagio. */
+/** Looks for the entry point name of a stage. */
 export function findEntry(reflection: WgslReflection, stage: WgslEntry['stage']): WgslEntry | undefined {
   return reflection.entries.find((entry) => entry.stage === stage);
 }
 
 // ---------------------------------------------------------------------------
-// Layout inferido a partir de valores JavaScript
+// Layout inferred from JavaScript values
 // ---------------------------------------------------------------------------
 
-/** Descobre o tipo WGSL equivalente a um valor JavaScript. */
+/** Discovers the WGSL type equivalent to a JavaScript value. */
 function guessType(value: unknown): string | null {
   if (typeof value === 'number') return 'f32';
   if (typeof value === 'boolean') return 'f32';
@@ -620,12 +620,12 @@ function guessType(value: unknown): string | null {
 }
 
 /**
- * Monta um struct a partir de um objeto de valores, quando nao existe shader
- * para consultar. E o caminho de `V.gpu.uniforms(gpu, { ... })`.
+ * Builds a struct from a values object when there's no shader to consult. This is
+ * the path for `V.gpu.uniforms(gpu, { ... })`.
  *
- * A ordem das chaves do objeto vira a ordem dos campos, entao o objeto precisa
- * espelhar o `struct` do shader. Quando existe shader, prefira sempre a
- * reflexao: ela nao depende de ninguem lembrar a ordem certa.
+ * The order of the object's keys becomes the order of the fields, so the object needs
+ * to mirror the shader's `struct`. When a shader exists, always prefer reflection:
+ * it doesn't depend on anyone remembering the correct order.
  */
 export function inferStruct(values: Record<string, unknown>, name = 'Uniforms'): WgslStruct {
   const fields: WgslField[] = [];
@@ -647,12 +647,12 @@ export function inferStruct(values: Record<string, unknown>, name = 'Uniforms'):
 }
 
 // ---------------------------------------------------------------------------
-// Escrita dos valores no buffer
+// Writing values to the buffer
 // ---------------------------------------------------------------------------
 
 const HEX = /^#([0-9a-f]{3,8})$/i;
 
-/** Le `#f0a`, `#ff00aa` e `#ff00aa80` como quatro canais de 0 a 1. */
+/** Reads `#f0a`, `#ff00aa`, and `#ff00aa80` as four channels from 0 to 1. */
 function parseColor(text: string): [number, number, number, number] | null {
   const match = HEX.exec(text.trim());
   if (!match) return null;
@@ -669,10 +669,10 @@ function parseColor(text: string): [number, number, number, number] | null {
   return [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255, alpha];
 }
 
-/** Transforma um valor solto na lista de escalares que ele representa. */
+/** Transforms a loose value into the list of scalars it represents. */
 export function flattenValue(value: unknown, components: number): number[] {
   if (typeof value === 'number') {
-    // Um numero so preenche o vetor inteiro. `escala: 2` vira `vec3(2,2,2)`.
+    // A single number fills the entire vector. `scale: 2` becomes `vec3(2,2,2)`.
     return new Array(components).fill(value);
   }
   if (typeof value === 'boolean') return new Array(components).fill(value ? 1 : 0);
@@ -708,7 +708,7 @@ export function flattenValue(value: unknown, components: number): number[] {
   return [];
 }
 
-/** Escreve um campo no buffer, respeitando o passo entre colunas da matriz. */
+/** Writes a field to the buffer, respecting the stride between matrix columns. */
 export function writeField(view: DataView, field: WgslField, value: unknown): boolean {
   const { type, offset } = field;
   const numbers = flattenValue(value, type.components);
@@ -722,7 +722,7 @@ export function writeField(view: DataView, field: WgslField, value: unknown): bo
     else view.setFloat32(at, n, little);
   };
 
-  // Matriz e array escrevem por bloco: entre uma coluna e outra ha preenchimento.
+  // Matrix and array write by block: padding between one column and the next.
   if (type.kind === 'matrix' && type.columns && type.rows && type.stride) {
     const unit = SCALAR_SIZE[type.scalar] ?? 4;
     for (let column = 0; column < type.columns; column++) {
@@ -757,11 +757,11 @@ export function writeField(view: DataView, field: WgslField, value: unknown): bo
 }
 
 /**
- * Escreve um objeto de valores dentro de um buffer que segue o layout do
- * struct. Campos ausentes ficam como estavam, o que permite atualizar so o que
- * mudou sem reenviar o resto.
+ * Writes an object of values into a buffer following the struct layout. Missing
+ * fields remain as they were, which allows updating only what changed without
+ * resending the rest.
  *
- * @returns os nomes dos campos que foram realmente escritos
+ * @returns the names of the fields that were actually written
  */
 export function writeStruct(
   buffer: ArrayBuffer,
@@ -779,7 +779,7 @@ export function writeStruct(
   return written;
 }
 
-/** Cria o buffer do struct ja com os valores iniciais escritos. */
+/** Creates the struct buffer already with initial values written. */
 export function packStruct(struct: WgslStruct, values: Record<string, unknown> = {}): ArrayBuffer {
   const buffer = new ArrayBuffer(Math.max(16, struct.size));
   writeStruct(buffer, struct, values);

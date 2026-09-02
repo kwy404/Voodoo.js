@@ -490,7 +490,7 @@ async function runGuards(to: RouteLocation, from: RouteLocation): Promise<boolea
 }
 
 // ---------------------------------------------------------------------------
-// Rolagem
+// Scrolling
 // ---------------------------------------------------------------------------
 
 function saveScroll(): void {
@@ -499,15 +499,15 @@ function saveScroll(): void {
 }
 
 /**
- * Aplica a rolagem depois que a nova tela foi montada. Rota nova volta ao topo,
- * volta pelo historico restaura a posicao guardada e hash rola ate a ancora.
+ * Applies scrolling after the new screen is mounted. A new route goes to the top,
+ * navigating back via history restores the saved position, and hash scrolls to the anchor.
  */
 function scheduleScroll(to: RouteLocation, from: RouteLocation, saved: number | null): void {
   if (typeof window === 'undefined') return;
 
   queuePostFlush(() => {
     requestAnimationFrame(() => {
-      // Rolling to where the page already is would be wasted work.
+      // Scrolling to where the page already is would be wasted work.
       const moveTo = (top: number): void => {
         if (Math.abs(window.scrollY - top) > 1) window.scrollTo(0, top);
       };
@@ -522,8 +522,8 @@ function scheduleScroll(to: RouteLocation, from: RouteLocation, saved: number | 
       }
 
       if (to.hash) {
-        // Names with strange characters would break the selector, so `name`
-        // is only consulted when the text is simple.
+        // Anchors with strange characters would break the selector, so the `name`
+        // attribute is only consulted when the text is simple.
         const anchor =
           document.getElementById(to.hash) ??
           (/^[\w-]+$/.test(to.hash) ? document.querySelector(`[name="${to.hash}"]`) : null);
@@ -905,7 +905,7 @@ defineDirective(
         try {
           html = await loadView(record.view);
         } catch (err) {
-          handleError(err, `v-router-view ao carregar "${record.view}"`);
+          handleError(err, `v-router-view loading "${record.view}"`);
           html = '';
         } finally {
           el.classList.remove('v-router-loading');

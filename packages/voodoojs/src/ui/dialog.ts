@@ -384,8 +384,8 @@ function openDialog(request: OpenRequest): DialogHandle {
   root.setAttribute('data-size', request.size ?? settings.size);
   root.setAttribute('data-position', request.position ?? 'center');
   root.style.setProperty('--v-dialog-ms', `${duration}ms`);
-  // Cada dialogo empilhado sobe duas camadas acima do anterior, sem fixar o
-  // valor do token `--v-z-modal`.
+  // Each stacked dialog rises two layers above the previous one, without fixing the
+  // value of the `--v-z-modal` token.
   root.style.setProperty('--v-dialog-layer', String(stack.length * 2));
 
   const backdrop = document.createElement('div');

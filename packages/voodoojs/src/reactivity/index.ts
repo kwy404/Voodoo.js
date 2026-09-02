@@ -540,12 +540,12 @@ export function isReactive(value: unknown): boolean {
 }
 
 /**
- * Torna um objeto reativo em profundidade.
+ * Makes an object deeply reactive.
  *
  * ```js
  * const state = V.reactive({ user: { name: 'Ana' }, tags: [] })
- * state.user.name = 'Bia'  // dispara efeitos que leram user.name
- * state.tags.push('novo')  // dispara efeitos que leram tags
+ * state.user.name = 'Bia'  // triggers effects that read user.name
+ * state.tags.push('novo')  // triggers effects that read tags
  * ```
  */
 export function reactive<T extends object>(target: T): T {
@@ -556,12 +556,11 @@ export function reactive<T extends object>(target: T): T {
   const existing = reactiveMap.get(target);
   if (existing) return existing;
 
-  // `WeakMap` e `WeakSet` ficaram de fora de proposito. Eles nao expoem `size`,
-  // iteracao nem `forEach`, entao nao existe leitura de conjunto para rastrear:
-  // um efeito so poderia depender de uma chave que ele ja tem em maos. Alem
-  // disso `canObserve()` nem deixa esses alvos chegarem aqui, o que fazia o
-  // teste antigo por `instanceof WeakMap` ser codigo morto. Continua valendo o
-  // contrato geral: o que nao da para observar volta como esta.
+  // `WeakMap` and `WeakSet` are intentionally left out. They don't expose `size`,
+  // iteration, or `forEach`, so there's no collection read to track: an effect
+  // could only depend on a key it already has. Also, `canObserve()` won't let
+  // these targets reach here, making the old `instanceof WeakMap` test dead code.
+  // The general contract still holds: what can't be observed comes back as-is.
   const isMapOrSet = target instanceof Map || target instanceof Set;
 
   const proxy = new Proxy(
@@ -633,7 +632,7 @@ const baseHandlers: ProxyHandler<Record<PropertyKey, any>> = {
   },
 };
 
-/** Handlers para Map e Set. */
+/** Handlers for Map and Set. */
 const collectionHandlers: ProxyHandler<any> = {
   get(target, key, receiver) {
     if (key === RAW) return target;
@@ -762,7 +761,7 @@ function triggerRefValue(ref: { dep: Dep }): void {
 }
 
 /**
- * Referencia reativa para valores primitivos.
+ * Reactive reference for primitive values.
  *
  * ```js
  * const count = V.ref(0)
@@ -818,7 +817,7 @@ class ComputedRefImpl<T> {
 
   set value(v: T) {
     if (this.setter) this.setter(v);
-    else warn('computed e somente leitura quando nao ha setter.');
+    else warn('computed is read-only when there is no setter.');
   }
 
   stop(): void {
@@ -827,7 +826,7 @@ class ComputedRefImpl<T> {
 }
 
 /**
- * Valor derivado com cache. So recalcula quando alguma dependencia muda.
+ * Derived value with cache. Only recalculates when a dependency changes.
  *
  * ```js
  * const full = V.computed(() => `${state.first} ${state.last}`)
@@ -855,10 +854,10 @@ export type WatchCallback<T = any> = (
 ) => void;
 
 /**
- * Observa uma fonte reativa e chama o callback quando ela muda.
+ * Watches a reactive source and calls the callback when it changes.
  *
  * ```js
- * V.watch(() => state.search, (novo, antigo) => buscar(novo))
+ * V.watch(() => state.search, (newValue, oldValue) => search(newValue))
  * ```
  */
 export function watch<T>(
@@ -899,7 +898,7 @@ export function watch<T>(
   const scheduler =
     flush === 'sync' ? job : flush === 'post' ? () => queuePostFlush(job) : () => queueJob(runner.effect as any);
 
-  // Para flush 'pre' o proprio efeito e reagendado e o job roda dentro dele.
+  // For 'pre' flush, the effect itself is rescheduled and the job runs within it.
   const runner =
     flush === 'pre'
       ? effect(getter, {
@@ -914,7 +913,7 @@ export function watch<T>(
   return () => runner.effect.stop();
 }
 
-/** Executa o efeito imediatamente e reexecuta quando dependencias mudam. */
+/** Executes the effect immediately and re-executes when dependencies change. */
 export function watchEffect(fn: (onInvalidate: (c: () => void) => void) => void): WatchStopHandle {
   let cleanupFn: (() => void) | undefined;
   const onInvalidate = (c: () => void): void => {

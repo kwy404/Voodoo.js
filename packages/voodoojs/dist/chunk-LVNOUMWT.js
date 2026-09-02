@@ -1,7 +1,7 @@
-import { __publicField } from './chunk-4BNJKNRI.js';
+import { __publicField } from './chunk-F62A4EMT.js';
 
 /**
- * Voodoo.js v0.4.0
+ * Voodoo.js v0.4.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -567,7 +567,7 @@ var ComputedRefImpl = class {
   }
   set value(v) {
     if (this.setter) this.setter(v);
-    else warn("computed e somente leitura quando nao ha setter.");
+    else warn("computed is read-only when there is no setter.");
   }
   stop() {
     this.effect.stop();
@@ -641,5 +641,5 @@ function traverse(value, seen = /* @__PURE__ */ new Set()) {
 }
 
 export { EffectScope, ITERATE_KEY, ReactiveEffect, TriggerType, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };
-//# sourceMappingURL=chunk-TPDT62G2.js.map
-//# sourceMappingURL=chunk-TPDT62G2.js.map
+//# sourceMappingURL=chunk-LVNOUMWT.js.map
+//# sourceMappingURL=chunk-LVNOUMWT.js.map

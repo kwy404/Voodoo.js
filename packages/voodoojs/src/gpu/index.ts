@@ -322,7 +322,7 @@ export function surface(
       try {
         context.unconfigure();
       } catch {
-        // Contexto ja solto pelo navegador. Nada a fazer.
+        // Context already released by the browser. Nothing to do.
       }
       untrack(gpu, handle);
     },
@@ -467,8 +467,8 @@ function uniformsFromStruct(
     values,
     set(next: Record<string, unknown>): void {
       if (!buffer || !live(gpu) || !next) return;
-      // O buffer local e a fonte da verdade: campos ausentes ficam como estavam,
-      // entao mudar um uniform nao apaga os outros.
+      // The local buffer is the source of truth: missing fields remain as they were,
+      // so changing one uniform doesn't erase the others.
       const written = writeStruct(bytes, struct, next);
       if (written.length === 0) return;
       for (const name of written) values[name] = next[name];
@@ -550,8 +550,8 @@ export function clock(_gpu?: GpuContext | null): GpuClock {
         previous = stamp;
       }
       time = (stamp - start) / 1000;
-      // Um limite no delta evita que voltar para a aba depois de um minuto
-      // faca a simulacao dar um salto absurdo.
+      // A limit on delta prevents returning to the tab after a minute from making
+      // the simulation jump an absurd amount.
       delta = Math.min(0.25, Math.max(0, (stamp - previous) / 1000));
       previous = stamp;
       frame += 1;
@@ -647,11 +647,11 @@ interface Bound {
 }
 
 /**
- * Monta o bind group do grupo 0 a partir da reflexao.
+ * Builds the group 0 bind group from reflection.
  *
- * Quando a reflexao nao da conta do shader, o pipeline volta para o modo `auto`
- * do proprio WebGPU. E preferivel perder a inferencia dos uniforms a recusar um
- * shader que o driver aceitaria sem reclamar.
+ * When reflection cannot make sense of the shader, the pipeline falls back to
+ * WebGPU's own `auto` layout mode. Losing uniform inference is preferable to
+ * refusing a shader the driver would have accepted without complaint.
  */
 function bindFromReflection(
   gpu: GpuContext,
@@ -706,7 +706,7 @@ function bindFromReflection(
       resources.push({ binding: binding.binding, resource: view });
       continue;
     }
-    // Falta recurso para este binding: sem ele o bind group nao pode ser criado.
+    // No resource for this binding: without it the bind group cannot be created.
     return { layout, group: null, uniforms: uniformValues, sampler, fromReflection: false };
   }
 
@@ -859,7 +859,7 @@ export function effect(
     }
     pipeline = gpu.device.createRenderPipeline(descriptor);
   } catch (err) {
-    // Layout explicito recusado: o modo `auto` do WebGPU ainda pode dar conta.
+    // Explicit layout rejected: WebGPU's `auto` mode may still work.
     try {
       descriptor.layout = 'auto';
       pipeline = gpu.device.createRenderPipeline(descriptor);
