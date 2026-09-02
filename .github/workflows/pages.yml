@@ -1,0 +1,107 @@
+
+# Publishes the landing page, the documentation and the runnable examples to
+# GitHub Pages on every push to main.
+#
+# No secrets are involved. Deployment uses the automatic GITHUB_TOKEN that
+# Actions injects into every run, scoped by the `permissions` block below, so
+# there is nothing to rotate and nothing to leak.
+#
+# The site is assembled rather than published straight from `site/`, because the
+# examples live at the repository root and load the framework through relative
+# paths like `../../packages/voodoojs/dist/voodoo.min.js`. Mirroring that layout
+# under the published root is what keeps those links working unchanged.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: read the repo, write a Pages deployment, nothing else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. Do not cancel a running one: a half-finished
+# publish would leave the live site inconsistent.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The bundles the site and the examples load are build output, so they are
+      # built here rather than trusted from the committed copies.
+      - name: Build the framework
+        run: npm run build --workspace=voodoojs
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+
+          # Landing page, documentation and playground.
+          cp -r site/. _site/
+
+          # Runnable examples, plus everything they load by relative path.
+          mkdir -p _site/packages/voodoojs
+          cp -r examples            _site/examples
+          cp -r design-system       _site/design-system
+          cp -r brand               _site/brand
+          cp -r packages/voodoojs/dist _site/packages/voodoojs/dist
+
+          # Fresh bundles at the root, where the landing page expects them.
+          cp packages/voodoojs/dist/voodoo.min.js          _site/
+          cp packages/voodoojs/dist/voodoo.min.js.map      _site/
+          cp packages/voodoojs/dist/voodoo.full.min.js     _site/
+          cp packages/voodoojs/dist/voodoo.full.min.js.map _site/
+
+          # Pages runs Jekyll by default, which silently drops files and folders
+          # whose name starts with an underscore. This opts out.
+          touch _site/.nojekyll
+
+          # vercel.json configured a different host and is meaningless here.
+          rm -f _site/vercel.json
+
+      # A broken link is worth catching before it is live, not after.
+      - name: Check the assembled site
+        run: |
+          set -euo pipefail
+          for f in _site/index.html _site/docs/index.html _site/examples/index.html \
+                   _site/voodoo.min.js _site/packages/voodoojs/dist/voodoo.min.js \
+                   _site/design-system/voodoo-ui.css _site/.nojekyll; do
+            test -e "$f" || { echo "missing: $f"; exit 1; }
+          done
+          if grep -rn 'href="/[a-z]' _site/index.html | grep -v '&lt;'; then
+            echo 'absolute navigation link in index.html: it would escape the /Voodoo.js/ base path'
+            exit 1
+          fi
+          echo "site assembled: $(find _site -type f | wc -l) files"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

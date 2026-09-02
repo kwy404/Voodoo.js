@@ -347,7 +347,7 @@
           <a href="#guia" v-t="guide.eyebrow">Guia rapido</a>
           <a href="#instalacao" v-t="nav.install">Instalacao</a>
           <a href="#modos" v-t="modos.eyebrow">Dois modos</a>
-          <a href="/docs/" v-t="nav.docs">Documentacao</a>
+          <a href="docs/" v-t="nav.docs">Documentacao</a>
           <a href="#playground" v-t="nav.playground">Playground</a>
           <a href="#directives" v-t="nav.directives">Directives</a>
           <a href="#componentes" v-t="nav.components">Componentes</a>
@@ -471,7 +471,7 @@
         <a href="#guia" @click="menu = false" v-t="guide.eyebrow">Guia rapido</a>
         <a href="#instalacao" @click="menu = false" v-t="nav.install">Instalacao</a>
         <a href="#modos" @click="menu = false" v-t="modos.eyebrow">Dois modos</a>
-        <a href="/docs/" @click="menu = false" v-t="nav.docs">Documentacao</a>
+        <a href="docs/" @click="menu = false" v-t="nav.docs">Documentacao</a>
         <a href="#playground" @click="menu = false" v-t="nav.playground">Playground</a>
         <a href="#directives" @click="menu = false" v-t="nav.directives">Directives</a>
         <a href="#componentes" @click="menu = false" v-t="nav.components">Componentes</a>
@@ -1079,7 +1079,7 @@ V.setLocale('en');</code></pre>
   V.createApp({ template: '&lt;p&gt;montei quando deu&lt;/p&gt;' }).mount('#tela-2');
 &lt;/script&gt;</code></pre>
             <p class="vd-mt">
-              <a class="vd-btn vd-btn-ghost" href="/docs/guia/modo-aplicacao.html" v-t="modos.docs">
+              <a class="vd-btn vd-btn-ghost" href="docs/guia/modo-aplicacao.html" v-t="modos.docs">
                 Ver os dois modos na documentacao
               </a>
             </p>
@@ -2329,7 +2329,7 @@ V.setLocale('en');</code></pre>
                 Voodoo.js resolver o seu problema.
               </p>
               <div class="vd-hero-cta">
-                <a class="vd-btn vd-btn-primary" href="/examples/" v-t="final.examples">Ver as demos</a>
+                <a class="vd-btn vd-btn-primary" href="examples/" v-t="final.examples">Ver as demos</a>
                 <a class="vd-btn vd-btn-ghost" :href="github + '#readme'" target="_blank" rel="noopener" v-t="final.docs">Ler a documentacao</a>
                 <a class="vd-btn vd-btn-ghost" :href="github" target="_blank" rel="noopener" v-t="final.github">Dar uma estrela no GitHub</a>
               </div>
@@ -2377,8 +2377,8 @@ V.setLocale('en');</code></pre>
           <div>
             <h2 class="vd-foot-title" v-t="footer.resources">Recursos</h2>
             <ul class="vd-foot-list">
-              <li><a href="/examples/" v-t="nav.examples">Exemplos</a></li>
-              <li><a href="/docs/" v-t="nav.docs">Documentacao</a></li>
+              <li><a href="examples/" v-t="nav.examples">Exemplos</a></li>
+              <li><a href="docs/" v-t="nav.docs">Documentacao</a></li>
               <li><a href="https://www.npmjs.com/package/voodoojs" target="_blank" rel="noopener">npm</a></li>
               <li><a :href="github + '/blob/main/brand/README.md'" target="_blank" rel="noopener" v-t="footer.brand">Marca</a></li>
               <li><a :href="github + '/tree/main/design-system'" target="_blank" rel="noopener" v-t="footer.designSystem">Design system</a></li>
