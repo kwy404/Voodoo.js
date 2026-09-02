@@ -33,6 +33,7 @@ export type Node =
   | { t: 'assign'; op: string; target: Node; value: Node }
   | { t: 'arrow'; params: string[]; body: Node }
   | { t: 'method'; params: string[]; body: Node }
+  | { t: 'if'; test: Node; cons: Node; alt: Node | null }
   | { t: 'obj'; props: ObjectProperty[] }
   | { t: 'arr'; els: Array<Node | { spread: Node }> }
   | { t: 'seq'; body: Node[] };
@@ -43,6 +44,8 @@ export interface ObjectProperty {
   keyExpr?: Node;
   value?: Node;
   spread?: Node;
+  /** `true` for `{ get name() { ... } }`, evaluated on every read. */
+  getter?: boolean;
 }
 
 /** Precedence of binary operators. Higher binds tighter. */
@@ -155,7 +158,7 @@ class Parser {
   parseProgram(): Node {
     const body: Node[] = [];
     while (this.peek().type !== 'eof') {
-      body.push(this.parseExpression());
+      body.push(this.parseStatement());
       // Both separators are accepted. `@click="a++; b++"` and
       // `@click="a++, b++"` are equally natural to write in an attribute, and
       // the comma used to fail with a confusing "unexpected token".
@@ -184,11 +187,47 @@ class Parser {
     this.next(); // {
     const body: Node[] = [];
     while (!this.isPunct('}') && this.peek().type !== 'eof') {
-      body.push(this.parseExpression());
+      body.push(this.parseStatement());
       while (this.isPunct(';') || this.isPunct(',')) this.next();
     }
     this.expect('}');
 
+    if (body.length === 0) return { t: 'lit', v: undefined };
+    if (body.length === 1) return body[0];
+    return { t: 'seq', body };
+  }
+
+  /**
+   * One statement. Only `if` needs its own form; everything else in this
+   * language is an expression.
+   */
+  private parseStatement(): Node {
+    if (this.peek().type === 'ident' && this.peek().value === 'if' && this.isPunct('(', 1)) {
+      this.next(); // if
+      this.expect('(');
+      const test = this.parseExpression();
+      this.expect(')');
+      const cons = this.parseBlockOrStatement();
+      let alt: Node | null = null;
+      if (this.peek().type === 'ident' && this.peek().value === 'else') {
+        this.next();
+        alt = this.parseBlockOrStatement();
+      }
+      return { t: 'if', test, cons, alt };
+    }
+    return this.parseExpression();
+  }
+
+  /** The body of an `if` or `else`, with or without braces. */
+  private parseBlockOrStatement(): Node {
+    if (!this.isPunct('{')) return this.parseStatement();
+    this.next();
+    const body: Node[] = [];
+    while (!this.isPunct('}') && this.peek().type !== 'eof') {
+      body.push(this.parseStatement());
+      while (this.isPunct(';') || this.isPunct(',')) this.next();
+    }
+    this.expect('}');
     if (body.length === 0) return { t: 'lit', v: undefined };
     if (body.length === 1) return body[0];
     return { t: 'seq', body };
@@ -528,6 +567,27 @@ class Parser {
         this.expect(':');
         props.push({ key: null, keyExpr, value: this.parseAssignment() });
       } else {
+        // `{ get total() { ... } }`. Only a getter: a setter would need an
+        // assignment target the scope model has nowhere to put.
+        if (
+          this.peek().type === 'ident' &&
+          this.peek().value === 'get' &&
+          this.peek(1).type === 'ident' &&
+          this.isPunct('(', 2)
+        ) {
+          this.next(); // get
+          const nameToken = this.next();
+          this.expect('(');
+          this.expect(')');
+          props.push({
+            key: String(nameToken.value),
+            getter: true,
+            value: { t: 'method', params: [], body: this.parseArrowBody() },
+          });
+          if (this.isPunct(',')) this.next();
+          continue;
+        }
+
         const keyToken = this.next();
         if (keyToken.type !== 'ident' && keyToken.type !== 'str' && keyToken.type !== 'num') {
           throw new VoodooSyntaxError('Invalid object key', this.source, keyToken.start);

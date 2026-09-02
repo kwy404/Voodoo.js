@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.4.4
+ * Voodoo.js v0.4.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1184,7 +1184,7 @@ ${pointer}`);
     parseProgram() {
       const body = [];
       while (this.peek().type !== "eof") {
-        body.push(this.parseExpression());
+        body.push(this.parseStatement());
         while (this.isPunct(";") || this.isPunct(",")) this.next();
       }
       if (body.length === 0) return { t: "lit", v: void 0 };
@@ -1207,7 +1207,41 @@ ${pointer}`);
       this.next();
       const body = [];
       while (!this.isPunct("}") && this.peek().type !== "eof") {
-        body.push(this.parseExpression());
+        body.push(this.parseStatement());
+        while (this.isPunct(";") || this.isPunct(",")) this.next();
+      }
+      this.expect("}");
+      if (body.length === 0) return { t: "lit", v: void 0 };
+      if (body.length === 1) return body[0];
+      return { t: "seq", body };
+    }
+    /**
+     * One statement. Only `if` needs its own form; everything else in this
+     * language is an expression.
+     */
+    parseStatement() {
+      if (this.peek().type === "ident" && this.peek().value === "if" && this.isPunct("(", 1)) {
+        this.next();
+        this.expect("(");
+        const test = this.parseExpression();
+        this.expect(")");
+        const cons = this.parseBlockOrStatement();
+        let alt = null;
+        if (this.peek().type === "ident" && this.peek().value === "else") {
+          this.next();
+          alt = this.parseBlockOrStatement();
+        }
+        return { t: "if", test, cons, alt };
+      }
+      return this.parseExpression();
+    }
+    /** The body of an `if` or `else`, with or without braces. */
+    parseBlockOrStatement() {
+      if (!this.isPunct("{")) return this.parseStatement();
+      this.next();
+      const body = [];
+      while (!this.isPunct("}") && this.peek().type !== "eof") {
+        body.push(this.parseStatement());
         while (this.isPunct(";") || this.isPunct(",")) this.next();
       }
       this.expect("}");
@@ -1506,6 +1540,19 @@ ${pointer}`);
           this.expect(":");
           props.push({ key: null, keyExpr, value: this.parseAssignment() });
         } else {
+          if (this.peek().type === "ident" && this.peek().value === "get" && this.peek(1).type === "ident" && this.isPunct("(", 2)) {
+            this.next();
+            const nameToken = this.next();
+            this.expect("(");
+            this.expect(")");
+            props.push({
+              key: String(nameToken.value),
+              getter: true,
+              value: { t: "method", params: [], body: this.parseArrowBody() }
+            });
+            if (this.isPunct(",")) this.next();
+            continue;
+          }
           const keyToken = this.next();
           if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
             throw new VoodooSyntaxError("Invalid object key", this.source, keyToken.start);
@@ -1835,6 +1882,10 @@ Expression: ${expression}` : message);
         assign(node.target, value, scope);
         return value;
       }
+      case "if": {
+        if (evaluate(node.test, scope)) return evaluate(node.cons, scope);
+        return node.alt ? evaluate(node.alt, scope) : void 0;
+      }
       case "method": {
         const methodParams = node.params;
         const methodBody = node.body;
@@ -1864,6 +1915,17 @@ Expression: ${expression}` : message);
             const key = checkKey(
               prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
             );
+            if (prop.getter) {
+              const compute = evaluate(prop.value, scope);
+              Object.defineProperty(out, key, {
+                enumerable: true,
+                configurable: true,
+                get() {
+                  return compute.call(this);
+                }
+              });
+              continue;
+            }
             out[key] = evaluate(prop.value, scope);
           }
         }
@@ -6515,7 +6577,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.4.4";
+  var version = "0.4.5";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,

@@ -1,6 +1,6 @@
 {
   "name": "voodoo-monorepo",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "private": true,
   "description": "Voodoo.js: the HTML-first JavaScript framework. Build reactive applications directly in HTML.",
   "workspaces": [

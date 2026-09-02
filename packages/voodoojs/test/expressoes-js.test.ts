@@ -211,3 +211,63 @@ describe('method shorthand in an object literal', () => {
     expect(typeof (run('({ f: function () { 1 } })') as Record<string, unknown>).f).toBe('function');
   });
 });
+
+describe('if statements', () => {
+  it('runs the branch and yields its value', () => {
+    expect(run('if (n > 1) { r = 9 } ; r', { n: 2, r: 0 })).toBe(9);
+  });
+
+  it('takes the else branch', () => {
+    expect(run('if (n > 5) { r = 1 } else { r = 2 } ; r', { n: 2, r: 0 })).toBe(2);
+  });
+
+  it('yields undefined when false and there is no else', () => {
+    expect(run('if (false) { 1 }')).toBeUndefined();
+  });
+
+  it('works without braces', () => {
+    expect(run('if (true) 7')).toBe(7);
+  });
+
+  it('chains else if', () => {
+    expect(run('if (n === 1) { "um" } else if (n === 2) { "dois" } else { "outro" }', { n: 2 })).toBe(
+      'dois'
+    );
+  });
+
+  it('runs inside an event handler', async () => {
+    expect(await click('if (n === 0) { n = 5 } else { n = 1 }')).toBe('5|');
+  });
+
+  it('a bare name called `if` is still an ordinary identifier', () => {
+    // The statement form is only taken when a `(` follows, so this stays data.
+    expect(run('ifs', { ifs: 3 })).toBe(3);
+  });
+});
+
+describe('getters in object literals', () => {
+  it('computes on read', () => {
+    expect(run('({ a: 2, get double() { 4 } }).double')).toBe(4);
+  });
+
+  it('reads sibling state through this', () => {
+    expect(run('({ n: 3, get double() { n * 2 } }).double')).toBe(6);
+  });
+
+  it('recomputes rather than freezing the first value', () => {
+    // The trap V.store and V.data both fell into: reading once and storing the
+    // result turns a derived value into a constant.
+    const obj = run('({ n: 1, get double() { n * 2 } })') as { n: number; double: number };
+    expect(obj.double).toBe(2);
+    obj.n = 5;
+    expect(obj.double).toBe(10);
+  });
+
+  it('is enumerable, so spreading still sees it', () => {
+    expect(Object.keys(run('({ a: 1, get b() { 2 } })') as object)).toEqual(['a', 'b']);
+  });
+
+  it('a property literally named get still works', () => {
+    expect((run('({ get: 1 })') as Record<string, unknown>).get).toBe(1);
+  });
+});

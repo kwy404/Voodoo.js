@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.4.4
+ * Voodoo.js v0.4.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -60,5 +60,5 @@ function usePlugin(V, plugin, options) {
 }
 
 export { PRIORITY, components, config, defineDirective, directives, normalizeComponentName, usePlugin };
-//# sourceMappingURL=chunk-LDJQDQQN.js.map
-//# sourceMappingURL=chunk-LDJQDQQN.js.map
+//# sourceMappingURL=chunk-54Y37JIN.js.map
+//# sourceMappingURL=chunk-54Y37JIN.js.map

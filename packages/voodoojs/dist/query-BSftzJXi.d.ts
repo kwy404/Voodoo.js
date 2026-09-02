@@ -1,6 +1,6 @@
-import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
 
 /**
  * @module parser/lexer
@@ -115,6 +115,11 @@ type Node$1 = {
     params: string[];
     body: Node$1;
 } | {
+    t: 'if';
+    test: Node$1;
+    cons: Node$1;
+    alt: Node$1 | null;
+} | {
     t: 'obj';
     props: ObjectProperty[];
 } | {
@@ -132,6 +137,8 @@ interface ObjectProperty {
     keyExpr?: Node$1;
     value?: Node$1;
     spread?: Node$1;
+    /** `true` for `{ get name() { ... } }`, evaluated on every read. */
+    getter?: boolean;
 }
 /**
  * Converts text to AST, with caching.

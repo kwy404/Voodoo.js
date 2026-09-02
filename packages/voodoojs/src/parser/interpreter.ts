@@ -394,6 +394,13 @@ export function evaluate(node: Node, scope: EvalScope): any {
       return value;
     }
 
+    case 'if': {
+      // A statement, so it yields the value of whichever branch ran, and
+      // undefined when the condition is false and there is no `else`.
+      if (evaluate(node.test, scope)) return evaluate(node.cons, scope);
+      return node.alt ? evaluate(node.alt, scope) : undefined;
+    }
+
     case 'method': {
       // A method must see the object it belongs to.
       //
@@ -440,6 +447,23 @@ export function evaluate(node: Node, scope: EvalScope): any {
           const key = checkKey(
             prop.key !== null ? prop.key : String(evaluate(prop.keyExpr!, scope))
           ) as string;
+
+          if (prop.getter) {
+            // Defined as a real accessor, so it recomputes on every read and
+            // the reactive proxy tracks whatever the body touches. Assigning
+            // the result once instead would freeze a derived value, which is
+            // the same trap `V.store` and `V.data` fell into.
+            const compute = evaluate(prop.value!, scope) as () => unknown;
+            Object.defineProperty(out, key, {
+              enumerable: true,
+              configurable: true,
+              get() {
+                return compute.call(this);
+              },
+            });
+            continue;
+          }
+
           out[key] = evaluate(prop.value!, scope);
         }
       }
