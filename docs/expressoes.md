@@ -265,7 +265,7 @@ runtime. To skip it, turn off injection and load the CSS yourself:
 <link rel="stylesheet" href="/css/voodoo-ui.css">
 ```
 
-No `unsafe-eval` is needed in any configuration. See [Security](security.md).
+No `unsafe-eval` is needed in any configuration. See [Security](seguranca.md).
 
 ## Parser API
 
@@ -281,4 +281,4 @@ V.stringify(value);                 // conversion used in interpolation
 
 ---
 
-Previous: [Reactivity](reactivity.md) · Next: [Directives](directives.md)
+Previous: [Reactivity](reatividade.md) · Next: [Directives](directives.md)

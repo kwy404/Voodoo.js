@@ -48,7 +48,7 @@ function flushJobs() {
       counts.set(job, count);
       if (count > RECURSION_LIMIT) {
         warn(
-          "Loop infinito de atualizacao detectado. Um efeito reativo esta se disparando de novo sem parar. Verifique se alguma expressao escreve em um estado que ela mesma le."
+          "Infinite update loop detected. A reactive effect keeps triggering itself without ever settling. Check whether some expression writes to state that it also reads."
         );
         continue;
       }
@@ -93,7 +93,7 @@ function handleError(err, context) {
     errorHandler(err, context);
     return;
   }
-  console.error(`[Voodoo] erro em ${context}:`, err);
+  console.error(`[Voodoo] error in ${context}:`, err);
 }
 function warn(msg, ...args) {
   console.warn(`[Voodoo] ${msg}`, ...args);
@@ -121,13 +121,13 @@ var ReactiveEffect = class {
     __publicField(this, "fn", fn);
     __publicField(this, "id", effectId++);
     __publicField(this, "active", true);
-    /** `true` enquanto o efeito espera na fila do agendador. */
+    /** `true` while the effect is waiting in the scheduler queue. */
     __publicField(this, "queued", false);
     __publicField(this, "deps", []);
     __publicField(this, "parent");
     __publicField(this, "scheduler");
     __publicField(this, "onStop");
-    /** Callbacks de limpeza registrados pelo proprio efeito. */
+    /** Cleanup callbacks registered by the effect itself. */
     __publicField(this, "cleanups", []);
     this.scheduler = options?.scheduler;
     this.onStop = options?.onStop;
@@ -154,7 +154,7 @@ var ReactiveEffect = class {
       this.parent = void 0;
     }
   }
-  /** Registra uma funcao chamada antes da proxima execucao e ao parar. */
+  /** Registers a function called before the next run and on stop. */
   onInvalidate(fn) {
     this.cleanups.push(fn);
   }

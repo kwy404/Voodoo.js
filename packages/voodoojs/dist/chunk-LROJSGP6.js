@@ -1,5 +1,5 @@
-import { avisarUmaVez } from './chunk-S3U6BJNJ.js';
-import { parseDuration } from './chunk-KCG2YK55.js';
+import { warnOnce } from './chunk-UGX5TOOI.js';
+import { parseDuration } from './chunk-NMCVD7AK.js';
 import { __publicField } from './chunk-5I3A7PYT.js';
 
 /**
@@ -20,7 +20,7 @@ var HttpError = class extends Error {
   get status() {
     return this.response?.status ?? 0;
   }
-  /** `true` quando o erro foi de rede, timeout ou cancelamento. */
+  /** `true` when error is network, timeout, or cancellation. */
   get isNetworkError() {
     return !this.response;
   }
@@ -94,8 +94,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const novos = readQueue();
-      writeQueue([...list.slice(index), ...novos]);
+      const newItems = readQueue();
+      writeQueue([...list.slice(index), ...newItems]);
       break;
     }
   }
@@ -160,8 +160,8 @@ async function parseResponse(response, type) {
 }
 var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
 function temChaveDeIdempotencia(headers) {
-  for (const [nome, valor] of Object.entries(headers)) {
-    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === "idempotency-key" && String(value).trim() !== "") return true;
   }
   return false;
 }
@@ -170,9 +170,9 @@ function podeRepetir(method, config, headers, url) {
   if (config.retryUnsafe === true) return true;
   if (temChaveDeIdempotencia(headers)) return true;
   if ((config.retry ?? 0) > 0) {
-    avisarUmaVez(
-      `http:retry-inseguro:${method} ${url}`,
-      `retry ignorado em ${method} ${url}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+    warnOnce(
+      `http:retry-unsafe:${method} ${url}`,
+      `retry ignored on ${method} ${url}: retrying a method that changes state may apply the same operation twice if the response is lost in transit. Allow with retryUnsafe: true or send an Idempotency-Key header.`
     );
   }
   return false;
@@ -261,7 +261,7 @@ async function request(input) {
           continue;
         }
         const error2 = new HttpError(
-          `Requisicao falhou com status ${response.status}`,
+          `Request failed with status ${response.status}`,
           result,
           config
         );
@@ -291,7 +291,7 @@ async function request(input) {
       }
     }
   }
-  const message = lastError?.name === "TimeoutError" ? `Tempo esgotado apos ${config.timeout}ms` : `Falha de rede ao acessar ${url}`;
+  const message = lastError?.name === "TimeoutError" ? `Timeout after ${config.timeout}ms` : `Network failure accessing ${url}`;
   const error = new HttpError(message, void 0, config, lastError);
   for (const interceptor of errorInterceptors) interceptor(error);
   throw error;
@@ -323,9 +323,9 @@ var http = {
   head(url, options = {}) {
     return shortcut({ ...options, url, method: "HEAD" });
   },
-  /** Requisicao completa, com status e cabecalhos. */
+  /** Full request with status and headers. */
   request,
-  /** Envia arquivos com progresso real, usando XMLHttpRequest. */
+  /** Upload files with real progress using XMLHttpRequest. */
   upload(url, data, options = {}) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -355,15 +355,15 @@ var http = {
           }
         }
         if (xhr.status >= 200 && xhr.status < 300) resolve(data2);
-        else reject(new HttpError(`Upload falhou com status ${xhr.status}`));
+        else reject(new HttpError(`Upload failed with status ${xhr.status}`));
       });
-      xhr.addEventListener("error", () => reject(new HttpError("Falha de rede no upload")));
-      xhr.addEventListener("abort", () => reject(new HttpError("Upload cancelado")));
+      xhr.addEventListener("error", () => reject(new HttpError("Network failure during upload")));
+      xhr.addEventListener("abort", () => reject(new HttpError("Upload canceled")));
       options.signal?.addEventListener("abort", () => xhr.abort());
       xhr.send(data);
     });
   },
-  /** Server-Sent Events com reconexao automatica do proprio navegador. */
+  /** Server-Sent Events with automatic reconnection by the browser. */
   sse(url, handlers = {}) {
     const source = new EventSource(buildURL({ url }));
     source.addEventListener("message", (event) => {
@@ -377,7 +377,7 @@ var http = {
     if (handlers.error) source.addEventListener("error", handlers.error);
     return source;
   },
-  /** Le uma resposta em streaming, linha a linha (NDJSON). */
+  /** Read a streaming response line by line (NDJSON). */
   async stream(url, onLine, options = {}) {
     const response = await fetch(buildURL({ url, params: options.params }), {
       headers: { ...defaults.headers, ...options.headers },
@@ -426,12 +426,12 @@ var http = {
       }
     }
   },
-  /** Define cabecalhos enviados em toda requisicao. */
+  /** Set headers sent on every request. */
   setHeader(name, value) {
     if (value === null) delete defaults.headers[name];
     else defaults.headers[name] = value;
   },
-  /** Atalho para autenticacao por token. */
+  /** Shortcut for token-based authentication. */
   setToken(token, scheme = "Bearer") {
     this.setHeader("Authorization", token ? `${scheme} ${token}` : null);
   },
@@ -444,5 +444,5 @@ var http = {
 };
 
 export { HttpError, clearCache, flushOfflineQueue, http, request };
-//# sourceMappingURL=chunk-PJ32JPZL.js.map
-//# sourceMappingURL=chunk-PJ32JPZL.js.map
+//# sourceMappingURL=chunk-LROJSGP6.js.map
+//# sourceMappingURL=chunk-LROJSGP6.js.map

@@ -583,7 +583,7 @@ third parameter is additive and won't break any existing plugin.
 
 - [Plugins](plugins.md), the usage guide
 - [Directives](directives.md)
-- [Components](components.md)
+- [Components](componentes.md)
 - [Application structure](application-structure.md)
 - [CONVENTIONS.md](../CONVENTIONS.md), naming rules and deprecation policy
 - [SECURITY.md](../SECURITY.md), what a plugin can compromise

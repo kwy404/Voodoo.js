@@ -1,19 +1,19 @@
 /**
  * @module gpu/types
  *
- * Tipos minimos do WebGPU, escritos a mao.
+ * Minimal WebGPU types, hand-written.
  *
- * O projeto nao aceita dependencias novas, entao `@webgpu/types` esta fora e o
- * `lib.dom` do TypeScript ainda nao descreve `navigator.gpu`. O que existe aqui
- * e apenas a fatia da API que o modulo realmente chama: descritores ficam como
- * `any` de proposito, porque copiar o schema inteiro so criaria uma segunda
- * fonte de verdade para manter em dia.
+ * The project doesn't accept new dependencies, so `@webgpu/types` is out and
+ * TypeScript's `lib.dom` still doesn't describe `navigator.gpu`. What's here
+ * is only the slice of the API the module actually calls: descriptors stay as
+ * `any` on purpose, because copying the entire schema would just create a second
+ * source of truth to keep in sync.
  *
- * As constantes de uso tambem sao locais. Em producao elas existem como globais
- * (`GPUBufferUsage` e companhia), mas em jsdom nao existem nenhuma, e o modulo
- * precisa ser importavel em ambiente sem GPU sem estourar na primeira linha.
+ * The usage constants are also local. In production they exist as globals
+ * (`GPUBufferUsage` and company), but in jsdom they don't exist at all, and the module
+ * needs to be importable in an environment without GPU without blowing up on the first line.
  */
-/** Nome de formato de textura, como `bgra8unorm`. */
+/** Texture format name, like `bgra8unorm`. */
 type GPUTextureFormat = string;
 interface GPUBuffer {
     destroy(): void;
@@ -30,7 +30,7 @@ interface GPUTexture {
 interface GPUSampler {
     readonly __sampler?: never;
 }
-/** Uma mensagem do compilador de WGSL. `lineNum` comeca em 1. */
+/** A WGSL compiler message. `lineNum` starts at 1. */
 interface GPUCompilationMessage {
     readonly message: string;
     readonly type: 'error' | 'warning' | 'info';
@@ -151,63 +151,63 @@ declare const SHADER_STAGE: {
 /**
  * @module gpu/wgsl
  *
- * Leitura de codigo WGSL para descobrir sozinho o que o shader precisa.
+ * Reading WGSL code to figure out what the shader needs on its own.
  *
- * A ideia veio do vgpu: quem escreve o shader ja declarou `@group`, `@binding`
- * e o `struct` dos uniforms la dentro. Repetir isso em JavaScript e trabalho
- * dobrado e uma chance a mais de os dois lados sairem do lugar. Entao o modulo
- * le a fonte e monta o bind group layout, o tamanho do buffer e o deslocamento
- * de cada campo a partir do proprio shader.
+ * The idea came from vgpu: whoever writes the shader already declared `@group`, `@binding`
+ * and the uniforms `struct` inside it. Repeating this in JavaScript is double work
+ * and one more chance for the two sides to get out of sync. So the module
+ * reads the source and builds the bind group layout, buffer size and offset
+ * of each field straight from the shader itself.
  *
- * Tudo aqui e funcao pura sobre texto: nao toca no DOM, nao precisa de GPU e
- * roda igual em jsdom. E por isso que esta e a parte mais testada do modulo.
+ * Everything here is pure text functions: doesn't touch the DOM, doesn't need GPU and
+ * runs the same in jsdom. That's why this is the most tested part of the module.
  *
- * O que a reflexao cobre esta descrito em `docs/gpu.md`. Em resumo: `struct`
- * declarado no proprio arquivo, escalares, vetores, matrizes e arrays de tamanho
- * fixo, mais texturas, samplers e buffers de storage. Fica de fora: `@align`,
- * `@size`, `@location` de vertice, arrays sem tamanho dentro de uniform (que o
- * WGSL tambem proibe) e `type`/alias definidos pelo usuario.
+ * What reflection covers is described in `docs/gpu.md`. In summary: `struct`
+ * declared in the file itself, scalars, vectors, matrices and fixed-size arrays,
+ * plus textures, samplers and storage buffers. Left out: `@align`,
+ * `@size`, vertex `@location`, unsized arrays inside uniform (which
+ * WGSL also forbids) and user-defined `type`/alias.
  */
-/** Familia de um tipo WGSL. */
+/** Family of a WGSL type. */
 type WgslTypeKind = 'scalar' | 'vector' | 'matrix' | 'array' | 'struct' | 'unknown';
-/** Descricao de um tipo, com o tamanho e o alinhamento ja resolvidos. */
+/** Description of a type, with size and alignment already resolved. */
 interface WgslType {
-    /** Texto original, como `vec3<f32>`. */
+    /** Original text, like `vec3<f32>`. */
     text: string;
     kind: WgslTypeKind;
-    /** Escalar de base. `f32` para tipos sem escalar claro. */
+    /** Base scalar. `f32` for types with no clear scalar. */
     scalar: 'f32' | 'i32' | 'u32' | 'f16' | 'bool';
-    /** Bytes ocupados. */
+    /** Bytes occupied. */
     size: number;
-    /** Alinhamento exigido, em bytes. */
+    /** Required alignment, in bytes. */
     align: number;
-    /** Quantos escalares o valor tem ao todo. `vec3<f32>` tem 3. */
+    /** How many scalars the value has in total. `vec3<f32>` has 3. */
     components: number;
-    /** Colunas da matriz. */
+    /** Matrix columns. */
     columns?: number;
-    /** Linhas da matriz, ou seja, o tamanho de cada coluna. */
+    /** Matrix rows, i.e., the size of each column. */
     rows?: number;
-    /** Distancia entre elementos de um array, ou entre colunas de uma matriz. */
+    /** Distance between array elements, or between matrix columns. */
     stride?: number;
-    /** Quantidade de elementos de um array de tamanho fixo. */
+    /** Number of elements in a fixed-size array. */
     count?: number;
-    /** Tipo do elemento de um array. */
+    /** Type of an array element. */
     element?: WgslType;
-    /** Nome do struct, quando `kind` e `struct`. */
+    /** Struct name, when `kind` is `struct`. */
     struct?: string;
 }
-/** Um campo de struct, com o deslocamento dentro do buffer. */
+/** A struct field, with offset within the buffer. */
 interface WgslField {
     name: string;
     type: WgslType;
-    /** Deslocamento em bytes a partir do inicio do struct. */
+    /** Offset in bytes from the start of the struct. */
     offset: number;
 }
-/** Struct declarado no shader. */
+/** Struct declared in the shader. */
 interface WgslStruct {
     name: string;
     fields: WgslField[];
-    /** Tamanho total, ja arredondado para o alinhamento. */
+    /** Total size, already rounded to alignment. */
     size: number;
     align: number;
 }
@@ -249,32 +249,32 @@ interface WgslReflection {
     uniform?: WgslBinding;
 }
 /**
- * Remove comentarios de linha e de bloco. O WGSL permite bloco aninhado, entao
- * a contagem e feita com profundidade em vez de uma expressao regular.
+ * Removes line and block comments. WGSL allows nested blocks, so
+ * counting is done with depth instead of a regex.
  *
- * Os caracteres removidos viram espaco em vez de sumirem, para que o numero da
- * linha continue batendo com o arquivo original nas mensagens de erro.
+ * Removed characters become spaces instead of disappearing, so the line number
+ * still matches the original file in error messages.
  */
 declare function stripWgslComments(source: string): string;
 /**
- * Divide por virgulas de primeiro nivel. Sem isso `array<vec4<f32>, 8>` seria
- * cortado no meio do generico.
+ * Splits by top-level commas. Without this `array<vec4<f32>, 8>` would be
+ * cut in the middle of the generic.
  */
 declare function splitTopLevel(text: string): string[];
 /**
- * Descreve um tipo WGSL com tamanho e alinhamento.
+ * Describes a WGSL type with size and alignment.
  *
- * As regras seguidas sao as do endereco `uniform`, que e o caso de uso do
- * modulo: struct alinhado a 16 bytes e passo de array tambem multiplo de 16.
- * Para `storage` o WGSL e mais frouxo; a diferenca esta documentada.
+ * The rules followed are for the `uniform` address space, which is the module's
+ * use case: struct aligned to 16 bytes and array stride also a multiple of 16.
+ * For `storage` WGSL is more relaxed; the difference is documented.
  */
 declare function describeWgslType(text: string, structs?: Record<string, WgslStruct>): WgslType;
 /**
- * Le os `struct` da fonte e calcula o deslocamento de cada campo.
+ * Reads `struct`s from the source and calculates the offset of each field.
  *
- * Structs sao resolvidos em varias passadas porque um pode citar outro que
- * aparece depois no arquivo. Tres passadas cobrem qualquer aninhamento razoavel
- * sem virar um grafo de dependencias.
+ * Structs are resolved in multiple passes because one can reference another
+ * that appears later in the file. Three passes cover any reasonable nesting
+ * without becoming a dependency graph.
  */
 declare function reflectStructs(source: string): Record<string, WgslStruct>;
 /** Le os `@group @binding var ...` da fonte. */
@@ -323,9 +323,9 @@ declare function packStruct(struct: WgslStruct, values?: Record<string, unknown>
 /**
  * @module gpu
  *
- * Camada WebGPU da Voodoo, no espirito do vgpu: funcoes soltas que recebem o
- * contexto como primeiro argumento, sem estado global escondido e sem classe
- * nenhuma para instanciar.
+ * Voodoo's WebGPU layer, in the spirit of vgpu: loose functions that receive
+ * context as the first argument, with no hidden global state and no classes
+ * to instantiate.
  *
  * ```js
  * const gpu = await V.gpu.init()
@@ -334,103 +334,103 @@ declare function packStruct(struct: WgslStruct, values?: Record<string, unknown>
  * const parar = V.gpu.frameLoop(gpu, (frame) => frame.pass(tela, ondas))
  * ```
  *
- * A regra que manda em tudo: **nunca lancar quando nao existe WebGPU**.
- * `supported()` devolve `false`, `init()` devolve `null` e todo o resto aceita
- * `null` no lugar do contexto e vira operacao vazia. Uma pagina que usa GPU
- * para enfeite nao pode quebrar num navegador que ainda nao tem GPU.
+ * The rule that governs everything: **never throw when WebGPU doesn't exist**.
+ * `supported()` returns `false`, `init()` returns `null` and everything else accepts
+ * `null` in place of context and becomes a no-op. A page using GPU
+ * for decoration can't break in a browser that doesn't have GPU yet.
  *
- * Os bindings do shader nao sao declarados a mao: `gpu/wgsl` le a fonte e monta
- * o bind group layout, o tamanho do buffer e o deslocamento de cada uniform.
+ * Shader bindings are not declared by hand: `gpu/wgsl` reads the source and builds
+ * the bind group layout, buffer size and offset of each uniform.
  */
 
-/** Qualquer coisa que ocupa memoria na GPU e sabe se soltar. */
+/** Anything that occupies GPU memory and knows how to release itself. */
 interface Disposable {
     destroy(): void;
 }
-/** Contexto devolvido por `init()`. E o primeiro argumento de tudo. */
+/** Context returned by `init()`. It's the first argument to everything. */
 interface GpuContext {
     adapter: GPUAdapter;
     device: GPUDevice;
     queue: GPUDevice['queue'];
-    /** Formato preferido do canvas neste dispositivo. */
+    /** Preferred canvas format on this device. */
     format: GPUTextureFormat;
-    /** Recursos abertos, para que `destroy(gpu)` nao esqueca nenhum. */
+    /** Open resources, so `destroy(gpu)` doesn't forget any. */
     readonly resources: Set<Disposable>;
-    /** Vira `true` depois de `destroy(gpu)`. Toda operacao passa a ser vazia. */
+    /** Becomes `true` after `destroy(gpu)`. All operations become no-ops. */
     destroyed: boolean;
 }
-/** Opcoes de `init()`. */
+/** Options for `init()`. */
 interface GpuInitOptions {
-    /** Preferencia de adaptador: `low-power` economiza bateria. */
+    /** Adapter preference: `low-power` saves battery. */
     powerPreference?: 'low-power' | 'high-performance';
-    /** Recursos opcionais pedidos ao dispositivo. Os indisponiveis sao ignorados. */
+    /** Optional features requested from the device. Unavailable ones are ignored. */
     features?: string[];
-    /** Limites minimos desejados. */
+    /** Desired minimum limits. */
     limits?: Record<string, number>;
     label?: string;
 }
 /**
- * `true` quando o navegador expoe WebGPU. Nunca lanca, nem em Node, nem em
- * jsdom, nem em navegador antigo.
+ * `true` when the browser exposes WebGPU. Never throws, not in Node,
+ * not in jsdom, not in old browsers.
  */
 declare function supported(): boolean;
 /**
- * Abre o adaptador e o dispositivo.
+ * Opens the adapter and device.
  *
  * ```js
  * const gpu = await V.gpu.init()
  * if (!gpu) mostrarVersaoSemGpu()
  * ```
  *
- * @returns o contexto, ou `null` quando nao ha WebGPU ou o adaptador recusou
+ * @returns the context, or `null` when there's no WebGPU or the adapter refused
  */
 declare function init(options?: GpuInitOptions): Promise<GpuContext | null>;
 /**
- * Contexto unico da pagina, criado na primeira chamada.
+ * Single context for the page, created on first call.
  *
- * Um dispositivo por aba basta: e o que a directive `v-shader` usa, para que
- * dez canvas na mesma pagina nao abram dez dispositivos.
+ * One device per tab is enough: it's what the `v-shader` directive uses, so
+ * ten canvases on the same page don't open ten devices.
  */
 declare function shared(options?: GpuInitOptions): Promise<GpuContext | null>;
-/** Esquece o contexto compartilhado. Usado por `destroy()` e pelos testes. */
+/** Forgets the shared context. Used by `destroy()` and by tests. */
 declare function resetShared(): void;
-/** Opcoes de `surface()`. */
+/** Options for `surface()`. */
 interface GpuSurfaceOptions {
-    /** Faixa aceita de `devicePixelRatio`, como `[1, 2]`. Padrao `[1, 2]`. */
+    /** Accepted range of `devicePixelRatio`, like `[1, 2]`. Default `[1, 2]`. */
     dpr?: [number, number];
-    /** Formato do canvas. Padrao o preferido do dispositivo. */
+    /** Canvas format. Default the device's preferred one. */
     format?: GPUTextureFormat;
-    /** Deixa o canvas transparente. Padrao `false`. */
+    /** Makes the canvas transparent. Default `false`. */
     alpha?: boolean;
 }
-/** Canvas configurado para receber quadros da GPU. */
+/** Canvas configured to receive frames from the GPU. */
 interface GpuSurface {
     readonly canvas: HTMLCanvasElement | null;
     readonly format: GPUTextureFormat;
     readonly width: number;
     readonly height: number;
-    /** View do quadro atual. `null` quando nao ha GPU. */
+    /** View of the current frame. `null` when there's no GPU. */
     view(): GPUTextureView | null;
-    /** Remede o canvas e reconfigura o contexto. */
+    /** Remeasures the canvas and reconfigures the context. */
     resize(): void;
     destroy(): void;
 }
 /**
- * Prepara um `<canvas>` para receber quadros.
+ * Prepares a `<canvas>` to receive frames.
  *
- * O tamanho do buffer acompanha o tamanho em CSS multiplicado pelo
- * `devicePixelRatio`, limitado pela faixa de `dpr` e pelo maior tamanho de
- * textura do dispositivo. Um `ResizeObserver` mantem isso em dia sozinho.
+ * The buffer size follows the CSS size multiplied by
+ * `devicePixelRatio`, capped by the `dpr` range and the device's maximum texture size.
+ * A `ResizeObserver` keeps this up to date automatically.
  */
 declare function surface(gpu: GpuContext | null, canvas: HTMLCanvasElement | null, options?: GpuSurfaceOptions): GpuSurface;
-/** Opcoes de `target()`. */
+/** Options for `target()`. */
 interface GpuTargetOptions {
     width: number;
     height: number;
     format?: GPUTextureFormat;
     label?: string;
 }
-/** Textura usada como destino de um passe, para encadear efeitos. */
+/** Texture used as a render pass target, to chain effects. */
 interface GpuTarget {
     readonly texture: GPUTexture | null;
     readonly width: number;
@@ -439,126 +439,126 @@ interface GpuTarget {
     view(): GPUTextureView | null;
     destroy(): void;
 }
-/** Cria uma textura de destino, para renderizar fora da tela. */
+/** Creates a target texture for off-screen rendering. */
 declare function target(gpu: GpuContext | null, options: GpuTargetOptions): GpuTarget;
-/** Buffer de uniforms com layout conhecido. */
+/** Uniform buffer with known layout. */
 interface GpuUniforms {
-    /** Layout em uso, venha ele da reflexao ou dos valores iniciais. */
+    /** Layout in use, whether from reflection or initial values. */
     readonly struct: WgslStruct;
     readonly buffer: GPUBuffer | null;
-    /** Ultimos valores aplicados. */
+    /** Last applied values. */
     readonly values: Record<string, unknown>;
-    /** Atualiza os campos informados e envia o buffer. */
+    /** Updates the given fields and sends the buffer. */
     set(values: Record<string, unknown>): void;
     destroy(): void;
 }
 /**
- * Cria um buffer de uniforms a partir dos valores iniciais.
+ * Creates a uniform buffer from initial values.
  *
  * ```js
  * const u = V.gpu.uniforms(gpu, { time: 0, tint: '#ff3d8b' })
  * u.set({ time: 1.5 })
  * ```
  *
- * Sem shader para consultar, o layout vem da ordem das chaves do objeto. Quando
- * existe shader, `V.gpu.effect` prefere a reflexao, que nao depende de ninguem
- * lembrar a ordem certa.
+ * Without a shader to consult, the layout comes from the object's key order. When
+ * there's a shader, `V.gpu.effect` prefers reflection, which doesn't depend on anyone
+ * remembering the right order.
  */
 declare function uniforms(gpu: GpuContext | null, initial?: Record<string, unknown>): GpuUniforms;
-/** Tempo do laco de quadros, em segundos. */
+/** Time in the frame loop, in seconds. */
 interface GpuClock {
-    /** Segundos desde o primeiro quadro. */
+    /** Seconds since the first frame. */
     readonly time: number;
-    /** Segundos desde o quadro anterior. */
+    /** Seconds since the previous frame. */
     readonly delta: number;
-    /** Numero do quadro atual, comecando em zero. */
+    /** Current frame number, starting at zero. */
     readonly frame: number;
-    /** Avanca o relogio. O laco de quadros chama sozinho. */
+    /** Advances the clock. The frame loop calls it automatically. */
     tick(now?: number): void;
     reset(): void;
 }
 /**
- * Cria um relogio. O contexto entra por simetria com o resto da API: o relogio
- * funciona igual com ou sem GPU, o que deixa a directive escrever um caminho so.
+ * Creates a clock. The context comes in for symmetry with the rest of the API: the clock
+ * works the same with or without GPU, so the directive can write one path.
  */
 declare function clock(_gpu?: GpuContext | null): GpuClock;
-/** Opcoes de `effect()`. */
+/** Options for `effect()`. */
 interface GpuEffectOptions {
-    /** Valores iniciais dos uniforms. */
+    /** Initial uniform values. */
     set?: Record<string, unknown>;
-    /** Nome do `@fragment`. Padrao o primeiro encontrado na fonte. */
+    /** Name of `@fragment`. Default the first found in the source. */
     entry?: string;
-    /** Formato do destino. Padrao o formato preferido do canvas. */
+    /** Destination format. Default the canvas's preferred format. */
     format?: GPUTextureFormat;
-    /** Views ligadas aos bindings de textura, por nome da variavel no WGSL. */
+    /** Views bound to texture bindings, by variable name in WGSL. */
     textures?: Record<string, GPUTextureView>;
     label?: string;
 }
-/** Um shader de tela cheia pronto para desenhar. */
+/** A full-screen shader ready to draw. */
 interface GpuEffect {
-    /** O que a reflexao encontrou na fonte. Funciona mesmo sem GPU. */
+    /** What reflection found in the source. Works even without GPU. */
     readonly reflection: WgslReflection;
-    /** `false` quando o pipeline nao subiu. Desenhar vira operacao vazia. */
+    /** `false` when the pipeline didn't come up. Drawing becomes a no-op. */
     readonly ok: boolean;
     readonly uniforms: GpuUniforms;
-    /** Atualiza uniforms sem recriar o pipeline. */
+    /** Updates uniforms without recreating the pipeline. */
     set(values: Record<string, unknown>): void;
-    /** Grava os comandos de desenho. Chamado por `frame.pass`. */
+    /** Records the draw commands. Called by `frame.pass`. */
     draw(pass: GPURenderPassEncoder): void;
     destroy(): void;
 }
 /**
- * Compila um shader de tela cheia.
+ * Compiles a full-screen shader.
  *
- * Quando a fonte nao traz `@vertex`, a Voodoo acrescenta um triangulo que cobre
- * a tela e entrega `@location(0) uv` ao fragmento. Escrever so o `@fragment` e o
- * caso comum, e e o que a directive `v-shader` espera.
+ * When the source doesn't bring `@vertex`, Voodoo adds a triangle covering
+ * the screen and delivers `@location(0) uv` to the fragment. Writing just the `@fragment` is
+ * the common case, and what the `v-shader` directive expects.
  *
  * ```js
  * const efeito = V.gpu.effect(gpu, wgsl, { set: { speed: 1.2 } })
- * efeito.set({ speed: 2 })   // nao recompila nada
+ * efeito.set({ speed: 2 })   // doesn't recompile anything
  * ```
  */
 declare function effect(gpu: GpuContext | null, wgsl: string, options?: GpuEffectOptions): GpuEffect;
-/** Opcoes de `compute()`. */
+/** Options for `compute()`. */
 interface GpuComputeOptions {
     set?: Record<string, unknown>;
     entry?: string;
-    /** Quantos workgroups despachar. Padrao `[1, 1, 1]`. */
+    /** How many workgroups to dispatch. Default `[1, 1, 1]`. */
     workgroups?: [number, number?, number?];
     textures?: Record<string, GPUTextureView>;
     label?: string;
 }
-/** Um shader de computacao pronto para despachar. */
+/** A compute shader ready to dispatch. */
 interface GpuCompute {
     readonly reflection: WgslReflection;
     readonly ok: boolean;
     readonly uniforms: GpuUniforms;
     set(values: Record<string, unknown>): void;
-    /** Grava o despacho. Chamado por `frame.compute`. */
+    /** Records the dispatch. Called by `frame.compute`. */
     dispatch(pass: GPUComputePassEncoder, workgroups?: [number, number?, number?]): void;
     destroy(): void;
 }
-/** Compila um shader de computacao. */
+/** Compiles a compute shader. */
 declare function compute(gpu: GpuContext | null, wgsl: string, options?: GpuComputeOptions): GpuCompute;
-/** Destino aceito por `frame.pass`. */
+/** Target accepted by `frame.pass`. */
 type GpuPassTarget = GpuSurface | GpuTarget | null;
-/** Cor de limpeza, como `[r, g, b, a]` de 0 a 1. */
+/** Clear color, like `[r, g, b, a]` from 0 to 1. */
 type GpuClearColor = [number, number, number, number];
-/** O quadro em construcao, entregue ao callback de `frame` e `frameLoop`. */
+/** The frame being built, delivered to the callback of `frame` and `frameLoop`. */
 interface GpuFrame {
     readonly encoder: GPUCommandEncoder | null;
-    /** Relogio do laco. Fora do laco, marca sempre o quadro zero. */
+    /** Loop clock. Outside the loop, always marks frame zero. */
     readonly clock: GpuClock;
-    /** Abre um passe de renderizacao no destino e executa os efeitos em ordem. */
+    /** Opens a render pass on the target and executes effects in order. */
     pass(destino: GpuPassTarget, ...operacoes: Array<GpuEffect | null | undefined>): void;
-    /** Abre um passe de computacao e despacha as operacoes em ordem. */
+    /** Opens a compute pass and dispatches operations in order. */
     compute(...operacoes: Array<GpuCompute | null | undefined>): void;
-    /** Cor usada ao limpar o destino. Padrao transparente. */
+    /** Color used when clearing the target. Default transparent. */
     clear: GpuClearColor;
 }
 /**
- * Grava e envia um quadro.
+ * Records and submits a frame.
  *
  * ```js
  * V.gpu.frame(gpu, (frame) => frame.pass(tela, ondas))
@@ -566,7 +566,7 @@ interface GpuFrame {
  */
 declare function frame(gpu: GpuContext | null, build: (frame: GpuFrame) => void, relogio?: GpuClock): void;
 /**
- * Laco de quadros com `requestAnimationFrame`.
+ * Frame loop with `requestAnimationFrame`.
  *
  * ```js
  * const parar = V.gpu.frameLoop(gpu, (frame) => {
@@ -575,18 +575,18 @@ declare function frame(gpu: GpuContext | null, build: (frame: GpuFrame) => void,
  * })
  * ```
  *
- * @returns funcao que encerra o laco. Sem GPU, o laco nem comeca.
+ * @returns function that stops the loop. Without GPU, the loop never starts.
  */
 declare function frameLoop(gpu: GpuContext | null, build: (frame: GpuFrame) => void): () => void;
 /**
- * Solta tudo que o contexto abriu e encerra o dispositivo.
+ * Releases everything the context opened and shuts down the device.
  *
- * Chamar duas vezes nao faz mal, e chamar com `null` tambem nao.
+ * Calling twice does no harm, and calling with `null` doesn't either.
  */
 declare function destroy(gpu: GpuContext | null): void;
 /**
- * Tudo do modulo reunido, para expor como `V.gpu` sem colidir com nomes de
- * outros modulos, como o `effect` da reatividade.
+ * Everything from the module grouped, to expose as `V.gpu` without clashing with names of
+ * other modules, like the `effect` from reactivity.
  */
 declare const gpu: {
     supported: typeof supported;
@@ -601,7 +601,7 @@ declare const gpu: {
     frame: typeof frame;
     frameLoop: typeof frameLoop;
     destroy: typeof destroy;
-    /** Leitura de WGSL, util sozinha para inspecionar um shader. */
+    /** WGSL reading, useful on its own for inspecting a shader. */
     reflect: typeof reflectWgsl;
 };
 

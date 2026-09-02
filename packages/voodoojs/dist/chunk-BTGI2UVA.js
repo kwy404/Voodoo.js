@@ -1,6 +1,6 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-PKGMG3DB.js';
-import { emDesenvolvimento, avisarExpressaoInvalida, avisarDirectiveDesconhecida } from './chunk-S3U6BJNJ.js';
-import { config, directives, components } from './chunk-ZVXMGOYP.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-DVD2FAS5.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-UGX5TOOI.js';
+import { config, directives, components } from './chunk-VARMOPJR.js';
 import { __publicField } from './chunk-5I3A7PYT.js';
 
 /**
@@ -107,7 +107,7 @@ function tokenize(source) {
     }
     if (ch === "/" && source[i + 1] === "*") {
       const end = source.indexOf("*/", i + 2);
-      if (end === -1) throw new VoodooSyntaxError("Comentario de bloco nao fechado", source, i);
+      if (end === -1) throw new VoodooSyntaxError("Unclosed block comment", source, i);
       i = end + 2;
       continue;
     }
@@ -135,7 +135,7 @@ function tokenize(source) {
         }
       }
       const parsed = Number(raw.replace(/_/g, ""));
-      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Numero invalido", source, start2);
+      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Invalid number", source, start2);
       tokens.push({ type: "num", value: raw, parsed, start: start2, end: i });
       continue;
     }
@@ -150,36 +150,36 @@ function tokenize(source) {
             if (source[i + 1] === "{") {
               const close = source.indexOf("}", i);
               if (close === -1)
-                throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
-              const digitos = source.slice(i + 2, close);
-              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                throw new VoodooSyntaxError("Unclosed Unicode escape", source, start2);
+              const digits = source.slice(i + 2, close);
+              if (!/^[0-9a-fA-F]+$/.test(digits) || parseInt(digits, 16) > 1114111)
                 throw new VoodooSyntaxError(
-                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  `Invalid Unicode escape "\\u{${digits}}"`,
                   source,
                   i - 1
                 );
-              out += String.fromCodePoint(parseInt(digitos, 16));
+              out += String.fromCodePoint(parseInt(digits, 16));
               i = close + 1;
             } else {
-              const digitos = source.slice(i + 1, i + 5);
-              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+              const digits = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digits))
                 throw new VoodooSyntaxError(
-                  "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                  "Invalid Unicode escape: \\u needs 4 hexadecimal digits",
                   source,
                   i - 1
                 );
-              out += String.fromCharCode(parseInt(digitos, 16));
+              out += String.fromCharCode(parseInt(digits, 16));
               i += 5;
             }
           } else if (esc === "x") {
-            const digitos = source.slice(i + 1, i + 3);
-            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+            const digits = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digits))
               throw new VoodooSyntaxError(
-                "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                "Invalid hexadecimal escape: \\x needs 2 hexadecimal digits",
                 source,
                 i - 1
               );
-            out += String.fromCharCode(parseInt(digitos, 16));
+            out += String.fromCharCode(parseInt(digits, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -189,7 +189,7 @@ function tokenize(source) {
           out += source[i++];
         }
       }
-      if (i >= len) throw new VoodooSyntaxError("String nao fechada", source, start2);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed string", source, start2);
       i++;
       tokens.push({ type: "str", value: out, parsed: out, start: start2, end: i });
       continue;
@@ -229,14 +229,14 @@ function tokenize(source) {
             expr += source[i++];
           }
           if (depth !== 0)
-            throw new VoodooSyntaxError("Interpolacao de template nao fechada", source, start2);
+            throw new VoodooSyntaxError("Unclosed template interpolation", source, start2);
           i++;
           exprs.push(expr);
           continue;
         }
         current += source[i++];
       }
-      if (i >= len) throw new VoodooSyntaxError("Template literal nao fechado", source, start2);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed template literal", source, start2);
       i++;
       quasis.push(current);
       tokens.push({
@@ -267,7 +267,7 @@ function tokenize(source) {
       tokens.push({ type: "punct", value: matched, start: start2, end: i });
       continue;
     }
-    throw new VoodooSyntaxError(`Caractere inesperado "${ch}"`, source, i);
+    throw new VoodooSyntaxError(`Unexpected character "${ch}"`, source, i);
   }
   tokens.push({ type: "eof", value: "", start: len, end: len });
   return tokens;
@@ -331,14 +331,14 @@ var Parser = class {
     if (!this.isPunct(value)) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Esperava "${value}" mas encontrou "${t.value || "fim da expressao"}"`,
+        `Expected "${value}" but found "${t.value || "end of expression"}"`,
         this.source,
         t.start
       );
     }
     return this.next();
   }
-  /** Ponto de entrada: uma ou mais expressoes separadas por `;` ou `,` no topo. */
+  /** Entry point: one or more expressions separated by `;` or `,` at the top. */
   parseProgram() {
     const body = [];
     while (this.peek().type !== "eof") {
@@ -352,24 +352,24 @@ var Parser = class {
   parseExpression() {
     return this.parseAssignment();
   }
-  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
-  entrar() {
+  /** Raises recursion level and rejects expression when exceeding limit. */
+  enterLevel() {
     if (++this.depth > MAX_DEPTH) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        `Expression too deeply nested (limit of ${MAX_DEPTH} levels)`,
         this.source,
         t.start
       );
     }
   }
   parseAssignment() {
-    this.entrar();
-    const node = this.parseAssignmentInterno();
+    this.enterLevel();
+    const node = this.parseAssignmentInternal();
     this.depth--;
     return node;
   }
-  parseAssignmentInterno() {
+  parseAssignmentInternal() {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
@@ -383,7 +383,7 @@ var Parser = class {
     const t = this.peek();
     if (t.type === "punct" && ASSIGN_OPS.has(t.value)) {
       if (left.t !== "id" && left.t !== "member") {
-        throw new VoodooSyntaxError("Alvo de atribuicao invalido", this.source, t.start);
+        throw new VoodooSyntaxError("Invalid assignment target", this.source, t.start);
       }
       this.next();
       const value = this.parseAssignment();
@@ -392,8 +392,8 @@ var Parser = class {
     return left;
   }
   /**
-   * Tenta ler `( params ) =>`. Se o que vem depois do parentese de fechamento
-   * nao for `=>`, volta a posicao original e deixa o caminho normal seguir.
+   * Tries to read `( params ) =>`. If what comes after the closing parenthesis
+   * is not `=>`, returns to original position and lets normal parsing continue.
    */
   tryParseParenArrow() {
     const start2 = this.pos;
@@ -436,12 +436,12 @@ var Parser = class {
     return test;
   }
   parseBinary(minPrec) {
-    this.entrar();
-    const node = this.parseBinarioInterno(minPrec);
+    this.enterLevel();
+    const node = this.parseBinaryInternal(minPrec);
     this.depth--;
     return node;
   }
-  parseBinarioInterno(minPrec) {
+  parseBinaryInternal(minPrec) {
     let left = this.parseUnary();
     for (; ; ) {
       const t = this.peek();
@@ -458,12 +458,12 @@ var Parser = class {
     return left;
   }
   parseUnary() {
-    this.entrar();
-    const node = this.parseUnarioInterno();
+    this.enterLevel();
+    const node = this.parseUnaryInternal();
     this.depth--;
     return node;
   }
-  parseUnarioInterno() {
+  parseUnaryInternal() {
     const t = this.peek();
     if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
       this.next();
@@ -489,7 +489,7 @@ var Parser = class {
         this.next();
         const prop = this.next();
         if (prop.type !== "ident") {
-          throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+          throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
         }
         expr = { t: "member", o: expr, p: { t: "lit", v: prop.value }, computed: false, opt: false };
       } else if (this.isPunct("?.")) {
@@ -504,7 +504,7 @@ var Parser = class {
         } else {
           const prop = this.next();
           if (prop.type !== "ident") {
-            throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+            throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
           }
           expr = {
             t: "member",
@@ -553,7 +553,7 @@ var Parser = class {
       const part = t.tpl;
       if (templateDepth >= MAX_TEMPLATE_DEPTH) {
         throw new VoodooSyntaxError(
-          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          `Template literal too deeply nested (limit of ${MAX_TEMPLATE_DEPTH} levels)`,
           this.source,
           t.start
         );
@@ -588,7 +588,7 @@ var Parser = class {
       if (t.value === "{") return this.parseObjectLiteral();
     }
     throw new VoodooSyntaxError(
-      `Token inesperado "${t.value || "fim da expressao"}"`,
+      `Unexpected token "${t.value || "end of expression"}"`,
       this.source,
       t.start
     );
@@ -625,7 +625,7 @@ var Parser = class {
       } else {
         const keyToken = this.next();
         if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
-          throw new VoodooSyntaxError("Chave de objeto invalida", this.source, keyToken.start);
+          throw new VoodooSyntaxError("Invalid object key", this.source, keyToken.start);
         }
         const key = String(keyToken.parsed ?? keyToken.value);
         if (this.isPunct(":")) {
@@ -698,21 +698,21 @@ var VoodooRuntimeError = class extends Error {
   constructor(message, expression) {
     super(expression ? `${message}
 
-Expressao: ${expression}` : message);
+Expression: ${expression}` : message);
     __publicField(this, "expression", expression);
     this.name = "VoodooRuntimeError";
   }
 };
 var SPREAD = /* @__PURE__ */ Symbol("spread");
-var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+var BLOCKED_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 function chaveBloqueada(key) {
-  return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+  return typeof key === "string" && BLOCKED_KEYS.has(key);
 }
-function checarChave(key, expressao) {
+function checkKey(key, expression) {
   if (chaveBloqueada(key)) {
     throw new VoodooRuntimeError(
-      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
-      expressao
+      `Access blocked to "${String(key)}": template expressions cannot reach the prototype chain. Expose a method in state instead.`,
+      expression
     );
   }
   return key;
@@ -730,7 +730,7 @@ function evaluate(node, scope) {
       return out;
     }
     case "id": {
-      checarChave(node.n);
+      checkKey(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -741,10 +741,10 @@ function evaluate(node, scope) {
       if (obj == null) {
         if (node.opt) return void 0;
         throw new VoodooRuntimeError(
-          `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
+          `Could not read "${describeKey(node, scope)}" from ${obj === null ? "null" : "undefined"}`
         );
       }
-      const key = checarChave(
+      const key = checkKey(
         node.computed ? evaluate(node.p, scope) : node.p.v
       );
       return obj[key];
@@ -757,16 +757,16 @@ function evaluate(node, scope) {
         if (obj == null) {
           if (node.callee.opt || node.opt) return void 0;
           throw new VoodooRuntimeError(
-            `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
+            `Could not call "${describeKey(node.callee, scope)}" from ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = checarChave(
+        const key = checkKey(
           node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
         );
         thisArg = obj;
         fn = obj[key];
       } else if (node.callee.t === "id") {
-        checarChave(node.callee.n);
+        checkKey(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -780,7 +780,7 @@ function evaluate(node, scope) {
       if (fn == null && node.opt) return void 0;
       if (typeof fn !== "function") {
         const name = node.callee.t === "id" ? node.callee.n : describeKey(node.callee, scope);
-        throw new VoodooRuntimeError(`"${name}" nao e uma funcao`);
+        throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
       return fn.apply(thisArg, evalArgs(node.args, scope));
     }
@@ -806,7 +806,7 @@ function evaluate(node, scope) {
         case "void":
           return void 0;
       }
-      throw new VoodooRuntimeError(`Operador unario nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported unary operator: ${node.op}`);
     }
     case "update": {
       const old = Number(evaluate(node.a, scope));
@@ -851,7 +851,7 @@ function evaluate(node, scope) {
         case "instanceof":
           return l instanceof r;
       }
-      throw new VoodooRuntimeError(`Operador nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
     }
     case "logic": {
       const l = evaluate(node.l, scope);
@@ -893,7 +893,7 @@ function evaluate(node, scope) {
             value = current ** operand;
             break;
           default:
-            throw new VoodooRuntimeError(`Atribuicao nao suportada: ${node.op}`);
+            throw new VoodooRuntimeError(`Unsupported assignment: ${node.op}`);
         }
       }
       assign(node.target, value, scope);
@@ -914,7 +914,7 @@ function evaluate(node, scope) {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope));
         } else {
-          const key = checarChave(
+          const key = checkKey(
             prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
           );
           out[key] = evaluate(prop.value, scope);
@@ -939,7 +939,7 @@ function evaluate(node, scope) {
       return last;
     }
   }
-  throw new VoodooRuntimeError(`No desconhecido: ${node.t}`);
+  throw new VoodooRuntimeError(`Unknown node: ${node.t}`);
 }
 function evalArgs(args, scope) {
   const out = [];
@@ -955,29 +955,29 @@ function evalArgs(args, scope) {
 }
 function assign(target, value, scope) {
   if (target.t === "id") {
-    checarChave(target.n);
+    checkKey(target.n);
     scope.set(target.n, value);
     return;
   }
   if (target.t === "member") {
     const obj = evaluate(target.o, scope);
     if (obj == null) {
-      throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
+      throw new VoodooRuntimeError("Could not write to null or undefined");
     }
-    const key = checarChave(
+    const key = checkKey(
       target.computed ? evaluate(target.p, scope) : target.p.v
     );
     obj[key] = value;
     return;
   }
-  throw new VoodooRuntimeError("Alvo de atribuicao invalido");
+  throw new VoodooRuntimeError("Invalid assignment target");
 }
 function describeKey(node, scope) {
   if (node.t === "member") {
     return node.computed ? String(evaluate(node.p, scope)) : String(node.p.v);
   }
   if (node.t === "id") return node.n;
-  return "valor";
+  return "value";
 }
 function stringify(value) {
   if (value == null) return "";
@@ -1001,29 +1001,29 @@ function magic(name, getter) {
 }
 var Scope = class _Scope {
   constructor(data = {}, parent = null, el = null) {
-    /** Dados proprios deste escopo, normalmente um proxy reativo. */
+    /** Data local to this scope, normally a reactive proxy. */
     __publicField(this, "data");
     __publicField(this, "parent");
-    /** Elemento que criou o escopo. Usado por `$el` e `$refs`. */
+    /** Element that created the scope. Used by `$el` and `$refs`. */
     __publicField(this, "el");
-    /** Referencias declaradas com `v-ref` dentro deste escopo. */
+    /** References declared with `v-ref` within this scope. */
     __publicField(this, "refs", {});
-    /** Instancia de componente, quando este escopo pertence a um. */
+    /** Component instance, when this scope belongs to one. */
     __publicField(this, "component", null);
-    /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+    /** Values delivered by `provide`, visible to lower scopes. */
     __publicField(this, "provides", null);
     __publicField(this, "magicCache", null);
     this.data = data;
     this.parent = parent;
     this.el = el;
   }
-  /** Escopo raiz da cadeia. */
+  /** Root scope of the chain. */
   get root() {
     let s = this;
     while (s.parent) s = s.parent;
     return s;
   }
-  /** Procura um valor de `provide` subindo a cadeia de escopos. */
+  /** Look up a `provide` value by traveling up the scope chain. */
   inject(key, fallback) {
     let s = this;
     while (s) {
@@ -1032,7 +1032,7 @@ var Scope = class _Scope {
     }
     return fallback;
   }
-  /** Escopo de componente mais proximo, subindo a cadeia. */
+  /** Nearest component scope, traveling up the chain. */
   get owner() {
     let s = this;
     while (s) {
@@ -1041,7 +1041,7 @@ var Scope = class _Scope {
     }
     return null;
   }
-  /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
+  /** Set of visible refs, merging ancestor scopes. */
   get allRefs() {
     const chain = [];
     let s = this;
@@ -1085,7 +1085,7 @@ var Scope = class _Scope {
   child(vars = {}, el = null) {
     return new _Scope(vars, this, el ?? this.el);
   }
-  /** Cria um escopo filho reativo, usado por `v-data` e por `v-for`. */
+  /** Create a reactive child scope, used by `v-data` and `v-for`. */
   reactiveChild(vars, el = null) {
     return new _Scope(reactive(vars), this, el ?? this.el);
   }
@@ -1144,9 +1144,9 @@ function trackEffectScope(node, scope) {
 function getEffectScopes(node) {
   return nodeEffectScopes.get(node) ?? [];
 }
-var remocoesIgnoradas = /* @__PURE__ */ new WeakSet();
+var ignoredRemovals = /* @__PURE__ */ new WeakSet();
 function removeQuietly(node) {
-  remocoesIgnoradas.add(node);
+  ignoredRemovals.add(node);
   node.remove();
 }
 function addCleanup(node, fn) {
@@ -1156,11 +1156,11 @@ function addCleanup(node, fn) {
 }
 function destroy(node) {
   if (node.nodeType === 1) {
-    const filhos = [];
-    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
-      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
+    const children = [];
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
-    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
+    for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -1258,19 +1258,19 @@ function hasDirective(el, name) {
 function queryDirective(root, name) {
   const out = [];
   const set = directiveIndex.get(name);
-  const raiz = root;
+  const root_ = root;
   if (set) {
     for (const el of set) {
       if (!el.isConnected) continue;
-      if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el);
+      if (root_.contains && root_.contains(el) && el !== root_) out.push(el);
     }
   }
-  const vistos = new Set(out);
+  const seen = new Set(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (vistos.has(el)) continue;
-    vistos.add(el);
+    if (seen.has(el)) continue;
+    seen.add(el);
     out.push(el);
   }
   out.sort(
@@ -1279,10 +1279,10 @@ function queryDirective(root, name) {
   return out;
 }
 function closestDirective(el, name) {
-  let atual = el;
-  while (atual) {
-    if (hasDirective(atual, name)) return atual;
-    atual = atual.parentElement;
+  let current = el;
+  while (current) {
+    if (hasDirective(current, name)) return current;
+    current = current.parentElement;
   }
   return null;
 }
@@ -1314,14 +1314,14 @@ function stripAttributes(el) {
   if (!config.cleanAttributes) return;
   let map = attributeCache.get(el);
   if (!map) attributeCache.set(el, map = /* @__PURE__ */ new Map());
-  const remover = [];
+  const toRemove = [];
   for (let i = 0; i < el.attributes.length; i++) {
     const attr = el.attributes[i];
     if (!isVoodooAttribute(attr.name)) continue;
     map.set(attr.name, attr.value);
-    remover.push(attr.name);
+    toRemove.push(attr.name);
   }
-  for (const name of remover) el.removeAttribute(name);
+  for (const name of toRemove) el.removeAttribute(name);
 }
 function restoreAttributes(el) {
   const map = attributeCache.get(el);
@@ -1354,10 +1354,10 @@ function evaluateIn(expression, scope, context, el) {
   try {
     return evaluate(parse(expression), scope);
   } catch (err) {
-    if (emDesenvolvimento()) {
-      avisarExpressaoInvalida(el ?? scope.el, context ?? "expressao", expression, err);
+    if (inDevelopment()) {
+      warnInvalidExpression(el ?? scope.el, context ?? "expression", expression, err);
     }
-    handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+    handleError(err, context ? `${context} ("${expression}")` : `expression "${expression}"`);
     return void 0;
   }
 }
@@ -1368,8 +1368,8 @@ function markSkipChildren(el) {
 function runDirective(el, attr, scope) {
   const def = directives.get(attr.name);
   if (!def) {
-    if (emDesenvolvimento() && attr.raw.startsWith(config.prefix)) {
-      avisarDirectiveDesconhecida(el, attr.raw, attr.name);
+    if (inDevelopment() && attr.raw.startsWith(config.prefix)) {
+      warnUnknownDirective(el, attr.raw, attr.name);
     }
     return;
   }
@@ -1444,12 +1444,12 @@ function walk(node, scope) {
   const dataAttr = attrs.find((a) => a.name === "data");
   const componentAttr = attrs.find((a) => a.name === "component");
   const componentName = componentAttr ? componentAttr.expression || "" : tagComponent || "";
-  let montouComponente = false;
+  let mountedComponent = false;
   if (componentName && componentMounter) {
     const created = componentMounter(el, componentName, current);
     if (created) {
       current = created;
-      montouComponente = true;
+      mountedComponent = true;
       nodeScopes.set(el, current);
     }
   } else if (dataAttr || componentAttr) {
@@ -1457,10 +1457,10 @@ function walk(node, scope) {
     current = current.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
     nodeScopes.set(el, current);
   }
-  const escopoDosAtributos = montouComponente ? activeScope : current;
+  const attributeScope = mountedComponent ? activeScope : current;
   for (const attr of attrs) {
     if (attr.name === "data" || attr.name === "component") continue;
-    runDirective(el, attr, escopoDosAtributos);
+    runDirective(el, attr, attributeScope);
   }
   stripAttributes(el);
   if (!skipChildren.has(el)) walkChildren(el, current);
@@ -1473,79 +1473,79 @@ function walkChildren(el, scope) {
   }
   for (const child of list) walk(child, nodeScopes.get(child) ?? scope);
 }
-var LIMITE_EXPRESSAO = 500;
-var expressaoValida = /* @__PURE__ */ new Map();
-function pareceExpressao(texto) {
-  const limpo = texto.trim();
-  if (!limpo) return false;
-  const guardado = expressaoValida.get(limpo);
-  if (guardado !== void 0) return guardado;
-  let valida = true;
+var EXPRESSION_LIMIT = 500;
+var validExpressions = /* @__PURE__ */ new Map();
+function looksLikeExpression(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const cached = validExpressions.get(trimmed);
+  if (cached !== void 0) return cached;
+  let valid = true;
   try {
-    valida = parse(limpo).t !== "seq";
+    valid = parse(trimmed).t !== "seq";
   } catch {
-    valida = false;
+    valid = false;
   }
-  expressaoValida.set(limpo, valida);
-  return valida;
+  validExpressions.set(trimmed, valid);
+  return valid;
 }
-function fecharChave(fonte, inicio) {
-  let nivel = 0;
-  let aspas = null;
-  for (let i = inicio; i < fonte.length; i++) {
-    const c = fonte[i];
-    if (aspas) {
+function closeBrace(source, start2) {
+  let level = 0;
+  let quote = null;
+  for (let i = start2; i < source.length; i++) {
+    const c = source[i];
+    if (quote) {
       if (c === "\\") i++;
-      else if (c === aspas) aspas = null;
+      else if (c === quote) quote = null;
       continue;
     }
     if (c === '"' || c === "'" || c === "`") {
-      aspas = c;
+      quote = c;
       continue;
     }
-    if (c === "{") nivel++;
+    if (c === "{") level++;
     else if (c === "}") {
-      nivel--;
-      if (nivel === 0) return i;
+      level--;
+      if (level === 0) return i;
     }
   }
   return -1;
 }
-function fatiarTexto(raw) {
+function sliceText(raw) {
   const segments = [];
   let literal = "";
   let i = 0;
-  const guardarLiteral = () => {
+  const saveLiteral = () => {
     if (literal) segments.push({ text: literal });
     literal = "";
   };
   while (i < raw.length) {
-    const abre = raw.indexOf("{", i);
-    if (abre === -1) {
+    const open = raw.indexOf("{", i);
+    if (open === -1) {
       literal += raw.slice(i);
       break;
     }
-    literal += raw.slice(i, abre);
-    const duplo = raw[abre + 1] === "{";
-    const fecha = duplo ? raw.indexOf("}}", abre + 2) : fecharChave(raw, abre);
-    if (fecha === -1) {
-      literal += raw[abre];
-      i = abre + 1;
+    literal += raw.slice(i, open);
+    const double = raw[open + 1] === "{";
+    const close = double ? raw.indexOf("}}", open + 2) : closeBrace(raw, open);
+    if (close === -1) {
+      literal += raw[open];
+      i = open + 1;
       continue;
     }
-    const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
-    const fim = duplo ? fecha + 2 : fecha + 1;
-    const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
-    if (cabe && pareceExpressao(expressao)) {
-      guardarLiteral();
-      segments.push({ expression: expressao.trim() });
-      i = fim;
+    const expression = double ? raw.slice(open + 2, close) : raw.slice(open + 1, close);
+    const end = double ? close + 2 : close + 1;
+    const fits = double || expression.length <= EXPRESSION_LIMIT;
+    if (fits && looksLikeExpression(expression)) {
+      saveLiteral();
+      segments.push({ expression: expression.trim() });
+      i = end;
       continue;
     }
-    literal += raw[abre];
-    i = abre + 1;
+    literal += raw[open];
+    i = open + 1;
   }
-  guardarLiteral();
+  saveLiteral();
   return segments;
 }
 var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
@@ -1553,15 +1553,15 @@ function bindTextNode(node, scope) {
   const raw = node.textContent;
   if (!raw || raw.indexOf("{") === -1) return;
   if (initialized.has(node)) return;
-  let ancestral = node.parentElement;
-  while (ancestral) {
-    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
-    if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+  let ancestor = node.parentElement;
+  while (ancestor) {
+    if (NO_INTERPOLATION.has(ancestor.tagName)) return;
+    if (ancestor.hasAttribute(`${config.prefix}ignore`) || ancestor.hasAttribute(`${config.prefix}pre`) || ancestor.hasAttribute("data-v-ignore") || ancestor.hasAttribute("data-v-pre")) {
       return;
     }
-    ancestral = ancestral.parentElement;
+    ancestor = ancestor.parentElement;
   }
-  const segments = fatiarTexto(raw);
+  const segments = sliceText(raw);
   if (!segments.some((s) => s.expression)) return;
   initialized.add(node);
   const owner = new EffectScope(true);
@@ -1571,7 +1571,7 @@ function bindTextNode(node, scope) {
     () => effect(() => {
       let out = "";
       for (const segment of segments) {
-        out += segment.text ?? stringify(evaluateIn(segment.expression, scope, "interpolacao"));
+        out += segment.text ?? stringify(evaluateIn(segment.expression, scope, "interpolation"));
       }
       if (node.textContent !== out) node.textContent = out;
     }, { scope: owner })
@@ -1607,8 +1607,8 @@ function observeDOM(target) {
     for (const mutation of mutations) {
       for (let i = 0; i < mutation.removedNodes.length; i++) {
         const removed = mutation.removedNodes[i];
-        if (remocoesIgnoradas.has(removed)) {
-          remocoesIgnoradas.delete(removed);
+        if (ignoredRemovals.has(removed)) {
+          ignoredRemovals.delete(removed);
           continue;
         }
         if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
@@ -1633,5 +1633,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-EUQULT5T.js.map
-//# sourceMappingURL=chunk-EUQULT5T.js.map
+//# sourceMappingURL=chunk-BTGI2UVA.js.map
+//# sourceMappingURL=chunk-BTGI2UVA.js.map

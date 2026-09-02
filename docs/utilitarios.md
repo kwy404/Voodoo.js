@@ -220,7 +220,7 @@ V.stripTags('<b>hi</b>');    // 'hi'
 ```
 
 `escapeHtml` is the safe way to build HTML by hand. `stripTags` removes tags simply, and **does not**
-work as a security sanitizer. See [Security](security.md).
+work as a security sanitizer. See [Security](seguranca.md).
 
 ---
 

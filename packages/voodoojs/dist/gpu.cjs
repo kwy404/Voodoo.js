@@ -11,7 +11,7 @@ var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 function handleError(err, context) {
-  console.error(`[Voodoo] erro em ${context}:`, err);
+  console.error(`[Voodoo] error in ${context}:`, err);
 }
 
 // src/runtime/registry.ts
@@ -28,15 +28,15 @@ function defineDirective(name, setup, options = {}) {
     terminal: options.terminal ?? false
   });
 }
-function descreverElemento(el) {
-  if (!el) return "(sem elemento)";
+function describeElement(el) {
+  if (!el) return "(no element)";
   let out = el.tagName.toLowerCase();
   if (el.id) out += `#${el.id}`;
   const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
   if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
   return `<${out}>`;
 }
-function avisar(mensagem) {
+function warn(message) {
   return;
 }
 
@@ -47,11 +47,11 @@ var initialized = /* @__PURE__ */ new WeakSet();
 var nodeEffectScopes = /* @__PURE__ */ new WeakMap();
 function destroy(node) {
   if (node.nodeType === 1) {
-    const filhos = [];
-    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
-      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
+    const children = [];
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
-    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
+    for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -123,7 +123,7 @@ var HttpError = class extends Error {
   get status() {
     return this.response?.status ?? 0;
   }
-  /** `true` quando o erro foi de rede, timeout ou cancelamento. */
+  /** `true` when error is network, timeout, or cancellation. */
   get isNetworkError() {
     return !this.response;
   }
@@ -197,8 +197,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const novos = readQueue();
-      writeQueue([...list.slice(index), ...novos]);
+      const newItems = readQueue();
+      writeQueue([...list.slice(index), ...newItems]);
       break;
     }
   }
@@ -263,8 +263,8 @@ async function parseResponse(response, type) {
 }
 var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
 function temChaveDeIdempotencia(headers) {
-  for (const [nome, valor] of Object.entries(headers)) {
-    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === "idempotency-key" && String(value).trim() !== "") return true;
   }
   return false;
 }
@@ -359,7 +359,7 @@ async function request(input) {
           continue;
         }
         const error2 = new HttpError(
-          `Requisicao falhou com status ${response.status}`,
+          `Request failed with status ${response.status}`,
           result,
           config2
         );
@@ -389,7 +389,7 @@ async function request(input) {
       }
     }
   }
-  const message = lastError?.name === "TimeoutError" ? `Tempo esgotado apos ${config2.timeout}ms` : `Falha de rede ao acessar ${url}`;
+  const message = lastError?.name === "TimeoutError" ? `Timeout after ${config2.timeout}ms` : `Network failure accessing ${url}`;
   const error = new HttpError(message, void 0, config2, lastError);
   for (const interceptor of errorInterceptors) interceptor(error);
   throw error;
@@ -421,9 +421,9 @@ var http = {
   head(url, options = {}) {
     return shortcut({ ...options, url, method: "HEAD" });
   },
-  /** Requisicao completa, com status e cabecalhos. */
+  /** Full request with status and headers. */
   request,
-  /** Envia arquivos com progresso real, usando XMLHttpRequest. */
+  /** Upload files with real progress using XMLHttpRequest. */
   upload(url, data, options = {}) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -453,15 +453,15 @@ var http = {
           }
         }
         if (xhr.status >= 200 && xhr.status < 300) resolve(data2);
-        else reject(new HttpError(`Upload falhou com status ${xhr.status}`));
+        else reject(new HttpError(`Upload failed with status ${xhr.status}`));
       });
-      xhr.addEventListener("error", () => reject(new HttpError("Falha de rede no upload")));
-      xhr.addEventListener("abort", () => reject(new HttpError("Upload cancelado")));
+      xhr.addEventListener("error", () => reject(new HttpError("Network failure during upload")));
+      xhr.addEventListener("abort", () => reject(new HttpError("Upload canceled")));
       options.signal?.addEventListener("abort", () => xhr.abort());
       xhr.send(data);
     });
   },
-  /** Server-Sent Events com reconexao automatica do proprio navegador. */
+  /** Server-Sent Events with automatic reconnection by the browser. */
   sse(url, handlers = {}) {
     const source = new EventSource(buildURL({ url }));
     source.addEventListener("message", (event) => {
@@ -475,7 +475,7 @@ var http = {
     if (handlers.error) source.addEventListener("error", handlers.error);
     return source;
   },
-  /** Le uma resposta em streaming, linha a linha (NDJSON). */
+  /** Read a streaming response line by line (NDJSON). */
   async stream(url, onLine, options = {}) {
     const response = await fetch(buildURL({ url, params: options.params }), {
       headers: { ...defaults.headers, ...options.headers },
@@ -524,12 +524,12 @@ var http = {
       }
     }
   },
-  /** Define cabecalhos enviados em toda requisicao. */
+  /** Set headers sent on every request. */
   setHeader(name, value) {
     if (value === null) delete defaults.headers[name];
     else defaults.headers[name] = value;
   },
-  /** Atalho para autenticacao por token. */
+  /** Shortcut for token-based authentication. */
   setToken(token, scheme = "Bearer") {
     this.setHeader("Authorization", token ? `${scheme} ${token}` : null);
   },
@@ -683,7 +683,7 @@ function describeWgslType(text, structs = {}) {
       kind: "vector",
       scalar,
       size: n * unit,
-      // vec3 alinha como vec4: e a pegadinha classica de quem escreve o offset a mao.
+      // vec3 aligns like vec4: the classic gotcha when writing offsets by hand.
       align: (n === 3 ? 4 : n) * unit,
       components: n
     };
@@ -1072,7 +1072,7 @@ async function init(options = {}) {
     };
     device.lost?.then((info) => {
       gpu2.destroyed = true;
-      avisar(`o dispositivo WebGPU foi perdido (${info.reason}): ${info.message}`);
+      warn(`WebGPU device was lost (${info.reason}): ${info.message}`);
     }).catch(() => void 0);
     return gpu2;
   } catch (err) {
@@ -1417,14 +1417,14 @@ function bindFromReflection(gpu2, reflection, visibility, initial, textures, lab
 }
 function reportCompilation(module, label, source) {
   if (typeof module.getCompilationInfo !== "function") return;
-  const linhas = source.split("\n");
+  const lines = source.split("\n");
   module.getCompilationInfo().then((info) => {
-    const erros = info.messages.filter((m) => m.type === "error");
-    if (erros.length === 0) return;
-    const detalhe = erros.map((m) => `  linha ${m.lineNum}: ${m.message}
-  > ${(linhas[m.lineNum - 1] ?? "").trim()}`).join("\n");
-    handleError(new Error(`shader "${label}" nao compilou:
-${detalhe}`), "V.gpu shader");
+    const errors = info.messages.filter((m) => m.type === "error");
+    if (errors.length === 0) return;
+    const detail = errors.map((m) => `  line ${m.lineNum}: ${m.message}
+  > ${(lines[m.lineNum - 1] ?? "").trim()}`).join("\n");
+    handleError(new Error(`shader "${label}" did not compile:
+${detail}`), "V.gpu shader");
   }).catch(() => void 0);
 }
 function noEffect(reflection) {
@@ -1441,10 +1441,10 @@ function effect2(gpu2, wgsl, options = {}) {
   const reflection = reflectWgsl(wgsl);
   if (!live(gpu2) || !wgsl) return noEffect(reflection);
   const label = options.label ?? "voodoo-effect";
-  const temVertex = !!findEntry(reflection, "vertex");
-  const source = temVertex ? wgsl : `${FULLSCREEN_VERTEX}
+  const hasVertex = !!findEntry(reflection, "vertex");
+  const source = hasVertex ? wgsl : `${FULLSCREEN_VERTEX}
 ${wgsl}`;
-  const vertexEntry = temVertex ? findEntry(reflection, "vertex").name : "voodooFullscreen";
+  const vertexEntry = hasVertex ? findEntry(reflection, "vertex").name : "voodooFullscreen";
   const fragmentEntry = options.entry ?? findEntry(reflection, "fragment")?.name;
   if (!fragmentEntry) {
     return noEffect(reflection);
@@ -1578,7 +1578,7 @@ function compute(gpu2, wgsl, options = {}) {
       return noCompute(reflection);
     }
   }
-  const padrao = options.workgroups ?? [1, 1, 1];
+  const default_ = options.workgroups ?? [1, 1, 1];
   let alive = true;
   const handle = {
     reflection,
@@ -1589,7 +1589,7 @@ function compute(gpu2, wgsl, options = {}) {
     },
     dispatch(pass, workgroups) {
       if (!alive || !pipeline) return;
-      const [x, y, z] = workgroups ?? padrao;
+      const [x, y, z] = workgroups ?? default_;
       pass.setPipeline(pipeline);
       if (bound.group) pass.setBindGroup(0, bound.group);
       pass.dispatchWorkgroups(Math.max(1, x), y ?? 1, z ?? 1);
@@ -1699,8 +1699,8 @@ function destroy2(gpu2) {
     gpu2.device.destroy();
   } catch {
   }
-  sharedContext?.then((atual) => {
-    if (atual === gpu2) resetShared();
+  sharedContext?.then((current) => {
+    if (current === gpu2) resetShared();
   });
 }
 var gpu = {
@@ -1716,7 +1716,7 @@ var gpu = {
   frame,
   frameLoop,
   destroy: destroy2,
-  /** Leitura de WGSL, util sozinha para inspecionar um shader. */
+  /** WGSL reading, useful on its own for inspecting a shader. */
   reflect: reflectWgsl
 };
 
@@ -1737,53 +1737,53 @@ async function resolveShaderSource(text) {
   if (kind === "inline") return valor;
   if (kind === "selector") {
     if (typeof document === "undefined") return "";
-    let alvo2 = null;
+    let target3 = null;
     try {
-      alvo2 = document.querySelector(valor);
+      target3 = document.querySelector(valor);
     } catch {
-      alvo2 = null;
+      target3 = null;
     }
-    if (!alvo2) {
+    if (!target3) {
       return "";
     }
-    return alvo2.textContent ?? "";
+    return target3.textContent ?? "";
   }
   try {
-    const resposta = await http.get(valor, { responseType: "text" });
-    return typeof resposta === "string" ? resposta : "";
+    const response = await http.get(valor, { responseType: "text" });
+    return typeof response === "string" ? response : "";
   } catch (err) {
-    handleError(err, `v-shader ao buscar "${valor}"`);
+    handleError(err, `v-shader when fetching "${valor}"`);
     return "";
   }
 }
-function revelarFallback(el, montar) {
+function revealFallback(el, mount) {
   if (!el.firstChild || typeof document === "undefined") return () => void 0;
-  const substituto = document.createElement("div");
-  substituto.setAttribute("data-gpu-fallback", "");
-  while (el.firstChild) substituto.appendChild(el.firstChild);
-  el.parentNode?.insertBefore(substituto, el.nextSibling);
-  const displayAnterior = el.style.display;
+  const substitute = document.createElement("div");
+  substitute.setAttribute("data-gpu-fallback", "");
+  while (el.firstChild) substitute.appendChild(el.firstChild);
+  el.parentNode?.insertBefore(substitute, el.nextSibling);
+  const previousDisplay = el.style.display;
   el.style.display = "none";
-  montar(substituto);
+  mount(substitute);
   return () => {
-    destroy(substituto);
-    while (substituto.firstChild) el.appendChild(substituto.firstChild);
-    substituto.remove();
-    if (displayAnterior) el.style.display = displayAnterior;
+    destroy(substitute);
+    while (substitute.firstChild) el.appendChild(substitute.firstChild);
+    substitute.remove();
+    if (previousDisplay) el.style.display = previousDisplay;
     else el.style.removeProperty("display");
   };
 }
-function semSuporte(el, motivo, montar) {
+function noSupport(el, reason, mount) {
   el.setAttribute("data-gpu", "unsupported");
   el.dispatchEvent(
-    new CustomEvent("voodoo:gpu-unsupported", { bubbles: true, detail: { motivo, el } })
+    new CustomEvent("voodoo:gpu-unsupported", { bubbles: true, detail: { reason, el } })
   );
-  avisar(
-    `v-shader em ${descreverElemento(el)} nao rodou: ${motivo}. O conteudo dentro do <canvas> foi usado como alternativa. Escute voodoo:gpu-unsupported para oferecer outra coisa.`
+  warn(
+    `v-shader at ${describeElement(el)} did not run: ${reason}. The content inside the <canvas> was used as a fallback. Listen to voodoo:gpu-unsupported to offer something else.`
   );
-  return revelarFallback(el, montar);
+  return revealFallback(el, mount);
 }
-function expressaoDeSet(el) {
+function expressionOfSet(el) {
   const atributos = originalAttributes(el);
   for (const nome of [":set", "v-bind:set", "data-v-bind:set"]) {
     const valor = atributos.get(nome);
@@ -1792,172 +1792,172 @@ function expressaoDeSet(el) {
   const proprio = el.getAttribute("v-shader-set") ?? el.getAttribute("data-v-shader-set");
   return proprio || null;
 }
-function faixaDpr(el) {
-  const bruto = el.getAttribute("v-shader-dpr") ?? el.getAttribute("data-v-shader-dpr");
-  if (!bruto) return [1, 2];
-  const partes = bruto.split(",").map((n) => parseFloat(n.trim()));
-  const min = Number.isFinite(partes[0]) ? partes[0] : 1;
-  const max = Number.isFinite(partes[1]) ? partes[1] : Math.max(min, 2);
+function dprRange(el) {
+  const raw = el.getAttribute("v-shader-dpr") ?? el.getAttribute("data-v-shader-dpr");
+  if (!raw) return [1, 2];
+  const parts = raw.split(",").map((n) => parseFloat(n.trim()));
+  const min = Number.isFinite(parts[0]) ? parts[0] : 1;
+  const max = Number.isFinite(parts[1]) ? parts[1] : Math.max(min, 2);
   return [Math.max(0.5, min), Math.max(min, max)];
 }
-var UNIFORMS_AUTOMATICOS = ["time", "delta", "frame", "resolution"];
+var AUTOMATIC_UNIFORMS = ["time", "delta", "frame", "resolution"];
 defineDirective("shader", (ctx) => {
   const { el, expression, modifiers, evaluate, effect: effect3, cleanup, scope, walk } = ctx;
-  const montarNo = (no) => walk(no, scope);
+  const mountOn = (node) => walk(node, scope);
   if (typeof HTMLCanvasElement === "undefined" || !(el instanceof HTMLCanvasElement)) {
-    avisar(
-      `v-shader precisa de um <canvas>, mas foi usado em ${descreverElemento(el)}. Troque a tag por <canvas> para o shader ter onde desenhar.`
+    warn(
+      `v-shader needs a <canvas>, but was used on ${describeElement(el)}. Change the tag to <canvas> so the shader has somewhere to draw.`
     );
     return;
   }
   const canvas = el;
-  let cancelado = false;
+  let canceled = false;
   cleanup(() => {
-    cancelado = true;
+    canceled = true;
     canvas.removeAttribute("data-gpu");
   });
   if (!supported()) {
-    const restaurar = semSuporte(canvas, "este navegador nao tem WebGPU", montarNo);
-    cleanup(restaurar);
+    const restore = noSupport(canvas, "this browser does not have WebGPU", mountOn);
+    cleanup(restore);
     return;
   }
-  const setExpr = expressaoDeSet(canvas);
-  let valores = {};
-  let aplicar = null;
+  const setExpr = expressionOfSet(canvas);
+  let values = {};
+  let apply = null;
   if (setExpr) {
     effect3(() => {
-      const lido = evaluate(setExpr);
-      valores = lido && typeof lido === "object" ? lido : {};
-      aplicar?.(valores);
+      const read = evaluate(setExpr);
+      values = read && typeof read === "object" ? read : {};
+      apply?.(values);
     });
   }
   const pausedExpr = canvas.getAttribute("v-shader-paused") ?? canvas.getAttribute("data-v-shader-paused");
-  let pausado = !!modifiers.paused;
-  let visivel = !modifiers.visible;
-  let tela = null;
-  let efeito = null;
-  let pararLaco = null;
-  let quadroUnico = 0;
-  let observador = null;
-  let restaurarFallback = null;
-  let automaticos = [];
-  const relogio = clock();
+  let paused = !!modifiers.paused;
+  let visible = !modifiers.visible;
+  let surface_obj = null;
+  let effect_obj = null;
+  let stopLoop = null;
+  let singleFrame = 0;
+  let observer_obj = null;
+  let restoreFallback = null;
+  let automaticList = [];
+  const clock_obj = clock();
   cleanup(() => {
-    pararLaco?.();
-    pararLaco = null;
-    observador?.disconnect();
-    observador = null;
-    if (quadroUnico) cancelAnimationFrame(quadroUnico);
-    quadroUnico = 0;
-    efeito?.destroy();
-    efeito = null;
-    tela?.destroy();
-    tela = null;
-    aplicar = null;
-    restaurarFallback?.();
-    restaurarFallback = null;
+    stopLoop?.();
+    stopLoop = null;
+    observer_obj?.disconnect();
+    observer_obj = null;
+    if (singleFrame) cancelAnimationFrame(singleFrame);
+    singleFrame = 0;
+    effect_obj?.destroy();
+    effect_obj = null;
+    surface_obj?.destroy();
+    surface_obj = null;
+    apply = null;
+    restoreFallback?.();
+    restoreFallback = null;
   });
-  const alimentarRelogio = () => {
-    if (!efeito || automaticos.length === 0) return;
-    const pacote = {
-      time: relogio.time,
-      delta: relogio.delta,
-      frame: relogio.frame,
-      resolution: [tela?.width ?? 0, tela?.height ?? 0]
+  const feedClock = () => {
+    if (!effect_obj || automaticList.length === 0) return;
+    const package_data = {
+      time: clock_obj.time,
+      delta: clock_obj.delta,
+      frame: clock_obj.frame,
+      resolution: [surface_obj?.width ?? 0, surface_obj?.height ?? 0]
     };
-    const so = {};
-    for (const nome of automaticos) so[nome] = pacote[nome];
-    efeito.set(so);
+    const uniforms2 = {};
+    for (const name of automaticList) uniforms2[name] = package_data[name];
+    effect_obj.set(uniforms2);
   };
-  const desenhar = (gpu2) => {
-    alimentarRelogio();
-    frame(gpu2, (quadro) => quadro.pass(tela, efeito));
+  const draw = (gpu2) => {
+    feedClock();
+    frame(gpu2, (frame2) => frame2.pass(surface_obj, effect_obj));
   };
-  const rodando = () => !!pararLaco;
-  const sincronizarLaco = (gpu2) => {
-    if (cancelado || !efeito) return;
-    const deveRodar = !pausado && visivel && !modifiers.once;
-    if (deveRodar && !rodando()) {
-      pararLaco = frameLoop(gpu2, (quadro) => {
-        relogio.tick();
-        alimentarRelogio();
-        quadro.pass(tela, efeito);
+  const isRunning = () => !!stopLoop;
+  const syncLoop = (gpu2) => {
+    if (canceled || !effect_obj) return;
+    const shouldRun = !paused && visible && !modifiers.once;
+    if (shouldRun && !isRunning()) {
+      stopLoop = frameLoop(gpu2, (frame2) => {
+        clock_obj.tick();
+        feedClock();
+        frame2.pass(surface_obj, effect_obj);
       });
       canvas.setAttribute("data-gpu", "ready");
       return;
     }
-    if (!deveRodar && rodando()) {
-      pararLaco?.();
-      pararLaco = null;
+    if (!shouldRun && isRunning()) {
+      stopLoop?.();
+      stopLoop = null;
       canvas.setAttribute("data-gpu", "paused");
     }
   };
-  const montar = (gpu2, fonte) => {
-    tela = surface(gpu2, canvas, { dpr: faixaDpr(canvas), alpha: true });
-    efeito = effect2(gpu2, fonte, {
-      set: valores,
-      format: tela.format || void 0,
-      label: `v-shader ${descreverElemento(canvas)}`
+  const mount = (gpu2, source) => {
+    surface_obj = surface(gpu2, canvas, { dpr: dprRange(canvas), alpha: true });
+    effect_obj = effect2(gpu2, source, {
+      set: values,
+      format: surface_obj.format || void 0,
+      label: `v-shader ${describeElement(canvas)}`
     });
-    if (!efeito.ok) {
+    if (!effect_obj.ok) {
       canvas.setAttribute("data-gpu", "error");
-      efeito.destroy();
-      efeito = null;
-      tela.destroy();
-      tela = null;
+      effect_obj.destroy();
+      effect_obj = null;
+      surface_obj.destroy();
+      surface_obj = null;
       return;
     }
-    aplicar = (v) => efeito?.set(v);
-    const campos = efeito.reflection.uniform?.struct?.fields ?? [];
-    automaticos = UNIFORMS_AUTOMATICOS.filter((nome) => campos.some((f) => f.name === nome));
+    apply = (v) => effect_obj?.set(v);
+    const fields = effect_obj.reflection.uniform?.struct?.fields ?? [];
+    automaticList = AUTOMATIC_UNIFORMS.filter((name) => fields.some((f) => f.name === name));
     if (pausedExpr) {
       effect3(() => {
-        pausado = !!evaluate(pausedExpr);
-        sincronizarLaco(gpu2);
+        paused = !!evaluate(pausedExpr);
+        syncLoop(gpu2);
       });
     }
     if (modifiers.visible && typeof IntersectionObserver !== "undefined") {
-      observador = new IntersectionObserver((entradas) => {
-        for (const entrada of entradas) visivel = entrada.isIntersecting;
-        sincronizarLaco(gpu2);
+      observer_obj = new IntersectionObserver((entries) => {
+        for (const entry of entries) visible = entry.isIntersecting;
+        syncLoop(gpu2);
       });
-      observador.observe(canvas);
+      observer_obj.observe(canvas);
     } else {
-      visivel = true;
+      visible = true;
     }
     if (modifiers.once) {
-      quadroUnico = requestAnimationFrame(() => {
-        quadroUnico = 0;
-        if (cancelado) return;
-        relogio.tick();
-        desenhar(gpu2);
+      singleFrame = requestAnimationFrame(() => {
+        singleFrame = 0;
+        if (canceled) return;
+        clock_obj.tick();
+        draw(gpu2);
         canvas.setAttribute("data-gpu", "ready");
       });
       return;
     }
     canvas.setAttribute("data-gpu", "ready");
-    sincronizarLaco(gpu2);
+    syncLoop(gpu2);
   };
   canvas.setAttribute("data-gpu", "loading");
   void (async () => {
-    const fonte = await resolveShaderSource(expression);
-    if (cancelado) return;
-    if (!fonte) {
+    const source = await resolveShaderSource(expression);
+    if (canceled) return;
+    if (!source) {
       canvas.setAttribute("data-gpu", "error");
-      restaurarFallback = revelarFallback(canvas, montarNo);
+      restoreFallback = revealFallback(canvas, mountOn);
       return;
     }
     const gpu2 = await shared();
-    if (cancelado) return;
+    if (canceled) return;
     if (!gpu2) {
-      restaurarFallback = semSuporte(canvas, "o adaptador WebGPU nao abriu", montarNo);
+      restoreFallback = noSupport(canvas, "the WebGPU adapter did not open", mountOn);
       return;
     }
     try {
-      montar(gpu2, fonte);
+      mount(gpu2, source);
     } catch (err) {
       canvas.setAttribute("data-gpu", "error");
-      handleError(err, `v-shader em ${descreverElemento(canvas)}`);
+      handleError(err, `v-shader at ${describeElement(canvas)}`);
     }
   })();
 });
@@ -1969,8 +1969,8 @@ var voodooGpu = {
     if (!V.gpu) V.gpu = gpu;
   }
 };
-var alvo = globalThis.V;
-if (alvo && typeof alvo === "object" && !alvo.gpu) alvo.gpu = gpu;
+var target2 = globalThis.V;
+if (target2 && typeof target2 === "object" && !target2.gpu) target2.gpu = gpu;
 var plugin_default = voodooGpu;
 
 exports.classifyShaderSource = classifyShaderSource;

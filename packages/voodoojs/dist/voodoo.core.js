@@ -96,7 +96,7 @@ var Voodoo = (() => {
         counts.set(job, count);
         if (count > RECURSION_LIMIT) {
           warn(
-            "Loop infinito de atualizacao detectado. Um efeito reativo esta se disparando de novo sem parar. Verifique se alguma expressao escreve em um estado que ela mesma le."
+            "Infinite update loop detected. A reactive effect keeps triggering itself without ever settling. Check whether some expression writes to state that it also reads."
           );
           continue;
         }
@@ -140,7 +140,7 @@ var Voodoo = (() => {
       errorHandler(err, context);
       return;
     }
-    console.error(`[Voodoo] erro em ${context}:`, err);
+    console.error(`[Voodoo] error in ${context}:`, err);
   }
   function warn(msg, ...args) {
     console.warn(`[Voodoo] ${msg}`, ...args);
@@ -380,13 +380,13 @@ var Voodoo = (() => {
           __publicField(this, "fn", fn);
           __publicField(this, "id", effectId++);
           __publicField(this, "active", true);
-          /** `true` enquanto o efeito espera na fila do agendador. */
+          /** `true` while the effect is waiting in the scheduler queue. */
           __publicField(this, "queued", false);
           __publicField(this, "deps", []);
           __publicField(this, "parent");
           __publicField(this, "scheduler");
           __publicField(this, "onStop");
-          /** Callbacks de limpeza registrados pelo proprio efeito. */
+          /** Cleanup callbacks registered by the effect itself. */
           __publicField(this, "cleanups", []);
           var _a2;
           this.scheduler = options == null ? void 0 : options.scheduler;
@@ -414,7 +414,7 @@ var Voodoo = (() => {
             this.parent = void 0;
           }
         }
-        /** Registra uma funcao chamada antes da proxima execucao e ao parar. */
+        /** Registers a function called before the next run and on stop. */
         onInvalidate(fn) {
           this.cleanups.push(fn);
         }
@@ -750,12 +750,12 @@ var Voodoo = (() => {
         DATA: 70,
         COMPONENT: 65,
         REF: 60,
-        // O binding vem antes do modelo de proposito.
+        // Binding comes before model on purpose.
         //
-        // `v-model` escreve o valor no campo, e `:min`, `:max` e `:step` mudam o que
-        // o navegador aceita como valor. Na ordem contraria o campo recebia o valor
-        // com as regras antigas ainda no lugar, e o proprio navegador arredondava ou
-        // grampeava: `0.12` virava `0` enquanto o `step` anterior fosse `1`.
+        // `v-model` writes the value to the field, and `:min`, `:max`, `:step` change
+        // what the browser accepts as a value. In reverse order, the field would receive
+        // the value with the old rules still in place, and the browser itself would round
+        // or clamp: `0.12` would become `0` if the previous `step` was `1`.
         BIND: 45,
         MODEL: 40,
         DEFAULT: 0,
@@ -949,7 +949,7 @@ ${pointer}`);
       }
       if (ch === "/" && source[i + 1] === "*") {
         const end = source.indexOf("*/", i + 2);
-        if (end === -1) throw new VoodooSyntaxError("Comentario de bloco nao fechado", source, i);
+        if (end === -1) throw new VoodooSyntaxError("Unclosed block comment", source, i);
         i = end + 2;
         continue;
       }
@@ -977,7 +977,7 @@ ${pointer}`);
           }
         }
         const parsed = Number(raw.replace(/_/g, ""));
-        if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Numero invalido", source, start2);
+        if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Invalid number", source, start2);
         tokens.push({ type: "num", value: raw, parsed, start: start2, end: i });
         continue;
       }
@@ -992,36 +992,36 @@ ${pointer}`);
               if (source[i + 1] === "{") {
                 const close = source.indexOf("}", i);
                 if (close === -1)
-                  throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
-                const digitos = source.slice(i + 2, close);
-                if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                  throw new VoodooSyntaxError("Unclosed Unicode escape", source, start2);
+                const digits = source.slice(i + 2, close);
+                if (!/^[0-9a-fA-F]+$/.test(digits) || parseInt(digits, 16) > 1114111)
                   throw new VoodooSyntaxError(
-                    `Escape unicode invalido "\\u{${digitos}}"`,
+                    `Invalid Unicode escape "\\u{${digits}}"`,
                     source,
                     i - 1
                   );
-                out += String.fromCodePoint(parseInt(digitos, 16));
+                out += String.fromCodePoint(parseInt(digits, 16));
                 i = close + 1;
               } else {
-                const digitos = source.slice(i + 1, i + 5);
-                if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+                const digits = source.slice(i + 1, i + 5);
+                if (!/^[0-9a-fA-F]{4}$/.test(digits))
                   throw new VoodooSyntaxError(
-                    "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                    "Invalid Unicode escape: \\u needs 4 hexadecimal digits",
                     source,
                     i - 1
                   );
-                out += String.fromCharCode(parseInt(digitos, 16));
+                out += String.fromCharCode(parseInt(digits, 16));
                 i += 5;
               }
             } else if (esc === "x") {
-              const digitos = source.slice(i + 1, i + 3);
-              if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+              const digits = source.slice(i + 1, i + 3);
+              if (!/^[0-9a-fA-F]{2}$/.test(digits))
                 throw new VoodooSyntaxError(
-                  "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                  "Invalid hexadecimal escape: \\x needs 2 hexadecimal digits",
                   source,
                   i - 1
                 );
-              out += String.fromCharCode(parseInt(digitos, 16));
+              out += String.fromCharCode(parseInt(digits, 16));
               i += 3;
             } else {
               out += (_a2 = ESCAPES[esc]) != null ? _a2 : esc;
@@ -1031,7 +1031,7 @@ ${pointer}`);
             out += source[i++];
           }
         }
-        if (i >= len) throw new VoodooSyntaxError("String nao fechada", source, start2);
+        if (i >= len) throw new VoodooSyntaxError("Unclosed string", source, start2);
         i++;
         tokens.push({ type: "str", value: out, parsed: out, start: start2, end: i });
         continue;
@@ -1071,14 +1071,14 @@ ${pointer}`);
               expr += source[i++];
             }
             if (depth !== 0)
-              throw new VoodooSyntaxError("Interpolacao de template nao fechada", source, start2);
+              throw new VoodooSyntaxError("Unclosed template interpolation", source, start2);
             i++;
             exprs.push(expr);
             continue;
           }
           current2 += source[i++];
         }
-        if (i >= len) throw new VoodooSyntaxError("Template literal nao fechado", source, start2);
+        if (i >= len) throw new VoodooSyntaxError("Unclosed template literal", source, start2);
         i++;
         quasis.push(current2);
         tokens.push({
@@ -1109,7 +1109,7 @@ ${pointer}`);
         tokens.push({ type: "punct", value: matched, start: start2, end: i });
         continue;
       }
-      throw new VoodooSyntaxError(`Caractere inesperado "${ch}"`, source, i);
+      throw new VoodooSyntaxError(`Unexpected character "${ch}"`, source, i);
     }
     tokens.push({ type: "eof", value: "", start: len, end: len });
     return tokens;
@@ -1173,14 +1173,14 @@ ${pointer}`);
       if (!this.isPunct(value)) {
         const t = this.peek();
         throw new VoodooSyntaxError(
-          `Esperava "${value}" mas encontrou "${t.value || "fim da expressao"}"`,
+          `Expected "${value}" but found "${t.value || "end of expression"}"`,
           this.source,
           t.start
         );
       }
       return this.next();
     }
-    /** Ponto de entrada: uma ou mais expressoes separadas por `;` ou `,` no topo. */
+    /** Entry point: one or more expressions separated by `;` or `,` at the top. */
     parseProgram() {
       const body = [];
       while (this.peek().type !== "eof") {
@@ -1194,24 +1194,24 @@ ${pointer}`);
     parseExpression() {
       return this.parseAssignment();
     }
-    /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
-    entrar() {
+    /** Raises recursion level and rejects expression when exceeding limit. */
+    enterLevel() {
       if (++this.depth > MAX_DEPTH) {
         const t = this.peek();
         throw new VoodooSyntaxError(
-          `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+          `Expression too deeply nested (limit of ${MAX_DEPTH} levels)`,
           this.source,
           t.start
         );
       }
     }
     parseAssignment() {
-      this.entrar();
-      const node = this.parseAssignmentInterno();
+      this.enterLevel();
+      const node = this.parseAssignmentInternal();
       this.depth--;
       return node;
     }
-    parseAssignmentInterno() {
+    parseAssignmentInternal() {
       if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
         const param = this.next().value;
         this.next();
@@ -1225,7 +1225,7 @@ ${pointer}`);
       const t = this.peek();
       if (t.type === "punct" && ASSIGN_OPS.has(t.value)) {
         if (left.t !== "id" && left.t !== "member") {
-          throw new VoodooSyntaxError("Alvo de atribuicao invalido", this.source, t.start);
+          throw new VoodooSyntaxError("Invalid assignment target", this.source, t.start);
         }
         this.next();
         const value = this.parseAssignment();
@@ -1234,8 +1234,8 @@ ${pointer}`);
       return left;
     }
     /**
-     * Tenta ler `( params ) =>`. Se o que vem depois do parentese de fechamento
-     * nao for `=>`, volta a posicao original e deixa o caminho normal seguir.
+     * Tries to read `( params ) =>`. If what comes after the closing parenthesis
+     * is not `=>`, returns to original position and lets normal parsing continue.
      */
     tryParseParenArrow() {
       const start2 = this.pos;
@@ -1278,12 +1278,12 @@ ${pointer}`);
       return test;
     }
     parseBinary(minPrec) {
-      this.entrar();
-      const node = this.parseBinarioInterno(minPrec);
+      this.enterLevel();
+      const node = this.parseBinaryInternal(minPrec);
       this.depth--;
       return node;
     }
-    parseBinarioInterno(minPrec) {
+    parseBinaryInternal(minPrec) {
       let left = this.parseUnary();
       for (; ; ) {
         const t = this.peek();
@@ -1300,12 +1300,12 @@ ${pointer}`);
       return left;
     }
     parseUnary() {
-      this.entrar();
-      const node = this.parseUnarioInterno();
+      this.enterLevel();
+      const node = this.parseUnaryInternal();
       this.depth--;
       return node;
     }
-    parseUnarioInterno() {
+    parseUnaryInternal() {
       const t = this.peek();
       if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
         this.next();
@@ -1331,7 +1331,7 @@ ${pointer}`);
           this.next();
           const prop = this.next();
           if (prop.type !== "ident") {
-            throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+            throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
           }
           expr = { t: "member", o: expr, p: { t: "lit", v: prop.value }, computed: false, opt: false };
         } else if (this.isPunct("?.")) {
@@ -1346,7 +1346,7 @@ ${pointer}`);
           } else {
             const prop = this.next();
             if (prop.type !== "ident") {
-              throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+              throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
             }
             expr = {
               t: "member",
@@ -1395,7 +1395,7 @@ ${pointer}`);
         const part = t.tpl;
         if (templateDepth >= MAX_TEMPLATE_DEPTH) {
           throw new VoodooSyntaxError(
-            `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+            `Template literal too deeply nested (limit of ${MAX_TEMPLATE_DEPTH} levels)`,
             this.source,
             t.start
           );
@@ -1430,7 +1430,7 @@ ${pointer}`);
         if (t.value === "{") return this.parseObjectLiteral();
       }
       throw new VoodooSyntaxError(
-        `Token inesperado "${t.value || "fim da expressao"}"`,
+        `Unexpected token "${t.value || "end of expression"}"`,
         this.source,
         t.start
       );
@@ -1468,7 +1468,7 @@ ${pointer}`);
         } else {
           const keyToken = this.next();
           if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
-            throw new VoodooSyntaxError("Chave de objeto invalida", this.source, keyToken.start);
+            throw new VoodooSyntaxError("Invalid object key", this.source, keyToken.start);
           }
           const key = String((_a2 = keyToken.parsed) != null ? _a2 : keyToken.value);
           if (this.isPunct(":")) {
@@ -1542,21 +1542,21 @@ ${pointer}`);
     constructor(message, expression) {
       super(expression ? `${message}
 
-Expressao: ${expression}` : message);
+Expression: ${expression}` : message);
       __publicField(this, "expression", expression);
       this.name = "VoodooRuntimeError";
     }
   };
   var SPREAD = /* @__PURE__ */ Symbol("spread");
-  var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+  var BLOCKED_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
   function chaveBloqueada(key) {
-    return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+    return typeof key === "string" && BLOCKED_KEYS.has(key);
   }
-  function checarChave(key, expressao) {
+  function checkKey(key, expression) {
     if (chaveBloqueada(key)) {
       throw new VoodooRuntimeError(
-        `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
-        expressao
+        `Access blocked to "${String(key)}": template expressions cannot reach the prototype chain. Expose a method in state instead.`,
+        expression
       );
     }
     return key;
@@ -1575,7 +1575,7 @@ Expressao: ${expression}` : message);
         return out;
       }
       case "id": {
-        checarChave(node.n);
+        checkKey(node.n);
         const owner = scope.lookup(node.n);
         if (owner) return owner[node.n];
         if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -1586,10 +1586,10 @@ Expressao: ${expression}` : message);
         if (obj == null) {
           if (node.opt) return void 0;
           throw new VoodooRuntimeError(
-            `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
+            `Could not read "${describeKey(node, scope)}" from ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = checarChave(
+        const key = checkKey(
           node.computed ? evaluate(node.p, scope) : node.p.v
         );
         return obj[key];
@@ -1602,16 +1602,16 @@ Expressao: ${expression}` : message);
           if (obj == null) {
             if (node.callee.opt || node.opt) return void 0;
             throw new VoodooRuntimeError(
-              `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
+              `Could not call "${describeKey(node.callee, scope)}" from ${obj === null ? "null" : "undefined"}`
             );
           }
-          const key = checarChave(
+          const key = checkKey(
             node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
           );
           thisArg = obj;
           fn = obj[key];
         } else if (node.callee.t === "id") {
-          checarChave(node.callee.n);
+          checkKey(node.callee.n);
           const owner = scope.lookup(node.callee.n);
           if (owner) {
             thisArg = owner;
@@ -1625,7 +1625,7 @@ Expressao: ${expression}` : message);
         if (fn == null && node.opt) return void 0;
         if (typeof fn !== "function") {
           const name = node.callee.t === "id" ? node.callee.n : describeKey(node.callee, scope);
-          throw new VoodooRuntimeError(`"${name}" nao e uma funcao`);
+          throw new VoodooRuntimeError(`"${name}" is not a function`);
         }
         return fn.apply(thisArg, evalArgs(node.args, scope));
       }
@@ -1651,7 +1651,7 @@ Expressao: ${expression}` : message);
           case "void":
             return void 0;
         }
-        throw new VoodooRuntimeError(`Operador unario nao suportado: ${node.op}`);
+        throw new VoodooRuntimeError(`Unsupported unary operator: ${node.op}`);
       }
       case "update": {
         const old = Number(evaluate(node.a, scope));
@@ -1696,7 +1696,7 @@ Expressao: ${expression}` : message);
           case "instanceof":
             return l instanceof r;
         }
-        throw new VoodooRuntimeError(`Operador nao suportado: ${node.op}`);
+        throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
       }
       case "logic": {
         const l = evaluate(node.l, scope);
@@ -1738,7 +1738,7 @@ Expressao: ${expression}` : message);
               value = current2 ** operand;
               break;
             default:
-              throw new VoodooRuntimeError(`Atribuicao nao suportada: ${node.op}`);
+              throw new VoodooRuntimeError(`Unsupported assignment: ${node.op}`);
           }
         }
         assign(node.target, value, scope);
@@ -1759,7 +1759,7 @@ Expressao: ${expression}` : message);
           if (prop.spread) {
             Object.assign(out, evaluate(prop.spread, scope));
           } else {
-            const key = checarChave(
+            const key = checkKey(
               prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
             );
             out[key] = evaluate(prop.value, scope);
@@ -1784,7 +1784,7 @@ Expressao: ${expression}` : message);
         return last;
       }
     }
-    throw new VoodooRuntimeError(`No desconhecido: ${node.t}`);
+    throw new VoodooRuntimeError(`Unknown node: ${node.t}`);
   }
   function evalArgs(args, scope) {
     const out = [];
@@ -1800,29 +1800,29 @@ Expressao: ${expression}` : message);
   }
   function assign(target, value, scope) {
     if (target.t === "id") {
-      checarChave(target.n);
+      checkKey(target.n);
       scope.set(target.n, value);
       return;
     }
     if (target.t === "member") {
       const obj = evaluate(target.o, scope);
       if (obj == null) {
-        throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
+        throw new VoodooRuntimeError("Could not write to null or undefined");
       }
-      const key = checarChave(
+      const key = checkKey(
         target.computed ? evaluate(target.p, scope) : target.p.v
       );
       obj[key] = value;
       return;
     }
-    throw new VoodooRuntimeError("Alvo de atribuicao invalido");
+    throw new VoodooRuntimeError("Invalid assignment target");
   }
   function describeKey(node, scope) {
     if (node.t === "member") {
       return node.computed ? String(evaluate(node.p, scope)) : String(node.p.v);
     }
     if (node.t === "id") return node.n;
-    return "valor";
+    return "value";
   }
   function stringify(value) {
     if (value == null) return "";
@@ -1850,29 +1850,29 @@ Expressao: ${expression}` : message);
   }
   var Scope = class _Scope {
     constructor(data2 = {}, parent = null, el = null) {
-      /** Dados proprios deste escopo, normalmente um proxy reativo. */
+      /** Data local to this scope, normally a reactive proxy. */
       __publicField(this, "data");
       __publicField(this, "parent");
-      /** Elemento que criou o escopo. Usado por `$el` e `$refs`. */
+      /** Element that created the scope. Used by `$el` and `$refs`. */
       __publicField(this, "el");
-      /** Referencias declaradas com `v-ref` dentro deste escopo. */
+      /** References declared with `v-ref` within this scope. */
       __publicField(this, "refs", {});
-      /** Instancia de componente, quando este escopo pertence a um. */
+      /** Component instance, when this scope belongs to one. */
       __publicField(this, "component", null);
-      /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+      /** Values delivered by `provide`, visible to lower scopes. */
       __publicField(this, "provides", null);
       __publicField(this, "magicCache", null);
       this.data = data2;
       this.parent = parent;
       this.el = el;
     }
-    /** Escopo raiz da cadeia. */
+    /** Root scope of the chain. */
     get root() {
       let s = this;
       while (s.parent) s = s.parent;
       return s;
     }
-    /** Procura um valor de `provide` subindo a cadeia de escopos. */
+    /** Look up a `provide` value by traveling up the scope chain. */
     inject(key, fallback) {
       let s = this;
       while (s) {
@@ -1881,7 +1881,7 @@ Expressao: ${expression}` : message);
       }
       return fallback;
     }
-    /** Escopo de componente mais proximo, subindo a cadeia. */
+    /** Nearest component scope, traveling up the chain. */
     get owner() {
       let s = this;
       while (s) {
@@ -1890,7 +1890,7 @@ Expressao: ${expression}` : message);
       }
       return null;
     }
-    /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
+    /** Set of visible refs, merging ancestor scopes. */
     get allRefs() {
       const chain = [];
       let s = this;
@@ -1934,7 +1934,7 @@ Expressao: ${expression}` : message);
     child(vars = {}, el = null) {
       return new _Scope(vars, this, el != null ? el : this.el);
     }
-    /** Cria um escopo filho reativo, usado por `v-data` e por `v-for`. */
+    /** Create a reactive child scope, used by `v-data` and `v-for`. */
     reactiveChild(vars, el = null) {
       return new _Scope(reactive(vars), this, el != null ? el : this.el);
     }
@@ -1968,73 +1968,73 @@ Expressao: ${expression}` : message);
 
   // src/runtime/avisos.ts
   init_registry();
-  function emDesenvolvimento() {
+  function inDevelopment() {
     return config.devtools === true;
   }
-  function descreverElemento(el) {
-    if (!el) return "(sem elemento)";
+  function describeElement(el) {
+    if (!el) return "(no element)";
     let out = el.tagName.toLowerCase();
     if (el.id) out += `#${el.id}`;
     const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
     if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
     return `<${out}>`;
   }
-  function avisar(mensagem) {
-    if (!emDesenvolvimento()) return;
-    console.warn(`[Voodoo] ${mensagem}`);
+  function warn2(message) {
+    if (!inDevelopment()) return;
+    console.warn(`[Voodoo] ${message}`);
   }
-  var jaAvisado = /* @__PURE__ */ new Set();
-  function avisarUmaVez(chave, mensagem) {
-    if (!emDesenvolvimento()) return;
-    if (jaAvisado.has(chave)) return;
-    jaAvisado.add(chave);
-    console.warn(`[Voodoo] ${mensagem}`);
+  var alreadyWarned = /* @__PURE__ */ new Set();
+  function warnOnce(key, message) {
+    if (!inDevelopment()) return;
+    if (alreadyWarned.has(key)) return;
+    alreadyWarned.add(key);
+    console.warn(`[Voodoo] ${message}`);
   }
-  var ATRIBUTOS_AUXILIARES = /* @__PURE__ */ new Set([
+  var AUXILIARY_ATTRIBUTES = /* @__PURE__ */ new Set([
     "confirm-title",
     "confirm-label",
     "confirm-cancel",
     "hold-duration"
   ]);
-  function avisarDirectiveDesconhecida(el, raw, nome) {
-    if (!emDesenvolvimento()) return;
-    if (ATRIBUTOS_AUXILIARES.has(nome)) return;
-    avisarUmaVez(
-      `directive-desconhecida:${nome}`,
-      `directive desconhecida "${raw}" em ${descreverElemento(el)}. Nenhuma directive chamada "${nome}" foi registrada. Verifique a grafia ou registre com V.directive("${nome}", ...).`
+  function warnUnknownDirective(el, raw, name) {
+    if (!inDevelopment()) return;
+    if (AUXILIARY_ATTRIBUTES.has(name)) return;
+    warnOnce(
+      `unknown-directive:${name}`,
+      `unknown directive "${raw}" at ${describeElement(el)}. No directive named "${name}" was registered. Check the spelling or register with V.directive("${name}", ...).`
     );
   }
-  function avisarComponenteDesconhecido(el, nome) {
-    avisarUmaVez(
-      `componente-desconhecido:${nome}`,
-      `componente "${nome}" nao registrado em ${descreverElemento(el)}. Registre com V.component("${nome}", { ... }) antes de usar a tag, ou remova o atributo para deixar o elemento como HTML comum.`
+  function warnUnknownComponent(el, name) {
+    warnOnce(
+      `unknown-component:${name}`,
+      `component "${name}" not registered at ${describeElement(el)}. Register with V.component("${name}", { ... }) before using the tag, or remove the attribute to leave the element as plain HTML.`
     );
   }
-  function avisarExpressaoInvalida(el, raw, expressao, err) {
-    if (!emDesenvolvimento()) return;
-    const motivo = err instanceof Error ? err.message.split("\n")[0] : String(err);
-    avisar(
-      `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.
-Motivo: ${motivo}
-Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que uma linha, mova para um metodo do componente e chame o metodo aqui.`
+  function warnInvalidExpression(el, raw, expression, err) {
+    if (!inDevelopment()) return;
+    const reason = err instanceof Error ? err.message.split("\n")[0] : String(err);
+    warn2(
+      `invalid expression in ${raw}="${expression}" on element ${describeElement(el)}.
+Reason: ${reason}
+Suggestion: attribute expressions accept a single value. If the logic spans more than one line, move it to a component method and call the method here.`
     );
   }
-  function avisarChaveDuplicada(el, chave, expressao) {
-    if (!emDesenvolvimento()) return;
-    avisar(
-      `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.`
+  function warnDuplicateKey(el, key, expression) {
+    if (!inDevelopment()) return;
+    warn2(
+      `duplicate key "${String(key)}" in v-for="${expression}" on element ${describeElement(el)}. Two rows with the same key cause the list to reuse the wrong block when reordering. Use a unique key, like the item id.`
     );
   }
-  function avisarPropObrigatoria(el, componente, prop) {
-    if (!emDesenvolvimento()) return;
-    avisar(
-      `prop obrigatoria "${prop}" ausente no componente "${componente}" em ${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um texto fixo ou :${prop}="expressao" para um valor do estado.`
+  function warnRequiredProp(el, component, prop) {
+    if (!inDevelopment()) return;
+    warn2(
+      `required prop "${prop}" missing from component "${component}" at ${describeElement(el)}. Pass the value on the tag with ${prop}="..." for a fixed value or :${prop}="expression" for a state value.`
     );
   }
-  function avisarAlias(alias, canonico) {
-    avisarUmaVez(
+  function warnAlias(alias, canonical) {
+    warnOnce(
       `alias:${alias}`,
-      `"${alias}" e um apelido de "${canonico}" e continua funcionando, mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
+      `"${alias}" is an alias for "${canonical}" and still works, but the official name is "${canonical}". Prefer "${canonical}" in new code.`
     );
   }
 
@@ -2066,9 +2066,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (!list) nodeEffectScopes.set(node, list = []);
     list.push(scope);
   }
-  var remocoesIgnoradas = /* @__PURE__ */ new WeakSet();
+  var ignoredRemovals = /* @__PURE__ */ new WeakSet();
   function removeQuietly(node) {
-    remocoesIgnoradas.add(node);
+    ignoredRemovals.add(node);
     node.remove();
   }
   function addCleanup(node, fn) {
@@ -2078,11 +2078,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   function destroy(node) {
     if (node.nodeType === 1) {
-      const filhos = [];
-      for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
-        if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
+      const children = [];
+      for (let child = node.firstChild; child; child = child.nextSibling) {
+        if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
       }
-      for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
+      for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
     }
     const list = nodeCleanups.get(node);
     if (list) {
@@ -2194,14 +2194,14 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (!config.cleanAttributes) return;
     let map = attributeCache.get(el);
     if (!map) attributeCache.set(el, map = /* @__PURE__ */ new Map());
-    const remover = [];
+    const toRemove = [];
     for (let i = 0; i < el.attributes.length; i++) {
       const attr2 = el.attributes[i];
       if (!isVoodooAttribute(attr2.name)) continue;
       map.set(attr2.name, attr2.value);
-      remover.push(attr2.name);
+      toRemove.push(attr2.name);
     }
-    for (const name of remover) el.removeAttribute(name);
+    for (const name of toRemove) el.removeAttribute(name);
   }
   function restoreAttributes(el) {
     const map = attributeCache.get(el);
@@ -2229,10 +2229,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     try {
       return evaluate(parse(expression), scope);
     } catch (err) {
-      if (emDesenvolvimento()) {
-        avisarExpressaoInvalida(el != null ? el : scope.el, context != null ? context : "expressao", expression, err);
+      if (inDevelopment()) {
+        warnInvalidExpression(el != null ? el : scope.el, context != null ? context : "expression", expression, err);
       }
-      handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+      handleError(err, context ? `${context} ("${expression}")` : `expression "${expression}"`);
       return void 0;
     }
   }
@@ -2243,8 +2243,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   function runDirective(el, attr2, scope) {
     const def = directives.get(attr2.name);
     if (!def) {
-      if (emDesenvolvimento() && attr2.raw.startsWith(config.prefix)) {
-        avisarDirectiveDesconhecida(el, attr2.raw, attr2.name);
+      if (inDevelopment() && attr2.raw.startsWith(config.prefix)) {
+        warnUnknownDirective(el, attr2.raw, attr2.name);
       }
       return;
     }
@@ -2319,12 +2319,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const dataAttr = attrs.find((a) => a.name === "data");
     const componentAttr = attrs.find((a) => a.name === "component");
     const componentName = componentAttr ? componentAttr.expression || "" : tagComponent || "";
-    let montouComponente = false;
+    let mountedComponent = false;
     if (componentName && componentMounter) {
       const created = componentMounter(el, componentName, current2);
       if (created) {
         current2 = created;
-        montouComponente = true;
+        mountedComponent = true;
         nodeScopes.set(el, current2);
       }
     } else if (dataAttr || componentAttr) {
@@ -2332,10 +2332,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       current2 = current2.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
       nodeScopes.set(el, current2);
     }
-    const escopoDosAtributos = montouComponente ? activeScope2 : current2;
+    const attributeScope = mountedComponent ? activeScope2 : current2;
     for (const attr2 of attrs) {
       if (attr2.name === "data" || attr2.name === "component") continue;
-      runDirective(el, attr2, escopoDosAtributos);
+      runDirective(el, attr2, attributeScope);
     }
     stripAttributes(el);
     if (!skipChildren.has(el)) walkChildren(el, current2);
@@ -2349,79 +2349,79 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     for (const child of list) walk(child, (_a2 = nodeScopes.get(child)) != null ? _a2 : scope);
   }
-  var LIMITE_EXPRESSAO = 500;
-  var expressaoValida = /* @__PURE__ */ new Map();
-  function pareceExpressao(texto) {
-    const limpo = texto.trim();
-    if (!limpo) return false;
-    const guardado = expressaoValida.get(limpo);
-    if (guardado !== void 0) return guardado;
-    let valida = true;
+  var EXPRESSION_LIMIT = 500;
+  var validExpressions = /* @__PURE__ */ new Map();
+  function looksLikeExpression(text) {
+    const trimmed = text.trim();
+    if (!trimmed) return false;
+    const cached = validExpressions.get(trimmed);
+    if (cached !== void 0) return cached;
+    let valid = true;
     try {
-      valida = parse(limpo).t !== "seq";
+      valid = parse(trimmed).t !== "seq";
     } catch (e) {
-      valida = false;
+      valid = false;
     }
-    expressaoValida.set(limpo, valida);
-    return valida;
+    validExpressions.set(trimmed, valid);
+    return valid;
   }
-  function fecharChave(fonte, inicio) {
-    let nivel = 0;
-    let aspas = null;
-    for (let i = inicio; i < fonte.length; i++) {
-      const c = fonte[i];
-      if (aspas) {
+  function closeBrace(source, start2) {
+    let level = 0;
+    let quote = null;
+    for (let i = start2; i < source.length; i++) {
+      const c = source[i];
+      if (quote) {
         if (c === "\\") i++;
-        else if (c === aspas) aspas = null;
+        else if (c === quote) quote = null;
         continue;
       }
       if (c === '"' || c === "'" || c === "`") {
-        aspas = c;
+        quote = c;
         continue;
       }
-      if (c === "{") nivel++;
+      if (c === "{") level++;
       else if (c === "}") {
-        nivel--;
-        if (nivel === 0) return i;
+        level--;
+        if (level === 0) return i;
       }
     }
     return -1;
   }
-  function fatiarTexto(raw) {
+  function sliceText(raw) {
     const segments = [];
     let literal = "";
     let i = 0;
-    const guardarLiteral = () => {
+    const saveLiteral = () => {
       if (literal) segments.push({ text: literal });
       literal = "";
     };
     while (i < raw.length) {
-      const abre = raw.indexOf("{", i);
-      if (abre === -1) {
+      const open = raw.indexOf("{", i);
+      if (open === -1) {
         literal += raw.slice(i);
         break;
       }
-      literal += raw.slice(i, abre);
-      const duplo = raw[abre + 1] === "{";
-      const fecha = duplo ? raw.indexOf("}}", abre + 2) : fecharChave(raw, abre);
-      if (fecha === -1) {
-        literal += raw[abre];
-        i = abre + 1;
+      literal += raw.slice(i, open);
+      const double = raw[open + 1] === "{";
+      const close = double ? raw.indexOf("}}", open + 2) : closeBrace(raw, open);
+      if (close === -1) {
+        literal += raw[open];
+        i = open + 1;
         continue;
       }
-      const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
-      const fim = duplo ? fecha + 2 : fecha + 1;
-      const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
-      if (cabe && pareceExpressao(expressao)) {
-        guardarLiteral();
-        segments.push({ expression: expressao.trim() });
-        i = fim;
+      const expression = double ? raw.slice(open + 2, close) : raw.slice(open + 1, close);
+      const end = double ? close + 2 : close + 1;
+      const fits = double || expression.length <= EXPRESSION_LIMIT;
+      if (fits && looksLikeExpression(expression)) {
+        saveLiteral();
+        segments.push({ expression: expression.trim() });
+        i = end;
         continue;
       }
-      literal += raw[abre];
-      i = abre + 1;
+      literal += raw[open];
+      i = open + 1;
     }
-    guardarLiteral();
+    saveLiteral();
     return segments;
   }
   var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
@@ -2429,15 +2429,15 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const raw = node.textContent;
     if (!raw || raw.indexOf("{") === -1) return;
     if (initialized.has(node)) return;
-    let ancestral = node.parentElement;
-    while (ancestral) {
-      if (NO_INTERPOLATION.has(ancestral.tagName)) return;
-      if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+    let ancestor = node.parentElement;
+    while (ancestor) {
+      if (NO_INTERPOLATION.has(ancestor.tagName)) return;
+      if (ancestor.hasAttribute(`${config.prefix}ignore`) || ancestor.hasAttribute(`${config.prefix}pre`) || ancestor.hasAttribute("data-v-ignore") || ancestor.hasAttribute("data-v-pre")) {
         return;
       }
-      ancestral = ancestral.parentElement;
+      ancestor = ancestor.parentElement;
     }
-    const segments = fatiarTexto(raw);
+    const segments = sliceText(raw);
     if (!segments.some((s) => s.expression)) return;
     initialized.add(node);
     const owner = new EffectScope(true);
@@ -2448,7 +2448,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         var _a2;
         let out = "";
         for (const segment of segments) {
-          out += (_a2 = segment.text) != null ? _a2 : stringify(evaluateIn(segment.expression, scope, "interpolacao"));
+          out += (_a2 = segment.text) != null ? _a2 : stringify(evaluateIn(segment.expression, scope, "interpolation"));
         }
         if (node.textContent !== out) node.textContent = out;
       }, { scope: owner })
@@ -2485,8 +2485,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.removedNodes.length; i++) {
           const removed = mutation.removedNodes[i];
-          if (remocoesIgnoradas.has(removed)) {
-            remocoesIgnoradas.delete(removed);
+          if (ignoredRemovals.has(removed)) {
+            ignoredRemovals.delete(removed);
             continue;
           }
           if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
@@ -2524,32 +2524,32 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   function mountPending(normalized) {
     var _a2;
     if (typeof document === "undefined" || !document.body) return;
-    const semHifen = normalized.replace(/-/g, "");
-    const seletores = [normalized, semHifen, `[${config.prefix}component="${normalized}"]`];
-    for (const seletor of seletores) {
-      let encontrados;
+    const noHyphen = normalized.replace(/-/g, "");
+    const selectors = [normalized, noHyphen, `[${config.prefix}component="${normalized}"]`];
+    for (const selector of selectors) {
+      let found;
       try {
-        encontrados = Array.from(document.querySelectorAll(seletor));
+        found = Array.from(document.querySelectorAll(selector));
       } catch (e) {
         continue;
       }
-      for (const el of encontrados) {
+      for (const el of found) {
         if ((_a2 = getScope(el)) == null ? void 0 : _a2.component) continue;
-        if (temAncestralPendente(el)) continue;
-        const escopo = findScope(el.parentNode);
+        if (hasPendingAncestor(el)) continue;
+        const scope = findScope(el.parentNode);
         if (isInitialized(el)) {
           destroy(el);
           restoreAttributes(el);
         }
-        walk(el, escopo);
+        walk(el, scope);
       }
     }
   }
-  function temAncestralPendente(el) {
-    let atual = el.parentElement;
-    while (atual && atual !== document.body) {
-      if (hasDirectives(atual) && !isInitialized(atual)) return true;
-      atual = atual.parentElement;
+  function hasPendingAncestor(el) {
+    let current2 = el.parentElement;
+    while (current2 && current2 !== document.body) {
+      if (hasDirectives(current2) && !isInitialized(current2)) return true;
+      current2 = current2.parentElement;
     }
     return false;
   }
@@ -2584,7 +2584,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   function camelize(name) {
     return name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
   }
-  function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
+  function resolveProps(el, defs, parentScope, owner, componentName) {
     var _a2;
     const props = reactive({});
     const known = Object.keys(defs);
@@ -2617,7 +2617,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     for (const key of known) {
       if (defs[key].required && props[key] === void 0) {
-        avisarPropObrigatoria(el, nomeDoComponente, key);
+        warnRequiredProp(el, componentName, key);
       }
     }
     return props;
@@ -2666,13 +2666,13 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const normalized = name ? normalizeComponentName(name) : "";
     const definition = normalized ? (_c = (_b = components.get(normalized)) != null ? _b : components.get((_a2 = componentAliases.get(normalized)) != null ? _a2 : "")) != null ? _c : {} : {};
     if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
-      avisarComponenteDesconhecido(el, name);
+      warnUnknownComponent(el, name);
     }
     const owner = new EffectScope(true);
     const defs = propDefinitions(definition);
     const props = resolveProps(el, defs, parentScope, owner, normalized || "inline");
-    if (!definition.state && definition.data) avisarAlias("data()", "state()");
-    if (definition.destroyed) avisarAlias("destroyed()", "unmounted()");
+    if (!definition.state && definition.data) warnAlias("data()", "state()");
+    if (definition.destroyed) warnAlias("destroyed()", "unmounted()");
     const stateFactory = (_d = definition.state) != null ? _d : definition.data;
     let stateRaw = {};
     const instance = {};
@@ -2682,7 +2682,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     try {
       stateRaw = stateFactory ? (_e = stateFactory.call(instance, props)) != null ? _e : {} : {};
     } catch (err) {
-      handleError(err, `state() do componente "${name}"`);
+      handleError(err, `state() of component "${name}"`);
     }
     const dataAttr = el.getAttribute(`${config.prefix}data`);
     if (dataAttr) {
@@ -2691,22 +2691,22 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
     if (definition.provide) {
       try {
-        const fornecidos = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
-        if (fornecidos && typeof fornecidos === "object") {
-          scope.provides = { ...fornecidos };
+        const provided = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
+        if (provided && typeof provided === "object") {
+          scope.provides = { ...provided };
         }
       } catch (err) {
-        handleError(err, `provide() do componente "${name}"`);
+        handleError(err, `provide() of component "${name}"`);
       }
     }
     if (definition.inject) {
-      const pedidos = Array.isArray(definition.inject) ? definition.inject.map((chave) => [chave, { from: chave }]) : Object.entries(definition.inject).map(
-        ([chave, opcoes]) => [chave, opcoes != null ? opcoes : {}]
+      const requests = Array.isArray(definition.inject) ? definition.inject.map((key) => [key, { from: key }]) : Object.entries(definition.inject).map(
+        ([key, options]) => [key, options != null ? options : {}]
       );
-      for (const [chave, opcoes] of pedidos) {
-        const de = (_f = opcoes.from) != null ? _f : chave;
-        const valor = parentScope.inject(de, opcoes.default);
-        if (!(chave in stateRaw)) stateRaw[chave] = valor;
+      for (const [key, options] of requests) {
+        const from = (_f = options.from) != null ? _f : key;
+        const value = parentScope.inject(from, options.default);
+        if (!(key in stateRaw)) stateRaw[key] = value;
       }
     }
     const state = reactive(stateRaw);
@@ -2856,271 +2856,271 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   init_registry();
 
   // src/runtime/boot.ts
-  var LIMITE_ESPERA = 1e4;
-  var PASSOS_ESTAVEIS = 2;
-  var fila = [];
-  var observador = null;
-  var versaoDoDom = 0;
-  var versaoNoPassoAnterior = -1;
-  var passosSemMudanca = 0;
-  var agendado = false;
-  function agora() {
+  var WAIT_LIMIT = 1e4;
+  var STABLE_STEPS = 2;
+  var queue2 = [];
+  var observer2 = null;
+  var domVersion = 0;
+  var domVersionAtPreviousStep = -1;
+  var stepsWithoutChange = 0;
+  var scheduled = false;
+  function now() {
     return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
   }
-  function observarMudancas() {
-    if (observador || typeof MutationObserver === "undefined" || typeof document === "undefined") {
+  function observeChanges() {
+    if (observer2 || typeof MutationObserver === "undefined" || typeof document === "undefined") {
       return;
     }
-    const raiz = document.documentElement;
-    if (!raiz) return;
-    observador = new MutationObserver(() => {
-      versaoDoDom++;
+    const root = document.documentElement;
+    if (!root) return;
+    observer2 = new MutationObserver(() => {
+      domVersion++;
     });
-    observador.observe(raiz, { childList: true, subtree: true });
+    observer2.observe(root, { childList: true, subtree: true });
   }
-  function agendarPasso() {
-    if (agendado) return;
-    agendado = true;
-    const executar = () => {
-      agendado = false;
-      passo();
+  function scheduleStep() {
+    if (scheduled) return;
+    scheduled = true;
+    const execute = () => {
+      scheduled = false;
+      step();
     };
     if (typeof requestAnimationFrame === "function") {
-      let disparado = false;
-      const uma = () => {
-        if (disparado) return;
-        disparado = true;
-        executar();
+      let fired = false;
+      const one = () => {
+        if (fired) return;
+        fired = true;
+        execute();
       };
-      requestAnimationFrame(uma);
-      setTimeout(uma, 32);
+      requestAnimationFrame(one);
+      setTimeout(one, 32);
       return;
     }
-    setTimeout(executar, 0);
+    setTimeout(execute, 0);
   }
-  function passo() {
+  function step() {
     var _a2;
-    if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
-    else passosSemMudanca = 0;
-    versaoNoPassoAnterior = versaoDoDom;
-    const instante = agora();
-    for (let i = fila.length - 1; i >= 0; i--) {
-      const tarefa = fila[i];
-      let valor = null;
+    if (domVersion === domVersionAtPreviousStep) stepsWithoutChange++;
+    else stepsWithoutChange = 0;
+    domVersionAtPreviousStep = domVersion;
+    const now_ = now();
+    for (let i = queue2.length - 1; i >= 0; i--) {
+      const task = queue2[i];
+      let value = null;
       try {
-        valor = tarefa.pronto();
+        value = task.ready();
       } catch (e) {
-        valor = null;
+        value = null;
       }
-      if (valor) {
-        fila.splice(i, 1);
-        tarefa.acao(valor);
+      if (value) {
+        queue2.splice(i, 1);
+        task.action(value);
         continue;
       }
-      if (instante - tarefa.desde > LIMITE_ESPERA) {
-        fila.splice(i, 1);
-        (_a2 = tarefa.aoDesistir) == null ? void 0 : _a2.call(tarefa);
+      if (now_ - task.since > WAIT_LIMIT) {
+        queue2.splice(i, 1);
+        (_a2 = task.onGiveUp) == null ? void 0 : _a2.call(task);
       }
     }
-    if (fila.length) agendarPasso();
+    if (queue2.length) scheduleStep();
   }
-  function enfileirar(tarefa) {
-    let valor = null;
+  function enqueue(task) {
+    let value = null;
     try {
-      valor = tarefa.pronto();
+      value = task.ready();
     } catch (e) {
-      valor = null;
+      value = null;
     }
-    if (valor) {
-      tarefa.acao(valor);
+    if (value) {
+      task.action(value);
       return;
     }
-    observarMudancas();
-    fila.push({ ...tarefa, desde: agora() });
-    agendarPasso();
+    observeChanges();
+    queue2.push({ ...task, since: now() });
+    scheduleStep();
   }
-  function documentoEstavel() {
+  function documentStable() {
     if (typeof document === "undefined" || !document.body) return false;
-    return passosSemMudanca >= PASSOS_ESTAVEIS;
+    return stepsWithoutChange >= STABLE_STEPS;
   }
-  function documentoParado() {
+  function documentStopped() {
     if (typeof document === "undefined" || !document.body) return false;
-    return versaoDoDom === 0;
+    return domVersion === 0;
   }
-  function whenReady(acao) {
+  function whenReady(action) {
     if (typeof document === "undefined") return;
-    enfileirar({
-      pronto: () => documentoEstavel() ? document.body : null,
-      acao: () => acao(),
-      // Passado o limite, comeca assim mesmo: uma pagina que nunca para de mudar
-      // ainda merece ser inicializada.
-      aoDesistir: () => {
-        if (document.body) acao();
+    enqueue({
+      ready: () => documentStable() ? document.body : null,
+      action: () => action(),
+      // Past the limit, start anyway: a page that never stops changing
+      // still deserves to be initialized.
+      onGiveUp: () => {
+        if (document.body) action();
       }
     });
   }
-  function whenBodyReady(acao) {
+  function whenBodyReady(action) {
     if (typeof document === "undefined") return;
-    if (documentoParado()) {
-      void Promise.resolve().then(acao);
+    if (documentStopped()) {
+      void Promise.resolve().then(action);
       return;
     }
-    enfileirar({
-      pronto: () => documentoEstavel() ? document.body : null,
-      acao: () => acao(),
-      aoDesistir: () => {
-        if (document.body) acao();
+    enqueue({
+      ready: () => documentStable() ? document.body : null,
+      action: () => action(),
+      onGiveUp: () => {
+        if (document.body) action();
       }
     });
   }
-  function whenElement(alvo, acao, aoDesistir) {
-    if (typeof alvo !== "string") {
-      acao(alvo);
+  function whenElement(target, action, onGiveUp) {
+    if (typeof target !== "string") {
+      action(target);
       return;
     }
     if (typeof document === "undefined") return;
-    enfileirar({
-      pronto: () => document.querySelector(alvo),
-      acao: (el) => acao(el),
-      aoDesistir
+    enqueue({
+      ready: () => document.querySelector(target),
+      action: (el) => action(el),
+      onGiveUp
     });
   }
 
   // src/runtime/app.ts
-  var contador = 0;
+  var counter = 0;
   var directiveRegistrar = null;
   function setDirectiveRegistrar(fn) {
     directiveRegistrar = fn;
   }
   function createApp(options = {}) {
-    const name = `voodoo-app-${++contador}`;
-    const { components: locais, ...raiz } = options;
+    const name = `voodoo-app-${++counter}`;
+    const { components: local, ...root } = options;
     const config_ = { globalProperties: {} };
-    const providos = {};
-    const registradosPorEsteApp = [];
+    const provided = {};
+    const registeredByThisApp = [];
     let container2 = null;
-    let htmlOriginal = "";
-    let instancia = null;
-    let esperando = [];
-    function registrarLocais() {
-      if (!locais) return;
-      for (const [nome, definicao] of Object.entries(locais)) {
-        const normalizado = normalizeComponentName(nome);
-        if (components.has(normalizado)) continue;
-        defineComponent(normalizado, definicao);
-        registradosPorEsteApp.push(normalizado);
+    let originalHTML = "";
+    let instance = null;
+    let waiting = [];
+    function registerLocal() {
+      if (!local) return;
+      for (const [name2, definition] of Object.entries(local)) {
+        const normalized = normalizeComponentName(name2);
+        if (components.has(normalized)) continue;
+        defineComponent(normalized, definition);
+        registeredByThisApp.push(normalized);
       }
     }
-    function montarEm(el) {
+    function mountOn(el) {
       var _a2, _b;
-      if (instancia) return instancia;
+      if (instance) return instance;
       container2 = el;
-      htmlOriginal = el.innerHTML;
+      originalHTML = el.innerHTML;
       Object.assign(allowedGlobals, config_.globalProperties);
-      registrarLocais();
-      const definicao = { ...raiz };
-      if (Object.keys(providos).length) {
-        const anterior = definicao.provide;
-        definicao.provide = () => ({
-          ...typeof anterior === "function" ? anterior() : anterior != null ? anterior : {},
-          ...providos
+      registerLocal();
+      const definition = { ...root };
+      if (Object.keys(provided).length) {
+        const previous = definition.provide;
+        definition.provide = () => ({
+          ...typeof previous === "function" ? previous() : previous != null ? previous : {},
+          ...provided
         });
       }
-      defineComponent(name, definicao);
+      defineComponent(name, definition);
       el.setAttribute(`${config.prefix}component`, name);
       try {
         walk(el, rootScope);
       } catch (err) {
-        handleError(err, `montagem da aplicacao "${name}"`);
+        handleError(err, `application mounting "${name}"`);
         return null;
       }
-      instancia = (_b = (_a2 = getScope(el)) == null ? void 0 : _a2.component) != null ? _b : null;
-      if (instancia) {
-        const fila2 = esperando;
-        esperando = [];
-        for (const resolver of fila2) resolver(instancia);
+      instance = (_b = (_a2 = getScope(el)) == null ? void 0 : _a2.component) != null ? _b : null;
+      if (instance) {
+        const queue3 = waiting;
+        waiting = [];
+        for (const resolver of queue3) resolver(instance);
       }
-      return instancia;
+      return instance;
     }
     const app = {
       name,
       config: config_,
       get instance() {
-        return instancia;
+        return instance;
       },
       get container() {
         return container2;
       },
       get isMounted() {
-        return instancia !== null;
+        return instance !== null;
       },
-      component(nome, definicao) {
+      component(name2, definition) {
         var _a2;
-        const normalizado = normalizeComponentName(nome);
-        if (definicao === void 0) {
-          return (_a2 = locais && locais[nome]) != null ? _a2 : components.get(normalizado);
+        const normalized = normalizeComponentName(name2);
+        if (definition === void 0) {
+          return (_a2 = local && local[name2]) != null ? _a2 : components.get(normalized);
         }
-        if (locais) locais[nome] = definicao;
-        else options.components = { [nome]: definicao };
-        if (instancia && !components.has(normalizado)) {
-          defineComponent(normalizado, definicao);
-          registradosPorEsteApp.push(normalizado);
+        if (local) local[name2] = definition;
+        else options.components = { [name2]: definition };
+        if (instance && !components.has(normalized)) {
+          defineComponent(normalized, definition);
+          registeredByThisApp.push(normalized);
         }
         return app;
       },
-      directive(nome, definicao) {
-        directiveRegistrar == null ? void 0 : directiveRegistrar(nome, definicao);
+      directive(name2, definition) {
+        directiveRegistrar == null ? void 0 : directiveRegistrar(name2, definition);
         return app;
       },
-      use(plugin, opcoes) {
-        usePlugin(globalThis_V(), plugin, opcoes);
+      use(plugin, options2) {
+        usePlugin(globalThis_V(), plugin, options2);
         return app;
       },
-      provide(chave, valor) {
-        providos[chave] = valor;
+      provide(key, value) {
+        provided[key] = value;
         return app;
       },
-      mount(alvo) {
-        if (instancia) return instancia;
-        if (typeof alvo !== "string") return montarEm(alvo);
-        let resultado = null;
+      mount(target) {
+        if (instance) return instance;
+        if (typeof target !== "string") return mountOn(target);
+        let result = null;
         whenElement(
-          alvo,
+          target,
           (el) => {
-            resultado = montarEm(el);
+            result = mountOn(el);
           },
           () => {
             console.warn(
-              `[Voodoo] createApp().mount("${alvo}") nao encontrou o elemento. A aplicacao continua sem montar.`
+              `[Voodoo] createApp().mount("${target}") did not find the element. The application remains unmounted.`
             );
           }
         );
-        return resultado;
+        return result;
       },
       whenMounted() {
-        if (instancia) return Promise.resolve(instancia);
-        return new Promise((resolve2) => esperando.push(resolve2));
+        if (instance) return Promise.resolve(instance);
+        return new Promise((resolve2) => waiting.push(resolve2));
       },
       unmount() {
         if (!container2) return;
         destroy(container2);
         container2.removeAttribute(`${config.prefix}component`);
-        container2.innerHTML = htmlOriginal;
+        container2.innerHTML = originalHTML;
         components.delete(name);
-        for (const nome of registradosPorEsteApp) components.delete(nome);
-        registradosPorEsteApp.length = 0;
-        instancia = null;
+        for (const name2 of registeredByThisApp) components.delete(name2);
+        registeredByThisApp.length = 0;
+        instance = null;
         container2 = null;
       }
     };
     return app;
   }
-  var objetoV = null;
+  var objectV = null;
   function setAppHost(V2) {
-    objetoV = V2;
+    objectV = V2;
   }
   function globalThis_V() {
-    return objetoV;
+    return objectV;
   }
 
   // src/runtime/magics.ts
@@ -3330,15 +3330,15 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     let timer = null;
     let lastArgs = null;
     const throttled = function(...args) {
-      const now = Date.now();
+      const now2 = Date.now();
       lastArgs = args;
-      const remaining = wait2 - (now - last);
+      const remaining = wait2 - (now2 - last);
       if (remaining <= 0) {
         if (timer) {
           clearTimeout(timer);
           timer = null;
         }
-        last = now;
+        last = now2;
         fn.apply(this, args);
       } else if (!timer) {
         timer = setTimeout(() => {
@@ -3624,7 +3624,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       var _a2, _b;
       return (_b = (_a2 = this.response) == null ? void 0 : _a2.status) != null ? _b : 0;
     }
-    /** `true` quando o erro foi de rede, timeout ou cancelamento. */
+    /** `true` when error is network, timeout, or cancellation. */
     get isNetworkError() {
       return !this.response;
     }
@@ -3700,8 +3700,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         });
         sent++;
       } catch (e) {
-        const novos = readQueue();
-        writeQueue([...list.slice(index), ...novos]);
+        const newItems = readQueue();
+        writeQueue([...list.slice(index), ...newItems]);
         break;
       }
     }
@@ -3767,8 +3767,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
   function temChaveDeIdempotencia(headers) {
-    for (const [nome, valor] of Object.entries(headers)) {
-      if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+    for (const [name, value] of Object.entries(headers)) {
+      if (name.toLowerCase() === "idempotency-key" && String(value).trim() !== "") return true;
     }
     return false;
   }
@@ -3778,9 +3778,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (config2.retryUnsafe === true) return true;
     if (temChaveDeIdempotencia(headers)) return true;
     if (((_a2 = config2.retry) != null ? _a2 : 0) > 0) {
-      avisarUmaVez(
-        `http:retry-inseguro:${method} ${url2}`,
-        `retry ignorado em ${method} ${url2}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+      warnOnce(
+        `http:retry-unsafe:${method} ${url2}`,
+        `retry ignored on ${method} ${url2}: retrying a method that changes state may apply the same operation twice if the response is lost in transit. Allow with retryUnsafe: true or send an Idempotency-Key header.`
       );
     }
     return false;
@@ -3870,7 +3870,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             continue;
           }
           const error2 = new HttpError(
-            `Requisicao falhou com status ${response.status}`,
+            `Request failed with status ${response.status}`,
             result,
             config2
           );
@@ -3900,7 +3900,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         }
       }
     }
-    const message = (lastError == null ? void 0 : lastError.name) === "TimeoutError" ? `Tempo esgotado apos ${config2.timeout}ms` : `Falha de rede ao acessar ${url2}`;
+    const message = (lastError == null ? void 0 : lastError.name) === "TimeoutError" ? `Timeout after ${config2.timeout}ms` : `Network failure accessing ${url2}`;
     const error = new HttpError(message, void 0, config2, lastError);
     for (const interceptor of errorInterceptors) interceptor(error);
     throw error;
@@ -3932,9 +3932,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     head(url2, options = {}) {
       return shortcut({ ...options, url: url2, method: "HEAD" });
     },
-    /** Requisicao completa, com status e cabecalhos. */
+    /** Full request with status and headers. */
     request,
-    /** Envia arquivos com progresso real, usando XMLHttpRequest. */
+    /** Upload files with real progress using XMLHttpRequest. */
     upload(url2, data2, options = {}) {
       return new Promise((resolve2, reject) => {
         var _a2, _b;
@@ -3967,15 +3967,15 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
             }
           }
           if (xhr.status >= 200 && xhr.status < 300) resolve2(data3);
-          else reject(new HttpError(`Upload falhou com status ${xhr.status}`));
+          else reject(new HttpError(`Upload failed with status ${xhr.status}`));
         });
-        xhr.addEventListener("error", () => reject(new HttpError("Falha de rede no upload")));
-        xhr.addEventListener("abort", () => reject(new HttpError("Upload cancelado")));
+        xhr.addEventListener("error", () => reject(new HttpError("Network failure during upload")));
+        xhr.addEventListener("abort", () => reject(new HttpError("Upload canceled")));
         (_b = options.signal) == null ? void 0 : _b.addEventListener("abort", () => xhr.abort());
         xhr.send(data2);
       });
     },
-    /** Server-Sent Events com reconexao automatica do proprio navegador. */
+    /** Server-Sent Events with automatic reconnection by the browser. */
     sse(url2, handlers = {}) {
       const source = new EventSource(buildURL({ url: url2 }));
       source.addEventListener("message", (event) => {
@@ -3990,7 +3990,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       if (handlers.error) source.addEventListener("error", handlers.error);
       return source;
     },
-    /** Le uma resposta em streaming, linha a linha (NDJSON). */
+    /** Read a streaming response line by line (NDJSON). */
     async stream(url2, onLine, options = {}) {
       var _a2;
       const response = await fetch(buildURL({ url: url2, params: options.params }), {
@@ -4040,12 +4040,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         }
       }
     },
-    /** Define cabecalhos enviados em toda requisicao. */
+    /** Set headers sent on every request. */
     setHeader(name, value) {
       if (value === null) delete defaults.headers[name];
       else defaults.headers[name] = value;
     },
-    /** Atalho para autenticacao por token. */
+    /** Shortcut for token-based authentication. */
     setToken(token, scheme = "Bearer") {
       this.setHeader("Authorization", token ? `${scheme} ${token}` : null);
     },
@@ -4128,7 +4128,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     element.className = "v-toaster";
     element.setAttribute("data-pos", position);
     element.setAttribute("role", "region");
-    element.setAttribute("aria-label", "Notificacoes");
+    element.setAttribute("aria-label", "Notifications");
     document.body.appendChild(element);
     containers.set(position, element);
     return element;
@@ -4206,7 +4206,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
           const button = document.createElement("button");
           button.type = "button";
           button.className = "v-toast-close";
-          button.setAttribute("aria-label", "Fechar notificacao");
+          button.setAttribute("aria-label", "Close notification");
           button.innerHTML = "&times;";
           button.addEventListener("click", close);
           element.appendChild(button);
@@ -4248,7 +4248,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     return typeof input === "string" ? { title: input, type } : { type, ...input };
   }
   var toast = Object.assign(
-    /** Notificacao neutra. */
+    /** Neutral notification. */
     (message, options = {}) => render({ ...normalize(message, "default"), ...options }),
     {
       success: (message, options = {}) => render({ ...normalize(message, "success"), ...options }),
@@ -4257,44 +4257,44 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       info: (message, options = {}) => render({ ...normalize(message, "info"), ...options }),
       loading: (message, options = {}) => render({ ...normalize(message, "loading"), duration: 0, ...options }),
       /**
-       * Acompanha uma promessa: mostra carregando, depois sucesso ou erro.
+       * Monitor a promise: show loading, then success or error.
        *
        * ```js
-       * V.toast.promise(salvar(), {
-       *   loading: 'Salvando...',
-       *   success: (dados) => `Salvo com id ${dados.id}`,
-       *   error: 'Nao foi possivel salvar'
+       * V.toast.promise(save(), {
+       *   loading: 'Saving...',
+       *   success: (data) => `Saved with id ${data.id}`,
+       *   error: 'Failed to save'
        * })
        * ```
        */
       async promise(promise, messages = {}) {
         var _a2, _b, _c;
-        const handle = render({ title: (_a2 = messages.loading) != null ? _a2 : "Carregando...", type: "loading", duration: 0 });
+        const handle = render({ title: (_a2 = messages.loading) != null ? _a2 : "Loading...", type: "loading", duration: 0 });
         try {
           const value = await promise;
           handle.update({
-            title: typeof messages.success === "function" ? messages.success(value) : (_b = messages.success) != null ? _b : "Pronto",
+            title: typeof messages.success === "function" ? messages.success(value) : (_b = messages.success) != null ? _b : "Done",
             type: "success",
             duration: settings.duration
           });
           return value;
         } catch (err) {
           handle.update({
-            title: typeof messages.error === "function" ? messages.error(err) : (_c = messages.error) != null ? _c : "Algo deu errado",
+            title: typeof messages.error === "function" ? messages.error(err) : (_c = messages.error) != null ? _c : "Something went wrong",
             type: "error",
             duration: settings.duration
           });
           throw err;
         }
       },
-      /** Fecha todas as notificacoes abertas. */
+      /** Close all open notifications. */
       clear() {
         for (const [position, element] of containers) {
           element.remove();
           containers.delete(position);
         }
       },
-      /** Ajusta duracao, posicao e limite padrao. */
+      /** Adjust default duration, position, and limit. */
       configure(options) {
         Object.assign(settings, options);
       },
@@ -4406,18 +4406,18 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
   };
   var url = {
-    /** Le um parametro da URL atual. */
+    /** Reads a parameter from the current URL. */
     get(key, fallback) {
       var _a2;
       if (typeof location === "undefined") return fallback;
       return (_a2 = new URLSearchParams(location.search).get(key)) != null ? _a2 : fallback;
     },
-    /** Le todos os parametros como objeto. */
+    /** Reads all parameters as an object. */
     all() {
       if (typeof location === "undefined") return {};
       return Object.fromEntries(new URLSearchParams(location.search));
     },
-    /** Escreve um parametro sem recarregar a pagina. */
+    /** Writes a parameter without reloading the page. */
     set(key, value, replace = true) {
       if (typeof location === "undefined") return;
       const next = new URL(location.href);
@@ -4428,7 +4428,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     remove(key, replace = true) {
       this.set(key, null, replace);
     },
-    /** Aplica varios parametros de uma vez. */
+    /** Applies multiple parameters at once. */
     merge(params, replace = true) {
       if (typeof location === "undefined") return;
       const next = new URL(location.href);
@@ -4441,7 +4441,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   };
   var memoryCache = /* @__PURE__ */ new Map();
   var cache2 = {
-    /** Guarda um valor. `ttl` em milissegundos, `0` significa sem expiracao. */
+    /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
     set(key, value, ttl = 0) {
       memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
       return value;
@@ -4464,7 +4464,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     clear() {
       memoryCache.clear();
     },
-    /** Executa a funcao apenas quando o valor nao estiver em cache. */
+    /** Executes the function only when the value is not in cache. */
     async remember(key, ttl, factory) {
       const hit = this.get(key);
       if (hit !== void 0) return hit;
@@ -4478,12 +4478,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   };
   var THEME_KEY = "voodoo:theme";
   var theme = {
-    /** Tema escolhido pelo usuario, ou `system` quando nunca foi definido. */
+    /** Theme chosen by the user, or `system` when never set. */
     get current() {
       var _a2;
       return (_a2 = storage.get(THEME_KEY)) != null ? _a2 : "system";
     },
-    /** Tema efetivamente aplicado, resolvendo `system`. */
+    /** Theme effectively applied, resolving `system`. */
     get resolved() {
       const value = this.current;
       if (value !== "system") return value;
@@ -4499,7 +4499,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       this.set(next);
       return next;
     },
-    /** Escreve `data-theme` no elemento raiz e avisa a pagina. */
+    /** Writes `data-theme` on the root element and notifies the page. */
     apply() {
       if (typeof document === "undefined") return;
       const value = this.current;
@@ -4511,7 +4511,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         new CustomEvent("voodoo:theme", { detail: { theme: value, resolved: this.resolved } })
       );
     },
-    /** Aplica o tema salvo assim que a pagina carrega. */
+    /** Applies the saved theme as soon as the page loads. */
     init() {
       if (typeof document === "undefined") return;
       this.apply();
@@ -4530,7 +4530,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     desktop: false,
     portrait: false,
     landscape: false,
-    /** Verifica uma media query arbitraria. */
+    /** Check an arbitrary media query. */
     matches(query2) {
       return typeof matchMedia !== "undefined" && matchMedia(query2).matches;
     }
@@ -4547,9 +4547,9 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   var network = reactive({
     online: true,
-    /** Tipo de conexao informado pelo navegador, quando disponivel. */
+    /** Connection type reported by the browser, when available. */
     type: "unknown",
-    /** `true` quando o usuario pediu economia de dados. */
+    /** `true` when the user requested data saving mode. */
     saveData: false,
     slow: false
   });
@@ -4565,7 +4565,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     }
   }
   var clipboard = {
-    /** Copia texto, com fallback para navegadores sem a API moderna. */
+    /** Copy text, with fallback for browsers without the modern API. */
     async copy(text) {
       var _a2;
       try {
@@ -4589,7 +4589,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         return false;
       }
     },
-    /** Le o conteudo da area de transferencia, quando o usuario permitir. */
+    /** Read clipboard content, when the user allows. */
     async read() {
       try {
         return await navigator.clipboard.readText();
@@ -4942,7 +4942,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       };
       evaluate(assignment, scope);
     } catch (err) {
-      handleError(err, `atribuicao em "${expression}"`);
+      handleError(err, `assignment in "${expression}"`);
     }
   }
   function transitionOptions(el) {
@@ -5110,7 +5110,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const match = FOR_PATTERN.exec(expression);
       if (!match) {
         handleError(
-          new Error(`Sintaxe invalida em v-for="${expression}". Use "item in itens".`),
+          new Error(`Invalid syntax in v-for="${expression}". Use "item in items".`),
           "v-for"
         );
         return;
@@ -5146,7 +5146,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         const used = /* @__PURE__ */ new Set();
         entries.forEach((vars, index) => {
           const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
-          if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
+          if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
           const existing = previous.get(key);
           if (existing && !used.has(key)) {
             used.add(key);
@@ -5249,23 +5249,23 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (name === "class") return applyClass(el, value);
     if (name === "style") return applyStyle(el, value);
     if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
-      avisar(
-        `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.`
+      warn2(
+        `:srcdoc refused in ${describeElement(el)}: the value becomes a document with active script inside the iframe, the same way v-html becomes markup. If the content is trusted, write :srcdoc.dangerous="..."; to turn off this protection on the entire application, set V.config.sanitizeUrls = false.`
       );
       el.removeAttribute(name);
       return;
     }
     if (config.sanitizeUrls && !asProp) {
       if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
-        avisar(
-          `valor recusado em :${name} de ${descreverElemento(el)}: "${value.slice(0, 60)}" usa um esquema que executa codigo. Use um endereco http(s) ou relativo. Para desligar esta protecao, defina V.config.sanitizeUrls = false.`
+        warn2(
+          `value refused in :${name} of ${describeElement(el)}: "${value.slice(0, 60)}" uses a scheme that executes code. Use an http(s) or relative address. To turn off this protection, set V.config.sanitizeUrls = false.`
         );
         el.removeAttribute(name);
         return;
       }
       if (name.length > 2 && /^on[a-z]/.test(name)) {
-        avisar(
-          `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+        warn2(
+          `attribute "${name}" refused in ${describeElement(el)}: linking event by attribute creates an inline handler. Use @${name.slice(2)}="..." instead.`
         );
         el.removeAttribute(name);
         return;
@@ -5397,7 +5397,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         value.call(scope.data, isEmit ? payload : event);
       }
     } catch (err) {
-      handleError(err, `evento ${event.type} ("${expression}")`);
+      handleError(err, `event ${event.type} ("${expression}")`);
     }
   }
   var EVENT_ALIASES = {
@@ -5412,7 +5412,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     submitform: "submit"
   };
   var customEvents = {
-    /** Segurar pressionado. Duracao pela modificador, como `@hold.1s`. */
+    /** Hold pressed. Duration via modifier, like `@hold.1s`. */
     hold(el, run, modifiers, cleanup) {
       const holdFor = parseDuration(
         typeof modifiers.duration === "string" && modifiers.duration || Object.keys(modifiers).find((m) => /^[\d.]+(ms|s)?$/.test(m)) || el.getAttribute(`${config.prefix}hold-duration`) || 800,
@@ -5456,7 +5456,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         el.removeEventListener("click", swallowClick, true);
       });
     },
-    /** Clique em qualquer lugar fora do elemento. */
+    /** Click anywhere outside the element. */
     outside(el, run, _modifiers, cleanup) {
       const handler = (event) => {
         if (!el.isConnected) return;
@@ -5466,25 +5466,25 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       document.addEventListener("click", handler, true);
       cleanup(() => document.removeEventListener("click", handler, true));
     },
-    /** Elemento entrou na area visivel. */
+    /** Element entered visible area. */
     visible(el, run, modifiers, cleanup) {
       var _a2, _b;
       if (typeof IntersectionObserver === "undefined") {
         run(new CustomEvent("visible"));
         return;
       }
-      const observer2 = new IntersectionObserver(
+      const observer3 = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             run(new CustomEvent("visible", { detail: entry }));
-            if (modifiers.repeat !== true) observer2.unobserve(el);
+            if (modifiers.repeat !== true) observer3.unobserve(el);
           }
         },
         { threshold: Number((_a2 = modifiers.threshold) != null ? _a2 : 0.1), rootMargin: String((_b = modifiers.margin) != null ? _b : "0px") }
       );
-      observer2.observe(el);
-      cleanup(() => observer2.disconnect());
+      observer3.observe(el);
+      cleanup(() => observer3.disconnect());
     }
   };
   for (const direction of ["left", "right", "up", "down"]) {
@@ -5753,7 +5753,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const selector = expression.trim() || "body";
       const target = selector === "body" ? document.body : document.querySelector(selector);
       if (!target) {
-        handleError(new Error(`Destino de v-teleport nao encontrado: ${selector}`), "v-teleport");
+        handleError(new Error(`v-teleport destination not found: ${selector}`), "v-teleport");
         return;
       }
       const placeholder = document.createComment(" v-teleport ");
@@ -5888,7 +5888,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     if (value == null) return "";
     if (typeof value !== "object") return escapeHtml(String(value));
     if (Array.isArray(value)) {
-      if (!value.length) return '<p class="v-json-empty">Nenhum resultado.</p>';
+      if (!value.length) return '<p class="v-json-empty">No results.</p>';
       const allObjects = value.every((item) => item && typeof item === "object" && !Array.isArray(item));
       if (allObjects && depth === 0) {
         const columns = Array.from(
@@ -5914,7 +5914,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   function renderWithTemplate(selector, data2, scope, target) {
     const template = document.querySelector(selector);
     if (!template) {
-      handleError(new Error(`Template nao encontrado: ${selector}`), "v-template");
+      handleError(new Error(`Template not found: ${selector}`), "v-template");
       return;
     }
     for (const child of Array.from(target.children)) destroy(child);
@@ -5937,8 +5937,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     var _a2, _b, _c, _d, _e;
     const { el, scope, method } = options;
     const settings2 = readSettings(el, scope);
-    const dialogoCuidaDaPergunta = directives.has(`confirm`);
-    if (settings2.confirmMessage && !dialogoCuidaDaPergunta) {
+    const dialogHandlesTheQuestion = directives.has(`confirm`);
+    if (settings2.confirmMessage && !dialogHandlesTheQuestion) {
       const confirmed = await askConfirmation(settings2.confirmMessage);
       if (!confirmed) return;
     }
@@ -6004,12 +6004,12 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
     } catch (err) {
       if ((err == null ? void 0 : err.name) === "AbortError") return;
-      const message = err instanceof HttpError ? (_d = extractMessage(err)) != null ? _d : err.message : (_e = err == null ? void 0 : err.message) != null ? _e : "Erro desconhecido";
+      const message = err instanceof HttpError ? (_d = extractMessage(err)) != null ? _d : err.message : (_e = err == null ? void 0 : err.message) != null ? _e : "Unknown error";
       if (settings2.toastError) toast.error(settings2.toastError);
       else if (!settings2.onError) toast.error(message);
       if (settings2.onError) callHandler(settings2.onError, scope, el, { error: err, message });
       dispatch(el, "voodoo:error", { error: err, message });
-      handleError(err, `requisicao ${method} ${options.url}`);
+      handleError(err, `request ${method} ${options.url}`);
     } finally {
       stopLoading();
       inFlight.delete(el);
@@ -6023,7 +6023,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   function callHandler(expression, scope, el, extra) {
     var _a2;
     const local = scope.child({ $el: el, ...extra });
-    const value = evaluateIn(expression, local, "callback HTTP");
+    const value = evaluateIn(expression, local, "HTTP callback");
     if (typeof value === "function") value.call(scope.data, (_a2 = extra.data) != null ? _a2 : extra.error);
   }
   async function askConfirmation(message) {
@@ -6084,18 +6084,18 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
         run();
         return;
       }
-      const observer2 = new IntersectionObserver(
+      const observer3 = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
             if (!entry.isIntersecting) continue;
             run();
-            if (!modifiers.includes("repeat")) observer2.unobserve(el);
+            if (!modifiers.includes("repeat")) observer3.unobserve(el);
           }
         },
         { rootMargin: "80px" }
       );
-      observer2.observe(el);
-      cleanup(() => observer2.disconnect());
+      observer3.observe(el);
+      cleanup(() => observer3.disconnect());
       return;
     }
     const once2 = modifiers.includes("once");
@@ -6148,18 +6148,18 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       void runRequest({ el, scope, method: "GET", url: url2 });
       return;
     }
-    const observer2 = new IntersectionObserver(
+    const observer3 = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          observer2.unobserve(el);
+          observer3.unobserve(el);
           void runRequest({ el, scope, method: "GET", url: url2 });
         }
       },
       { rootMargin: "120px" }
     );
-    observer2.observe(el);
-    cleanup(() => observer2.disconnect());
+    observer3.observe(el);
+    cleanup(() => observer3.disconnect());
   });
   defineDirective("search", ({ el, scope, expression, cleanup }) => {
     var _a2, _b;
@@ -6270,7 +6270,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       try {
         handler(payload);
       } catch (err) {
-        handleError(err, `evento "${name}"`);
+        handleError(err, `event "${name}"`);
       }
     }
   }
@@ -6337,11 +6337,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   var version = "0.3.0";
   var core = {
-    // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
+    // Utilities first: Voodoo's own names can override.
     ...utils_exports,
     version,
     config,
-    // Reatividade
+    // Reactivity
     reactive,
     ref,
     shallowRef,
@@ -6357,23 +6357,23 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     effectScope,
     EffectScope,
     flushSync,
-    // Estado
+    // State
     data,
     store,
     stores: allStores,
     removeStore,
     storeNames,
     scope: rootScope,
-    // Componentes e directives
+    // Components and directives
     component: defineComponent,
     components,
     directive,
     directives,
     magic,
     magics,
-    // Modo aplicacao
+    // Application mode
     createApp,
-    // Ciclo de vida do DOM
+    // DOM lifecycle
     start,
     whenReady,
     whenElement,
@@ -6385,7 +6385,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     findScope,
     addCleanup,
     parseAttribute,
-    // Expressoes
+    // Expressions
     parse,
     tokenize,
     evaluate,
@@ -6393,11 +6393,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     stringify,
     clearParseCache,
     globals: allowedGlobals,
-    // Servicos
+    // Services
     http,
     request,
     HttpError,
-    /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+    /** Reactive resource via JavaScript, equivalent to `v-resource`. */
     resource: createResource,
     toast,
     storage,
@@ -6409,7 +6409,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     clipboard,
     screen,
     network,
-    // Animacao
+    // Animation
     enter,
     leave,
     fadeIn,
@@ -6417,10 +6417,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     slideUp,
     slideDown,
     viewTransition,
-    // Estilo
+    // Styling
     injectStyle,
     ensureTokens,
-    // Eventos globais
+    // Global events
     on,
     once: onceEvent,
     off,
@@ -6429,11 +6429,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     use(plugin, options) {
       usePlugin(core, plugin, options);
     },
-    /** Define o tratamento de erros da aplicacao inteira. */
+    /** Defines error handling for the entire application. */
     onError(handler) {
       setErrorHandler(handler);
     },
-    /** Instancias de componente montadas, para inspecao. */
+    /** Mounted component instances for inspection. */
     instances,
     Scope,
     PRIORITY,
@@ -6627,23 +6627,23 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
   }
   var VoodooCollection = class _VoodooCollection {
     constructor(elements = []) {
-      /** Quantidade de elementos da colecao. */
+      /** Number of elements in the collection. */
       __publicField(this, "length");
-      /** Elementos da colecao, na ordem em que foram encontrados. */
+      /** Elements of the collection, in the order they were found. */
       __publicField(this, "elements");
       this.elements = elements;
       this.length = elements.length;
       const indexed = this;
       for (let i = 0; i < elements.length; i++) indexed[i] = elements[i];
     }
-    /** Permite `for (const el of query('.item'))`. */
+    /** Enables `for (const el of query('.item'))`. */
     [Symbol.iterator]() {
       return this.elements[Symbol.iterator]();
     }
     // -------------------------------------------------------------------------
-    // Travessia
+    // Traversal
     // -------------------------------------------------------------------------
-    /** Descendentes que casam com o seletor. */
+    /** Descendants that match the selector. */
     find(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6654,7 +6654,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Ancestral mais proximo, incluindo o proprio elemento. */
+    /** Nearest ancestor, including the element itself. */
     closest(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6663,7 +6663,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Elemento pai de cada item, opcionalmente filtrado. */
+    /** Parent element of each item, optionally filtered. */
     parent(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6672,7 +6672,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Todos os ancestrais, do mais proximo ao mais distante. */
+    /** All ancestors, from nearest to farthest. */
     parents(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6684,7 +6684,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Filhos diretos, opcionalmente filtrados. */
+    /** Direct children, optionally filtered. */
     children(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6694,7 +6694,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Irmaos, sem incluir os proprios elementos. */
+    /** Siblings, excluding the elements themselves. */
     siblings(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6707,7 +6707,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Proximo irmao de cada elemento. */
+    /** Next sibling of each element. */
     next(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6716,7 +6716,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Irmao anterior de cada elemento. */
+    /** Previous sibling of each element. */
     prev(selector) {
       const out = [];
       for (const el of this.elements) {
@@ -6725,52 +6725,52 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return new _VoodooCollection(distinct(out));
     }
-    /** Somente o primeiro elemento. */
+    /** Only the first element. */
     first() {
       return this.eq(0);
     }
-    /** Somente o ultimo elemento. */
+    /** Only the last element. */
     last() {
       return this.eq(-1);
     }
-    /** Elemento na posicao informada. Indices negativos contam do fim. */
+    /** Element at the specified position. Negative indices count from the end. */
     eq(index) {
       const position = index < 0 ? this.elements.length + index : index;
       const el = this.elements[position];
       return new _VoodooCollection(el ? [el] : []);
     }
-    /** Mantem apenas os elementos que passam no filtro. */
+    /** Keeps only elements that pass the filter. */
     filter(test) {
       const out = this.elements.filter(
         (el, index) => typeof test === "function" ? test(el, index) : el.matches(test)
       );
       return new _VoodooCollection(out);
     }
-    /** Remove da colecao os elementos que passam no filtro. */
+    /** Removes from the collection elements that pass the filter. */
     not(test) {
       const out = this.elements.filter(
         (el, index) => typeof test === "function" ? !test(el, index) : !el.matches(test)
       );
       return new _VoodooCollection(out);
     }
-    /** Mantem os elementos que contem o descendente informado. */
+    /** Keeps elements that contain the specified descendant. */
     has(target) {
       const out = this.elements.filter(
         (el) => typeof target === "string" ? el.querySelector(target) !== null : el.contains(target)
       );
       return new _VoodooCollection(out);
     }
-    /** Verifica se ao menos um elemento casa com o filtro. */
+    /** Checks if at least one element matches the filter. */
     is(test) {
       return this.elements.some(
         (el, index) => typeof test === "function" ? test(el, index) : el.matches(test)
       );
     }
-    /** Projeta cada elemento em um valor e devolve um array comum. */
+    /** Projects each element to a value and returns a regular array. */
     map(fn) {
       return this.elements.map((el, index) => fn(el, index));
     }
-    /** Percorre a colecao. Dentro da funcao, `this` e o elemento atual. */
+    /** Iterates over the collection. Inside the function, `this` is the current element. */
     each(fn) {
       for (let i = 0; i < this.elements.length; i++) {
         const el = this.elements[i];
@@ -6783,15 +6783,15 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const index = Number(rest[0]);
       return this.elements[index < 0 ? this.elements.length + index : index];
     }
-    /** Copia dos elementos como array comum. */
+    /** Copy of elements as a regular array. */
     toArray() {
       return this.elements.slice();
     }
-    /** Junta outros elementos a colecao, sem repetir. */
+    /** Joins other elements to the collection without duplication. */
     add(input, context) {
       return new _VoodooCollection(distinct([...this.elements, ...resolve(input, context)]));
     }
-    /** Recorte da colecao, com a mesma semantica de `Array.prototype.slice`. */
+    /** Slice of the collection with the same semantics as `Array.prototype.slice`. */
     slice(start2, end) {
       return new _VoodooCollection(this.elements.slice(start2, end));
     }
@@ -6867,7 +6867,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Remove um ou varios atributos, separados por espaco. */
+    /** Removes one or more space-separated attributes. */
     removeAttr(name) {
       const list = names(name);
       for (const el of this.elements) for (const attribute of list) el.removeAttribute(attribute);
@@ -6943,14 +6943,14 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       for (const el of this.elements) setStyle(el, "height", rest[0]);
       return this;
     }
-    /** Posicao do primeiro elemento em relacao ao documento. */
+    /** Position of the first element relative to the document. */
     offset() {
       const el = this.elements[0];
       if (!el) return { top: 0, left: 0 };
       const rect = el.getBoundingClientRect();
       return { top: rect.top + window.scrollY, left: rect.left + window.scrollX };
     }
-    /** Posicao do primeiro elemento em relacao ao ancestral posicionado. */
+    /** Position of the first element relative to the positioned ancestor. */
     position() {
       const el = this.elements[0];
       if (!el) return { top: 0, left: 0 };
@@ -6966,19 +6966,19 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     // -------------------------------------------------------------------------
     // Classes
     // -------------------------------------------------------------------------
-    /** Adiciona uma ou varias classes separadas por espaco. */
+    /** Adds one or more space-separated classes. */
     addClass(value) {
       const list = names(value);
       if (list.length) for (const el of this.elements) el.classList.add(...list);
       return this;
     }
-    /** Remove uma ou varias classes separadas por espaco. */
+    /** Removes one or more space-separated classes. */
     removeClass(value) {
       const list = names(value);
       if (list.length) for (const el of this.elements) el.classList.remove(...list);
       return this;
     }
-    /** Alterna classes. O segundo argumento forca ligar ou desligar. */
+    /** Toggles classes. The second argument forces on or off. */
     toggleClass(value, force) {
       const list = names(value);
       for (const el of this.elements) {
@@ -6989,19 +6989,19 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Verdadeiro quando algum elemento tem todas as classes informadas. */
+    /** True when some element has all the specified classes. */
     hasClass(value) {
       const list = names(value);
       if (!list.length) return false;
       return this.elements.some((el) => list.every((cls) => el.classList.contains(cls)));
     }
     // -------------------------------------------------------------------------
-    // Manipulacao de DOM
+    // DOM manipulation
     // -------------------------------------------------------------------------
     /**
-     * Base de `append`, `prepend`, `before` e `after`. Quando a colecao tem mais
-     * de um elemento, cada destino recebe uma copia e o ultimo fica com o
-     * original, que e o comportamento esperado por quem vem do jQuery.
+     * Base of `append`, `prepend`, `before`, and `after`. When the collection has more
+     * than one element, each destination receives a copy and the last gets the
+     * original, which is the expected behavior for those coming from jQuery.
      */
     insert(content, place) {
       const total = this.elements.length;
@@ -7013,29 +7013,29 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Insere conteudo no fim de cada elemento. */
+    /** Inserts content at the end of each element. */
     append(content) {
       return this.insert(content, (el, node) => el.appendChild(node));
     }
-    /** Insere conteudo no inicio de cada elemento. */
+    /** Inserts content at the beginning of each element. */
     prepend(content) {
       return this.insert(content, (el, node) => el.insertBefore(node, el.firstChild));
     }
-    /** Insere conteudo antes de cada elemento. */
+    /** Inserts content before each element. */
     before(content) {
       return this.insert(content, (el, node) => {
         var _a2;
         return (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(node, el);
       });
     }
-    /** Insere conteudo depois de cada elemento. */
+    /** Inserts content after each element. */
     after(content) {
       return this.insert(content, (el, node) => {
         var _a2;
         return (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(node, el.nextSibling);
       });
     }
-    /** Move os elementos da colecao para dentro do destino. */
+    /** Moves the collection's elements into the target. */
     appendTo(target) {
       const targets = resolve(target);
       for (let i = 0; i < targets.length; i++) {
@@ -7045,7 +7045,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Move os elementos da colecao para o inicio do destino. */
+    /** Moves the collection's elements to the beginning of the target. */
     prependTo(target) {
       const targets = resolve(target);
       for (let i = 0; i < targets.length; i++) {
@@ -7057,7 +7057,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Troca cada elemento pelo conteudo informado, desmontando o antigo. */
+    /** Replaces each element with the provided content, unmounting the old one. */
     replaceWith(content) {
       for (const el of this.elements) {
         const parent = el.parentNode;
@@ -7068,7 +7068,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Envolve cada elemento com o HTML ou elemento informado. */
+    /** Wraps each element with the provided HTML or element. */
     wrap(wrapper) {
       var _a2;
       for (const el of this.elements) {
@@ -7082,7 +7082,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Remove o pai de cada elemento, mantendo os filhos no lugar. */
+    /** Removes the parent of each element, keeping children in place. */
     unwrap() {
       const parents = /* @__PURE__ */ new Set();
       for (const el of this.elements) {
@@ -7098,7 +7098,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Remove os elementos do documento e desmonta os efeitos reativos. */
+    /** Removes elements from the document and unmounts reactive effects. */
     remove() {
       for (const el of this.elements) {
         destroy(el);
@@ -7106,7 +7106,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Esvazia os elementos, desmontando o conteudo removido. */
+    /** Empties elements, unmounting removed content. */
     empty() {
       for (const el of this.elements) {
         for (const child of Array.from(el.childNodes)) destroy(child);
@@ -7114,7 +7114,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Copia os elementos. A copia nasce sem directives inicializadas. */
+    /** Clones elements. The clone starts without directives initialized. */
     clone(deep = true) {
       return new _VoodooCollection(this.elements.map((el) => el.cloneNode(deep)));
     }
@@ -7144,8 +7144,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     /**
-     * Remove escutas registradas por `on`. Sem argumentos remove todas, com tipo
-     * remove as daquele evento, e com seletor ou funcao afina ainda mais.
+     * Removes listeners registered by `on`. Without arguments removes all, with type
+     * removes those for that event, and with selector or function refines further.
      */
     off(types, selectorOrHandler, handler) {
       const wantedSelector = typeof selectorOrHandler === "string" ? selectorOrHandler : null;
@@ -7184,8 +7184,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this.on(types, wrapper);
     }
     /**
-     * Dispara um evento. Eventos nativos com metodo proprio, como `click` e
-     * `focus`, usam o metodo do elemento quando nao ha `detail`.
+     * Dispatches an event. Native events with their own method, like `click` and
+     * `focus`, use the element's method when there is no `detail`.
      */
     trigger(type, detail) {
       for (const el of this.elements) {
@@ -7199,7 +7199,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Dispara um evento customizado que sobe pela arvore, no estilo componente. */
+    /** Dispatches a custom event that bubbles up the tree, component-style. */
     emit(type, detail) {
       for (const el of this.elements) {
         const event = new CustomEvent(type, { detail, bubbles: true, cancelable: true });
@@ -7209,19 +7209,19 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     // -------------------------------------------------------------------------
-    // Visibilidade e animacao
+    // Visibility and animation
     // -------------------------------------------------------------------------
-    /** Mostra os elementos restaurando o display anterior. */
+    /** Shows elements by restoring their previous display value. */
     show() {
       for (const el of this.elements) showElement(el);
       return this;
     }
-    /** Esconde os elementos guardando o display atual. */
+    /** Hides elements while saving their current display value. */
     hide() {
       for (const el of this.elements) hideElement(el);
       return this;
     }
-    /** Alterna a visibilidade. O argumento forca mostrar ou esconder. */
+    /** Toggles visibility. The argument forces show or hide. */
     toggle(force) {
       for (const el of this.elements) {
         const visible = force === void 0 ? elementHidden(el) : force;
@@ -7230,7 +7230,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Aparecimento com fade. */
+    /** Appearance with fade. */
     fadeIn(duration = 220) {
       for (const el of this.elements) {
         el.removeAttribute("hidden");
@@ -7238,17 +7238,17 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Desaparecimento com fade, terminando escondido. */
+    /** Disappearance with fade, ending hidden. */
     fadeOut(duration = 220) {
       for (const el of this.elements) void fadeOut(el, duration);
       return this;
     }
-    /** Recolhe a altura ate zero. */
+    /** Collapses height to zero. */
     slideUp(duration = 240) {
       for (const el of this.elements) void slideUp(el, duration);
       return this;
     }
-    /** Expande a altura ate o conteudo. */
+    /** Expands height to content. */
     slideDown(duration = 240) {
       for (const el of this.elements) {
         el.removeAttribute("hidden");
@@ -7256,7 +7256,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Alterna entre recolher e expandir. */
+    /** Toggles between collapse and expand. */
     slideToggle(duration = 240) {
       for (const el of this.elements) {
         if (elementHidden(el)) {
@@ -7268,7 +7268,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Animacao pela Web Animations API. */
+    /** Animation via Web Animations API. */
     animate(keyframes, options = 300) {
       for (const el of this.elements) {
         if (typeof el.animate !== "function") continue;
@@ -7276,16 +7276,16 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Rola a pagina ate o primeiro elemento. */
+    /** Scrolls the page to the first element. */
     scrollIntoView(options = { behavior: "smooth", block: "start" }) {
       var _a2;
       (_a2 = this.elements[0]) == null ? void 0 : _a2.scrollIntoView(options);
       return this;
     }
     // -------------------------------------------------------------------------
-    // Formulario
+    // Form
     // -------------------------------------------------------------------------
-    /** Serializa os campos do primeiro elemento no formato de query string. */
+    /** Serializes the first element's fields as a query string. */
     serialize() {
       const el = this.elements[0];
       if (!el) return "";
@@ -7303,9 +7303,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return params.toString();
     }
     /**
-     * Serializa os campos em um objeto. Nomes repetidos e nomes terminados em
-     * `[]` viram array, caixas de selecao viram booleano e campos numericos viram
-     * numero.
+     * Serializes fields into an object. Repeated names and names ending in
+     * `[]` become arrays, checkboxes become booleans, and numeric fields become numbers.
      */
     serializeObject() {
       var _a2, _b, _c, _d;
@@ -7357,18 +7356,18 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return out;
     }
-    /** Coloca o foco no primeiro elemento. */
+    /** Sets focus on the first element. */
     focus(options) {
       var _a2;
       (_a2 = this.elements[0]) == null ? void 0 : _a2.focus(options);
       return this;
     }
-    /** Tira o foco de todos os elementos. */
+    /** Removes focus from all elements. */
     blur() {
       for (const el of this.elements) el.blur();
       return this;
     }
-    /** Seleciona o texto dos campos da colecao. */
+    /** Selects the text of the collection's fields. */
     select() {
       for (const el of this.elements) {
         const field = el;
@@ -7377,11 +7376,11 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       return this;
     }
     // -------------------------------------------------------------------------
-    // Integracao com o runtime da Voodoo
+    // Integration with Voodoo runtime
     // -------------------------------------------------------------------------
     /**
-     * Inicializa as directives dos elementos da colecao, herdando o escopo do pai.
-     * Com `force`, desmonta antes para reiniciar do zero.
+     * Initializes directives for the collection's elements, inheriting the parent's scope.
+     * With `force`, unmounts first to restart from scratch.
      */
     walk(force = false) {
       for (const el of this.elements) {
@@ -7390,7 +7389,7 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       }
       return this;
     }
-    /** Desmonta efeitos, escutas e componentes, mantendo os elementos no DOM. */
+    /** Unmounts effects, listeners, and components while keeping elements in the DOM. */
     destroy() {
       for (const el of this.elements) destroy(el);
       return this;
@@ -7612,8 +7611,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const lightness = dark ? DARK_L : LIGHT_L;
     const chroma = dark ? DARK_C : LIGHT_C;
     const out = {};
-    SCALE_STEPS.forEach((step, index) => {
-      out[String(step)] = oklchToHex({
+    SCALE_STEPS.forEach((step2, index) => {
+      out[String(step2)] = oklchToHex({
         l: lightness[index],
         c: base.c * chroma[index],
         h: base.h
@@ -7709,8 +7708,8 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
       const base = rgbToOklch(rgb);
       const scale = colorScale(rgb, dark);
       scales[role] = scale;
-      for (const step of SCALE_STEPS) {
-        vars[`--v-${role}-${step}`] = scale[String(step)];
+      for (const step2 of SCALE_STEPS) {
+        vars[`--v-${role}-${step2}`] = scale[String(step2)];
       }
       const main = dark ? { l: Math.max(base.l, 0.62), c: base.c * 0.95, h: base.h } : base;
       const hover = dark ? { l: Math.min(main.l + 0.07, 0.94), c: main.c * 0.95, h: main.h } : { l: Math.max(main.l - 0.055, 0.12), c: main.c, h: main.h };
@@ -7738,10 +7737,10 @@ Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que 
     const hue = rgbToOklch(neutralRgb).h;
     const neutral = (l, c) => oklchToHex({ l, c, h: hue });
     const neutralScale = {};
-    SCALE_STEPS.forEach((step, index) => {
+    SCALE_STEPS.forEach((step2, index) => {
       const lightnessList = dark ? DARK_L : LIGHT_L;
-      neutralScale[String(step)] = neutral(lightnessList[index], 0.012);
-      vars[`--v-neutral-${step}`] = neutralScale[String(step)];
+      neutralScale[String(step2)] = neutral(lightnessList[index], 0.012);
+      vars[`--v-neutral-${step2}`] = neutralScale[String(step2)];
     });
     scales.neutral = neutralScale;
     if (dark) {
@@ -7800,7 +7799,7 @@ ${body}
     };
     for (const role of ROLES) {
       if (parseColor(colors[role])) continue;
-      console.warn(`[Voodoo] cor invalida em palette.${role}: "${colors[role]}". Usando o preset.`);
+      console.warn(`[Voodoo] invalid color in palette.${role}: "${colors[role]}". Using preset.`);
       colors[role] = preset[role];
     }
     return {
@@ -7833,7 +7832,7 @@ ${body}
       "--v-font-mono": mono
     };
     const css = [
-      "/* Paleta gerada por V.palette(). Nao edite a mao. */",
+      "/* Palette generated by V.palette(). Do not edit manually. */",
       block(":root", { ...shared, ...light.vars }),
       `@media (prefers-color-scheme: dark) {
 ${block(':root:not([data-theme="light"])', dark.vars)}
@@ -7879,55 +7878,55 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     return initPalette();
   }
   var palette = Object.assign(applyPalette, {
-    /** Presets prontos, indexados pelo nome. */
+    /** Ready-made presets, indexed by name. */
     presets,
-    /** Nomes dos presets disponiveis. */
+    /** Names of available presets. */
     get names() {
       return Object.keys(presets);
     },
-    /** Paleta em uso, ou `null` antes da primeira aplicacao. */
+    /** Palette in use, or `null` before the first application. */
     get current() {
       return current;
     },
-    /** Opcoes usadas na ultima aplicacao. */
+    /** Options used in the last application. */
     get options() {
       return currentOptions;
     },
-    /** Aplica a paleta salva, ou o padrao quando nao ha nada salvo. */
+    /** Apply the saved palette, or the default when there is nothing saved. */
     init: initPalette,
-    /** Garante que as variaveis existam, sem sobrescrever o que ja foi aplicado. */
+    /** Ensure variables exist, without overwriting what has already been applied. */
     ensure: ensurePalette,
-    /** Volta ao preset padrao e apaga a escolha salva. */
+    /** Return to the default preset and clear the saved choice. */
     reset() {
       storage.remove(STORAGE_KEY);
       return applyPalette({ persist: false });
     },
-    /** Troca apenas o preset, mantendo raio e fonte atuais. */
+    /** Change only the preset, maintaining current radius and font. */
     use(name) {
       return applyPalette({ ...currentOptions != null ? currentOptions : {}, preset: name, primary: void 0, accent: void 0 });
     },
-    /** Escala de tons de uma cor qualquer. */
+    /** Scale of tones for any color. */
     scale: colorScale,
-    /** Preto ou branco, conforme o melhor contraste WCAG sobre a cor. */
+    /** Black or white, depending on the best WCAG contrast over the color. */
     contrastText,
-    /** Razao de contraste WCAG entre duas cores. */
+    /** WCAG contrast ratio between two colors. */
     contrastRatio,
-    /** Luminancia relativa WCAG de uma cor. */
+    /** WCAG relative luminance of a color. */
     luminance(color) {
       const rgb = typeof color === "string" ? parseColor(color) : color;
       return rgb ? relativeLuminance(rgb) : 0;
     },
-    /** Conversores expostos para quem quiser gerar cores derivadas. */
+    /** Converters exposed for those who want to generate derived colors. */
     convert: { parseColor, rgbToOklch, oklchToRgb, toHex, toRgba }
   });
 
   // src/bootstrap.ts
   function readDevtoolsFlag(script) {
     if (window.VOODOO_DEVTOOLS === true) return true;
-    for (const nome of ["devtools", "data-devtools"]) {
-      if (!script.hasAttribute(nome)) continue;
-      const valor = script.getAttribute(nome);
-      return valor === null || valor === "" || valor.toLowerCase() !== "false";
+    for (const name of ["devtools", "data-devtools"]) {
+      if (!script.hasAttribute(name)) continue;
+      const value = script.getAttribute(name);
+      return value === null || value === "" || value.toLowerCase() !== "false";
     }
     return false;
   }
@@ -7955,7 +7954,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       return;
     }
     console.info(
-      "[Voodoo] devtools pedidas, mas este build nao traz o inspetor. Use voodoo.full.min.js para ganhar o widget e o painel completo."
+      "[Voodoo] devtools requested, but this build does not include the inspector. Use voodoo.full.min.js to get the widget and full devtools panel."
     );
   }
   function bootstrap(V2) {

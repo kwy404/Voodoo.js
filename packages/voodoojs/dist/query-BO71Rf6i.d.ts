@@ -1,59 +1,59 @@
-import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
 
 /**
  * @module parser/lexer
  *
- * Tokenizador do subconjunto de JavaScript aceito dentro de atributos `v-*`.
+ * Tokenizer for the JavaScript subset accepted within `v-*` attributes.
  *
- * A Voodoo nao usa `eval` nem `new Function`. Todo o texto de uma expressao
- * passa por este lexer, depois pelo parser e por fim por um interpretador de
- * arvore. Isso mantem a biblioteca compativel com Content Security Policy
- * restritiva, sem `unsafe-eval`.
+ * Voodoo does not use `eval` or `new Function`. All expression text
+ * goes through this lexer, then the parser, and finally through a tree
+ * interpreter. This keeps the library compatible with restrictive Content
+ * Security Policy, without `unsafe-eval`.
  */
 type TokenType = 'num' | 'str' | 'tpl' | 'ident' | 'punct' | 'eof';
 interface TemplatePart {
-    /** Trechos literais entre as interpolacoes. Sempre tem 1 item a mais que `exprs`. */
+    /** Literal chunks between interpolations. Always has 1 more item than `exprs`. */
     quasis: string[];
-    /** Codigo fonte de cada `${...}`. */
+    /** Source code of each `${...}`. */
     exprs: string[];
 }
 interface Token {
     type: TokenType;
     value: string;
-    /** Valor ja convertido para numero ou string, quando aplicavel. */
+    /** Value already converted to number or string, when applicable. */
     parsed?: number | string;
     tpl?: TemplatePart;
     start: number;
     end: number;
 }
-/** Erro de sintaxe com posicao dentro da expressao original. */
+/** Syntax error with position within the original expression. */
 declare class VoodooSyntaxError extends Error {
     readonly source: string;
     readonly position: number;
     constructor(message: string, source: string, position: number);
 }
 /**
- * Converte uma expressao em uma lista de tokens.
+ * Converts an expression to a list of tokens.
  *
- * @throws {VoodooSyntaxError} quando encontra um caractere invalido.
+ * @throws {VoodooSyntaxError} when it encounters an invalid character.
  */
 declare function tokenize(source: string): Token[];
 
 /**
  * @module parser/parser
  *
- * Parser Pratt (precedencia de operadores) que transforma tokens em AST.
+ * Pratt parser (operator precedence) that transforms tokens to AST.
  *
- * Suporta o subconjunto de JavaScript que faz sentido dentro de um atributo:
- * literais, identificadores, acesso a membros, chamadas, operadores unarios e
- * binarios, ternario, atribuicao, incremento, objetos, arrays, arrow functions,
- * template literals, spread, encadeamento opcional e sequencias com `;`.
+ * Supports the subset of JavaScript that makes sense within an attribute:
+ * literals, identifiers, member access, function calls, unary and binary
+ * operators, ternary, assignment, increment, objects, arrays, arrow functions,
+ * template literals, spread, optional chaining and sequences with `;`.
  *
- * Nao suporta, por decisao de projeto: `function`, `class`, `new`, `delete`,
- * `import`, `await`, laco `for`, `while`, `try` e desestruturacao complexa.
- * Expressoes de atributo devem ser curtas. Logica maior vive em metodos.
+ * Does not support, by design decision: `function`, `class`, `new`, `delete`,
+ * `import`, `await`, `for` loop, `while`, `try` and complex destructuring.
+ * Attribute expressions should be short. Larger logic lives in methods.
  */
 
 type Node$1 = {
@@ -123,14 +123,14 @@ type Node$1 = {
     body: Node$1[];
 };
 interface ObjectProperty {
-    /** Nome fixo da chave, ou `null` quando a chave e computada. */
+    /** Fixed key name, or `null` when the key is computed. */
     key: string | null;
     keyExpr?: Node$1;
     value?: Node$1;
     spread?: Node$1;
 }
 /**
- * Converte texto em AST, com cache.
+ * Converts text to AST, with caching.
  *
  * ```js
  * parse('count + 1')
@@ -138,153 +138,153 @@ interface ObjectProperty {
  * ```
  */
 declare function parse(source: string): Node$1;
-/** Limpa o cache de expressoes. Usado em testes e no hot reload. */
+/** Clears the expression cache. Used in tests and hot reload. */
 declare function clearParseCache(): void;
 
 /**
  * @module parser/interpreter
  *
- * Interpretador da AST. Recebe um no e um escopo e devolve o valor.
+ * AST interpreter. Takes a node and a scope and returns the value.
  *
- * Seguranca: nao existe acesso implicito a `window`, `globalThis`, `document`,
- * `fetch` ou `eval`. Identificadores que nao estao no escopo sao procurados em
- * uma lista fechada de globais permitidos, configuravel pela aplicacao.
+ * Security: there is no implicit access to `window`, `globalThis`, `document`,
+ * `fetch` or `eval`. Identifiers not in scope are looked up in a closed list of
+ * allowed globals, configurable by the application.
  */
 
-/** Contrato minimo que um escopo precisa cumprir para ser avaliado. */
+/** Minimum contract that a scope must fulfill to be evaluated. */
 interface EvalScope {
-    /** Retorna o objeto que contem a chave, subindo a cadeia de escopos. */
+    /** Returns the object containing the key, walking up the scope chain. */
     lookup(name: string): Record<string, any> | undefined;
-    /** Le um valor da cadeia de escopos. */
+    /** Reads a value from the scope chain. */
     get(name: string): unknown;
-    /** Escreve na cadeia de escopos, no dono da chave quando ele existir. */
+    /** Writes to the scope chain, in the key owner when it exists. */
     set(name: string, value: unknown): void;
-    /** Cria um escopo filho com variaveis locais, usado por arrow functions e `v-for`. */
+    /** Creates a child scope with local variables, used by arrow functions and `v-for`. */
     child(vars: Record<string, unknown>): EvalScope;
 }
 declare const allowedGlobals: Record<string, unknown>;
-/** Erro em tempo de execucao de uma expressao, com o texto original anexado. */
+/** Runtime error for an expression, with original text attached. */
 declare class VoodooRuntimeError extends Error {
     readonly expression?: string | undefined;
     constructor(message: string, expression?: string | undefined);
 }
 /**
- * Avalia um no da AST.
+ * Evaluates an AST node.
  *
- * @param node no gerado por `parse()`
- * @param scope escopo de leitura e escrita
+ * @param node node generated by `parse()`
+ * @param scope read and write scope
  */
 declare function evaluate(node: Node$1, scope: EvalScope): any;
-/** Converte qualquer valor no texto que sera escrito no DOM. */
+/** Converts any value to text that will be written to the DOM. */
 declare function stringify(value: unknown): string;
 
 /**
  * @module runtime/scope
  *
- * Cadeia de escopos. Cada `v-data`, cada componente e cada iteracao de `v-for`
- * cria um escopo filho. A busca de um identificador sobe a cadeia ate a raiz e,
- * se nada for encontrado, cai nas variaveis magicas (`$store`, `$el`, ...).
+ * Scope chain. Each `v-data`, each component, and each iteration of `v-for`
+ * creates a child scope. Identifier lookup travels up the chain to the root, and
+ * if nothing is found, falls back to magic variables (`$store`, `$el`, ...).
  */
 
 type MagicGetter = (scope: Scope) => unknown;
-/** Registro global de variaveis magicas, preenchido pelos modulos. */
+/** Global registry of magic variables, filled by modules. */
 declare const magics: Map<string, MagicGetter>;
-/** Registra uma variavel magica disponivel em qualquer expressao. */
+/** Register a magic variable available in any expression. */
 declare function magic(name: string, getter: MagicGetter): void;
 declare class Scope implements EvalScope {
-    /** Dados proprios deste escopo, normalmente um proxy reativo. */
+    /** Data local to this scope, normally a reactive proxy. */
     data: Record<string, any>;
     parent: Scope | null;
-    /** Elemento que criou o escopo. Usado por `$el` e `$refs`. */
+    /** Element that created the scope. Used by `$el` and `$refs`. */
     el: Element | null;
-    /** Referencias declaradas com `v-ref` dentro deste escopo. */
+    /** References declared with `v-ref` within this scope. */
     refs: Record<string, Element>;
-    /** Instancia de componente, quando este escopo pertence a um. */
+    /** Component instance, when this scope belongs to one. */
     component: any;
-    /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+    /** Values delivered by `provide`, visible to lower scopes. */
     provides: Record<string, unknown> | null;
     private magicCache;
     constructor(data?: Record<string, any>, parent?: Scope | null, el?: Element | null);
-    /** Escopo raiz da cadeia. */
+    /** Root scope of the chain. */
     get root(): Scope;
-    /** Procura um valor de `provide` subindo a cadeia de escopos. */
+    /** Look up a `provide` value by traveling up the scope chain. */
     inject<T = unknown>(key: string, fallback?: T): T | undefined;
-    /** Escopo de componente mais proximo, subindo a cadeia. */
+    /** Nearest component scope, traveling up the chain. */
     get owner(): Scope | null;
-    /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
+    /** Set of visible refs, merging ancestor scopes. */
     get allRefs(): Record<string, Element>;
     lookup(name: string): Record<string, any> | undefined;
     has(name: string): boolean;
     get(name: string): unknown;
     set(name: string, value: unknown): void;
     child(vars?: Record<string, unknown>, el?: Element | null): Scope;
-    /** Cria um escopo filho reativo, usado por `v-data` e por `v-for`. */
+    /** Create a reactive child scope, used by `v-data` and `v-for`. */
     reactiveChild(vars: Record<string, unknown>, el?: Element | null): Scope;
     private magicContainer;
 }
 /**
- * Escopo raiz global, compartilhado por elementos sem `v-data`.
- * Os dados sao reativos, entao qualquer valor colocado aqui por `V.data()`
- * ou por `v-resource` atualiza a pagina sozinho.
+ * Global root scope, shared by elements without `v-data`.
+ * The data is reactive, so any value placed here by `V.data()` or `v-resource`
+ * automatically updates the page.
  */
 declare const rootScope: Scope;
 
 /**
  * @module runtime/registry
  *
- * Registros globais: configuracao, directives, componentes e plugins.
+ * Global registries: configuration, directives, components, and plugins.
  */
 
 interface VoodooConfig {
-    /** Prefixo dos atributos. Trocar para `data-v-` em HTML estritamente valido. */
+    /** Attribute prefix. Change to `data-v-` for strictly valid HTML. */
     prefix: string;
-    /** Inicializa o DOM automaticamente quando o script carrega. */
+    /** Initialize the DOM automatically when the script loads. */
     autoStart: boolean;
-    /** Observa o DOM com MutationObserver e inicializa novos elementos. */
+    /** Watch the DOM with MutationObserver and initialize new elements. */
     autoDiscover: boolean;
-    /** Raiz observada. Por padrao `document.body`. */
+    /** Observed root. Default is `document.body`. */
     root: Element | null;
-    /** Mostra avisos detalhados no console. */
+    /** Show detailed warnings in the console. */
     devtools: boolean;
-    /** URL base das requisicoes disparadas por atributos. */
+    /** Base URL for requests triggered by attributes. */
     baseURL: string;
-    /** Globais liberados dentro das expressoes. */
+    /** Globals allowed inside expressions. */
     globals: Record<string, unknown>;
-    /** Locale usado por formatadores de data, numero e moeda. */
+    /** Locale used by date, number, and currency formatters. */
     locale: string;
-    /** Moeda padrao de `v-currency`. */
+    /** Default currency for `v-currency`. */
     currency: string;
-    /** Injeta o CSS dos componentes de UI automaticamente. */
+    /** Inject UI component CSS automatically. */
     injectStyles: boolean;
     /**
-     * Retira os atributos `v-*` do HTML depois de processados, deixando o DOM
-     * limpo no inspetor. Os valores continuam acessiveis internamente.
+     * Remove `v-*` attributes from HTML after processing, leaving the DOM clean
+     * in the inspector. Values remain accessible internally.
      */
     cleanAttributes: boolean;
     /**
-     * Recusa `javascript:`, `vbscript:` e `data:text/html` em atributos que o
-     * navegador navega, como `href`, `src`, `action` e `formaction`. Desligue
-     * somente se a aplicacao precisar mesmo gerar esses esquemas.
+     * Reject `javascript:`, `vbscript:`, and `data:text/html` in attributes that
+     * the browser navigates, like `href`, `src`, `action`, and `formaction`. Only
+     * turn off if the application truly needs to generate those schemes.
      */
     sanitizeUrls: boolean;
 }
 declare const config: VoodooConfig;
 interface DirectiveBinding<T = any> {
     el: HTMLElement;
-    /** Valor ja avaliado da expressao. */
+    /** Already-evaluated value of the expression. */
     value: T;
     oldValue: T | undefined;
-    /** Argumento depois dos dois pontos, como `click` em `v-on:click`. */
+    /** Argument after the colon, like `click` in `v-on:click`. */
     arg?: string;
-    /** Modificadores depois dos pontos, como `.prevent.stop`. */
+    /** Modifiers after the dots, like `.prevent.stop`. */
     modifiers: Record<string, string | true>;
-    /** Texto original da expressao. */
+    /** Original text of the expression. */
     expression: string;
     scope: Scope;
-    /** Instancia de componente mais proxima, quando existir. */
+    /** Nearest component instance, when it exists. */
     instance: any;
 }
-/** Directive no formato de ciclo de vida, usado por `V.directive()`. */
+/** Directive in lifecycle format, used by `V.directive()`. */
 interface DirectiveHooks<T = any> {
     created?(el: HTMLElement, binding: DirectiveBinding<T>): void;
     beforeMount?(el: HTMLElement, binding: DirectiveBinding<T>): void;
@@ -292,46 +292,46 @@ interface DirectiveHooks<T = any> {
     updated?(el: HTMLElement, binding: DirectiveBinding<T>): void;
     beforeUnmount?(el: HTMLElement, binding: DirectiveBinding<T>): void;
     unmounted?(el: HTMLElement, binding: DirectiveBinding<T>): void;
-    /** Ordem de execucao. Maior roda primeiro. Padrao 0. */
+    /** Execution order. Higher runs first. Default 0. */
     priority?: number;
-    /** Quando `true`, a expressao nao e avaliada automaticamente. */
+    /** When `true`, the expression is not evaluated automatically. */
     raw?: boolean;
     /**
-     * Assume a subarvore inteira, como fazem `v-if` e `v-for`: o walker nao desce
-     * nos filhos, e quem decide o que fazer com eles e a propria directive.
-     * Sem isto, um plugin nao consegue escrever uma directive estrutural.
+     * Takes over the entire subtree, as `v-if` and `v-for` do: the walker doesn't
+     * descend into children, and the directive itself decides what to do with them.
+     * Without this, a plugin can't write a structural directive.
      */
     terminal?: boolean;
 }
-/** Contexto entregue as directives internas, com controle fino de efeitos. */
+/** Context delivered to internal directives, with fine-grained effect control. */
 interface DirectiveContext {
     el: HTMLElement;
     scope: Scope;
-    /** Texto da expressao, exatamente como escrito no atributo. */
+    /** Expression text, exactly as written in the attribute. */
     expression: string;
     arg?: string;
     modifiers: Record<string, string | true>;
-    /** Avalia a expressao do atributo, ou outra passada por parametro. */
+    /** Evaluate the attribute expression, or another passed as parameter. */
     evaluate<T = any>(expression?: string): T;
-    /** Cria um efeito reativo com limpeza ligada ao elemento. */
+    /** Create a reactive effect with cleanup tied to the element. */
     effect(fn: () => void): void;
-    /** Registra limpeza executada quando o elemento sai do DOM. */
+    /** Register cleanup executed when the element leaves the DOM. */
     cleanup(fn: () => void): void;
-    /** Percorre um subarvore aplicando as directives, usado por `v-if` e `v-for`. */
+    /** Walk a subtree applying directives, used by `v-if` and `v-for`. */
     walk(node: Node, scope: Scope): void;
-    /** Nome completo do atributo, util para mensagens de erro. */
+    /** Full attribute name, useful for error messages. */
     raw: string;
 }
 type DirectiveSetup = (ctx: DirectiveContext) => void;
 interface DirectiveDefinition {
     name: string;
     setup: DirectiveSetup;
-    /** Maior roda primeiro. */
+    /** Higher runs first. */
     priority: number;
-    /** Impede que o walker desca nos filhos, como em `v-for` e `v-if`. */
+    /** Prevents the walker from descending into children, as in `v-for` and `v-if`. */
     terminal: boolean;
 }
-/** Prioridades dos casos especiais. Valores maiores sao processados antes. */
+/** Priorities of special cases. Higher values are processed first. */
 declare const PRIORITY: {
     readonly IGNORE: 100;
     readonly FOR: 90;
@@ -349,27 +349,27 @@ interface RegisterDirectiveOptions {
     priority?: number;
     terminal?: boolean;
 }
-/** Registro interno, usado pelas directives nativas. */
+/** Internal registry, used by native directives. */
 declare function defineDirective(name: string, setup: DirectiveSetup, options?: RegisterDirectiveOptions): void;
 interface ComponentDefinition {
-    /** Estado inicial. Recebe as props ja resolvidas. */
+    /** Initial state. Receives already-resolved props. */
     state?: (this: any, props: Record<string, any>) => Record<string, any>;
-    /** Alias de `state`, para quem vem do Vue. */
+    /** Alias for `state`, for those coming from Vue. */
     data?: (this: any, props: Record<string, any>) => Record<string, any>;
-    /** Nomes das props aceitas, ou definicao com tipo e valor padrao. */
+    /** Names of accepted props, or definition with type and default value. */
     props?: string[] | Record<string, PropDefinition>;
     methods?: Record<string, (this: any, ...args: any[]) => any>;
     computed?: Record<string, (this: any) => any>;
     watch?: Record<string, (this: any, value: any, oldValue: any) => void>;
-    /** HTML do componente. Use `<slot>` para receber o conteudo original. */
+    /** Component HTML. Use `<slot>` to receive the original content. */
     template?: string;
-    /** CSS injetado uma unica vez quando o componente e usado. */
+    /** CSS injected once when the component is used. */
     style?: string;
-    /** Herda o escopo do pai em vez de isolar. Padrao `false`. */
+    /** Inherit parent scope instead of isolating. Default `false`. */
     inheritScope?: boolean;
-    /** Valores entregues aos descendentes, lidos com `inject`. */
+    /** Values delivered to descendants, read with `inject`. */
     provide?: Record<string, unknown> | ((this: any) => Record<string, unknown>);
-    /** Valores buscados em um `provide` acima, disponiveis como estado. */
+    /** Values looked up in a `provide` above, available as state. */
     inject?: string[] | Record<string, {
         from?: string;
         default?: unknown;
@@ -395,16 +395,16 @@ interface VoodooPlugin {
 /**
  * @module runtime/component
  *
- * Modelo de componentes. Um componente da Voodoo e um escopo com estado,
- * metodos, computados, watchers, props, slots e ciclo de vida, montado sobre um
- * elemento existente. Nao existe passo de compilacao.
+ * Component model. A Voodoo component is a scope with state, methods, computed
+ * properties, watchers, props, slots and lifecycle, mounted on an existing
+ * element. There is no compilation step.
  *
- * Tres formas de uso:
+ * Three ways to use:
  *
  * ```html
- * <div v-component="counter"></div>          <!-- registrado -->
- * <counter></counter>                        <!-- tag propria -->
- * <Counter start="10"></Counter>             <!-- tag em PascalCase -->
+ * <div v-component="counter"></div>          <!-- registered -->
+ * <counter></counter>                        <!-- custom tag -->
+ * <Counter start="10"></Counter>             <!-- PascalCase tag -->
  * ```
  */
 
@@ -418,38 +418,38 @@ interface ComponentInstance {
     emit(event: string, detail?: unknown): void;
     [key: string]: any;
 }
-/** Componentes ja montados, para inspecao pelas devtools. */
+/** Already mounted components, for inspection by devtools. */
 declare const instances: Set<ComponentInstance>;
 /**
- * Registra um componente.
+ * Registers a component.
  *
  * ```js
  * V.component('counter', {
  *   props: { start: { type: 'number', default: 0 } },
  *   state(props) { return { count: props.start } },
- *   computed: { dobro() { return this.count * 2 } },
+ *   computed: { double() { return this.count * 2 } },
  *   methods: { increment() { this.count++ } },
  *   template: `
  *     <button v-click="increment" v-text="count"></button>
- *     <small v-text="dobro"></small>
+ *     <small v-text="double"></small>
  *   `,
- *   mounted() { console.log('montado') }
+ *   mounted() { console.log('mounted') }
  * })
  * ```
  */
 declare function defineComponent(name: string, definition: ComponentDefinition): void;
 /**
- * Monta um componente sobre um elemento e devolve o escopo resultante.
- * Chamado pelo walker quando encontra `v-component` ou uma tag registrada.
+ * Mounts a component on an element and returns the resulting scope.
+ * Called by the walker when it finds `v-component` or a registered tag.
  */
 declare function mountComponent(el: HTMLElement, name: string, parentScope: Scope): Scope | null;
 
 /**
  * @module storage
  *
- * Acesso uniforme a localStorage, sessionStorage, cookies, query string e a um
- * cache em memoria com expiracao. Todas as leituras e escritas sao seguras: em
- * modo privado, com cota cheia ou fora do navegador, as chamadas nao lancam.
+ * Uniform access to localStorage, sessionStorage, cookies, query string, and an
+ * in-memory cache with expiration. All reads and writes are safe: in private mode,
+ * with full quota, or outside the browser, calls do not throw.
  */
 interface StorageAdapter {
     get<T = unknown>(key: string, fallback?: T): T | undefined;
@@ -459,12 +459,12 @@ interface StorageAdapter {
     has(key: string): boolean;
     keys(): string[];
 }
-/** `localStorage` com serializacao JSON automatica. */
+/** `localStorage` with automatic JSON serialization. */
 declare const storage: StorageAdapter;
-/** `sessionStorage` com serializacao JSON automatica. */
+/** `sessionStorage` with automatic JSON serialization. */
 declare const session: StorageAdapter;
 interface CookieOptions {
-    /** Dias ate expirar, ou uma data. */
+    /** Days until expiry, or a date. */
     expires?: number | Date;
     path?: string;
     domain?: string;
@@ -478,50 +478,50 @@ declare const cookie: {
     has(name: string): boolean;
 };
 declare const url: {
-    /** Le um parametro da URL atual. */
+    /** Reads a parameter from the current URL. */
     get(key: string, fallback?: string): string | undefined;
-    /** Le todos os parametros como objeto. */
+    /** Reads all parameters as an object. */
     all(): Record<string, string>;
-    /** Escreve um parametro sem recarregar a pagina. */
+    /** Writes a parameter without reloading the page. */
     set(key: string, value: string | number | null, replace?: boolean): void;
     remove(key: string, replace?: boolean): void;
-    /** Aplica varios parametros de uma vez. */
+    /** Applies multiple parameters at once. */
     merge(params: Record<string, string | number | null>, replace?: boolean): void;
 };
 declare const cache: {
-    /** Guarda um valor. `ttl` em milissegundos, `0` significa sem expiracao. */
+    /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
     set<T>(key: string, value: T, ttl?: number): T;
     get<T = unknown>(key: string, fallback?: T): T | undefined;
     has(key: string): boolean;
     remove(key: string): void;
     clear(): void;
-    /** Executa a funcao apenas quando o valor nao estiver em cache. */
+    /** Executes the function only when the value is not in cache. */
     remember<T>(key: string, ttl: number, factory: () => Promise<T> | T): Promise<T>;
     readonly size: number;
 };
 type ThemeName = 'light' | 'dark' | 'system';
 declare const theme: {
-    /** Tema escolhido pelo usuario, ou `system` quando nunca foi definido. */
+    /** Theme chosen by the user, or `system` when never set. */
     readonly current: ThemeName;
-    /** Tema efetivamente aplicado, resolvendo `system`. */
+    /** Theme effectively applied, resolving `system`. */
     readonly resolved: "light" | "dark";
     set(value: ThemeName): void;
     toggle(): "light" | "dark";
-    /** Escreve `data-theme` no elemento raiz e avisa a pagina. */
+    /** Writes `data-theme` on the root element and notifies the page. */
     apply(): void;
-    /** Aplica o tema salvo assim que a pagina carrega. */
+    /** Applies the saved theme as soon as the page loads. */
     init(): void;
 };
 
 /**
  * @module ui/toast
  *
- * Notificacoes temporarias. Sem dependencia, com fila, pausa ao passar o mouse,
- * barra de progresso, acao opcional e suporte a promessa.
+ * Temporary notifications. No dependencies, with queue, mouse-over pause,
+ * progress bar, optional action, and promise support.
  *
  * ```js
- * V.toast.success('Usuario salvo!')
- * V.toast.promise(salvar(), { loading: 'Salvando', success: 'Pronto', error: 'Falhou' })
+ * V.toast.success('User saved!')
+ * V.toast.promise(save(), { loading: 'Saving', success: 'Done', error: 'Failed' })
  * ```
  */
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading' | 'default';
@@ -530,17 +530,17 @@ interface ToastOptions {
     title?: string;
     description?: string;
     type?: ToastType;
-    /** Milissegundos ate fechar. `0` mantem aberto ate o usuario fechar. */
+    /** Milliseconds until close. `0` keeps it open until the user closes it. */
     duration?: number;
     position?: ToastPosition;
-    /** Botao de acao dentro da notificacao. */
+    /** Action button inside the notification. */
     action?: {
         label: string;
         onClick: () => void;
     };
-    /** Mostra o botao de fechar. */
+    /** Show the close button. */
     closable?: boolean;
-    /** HTML customizado no lugar do conteudo padrao. Use com cuidado. */
+    /** Custom HTML in place of default content. Use with caution. */
     html?: string;
     onClose?: () => void;
 }
@@ -561,13 +561,13 @@ declare const toast: ((message: string | ToastOptions, options?: Partial<ToastOp
     info: (message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle;
     loading: (message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle;
     /**
-     * Acompanha uma promessa: mostra carregando, depois sucesso ou erro.
+     * Monitor a promise: show loading, then success or error.
      *
      * ```js
-     * V.toast.promise(salvar(), {
-     *   loading: 'Salvando...',
-     *   success: (dados) => `Salvo com id ${dados.id}`,
-     *   error: 'Nao foi possivel salvar'
+     * V.toast.promise(save(), {
+     *   loading: 'Saving...',
+     *   success: (data) => `Saved with id ${data.id}`,
+     *   error: 'Failed to save'
      * })
      * ```
      */
@@ -576,9 +576,9 @@ declare const toast: ((message: string | ToastOptions, options?: Partial<ToastOp
         success?: string | ((value: T) => string);
         error?: string | ((error: unknown) => string);
     }): Promise<T>;
-    /** Fecha todas as notificacoes abertas. */
+    /** Close all open notifications. */
     clear(): void;
-    /** Ajusta duracao, posicao e limite padrao. */
+    /** Adjust default duration, position, and limit. */
     configure(options: Partial<typeof settings>): void;
     settings: {
         duration: number;
@@ -590,42 +590,42 @@ declare const toast: ((message: string | ToastOptions, options?: Partial<ToastOp
 /**
  * @module runtime/walker
  *
- * Percorre o DOM, encontra atributos `v-*`, `:` e `@`, e liga cada um ao
- * sistema reativo. Este e o motor que faz o HTML virar aplicacao.
+ * Walks the DOM, finds `v-*`, `:` and `@` attributes, and connects each to the
+ * reactive system. This is the engine that turns HTML into an application.
  *
- * Regras de ordem em um mesmo elemento:
- *   1. `v-ignore` e `v-pre` cancelam o processamento.
- *   2. Directives terminais (`v-for`, `v-if`) assumem o controle da subarvore.
- *   3. `v-data` e `v-component` criam o escopo usado pelo restante.
- *   4. As demais directives rodam por prioridade decrescente.
- *   5. Os filhos sao percorridos com o escopo resultante.
+ * Order rules for a single element:
+ *   1. `v-ignore` and `v-pre` cancel processing.
+ *   2. Terminal directives (`v-for`, `v-if`) take control of the subtree.
+ *   3. `v-data` and `v-component` create the scope used by the rest.
+ *   4. Other directives run by descending priority.
+ *   5. Children are walked with the resulting scope.
  */
 
-/** Escopo associado a um no, se houver. */
+/** Scope associated with a node, if any. */
 declare function getScope(node: Node): Scope | undefined;
-/** Escopo efetivo de um no, subindo pelos ancestrais. */
+/** Effective scope of a node, walking up through ancestors. */
 declare function findScope(node: Node | null): Scope;
-/** Registra uma funcao executada quando o no for removido do DOM. */
+/** Registers a function executed when the node is removed from the DOM. */
 declare function addCleanup(node: Node, fn: () => void): void;
 /**
- * Desmonta um no e todos os descendentes: para efeitos, remove listeners e
- * dispara os hooks `beforeUnmount` e `unmounted`.
+ * Unmounts a node and all descendants: stops effects, removes listeners, and
+ * fires the `beforeUnmount` and `unmounted` hooks.
  */
 declare function destroy(node: Node): void;
 interface ParsedAttribute {
-    /** Nome do atributo como escrito no HTML. */
+    /** Attribute name as written in HTML. */
     raw: string;
-    /** Nome da directive, sem prefixo, como `text`, `on`, `toast-success`. */
+    /** Directive name, without prefix, like `text`, `on`, `toast-success`. */
     name: string;
-    /** Argumento apos os dois pontos, como `click` em `v-on:click`. */
+    /** Argument after the colon, like `click` in `v-on:click`. */
     arg?: string;
     modifiers: Record<string, string | true>;
-    /** Valor do atributo. */
+    /** Attribute value. */
     expression: string;
 }
 /**
- * Converte um atributo do HTML na descricao de uma directive.
- * Retorna `null` quando o atributo nao pertence a Voodoo.
+ * Converts an HTML attribute into a directive description.
+ * Returns `null` when the attribute doesn't belong to Voodoo.
  *
  * ```
  * v-on:click.prevent="save"  ->  { name:'on', arg:'click', modifiers:{prevent:true} }
@@ -635,32 +635,33 @@ interface ParsedAttribute {
  */
 declare function parseAttribute(name: string, value: string): ParsedAttribute | null;
 /**
- * Avalia uma expressao no escopo informado. Erros sao reportados sem quebrar a
- * pagina, porque um atributo com problema nao deve derrubar o resto do app.
+ * Evaluates an expression in the given scope. Errors are reported without
+ * breaking the page, because a problematic attribute shouldn't crash the rest
+ * of the app.
  */
 declare function evaluateIn<T = any>(expression: string, scope: Scope, context?: string, el?: Element | null): T;
 /**
- * Percorre um no aplicando as directives encontradas.
+ * Walks a node applying the directives found.
  *
- * @param node raiz do trecho a inicializar
- * @param scope escopo aplicado ao no. Quando ausente, e deduzido dos ancestrais.
+ * @param node root of the section to initialize
+ * @param scope scope applied to the node. When absent, inferred from ancestors.
  */
 declare function walk(node: Node, scope?: Scope): void;
-/** Inicializa a Voodoo em uma raiz. Chamado automaticamente no navegador. */
+/** Initializes Voodoo in a root. Called automatically in the browser. */
 declare function start(root?: Element | Document): void;
-/** Interrompe a observacao automatica do DOM. */
+/** Stops automatic DOM observation. */
 declare function stopObserving(): void;
-/** Reinicializa a Voodoo dentro de uma raiz, util em testes. */
+/** Reinitializes Voodoo within a root, useful in tests. */
 declare function refresh(root?: Element): void;
 
 /**
  * @module runtime/app
  *
- * Modo aplicacao: `createApp(...).mount('#app')`.
+ * Application mode: `createApp(...).mount('#app')`.
  *
- * O modo de sempre da Voodoo e ligar atributos a um HTML que ja existe. Este
- * modulo acrescenta o outro caminho, o do Vue e do React: a aplicacao inteira e
- * descrita em JavaScript, tem uma raiz propria e o HTML dela vem do template.
+ * Voodoo's traditional mode binds attributes to existing HTML. This module adds
+ * the alternative path used by Vue and React: the entire application is described
+ * in JavaScript, has its own root, and HTML comes from the template.
  *
  * ```js
  * const app = V.createApp({
@@ -676,31 +677,30 @@ declare function refresh(root?: Element): void;
  * app.mount('#app')
  * ```
  *
- * Duas diferencas propositais em relacao ao Vue:
+ * Two intentional differences from Vue:
  *
- * 1. `mount` aceita um alvo que ainda nao existe. Nao existe corrida com o
- *    carregamento da pagina, porque quem espera e o agendador da propria
- *    Voodoo, e nao `DOMContentLoaded`.
- * 2. `unmount` devolve o container ao HTML original, em vez de deixa-lo vazio.
+ * 1. `mount` accepts a target that doesn't exist yet. No race with page loading,
+ *    because Voodoo's own scheduler waits, not `DOMContentLoaded`.
+ * 2. `unmount` restores the container to original HTML instead of leaving it empty.
  */
 
 interface AppOptions extends ComponentDefinition {
-    /** Componentes visiveis apenas dentro desta aplicacao. */
+    /** Components visible only within this application. */
     components?: Record<string, ComponentDefinition>;
-    /** Valores entregues a arvore inteira, lidos com `inject`. */
+    /** Values delivered to the entire tree, read with `inject`. */
     provide?: Record<string, unknown> | (() => Record<string, unknown>);
 }
 interface AppConfig {
-    /** Valores liberados dentro das expressoes desta aplicacao. */
+    /** Values allowed inside this application's expressions. */
     globalProperties: Record<string, unknown>;
 }
 interface App {
-    /** Nome interno do componente raiz, util em mensagens e no inspetor. */
+    /** Internal name of the root component, useful in messages and inspector. */
     readonly name: string;
     readonly config: AppConfig;
-    /** Instancia raiz, ou `null` enquanto a aplicacao nao montou. */
+    /** Root instance, or `null` until the application is mounted. */
     readonly instance: ComponentInstance | null;
-    /** Elemento que recebeu a aplicacao, ou `null`. */
+    /** Element that received the application, or `null`. */
     readonly container: Element | null;
     readonly isMounted: boolean;
     component(name: string): ComponentDefinition | undefined;
@@ -709,73 +709,73 @@ interface App {
     use(plugin: VoodooPlugin | Function, options?: Record<string, unknown>): App;
     provide(key: string, value: unknown): App;
     /**
-     * Monta a aplicacao. O alvo pode ser um seletor ou um elemento, e pode ainda
-     * nao existir: nesse caso a montagem acontece assim que ele aparecer.
+     * Mounts the application. The target can be a selector or element, and may
+     * not exist yet: in that case mounting happens as soon as it appears.
      */
     mount(target: string | Element): ComponentInstance | null;
-    /** Promessa resolvida com a instancia raiz quando a montagem acontecer. */
+    /** Promise resolved with the root instance when mounting happens. */
     whenMounted(): Promise<ComponentInstance>;
-    /** Desmonta e devolve o container ao conteudo original. */
+    /** Unmount and restore the container to its original content. */
     unmount(): void;
 }
 /**
- * Cria uma aplicacao. As opcoes sao as mesmas de um componente, mais
- * `components` e `provide`.
+ * Creates an application. Options are the same as for a component, plus
+ * `components` and `provide`.
  */
 declare function createApp(options?: AppOptions): App;
 
 /**
  * @module runtime/boot
  *
- * Agendador de inicializacao proprio da Voodoo.
+ * Voodoo's custom initialization scheduler.
  *
- * A biblioteca nao usa `DOMContentLoaded` nem `document.readyState` para saber
- * quando comecar. Em vez disso ela mantem o proprio laco: a cada passo pergunta
- * se a condicao daquela tarefa ja vale, e executa as que valem.
+ * The library doesn't use `DOMContentLoaded` or `document.readyState` to know
+ * when to start. Instead it maintains its own loop: at each step it asks whether
+ * a task's condition is met, and executes those that are.
  *
- * O motivo e simples. Os eventos de carregamento do navegador respondem a
- * pergunta errada. `DOMContentLoaded` diz que o parser terminou, e nao que a
- * arvore que interessa existe. Uma pagina renderizada por outro script, um
- * fragmento inserido depois, um container que so aparece na segunda tela: em
- * todos esses casos o evento ja passou, ou vai passar cedo demais.
+ * The reason is simple. Browser load events answer the wrong question.
+ * `DOMContentLoaded` says the parser finished, not that the tree we care about
+ * exists. A page rendered by another script, a fragment inserted later, a
+ * container that only appears on the second viewport: in all these cases the
+ * event already passed, or will pass too early.
  *
- * O laco daqui responde a pergunta certa: "o que eu preciso ja esta no
- * documento e parou de mudar?". Isso vale tanto para o inicio automatico quanto
- * para `app.mount('#app')` chamado antes de `#app` existir.
+ * The loop here answers the right question: "do I have what I need in the
+ * document and has it stopped changing?". This applies both to automatic startup
+ * and to `app.mount('#app')` called before `#app` exists.
  *
  * ```js
- * whenReady(() => V.start())                    // documento estavel
- * whenElement('#app', (el) => montar(el))       // elemento, exista ele ou nao
+ * whenReady(() => V.start())                    // document stable
+ * whenElement('#app', (el) => mount(el))        // element, whether it exists or not
  * ```
  */
 /**
- * Executa quando o documento tiver corpo e parar de mudar.
+ * Executes when the document has a body and stops changing.
  *
- * Substitui `DOMContentLoaded`. A diferenca pratica aparece em dois casos:
- * um script sem `defer` no `<head>`, onde o corpo ainda nao existe, e uma
- * pagina montada por outro script, onde o evento ja passou.
+ * Replaces `DOMContentLoaded`. The practical difference appears in two cases:
+ * a script without `defer` in `<head>`, where the body doesn't exist yet, and a
+ * page rendered by another script, where the event already passed.
  */
-declare function whenReady(acao: () => void): void;
+declare function whenReady(action: () => void): void;
 /**
- * Resolve um elemento que pode ainda nao existir.
+ * Resolves an element that may not exist yet.
  *
  * ```js
  * whenElement('#app', (el) => app.mount(el))
  * ```
  */
-declare function whenElement(alvo: string | Element, acao: (el: Element) => void, aoDesistir?: () => void): void;
-/** Promessa resolvida quando o documento estiver pronto pelo criterio acima. */
+declare function whenElement(target: string | Element, action: (el: Element) => void, onGiveUp?: () => void): void;
+/** Promise resolved when the document is ready by the above criterion. */
 declare function ready$1(): Promise<void>;
 
 /**
  * @module http/resource
  *
- * Recurso reativo: uma requisicao com estado de carregamento, erro e dados
- * prontos para serem lidos direto no HTML.
+ * Reactive resource: a request with loading state, error, and data ready to be
+ * read directly in HTML.
  *
- * E o mesmo nucleo usado por `v-resource`. A directive apenas le a configuracao
- * dos atributos e chama esta funcao, entao o comportamento dos dois e sempre o
- * mesmo, sem logica duplicada.
+ * It's the same core used by `v-resource`. The directive just reads the
+ * configuration from attributes and calls this function, so the behavior of
+ * both is always the same, with no duplicated logic.
  *
  * ```js
  * const produtos = V.resource('/api/produtos')
@@ -785,113 +785,113 @@ declare function ready$1(): Promise<void>;
  */
 
 interface ResourceOptions {
-    /** Verbo HTTP. Padrao `GET`. */
+    /** HTTP verb. Default `GET`. */
     method?: HttpMethod;
-    /** Parametros de query. Uma funcao e reavaliada a cada requisicao. */
+    /** Query parameters. A function is re-evaluated on each request. */
     params?: Record<string, string | number | boolean | null | undefined> | (() => Record<string, string | number | boolean | null | undefined> | undefined);
-    /** Tempo de cache da resposta, em ms. */
+    /** Response cache duration in ms. */
     cache?: number;
-    /** Tentativas extras em caso de falha. */
+    /** Extra attempts on failure. */
     retry?: number;
-    /** Milissegundos ate abortar. */
+    /** Milliseconds before aborting. */
     timeout?: number;
     headers?: Record<string, string>;
-    /** Caminho dentro do JSON da resposta, como `dados.itens`. */
+    /** Path within the JSON response, like `data.items`. */
     jsonPath?: string | null;
-    /** Nao dispara a primeira requisicao sozinho. */
+    /** Don't fire the first request automatically. */
     manual?: boolean;
-    /** Repete a requisicao a cada N ms enquanto a aba estiver visivel. */
+    /** Repeat request every N ms while the tab is visible. */
     poll?: number;
-    /** Chamado depois de cada resposta bem sucedida. */
+    /** Called after each successful response. */
     onSuccess?(data: unknown): void;
-    /** Chamado quando a requisicao falha, com a mensagem ja extraida. */
+    /** Called when request fails, with message already extracted. */
     onError?(err: unknown, message: string): void;
 }
 interface Resource<T = unknown> {
-    /** Corpo da resposta, ja recortado por `jsonPath` quando houver. */
+    /** Response body, already sliced by `jsonPath` if present. */
     data: T | null;
-    /** `true` enquanto a requisicao esta em andamento. */
+    /** `true` while request is in progress. */
     loading: boolean;
-    /** Erro da ultima tentativa, ou `null`. */
+    /** Error from last attempt, or `null`. */
     error: (Error & {
         message: string;
     }) | null;
-    /** `true` depois da primeira resposta bem sucedida. */
+    /** `true` after first successful response. */
     loaded: boolean;
-    /** Refaz a requisicao. */
+    /** Redo the request. */
     reload(): Promise<void>;
-    /** Troca os dados localmente, util para atualizacao otimista. */
+    /** Change data locally, useful for optimistic updates. */
     set(value: T): void;
-    /** Cancela a requisicao em andamento e para a repeticao automatica. */
+    /** Cancel in-progress request and stop automatic repetition. */
     stop(): void;
 }
 /**
- * Cria um recurso reativo.
+ * Creates a reactive resource.
  *
- * @param url endereco fixo, ou funcao que devolve o endereco a cada chamada.
- *   Devolver vazio adia a requisicao, util enquanto um parametro nao existe.
- * @param options configuracao da requisicao e do ciclo de vida
+ * @param url fixed address, or function that returns the address on each call.
+ *   Returning empty postpones the request, useful while a parameter doesn't exist.
+ * @param options request and lifecycle configuration
  */
 declare function createResource<T = unknown>(url: string | (() => string), options?: ResourceOptions): Resource<T>;
 
 /**
  * @module store
  *
- * Estado global reativo. Um store e um objeto reativo nomeado, acessivel de
- * qualquer expressao pela variavel magica `$store`.
+ * Reactive global state. A store is a named reactive object, accessible from
+ * any expression via the magic variable `$store`.
  *
  * ```js
- * V.store('carrinho', { itens: [], get total() { return this.itens.length } })
+ * V.store('cart', { items: [], get total() { return this.items.length } })
  * ```
  *
  * ```html
- * <span>{ $store.carrinho.total }</span>
- * <button v-click="$store.carrinho.itens.push(produto)">Adicionar</button>
+ * <span>{ $store.cart.total }</span>
+ * <button v-click="$store.cart.items.push(product)">Add</button>
  * ```
  */
 type StoreDefinition = Record<string, any>;
 interface StoreOptions {
-    /** Salva o store no localStorage e restaura no proximo carregamento. */
+    /** Saves the store to localStorage and restores on next load. */
     persist?: boolean | string;
 }
 /**
- * Cria ou recupera um store.
+ * Creates or retrieves a store.
  *
- * Passando apenas o nome, devolve o store existente. Passando a definicao,
- * cria o store. Metodos declarados na definicao recebem `this` apontando para
- * o proprio store.
+ * Passing only the name returns the existing store. Passing the definition
+ * creates the store. Methods declared in the definition receive `this` pointing
+ * to the store itself.
  */
 declare function store<T extends StoreDefinition>(name: string, definition?: T, options?: StoreOptions): T;
-/** Todos os stores registrados, usado por `$store` e pelas devtools. */
+/** All registered stores, used by `$store` and devtools. */
 declare const allStores: Record<string, Record<string, any>>;
-/** Remove um store e para a persistencia associada. */
+/** Removes a store and stops its associated persistence. */
 declare function removeStore(name: string): void;
-/** Lista os nomes dos stores existentes. */
+/** Lists the names of existing stores. */
 declare function storeNames(): string[];
 
 /**
  * @module dom/style
  *
- * Injecao de CSS sob demanda. Cada bloco entra no documento uma unica vez, so
- * quando o recurso correspondente e realmente usado, o que evita CSS morto.
+ * On-demand CSS injection. Each block enters the document only once, only
+ * when the corresponding resource is actually used, avoiding dead CSS.
  *
- * Todos os estilos usam variaveis CSS com valor padrao embutido. Se o projeto
- * carregar o design system da Voodoo, as cores seguem automaticamente o tema.
+ * All styles use CSS variables with built-in default values. If the project
+ * loads Voodoo's design system, colors automatically follow the theme.
  */
-/** Injeta um bloco de CSS identificado por `id`. Repetir a chamada nao duplica. */
+/** Injects a CSS block identified by `id`. Repeating the call does not duplicate. */
 declare function injectStyle(id: string, css: string): void;
-/** Garante que os tokens estejam presentes antes de qualquer componente de UI. */
+/** Ensures tokens are present before any UI component. */
 declare function ensureTokens(): void;
 
 /**
  * @module dom/transition
  *
- * Transicoes de entrada e saida baseadas em classes CSS, no mesmo modelo do
- * Vue, porem sem componente wrapper: basta `v-transition` no elemento.
+ * Entry and exit transitions based on CSS classes, in the same model as Vue,
+ * but without a wrapper component: just use `v-transition` on the element.
  *
- * Ciclo de entrada:
- *   `.{nome}-enter-from` aplicado, proximo quadro troca para `.{nome}-enter-to`,
- *   ambas com `.{nome}-enter-active`, removidas ao terminar a animacao.
+ * Entry cycle:
+ *   `.{name}-enter-from` applied, next frame switches to `.{name}-enter-to`,
+ *   both with `.{name}-enter-active`, removed when animation finishes.
  */
 interface TransitionClasses {
     enterFrom?: string;
@@ -902,39 +902,39 @@ interface TransitionClasses {
     leaveTo?: string;
 }
 interface TransitionOptions extends TransitionClasses {
-    /** Nome base das classes. Padrao `v-fade`. */
+    /** Base name of the classes. Default `v-fade`. */
     name?: string;
-    /** Duracao forcada em ms. Quando ausente, e lida do CSS computado. */
+    /** Forced duration in ms. When absent, read from computed CSS. */
     duration?: number;
 }
-/** Executa a transicao de entrada e resolve quando ela termina. */
+/** Executes the entry transition and resolves when it finishes. */
 declare function enter(el: HTMLElement, options?: TransitionOptions): Promise<void>;
-/** Executa a transicao de saida e resolve quando ela termina. */
+/** Executes the exit transition and resolves when it finishes. */
 declare function leave(el: HTMLElement, options?: TransitionOptions): Promise<void>;
-/** Anima altura de 0 ate o conteudo. Usado por `v-collapse`. */
+/** Animates height from 0 to content. Used by `v-collapse`. */
 declare function slideDown(el: HTMLElement, duration?: number): Promise<void>;
-/** Anima altura ate zero e esconde o elemento. */
+/** Animates height to zero and hides the element. */
 declare function slideUp(el: HTMLElement, duration?: number): Promise<void>;
-/** Aparecimento com fade. */
+/** Appearance with fade. */
 declare function fadeIn(el: HTMLElement, duration?: number): Promise<void>;
-/** Desaparecimento com fade, terminando em `display:none`. */
+/** Disappearance with fade, ending in `display:none`. */
 declare function fadeOut(el: HTMLElement, duration?: number): Promise<void>;
 /**
- * Transicoes suaves de layout usando a View Transitions API quando existir.
- * Em navegadores sem suporte, a funcao apenas executa a mudanca.
+ * Smooth layout transitions using the View Transitions API when available.
+ * On browsers without support, the function just executes the change.
  */
 declare function viewTransition(update: () => void): void;
 
 type EventHandler = (payload?: any) => void;
-/** Assina um evento global. Devolve a funcao que cancela a assinatura. */
+/** Subscribes to a global event. Returns a function that cancels the subscription. */
 declare function on(name: string, handler: EventHandler): () => void;
-/** Assina um evento global apenas para a proxima ocorrencia. */
+/** Subscribes to a global event for only the next occurrence. */
 declare function onceEvent(name: string, handler: EventHandler): () => void;
-/** Dispara um evento global. */
+/** Emits a global event. */
 declare function emit(name: string, payload?: unknown): void;
 declare function off(name: string, handler?: EventHandler): void;
 /**
- * Registra uma directive personalizada.
+ * Registers a custom directive.
  *
  * ```js
  * V.directive('highlight', {
@@ -944,10 +944,10 @@ declare function off(name: string, handler?: EventHandler): void;
  * ```
  *
  * ```html
- * <div v-highlight="'yellow'">Destaque</div>
+ * <div v-highlight="'yellow'">Highlight</div>
  * ```
  *
- * Tambem aceita uma funcao curta, chamada em `mounted` e em `updated`:
+ * Also accepts a short function, called in both `mounted` and `updated`:
  *
  * ```js
  * V.directive('highlight', (el, binding) => { el.style.background = binding.value })
@@ -955,16 +955,16 @@ declare function off(name: string, handler?: EventHandler): void;
  */
 declare function directive<T = any>(name: string, definition: DirectiveHooks<T> | ((el: HTMLElement, binding: DirectiveBinding<T>) => void)): void;
 /**
- * Coloca valores no escopo raiz, visiveis para qualquer expressao da pagina.
+ * Places values in the root scope, visible to any expression on the page.
  *
  * ```js
- * V.data({ usuario: null, carregando: false })
+ * V.data({ user: null, loading: false })
  * ```
  */
 declare function data<T extends Record<string, unknown>>(values: T): T;
 /**
- * Nucleo da Voodoo. O objeto exportado tambem e chamavel: `V('#app')` devolve
- * uma colecao encadeavel de elementos.
+ * Core of Voodoo. The exported object is also callable: `V('#app')` returns
+ * a chainable collection of elements.
  */
 declare const core: {
     version: string;
@@ -1146,7 +1146,7 @@ declare const core: {
     };
     request: typeof request;
     HttpError: typeof HttpError;
-    /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+    /** Reactive resource via JavaScript, equivalent to `v-resource`. */
     resource: typeof createResource;
     toast: ((message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle) & {
         success: (message: string | ToastOptions, options?: Partial<ToastOptions>) => ToastHandle;
@@ -1237,9 +1237,9 @@ declare const core: {
     off: typeof off;
     emit: typeof emit;
     use(plugin: VoodooPlugin | ((V: any) => void), options?: Record<string, unknown>): void;
-    /** Define o tratamento de erros da aplicacao inteira. */
+    /** Defines error handling for the entire application. */
     onError(handler: (err: unknown, context: string) => void): void;
-    /** Instancias de componente montadas, para inspecao. */
+    /** Mounted component instances for inspection. */
     instances: Set<ComponentInstance>;
     Scope: typeof Scope;
     PRIORITY: {
@@ -1305,11 +1305,11 @@ declare const core: {
 /**
  * @module dom/query
  *
- * Colecao encadeavel de elementos. A ideia e a mesma do jQuery: selecionar,
- * percorrer e manipular com poucas linhas. A diferenca esta na tipagem estrita,
- * na iteracao nativa com `for...of`, no zero de dependencias e na integracao com
- * o runtime da Voodoo: remover ou esvaziar elementos desmonta os efeitos
- * reativos ligados a eles, o que evita vazamento.
+ * Chainable collection of elements. The idea is the same as jQuery: select,
+ * traverse, and manipulate with few lines. The difference is in strict typing,
+ * native iteration with `for...of`, zero dependencies, and integration with
+ * Voodoo's runtime: removing or emptying elements unmounts the reactive effects
+ * tied to them, preventing memory leaks.
  *
  * ```js
  * V.query('.card')
@@ -1317,251 +1317,250 @@ declare const core: {
  *   .on('click', '.botao', function () { V.query(this).closest('.card').remove() })
  * ```
  */
-/** Funcao executada quando o documento fica pronto. */
+/** Function executed when the document becomes ready. */
 type ReadyCallback = () => void;
-/** Manipulador de evento. `this` aponta para o elemento que casou com o filtro. */
+/** Event handler. `this` points to the element that matched the filter. */
 type QueryEventHandler = (this: HTMLElement, event: Event) => unknown;
-/** Tudo que `query()` aceita como entrada. */
+/** Everything that `query()` accepts as input. */
 type QueryInput = string | Node | Element | Document | DocumentFragment | ArrayLike<Node> | VoodooCollection | ReadyCallback | null | undefined;
-/** Filtro aceito por `filter`, `not` e `is`. */
+/** Filter accepted by `filter`, `not`, and `is`. */
 type QueryFilter = string | ((el: HTMLElement, index: number) => boolean);
-/** Coordenadas devolvidas por `offset` e `position`. */
+/** Coordinates returned by `offset` and `position`. */
 interface QueryPoint {
     top: number;
     left: number;
 }
-/** Valor aceito na escrita de atributos e propriedades simples. */
+/** Value accepted when writing simple attributes and properties. */
 type QueryValue = string | number | boolean | null;
 /**
- * Lista imutavel de elementos com metodos encadeaveis. Instancias sao criadas
- * por `query()`, nunca com `new` no codigo do usuario.
+ * Immutable list of elements with chainable methods. Instances are created
+ * by `query()`, never with `new` in user code.
  */
 declare class VoodooCollection implements Iterable<HTMLElement> {
-    /** Acesso indexado, como em `colecao[0]`. */
+    /** Indexed access, as in `collection[0]`. */
     [index: number]: HTMLElement;
-    /** Quantidade de elementos da colecao. */
+    /** Number of elements in the collection. */
     readonly length: number;
-    /** Elementos da colecao, na ordem em que foram encontrados. */
+    /** Elements of the collection, in the order they were found. */
     readonly elements: HTMLElement[];
     constructor(elements?: HTMLElement[]);
-    /** Permite `for (const el of query('.item'))`. */
+    /** Enables `for (const el of query('.item'))`. */
     [Symbol.iterator](): Iterator<HTMLElement>;
-    /** Descendentes que casam com o seletor. */
+    /** Descendants that match the selector. */
     find(selector: string): VoodooCollection;
-    /** Ancestral mais proximo, incluindo o proprio elemento. */
+    /** Nearest ancestor, including the element itself. */
     closest(selector: string): VoodooCollection;
-    /** Elemento pai de cada item, opcionalmente filtrado. */
+    /** Parent element of each item, optionally filtered. */
     parent(selector?: string): VoodooCollection;
-    /** Todos os ancestrais, do mais proximo ao mais distante. */
+    /** All ancestors, from nearest to farthest. */
     parents(selector?: string): VoodooCollection;
-    /** Filhos diretos, opcionalmente filtrados. */
+    /** Direct children, optionally filtered. */
     children(selector?: string): VoodooCollection;
-    /** Irmaos, sem incluir os proprios elementos. */
+    /** Siblings, excluding the elements themselves. */
     siblings(selector?: string): VoodooCollection;
-    /** Proximo irmao de cada elemento. */
+    /** Next sibling of each element. */
     next(selector?: string): VoodooCollection;
-    /** Irmao anterior de cada elemento. */
+    /** Previous sibling of each element. */
     prev(selector?: string): VoodooCollection;
-    /** Somente o primeiro elemento. */
+    /** Only the first element. */
     first(): VoodooCollection;
-    /** Somente o ultimo elemento. */
+    /** Only the last element. */
     last(): VoodooCollection;
-    /** Elemento na posicao informada. Indices negativos contam do fim. */
+    /** Element at the specified position. Negative indices count from the end. */
     eq(index: number): VoodooCollection;
-    /** Mantem apenas os elementos que passam no filtro. */
+    /** Keeps only elements that pass the filter. */
     filter(test: QueryFilter): VoodooCollection;
-    /** Remove da colecao os elementos que passam no filtro. */
+    /** Removes from the collection elements that pass the filter. */
     not(test: QueryFilter): VoodooCollection;
-    /** Mantem os elementos que contem o descendente informado. */
+    /** Keeps elements that contain the specified descendant. */
     has(target: string | Element): VoodooCollection;
-    /** Verifica se ao menos um elemento casa com o filtro. */
+    /** Checks if at least one element matches the filter. */
     is(test: QueryFilter): boolean;
-    /** Projeta cada elemento em um valor e devolve um array comum. */
+    /** Projects each element to a value and returns a regular array. */
     map<T>(fn: (el: HTMLElement, index: number) => T): T[];
-    /** Percorre a colecao. Dentro da funcao, `this` e o elemento atual. */
+    /** Iterates over the collection. Inside the function, `this` is the current element. */
     each(fn: (this: HTMLElement, el: HTMLElement, index: number) => unknown): this;
-    /** Sem argumento devolve o array; com indice devolve um elemento. */
+    /** Without arguments returns the array; with index returns an element. */
     get(): HTMLElement[];
     get(index: number): HTMLElement | undefined;
-    /** Copia dos elementos como array comum. */
+    /** Copy of elements as a regular array. */
     toArray(): HTMLElement[];
-    /** Junta outros elementos a colecao, sem repetir. */
+    /** Joins other elements to the collection without duplication. */
     add(input: QueryInput, context?: QueryInput): VoodooCollection;
-    /** Recorte da colecao, com a mesma semantica de `Array.prototype.slice`. */
+    /** Slice of the collection with the same semantics as `Array.prototype.slice`. */
     slice(start?: number, end?: number): VoodooCollection;
-    /** Le o texto do primeiro elemento ou escreve em todos. */
+    /** Reads the text of the first element or writes to all. */
     text(): string;
     text(value: string | number | null): this;
-    /** Le o HTML interno do primeiro elemento ou escreve em todos. */
+    /** Reads the inner HTML of the first element or writes to all. */
     html(): string;
     html(value: string | null): this;
-    /** Le o valor do primeiro campo ou escreve em todos. */
+    /** Reads the value of the first field or writes to all. */
     val(): string | string[];
     val(value: string | number | boolean | string[] | null): this;
-    /** Le um atributo do primeiro elemento, ou escreve um ou varios. */
+    /** Reads an attribute of the first element, or writes one or more. */
     attr(name: string): string | undefined;
     attr(name: string, value: QueryValue): this;
     attr(values: Record<string, QueryValue>): this;
-    /** Remove um ou varios atributos, separados por espaco. */
+    /** Removes one or more space-separated attributes. */
     removeAttr(name: string): this;
-    /** Le uma propriedade do primeiro elemento ou escreve em todos. */
+    /** Reads a property of the first element or writes to all. */
     prop<T = unknown>(name: string): T | undefined;
     prop(name: string, value: unknown): this;
     /**
-     * Le e escreve em `dataset`. A leitura converte JSON, numero e booleano,
-     * entao `data-config='{"a":1}'` volta como objeto de verdade.
+     * Reads and writes `dataset`. Reading converts JSON, numbers, and booleans,
+     * so `data-config='{"a":1}'` comes back as an actual object.
      */
     data(): Record<string, unknown>;
     data(key: string): unknown;
     data(key: string, value: unknown): this;
     data(values: Record<string, unknown>): this;
-    /** Le um estilo computado ou aplica um ou varios estilos. */
+    /** Reads a computed style or applies one or more styles. */
     css(property: string): string;
     css(property: string, value: string | number | null): this;
     css(values: Record<string, string | number | null>): this;
-    /** Largura em pixels do primeiro elemento, ou escrita em todos. */
+    /** Width in pixels of the first element, or writes to all. */
     width(): number;
     width(value: string | number): this;
-    /** Altura em pixels do primeiro elemento, ou escrita em todos. */
+    /** Height in pixels of the first element, or writes to all. */
     height(): number;
     height(value: string | number): this;
-    /** Posicao do primeiro elemento em relacao ao documento. */
+    /** Position of the first element relative to the document. */
     offset(): QueryPoint;
-    /** Posicao do primeiro elemento em relacao ao ancestral posicionado. */
+    /** Position of the first element relative to the positioned ancestor. */
     position(): QueryPoint;
-    /** Le a rolagem vertical do primeiro elemento ou escreve em todos. */
+    /** Reads the vertical scroll of the first element or writes to all. */
     scrollTop(): number;
     scrollTop(value: number): this;
-    /** Adiciona uma ou varias classes separadas por espaco. */
+    /** Adds one or more space-separated classes. */
     addClass(value: string): this;
-    /** Remove uma ou varias classes separadas por espaco. */
+    /** Removes one or more space-separated classes. */
     removeClass(value: string): this;
-    /** Alterna classes. O segundo argumento forca ligar ou desligar. */
+    /** Toggles classes. The second argument forces on or off. */
     toggleClass(value: string, force?: boolean): this;
-    /** Verdadeiro quando algum elemento tem todas as classes informadas. */
+    /** True when some element has all the specified classes. */
     hasClass(value: string): boolean;
     /**
-     * Base de `append`, `prepend`, `before` e `after`. Quando a colecao tem mais
-     * de um elemento, cada destino recebe uma copia e o ultimo fica com o
-     * original, que e o comportamento esperado por quem vem do jQuery.
+     * Base of `append`, `prepend`, `before`, and `after`. When the collection has more
+     * than one element, each destination receives a copy and the last gets the
+     * original, which is the expected behavior for those coming from jQuery.
      */
     private insert;
-    /** Insere conteudo no fim de cada elemento. */
+    /** Inserts content at the end of each element. */
     append(content: QueryInput): this;
-    /** Insere conteudo no inicio de cada elemento. */
+    /** Inserts content at the beginning of each element. */
     prepend(content: QueryInput): this;
-    /** Insere conteudo antes de cada elemento. */
+    /** Inserts content before each element. */
     before(content: QueryInput): this;
-    /** Insere conteudo depois de cada elemento. */
+    /** Inserts content after each element. */
     after(content: QueryInput): this;
-    /** Move os elementos da colecao para dentro do destino. */
+    /** Moves the collection's elements into the target. */
     appendTo(target: QueryInput): this;
-    /** Move os elementos da colecao para o inicio do destino. */
+    /** Moves the collection's elements to the beginning of the target. */
     prependTo(target: QueryInput): this;
-    /** Troca cada elemento pelo conteudo informado, desmontando o antigo. */
+    /** Replaces each element with the provided content, unmounting the old one. */
     replaceWith(content: QueryInput): this;
-    /** Envolve cada elemento com o HTML ou elemento informado. */
+    /** Wraps each element with the provided HTML or element. */
     wrap(wrapper: QueryInput): this;
-    /** Remove o pai de cada elemento, mantendo os filhos no lugar. */
+    /** Removes the parent of each element, keeping children in place. */
     unwrap(): this;
-    /** Remove os elementos do documento e desmonta os efeitos reativos. */
+    /** Removes elements from the document and unmounts reactive effects. */
     remove(): this;
-    /** Esvazia os elementos, desmontando o conteudo removido. */
+    /** Empties elements, unmounting removed content. */
     empty(): this;
-    /** Copia os elementos. A copia nasce sem directives inicializadas. */
+    /** Clones elements. The clone starts without directives initialized. */
     clone(deep?: boolean): VoodooCollection;
     /**
-     * Escuta eventos. Com o segundo argumento em texto, usa delegacao:
-     * `on('click', '.item', fn)` continua funcionando para itens criados depois.
+     * Listens for events. With the second argument as a string, uses delegation:
+     * `on('click', '.item', fn)` continues to work for items created later.
      */
     on(types: string, handler: QueryEventHandler, options?: AddEventListenerOptions): this;
     on(types: string, selector: string, handler: QueryEventHandler, options?: AddEventListenerOptions): this;
     /**
-     * Remove escutas registradas por `on`. Sem argumentos remove todas, com tipo
-     * remove as daquele evento, e com seletor ou funcao afina ainda mais.
+     * Removes listeners registered by `on`. Without arguments removes all, with type
+     * removes those for that event, and with selector or function refines further.
      */
     off(types?: string, selectorOrHandler?: string | QueryEventHandler, handler?: QueryEventHandler): this;
-    /** Escuta uma unica vez. Aceita delegacao igual a `on`. */
+    /** Listens only once. Accepts delegation like `on`. */
     once(types: string, handler: QueryEventHandler): this;
     once(types: string, selector: string, handler: QueryEventHandler): this;
     /**
-     * Dispara um evento. Eventos nativos com metodo proprio, como `click` e
-     * `focus`, usam o metodo do elemento quando nao ha `detail`.
+     * Dispatches an event. Native events with their own method, like `click` and
+     * `focus`, use the element's method when there is no `detail`.
      */
     trigger(type: string, detail?: unknown): this;
-    /** Dispara um evento customizado que sobe pela arvore, no estilo componente. */
+    /** Dispatches a custom event that bubbles up the tree, component-style. */
     emit(type: string, detail?: unknown): this;
-    /** Mostra os elementos restaurando o display anterior. */
+    /** Shows elements by restoring their previous display value. */
     show(): this;
-    /** Esconde os elementos guardando o display atual. */
+    /** Hides elements while saving their current display value. */
     hide(): this;
-    /** Alterna a visibilidade. O argumento forca mostrar ou esconder. */
+    /** Toggles visibility. The argument forces show or hide. */
     toggle(force?: boolean): this;
-    /** Aparecimento com fade. */
+    /** Appearance with fade. */
     fadeIn(duration?: number): this;
-    /** Desaparecimento com fade, terminando escondido. */
+    /** Disappearance with fade, ending hidden. */
     fadeOut(duration?: number): this;
-    /** Recolhe a altura ate zero. */
+    /** Collapses height to zero. */
     slideUp(duration?: number): this;
-    /** Expande a altura ate o conteudo. */
+    /** Expands height to content. */
     slideDown(duration?: number): this;
-    /** Alterna entre recolher e expandir. */
+    /** Toggles between collapse and expand. */
     slideToggle(duration?: number): this;
-    /** Animacao pela Web Animations API. */
+    /** Animation via Web Animations API. */
     animate(keyframes: Keyframe[] | PropertyIndexedKeyframes, options?: number | KeyframeAnimationOptions): this;
-    /** Rola a pagina ate o primeiro elemento. */
+    /** Scrolls the page to the first element. */
     scrollIntoView(options?: boolean | ScrollIntoViewOptions): this;
-    /** Serializa os campos do primeiro elemento no formato de query string. */
+    /** Serializes the first element's fields as a query string. */
     serialize(): string;
     /**
-     * Serializa os campos em um objeto. Nomes repetidos e nomes terminados em
-     * `[]` viram array, caixas de selecao viram booleano e campos numericos viram
-     * numero.
+     * Serializes fields into an object. Repeated names and names ending in
+     * `[]` become arrays, checkboxes become booleans, and numeric fields become numbers.
      */
     serializeObject(): Record<string, unknown>;
-    /** Coloca o foco no primeiro elemento. */
+    /** Sets focus on the first element. */
     focus(options?: FocusOptions): this;
-    /** Tira o foco de todos os elementos. */
+    /** Removes focus from all elements. */
     blur(): this;
-    /** Seleciona o texto dos campos da colecao. */
+    /** Selects the text of the collection's fields. */
     select(): this;
     /**
-     * Inicializa as directives dos elementos da colecao, herdando o escopo do pai.
-     * Com `force`, desmonta antes para reiniciar do zero.
+     * Initializes directives for the collection's elements, inheriting the parent's scope.
+     * With `force`, unmounts first to restart from scratch.
      */
     walk(force?: boolean): this;
-    /** Desmonta efeitos, escutas e componentes, mantendo os elementos no DOM. */
+    /** Unmounts effects, listeners, and components while keeping elements in the DOM. */
     destroy(): this;
 }
 /**
- * Cria uma colecao a partir de seletor CSS, elemento, lista de elementos,
- * string de HTML ou funcao.
+ * Creates a collection from a CSS selector, element, list of elements,
+ * HTML string, or function.
  *
  * ```js
- * V.query('#lista li')          // seletor
- * V.query(document.body)        // elemento
- * V.query('<li>novo</li>')      // cria elementos
- * V.query(() => iniciar())      // equivale a V.ready
+ * V.query('#lista li')          // selector
+ * V.query(document.body)        // element
+ * V.query('<li>novo</li>')      // creates elements
+ * V.query(() => iniciar())      // equivalent to V.ready
  * ```
  *
- * @param input seletor, no, lista, HTML ou funcao de inicializacao
- * @param context raiz opcional da busca, util para escopos locais
+ * @param input selector, node, list, HTML or initialization function
+ * @param context optional search root, useful for local scopes
  */
 declare function query(input?: QueryInput, context?: QueryInput): VoodooCollection;
 /**
- * Executa a funcao quando a Voodoo considerar o documento pronto, e devolve uma
- * promessa do mesmo momento. As duas escritas valem:
+ * Executes the function when Voodoo considers the document ready, and returns a
+ * promise for the same moment. Both forms work:
  *
  * ```js
  * V.ready(() => console.log('pronto'))
  * await V.ready()
  * ```
  *
- * Quem decide a hora e o agendador da propria biblioteca, que espera o corpo
- * existir e a arvore parar de crescer. Nada aqui escuta `DOMContentLoaded`.
+ * The library's own scheduler decides the time, waiting for the body to exist
+ * and the tree to stop growing. This does not listen to `DOMContentLoaded`.
  */
 declare function ready(fn?: ReadyCallback): Promise<void>;
-/** Cria elementos a partir de uma string de HTML, sem inseri-los no documento. */
+/** Creates elements from an HTML string without inserting them in the document. */
 declare function fromHtml(html: string): VoodooCollection;
 
 export { store as $, type App as A, findScope as B, type ComponentDefinition as C, type DirectiveBinding as D, fromHtml as E, getScope as F, injectStyle as G, instances as H, leave as I, magic as J, magics as K, mountComponent as L, parse as M, query as N, ready as O, PRIORITY as P, refresh as Q, type Resource as R, Scope as S, removeStore as T, rootScope as U, VoodooCollection as V, session as W, slideDown as X, slideUp as Y, start as Z, storage as _, type AppOptions as a, storeNames as a0, stringify as a1, theme as a2, toast as a3, tokenize as a4, url as a5, viewTransition as a6, walk as a7, whenElement as a8, whenReady as a9, type DirectiveHooks as b, core as c, type ResourceOptions as d, type VoodooConfig as e, type VoodooPlugin as f, VoodooRuntimeError as g, VoodooSyntaxError as h, addCleanup as i, allStores as j, allowedGlobals as k, cache as l, clearParseCache as m, config as n, cookie as o, createApp as p, createResource as q, defineComponent as r, defineDirective as s, destroy as t, ready$1 as u, ensureTokens as v, enter as w, evaluate as x, fadeIn as y, fadeOut as z };

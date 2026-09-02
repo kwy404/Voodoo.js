@@ -330,4 +330,4 @@ V.instances.size;             // how many are mounted now
 
 ---
 
-Previous: [Directives](directives.md) · Next: [Ready-made components](ready-components.md)
+Previous: [Directives](directives.md) · Next: [Ready-made components](componentes-prontos.md)

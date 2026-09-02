@@ -1,19 +1,19 @@
-import { c as core, V as VoodooCollection } from './query-DozWdHqf.cjs';
+import { c as core, V as VoodooCollection } from './query-CgqtSMIw.cjs';
 import './http.cjs';
 import './utils.cjs';
 import './reactivity.cjs';
 
 /**
- * Build essencial da Voodoo.js, servido por padrao no CDN.
+ * Essential build of Voodoo.js, served by default on the CDN.
  *
- * Traz tudo que a maioria das paginas precisa: reatividade, directives,
- * componentes, DOM encadeavel, HTTP declarativo, formularios com validacao e
- * mascaras, interface e notificacoes.
+ * Includes everything most pages need: reactivity, directives, components,
+ * chainable DOM, declarative HTTP, forms with validation and masks, interface,
+ * and notifications.
  *
- * Fica de fora, para o arquivo continuar pequeno: graficos, animacoes com
- * fisica, roteador, idiomas, inspetor de reatividade e a biblioteca de
- * componentes prontos. Para esses, use `voodoo.full.min.js` ou monte um build
- * sob medida com `npx voodoo build`.
+ * Excluded to keep the file small: charts, physics-based animations, router,
+ * internationalization, reactivity inspector, and the ready-to-use component
+ * library. For these, use `voodoo.full.min.js` or build a custom version with
+ * `npx voodoo build`.
  */
 
 interface VoodooEssential extends Omit<typeof core, never> {

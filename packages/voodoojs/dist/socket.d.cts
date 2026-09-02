@@ -1,35 +1,35 @@
-export { R as RoomOptions, a as RoomState, h as Socket, i as SocketDefaults, j as SocketFactory, k as SocketInterceptor, l as SocketListener, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, W as WebSocketCtor, m as WebSocketLike, f as createSocket, r as resolveSocketURL, s as socket, g as socketSupported } from './index-smMSqTan.cjs';
+export { R as RoomOptions, a as RoomState, h as Socket, i as SocketDefaults, j as SocketFactory, k as SocketInterceptor, l as SocketListener, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, W as WebSocketCtor, m as WebSocketLike, f as createSocket, r as resolveSocketURL, s as socket, g as socketSupported } from './index-DTllqUtj.cjs';
 
 /**
  * @module socket/protocol
  *
- * O protocolo Engine.IO/Socket.IO escrito a mao, sem a biblioteca.
+ * The Engine.IO/Socket.IO protocol written by hand, without the library.
  *
- * Vale explicar por que este arquivo existe. `socket.io-client` pesa mais de 30
- * KB comprimidos, e a Voodoo nao tem dependencia de runtime nenhuma. Acontece
- * que o pedaco do protocolo que uma pagina usa de verdade e pequeno: um
- * handshake, seis codigos de pacote e um JSON. Isso cabe em texto puro sobre o
- * WebSocket nativo, e e exatamente o que esta aqui.
+ * It's worth explaining why this file exists. `socket.io-client` weighs over 30
+ * KB compressed, and Voodoo has no runtime dependencies. It happens
+ * that the piece of the protocol a page actually uses is small: one
+ * handshake, six packet codes and some JSON. This fits in plain text over
+ * native WebSocket, and that's exactly what's here.
  *
- * Um quadro de texto do Engine.IO v4 tem a forma `<codigo><corpo>`:
+ * An Engine.IO v4 text frame has the form `<code><body>`:
  *
  * ```text
- * 0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}   abertura
- * 2                                                          ping do servidor
- * 3                                                          pong do cliente
- * 40                                                         entrar no namespace
- * 42["mensagem",{"texto":"oi"}]                              evento
- * 421["salvar",{...}]                                        evento pedindo ack 1
- * 431[{"ok":true}]                                           resposta do ack 1
+ * 0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}   open
+ * 2                                                          server ping
+ * 3                                                          client pong
+ * 40                                                         enter namespace
+ * 42["mensagem",{"texto":"oi"}]                              event
+ * 421["salvar",{...}]                                        event requesting ack 1
+ * 431[{"ok":true}]                                           ack 1 response
  * ```
  *
- * O corpo de um pacote `4` (message) e um pacote Socket.IO, que por sua vez tem
- * a forma `<tipo>[<namespace>,][<ack>]<JSON>`. As duas camadas sao decodificadas
- * aqui, em funcoes puras, porque protocolo em funcao pura e protocolo testavel.
+ * The body of a `4` (message) packet is a Socket.IO packet, which in turn has
+ * the form `<type>[<namespace>,][<ack>]<JSON>`. The two layers are decoded
+ * here, in pure functions, because pure-function protocol is testable protocol.
  *
- * O que **nao** esta implementado esta declarado em `docs/websocket.md`, e a
- * lista curta e: anexos binarios (`45`/`46`), transporte por polling e upgrade,
- * e namespaces diferentes de `/`.
+ * What **is not** implemented is declared in `docs/websocket.md`, and the
+ * short list is: binary attachments (`45`/`46`), polling transport and upgrade,
+ * and namespaces other than `/`.
  */
 /** Codigos de pacote do Engine.IO v4. */
 declare const ENGINE: {
@@ -51,28 +51,28 @@ declare const SIO: {
     readonly BINARY_EVENT: 5;
     readonly BINARY_ACK: 6;
 };
-/** Dados que o servidor manda no pacote de abertura. */
+/** Data the server sends in the open packet. */
 interface EngineHandshake {
     sid: string;
-    /** Intervalo entre os pings do servidor, em ms. */
+    /** Interval between server pings, in ms. */
     pingInterval: number;
-    /** Quanto o servidor espera pelo pong antes de desistir, em ms. */
+    /** How long the server waits for pong before giving up, in ms. */
     pingTimeout: number;
     upgrades?: string[];
     maxPayload?: number;
 }
-/** Pacote Socket.IO ja separado em suas partes. */
+/** Socket.IO packet already split into its parts. */
 interface SocketIoPacket {
-    /** Um dos valores de `SIO`. */
+    /** One of the values of `SIO`. */
     type: number;
-    /** Namespace. Esta implementacao so fala `/`. */
+    /** Namespace. This implementation only supports `/`. */
     namespace: string;
-    /** Numero do ack, quando o pacote pede ou responde confirmacao. */
+    /** Ack number, when the packet requests or responds with acknowledgment. */
     ack?: number;
-    /** Corpo ja convertido de JSON. Para eventos, `[nome, ...argumentos]`. */
+    /** Body already converted from JSON. For events, `[name, ...args]`. */
     data?: unknown;
 }
-/** Pacote Engine.IO ja classificado. */
+/** Engine.IO packet already classified. */
 type EnginePacket = {
     kind: 'open';
     handshake: EngineHandshake;
@@ -88,51 +88,50 @@ type EnginePacket = {
 } | {
     kind: 'noop';
 }
-/** Quadro que este cliente nao sabe ler: binario, upgrade ou lixo. */
+/** Frame this client can't read: binary, upgrade or garbage. */
  | {
     kind: 'unknown';
     raw: string;
 };
 /**
- * Le o corpo de um pacote `4` (message) do Engine.IO.
+ * Reads the body of an Engine.IO `4` (message) packet.
  *
- * A ordem das partes e fixa e cada uma so aparece quando existe, entao a
- * leitura e posicional: tipo, namespace opcional terminado em virgula, ack
- * opcional em digitos, e o resto e JSON.
+ * The order of parts is fixed and each only appears when it exists, so
+ * reading is positional: type, optional namespace ending in comma, optional ack
+ * in digits, and the rest is JSON.
  */
 declare function decodeSocketIo(body: string): SocketIoPacket | null;
 /**
- * Classifica um quadro de texto recebido do servidor.
+ * Classifies a text frame received from the server.
  *
- * Quadros binarios chegam como `Blob` ou `ArrayBuffer` e viram `unknown`: sao
- * validos no protocolo, esta implementacao apenas nao os le.
+ * Binary frames arrive as `Blob` or `ArrayBuffer` and become `unknown`: they're
+ * valid in the protocol, this implementation just doesn't read them.
  */
 declare function decodeEngine(raw: unknown): EnginePacket;
 /**
- * Monta um pacote `4` (message) pronto para o fio.
+ * Builds a `4` (message) packet ready for the wire.
  *
- * `encodeSocketIo({ type: SIO.EVENT, data: ['oi', 1] })` devolve `42["oi",1]`.
+ * `encodeSocketIo({ type: SIO.EVENT, data: ['oi', 1] })` returns `42["oi",1]`.
  */
 declare function encodeSocketIo(packet: SocketIoPacket): string;
 /**
- * Monta a URL do endpoint Engine.IO.
+ * Builds the Engine.IO endpoint URL.
  *
- * O caminho vira `<path>?EIO=4&transport=websocket`, porque esta implementacao
- * abre direto em WebSocket e nunca passa por polling.
+ * The path becomes `<path>?EIO=4&transport=websocket`, because this implementation
+ * opens directly in WebSocket and never uses polling.
  */
 declare function engineURL(base: string, path?: string): string;
 
 /**
  * @module socket/plugin
  *
- * Entrada separada da camada de tempo real.
+ * Separate entry for the real-time layer.
  *
- * O motivo e medido, nao estetico: com o modulo dentro do build completo o
- * arquivo foi de 127.58 KB para 134.22 KB comprimidos, e o teto e 133. Em vez
- * de levantar a meta, que e o mesmo que nao ter meta, o modulo virou entrada
- * propria, como a camada GPU ja tinha feito pelo mesmo motivo. Quem usa
- * WebSocket paga por WebSocket; quem nao usa continua com o arquivo do tamanho
- * de antes.
+ * The reason is measured, not aesthetic: with the module in the complete build,
+ * the file went from 127.58 KB to 134.22 KB compressed, and the ceiling is 133. Instead
+ * of raising the target, which is the same as having no target, the module became its own
+ * entry, as the GPU layer already had for the same reason. Those using
+ * WebSocket pay for WebSocket; those not using it keep the file the same size as before.
  *
  * ```html
  * <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
@@ -143,17 +142,17 @@ declare function engineURL(base: string, path?: string): string;
  *
  * ```js
  * import V from 'voodoojs'
- * import 'voodoojs/dist/socket.js'   // registra v-socket, v-room e liga V.socket
+ * import 'voodoojs/dist/socket.js'   // registers v-socket, v-room and sets up V.socket
  * ```
  *
- * Importar este arquivo tem dois efeitos: registra as directives `v-socket`,
- * `v-room` e `v-on-socket`, e deixa `V.socket` disponivel. Nos builds ESM os
- * dois lados compartilham o mesmo runtime, porque as partes comuns saem em
- * chunks compartilhados.
+ * Importing this file has two effects: registers the `v-socket`,
+ * `v-room` and `v-on-socket` directives, and makes `V.socket` available. In ESM builds
+ * both sides share the same runtime, because common parts go out in
+ * shared chunks.
  */
 
 /**
- * Plugin no formato aceito por `V.use()`.
+ * Plugin in the format accepted by `V.use()`.
  *
  * ```js
  * import { voodooSocket } from 'voodoojs/dist/socket.js'

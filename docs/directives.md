@@ -81,7 +81,7 @@ Inserts HTML and initializes directives that come inside.
 ```
 
 > **Warning.** Never use `v-html` with text from the user without sanitizing. See
-> [Security](security.md).
+> [Security](seguranca.md).
 
 ## v-show
 
@@ -277,7 +277,7 @@ Modifiers:
 
 # Events
 
-Covered in detail in [Events](events.md). Summary:
+Covered in detail in [Events](eventos.md). Summary:
 
 ```html
 <button v-on:click="save()">Save</button>
@@ -365,7 +365,7 @@ When removed, the element goes back to its original place.
 
 ## v-component
 
-Mounts a registered component on the element. See [Components](components.md).
+Mounts a registered component on the element. See [Components](componentes.md).
 
 ```html
 <div v-component="user-card" :user="current"></div>
@@ -415,7 +415,7 @@ Configuration attributes: `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-params
 
 # Forms
 
-Detailed in [Forms](forms.md).
+Detailed in [Forms](formularios.md).
 
 | Directive | What it does |
 | --- | --- |
@@ -430,7 +430,7 @@ Detailed in [Forms](forms.md).
 
 # Validation
 
-Detailed in [Validation](validation.md).
+Detailed in [Validation](validacao.md).
 
 `v-validate` on the form enables automatic validation. On fields:
 
@@ -445,7 +445,7 @@ Per-field configuration: `v-error-message`, `v-error-target`, `v-regex-flags`, `
 
 # Masks
 
-Detailed in [Masks](masks.md).
+Detailed in [Masks](mascaras.md).
 
 ```html
 <input v-mask="cpf">
@@ -491,7 +491,7 @@ Detailed in [Interface](interface.md).
 
 # Drag and drop
 
-Detailed in [Drag and drop](drag-and-drop.md).
+Detailed in [Drag and drop](arrastar-e-soltar.md).
 
 `v-sortable`, `v-draggable`, `v-droppable`, `v-dnd-group` and configuration attributes
 `v-sortable-group`, `v-sortable-handle`, `v-draggable-handle`, `v-draggable-axis`,
@@ -501,7 +501,7 @@ Detailed in [Drag and drop](drag-and-drop.md).
 
 # Advanced state
 
-Detailed in [State and stores](state-and-stores.md).
+Detailed in [State and stores](estado-e-stores.md).
 
 | Directive | What it does |
 | --- | --- |
@@ -519,19 +519,19 @@ Detailed in [State and stores](state-and-stores.md).
 
 `v-motion`, `v-motion-scroll`, `v-motion-stagger`, `v-motion-stagger-from`, `v-motion-hover`,
 `v-motion-tap`, `v-parallax`, `v-flip`, `v-count`, `v-typewriter`. See
-[Animations](animations.md).
+[Animations](animacoes.md).
 
 ## Charts
 
-`v-chart` and `v-chart-*` attributes. See [Charts](charts.md).
+`v-chart` and `v-chart-*` attributes. See [Charts](graficos.md).
 
 ## Router
 
-`v-router-view`, `v-link`, `v-route-active`. See [Router](router.md).
+`v-router-view`, `v-link`, `v-route-active`. See [Router](roteador.md).
 
 ## Languages
 
-`v-t`, `v-t-params`, `v-locale`. See [Languages](languages.md).
+`v-t`, `v-t-params`, `v-locale`. See [Languages](idiomas.md).
 
 ---
 
@@ -560,4 +560,4 @@ See [Plugins](plugins.md) for the complete format, with priority, effects, and c
 
 ---
 
-Previous: [Expressions](expressions.md) · Next: [Components](components.md)
+Previous: [Expressions](expressoes.md) · Next: [Components](componentes.md)

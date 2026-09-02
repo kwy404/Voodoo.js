@@ -1,26 +1,26 @@
 /**
  * @module reactivity
  *
- * Nucleo reativo da Voodoo.js.
+ * The reactive core of Voodoo.js.
  *
- * Modelo: Proxy + rastreamento de dependencias por chave, com agendamento em
- * microtask. Nao existe Virtual DOM. Quando `count` muda, apenas os efeitos que
- * leram `count` sao reexecutados, e cada efeito atualiza somente o no do DOM
- * que ele mesmo escreveu.
+ * The model: a Proxy plus per-key dependency tracking, scheduled on a
+ * microtask. There is no Virtual DOM. When `count` changes, only the effects
+ * that read `count` re-run, and each effect updates only the DOM node it wrote
+ * itself.
  *
- * Este modulo nao toca no DOM e nao assume `window`, entao funciona em Node,
- * Bun e Deno sem adaptacao.
+ * This module never touches the DOM and never assumes `window`, so it runs on
+ * Node, Bun and Deno with no adaptation.
  */
 type Dep = Set<ReactiveEffect>;
 type EffectScheduler = () => void;
 interface EffectOptions {
-    /** Executa em vez do proprio efeito quando uma dependencia muda. */
+    /** Runs instead of the effect itself when a dependency changes. */
     scheduler?: EffectScheduler;
-    /** Nao executa imediatamente na criacao. */
+    /** Does not run immediately on creation. */
     lazy?: boolean;
-    /** Chamado quando o efeito e parado. */
+    /** Called when the effect is stopped. */
     onStop?: () => void;
-    /** Escopo dono do efeito, para limpeza automatica. */
+    /** The scope that owns the effect, for automatic cleanup. */
     scope?: EffectScope;
 }
 interface Ref<T = any> {
@@ -38,19 +38,19 @@ interface WatchOptions {
 }
 type WatchStopHandle = () => void;
 /**
- * Resolve depois que a fila de atualizacoes for aplicada ao DOM.
+ * Resolves once the queue of updates has been applied to the DOM.
  *
  * ```js
  * count.value++
  * await V.nextTick()
- * // o DOM ja refletiu a mudanca
+ * // the DOM already reflects the change
  * ```
  */
 declare function nextTick<T = void>(fn?: () => T): Promise<T | void>;
 declare function queueJob(job: ReactiveEffect): void;
-/** Agenda um callback para rodar depois que o DOM foi atualizado. */
+/** Schedules a callback to run after the DOM has been updated. */
 declare function queuePostFlush(cb: () => void): void;
-/** Aplica imediatamente tudo que estiver pendente. Util em testes. */
+/** Applies everything still pending right away. Useful in tests. */
 declare function flushSync(): void;
 type ErrorHandler = (err: unknown, context: string) => void;
 declare function setErrorHandler(fn: ErrorHandler | null): void;
@@ -64,17 +64,17 @@ declare class ReactiveEffect<T = any> {
     fn: () => T;
     readonly id: number;
     active: boolean;
-    /** `true` enquanto o efeito espera na fila do agendador. */
+    /** `true` while the effect is waiting in the scheduler queue. */
     queued: boolean;
     deps: Dep[];
     parent: ReactiveEffect | undefined;
     scheduler: EffectScheduler | undefined;
     onStop: (() => void) | undefined;
-    /** Callbacks de limpeza registrados pelo proprio efeito. */
+    /** Cleanup callbacks registered by the effect itself. */
     cleanups: Array<() => void>;
     constructor(fn: () => T, options?: EffectOptions);
     run(): T | undefined;
-    /** Registra uma funcao chamada antes da proxima execucao e ao parar. */
+    /** Registers a function called before the next run and on stop. */
     onInvalidate(fn: () => void): void;
     private runCleanups;
     stop(): void;
@@ -84,13 +84,13 @@ interface EffectRunner<T = any> {
     effect: ReactiveEffect<T>;
 }
 /**
- * Cria um efeito reativo. Executa uma vez na criacao e reexecuta sempre que
- * qualquer estado lido dentro dele mudar.
+ * Creates a reactive effect. Runs once on creation and re-runs whenever any
+ * state read inside it changes.
  *
  * ```js
  * const state = V.reactive({ count: 0 })
  * V.effect(() => console.log(state.count))
- * state.count++ // dispara o log
+ * state.count++ // triggers the log
  * ```
  */
 declare function effect<T = any>(fn: () => T, options?: EffectOptions): EffectRunner<T>;
@@ -117,9 +117,9 @@ declare const enum TriggerType {
     CLEAR = "clear"
 }
 declare function trigger(target: object, type: TriggerType, key?: PropertyKey, _newValue?: unknown): void;
-/** Marca um objeto para nunca ser transformado em proxy reativo. */
+/** Marks an object so it is never turned into a reactive proxy. */
 declare function markRaw<T extends object>(value: T): T;
-/** Devolve o objeto original por tras de um proxy reativo. */
+/** Returns the original object behind a reactive proxy. */
 declare function toRaw<T>(observed: T): T;
 declare function isReactive(value: unknown): boolean;
 /**

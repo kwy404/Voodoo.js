@@ -27,12 +27,12 @@ var PRIORITY = {
   DATA: 70,
   COMPONENT: 65,
   REF: 60,
-  // O binding vem antes do modelo de proposito.
+  // Binding comes before model on purpose.
   //
-  // `v-model` escreve o valor no campo, e `:min`, `:max` e `:step` mudam o que
-  // o navegador aceita como valor. Na ordem contraria o campo recebia o valor
-  // com as regras antigas ainda no lugar, e o proprio navegador arredondava ou
-  // grampeava: `0.12` virava `0` enquanto o `step` anterior fosse `1`.
+  // `v-model` writes the value to the field, and `:min`, `:max`, `:step` change
+  // what the browser accepts as a value. In reverse order, the field would receive
+  // the value with the old rules still in place, and the browser itself would round
+  // or clamp: `0.12` would become `0` if the previous `step` was `1`.
   BIND: 45,
   MODEL: 40,
   DEFAULT: 0,
@@ -60,5 +60,5 @@ function usePlugin(V, plugin, options) {
 }
 
 export { PRIORITY, components, config, defineDirective, directives, normalizeComponentName, usePlugin };
-//# sourceMappingURL=chunk-ZVXMGOYP.js.map
-//# sourceMappingURL=chunk-ZVXMGOYP.js.map
+//# sourceMappingURL=chunk-VARMOPJR.js.map
+//# sourceMappingURL=chunk-VARMOPJR.js.map

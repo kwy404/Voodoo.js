@@ -1,10 +1,10 @@
-import { socketSupported, createSocket, socket } from './chunk-ZMOP5QBI.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-ZMOP5QBI.js';
-import { evaluateIn, readAttr } from './chunk-EUQULT5T.js';
-import { reactive } from './chunk-PKGMG3DB.js';
-import './chunk-S3U6BJNJ.js';
-import { parseDuration } from './chunk-KCG2YK55.js';
-import { defineDirective, PRIORITY, config } from './chunk-ZVXMGOYP.js';
+import { socketSupported, createSocket, socket } from './chunk-KQV2XZKP.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-KQV2XZKP.js';
+import { evaluateIn, readAttr } from './chunk-BTGI2UVA.js';
+import { reactive } from './chunk-DVD2FAS5.js';
+import { warnAlias } from './chunk-UGX5TOOI.js';
+import { parseDuration } from './chunk-NMCVD7AK.js';
+import { defineDirective, PRIORITY, config } from './chunk-VARMOPJR.js';
 import './chunk-5I3A7PYT.js';
 
 /**
@@ -14,110 +14,136 @@ import './chunk-5I3A7PYT.js';
  */
 
 // src/directives/socket.ts
-function attr(el, nome) {
-  return readAttr(el, `${config.prefix}${nome}`);
+function aliasLegacy(view, pairs) {
+  for (const [old, canonical] of pairs) {
+    Object.defineProperty(view, old, {
+      enumerable: false,
+      configurable: true,
+      get() {
+        warnAlias(old, canonical);
+        return view[canonical];
+      },
+      set(value) {
+        warnAlias(old, canonical);
+        view[canonical] = value;
+      }
+    });
+  }
 }
-var conexoes = /* @__PURE__ */ new WeakMap();
-function maisProximo(el, mapa) {
-  let atual = el;
-  while (atual) {
-    const encontrado = mapa.get(atual);
-    if (encontrado) return encontrado;
-    atual = atual.parentElement;
+function attr(el, name) {
+  return readAttr(el, `${config.prefix}${name}`);
+}
+var connections = /* @__PURE__ */ new WeakMap();
+function closest(el, map) {
+  let current = el;
+  while (current) {
+    const found = map.get(current);
+    if (found) return found;
+    current = current.parentElement;
   }
   return null;
 }
-function resolverTexto(expressao, scope, contexto) {
-  const texto = expressao.trim();
-  if (!texto) return "";
-  if (/^[A-Za-z_$][\w$]*$/.test(texto)) {
-    const valor2 = scope.has(texto) ? scope.get(texto) : void 0;
-    return typeof valor2 === "string" && valor2 ? valor2 : texto;
+function resolveText(expression, scope, context) {
+  const text = expression.trim();
+  if (!text) return "";
+  if (/^[A-Za-z_$][\w$]*$/.test(text)) {
+    const value2 = scope.has(text) ? scope.get(text) : void 0;
+    return typeof value2 === "string" && value2 ? value2 : text;
   }
-  if (/^(wss?|https?):\/\//i.test(texto) || /^[\w:.\-/]+$/.test(texto)) return texto;
-  const valor = evaluateIn(texto, scope, contexto);
-  return typeof valor === "string" && valor ? valor : texto;
+  if (/^(wss?|https?):\/\//i.test(text) || /^[\w:.\-/]+$/.test(text)) return text;
+  const value = evaluateIn(text, scope, context);
+  return typeof value === "string" && value ? value : text;
 }
-function disparar(el, tipo, detalhe) {
-  el.dispatchEvent(new CustomEvent(tipo, { detail: detalhe, bubbles: true }));
+function dispatch(el, type, detail) {
+  el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
 defineDirective(
   "socket",
   ({ el, scope, expression, modifiers, cleanup, effect }) => {
-    const nome = attr(el, "socket-as") || "$socket";
+    const name = attr(el, "socket-as") || "$socket";
     if (!socketSupported()) {
       el.setAttribute("data-socket", "unsupported");
       scope.set(
-        nome,
+        name,
         reactive({
-          conectado: false,
-          estado: "closed",
-          erro: "WebSocket indisponivel neste ambiente",
-          tentativas: 0,
-          mensagens: [],
-          enviar: () => false,
-          abrir: () => void 0,
-          fechar: () => void 0,
+          connected: false,
+          state: "closed",
+          error: "WebSocket unavailable in this environment",
+          attempts: 0,
+          messages: [],
+          send: () => false,
+          open: () => void 0,
+          close: () => void 0,
           socket: null
         })
       );
-      disparar(el, "voodoo:socket-unsupported", { url: expression });
+      dispatch(el, "voodoo:socket-unsupported", { url: expression });
       return;
     }
-    const limite = Number(attr(el, "socket-buffer") ?? 50);
-    const transporte = attr(el, "socket-transport") || "ws";
-    const reconectar = !modifiers["no-reconnect"] && modifiers.reconnect !== "false" && attr(el, "socket-reconnect") !== "false";
-    const opcoes = {
-      transport: transporte === "socket.io" ? "socket.io" : "ws",
+    const limit = Number(attr(el, "socket-buffer") ?? 50);
+    const transport = attr(el, "socket-transport") || "ws";
+    const reconnect = !modifiers["no-reconnect"] && modifiers.reconnect !== "false" && attr(el, "socket-reconnect") !== "false";
+    const options = {
+      transport: transport === "socket.io" ? "socket.io" : "ws",
       manual: !!modifiers.manual,
-      reconnect: reconectar
+      reconnect
     };
-    if (modifiers.json) opcoes.json = modifiers.json !== "false";
-    const caminho = attr(el, "socket-path");
-    if (caminho) opcoes.path = caminho;
-    const batida = attr(el, "socket-heartbeat");
-    if (batida !== null) opcoes.heartbeat = parseDuration(batida, 25e3);
-    const s = createSocket(resolverTexto(expression, scope, "v-socket") || "/", opcoes);
-    conexoes.set(el, s);
+    if (modifiers.json) options.json = modifiers.json !== "false";
+    const path = attr(el, "socket-path");
+    if (path) options.path = path;
+    const heartbeat = attr(el, "socket-heartbeat");
+    if (heartbeat !== null) options.heartbeat = parseDuration(heartbeat, 25e3);
+    const s = createSocket(resolveText(expression, scope, "v-socket") || "/", options);
+    connections.set(el, s);
     el.setAttribute("data-socket", "ready");
-    function enviar(evento, ...resto) {
-      if (typeof evento !== "string") return s.send(evento);
-      return resto.length ? s.emit(evento, resto[0]) : s.emit(evento);
+    function send(event, ...rest) {
+      if (typeof event !== "string") return s.send(event);
+      return rest.length ? s.emit(event, rest[0]) : s.emit(event);
     }
-    const vista = reactive({
-      conectado: s.connected,
-      estado: s.state,
-      erro: s.error,
-      tentativas: s.attempts,
-      mensagens: [],
-      enviar,
-      abrir: () => s.open(),
-      fechar: () => s.close(),
+    const view = reactive({
+      connected: s.connected,
+      state: s.state,
+      error: s.error,
+      attempts: s.attempts,
+      messages: [],
+      send,
+      open: () => s.open(),
+      close: () => s.close(),
       socket: s
     });
-    scope.set(nome, vista);
+    aliasLegacy(view, [
+      ["conectado", "connected"],
+      ["estado", "state"],
+      ["mensagens", "messages"],
+      ["erro", "error"],
+      ["tentativas", "attempts"],
+      ["enviar", "send"],
+      ["abrir", "open"],
+      ["fechar", "close"]
+    ]);
+    scope.set(name, view);
     effect(() => {
-      vista.conectado = s.connected;
-      vista.estado = s.state;
-      vista.erro = s.error;
-      vista.tentativas = s.attempts;
+      view.connected = s.connected;
+      view.state = s.state;
+      view.error = s.error;
+      view.attempts = s.attempts;
     });
-    const cancelar = [
-      s.on("message", (dados) => {
-        vista.mensagens.push(dados);
-        if (vista.mensagens.length > limite) {
-          vista.mensagens.splice(0, vista.mensagens.length - limite);
+    const unsubscribe = [
+      s.on("message", (data) => {
+        view.messages.push(data);
+        if (view.messages.length > limit) {
+          view.messages.splice(0, view.messages.length - limit);
         }
       }),
-      s.on("open", () => disparar(el, "voodoo:socket-open", { url: s.url })),
-      s.on("close", (d) => disparar(el, "voodoo:socket-close", d)),
-      s.on("error", (d) => disparar(el, "voodoo:socket-error", d))
+      s.on("open", () => dispatch(el, "voodoo:socket-open", { url: s.url })),
+      s.on("close", (d) => dispatch(el, "voodoo:socket-close", d)),
+      s.on("error", (d) => dispatch(el, "voodoo:socket-error", d))
     ];
     cleanup(() => {
-      for (const parar of cancelar) parar();
+      for (const stop of unsubscribe) stop();
       s.off();
       s.close();
-      conexoes.delete(el);
+      connections.delete(el);
     });
   },
   { priority: PRIORITY.DATA }
@@ -125,54 +151,63 @@ defineDirective(
 defineDirective(
   "room",
   ({ el, scope, expression, modifiers, cleanup, effect }) => {
-    const s = maisProximo(el, conexoes);
+    const s = closest(el, connections);
     if (!s) return;
-    const nomeSala = resolverTexto(expression, scope, "v-room");
-    if (!nomeSala) return;
-    const sala = s.join(nomeSala, {
-      privada: !!modifiers.privada || !!modifiers.private,
+    const roomName = resolveText(expression, scope, "v-room");
+    if (!roomName) return;
+    const room = s.join(roomName, {
+      private: !!modifiers.private || !!modifiers.privada,
       buffer: Number(attr(el, "room-buffer") ?? 50)
     });
-    const vista = reactive({
-      nome: nomeSala,
-      privada: sala.privada,
-      estado: sala.estado,
-      membros: sala.membros,
-      mensagens: sala.mensagens,
-      /** Envia para a sala. Com `para`, so para aquele destinatario. */
-      enviar: (evento, dados, para) => para ? sala.to(para).emit(evento, dados) : sala.emit(evento, dados),
-      sair: () => sala.leave(),
-      sala
+    const view = reactive({
+      name: roomName,
+      private: room.private,
+      state: room.state,
+      members: room.members,
+      messages: room.messages,
+      /** Sends to the room. With `to`, only to that recipient. */
+      send: (event, data, to) => to ? room.to(to).emit(event, data) : room.emit(event, data),
+      leave: () => room.leave(),
+      room
     });
-    scope.set(attr(el, "room-as") || "$room", vista);
+    aliasLegacy(view, [
+      ["membros", "members"],
+      ["mensagens", "messages"],
+      ["estado", "state"],
+      ["nome", "name"],
+      ["privada", "private"],
+      ["enviar", "send"],
+      ["sair", "leave"]
+    ]);
+    scope.set(attr(el, "room-as") || "$room", view);
     effect(() => {
-      vista.estado = sala.estado;
-      vista.membros = sala.membros;
-      vista.mensagens = sala.mensagens;
+      view.state = room.state;
+      view.members = room.members;
+      view.messages = room.messages;
     });
-    const cancelar = [
-      sala.on("entrou", (m) => disparar(el, "voodoo:room-join", m)),
-      sala.on("saiu", (m) => disparar(el, "voodoo:room-leave", m))
+    const unsubscribe = [
+      room.on("joined", (m) => dispatch(el, "voodoo:room-join", m)),
+      room.on("left", (m) => dispatch(el, "voodoo:room-leave", m))
     ];
     cleanup(() => {
-      for (const parar of cancelar) parar();
-      sala.off();
-      sala.leave();
+      for (const stop of unsubscribe) stop();
+      room.off();
+      room.leave();
     });
   },
-  // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
+  // After `v-socket`, so the connection exists when the room asks to join.
   { priority: PRIORITY.DATA - 1 }
 );
 defineDirective("on-socket", ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo2 = maisProximo(el, conexoes);
-  if (!alvo2) return;
-  const cancelar = alvo2.on(arg, (dados, ack) => {
-    const local = scope.child({ $event: dados, $ack: ack, $el: el });
-    const valor = evaluateIn(expression, local, `v-on-socket:${arg}`);
-    if (typeof valor === "function") valor.call(scope.data, dados);
+  const target2 = closest(el, connections);
+  if (!target2) return;
+  const unsubscribe = target2.on(arg, (data, ack) => {
+    const local = scope.child({ $event: data, $ack: ack, $el: el });
+    const value = evaluateIn(expression, local, `v-on-socket:${arg}`);
+    if (typeof value === "function") value.call(scope.data, data);
   });
-  cleanup(cancelar);
+  cleanup(unsubscribe);
 });
 for (const nome of [
   "socket-transport",
@@ -194,8 +229,8 @@ var voodooSocket = {
     if (!V.socket) V.socket = socket;
   }
 };
-var alvo = globalThis.V;
-if (alvo && typeof alvo === "object" && !alvo.socket) alvo.socket = socket;
+var target = globalThis.V;
+if (target && typeof target === "object" && !target.socket) target.socket = socket;
 var plugin_default = voodooSocket;
 
 export { plugin_default as default, voodooSocket };

@@ -11,6 +11,27 @@ var __defProp = Object.defineProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+// src/runtime/registry.ts
+var config = {
+  prefix: "v-"};
+var directives = /* @__PURE__ */ new Map();
+var PRIORITY = {
+  DATA: 70,
+  DEFAULT: 0,
+  TRANSITION: -20
+};
+function defineDirective(name, setup, options = {}) {
+  directives.set(name, {
+    name,
+    setup,
+    priority: options.priority ?? PRIORITY.DEFAULT,
+    terminal: options.terminal ?? false
+  });
+}
+function warnOnce(key, message) {
+  return;
+}
+
 // src/reactivity/index.ts
 var resolvedPromise = /* @__PURE__ */ Promise.resolve();
 var queue = [];
@@ -40,8 +61,8 @@ function flushJobs() {
       const count = (counts.get(job) || 0) + 1;
       counts.set(job, count);
       if (count > RECURSION_LIMIT) {
-        warn(
-          "Loop infinito de atualizacao detectado. Um efeito reativo esta se disparando de novo sem parar. Verifique se alguma expressao escreve em um estado que ela mesma le."
+        warn2(
+          "Infinite update loop detected. A reactive effect keeps triggering itself without ever settling. Check whether some expression writes to state that it also reads."
         );
         continue;
       }
@@ -71,9 +92,9 @@ function flushJobs() {
   }
 }
 function handleError(err, context) {
-  console.error(`[Voodoo] erro em ${context}:`, err);
+  console.error(`[Voodoo] error in ${context}:`, err);
 }
-function warn(msg, ...args) {
+function warn2(msg, ...args) {
   console.warn(`[Voodoo] ${msg}`, ...args);
 }
 var activeEffect;
@@ -88,10 +109,10 @@ function resetTracking() {
 }
 var ITERATE_KEY = /* @__PURE__ */ Symbol("voodoo:iterate");
 var targetMap = /* @__PURE__ */ new WeakMap();
-function track(target, key) {
+function track(target2, key) {
   if (!shouldTrack || !activeEffect) return;
-  let depsMap = targetMap.get(target);
-  if (!depsMap) targetMap.set(target, depsMap = /* @__PURE__ */ new Map());
+  let depsMap = targetMap.get(target2);
+  if (!depsMap) targetMap.set(target2, depsMap = /* @__PURE__ */ new Map());
   let dep = depsMap.get(key);
   if (!dep) depsMap.set(key, dep = /* @__PURE__ */ new Set());
   if (!dep.has(activeEffect)) {
@@ -99,8 +120,8 @@ function track(target, key) {
     activeEffect.deps.push(dep);
   }
 }
-function trigger(target, type, key, _newValue) {
-  const depsMap = targetMap.get(target);
+function trigger(target2, type, key, _newValue) {
+  const depsMap = targetMap.get(target2);
   if (!depsMap) return;
   const effects = /* @__PURE__ */ new Set();
   const add = (dep) => {
@@ -111,7 +132,7 @@ function trigger(target, type, key, _newValue) {
     depsMap.forEach(add);
   } else {
     if (key !== void 0) add(depsMap.get(key));
-    const isArr = Array.isArray(target);
+    const isArr = Array.isArray(target2);
     if (type === "add" /* ADD */) {
       if (!isArr) add(depsMap.get(ITERATE_KEY));
       else if (isIntegerKey(key)) add(depsMap.get("length"));
@@ -194,71 +215,71 @@ function toRaw(observed) {
 function isReactive(value) {
   return !!(value && value[IS_REACTIVE]);
 }
-function reactive(target) {
-  if (!isObject(target)) return target;
-  if (isReactive(target)) return target;
-  if (!canObserve(target)) return target;
-  const existing = reactiveMap.get(target);
+function reactive(target2) {
+  if (!isObject(target2)) return target2;
+  if (isReactive(target2)) return target2;
+  if (!canObserve(target2)) return target2;
+  const existing = reactiveMap.get(target2);
   if (existing) return existing;
-  const isMapOrSet = target instanceof Map || target instanceof Set;
+  const isMapOrSet = target2 instanceof Map || target2 instanceof Set;
   const proxy = new Proxy(
-    target,
+    target2,
     isMapOrSet ? collectionHandlers : baseHandlers
   );
-  reactiveMap.set(target, proxy);
+  reactiveMap.set(target2, proxy);
   return proxy;
 }
 var baseHandlers = {
-  get(target, key, receiver) {
-    if (key === RAW) return target;
+  get(target2, key, receiver) {
+    if (key === RAW) return target2;
     if (key === IS_REACTIVE) return true;
-    const isArr = Array.isArray(target);
+    const isArr = Array.isArray(target2);
     if (isArr && Object.prototype.hasOwnProperty.call(arrayInstrumentations, key)) {
       return Reflect.get(arrayInstrumentations, key, receiver);
     }
-    const res = Reflect.get(target, key, receiver);
+    const res = Reflect.get(target2, key, receiver);
     if (typeof key === "symbol") return res;
-    track(target, key);
+    track(target2, key);
     if (isRef(res)) return isArr && isIntegerKey(key) ? res : res.value;
     if (isObject(res)) return reactive(res);
     return res;
   },
-  set(target, key, value, receiver) {
-    const oldValue = target[key];
+  set(target2, key, value, receiver) {
+    const oldValue = target2[key];
     value = toRaw(value);
-    if (!Array.isArray(target) && isRef(oldValue) && !isRef(value)) {
+    if (!Array.isArray(target2) && isRef(oldValue) && !isRef(value)) {
       oldValue.value = value;
       return true;
     }
-    const hadKey = Array.isArray(target) && isIntegerKey(key) ? Number(key) < target.length : Object.prototype.hasOwnProperty.call(target, key);
-    const result = Reflect.set(target, key, value, receiver);
-    if (target === toRaw(receiver)) {
-      if (!hadKey) trigger(target, "add" /* ADD */, key, value);
-      else if (hasChanged(value, oldValue)) trigger(target, "set" /* SET */, key, value);
+    const hadKey = Array.isArray(target2) && isIntegerKey(key) ? Number(key) < target2.length : Object.prototype.hasOwnProperty.call(target2, key);
+    const result = Reflect.set(target2, key, value, receiver);
+    if (target2 === toRaw(receiver)) {
+      if (!hadKey) trigger(target2, "add" /* ADD */, key, value);
+      else if (hasChanged(value, oldValue)) trigger(target2, "set" /* SET */, key, value);
     }
     return result;
   },
-  deleteProperty(target, key) {
-    const hadKey = Object.prototype.hasOwnProperty.call(target, key);
-    const result = Reflect.deleteProperty(target, key);
-    if (result && hadKey) trigger(target, "delete" /* DELETE */, key);
+  deleteProperty(target2, key) {
+    const hadKey = Object.prototype.hasOwnProperty.call(target2, key);
+    const result = Reflect.deleteProperty(target2, key);
+    if (result && hadKey) trigger(target2, "delete" /* DELETE */, key);
     return result;
   },
-  has(target, key) {
-    const result = Reflect.has(target, key);
-    if (typeof key !== "symbol") track(target, key);
+  has(target2, key) {
+    const result = Reflect.has(target2, key);
+    if (typeof key !== "symbol") track(target2, key);
     return result;
   },
-  ownKeys(target) {
-    track(target, Array.isArray(target) ? "length" : ITERATE_KEY);
-    return Reflect.ownKeys(target);
+  ownKeys(target2) {
+    track(target2, Array.isArray(target2) ? "length" : ITERATE_KEY);
+    return Reflect.ownKeys(target2);
   }
 };
 var collectionHandlers = {
-  get(target, key, receiver) {
-    if (key === RAW) return target;
+  get(target2, key, receiver) {
+    if (key === RAW) return target2;
     if (key === IS_REACTIVE) return true;
-    const raw = target;
+    const raw = target2;
     if (key === "size") {
       track(raw, ITERATE_KEY);
       return Reflect.get(raw, "size", raw);
@@ -324,24 +345,6 @@ function isRef(r) {
   return !!(r && r.__v_isRef === true);
 }
 
-// src/runtime/registry.ts
-var config = {
-  prefix: "v-"};
-var directives = /* @__PURE__ */ new Map();
-var PRIORITY = {
-  DATA: 70,
-  DEFAULT: 0,
-  TRANSITION: -20
-};
-function defineDirective(name, setup, options = {}) {
-  directives.set(name, {
-    name,
-    setup,
-    priority: options.priority ?? PRIORITY.DEFAULT,
-    terminal: options.terminal ?? false
-  });
-}
-
 // src/parser/interpreter.ts
 var SafeObject = /* @__PURE__ */ Object.freeze({
   keys: Object.keys,
@@ -376,21 +379,21 @@ var VoodooRuntimeError = class extends Error {
   constructor(message, expression) {
     super(expression ? `${message}
 
-Expressao: ${expression}` : message);
+Expression: ${expression}` : message);
     __publicField(this, "expression", expression);
     this.name = "VoodooRuntimeError";
   }
 };
 var SPREAD = /* @__PURE__ */ Symbol("spread");
-var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+var BLOCKED_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 function chaveBloqueada(key) {
-  return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+  return typeof key === "string" && BLOCKED_KEYS.has(key);
 }
-function checarChave(key, expressao) {
+function checkKey(key, expression) {
   if (chaveBloqueada(key)) {
     throw new VoodooRuntimeError(
-      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
-      expressao
+      `Access blocked to "${String(key)}": template expressions cannot reach the prototype chain. Expose a method in state instead.`,
+      expression
     );
   }
   return key;
@@ -408,7 +411,7 @@ function evaluate(node, scope) {
       return out;
     }
     case "id": {
-      checarChave(node.n);
+      checkKey(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -419,10 +422,10 @@ function evaluate(node, scope) {
       if (obj == null) {
         if (node.opt) return void 0;
         throw new VoodooRuntimeError(
-          `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
+          `Could not read "${describeKey(node, scope)}" from ${obj === null ? "null" : "undefined"}`
         );
       }
-      const key = checarChave(
+      const key = checkKey(
         node.computed ? evaluate(node.p, scope) : node.p.v
       );
       return obj[key];
@@ -435,16 +438,16 @@ function evaluate(node, scope) {
         if (obj == null) {
           if (node.callee.opt || node.opt) return void 0;
           throw new VoodooRuntimeError(
-            `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
+            `Could not call "${describeKey(node.callee, scope)}" from ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = checarChave(
+        const key = checkKey(
           node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
         );
         thisArg = obj;
         fn = obj[key];
       } else if (node.callee.t === "id") {
-        checarChave(node.callee.n);
+        checkKey(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -458,7 +461,7 @@ function evaluate(node, scope) {
       if (fn == null && node.opt) return void 0;
       if (typeof fn !== "function") {
         const name = node.callee.t === "id" ? node.callee.n : describeKey(node.callee, scope);
-        throw new VoodooRuntimeError(`"${name}" nao e uma funcao`);
+        throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
       return fn.apply(thisArg, evalArgs(node.args, scope));
     }
@@ -484,7 +487,7 @@ function evaluate(node, scope) {
         case "void":
           return void 0;
       }
-      throw new VoodooRuntimeError(`Operador unario nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported unary operator: ${node.op}`);
     }
     case "update": {
       const old = Number(evaluate(node.a, scope));
@@ -529,7 +532,7 @@ function evaluate(node, scope) {
         case "instanceof":
           return l instanceof r;
       }
-      throw new VoodooRuntimeError(`Operador nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
     }
     case "logic": {
       const l = evaluate(node.l, scope);
@@ -571,7 +574,7 @@ function evaluate(node, scope) {
             value = current ** operand;
             break;
           default:
-            throw new VoodooRuntimeError(`Atribuicao nao suportada: ${node.op}`);
+            throw new VoodooRuntimeError(`Unsupported assignment: ${node.op}`);
         }
       }
       assign(node.target, value, scope);
@@ -592,7 +595,7 @@ function evaluate(node, scope) {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope));
         } else {
-          const key = checarChave(
+          const key = checkKey(
             prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
           );
           out[key] = evaluate(prop.value, scope);
@@ -617,7 +620,7 @@ function evaluate(node, scope) {
       return last;
     }
   }
-  throw new VoodooRuntimeError(`No desconhecido: ${node.t}`);
+  throw new VoodooRuntimeError(`Unknown node: ${node.t}`);
 }
 function evalArgs(args, scope) {
   const out = [];
@@ -631,31 +634,31 @@ function evalArgs(args, scope) {
   }
   return out;
 }
-function assign(target, value, scope) {
-  if (target.t === "id") {
-    checarChave(target.n);
-    scope.set(target.n, value);
+function assign(target2, value, scope) {
+  if (target2.t === "id") {
+    checkKey(target2.n);
+    scope.set(target2.n, value);
     return;
   }
-  if (target.t === "member") {
-    const obj = evaluate(target.o, scope);
+  if (target2.t === "member") {
+    const obj = evaluate(target2.o, scope);
     if (obj == null) {
-      throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
+      throw new VoodooRuntimeError("Could not write to null or undefined");
     }
-    const key = checarChave(
-      target.computed ? evaluate(target.p, scope) : target.p.v
+    const key = checkKey(
+      target2.computed ? evaluate(target2.p, scope) : target2.p.v
     );
     obj[key] = value;
     return;
   }
-  throw new VoodooRuntimeError("Alvo de atribuicao invalido");
+  throw new VoodooRuntimeError("Invalid assignment target");
 }
 function describeKey(node, scope) {
   if (node.t === "member") {
     return node.computed ? String(evaluate(node.p, scope)) : String(node.p.v);
   }
   if (node.t === "id") return node.n;
-  return "valor";
+  return "value";
 }
 function stringify(value) {
   if (value == null) return "";
@@ -770,7 +773,7 @@ function tokenize(source) {
     }
     if (ch === "/" && source[i + 1] === "*") {
       const end = source.indexOf("*/", i + 2);
-      if (end === -1) throw new VoodooSyntaxError("Comentario de bloco nao fechado", source, i);
+      if (end === -1) throw new VoodooSyntaxError("Unclosed block comment", source, i);
       i = end + 2;
       continue;
     }
@@ -798,7 +801,7 @@ function tokenize(source) {
         }
       }
       const parsed = Number(raw.replace(/_/g, ""));
-      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Numero invalido", source, start);
+      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Invalid number", source, start);
       tokens.push({ type: "num", value: raw, parsed, start, end: i });
       continue;
     }
@@ -813,36 +816,36 @@ function tokenize(source) {
             if (source[i + 1] === "{") {
               const close = source.indexOf("}", i);
               if (close === -1)
-                throw new VoodooSyntaxError("Escape unicode nao fechado", source, start);
-              const digitos = source.slice(i + 2, close);
-              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                throw new VoodooSyntaxError("Unclosed Unicode escape", source, start);
+              const digits = source.slice(i + 2, close);
+              if (!/^[0-9a-fA-F]+$/.test(digits) || parseInt(digits, 16) > 1114111)
                 throw new VoodooSyntaxError(
-                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  `Invalid Unicode escape "\\u{${digits}}"`,
                   source,
                   i - 1
                 );
-              out += String.fromCodePoint(parseInt(digitos, 16));
+              out += String.fromCodePoint(parseInt(digits, 16));
               i = close + 1;
             } else {
-              const digitos = source.slice(i + 1, i + 5);
-              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+              const digits = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digits))
                 throw new VoodooSyntaxError(
-                  "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                  "Invalid Unicode escape: \\u needs 4 hexadecimal digits",
                   source,
                   i - 1
                 );
-              out += String.fromCharCode(parseInt(digitos, 16));
+              out += String.fromCharCode(parseInt(digits, 16));
               i += 5;
             }
           } else if (esc === "x") {
-            const digitos = source.slice(i + 1, i + 3);
-            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+            const digits = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digits))
               throw new VoodooSyntaxError(
-                "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                "Invalid hexadecimal escape: \\x needs 2 hexadecimal digits",
                 source,
                 i - 1
               );
-            out += String.fromCharCode(parseInt(digitos, 16));
+            out += String.fromCharCode(parseInt(digits, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -852,7 +855,7 @@ function tokenize(source) {
           out += source[i++];
         }
       }
-      if (i >= len) throw new VoodooSyntaxError("String nao fechada", source, start);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed string", source, start);
       i++;
       tokens.push({ type: "str", value: out, parsed: out, start, end: i });
       continue;
@@ -892,14 +895,14 @@ function tokenize(source) {
             expr += source[i++];
           }
           if (depth !== 0)
-            throw new VoodooSyntaxError("Interpolacao de template nao fechada", source, start);
+            throw new VoodooSyntaxError("Unclosed template interpolation", source, start);
           i++;
           exprs.push(expr);
           continue;
         }
         current += source[i++];
       }
-      if (i >= len) throw new VoodooSyntaxError("Template literal nao fechado", source, start);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed template literal", source, start);
       i++;
       quasis.push(current);
       tokens.push({
@@ -930,7 +933,7 @@ function tokenize(source) {
       tokens.push({ type: "punct", value: matched, start, end: i });
       continue;
     }
-    throw new VoodooSyntaxError(`Caractere inesperado "${ch}"`, source, i);
+    throw new VoodooSyntaxError(`Unexpected character "${ch}"`, source, i);
   }
   tokens.push({ type: "eof", value: "", start: len, end: len });
   return tokens;
@@ -994,14 +997,14 @@ var Parser = class {
     if (!this.isPunct(value)) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Esperava "${value}" mas encontrou "${t.value || "fim da expressao"}"`,
+        `Expected "${value}" but found "${t.value || "end of expression"}"`,
         this.source,
         t.start
       );
     }
     return this.next();
   }
-  /** Ponto de entrada: uma ou mais expressoes separadas por `;` ou `,` no topo. */
+  /** Entry point: one or more expressions separated by `;` or `,` at the top. */
   parseProgram() {
     const body = [];
     while (this.peek().type !== "eof") {
@@ -1015,24 +1018,24 @@ var Parser = class {
   parseExpression() {
     return this.parseAssignment();
   }
-  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
-  entrar() {
+  /** Raises recursion level and rejects expression when exceeding limit. */
+  enterLevel() {
     if (++this.depth > MAX_DEPTH) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        `Expression too deeply nested (limit of ${MAX_DEPTH} levels)`,
         this.source,
         t.start
       );
     }
   }
   parseAssignment() {
-    this.entrar();
-    const node = this.parseAssignmentInterno();
+    this.enterLevel();
+    const node = this.parseAssignmentInternal();
     this.depth--;
     return node;
   }
-  parseAssignmentInterno() {
+  parseAssignmentInternal() {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
@@ -1046,7 +1049,7 @@ var Parser = class {
     const t = this.peek();
     if (t.type === "punct" && ASSIGN_OPS.has(t.value)) {
       if (left.t !== "id" && left.t !== "member") {
-        throw new VoodooSyntaxError("Alvo de atribuicao invalido", this.source, t.start);
+        throw new VoodooSyntaxError("Invalid assignment target", this.source, t.start);
       }
       this.next();
       const value = this.parseAssignment();
@@ -1055,8 +1058,8 @@ var Parser = class {
     return left;
   }
   /**
-   * Tenta ler `( params ) =>`. Se o que vem depois do parentese de fechamento
-   * nao for `=>`, volta a posicao original e deixa o caminho normal seguir.
+   * Tries to read `( params ) =>`. If what comes after the closing parenthesis
+   * is not `=>`, returns to original position and lets normal parsing continue.
    */
   tryParseParenArrow() {
     const start = this.pos;
@@ -1099,12 +1102,12 @@ var Parser = class {
     return test;
   }
   parseBinary(minPrec) {
-    this.entrar();
-    const node = this.parseBinarioInterno(minPrec);
+    this.enterLevel();
+    const node = this.parseBinaryInternal(minPrec);
     this.depth--;
     return node;
   }
-  parseBinarioInterno(minPrec) {
+  parseBinaryInternal(minPrec) {
     let left = this.parseUnary();
     for (; ; ) {
       const t = this.peek();
@@ -1121,12 +1124,12 @@ var Parser = class {
     return left;
   }
   parseUnary() {
-    this.entrar();
-    const node = this.parseUnarioInterno();
+    this.enterLevel();
+    const node = this.parseUnaryInternal();
     this.depth--;
     return node;
   }
-  parseUnarioInterno() {
+  parseUnaryInternal() {
     const t = this.peek();
     if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
       this.next();
@@ -1152,7 +1155,7 @@ var Parser = class {
         this.next();
         const prop = this.next();
         if (prop.type !== "ident") {
-          throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+          throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
         }
         expr = { t: "member", o: expr, p: { t: "lit", v: prop.value }, computed: false, opt: false };
       } else if (this.isPunct("?.")) {
@@ -1167,7 +1170,7 @@ var Parser = class {
         } else {
           const prop = this.next();
           if (prop.type !== "ident") {
-            throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+            throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
           }
           expr = {
             t: "member",
@@ -1216,7 +1219,7 @@ var Parser = class {
       const part = t.tpl;
       if (templateDepth >= MAX_TEMPLATE_DEPTH) {
         throw new VoodooSyntaxError(
-          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          `Template literal too deeply nested (limit of ${MAX_TEMPLATE_DEPTH} levels)`,
           this.source,
           t.start
         );
@@ -1251,7 +1254,7 @@ var Parser = class {
       if (t.value === "{") return this.parseObjectLiteral();
     }
     throw new VoodooSyntaxError(
-      `Token inesperado "${t.value || "fim da expressao"}"`,
+      `Unexpected token "${t.value || "end of expression"}"`,
       this.source,
       t.start
     );
@@ -1288,7 +1291,7 @@ var Parser = class {
       } else {
         const keyToken = this.next();
         if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
-          throw new VoodooSyntaxError("Chave de objeto invalida", this.source, keyToken.start);
+          throw new VoodooSyntaxError("Invalid object key", this.source, keyToken.start);
         }
         const key = String(keyToken.parsed ?? keyToken.value);
         if (this.isPunct(":")) {
@@ -1316,15 +1319,12 @@ function parse(source) {
   return node;
 }
 function evictOldest() {
-  const alvo2 = Math.floor(MAX_CACHE / 2);
+  const alvo = Math.floor(MAX_CACHE / 2);
   let removidos = 0;
   for (const chave of cache.keys()) {
     cache.delete(chave);
-    if (++removidos >= alvo2) break;
+    if (++removidos >= alvo) break;
   }
-}
-function avisarUmaVez(chave, mensagem) {
-  return;
 }
 
 // src/runtime/walker.ts
@@ -1339,7 +1339,7 @@ function evaluateIn(expression, scope, context, el) {
   try {
     return evaluate(parse(expression), scope);
   } catch (err) {
-    handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+    handleError(err, context ? `${context} ("${expression}")` : `expression "${expression}"`);
     return void 0;
   }
 }
@@ -1366,7 +1366,7 @@ function parseDuration(value, fallback = 0) {
 // src/devtools/bus.ts
 var listeners = /* @__PURE__ */ new Map();
 var devtoolsBus = {
-  /** Publica um evento. Sem ouvintes, a chamada e praticamente gratuita. */
+  /** Publishes an event. With no listeners, the call is practically free. */
   emit(type, data) {
     const set = listeners.get(type);
     if (!set || set.size === 0) return;
@@ -1374,11 +1374,11 @@ var devtoolsBus = {
       try {
         listener(data);
       } catch (err) {
-        console.error("[Voodoo] erro em ouvinte de devtools:", err);
+        console.error("[Voodoo] error in devtools listener:", err);
       }
     }
   },
-  /** Assina um tipo de evento. Devolve a funcao que cancela a assinatura. */
+  /** Subscribes to an event type. Returns the function that unsubscribes. */
   on(type, callback) {
     let set = listeners.get(type);
     if (!set) listeners.set(type, set = /* @__PURE__ */ new Set());
@@ -1387,16 +1387,16 @@ var devtoolsBus = {
       set?.delete(callback);
     };
   },
-  /** Cancela uma assinatura especifica. */
+  /** Cancels a specific subscription. */
   off(type, callback) {
     listeners.get(type)?.delete(callback);
   },
-  /** Remove todos os ouvintes, de um tipo ou de todos. */
+  /** Removes all listeners of a type or all listeners. */
   clear(type) {
     if (type) listeners.delete(type);
     else listeners.clear();
   },
-  /** Quantidade de ouvintes registrados em um tipo. */
+  /** Number of listeners registered for a type. */
   count(type) {
     return listeners.get(type)?.size ?? 0;
   }
@@ -1436,37 +1436,37 @@ function decodeSocketIo(body) {
   let i = 1;
   let namespace = "/";
   if (body[i] === "/") {
-    const virgula = body.indexOf(",", i);
-    if (virgula === -1) {
+    const comma = body.indexOf(",", i);
+    if (comma === -1) {
       return { type, namespace: body.slice(i) };
     }
-    namespace = body.slice(i, virgula);
-    i = virgula + 1;
+    namespace = body.slice(i, comma);
+    i = comma + 1;
   }
   let ack;
-  const inicioAck = i;
+  const ackStart = i;
   while (i < body.length && body.charCodeAt(i) >= 48 && body.charCodeAt(i) <= 57) i++;
-  if (i > inicioAck) ack = Number(body.slice(inicioAck, i));
-  const resto = body.slice(i);
-  return { type, namespace, ack, data: parseJson(resto) };
+  if (i > ackStart) ack = Number(body.slice(ackStart, i));
+  const rest = body.slice(i);
+  return { type, namespace, ack, data: parseJson(rest) };
 }
 function decodeEngine(raw) {
   if (typeof raw !== "string" || !raw) return { kind: "unknown", raw: String(raw ?? "") };
-  const codigo = raw[0];
-  const corpo = raw.slice(1);
-  switch (codigo) {
+  const code = raw[0];
+  const body = raw.slice(1);
+  switch (code) {
     case ENGINE.OPEN: {
-      const dados = parseJson(corpo);
+      const data = parseJson(body);
       return {
         kind: "open",
         handshake: {
-          sid: dados?.sid ?? "",
-          // Os valores do servidor mandam. Os padroes aqui sao os do Engine.IO
-          // v4 e so entram em cena se o handshake vier incompleto.
-          pingInterval: Number(dados?.pingInterval) || 25e3,
-          pingTimeout: Number(dados?.pingTimeout) || 2e4,
-          upgrades: dados?.upgrades,
-          maxPayload: dados?.maxPayload
+          sid: data?.sid ?? "",
+          // Server values take precedence. The defaults here are from Engine.IO
+          // v4 and only come into play if the handshake is incomplete.
+          pingInterval: Number(data?.pingInterval) || 25e3,
+          pingTimeout: Number(data?.pingTimeout) || 2e4,
+          upgrades: data?.upgrades,
+          maxPayload: data?.maxPayload
         }
       };
     }
@@ -1477,7 +1477,7 @@ function decodeEngine(raw) {
     case ENGINE.PONG:
       return { kind: "pong" };
     case ENGINE.MESSAGE: {
-      const packet = decodeSocketIo(corpo);
+      const packet = decodeSocketIo(body);
       return packet ? { kind: "message", packet } : { kind: "unknown", raw };
     }
     case ENGINE.NOOP:
@@ -1494,15 +1494,15 @@ function encodeSocketIo(packet) {
   return out;
 }
 function engineURL(base, path = "/socket.io/") {
-  const caminho = `/${path.replace(/^\/+|\/+$/g, "")}/`;
-  const consulta = "EIO=4&transport=websocket";
+  const pathname = `/${path.replace(/^\/+|\/+$/g, "")}/`;
+  const query = "EIO=4&transport=websocket";
   try {
     const u = new URL(base);
-    u.pathname = caminho;
-    u.search = consulta;
+    u.pathname = pathname;
+    u.search = query;
     return u.toString();
   } catch {
-    return `${base.replace(/\/+$/, "")}${caminho}?${consulta}`;
+    return `${base.replace(/\/+$/, "")}${pathname}?${query}`;
   }
 }
 
@@ -1535,865 +1535,889 @@ var defaults = {
 };
 var incomingInterceptors = [];
 var outgoingInterceptors = [];
-function usar(lista, fn) {
-  lista.push(fn);
+function use(list, fn) {
+  list.push(fn);
   return () => {
-    const i = lista.indexOf(fn);
-    if (i > -1) lista.splice(i, 1);
+    const i = list.indexOf(fn);
+    if (i > -1) list.splice(i, 1);
   };
 }
-function aplicar(lista, mensagem) {
-  let atual = mensagem;
-  for (const fn of lista) {
-    if (!atual) return null;
-    const resultado = fn(atual);
-    if (resultado === null) return null;
-    if (resultado) atual = resultado;
+function apply(list, message) {
+  let current = message;
+  for (const fn of list) {
+    if (!current) return null;
+    const result = fn(current);
+    if (result === null) return null;
+    if (result) current = result;
   }
-  return atual;
+  return current;
 }
-var abertos = /* @__PURE__ */ new Set();
-function mesmoMembro(a, b) {
+var openConnections = /* @__PURE__ */ new Set();
+function sameMember(a, b) {
   if (a === b) return true;
   const ida = a && typeof a === "object" ? a.id : a;
   const idb = b && typeof b === "object" ? b.id : b;
   return ida !== void 0 && ida === idb;
 }
 function resolveSocketURL(url, baseURL = defaults.baseURL) {
-  let endereco = url || "/";
-  if (baseURL && !/^(wss?|https?):\/\//i.test(endereco) && !endereco.startsWith("//")) {
-    endereco = `${baseURL.replace(/\/$/, "")}/${endereco.replace(/^\//, "")}`;
+  let address = url || "/";
+  if (baseURL && !/^(wss?|https?):\/\//i.test(address) && !address.startsWith("//")) {
+    address = `${baseURL.replace(/\/$/, "")}/${address.replace(/^\//, "")}`;
   }
-  if (/^wss?:\/\//i.test(endereco)) return endereco;
-  if (/^https?:\/\//i.test(endereco)) return endereco.replace(/^http/i, "ws");
-  if (typeof location === "undefined" || !location.host) return endereco;
-  const protocolo = location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocolo}//${location.host}${endereco.startsWith("/") ? endereco : `/${endereco}`}`;
+  if (/^wss?:\/\//i.test(address)) return address;
+  if (/^https?:\/\//i.test(address)) return address.replace(/^http/i, "ws");
+  if (typeof location === "undefined" || !location.host) return address;
+  const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${location.host}${address.startsWith("/") ? address : `/${address}`}`;
 }
-function construtor(opcoes) {
-  const escolhido = opcoes.WebSocket ?? defaults.WebSocket ?? globalThis.WebSocket;
-  return typeof escolhido === "function" ? escolhido : null;
+function constructor(options) {
+  const chosen = options.WebSocket ?? defaults.WebSocket ?? globalThis.WebSocket;
+  return typeof chosen === "function" ? chosen : null;
 }
 function socketSupported() {
-  return construtor({}) !== null;
+  return constructor({}) !== null;
 }
 function createSocket(url, options = {}) {
-  const opcoes = { ...defaults, ...options };
-  const Impl = construtor(options);
-  const base = resolveSocketURL(url, opcoes.baseURL);
-  const socketIo = opcoes.transport === "socket.io";
-  const endereco = socketIo ? engineURL(base, opcoes.path) : base;
-  const estado = reactive({
-    estado: "closed",
-    conectado: false,
-    tentativas: 0,
-    enfileiradas: 0,
-    erro: null
+  const opts = { ...defaults, ...options };
+  const Impl = constructor(options);
+  const base = resolveSocketURL(url, opts.baseURL);
+  const socketIo = opts.transport === "socket.io";
+  const address = socketIo ? engineURL(base, opts.path) : base;
+  const state = reactive({
+    state: "closed",
+    connected: false,
+    attempts: 0,
+    queued: 0,
+    error: null
   });
-  const ouvintes = /* @__PURE__ */ new Map();
-  const fila = [];
+  const listeners2 = /* @__PURE__ */ new Map();
+  const queue2 = [];
   const acks = /* @__PURE__ */ new Map();
-  const salas = /* @__PURE__ */ new Map();
+  const rooms = /* @__PURE__ */ new Map();
   let ws = null;
-  let proximoAck = 1;
-  let fechadoDeProposito = false;
+  let nextAck = 1;
+  let closedPurposefully = false;
   let handshake = null;
-  let abertoEm = 0;
-  let timerReconexao = null;
-  let timerHeartbeat = null;
-  let timerVigilancia = null;
-  function on(evento, ouvinte) {
-    let conjunto = ouvintes.get(evento);
-    if (!conjunto) ouvintes.set(evento, conjunto = /* @__PURE__ */ new Set());
-    conjunto.add(ouvinte);
+  let openedAt = 0;
+  let reconnectTimer = null;
+  let heartbeatTimer = null;
+  let watchdogTimer = null;
+  function on(event, listener) {
+    let set = listeners2.get(event);
+    if (!set) listeners2.set(event, set = /* @__PURE__ */ new Set());
+    set.add(listener);
     return () => {
-      conjunto?.delete(ouvinte);
+      set?.delete(listener);
     };
   }
-  function once(evento, ouvinte) {
-    const cancelar = on(evento, (dados, ack) => {
-      cancelar();
-      ouvinte(dados, ack);
+  function once(event, listener) {
+    const cancel = on(event, (data, ack) => {
+      cancel();
+      listener(data, ack);
     });
-    return cancelar;
+    return cancel;
   }
-  function off(evento, ouvinte) {
-    if (!evento) {
-      ouvintes.clear();
+  function off(event, listener) {
+    if (!event) {
+      listeners2.clear();
       return;
     }
-    if (!ouvinte) {
-      ouvintes.delete(evento);
+    if (!listener) {
+      listeners2.delete(event);
       return;
     }
-    ouvintes.get(evento)?.delete(ouvinte);
+    listeners2.get(event)?.delete(listener);
   }
-  function entregar(evento, dados, ack) {
-    for (const nome of evento === "message" ? [evento] : [evento, "message"]) {
-      const conjunto = ouvintes.get(nome);
-      if (!conjunto) continue;
-      for (const ouvinte of [...conjunto]) {
+  function deliver(event, data, ack) {
+    for (const name of event === "message" ? [event] : [event, "message"]) {
+      const set = listeners2.get(name);
+      if (!set) continue;
+      for (const listener of [...set]) {
         try {
-          ouvinte(dados, ack);
+          listener(data, ack);
         } catch (err) {
-          console.error("[Voodoo] erro em ouvinte de socket:", err);
+          console.error("[Voodoo] error in socket listener:", err);
         }
       }
     }
   }
-  function mudarEstado(novo) {
-    if (estado.estado === novo) return;
-    estado.estado = novo;
-    estado.conectado = novo === "open";
-    entregar(`state:${novo}`, novo);
+  function changeState(newState) {
+    if (state.state === newState) return;
+    state.state = newState;
+    state.connected = newState === "open";
+    deliver(`state:${newState}`, newState);
   }
-  function registrarErro(mensagem) {
-    estado.erro = mensagem;
-    entregar("error", mensagem);
+  function registerError(message) {
+    state.error = message;
+    deliver("error", message);
     devtoolsBus.emit("network", {
       method: "WS",
-      url: endereco,
+      url: address,
       ok: false,
-      error: mensagem,
+      error: message,
       source: "socket"
     });
   }
-  function pararTimers() {
-    if (timerReconexao !== null) {
-      clearTimeout(timerReconexao);
-      timerReconexao = null;
+  function stopTimers() {
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     }
-    if (timerHeartbeat !== null) {
-      clearInterval(timerHeartbeat);
-      timerHeartbeat = null;
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
     }
-    if (timerVigilancia !== null) {
-      clearTimeout(timerVigilancia);
-      timerVigilancia = null;
+    if (watchdogTimer !== null) {
+      clearTimeout(watchdogTimer);
+      watchdogTimer = null;
     }
   }
-  function armarVigilancia(ms) {
-    if (timerVigilancia !== null) clearTimeout(timerVigilancia);
-    timerVigilancia = null;
+  function armWatchdog(ms) {
+    if (watchdogTimer !== null) clearTimeout(watchdogTimer);
+    watchdogTimer = null;
     if (!ms || ms <= 0) return;
-    timerVigilancia = setTimeout(() => {
-      timerVigilancia = null;
-      registrarErro("conexao sem resposta");
-      derrubar();
+    watchdogTimer = setTimeout(() => {
+      watchdogTimer = null;
+      registerError("connection unresponsive");
+      tearDown();
     }, ms);
   }
-  function janelaDeSilencio() {
+  function silenceWindow() {
     if (socketIo) {
       const h = handshake;
       return h ? h.pingInterval + h.pingTimeout : 0;
     }
-    return opcoes.heartbeat > 0 ? opcoes.heartbeat + opcoes.heartbeatTimeout : 0;
+    return opts.heartbeat > 0 ? opts.heartbeat + opts.heartbeatTimeout : 0;
   }
-  function marcarVivo() {
-    armarVigilancia(janelaDeSilencio());
+  function markAlive() {
+    armWatchdog(silenceWindow());
   }
-  function iniciarHeartbeat() {
-    if (socketIo || opcoes.heartbeat <= 0) return;
-    if (timerHeartbeat !== null) clearInterval(timerHeartbeat);
-    timerHeartbeat = setInterval(() => {
-      if (opcoes.pingPayload == null) return;
-      enviarTexto(opcoes.pingPayload);
-    }, opcoes.heartbeat);
+  function startHeartbeat() {
+    if (socketIo || opts.heartbeat <= 0) return;
+    if (heartbeatTimer !== null) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (opts.pingPayload == null) return;
+      sendText(opts.pingPayload);
+    }, opts.heartbeat);
   }
-  function esperaDaTentativa(n) {
-    const cru = opcoes.reconnectDelay * 2 ** Math.max(0, n - 1);
-    const teto = Math.min(cru, opcoes.reconnectMaxDelay);
-    const desvio = teto * Math.min(Math.max(opcoes.jitter, 0), 1);
-    return Math.max(0, Math.round(teto - desvio + Math.random() * desvio * 2));
+  function attemptDelay(n) {
+    const raw = opts.reconnectDelay * 2 ** Math.max(0, n - 1);
+    const cap = Math.min(raw, opts.reconnectMaxDelay);
+    const deviation = cap * Math.min(Math.max(opts.jitter, 0), 1);
+    return Math.max(0, Math.round(cap - deviation + Math.random() * deviation * 2));
   }
-  function agendarReconexao() {
-    if (fechadoDeProposito || !opcoes.reconnect) {
-      mudarEstado("closed");
+  function scheduleReconnect() {
+    if (closedPurposefully || !opts.reconnect) {
+      changeState("closed");
       return;
     }
-    if (estado.tentativas >= opcoes.reconnectMaxAttempts) {
-      registrarErro(`reconexao desistiu apos ${estado.tentativas} tentativas`);
-      mudarEstado("closed");
+    if (state.attempts >= opts.reconnectMaxAttempts) {
+      registerError(`reconnection gave up after ${state.attempts} attempts`);
+      changeState("closed");
       return;
     }
-    estado.tentativas += 1;
-    mudarEstado("reconnecting");
-    const espera = esperaDaTentativa(estado.tentativas);
-    entregar("reconnecting", { attempt: estado.tentativas, delay: espera });
-    if (timerReconexao !== null) clearTimeout(timerReconexao);
-    timerReconexao = setTimeout(() => {
-      timerReconexao = null;
-      if (fechadoDeProposito) return;
-      conectar();
-    }, espera);
+    state.attempts += 1;
+    changeState("reconnecting");
+    const delay = attemptDelay(state.attempts);
+    deliver("reconnecting", { attempt: state.attempts, delay });
+    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      if (closedPurposefully) return;
+      connect();
+    }, delay);
   }
-  function enfileirar(texto) {
-    if (opcoes.queueLimit <= 0) return;
-    if (fila.length >= opcoes.queueLimit) {
-      fila.shift();
+  function enqueue(text) {
+    if (opts.queueLimit <= 0) return;
+    if (queue2.length >= opts.queueLimit) {
+      queue2.shift();
     }
-    fila.push(texto);
-    estado.enfileiradas = fila.length;
+    queue2.push(text);
+    state.queued = queue2.length;
   }
-  function escoarFila() {
-    if (!fila.length) return;
-    const pendentes = fila.splice(0, fila.length);
-    estado.enfileiradas = 0;
-    for (const texto of pendentes) enviarTexto(texto);
+  function drainQueue() {
+    if (!queue2.length) return;
+    const pending = queue2.splice(0, queue2.length);
+    state.queued = 0;
+    for (const text of pending) sendText(text);
   }
-  function enviarTexto(texto) {
-    if (ws && ws.readyState === 1 && (!socketIo || estado.conectado)) {
+  function sendText(text) {
+    if (ws && ws.readyState === 1 && (!socketIo || state.connected)) {
       try {
-        ws.send(texto);
+        ws.send(text);
         return true;
       } catch (err) {
-        registrarErro(err?.message ?? "falha ao enviar");
+        registerError(err?.message ?? "send failed");
         return false;
       }
     }
-    enfileirar(texto);
+    enqueue(text);
     return false;
   }
-  function emit(evento, dados, ack) {
-    const mensagem = aplicar(outgoingInterceptors, { event: evento, data: dados, url: endereco });
-    if (!mensagem) return false;
+  function emit(event, data, ack) {
+    const message = apply(outgoingInterceptors, { event, data, url: address });
+    if (!message) return false;
     devtoolsBus.emit("event", {
-      type: `socket:${mensagem.event}`,
-      detail: mensagem.data,
+      type: `socket:${message.event}`,
+      detail: message.data,
       source: "socket:out"
     });
     if (socketIo) {
-      let numero;
+      let num;
       if (ack) {
-        numero = proximoAck++;
-        acks.set(numero, ack);
+        num = nextAck++;
+        acks.set(num, ack);
       }
-      const argumentos = mensagem.data === void 0 ? [mensagem.event] : [mensagem.event, mensagem.data];
-      return enviarTexto(
+      const args = message.data === void 0 ? [message.event] : [message.event, message.data];
+      return sendText(
         encodeSocketIo({
           type: SIO.EVENT,
-          namespace: opcoes.namespace,
-          ack: numero,
-          data: argumentos
+          namespace: opts.namespace,
+          ack: num,
+          data: args
         })
       );
     }
-    return enviarTexto(
-      opcoes.json ? JSON.stringify({ event: mensagem.event, data: mensagem.data }) : String(mensagem.data ?? mensagem.event)
+    return sendText(
+      opts.json ? JSON.stringify({ event: message.event, data: message.data }) : String(message.data ?? message.event)
     );
   }
-  function send(dados) {
-    const mensagem = aplicar(outgoingInterceptors, { event: "message", data: dados, url: endereco });
-    if (!mensagem) return false;
-    const carga = mensagem.data;
-    const texto = typeof carga === "string" ? carga : JSON.stringify(carga);
+  function send(data) {
+    const message = apply(outgoingInterceptors, { event: "message", data, url: address });
+    if (!message) return false;
+    const payload = message.data;
+    const text = typeof payload === "string" ? payload : JSON.stringify(payload);
     if (socketIo) {
-      return enviarTexto(
+      return sendText(
         encodeSocketIo({
           type: SIO.EVENT,
-          namespace: opcoes.namespace,
-          data: ["message", carga]
+          namespace: opts.namespace,
+          data: ["message", payload]
         })
       );
     }
-    return enviarTexto(texto);
+    return sendText(text);
   }
-  function receber(evento, dados, cru, ack) {
-    const mensagem = aplicar(incomingInterceptors, {
-      event: evento,
-      data: dados,
-      url: endereco,
-      raw: cru
+  function receive(event, data, raw, ack) {
+    const message = apply(incomingInterceptors, {
+      event,
+      data,
+      url: address,
+      raw
     });
-    if (!mensagem) return;
+    if (!message) return;
     devtoolsBus.emit("event", {
-      type: `socket:${mensagem.event}`,
-      detail: mensagem.data,
+      type: `socket:${message.event}`,
+      detail: message.data,
       source: "socket:in"
     });
-    rotearPresenca(mensagem.event, mensagem.data);
-    rotearSala(mensagem.event, mensagem.data, ack);
-    entregar(mensagem.event, mensagem.data, ack);
+    routePresence(message.event, message.data);
+    routeRoom(message.event, message.data, ack);
+    deliver(message.event, message.data, ack);
   }
-  function nomeDaSala(dados) {
-    if (!dados || typeof dados !== "object" || Array.isArray(dados)) return null;
-    const objeto = dados;
-    const nome = objeto.room ?? objeto.sala;
-    return typeof nome === "string" && nome ? nome : null;
+  function roomName(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+    const obj = data;
+    const name = obj.room ?? obj.sala;
+    return typeof name === "string" && name ? name : null;
   }
-  function cargaDaSala(dados) {
-    const objeto = dados;
-    if ("data" in objeto) return objeto.data;
-    if ("dados" in objeto) return objeto.dados;
-    return objeto;
+  function roomPayload(data) {
+    const obj = data;
+    if ("data" in obj) return obj.data;
+    if ("dados" in obj) return obj.dados;
+    return obj;
   }
-  function entregarNaSala(sala, evento, dados, ack) {
-    for (const nome of evento === "message" ? [evento] : [evento, "message"]) {
-      const conjunto = sala.ouvintes.get(nome);
-      if (!conjunto) continue;
-      for (const ouvinte of [...conjunto]) {
+  function deliverInRoom(room, event, data, ack) {
+    for (const name of event === "message" ? [event] : [event, "message"]) {
+      const set = room.listeners.get(name);
+      if (!set) continue;
+      for (const listener of [...set]) {
         try {
-          ouvinte(dados, ack);
+          listener(data, ack);
         } catch (err) {
-          console.error("[Voodoo] erro em ouvinte de sala:", err);
+          console.error("[Voodoo] error in room listener:", err);
         }
       }
     }
   }
-  function rotearSala(evento, dados, ack) {
-    const nome = nomeDaSala(dados);
-    if (!nome) return;
-    const sala = salas.get(nome);
-    if (!sala) return;
-    if (evento === opcoes.presenceEvent || evento === opcoes.memberJoinEvent || evento === opcoes.memberLeaveEvent) {
+  function routeRoom(event, data, ack) {
+    const name = roomName(data);
+    if (!name) return;
+    const room = rooms.get(name);
+    if (!room) return;
+    if (event === opts.presenceEvent || event === opts.memberJoinEvent || event === opts.memberLeaveEvent) {
       return;
     }
-    const carga = cargaDaSala(dados);
-    sala.estado.mensagens.push(carga);
-    if (sala.estado.mensagens.length > sala.buffer) {
-      sala.estado.mensagens.splice(0, sala.estado.mensagens.length - sala.buffer);
+    const payload = roomPayload(data);
+    room.state.messages.push(payload);
+    if (room.state.messages.length > room.buffer) {
+      room.state.messages.splice(0, room.state.messages.length - room.buffer);
     }
-    entregarNaSala(sala, evento, carga, ack);
+    deliverInRoom(room, event, payload, ack);
   }
-  function rotearPresenca(evento, dados) {
-    const nome = nomeDaSala(dados);
-    if (!nome) return;
-    const sala = salas.get(nome);
-    if (!sala) return;
-    const objeto = dados;
-    if (evento === opcoes.presenceEvent) {
-      const lista = objeto.members ?? objeto.membros;
-      if (Array.isArray(lista)) sala.estado.membros = [...lista];
+  function routePresence(event, data) {
+    const name = roomName(data);
+    if (!name) return;
+    const room = rooms.get(name);
+    if (!room) return;
+    const obj = data;
+    if (event === opts.presenceEvent) {
+      const list = obj.members ?? obj.membros;
+      if (Array.isArray(list)) room.state.members = [...list];
       return;
     }
-    const membro = objeto.member ?? objeto.membro ?? objeto.id;
-    if (membro === void 0) return;
-    if (evento === opcoes.memberJoinEvent) {
-      if (!sala.estado.membros.some((m) => mesmoMembro(m, membro))) {
-        sala.estado.membros.push(membro);
+    const member = obj.member ?? obj.membro ?? obj.id;
+    if (member === void 0) return;
+    if (event === opts.memberJoinEvent) {
+      if (!room.state.members.some((m) => sameMember(m, member))) {
+        room.state.members.push(member);
       }
-      entregarNaSala(sala, "entrou", membro);
+      deliverInRoom(room, "entrou", member);
       return;
     }
-    if (evento === opcoes.memberLeaveEvent) {
-      const i = sala.estado.membros.findIndex((m) => mesmoMembro(m, membro));
-      if (i > -1) sala.estado.membros.splice(i, 1);
-      entregarNaSala(sala, "saiu", membro);
+    if (event === opts.memberLeaveEvent) {
+      const i = room.state.members.findIndex((m) => sameMember(m, member));
+      if (i > -1) room.state.members.splice(i, 1);
+      deliverInRoom(room, "saiu", member);
     }
   }
-  function pedirEntrada(sala, nome) {
-    sala.estado.estado = "joining";
-    emit(opcoes.joinEvent, { room: nome, private: sala.privada });
+  function requestJoin(room, name) {
+    room.state.state = "joining";
+    emit(opts.joinEvent, { room: name, private: room.private });
   }
-  function reentrarNasSalas() {
-    for (const [nome, sala] of salas) {
-      if (sala.estado.estado === "left") continue;
-      pedirEntrada(sala, nome);
+  function rejoinRooms() {
+    for (const [name, room] of rooms) {
+      if (room.state.state === "left") continue;
+      requestJoin(room, name);
     }
   }
-  function join(nome, config2 = {}) {
-    const existente = salas.get(nome);
-    if (existente && existente.estado.estado !== "left") return existente.publica;
-    const privada = config2.privada ?? config2.private ?? false;
-    const estadoSala = reactive({
-      estado: "joining",
-      membros: [],
-      mensagens: []
+  function join(name, config2 = {}) {
+    const existing = rooms.get(name);
+    if (existing && existing.state.state !== "left") return existing.public;
+    const isPrivate = config2.privada ?? config2.private ?? false;
+    const roomState = reactive({
+      state: "joining",
+      members: [],
+      messages: []
     });
-    const ouvintesSala = /* @__PURE__ */ new Map();
-    const enviarNaSala = (evento, dados, destino) => emit(evento, destino ? { room: nome, to: destino, data: dados } : { room: nome, data: dados });
-    const publica = {
+    const roomListeners = /* @__PURE__ */ new Map();
+    const sendInRoom = (event, data, target2) => emit(event, target2 ? { room: name, to: target2, data } : { room: name, data });
+    const public_ = {
       get name() {
-        return nome;
+        return name;
       },
       get private() {
-        return privada;
+        return isPrivate;
       },
       get privada() {
-        return privada;
+        return isPrivate;
       },
       get state() {
-        return estadoSala.estado;
+        return roomState.state;
       },
       get estado() {
-        return estadoSala.estado;
+        return roomState.state;
       },
       get members() {
-        return estadoSala.membros;
+        return roomState.members;
       },
       get membros() {
-        return estadoSala.membros;
+        return roomState.members;
       },
       get messages() {
-        return estadoSala.mensagens;
+        return roomState.messages;
       },
       get mensagens() {
-        return estadoSala.mensagens;
+        return roomState.messages;
       },
-      on(evento, ouvinte) {
-        let conjunto = ouvintesSala.get(evento);
-        if (!conjunto) ouvintesSala.set(evento, conjunto = /* @__PURE__ */ new Set());
-        conjunto.add(ouvinte);
+      on(event, listener) {
+        let set = roomListeners.get(event);
+        if (!set) roomListeners.set(event, set = /* @__PURE__ */ new Set());
+        set.add(listener);
         return () => {
-          conjunto?.delete(ouvinte);
+          set?.delete(listener);
         };
       },
-      off(evento, ouvinte) {
-        if (!evento) ouvintesSala.clear();
-        else if (!ouvinte) ouvintesSala.delete(evento);
-        else ouvintesSala.get(evento)?.delete(ouvinte);
+      off(event, listener) {
+        if (!event) roomListeners.clear();
+        else if (!listener) roomListeners.delete(event);
+        else roomListeners.get(event)?.delete(listener);
       },
-      emit: (evento, dados) => enviarNaSala(evento, dados),
-      enviar: (evento, dados) => enviarNaSala(evento, dados),
-      to: (destino) => ({
-        emit: (evento, dados) => enviarNaSala(evento, dados, destino)
+      emit: (event, data) => sendInRoom(event, data),
+      enviar: (event, data) => sendInRoom(event, data),
+      to: (target2) => ({
+        emit: (event, data) => sendInRoom(event, data, target2)
       }),
-      leave: () => leave(nome),
-      sair: () => leave(nome)
+      leave: () => leave(name),
+      sair: () => leave(name)
     };
-    const interna = {
-      publica,
-      estado: estadoSala,
-      ouvintes: ouvintesSala,
-      privada,
-      buffer: config2.buffer ?? opcoes.roomBuffer
+    const internal = {
+      public: public_,
+      state: roomState,
+      listeners: roomListeners,
+      private: isPrivate,
+      buffer: config2.buffer ?? opts.roomBuffer
     };
-    salas.set(nome, interna);
-    pedirEntrada(interna, nome);
-    if (estado.conectado) estadoSala.estado = "joined";
-    return publica;
+    rooms.set(name, internal);
+    requestJoin(internal, name);
+    if (state.connected) roomState.state = "joined";
+    return public_;
   }
-  function leave(nome) {
-    const sala = salas.get(nome);
-    if (!sala) return;
-    salas.delete(nome);
-    sala.estado.estado = "left";
-    sala.ouvintes.clear();
-    sala.estado.membros = [];
-    if (estado.conectado) emit(opcoes.leaveEvent, { room: nome });
+  function leave(name) {
+    const room = rooms.get(name);
+    if (!room) return;
+    rooms.delete(name);
+    room.state.state = "left";
+    room.listeners.clear();
+    room.state.members = [];
+    if (state.connected) emit(opts.leaveEvent, { room: name });
   }
-  function to(destino) {
+  function to(target2) {
     return {
-      emit: (evento, dados) => emit(evento, { to: destino, data: dados })
+      emit: (event, data) => emit(event, { to: target2, data })
     };
   }
-  function receberNativo(cru) {
-    if (typeof cru !== "string") {
-      receber("message", cru);
+  function receiveNative(raw) {
+    if (typeof raw !== "string") {
+      receive("message", raw);
       return;
     }
-    if (opcoes.pongPayload != null && cru === opcoes.pongPayload) return;
-    let carga = cru;
-    if (opcoes.json) {
-      const inicio = cru.trimStart()[0];
-      if (inicio === "{" || inicio === "[") {
+    if (opts.pongPayload != null && raw === opts.pongPayload) return;
+    let payload = raw;
+    if (opts.json) {
+      const start = raw.trimStart()[0];
+      if (start === "{" || start === "[") {
         try {
-          carga = JSON.parse(cru);
+          payload = JSON.parse(raw);
         } catch {
         }
       }
     }
-    if (carga && typeof carga === "object" && !Array.isArray(carga)) {
-      const objeto = carga;
-      const nome = objeto.event ?? objeto.type;
-      if (typeof nome === "string" && nome) {
-        receber(nome, "data" in objeto ? objeto.data : objeto, cru);
+    if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+      const obj = payload;
+      const name = obj.event ?? obj.type;
+      if (typeof name === "string" && name) {
+        receive(name, "data" in obj ? obj.data : obj, raw);
         return;
       }
     }
-    receber("message", carga, cru);
+    receive("message", payload, raw);
   }
-  function receberSocketIo(cru) {
-    const pacote = decodeEngine(cru);
-    switch (pacote.kind) {
+  function receiveSocketIo(raw) {
+    const packet = decodeEngine(raw);
+    switch (packet.kind) {
       case "open":
-        handshake = pacote.handshake;
-        enviarHandshakeConnect();
-        marcarVivo();
+        handshake = packet.handshake;
+        sendHandshakeConnect();
+        markAlive();
         return;
       case "ping":
         ws?.send(ENGINE.PONG);
-        marcarVivo();
+        markAlive();
         return;
       case "pong":
       case "noop":
-        marcarVivo();
+        markAlive();
         return;
       case "close":
-        derrubar();
+        tearDown();
         return;
       case "message":
         break;
       default:
-        marcarVivo();
+        markAlive();
         return;
     }
-    const { packet } = pacote;
-    switch (packet.type) {
+    const { packet: socketPacket } = packet;
+    switch (socketPacket.type) {
       case SIO.CONNECT:
-        confirmarAbertura();
+        confirmOpen();
         return;
       case SIO.CONNECT_ERROR: {
-        const dados = packet.data;
-        registrarErro(dados?.message ?? "conexao recusada pelo servidor");
-        derrubar();
+        const data = socketPacket.data;
+        registerError(data?.message ?? "connection refused by server");
+        tearDown();
         return;
       }
       case SIO.DISCONNECT:
-        derrubar();
+        tearDown();
         return;
       case SIO.ACK: {
-        const resposta = Array.isArray(packet.data) ? packet.data[0] : packet.data;
-        if (packet.ack !== void 0) {
-          const callback = acks.get(packet.ack);
-          acks.delete(packet.ack);
-          callback?.(resposta);
+        const response = Array.isArray(socketPacket.data) ? socketPacket.data[0] : socketPacket.data;
+        if (socketPacket.ack !== void 0) {
+          const callback = acks.get(socketPacket.ack);
+          acks.delete(socketPacket.ack);
+          callback?.(response);
         }
         return;
       }
       case SIO.EVENT: {
-        const argumentos = Array.isArray(packet.data) ? packet.data : [];
-        const nome = typeof argumentos[0] === "string" ? argumentos[0] : "message";
-        const carga = argumentos.length > 2 ? argumentos.slice(1) : argumentos[1];
+        const args = Array.isArray(socketPacket.data) ? socketPacket.data : [];
+        const name = typeof args[0] === "string" ? args[0] : "message";
+        const payload = args.length > 2 ? args.slice(1) : args[1];
         let responder;
-        if (packet.ack !== void 0) {
-          const numero = packet.ack;
-          responder = (resposta) => {
-            enviarTexto(
+        if (socketPacket.ack !== void 0) {
+          const num = socketPacket.ack;
+          responder = (response) => {
+            sendText(
               encodeSocketIo({
                 type: SIO.ACK,
-                namespace: opcoes.namespace,
-                ack: numero,
-                data: [resposta]
+                namespace: opts.namespace,
+                ack: num,
+                data: [response]
               })
             );
           };
         }
-        receber(nome, carga, typeof cru === "string" ? cru : void 0, responder);
+        receive(name, payload, typeof raw === "string" ? raw : void 0, responder);
         return;
       }
       default:
-        avisarUmaVez(
-          `socket-pacote:${endereco}`,
-          `Pacote Socket.IO tipo ${packet.type} ignorado: anexos binarios nao estao implementados neste cliente.`
+        warnOnce(
+          `socket-packet:${address}`,
+          `Socket.IO packet type ${socketPacket.type} ignored: binary attachments are not implemented in this client.`
         );
     }
   }
-  function enviarHandshakeConnect() {
+  function sendHandshakeConnect() {
     ws?.send(
       encodeSocketIo({
         type: SIO.CONNECT,
-        namespace: opcoes.namespace,
+        namespace: opts.namespace,
         data: options.auth ?? defaults.auth ?? void 0
       })
     );
   }
-  function confirmarAbertura() {
-    estado.tentativas = 0;
-    estado.erro = null;
-    abertoEm = Date.now();
-    mudarEstado("open");
-    iniciarHeartbeat();
-    marcarVivo();
-    reentrarNasSalas();
-    escoarFila();
-    for (const sala of salas.values()) {
-      if (sala.estado.estado === "joining") sala.estado.estado = "joined";
+  function confirmOpen() {
+    state.attempts = 0;
+    state.error = null;
+    openedAt = Date.now();
+    changeState("open");
+    startHeartbeat();
+    markAlive();
+    rejoinRooms();
+    drainQueue();
+    for (const room of rooms.values()) {
+      if (room.state.state === "joining") room.state.state = "joined";
     }
-    entregar("open", { url: endereco });
+    deliver("open", { url: address });
     devtoolsBus.emit("network", {
       method: "WS",
-      url: endereco,
+      url: address,
       status: 101,
       ok: true,
       source: "socket"
     });
   }
-  function soltarWs() {
-    const anterior = ws;
-    if (anterior) {
-      anterior.onopen = null;
-      anterior.onclose = null;
-      anterior.onerror = null;
-      anterior.onmessage = null;
+  function releaseWs() {
+    const prev = ws;
+    if (prev) {
+      prev.onopen = null;
+      prev.onclose = null;
+      prev.onerror = null;
+      prev.onmessage = null;
     }
     ws = null;
-    return anterior;
+    return prev;
   }
-  function derrubar() {
-    const anterior = soltarWs();
+  function tearDown() {
+    const prev = releaseWs();
     handshake = null;
-    if (timerHeartbeat !== null) {
-      clearInterval(timerHeartbeat);
-      timerHeartbeat = null;
+    if (heartbeatTimer !== null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
     }
-    if (timerVigilancia !== null) {
-      clearTimeout(timerVigilancia);
-      timerVigilancia = null;
+    if (watchdogTimer !== null) {
+      clearTimeout(watchdogTimer);
+      watchdogTimer = null;
     }
-    estado.conectado = false;
+    state.connected = false;
     try {
-      anterior?.close();
+      prev?.close();
     } catch {
     }
-    entregar("close", { url: endereco });
-    agendarReconexao();
+    deliver("close", { url: address });
+    scheduleReconnect();
   }
-  function conectar() {
+  function connect() {
     if (!Impl) return;
     if (ws) return;
-    mudarEstado(estado.tentativas > 0 ? "reconnecting" : "connecting");
-    let novo;
+    changeState(state.attempts > 0 ? "reconnecting" : "connecting");
+    let newWs;
     try {
-      novo = new Impl(endereco, opcoes.protocols);
+      newWs = new Impl(address, opts.protocols);
     } catch (err) {
-      registrarErro(err?.message ?? "falha ao abrir a conexao");
-      agendarReconexao();
+      registerError(err?.message ?? "failed to open connection");
+      scheduleReconnect();
       return;
     }
-    ws = novo;
-    novo.onopen = () => {
-      if (ws !== novo) return;
-      if (socketIo) marcarVivo();
-      else confirmarAbertura();
+    ws = newWs;
+    newWs.onopen = () => {
+      if (ws !== newWs) return;
+      if (socketIo) markAlive();
+      else confirmOpen();
     };
-    novo.onmessage = (evento) => {
-      if (ws !== novo) return;
-      marcarVivo();
-      if (socketIo) receberSocketIo(evento?.data);
-      else receberNativo(evento?.data);
+    newWs.onmessage = (event) => {
+      if (ws !== newWs) return;
+      markAlive();
+      if (socketIo) receiveSocketIo(event?.data);
+      else receiveNative(event?.data);
     };
-    novo.onerror = () => {
-      if (ws !== novo) return;
-      registrarErro("falha na conexao");
+    newWs.onerror = () => {
+      if (ws !== newWs) return;
+      registerError("connection failed");
     };
-    novo.onclose = (evento) => {
-      if (ws !== novo) return;
-      soltarWs();
+    newWs.onclose = (event) => {
+      if (ws !== newWs) return;
+      releaseWs();
       handshake = null;
-      if (timerHeartbeat !== null) {
-        clearInterval(timerHeartbeat);
-        timerHeartbeat = null;
+      if (heartbeatTimer !== null) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
       }
-      if (timerVigilancia !== null) {
-        clearTimeout(timerVigilancia);
-        timerVigilancia = null;
+      if (watchdogTimer !== null) {
+        clearTimeout(watchdogTimer);
+        watchdogTimer = null;
       }
-      estado.conectado = false;
-      const detalhe = evento;
-      entregar("close", { url: endereco, code: detalhe?.code, reason: detalhe?.reason });
+      state.connected = false;
+      const detail = event;
+      deliver("close", { url: address, code: detail?.code, reason: detail?.reason });
       devtoolsBus.emit("network", {
         method: "WS",
-        url: endereco,
-        status: detalhe?.code,
+        url: address,
+        status: detail?.code,
         ok: true,
-        duration: abertoEm ? Date.now() - abertoEm : void 0,
+        duration: openedAt ? Date.now() - openedAt : void 0,
         source: "socket"
       });
-      agendarReconexao();
+      scheduleReconnect();
     };
   }
-  function open() {
-    fechadoDeProposito = false;
+  function openConnection() {
+    closedPurposefully = false;
     if (!Impl) return;
-    abertos.add(instancia);
-    if (ws || timerReconexao !== null) return;
-    conectar();
+    openConnections.add(instance);
+    if (ws || reconnectTimer !== null) return;
+    connect();
   }
-  function close(code, reason) {
-    fechadoDeProposito = true;
-    pararTimers();
-    mudarEstado("closing");
-    const anterior = soltarWs();
+  function closeConnection(code, reason) {
+    closedPurposefully = true;
+    stopTimers();
+    changeState("closing");
+    const prev = releaseWs();
     handshake = null;
     acks.clear();
-    fila.length = 0;
-    estado.enfileiradas = 0;
-    estado.tentativas = 0;
-    for (const [nome, sala] of salas) {
-      sala.estado.estado = "left";
-      sala.ouvintes.clear();
-      sala.estado.membros = [];
-      salas.delete(nome);
+    queue2.length = 0;
+    state.queued = 0;
+    state.attempts = 0;
+    for (const [name, room] of rooms) {
+      room.state.state = "left";
+      room.listeners.clear();
+      room.state.members = [];
+      rooms.delete(name);
     }
     try {
-      anterior?.close(code, reason);
+      prev?.close(code, reason);
     } catch {
     }
-    abertos.delete(instancia);
-    mudarEstado("closed");
-    entregar("close", { url: endereco, code, reason });
+    openConnections.delete(instance);
+    changeState("closed");
+    deliver("close", { url: address, code, reason });
   }
-  const instancia = {
+  const instance = {
     get url() {
-      return endereco;
+      return address;
     },
     get state() {
-      return estado.estado;
+      return state.state;
     },
     get connected() {
-      return estado.conectado;
+      return state.connected;
     },
     get attempts() {
-      return estado.tentativas;
+      return state.attempts;
     },
     get queued() {
-      return estado.enfileiradas;
+      return state.queued;
     },
     get error() {
-      return estado.erro;
+      return state.error;
     },
     get raw() {
       return ws;
     },
     get rooms() {
-      return [...salas.values()].map((s) => s.publica);
+      return [...rooms.values()].map((r) => r.public);
     },
     on,
     once,
     off,
     emit,
     send,
-    open,
-    close,
+    open: openConnection,
+    close: closeConnection,
     join,
     leave,
     to
   };
   if (!Impl) {
-    estado.erro = "WebSocket indisponivel neste ambiente";
-    return instancia;
+    state.error = "WebSocket unavailable in this environment";
+    return instance;
   }
-  if (!opcoes.manual) open();
-  else abertos.add(instancia);
-  return instancia;
+  if (!opts.manual) openConnection();
+  else openConnections.add(instance);
+  return instance;
 }
-var fabrica = ((url, options = {}) => createSocket(url, options));
-Object.assign(fabrica, {
+var factory = ((url, options = {}) => createSocket(url, options));
+Object.assign(factory, {
   defaults,
   interceptors: {
-    incoming: { use: (fn) => usar(incomingInterceptors, fn) },
-    outgoing: { use: (fn) => usar(outgoingInterceptors, fn) }
+    incoming: { use: (fn) => use(incomingInterceptors, fn) },
+    outgoing: { use: (fn) => use(outgoingInterceptors, fn) }
   },
   close() {
-    for (const s of [...abertos]) s.close();
+    for (const s of [...openConnections]) s.close();
   },
   supported: socketSupported,
   setWebSocket(impl) {
     defaults.WebSocket = impl;
   }
 });
-Object.defineProperty(fabrica, "open", {
-  get: () => [...abertos],
+Object.defineProperty(factory, "open", {
+  get: () => [...openConnections],
   enumerable: true
 });
-var socket = fabrica;
+var socket = factory;
 
 // src/directives/socket.ts
-function attr(el, nome) {
-  return readAttr(el, `${config.prefix}${nome}`);
+function aliasLegacy(view, pairs) {
+  for (const [old, canonical] of pairs) {
+    Object.defineProperty(view, old, {
+      enumerable: false,
+      configurable: true,
+      get() {
+        return view[canonical];
+      },
+      set(value) {
+        view[canonical] = value;
+      }
+    });
+  }
 }
-var conexoes = /* @__PURE__ */ new WeakMap();
-function maisProximo(el, mapa) {
-  let atual = el;
-  while (atual) {
-    const encontrado = mapa.get(atual);
-    if (encontrado) return encontrado;
-    atual = atual.parentElement;
+function attr(el, name) {
+  return readAttr(el, `${config.prefix}${name}`);
+}
+var connections = /* @__PURE__ */ new WeakMap();
+function closest(el, map) {
+  let current = el;
+  while (current) {
+    const found = map.get(current);
+    if (found) return found;
+    current = current.parentElement;
   }
   return null;
 }
-function resolverTexto(expressao, scope, contexto) {
-  const texto = expressao.trim();
-  if (!texto) return "";
-  if (/^[A-Za-z_$][\w$]*$/.test(texto)) {
-    const valor2 = scope.has(texto) ? scope.get(texto) : void 0;
-    return typeof valor2 === "string" && valor2 ? valor2 : texto;
+function resolveText(expression, scope, context) {
+  const text = expression.trim();
+  if (!text) return "";
+  if (/^[A-Za-z_$][\w$]*$/.test(text)) {
+    const value2 = scope.has(text) ? scope.get(text) : void 0;
+    return typeof value2 === "string" && value2 ? value2 : text;
   }
-  if (/^(wss?|https?):\/\//i.test(texto) || /^[\w:.\-/]+$/.test(texto)) return texto;
-  const valor = evaluateIn(texto, scope, contexto);
-  return typeof valor === "string" && valor ? valor : texto;
+  if (/^(wss?|https?):\/\//i.test(text) || /^[\w:.\-/]+$/.test(text)) return text;
+  const value = evaluateIn(text, scope, context);
+  return typeof value === "string" && value ? value : text;
 }
-function disparar(el, tipo, detalhe) {
-  el.dispatchEvent(new CustomEvent(tipo, { detail: detalhe, bubbles: true }));
+function dispatch(el, type, detail) {
+  el.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }
 defineDirective(
   "socket",
   ({ el, scope, expression, modifiers, cleanup, effect: effect2 }) => {
-    const nome = attr(el, "socket-as") || "$socket";
+    const name = attr(el, "socket-as") || "$socket";
     if (!socketSupported()) {
       el.setAttribute("data-socket", "unsupported");
       scope.set(
-        nome,
+        name,
         reactive({
-          conectado: false,
-          estado: "closed",
-          erro: "WebSocket indisponivel neste ambiente",
-          tentativas: 0,
-          mensagens: [],
-          enviar: () => false,
-          abrir: () => void 0,
-          fechar: () => void 0,
+          connected: false,
+          state: "closed",
+          error: "WebSocket unavailable in this environment",
+          attempts: 0,
+          messages: [],
+          send: () => false,
+          open: () => void 0,
+          close: () => void 0,
           socket: null
         })
       );
-      disparar(el, "voodoo:socket-unsupported", { url: expression });
+      dispatch(el, "voodoo:socket-unsupported", { url: expression });
       return;
     }
-    const limite = Number(attr(el, "socket-buffer") ?? 50);
-    const transporte = attr(el, "socket-transport") || "ws";
-    const reconectar = !modifiers["no-reconnect"] && modifiers.reconnect !== "false" && attr(el, "socket-reconnect") !== "false";
-    const opcoes = {
-      transport: transporte === "socket.io" ? "socket.io" : "ws",
+    const limit = Number(attr(el, "socket-buffer") ?? 50);
+    const transport = attr(el, "socket-transport") || "ws";
+    const reconnect = !modifiers["no-reconnect"] && modifiers.reconnect !== "false" && attr(el, "socket-reconnect") !== "false";
+    const options = {
+      transport: transport === "socket.io" ? "socket.io" : "ws",
       manual: !!modifiers.manual,
-      reconnect: reconectar
+      reconnect
     };
-    if (modifiers.json) opcoes.json = modifiers.json !== "false";
-    const caminho = attr(el, "socket-path");
-    if (caminho) opcoes.path = caminho;
-    const batida = attr(el, "socket-heartbeat");
-    if (batida !== null) opcoes.heartbeat = parseDuration(batida, 25e3);
-    const s = createSocket(resolverTexto(expression, scope, "v-socket") || "/", opcoes);
-    conexoes.set(el, s);
+    if (modifiers.json) options.json = modifiers.json !== "false";
+    const path = attr(el, "socket-path");
+    if (path) options.path = path;
+    const heartbeat = attr(el, "socket-heartbeat");
+    if (heartbeat !== null) options.heartbeat = parseDuration(heartbeat, 25e3);
+    const s = createSocket(resolveText(expression, scope, "v-socket") || "/", options);
+    connections.set(el, s);
     el.setAttribute("data-socket", "ready");
-    function enviar(evento, ...resto) {
-      if (typeof evento !== "string") return s.send(evento);
-      return resto.length ? s.emit(evento, resto[0]) : s.emit(evento);
+    function send(event, ...rest) {
+      if (typeof event !== "string") return s.send(event);
+      return rest.length ? s.emit(event, rest[0]) : s.emit(event);
     }
-    const vista = reactive({
-      conectado: s.connected,
-      estado: s.state,
-      erro: s.error,
-      tentativas: s.attempts,
-      mensagens: [],
-      enviar,
-      abrir: () => s.open(),
-      fechar: () => s.close(),
+    const view = reactive({
+      connected: s.connected,
+      state: s.state,
+      error: s.error,
+      attempts: s.attempts,
+      messages: [],
+      send,
+      open: () => s.open(),
+      close: () => s.close(),
       socket: s
     });
-    scope.set(nome, vista);
+    aliasLegacy(view, [
+      ["conectado", "connected"],
+      ["estado", "state"],
+      ["mensagens", "messages"],
+      ["erro", "error"],
+      ["tentativas", "attempts"],
+      ["enviar", "send"],
+      ["abrir", "open"],
+      ["fechar", "close"]
+    ]);
+    scope.set(name, view);
     effect2(() => {
-      vista.conectado = s.connected;
-      vista.estado = s.state;
-      vista.erro = s.error;
-      vista.tentativas = s.attempts;
+      view.connected = s.connected;
+      view.state = s.state;
+      view.error = s.error;
+      view.attempts = s.attempts;
     });
-    const cancelar = [
-      s.on("message", (dados) => {
-        vista.mensagens.push(dados);
-        if (vista.mensagens.length > limite) {
-          vista.mensagens.splice(0, vista.mensagens.length - limite);
+    const unsubscribe = [
+      s.on("message", (data) => {
+        view.messages.push(data);
+        if (view.messages.length > limit) {
+          view.messages.splice(0, view.messages.length - limit);
         }
       }),
-      s.on("open", () => disparar(el, "voodoo:socket-open", { url: s.url })),
-      s.on("close", (d) => disparar(el, "voodoo:socket-close", d)),
-      s.on("error", (d) => disparar(el, "voodoo:socket-error", d))
+      s.on("open", () => dispatch(el, "voodoo:socket-open", { url: s.url })),
+      s.on("close", (d) => dispatch(el, "voodoo:socket-close", d)),
+      s.on("error", (d) => dispatch(el, "voodoo:socket-error", d))
     ];
     cleanup(() => {
-      for (const parar of cancelar) parar();
+      for (const stop of unsubscribe) stop();
       s.off();
       s.close();
-      conexoes.delete(el);
+      connections.delete(el);
     });
   },
   { priority: PRIORITY.DATA }
@@ -2401,54 +2425,63 @@ defineDirective(
 defineDirective(
   "room",
   ({ el, scope, expression, modifiers, cleanup, effect: effect2 }) => {
-    const s = maisProximo(el, conexoes);
+    const s = closest(el, connections);
     if (!s) return;
-    const nomeSala = resolverTexto(expression, scope, "v-room");
-    if (!nomeSala) return;
-    const sala = s.join(nomeSala, {
-      privada: !!modifiers.privada || !!modifiers.private,
+    const roomName = resolveText(expression, scope, "v-room");
+    if (!roomName) return;
+    const room = s.join(roomName, {
+      private: !!modifiers.private || !!modifiers.privada,
       buffer: Number(attr(el, "room-buffer") ?? 50)
     });
-    const vista = reactive({
-      nome: nomeSala,
-      privada: sala.privada,
-      estado: sala.estado,
-      membros: sala.membros,
-      mensagens: sala.mensagens,
-      /** Envia para a sala. Com `para`, so para aquele destinatario. */
-      enviar: (evento, dados, para) => para ? sala.to(para).emit(evento, dados) : sala.emit(evento, dados),
-      sair: () => sala.leave(),
-      sala
+    const view = reactive({
+      name: roomName,
+      private: room.private,
+      state: room.state,
+      members: room.members,
+      messages: room.messages,
+      /** Sends to the room. With `to`, only to that recipient. */
+      send: (event, data, to) => to ? room.to(to).emit(event, data) : room.emit(event, data),
+      leave: () => room.leave(),
+      room
     });
-    scope.set(attr(el, "room-as") || "$room", vista);
+    aliasLegacy(view, [
+      ["membros", "members"],
+      ["mensagens", "messages"],
+      ["estado", "state"],
+      ["nome", "name"],
+      ["privada", "private"],
+      ["enviar", "send"],
+      ["sair", "leave"]
+    ]);
+    scope.set(attr(el, "room-as") || "$room", view);
     effect2(() => {
-      vista.estado = sala.estado;
-      vista.membros = sala.membros;
-      vista.mensagens = sala.mensagens;
+      view.state = room.state;
+      view.members = room.members;
+      view.messages = room.messages;
     });
-    const cancelar = [
-      sala.on("entrou", (m) => disparar(el, "voodoo:room-join", m)),
-      sala.on("saiu", (m) => disparar(el, "voodoo:room-leave", m))
+    const unsubscribe = [
+      room.on("joined", (m) => dispatch(el, "voodoo:room-join", m)),
+      room.on("left", (m) => dispatch(el, "voodoo:room-leave", m))
     ];
     cleanup(() => {
-      for (const parar of cancelar) parar();
-      sala.off();
-      sala.leave();
+      for (const stop of unsubscribe) stop();
+      room.off();
+      room.leave();
     });
   },
-  // Depois de `v-socket`, para a conexao ja existir quando a sala pedir entrada.
+  // After `v-socket`, so the connection exists when the room asks to join.
   { priority: PRIORITY.DATA - 1 }
 );
 defineDirective("on-socket", ({ el, scope, arg, expression, cleanup }) => {
   if (!arg) return;
-  const alvo2 = maisProximo(el, conexoes);
-  if (!alvo2) return;
-  const cancelar = alvo2.on(arg, (dados, ack) => {
-    const local = scope.child({ $event: dados, $ack: ack, $el: el });
-    const valor = evaluateIn(expression, local, `v-on-socket:${arg}`);
-    if (typeof valor === "function") valor.call(scope.data, dados);
+  const target2 = closest(el, connections);
+  if (!target2) return;
+  const unsubscribe = target2.on(arg, (data, ack) => {
+    const local = scope.child({ $event: data, $ack: ack, $el: el });
+    const value = evaluateIn(expression, local, `v-on-socket:${arg}`);
+    if (typeof value === "function") value.call(scope.data, data);
   });
-  cleanup(cancelar);
+  cleanup(unsubscribe);
 });
 for (const nome of [
   "socket-transport",
@@ -2470,8 +2503,8 @@ var voodooSocket = {
     if (!V.socket) V.socket = socket;
   }
 };
-var alvo = globalThis.V;
-if (alvo && typeof alvo === "object" && !alvo.socket) alvo.socket = socket;
+var target = globalThis.V;
+if (target && typeof target === "object" && !target.socket) target.socket = socket;
 var plugin_default = voodooSocket;
 
 exports.ENGINE = ENGINE;

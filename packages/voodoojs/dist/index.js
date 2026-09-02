@@ -1,21 +1,21 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-TJM55GOJ.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-TJM55GOJ.js';
-export { gpu, reflectWgsl } from './chunk-7ROVC52J.js';
-import { http } from './chunk-PJ32JPZL.js';
-export { HttpError, http, request } from './chunk-PJ32JPZL.js';
-import { devtoolsBus } from './chunk-ZMOP5QBI.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-ZMOP5QBI.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-EUQULT5T.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-EUQULT5T.js';
-import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-PKGMG3DB.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-PKGMG3DB.js';
-import { avisarAlias } from './chunk-S3U6BJNJ.js';
-import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-KCG2YK55.js';
-export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-KCG2YK55.js';
-import { ensureTokens, injectStyle } from './chunk-KIG6UYIE.js';
-export { ensureTokens, injectStyle } from './chunk-KIG6UYIE.js';
-import { defineDirective, PRIORITY, config } from './chunk-ZVXMGOYP.js';
-export { PRIORITY, config, defineDirective } from './chunk-ZVXMGOYP.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-FOJIYOJT.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-FOJIYOJT.js';
+export { gpu, reflectWgsl } from './chunk-PQD23OCQ.js';
+import { http } from './chunk-LROJSGP6.js';
+export { HttpError, http, request } from './chunk-LROJSGP6.js';
+import { devtoolsBus } from './chunk-KQV2XZKP.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-KQV2XZKP.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-BTGI2UVA.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-BTGI2UVA.js';
+import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-DVD2FAS5.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-DVD2FAS5.js';
+import { warnAlias } from './chunk-UGX5TOOI.js';
+import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-NMCVD7AK.js';
+export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-NMCVD7AK.js';
+import { ensureTokens, injectStyle } from './chunk-4LNIZARK.js';
+export { ensureTokens, injectStyle } from './chunk-4LNIZARK.js';
+import { defineDirective, PRIORITY, config } from './chunk-VARMOPJR.js';
+export { PRIORITY, config, defineDirective } from './chunk-VARMOPJR.js';
 import './chunk-5I3A7PYT.js';
 
 /**
@@ -291,7 +291,7 @@ async function navigate(target, options = {}) {
   if (!options.force && destination.fullPath === from.fullPath) return true;
   for (let redirects = 0; ; redirects++) {
     if (redirects > MAX_REDIRECTS) {
-      warn(`Router: excesso de redirecionamentos ao navegar para "${target}".`);
+      warn(`Router: too many redirects when navigating to "${target}".`);
       return false;
     }
     const verdict = await runGuards(destination, from);
@@ -389,7 +389,7 @@ async function enterInitialRoute() {
   let destination = locationFor(path, query2, hash);
   for (let redirects = 0; ; redirects++) {
     if (redirects > MAX_REDIRECTS) {
-      warn("Router: excesso de redirecionamentos na rota inicial.");
+      warn("Router: too many redirects in the initial route.");
       return;
     }
     const verdict = await runGuards(destination, from);
@@ -443,7 +443,7 @@ function configureRouter(options) {
   void enterInitialRoute();
   return router;
 }
-var membrosDoRouter = {
+var routerMembers = {
   get current() {
     return route;
   },
@@ -471,7 +471,7 @@ var membrosDoRouter = {
 };
 var router = Object.defineProperties(
   configureRouter,
-  Object.getOwnPropertyDescriptors(membrosDoRouter)
+  Object.getOwnPropertyDescriptors(routerMembers)
 );
 magic("$route", () => route);
 magic("$router", () => router);
@@ -806,7 +806,7 @@ function configureI18n(options = {}) {
   }
   return i18n;
 }
-var i18nDinamicos = {
+var i18nDynamic = {
   get locale() {
     return state.locale;
   },
@@ -831,7 +831,7 @@ var i18nDinamicos = {
 };
 var i18n = Object.defineProperties(
   configureI18n,
-  Object.getOwnPropertyDescriptors(i18nDinamicos)
+  Object.getOwnPropertyDescriptors(i18nDynamic)
 );
 magic("$t", () => t);
 magic("$locale", () => state.locale);
@@ -915,39 +915,39 @@ function backIn(t2) {
   return t2 * t2 * (2.70158 * t2 - 1.70158);
 }
 var easings = {
-  /** Progresso constante. */
+  /** Constant progress. */
   linear(t2) {
     return t2;
   },
-  /** Comeca devagar e acelera. */
+  /** Starts slow and accelerates. */
   easeIn(t2) {
     return t2 * t2 * t2;
   },
-  /** Comeca rapido e desacelera. A escolha padrao para entradas. */
+  /** Starts fast and decelerates. The default choice for entries. */
   easeOut(t2) {
     return 1 - Math.pow(1 - t2, 3);
   },
-  /** Acelera no comeco e freia no fim. */
+  /** Accelerates at the start and brakes at the end. */
   easeInOut(t2) {
     return t2 < 0.5 ? 4 * t2 * t2 * t2 : 1 - Math.pow(-2 * t2 + 2, 3) / 2;
   },
-  /** Passa do alvo e volta, dando um leve exagero no fim. */
+  /** Overshoots the target and comes back, giving a slight exaggeration at the end. */
   easeOutBack(t2) {
     const c1 = 1.70158;
     const c3 = c1 + 1;
     return 1 + c3 * Math.pow(t2 - 1, 3) + c1 * Math.pow(t2 - 1, 2);
   },
-  /** Freada muito longa, boa para entradas grandes. */
+  /** Very long deceleration, good for large entries. */
   easeOutExpo(t2) {
     return t2 >= 1 ? 1 : 1 - Math.pow(2, -10 * t2);
   },
-  /** Recua um pouco antes de avancar, como quem toma impulso. */
+  /** Pulls back slightly before advancing, like taking a running start. */
   anticipate(t2) {
     const doubled = t2 * 2;
     if (doubled < 1) return 0.5 * backIn(doubled);
     return 0.5 * (2 - Math.pow(2, -10 * (doubled - 1)));
   },
-  /** Quica ao chegar no alvo. */
+  /** Bounces when reaching the target. */
   bounce(t2) {
     const n1 = 7.5625;
     const d1 = 2.75;
@@ -1695,7 +1695,7 @@ function inheritedStaggerDelay(el) {
 defineDirective("motion", ({ el, expression, evaluate: evaluate2, cleanup }) => {
   const variant = resolveVariant(expression, evaluate2);
   if (!variant) {
-    warn(`v-motion nao reconheceu a variante "${expression}".`);
+    warn(`v-motion did not recognize the variant "${expression}".`);
     return;
   }
   const { keyframes, options } = splitVariant(variant);
@@ -1707,7 +1707,7 @@ defineDirective("motion", ({ el, expression, evaluate: evaluate2, cleanup }) => 
 defineDirective("motion-scroll", ({ el, expression, evaluate: evaluate2, modifiers, cleanup }) => {
   const variant = resolveVariant(expression, evaluate2);
   if (!variant) {
-    warn(`v-motion-scroll nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-scroll did not recognize the variant "${expression}".`);
     return;
   }
   const { keyframes, options } = splitVariant(variant);
@@ -1773,7 +1773,7 @@ function bindInteraction(el, variant, enterEvents, leaveEvents, defaults, cleanu
 defineDirective("motion-hover", ({ el, expression, evaluate: evaluate2, cleanup }) => {
   const variant = resolveVariant(expression, evaluate2);
   if (!variant) {
-    warn(`v-motion-hover nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-hover did not recognize the variant "${expression}".`);
     return;
   }
   bindInteraction(
@@ -1788,7 +1788,7 @@ defineDirective("motion-hover", ({ el, expression, evaluate: evaluate2, cleanup 
 defineDirective("motion-tap", ({ el, expression, evaluate: evaluate2, cleanup }) => {
   const variant = resolveVariant(expression, evaluate2);
   if (!variant) {
-    warn(`v-motion-tap nao reconheceu a variante "${expression}".`);
+    warn(`v-motion-tap did not recognize the variant "${expression}".`);
     return;
   }
   bindInteraction(
@@ -2338,7 +2338,7 @@ function seriesLength(dataset) {
   return length;
 }
 function emptyChart(ctx) {
-  return `<text class="v-chart-empty" x="${r(ctx.width / 2)}" y="${r(ctx.height / 2)}" text-anchor="middle">Sem dados</text>`;
+  return `<text class="v-chart-empty" x="${r(ctx.width / 2)}" y="${r(ctx.height / 2)}" text-anchor="middle">No data</text>`;
 }
 function titleTag(label, value, format) {
   return `<title>${escapeHtml(label)}: ${escapeHtml(formatChartValue(value, format))}</title>`;
@@ -2353,7 +2353,7 @@ function seriesSummary(entry, format) {
   }
   const first = entry.values[0];
   const last = entry.values[entry.values.length - 1];
-  return `${entry.name}: de ${formatChartValue(first, format)} a ${formatChartValue(last, format)}, minimo ${formatChartValue(min, format)}, maximo ${formatChartValue(max, format)}`;
+  return `${entry.name}: from ${formatChartValue(first, format)} to ${formatChartValue(last, format)}, minimum ${formatChartValue(min, format)}, maximum ${formatChartValue(max, format)}`;
 }
 function renderLine(ctx) {
   const bare = ctx.type === "sparkline";
@@ -2739,22 +2739,22 @@ function legendVisible(options, dataset) {
   return dataset.categorical || dataset.series.length > 1;
 }
 var TYPE_NAMES = {
-  line: "de linha",
-  area: "de area",
-  bar: "de barras",
-  column: "de barras horizontais",
-  stacked: "de barras empilhadas",
-  pie: "de pizza",
-  donut: "de rosca",
-  sparkline: "de tendencia",
-  radar: "de radar",
-  scatter: "de dispersao",
-  progress: "de progresso"
+  line: "line",
+  area: "area",
+  bar: "bar",
+  column: "horizontal bar",
+  stacked: "stacked bar",
+  pie: "pie",
+  donut: "donut",
+  sparkline: "trend",
+  radar: "radar",
+  scatter: "scatter",
+  progress: "progress"
 };
 function describe(type, dataset, format) {
-  if (dataset.series.length === 0) return "Grafico sem dados.";
-  const plural = dataset.series.length === 1 ? "serie" : "series";
-  const parts = [`Grafico ${TYPE_NAMES[type]} com ${dataset.series.length} ${plural}.`];
+  if (dataset.series.length === 0) return "Chart with no data.";
+  const plural = dataset.series.length === 1 ? "series" : "series";
+  const parts = [`${TYPE_NAMES[type]} chart with ${dataset.series.length} ${plural}.`];
   for (const entry of dataset.series) {
     if (entry.values.length === 0) continue;
     let min = Infinity;
@@ -2767,7 +2767,7 @@ function describe(type, dataset, format) {
     }
     const average = sum / entry.values.length;
     parts.push(
-      `${entry.name}: ${entry.values.length} pontos, minimo ${formatChartValue(min, format)}, maximo ${formatChartValue(max, format)}, media ${formatChartValue(average, format)}.`
+      `${entry.name}: ${entry.values.length} points, minimum ${formatChartValue(min, format)}, maximum ${formatChartValue(max, format)}, average ${formatChartValue(average, format)}.`
     );
   }
   return parts.join(" ");
@@ -3088,7 +3088,7 @@ function fromOuterScope(instance, raw) {
   if (!/^[A-Za-z_$][\w$]*$/.test(head)) return null;
   const parent = instance.$scope?.parent;
   if (!parent || !parent.has(head)) return null;
-  return evaluateIn(text, parent, "atributo de lista");
+  return evaluateIn(text, parent, "list attribute");
 }
 function splitList(text) {
   return String(text).split(",").map((part) => part.trim()).filter(Boolean);
@@ -3737,7 +3737,7 @@ register("v-icon-button", {
       return flag(this.disabled) || flag(this.loading);
     },
     accessibleName() {
-      return this.label || this.icon || "A\xE7\xE3o";
+      return this.label || this.icon || "Action";
     }
   },
   template: `
@@ -3884,7 +3884,7 @@ register("v-input", {
           :required="isRequired" :disabled="isDisabled" :readonly="isReadonly"
           :aria-invalid="!!error" :aria-describedby="describedBy" v-model="value">
         <button type="button" class="v-clear" v-if="isClearable && value && !isDisabled"
-          v-click="clear" aria-label="Limpar campo" v-html="svgIcon('x')"></button>
+          v-click="clear" aria-label="Clear field" v-html="svgIcon('x')"></button>
         <span class="v-affix" v-if="suffix" v-text="suffix"></span>
       </div>
       <p class="v-hint" :id="hintId" v-if="hint && !error" v-text="hint"></p>
@@ -3974,9 +3974,9 @@ register("v-select", {
   inheritScope: true,
   props: {
     label: TEXT,
-    placeholder: { type: "string", default: "Selecione" },
-    searchPlaceholder: { type: "string", default: "Buscar..." },
-    emptyText: { type: "string", default: "Nenhuma op\xE7\xE3o encontrada" },
+    placeholder: { type: "string", default: "Select" },
+    searchPlaceholder: { type: "string", default: "Search..." },
+    emptyText: { type: "string", default: "No options found" },
     options: { type: "any", default: "" },
     value: { type: "any", default: "" },
     hint: TEXT,
@@ -4178,7 +4178,7 @@ register("v-select", {
           :disabled="isDisabled" v-click="toggleList" v-keydown="onKey">
           <span class="v-select-value" :data-placeholder="!hasSelection" v-text="display"></span>
           <span class="v-clear" v-if="isClearable && hasSelection && !isDisabled"
-            role="button" tabindex="0" aria-label="Limpar sele\xE7\xE3o"
+            role="button" tabindex="0" aria-label="Clear selection"
             v-click.stop="clear" v-keydown.enter.stop="clear" v-html="svgIcon('x')"></span>
           <span class="v-select-arrow" aria-hidden="true" v-html="svgIcon('chevron-down')"></span>
         </button>
@@ -4187,7 +4187,7 @@ register("v-select", {
             <input type="text" class="v-select-input" v-ref="search" v-model="query"
               role="combobox" aria-autocomplete="list" :aria-controls="listId"
               :aria-expanded="open" :aria-activedescendant="activeId"
-              :placeholder="searchPlaceholder" aria-label="Buscar op\xE7\xE3o" v-keydown="onKey">
+              :placeholder="searchPlaceholder" aria-label="Search option" v-keydown="onKey">
           </div>
           <ul class="v-select-list" :id="listId" role="listbox"
             :aria-multiselectable="isMultiple" :aria-labelledby="label ? labelId : null">
@@ -4382,7 +4382,7 @@ register("v-tag", {
     variant: { type: "string", default: "soft" },
     icon: TEXT,
     closable: BOOL,
-    removeLabel: { type: "string", default: "Remover" }
+    removeLabel: { type: "string", default: "Remove" }
   },
   computed: { ...flags("closable") },
   methods: {
@@ -4414,7 +4414,7 @@ register("v-alert", {
     title: TEXT,
     icon: TEXT,
     closable: BOOL,
-    closeLabel: { type: "string", default: "Fechar aviso" }
+    closeLabel: { type: "string", default: "Close alert" }
   },
   state() {
     return { visible: true };
@@ -4506,7 +4506,7 @@ register("v-spinner", {
   props: {
     size: { type: "string", default: "md" },
     tone: { type: "string", default: "primary" },
-    label: { type: "string", default: "Carregando" }
+    label: { type: "string", default: "Loading" }
   },
   template: `
     <span class="v-spinner" :data-size="size" :data-tone="tone" role="status"
@@ -4538,7 +4538,7 @@ register("v-skeleton", {
     }
   },
   template: `
-    <div class="v-skeleton-stack" role="status" aria-label="Carregando conte\xFAdo" aria-busy="true">
+    <div class="v-skeleton-stack" role="status" aria-label="Loading content" aria-busy="true">
       <span class="v-skeleton" v-for="index in count" :key="index" :data-circle="isCircle"
         :style="index === count && count > 1 ? lastStyle : boxStyle"></span>
     </div>
@@ -4575,7 +4575,7 @@ register("v-progress", {
         <span v-text="label"></span>
         <span class="v-progress-value" v-if="isShowValue" v-text="percentText"></span>
       </div>
-      <div class="v-progress-track" role="progressbar" :aria-label="label || 'Progresso'"
+      <div class="v-progress-track" role="progressbar" :aria-label="label || 'Progress'"
         :aria-valuenow="isIndeterminate ? null : percent" aria-valuemin="0" aria-valuemax="100">
         <div class="v-progress-bar" :style="barStyle"></div>
       </div>
@@ -5592,7 +5592,7 @@ function isXrayNode(node) {
   return !!el && refs.root.contains(el);
 }
 function describeElement(el) {
-  if (!el) return "(sem elemento)";
+  if (!el) return "(no element)";
   const tag = el.tagName.toLowerCase();
   const id = el.id ? `#${el.id}` : "";
   const cls = typeof el.className === "string" && el.className ? `.${el.className.trim().split(/\s+/).slice(0, 2).join(".")}` : "";
@@ -5602,7 +5602,7 @@ function preview(value, max = 64) {
   if (value === null) return "null";
   if (value === void 0) return "undefined";
   const type = typeof value;
-  if (type === "function") return "funcao()";
+  if (type === "function") return "function()";
   if (type === "string") return `"${truncate(value, max)}"`;
   if (type === "number" || type === "boolean") return String(value);
   if (type === "symbol") return String(value);
@@ -5795,7 +5795,7 @@ function visibleVariables(scope, limit = 40) {
       try {
         value = current.data[key];
       } catch {
-        value = "(erro de leitura)";
+        value = "(read error)";
       }
       out.push([key, value]);
       if (out.length >= limit) break;
@@ -5814,23 +5814,23 @@ function buildCard(el) {
   card.appendChild(h("span", "v-xray-section", "Directives"));
   const names = collectDirectives(el);
   if (!names.length) {
-    card.appendChild(h("div", "v-xray-val", "nenhuma"));
+    card.appendChild(h("div", "v-xray-val", "none"));
   } else {
     for (const attr of names) {
       const row = h("div", "v-xray-row");
       row.appendChild(h("span", "v-xray-key", attr.raw));
-      row.appendChild(h("span", "v-xray-val", attr.expression || "(sem valor)"));
+      row.appendChild(h("span", "v-xray-val", attr.expression || "(no value)"));
       card.appendChild(row);
     }
   }
-  card.appendChild(h("span", "v-xray-section", "Componente"));
+  card.appendChild(h("span", "v-xray-section", "Component"));
   card.appendChild(
-    h("div", "v-xray-val", owner ? `${owner.$name} em ${describeElement(owner.$el)}` : "nenhum")
+    h("div", "v-xray-val", owner ? `${owner.$name} in ${describeElement(owner.$el)}` : "none")
   );
-  card.appendChild(h("span", "v-xray-section", "Escopo"));
+  card.appendChild(h("span", "v-xray-section", "Scope"));
   const variables = visibleVariables(scope);
   if (!variables.length) {
-    card.appendChild(h("div", "v-xray-val", "escopo raiz vazio"));
+    card.appendChild(h("div", "v-xray-val", "root scope empty"));
   } else {
     for (const [key, value] of variables) {
       const row = h("div", "v-xray-row");
@@ -5839,9 +5839,9 @@ function buildCard(el) {
       card.appendChild(row);
     }
   }
-  card.appendChild(h("span", "v-xray-section", "Reatividade"));
+  card.appendChild(h("span", "v-xray-section", "Reactivity"));
   card.appendChild(
-    h("div", "v-xray-val", `${countEffects(el)} efeito(s) dependem deste elemento`)
+    h("div", "v-xray-val", `${countEffects(el)} effect(s) depend on this element`)
   );
 }
 function positionCard(x, y) {
@@ -5903,7 +5903,7 @@ function valueRow(key, value, commit) {
   const row = h("div", "v-xray-row");
   row.appendChild(h("span", "v-xray-key", key));
   if (typeof value === "function") {
-    row.appendChild(h("span", "v-xray-val", "funcao()"));
+    row.appendChild(h("span", "v-xray-val", "function()"));
     return row;
   }
   const input = h("input", "v-xray-input");
@@ -5928,14 +5928,14 @@ function renderStateTab() {
   const frag = document.createDocumentFragment();
   const scopes = collectScopes();
   if (!scopes.length) {
-    frag.appendChild(h("span", "v-xray-empty", "Nenhum escopo na pagina. Use v-data ou um componente."));
+    frag.appendChild(h("span", "v-xray-empty", "No scopes on the page. Use v-data or a component."));
     return frag;
   }
   for (const entry of scopes) {
     const group = h("div", "v-xray-group");
     group.style.marginLeft = `${Math.min(entry.depth, 4) * 8}px`;
     const head = h("div", "v-xray-group-head");
-    head.appendChild(h("span", "v-xray-badge", entry.scope.component ? "componente" : "escopo"));
+    head.appendChild(h("span", "v-xray-badge", entry.scope.component ? "component" : "scope"));
     head.appendChild(h("span", void 0, describeElement(entry.el)));
     head.addEventListener("click", () => highlight(entry.el));
     group.appendChild(head);
@@ -5947,7 +5947,7 @@ function renderStateTab() {
       keys = [];
     }
     if (!keys.length) {
-      rows.appendChild(h("span", "v-xray-empty", "sem variaveis"));
+      rows.appendChild(h("span", "v-xray-empty", "no variables"));
     } else {
       for (const key of keys) {
         let value;
@@ -5972,7 +5972,7 @@ function renderComponentsTab() {
   const frag = document.createDocumentFragment();
   const list = [...instances];
   if (!list.length) {
-    frag.appendChild(h("span", "v-xray-empty", "Nenhum componente montado."));
+    frag.appendChild(h("span", "v-xray-empty", "No components mounted."));
     return frag;
   }
   for (const instance of list) {
@@ -5981,7 +5981,7 @@ function renderComponentsTab() {
     head.appendChild(h("span", "v-xray-badge", instance.$name));
     head.appendChild(h("span", void 0, describeElement(instance.$el)));
     head.appendChild(
-      h("span", "v-xray-badge", `${countEffects(instance.$el)} efeitos`)
+      h("span", "v-xray-badge", `${countEffects(instance.$el)} effects`)
     );
     head.lastChild.dataset.tone = "mute";
     head.addEventListener("click", () => highlight(instance.$el));
@@ -6007,7 +6007,7 @@ function renderComponentsTab() {
       stateKeys = [];
     }
     if (stateKeys.length) {
-      rows.appendChild(h("span", "v-xray-section", "Estado"));
+      rows.appendChild(h("span", "v-xray-section", "State"));
       for (const key of stateKeys) {
         let value;
         try {
@@ -6031,7 +6031,7 @@ function renderStoresTab() {
   const frag = document.createDocumentFragment();
   const names = storeNames();
   if (!names.length) {
-    frag.appendChild(h("span", "v-xray-empty", "Nenhum store global. Crie um com V.store()."));
+    frag.appendChild(h("span", "v-xray-empty", "No global stores. Create one with V.store()."));
     return frag;
   }
   for (const name of names) {
@@ -6045,7 +6045,7 @@ function renderStoresTab() {
     const rows = h("div", "v-xray-rows");
     const keys = data ? Object.keys(data) : [];
     if (!keys.length) {
-      rows.appendChild(h("span", "v-xray-empty", "store vazio"));
+      rows.appendChild(h("span", "v-xray-empty", "empty store"));
     } else {
       for (const key of keys) {
         rows.appendChild(
@@ -6072,26 +6072,26 @@ function logLine(time, main, tail, tone) {
 }
 function renderEventsTab() {
   const frag = document.createDocumentFragment();
-  const clear = h("button", "v-xray-btn", "limpar log");
+  const clear = h("button", "v-xray-btn", "clear log");
   clear.addEventListener("click", () => {
     eventLog.length = 0;
     renderActiveTab();
   });
   frag.appendChild(clear);
   if (!eventLog.length) {
-    frag.appendChild(h("span", "v-xray-empty", "Nenhum evento ainda. Interaja com a pagina."));
+    frag.appendChild(h("span", "v-xray-empty", "No events yet. Interact with the page."));
     return frag;
   }
   for (const entry of [...eventLog].reverse()) {
     frag.appendChild(
-      logLine(timeLabel(entry.at), `${entry.type} em ${entry.target}`, entry.detail || entry.source)
+      logLine(timeLabel(entry.at), `${entry.type} on ${entry.target}`, entry.detail || entry.source)
     );
   }
   return frag;
 }
 function renderNetworkTab() {
   const frag = document.createDocumentFragment();
-  const clear = h("button", "v-xray-btn", "limpar log");
+  const clear = h("button", "v-xray-btn", "clear log");
   clear.addEventListener("click", () => {
     networkLog.length = 0;
     renderActiveTab();
@@ -6099,7 +6099,7 @@ function renderNetworkTab() {
   frag.appendChild(clear);
   if (!networkLog.length) {
     frag.appendChild(
-      h("span", "v-xray-empty", "Nenhuma requisicao. v-get, v-post e V.http aparecem aqui.")
+      h("span", "v-xray-empty", "No requests yet. v-get, v-post and V.http show up here.")
     );
     return frag;
   }
@@ -6119,15 +6119,15 @@ function renderPerformanceTab() {
   const frag = document.createDocumentFragment();
   const updates = h("div", "v-xray-metric");
   updates.appendChild(h("span", "v-xray-metric-value", String(metrics.updatesPerSecond)));
-  updates.appendChild(h("span", void 0, "atualizacoes de DOM por segundo"));
+  updates.appendChild(h("span", void 0, "DOM updates per second"));
   frag.appendChild(updates);
   const effects = h("div", "v-xray-metric");
   effects.appendChild(h("span", "v-xray-metric-value", String(metrics.effectsPerSecond)));
-  effects.appendChild(h("span", void 0, "efeitos reativos disparados por segundo"));
+  effects.appendChild(h("span", void 0, "reactive effects triggered per second"));
   frag.appendChild(effects);
   const total = h("div", "v-xray-metric");
   total.appendChild(h("span", "v-xray-metric-value", String(metrics.effects)));
-  total.appendChild(h("span", void 0, "efeitos disparados desde que o raio-x ligou"));
+  total.appendChild(h("span", void 0, "effects triggered since x-ray was enabled"));
   frag.appendChild(total);
   const chart = h("div", "v-xray-chart");
   const peak = Math.max(1, ...metrics.history.map((item) => Math.max(item.effects, item.updates)));
@@ -6135,12 +6135,12 @@ function renderPerformanceTab() {
     const bar = h("div", "v-xray-bar");
     const value = Math.max(item.effects, item.updates);
     bar.style.height = `${Math.max(2, Math.round(value / peak * 46))}px`;
-    bar.title = `${item.effects} efeitos, ${item.updates} atualizacoes`;
+    bar.title = `${item.effects} effects, ${item.updates} updates`;
     chart.appendChild(bar);
   }
   frag.appendChild(chart);
   frag.appendChild(
-    h("span", "v-xray-hint", `${patchedEffects.size} efeitos instrumentados, pico de ${peak} por segundo`)
+    h("span", "v-xray-hint", `${patchedEffects.size} effects instrumented, peak of ${peak} per second`)
   );
   return frag;
 }
@@ -6181,7 +6181,7 @@ function renderActiveTab() {
     const tab = child;
     tab.dataset.active = tab.dataset.id === activeTab ? "1" : "0";
   }
-  refs.status.textContent = `${outlined.length} elementos com directives, ${instances.size} componentes, ${patchedEffects.size} efeitos observados`;
+  refs.status.textContent = `${outlined.length} elements with directives, ${instances.size} components, ${patchedEffects.size} effects observed`;
 }
 function highlight(el) {
   el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -6191,7 +6191,7 @@ function buildPanel() {
   const root = h("div", "v-xray-root");
   root.setAttribute(`${config.prefix}ignore`, "");
   root.setAttribute("role", "complementary");
-  root.setAttribute("aria-label", "Inspetor Voodoo x-ray");
+  root.setAttribute("aria-label", "Voodoo x-ray inspector");
   if (theme2 !== "auto") root.dataset.vXrayTheme = theme2;
   const overlay = h("div", "v-xray-overlay");
   root.appendChild(overlay);
@@ -6204,14 +6204,14 @@ function buildPanel() {
   brand.appendChild(h("span", "v-xray-dot"));
   brand.appendChild(document.createTextNode("Voodoo x-ray"));
   header.appendChild(brand);
-  const themeButton = h("button", "v-xray-btn", "tema");
+  const themeButton = h("button", "v-xray-btn", "theme");
   themeButton.addEventListener("click", () => {
     theme2 = theme2 === "auto" ? "dark" : theme2 === "dark" ? "light" : "auto";
     if (theme2 === "auto") delete root.dataset.vXrayTheme;
     else root.dataset.vXrayTheme = theme2;
   });
   header.appendChild(themeButton);
-  const closeButton = h("button", "v-xray-btn", "fechar");
+  const closeButton = h("button", "v-xray-btn", "close");
   closeButton.addEventListener("click", () => disableXray());
   header.appendChild(closeButton);
   panel.appendChild(header);
@@ -6229,7 +6229,7 @@ function buildPanel() {
   panel.appendChild(tabs);
   const body = h("div", "v-xray-body");
   panel.appendChild(body);
-  const status = h("div", "v-xray-status", "iniciando");
+  const status = h("div", "v-xray-status", "starting");
   panel.appendChild(status);
   root.appendChild(panel);
   document.body.appendChild(root);
@@ -6294,7 +6294,7 @@ function listenEvents() {
       at: Date.now(),
       type: event.type,
       target: describeElement(owner ?? target),
-      detail: custom ? "emit de componente" : "",
+      detail: custom ? "component emit" : "",
       source: custom ? "component" : "v-on"
     });
   };
@@ -6343,7 +6343,7 @@ function listenNetwork() {
       pushNetwork({
         at: Date.now(),
         method: (requestConfig?.method ?? "GET").toUpperCase(),
-        url: requestConfig?.url ?? "(desconhecida)",
+        url: requestConfig?.url ?? "(unknown)",
         status: error.status,
         ok: false,
         duration: performance.now() - started,
@@ -6669,9 +6669,9 @@ function construir() {
   const botao = document.createElement("button");
   botao.type = "button";
   botao.className = "v-devtools-btn";
-  botao.setAttribute("aria-label", "Abrir as devtools da Voodoo (Ctrl+Shift+X)");
+  botao.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
   botao.setAttribute("aria-pressed", "false");
-  botao.title = "Devtools da Voodoo \u2014 clique para inspecionar, arraste para mover (Ctrl+Shift+X)";
+  botao.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
   botao.innerHTML = MARCA;
   const rotulo = document.createElement("span");
   rotulo.className = "v-devtools-label";
@@ -6686,8 +6686,8 @@ function construir() {
   const fechar = document.createElement("button");
   fechar.type = "button";
   fechar.className = "v-devtools-close";
-  fechar.setAttribute("aria-label", "Esconder o widget das devtools nesta aba");
-  fechar.title = "Esconder nesta aba";
+  fechar.setAttribute("aria-label", "Hide the devtools widget in this tab");
+  fechar.title = "Hide in this tab";
   fechar.textContent = "\xD7";
   raiz.append(botao, fechar);
   document.body.appendChild(raiz);
@@ -6772,7 +6772,7 @@ function piscar() {
 function atualizarContador() {
   if (!refs2) return;
   const total = instances.size;
-  const texto = total === 1 ? "1 componente" : `${total} componentes`;
+  const texto = total === 1 ? "1 component" : `${total} components`;
   if (refs2.contador.textContent !== texto) refs2.contador.textContent = texto;
 }
 function mountDevtoolsWidget() {
@@ -6797,7 +6797,7 @@ function mountDevtoolsWidget() {
     } catch {
     }
     unmountDevtoolsWidget();
-    console.info("[Voodoo] widget das devtools escondido. Use V.devtoolsWidget(true) para voltar.");
+    console.info("[Voodoo] devtools widget hidden. Use V.devtoolsWidget(true) to bring back.");
   };
   refs2.fechar.addEventListener("click", aoFechar);
   desligar.push(() => refs2?.fechar.removeEventListener("click", aoFechar));
@@ -6849,39 +6849,39 @@ function devtoolsWidget(force) {
 
 // src/index.ts
 var V = ((input, context) => query(input, context));
-function comAviso(alias, canonico, fn) {
+function withWarning(alias, canonical, fn) {
   return ((...args) => {
-    avisarAlias(alias, canonico);
+    warnAlias(alias, canonical);
     return fn(...args);
   });
 }
 Object.assign(V, core, {
-  // DOM encadeavel
+  // Chainable DOM
   query,
   ready: ready2,
   fromHtml,
   Collection: VoodooCollection,
-  // Rotas
+  // Routes
   router,
   route,
   navigate,
   resolveRoute: resolve,
-  // Idiomas
+  // Languages
   i18n,
   t,
   setLocale,
   getLocale,
-  // Dialogos
+  // Dialogs
   modal,
   alert,
   confirm,
   prompt,
   dialog,
-  // Formularios
+  // Forms
   validator,
   validate,
-  // Apelido antigo. O nome oficial e `V.validate`.
-  validateForm: comAviso("V.validateForm", "V.validate", validate),
+  // Old alias. The official name is `V.validate`.
+  validateForm: withWarning("V.validateForm", "V.validate", validate),
   serializeForm,
   messages,
   showFormErrors,
@@ -6892,7 +6892,7 @@ Object.assign(V, core, {
   applyMask,
   unmask,
   registerMask,
-  // Animacao
+  // Animation
   animate,
   spring,
   stagger,
@@ -6900,9 +6900,9 @@ Object.assign(V, core, {
   scrollProgress,
   motion: motionPresets,
   easings,
-  // Graficos
-  // Apelido antigo. O nome oficial e `V.renderChart`.
-  chart: comAviso("V.chart", "V.renderChart", renderChart),
+  // Charts
+  // Old alias. The official name is `V.renderChart`.
+  chart: withWarning("V.chart", "V.renderChart", renderChart),
   renderChart,
   charts,
   chartColors: CHART_COLORS,
@@ -6910,7 +6910,7 @@ Object.assign(V, core, {
   palette,
   hotkey,
   sound,
-  // Ferramentas de inspecao
+  // Inspection tools
   xray,
   enableXrayShortcut,
   devtoolsWidget,

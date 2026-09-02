@@ -296,4 +296,4 @@ In HTML, `$dispatch` fires a `CustomEvent` that bubbles up the tree:
 
 ---
 
-Previous: [Ready-made components](ready-components.md) · Next: [Events](events.md)
+Previous: [Ready-made components](componentes-prontos.md) · Next: [Events](eventos.md)

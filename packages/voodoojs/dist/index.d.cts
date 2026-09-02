@@ -1,68 +1,66 @@
-import { c as core, V as VoodooCollection } from './query-DozWdHqf.cjs';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-DozWdHqf.cjs';
+import { c as core, V as VoodooCollection } from './query-CgqtSMIw.cjs';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-CgqtSMIw.cjs';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.cjs';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.cjs';
-export { R as RoomOptions, a as RoomState, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, f as createSocket, s as socket, g as socketSupported } from './index-smMSqTan.cjs';
-export { x as GpuClock, y as GpuCompute, A as GpuContext, C as GpuEffect, I as GpuSurface, M as GpuUniforms, a4 as gpu, ab as reflectWgsl } from './index-ByMtfCvK.cjs';
+export { R as RoomOptions, a as RoomState, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, f as createSocket, s as socket, g as socketSupported } from './index-DTllqUtj.cjs';
+export { x as GpuClock, y as GpuCompute, A as GpuContext, C as GpuEffect, I as GpuSurface, M as GpuUniforms, a4 as gpu, ab as reflectWgsl } from './index-DIj3O4Ap.cjs';
 export { DebouncedFunction, FormatOptions, capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './utils.cjs';
 
 /**
  * @module directives/ui
  *
- * Componentes de interface declarativos. Tudo aqui funciona escrevendo apenas
- * HTML: nenhuma linha de JavaScript e necessaria para ter menu suspenso, abas,
- * gaveta lateral, tooltip, paleta de comandos e o resto.
+ * Declarative UI components. Everything here works by writing HTML only:
+ * no JavaScript needed to have dropdowns, tabs, sidebars, tooltips, command palette and more.
  *
  * ```html
- * <button v-dropdown="#menu">Acoes</button>
+ * <button v-dropdown="#menu">Actions</button>
  * <div id="menu" v-dropdown-menu>
- *   <button v-copy="PROMO10">Copiar cupom</button>
+ *   <button v-copy="PROMO10">Copy coupon</button>
  * </div>
  * ```
  *
- * Acessibilidade nao e opcional neste modulo: cada componente cuida de papeis
- * ARIA, navegacao por teclado, foco visivel e fechamento por Escape.
+ * Accessibility is not optional in this module: each component manages ARIA roles,
+ * keyboard navigation, focus visibility, and Escape key closure.
  */
 
 interface HotkeyOptions {
-    /** Dispara mesmo com o foco dentro de um campo de texto. Padrao `false`. */
+    /** Fires even when focus is in a text field. Default `false`. */
     allowInInput?: boolean;
-    /** Cancela o comportamento padrao do navegador. Padrao `true`. */
+    /** Prevents browser default behavior. Default `true`. */
     preventDefault?: boolean;
 }
 /**
- * Registra um atalho global de teclado.
+ * Registers a global keyboard shortcut.
  *
  * ```js
- * const parar = V.hotkey('ctrl+k', () => abrirBusca())
- * parar() // remove o atalho
+ * const stop = V.hotkey('ctrl+k', () => openSearch())
+ * stop() // removes the shortcut
  * ```
  *
- * Aceita combinacoes (`ctrl+shift+p`, `alt+1`, `meta+k`, `mod+s`), teclas
- * isoladas (`?`, `Escape`) e varios combos separados por virgula. Combos sem
- * modificador nao disparam quando o foco esta em um campo de texto, para nao
- * atrapalhar quem esta digitando.
+ * Accepts combinations (`ctrl+shift+p`, `alt+1`, `meta+k`, `mod+s`), isolated keys
+ * (`?`, `Escape`) and multiple combos separated by comma. Unmodified combos don't
+ * fire when focus is in a text field, to avoid interfering with typing.
  *
- * @param combo combinacao de teclas
- * @param handler funcao executada quando o atalho e acionado
- * @param options ajustes de comportamento
- * @returns funcao que remove o atalho
+ * @param combo key combination
+ * @param handler function executed when the shortcut is triggered
+ * @param options behavior adjustments
+ * @returns function that removes the shortcut
  */
 declare function hotkey(combo: string, handler: (event: KeyboardEvent) => void, options?: HotkeyOptions): () => void;
 
 /**
  * @module sound
  *
- * Som nativo, sem arquivo e sem dependencia.
+ * Native sound, no files, no dependencies.
  *
- * Os efeitos sao sintetizados na hora com a Web Audio API, entao nao existe
- * download, nao existe pasta de audio e o custo em bytes e proximo de zero.
- * Tambem da para tocar um arquivo proprio quando voce quiser.
+ * Effects are synthesized on the fly with the Web Audio API, so there is no
+ * download, no audio folder, and the cost in bytes is nearly zero.
+ * You can also play your own file whenever you want.
  *
  * ```html
- * <button v-sound="click">Salvar</button>
- * <button v-sound="success" v-post="/api/pedidos">Finalizar</button>
- * <a v-sound:mouseenter="hover" href="/precos">Precos</a>
+ * <button v-sound="click">Save</button>
+ * <button v-sound="success" v-post="/api/orders">Complete</button>
+ * <a v-sound:mouseenter="hover" href="/prices">Prices</a>
  * <input v-sound:input="type">
  * ```
  *
@@ -74,49 +72,49 @@ declare function hotkey(combo: string, handler: (event: KeyboardEvent) => void, 
  * V.sound.mute()
  * ```
  *
- * Regras de bom comportamento que o modulo segue sozinho:
+ * Rules of good behavior that the module follows on its own:
  *
- * - navegador nenhum deixa tocar audio antes de a pessoa interagir, entao o
- *   contexto so e criado no primeiro gesto;
- * - quem liga `prefers-reduced-motion` costuma preferir menos estimulo, entao o
- *   volume padrao cai pela metade nesse caso;
- * - a preferencia de silencio fica guardada e vale nas proximas visitas.
+ * - no browser lets audio play before the user interacts, so the
+ *   context is only created on the first gesture;
+ * - those who enable `prefers-reduced-motion` usually prefer less stimulation, so the
+ *   default volume drops by half in that case;
+ * - the mute preference is saved and applies on future visits.
  */
-type FormaDeOnda = 'sine' | 'square' | 'sawtooth' | 'triangle';
-interface Camada {
-    /** Frequencia inicial em hertz. */
+type WaveformShape = 'sine' | 'square' | 'sawtooth' | 'triangle';
+interface Layer {
+    /** Initial frequency in hertz. */
     frequencia: number;
-    /** Frequencia final, para o som deslizar. Ausente mantem a inicial. */
+    /** Final frequency, for the sound to slide. Absent keeps the initial. */
     ate?: number;
-    /** Duracao em segundos. */
+    /** Duration in seconds. */
     duracao: number;
-    /** Volume relativo da camada, de 0 a 1. */
+    /** Relative volume of the layer, from 0 to 1. */
     volume?: number;
-    forma?: FormaDeOnda;
-    /** Atraso em segundos desde o inicio do efeito. */
+    forma?: WaveformShape;
+    /** Delay in seconds from the start of the effect. */
     atraso?: number;
-    /** Tempo de subida do volume, em segundos. */
+    /** Volume rise time, in seconds. */
     ataque?: number;
 }
-interface Efeito {
-    camadas: Camada[];
-    /** Volume do efeito inteiro, de 0 a 1. */
+interface Effect {
+    camadas: Layer[];
+    /** Volume of the entire effect, from 0 to 1. */
     volume?: number;
 }
 /**
- * Biblioteca de efeitos. Cada um foi desenhado para ser curto e discreto:
- * som de interface existe para confirmar uma acao, nao para chamar atencao.
+ * Library of effects. Each one was designed to be short and discrete:
+ * interface sound exists to confirm an action, not to draw attention.
  */
-declare const efeitos: Record<string, Efeito>;
-interface OpcoesDeToque {
-    /** Volume relativo, de 0 a 1. Multiplica o volume geral. */
+declare const efeitos: Record<string, Effect>;
+interface PlayOptions {
+    /** Relative volume, from 0 to 1. Multiplies the master volume. */
     volume?: number;
-    /** Multiplica a frequencia de todas as camadas, deixando o som mais agudo. */
+    /** Multiplies the frequency of all layers, making the sound higher. */
     tom?: number;
 }
 declare const sound: {
     /**
-     * Toca um efeito pelo nome, ou um arquivo pelo caminho.
+     * Plays an effect by name, or a file by path.
      *
      * ```js
      * V.sound.play('success')
@@ -124,64 +122,64 @@ declare const sound: {
      * V.sound.play('click', { volume: 0.5 })
      * ```
      */
-    play(nome: string, opcoes?: OpcoesDeToque): void;
+    play(name: string, options?: PlayOptions): void;
     /**
-     * Toca uma frequencia pura.
+     * Plays a pure frequency.
      *
      * ```js
      * V.sound.tone(440, 300)
      * ```
      *
-     * @param frequencia hertz
-     * @param duracao milissegundos
+     * @param frequency hertz
+     * @param duration milliseconds
      */
-    tone(frequencia: number, duracao?: number, opcoes?: OpcoesDeToque & {
-        forma?: FormaDeOnda;
+    tone(frequency: number, duration?: number, options?: PlayOptions & {
+        forma?: WaveformShape;
     }): void;
     /**
-     * Toca uma nota pelo nome.
+     * Plays a note by name.
      *
      * ```js
      * V.sound.note('la', 300)
      * V.sound.note('do5', 200)
      * ```
      */
-    note(nome: string, duracao?: number, opcoes?: OpcoesDeToque): void;
+    note(name: string, duration?: number, options?: PlayOptions): void;
     /**
-     * Toca uma sequencia de notas.
+     * Plays a sequence of notes.
      *
      * ```js
      * V.sound.melody(['do', 'mi', 'sol', 'do5'], 140)
      * ```
      *
-     * @param notas nomes de nota, ou frequencias em hertz
-     * @param intervalo milissegundos entre uma nota e a seguinte
+     * @param notes note names, or frequencies in hertz
+     * @param interval milliseconds between one note and the next
      */
-    melody(notas: Array<string | number>, intervalo?: number, opcoes?: OpcoesDeToque): void;
+    melody(notes: Array<string | number>, interval?: number, options?: PlayOptions): void;
     /**
-     * Le ou ajusta o volume geral, de 0 a 1. A escolha fica guardada.
+     * Reads or adjusts the master volume, from 0 to 1. The choice is saved.
      *
      * ```js
-     * V.sound.volume()      // le
-     * V.sound.volume(0.6)   // ajusta
+     * V.sound.volume()      // read
+     * V.sound.volume(0.6)   // adjust
      * ```
      */
-    volume(valor?: number): number;
-    /** Silencia. Passe `false` para voltar a tocar. */
-    mute(valor?: boolean): void;
-    /** Volta a tocar. */
+    volume(value?: number): number;
+    /** Mutes sound. Pass `false` to unmute. */
+    mute(value?: boolean): void;
+    /** Unmutes sound. */
     unmute(): void;
-    /** Alterna entre silencio e som, e devolve o novo estado. */
+    /** Toggles between muted and unmuted, and returns the new state. */
     toggle(): boolean;
-    /** `true` quando esta silenciado. */
+    /** `true` when muted. */
     readonly muted: boolean;
-    /** Nomes de todos os efeitos disponiveis. */
+    /** Names of all available effects. */
     readonly names: string[];
     /**
-     * Registra um efeito proprio.
+     * Registers a custom effect.
      *
      * ```js
-     * V.sound.define('meuAviso', {
+     * V.sound.define('myWarning', {
      *   volume: 0.5,
      *   camadas: [
      *     { frequencia: 700, duracao: 0.1 },
@@ -190,293 +188,293 @@ declare const sound: {
      * })
      * ```
      */
-    define(nome: string, efeito: Efeito): void;
-    /** Carrega um arquivo antes da hora, para nao atrasar no primeiro toque. */
+    define(name: string, effect: Effect): void;
+    /** Preloads a file to avoid delay on first play. */
     preload(...urls: string[]): void;
 };
 
-/** Alvo aceito por `animate` e `stagger`. */
+/** Target accepted by `animate` and `stagger`. */
 type MotionTarget = Element | ArrayLike<Element> | string | null | undefined;
-/** Valor de uma propriedade animada. */
+/** Value of an animated property. */
 type MotionValue = number | string;
 /**
- * Mapa de propriedades animadas. Um valor unico usa o estado atual como ponto
- * de partida. Um par `[de, para]` define os dois extremos.
+ * Map of animated properties. A single value uses the current state as the
+ * starting point. A pair `[from, to]` defines both extremes.
  */
 type MotionKeyframes = Record<string, MotionValue | [MotionValue, MotionValue]>;
-/** Curva de progresso. Recebe e devolve numeros normalmente entre 0 e 1. */
+/** Progress curve. Takes and returns numbers normally between 0 and 1. */
 type EasingFunction = (t: number) => number;
-/** Controle devolvido por qualquer animacao. */
+/** Control returned by any animation. */
 interface AnimationControl {
-    /** Interrompe a animacao no ponto atual, sem disparar `onComplete`. */
+    /** Stops the animation at the current point, without firing `onComplete`. */
     stop(): void;
-    /** Resolve quando a animacao termina ou quando e interrompida. */
+    /** Resolves when the animation finishes or is interrupted. */
     finished: Promise<void>;
 }
-/** Parametros fisicos da mola. */
+/** Physical parameters of the spring. */
 interface SpringConfig {
-    /** Rigidez da mola. Quanto maior, mais rapido. Padrao 170. */
+    /** Spring stiffness. Higher = faster. Default 170. */
     stiffness?: number;
-    /** Atrito. Quanto maior, menos oscilacao. Padrao 26. */
+    /** Damping. Higher = less oscillation. Default 26. */
     damping?: number;
-    /** Massa do corpo. Quanto maior, mais lento e pesado. Padrao 1. */
+    /** Mass of the body. Higher = slower and heavier. Default 1. */
     mass?: number;
-    /** Velocidade inicial, em unidades por segundo. */
+    /** Initial velocity, in units per second. */
     velocity?: number;
-    /** Distancia considerada repouso. */
+    /** Distance considered at rest. */
     restDelta?: number;
-    /** Velocidade considerada repouso. */
+    /** Velocity considered at rest. */
     restSpeed?: number;
 }
-/** Opcoes de `animate`. */
+/** Options for `animate`. */
 interface AnimateOptions {
-    /** Duracao em milissegundos. Ignorada quando `spring` esta ativo. Padrao 400. */
+    /** Duration in milliseconds. Ignored when `spring` is active. Default 400. */
     duration?: number;
-    /** Espera antes de comecar, em milissegundos. */
+    /** Wait before starting, in milliseconds. */
     delay?: number;
-    /** Nome de um easing conhecido ou funcao propria. */
+    /** Name of a known easing or custom function. */
     easing?: EasingName | EasingFunction | string;
-    /** Usa fisica de mola no lugar do tween. `true` aceita os padroes. */
+    /** Use spring physics instead of tween. `true` accepts defaults. */
     spring?: boolean | SpringConfig;
-    /** Repeticoes extras. `2` executa tres vezes ao todo. */
+    /** Extra repetitions. `2` plays three times total. */
     repeat?: number;
-    /** Comportamento de cada repeticao. */
+    /** Behavior of each repetition. */
     repeatType?: 'loop' | 'reverse' | 'mirror';
-    /** Ignora `prefers-reduced-motion`. Reserve para animacoes essenciais. */
+    /** Ignores `prefers-reduced-motion`. Reserve for essential animations. */
     force?: boolean;
-    /** Chamado a cada quadro com o progresso, que pode passar de 1 na mola. */
+    /** Called each frame with progress, which can exceed 1 for springs. */
     onUpdate?(progress: number): void;
-    /** Chamado quando a animacao chega ao fim por conta propria. */
+    /** Called when the animation finishes naturally. */
     onComplete?(): void;
 }
-/** Opcoes de `stagger`. */
+/** Options for `stagger`. */
 interface StaggerOptions extends AnimateOptions {
-    /** Atraso somado a cada item da lista, em milissegundos. Padrao 60. */
+    /** Delay added to each list item, in milliseconds. Default 60. */
     delay?: number;
-    /** De onde a onda parte. Padrao `first`. */
+    /** Where the wave starts. Default `first`. */
     from?: 'first' | 'last' | 'center';
-    /** Atraso aplicado antes do primeiro item da onda. */
+    /** Delay applied before the first item in the wave. */
     start?: number;
 }
-/** Opcoes de `spring`. */
+/** Options for `spring`. */
 interface SpringOptions extends SpringConfig {
-    /** Recebe o valor interpolado a cada quadro. */
+    /** Receives the interpolated value each frame. */
     onUpdate?(value: number): void;
-    /** Chamado quando a mola entra em repouso. */
+    /** Called when the spring comes to rest. */
     onComplete?(): void;
 }
-/** Opcoes de `inView`. */
+/** Options for `inView`. */
 interface InViewOptions {
-    /** Desliga o observador depois da primeira entrada. Padrao `true`. */
+    /** Turns off the observer after the first entry. Default `true`. */
     once?: boolean;
-    /** Margem do observador, no formato de `rootMargin`. */
+    /** Observer margin, in the format of `rootMargin`. */
     margin?: string;
-    /** Fracao visivel necessaria, ou `any` e `all`. Padrao 0.25. */
+    /** Visible fraction required, or `any` and `all`. Default 0.25. */
     amount?: number | 'any' | 'all';
-    /** Raiz do observador. Padrao a viewport. */
+    /** Observer root. Default is the viewport. */
     root?: Element | null;
 }
 /**
- * Objeto que mistura propriedades animadas e opcoes de animacao, no formato
- * usado pelos presets e pelas directives.
+ * Object that mixes animated properties and animation options, in the format
+ * used by presets and directives.
  */
 interface MotionVariant extends AnimateOptions {
     [property: string]: unknown;
 }
 /**
- * Curvas de progresso prontas. Todas recebem e devolvem valores entre 0 e 1,
- * com excecao de `easeOutBack` e `anticipate`, que passam do intervalo de
- * proposito para dar a sensacao de peso.
+ * Ready-made progress curves. All take and return values between 0 and 1,
+ * except `easeOutBack` and `anticipate`, which exceed the range on purpose
+ * to give a sense of weight.
  */
 declare const easings: {
-    /** Progresso constante. */
+    /** Constant progress. */
     linear(t: number): number;
-    /** Comeca devagar e acelera. */
+    /** Starts slow and accelerates. */
     easeIn(t: number): number;
-    /** Comeca rapido e desacelera. A escolha padrao para entradas. */
+    /** Starts fast and decelerates. The default choice for entries. */
     easeOut(t: number): number;
-    /** Acelera no comeco e freia no fim. */
+    /** Accelerates at the start and brakes at the end. */
     easeInOut(t: number): number;
-    /** Passa do alvo e volta, dando um leve exagero no fim. */
+    /** Overshoots the target and comes back, giving a slight exaggeration at the end. */
     easeOutBack(t: number): number;
-    /** Freada muito longa, boa para entradas grandes. */
+    /** Very long deceleration, good for large entries. */
     easeOutExpo(t: number): number;
-    /** Recua um pouco antes de avancar, como quem toma impulso. */
+    /** Pulls back slightly before advancing, like taking a running start. */
     anticipate(t: number): number;
-    /** Quica ao chegar no alvo. */
+    /** Bounces when reaching the target. */
     bounce(t: number): number;
 };
-/** Nomes aceitos na opcao `easing`. */
+/** Names accepted in the `easing` option. */
 type EasingName = keyof typeof easings;
 /**
- * Anima um ou varios elementos.
+ * Animates one or multiple elements.
  *
  * ```js
  * V.animate('.card', { opacity: [0, 1], y: [24, 0] }, { duration: 420 })
- * const controle = V.animate(el, { scale: 1.2 }, { spring: { stiffness: 300 } })
- * await controle.finished
+ * const control = V.animate(el, { scale: 1.2 }, { spring: { stiffness: 300 } })
+ * await control.finished
  * ```
  *
- * @param target elemento, lista de elementos ou seletor CSS
- * @param keyframes propriedades animadas, com valor unico ou par `[de, para]`
- * @param options duracao, atraso, easing, mola e repeticao
+ * @param target element, list of elements, or CSS selector
+ * @param keyframes animated properties, with single value or `[from, to]` pair
+ * @param options duration, delay, easing, spring, and repetition
  */
 declare function animate(target: MotionTarget, keyframes: MotionKeyframes, options?: AnimateOptions): AnimationControl;
 /**
- * Integra uma mola real entre dois numeros e entrega o valor a cada quadro.
- * Nao toca no DOM, entao serve tanto para estilos quanto para contadores,
- * rolagem suave ou qualquer outro valor numerico.
+ * Integrates a real spring between two numbers and delivers the value each frame.
+ * Does not touch the DOM, so it works for both styles and counters,
+ * smooth scrolling, or any other numeric value.
  *
  * ```js
- * V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) => barra.style.width = v + 'px' })
+ * V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) => bar.style.width = v + 'px' })
  * ```
  */
 declare function spring(from: number, to: number, options?: SpringOptions): AnimationControl;
 /**
- * Anima uma lista inteira com atraso progressivo entre os itens.
+ * Animates an entire list with progressive delay between items.
  *
  * ```js
  * V.stagger('.card', V.motionPresets.fadeUp, { delay: 70, from: 'center' })
  * ```
  *
- * @param targets elementos, lista ou seletor CSS
- * @param keyframes propriedades animadas
- * @param options `delay` e o passo entre itens e `start` o atraso da onda toda
+ * @param targets elements, list, or CSS selector
+ * @param keyframes animated properties
+ * @param options `delay` is the step between items and `start` is the delay for the entire wave
  */
 declare function stagger(targets: MotionTarget, keyframes: MotionKeyframes, options?: StaggerOptions): AnimationControl;
 /**
- * Dispara um callback quando o elemento entra na viewport.
+ * Fires a callback when the element enters the viewport.
  *
- * O callback pode devolver uma funcao de limpeza, executada quando o elemento
- * sai da viewport. Isso permite montar e desmontar efeitos sem esforco.
+ * The callback can return a cleanup function, executed when the element
+ * leaves the viewport. This allows mounting and unmounting effects effortlessly.
  *
  * ```js
- * const parar = V.inView(secao, () => secao.classList.add('ativa'), { once: true })
+ * const stop = V.inView(section, () => section.classList.add('active'), { once: true })
  * ```
  *
- * @returns funcao que encerra a observacao
+ * @returns function that stops the observation
  */
 declare function inView(el: Element, callback: (entry: IntersectionObserverEntry) => void | (() => void), options?: InViewOptions): () => void;
 /**
- * Reporta de 0 a 1 conforme o elemento atravessa a tela. Vale 0 quando o topo
- * do elemento encosta na base da viewport e 1 quando a base dele sai por cima.
+ * Reports from 0 to 1 as the element crosses the screen. Equals 0 when the top
+ * of the element touches the bottom of the viewport and 1 when its bottom exits the top.
  *
  * ```js
- * V.scrollProgress(secao, (p) => barra.style.width = (p * 100) + '%')
+ * V.scrollProgress(section, (p) => bar.style.width = (p * 100) + '%')
  * ```
  *
- * @returns funcao que encerra a observacao
+ * @returns function that stops the observation
  */
 declare function scrollProgress(el: Element, callback: (progress: number) => void): () => void;
-/** Todos os presets reunidos, para busca por nome. */
+/** All presets gathered for lookup by name. */
 declare const motionPresets: Record<string, MotionVariant>;
 
 /**
  * @module charts
  *
- * Graficos em SVG puro, sem nenhuma dependencia externa. Todo o desenho e
- * gerado como texto e entregue de uma vez ao container, o que mantem o
- * redesenho barato mesmo com dados mudando a cada quadro.
+ * Charts in pure SVG, with no external dependencies. All drawing is
+ * generated as text and delivered to the container at once, which keeps
+ * redrawing cheap even with data changing every frame.
  *
- * O modulo segue tres compromissos:
+ * The module follows three commitments:
  *
- * - responsivo, com `viewBox`, `preserveAspectRatio` e `ResizeObserver`;
- * - acessivel, com `role="img"`, `aria-label` descritivo e `<title>` por forma;
- * - tematico, usando as variaveis `--v-*` para funcionar em claro e escuro.
+ * - responsive, with `viewBox`, `preserveAspectRatio`, and `ResizeObserver`;
+ * - accessible, with `role="img"`, descriptive `aria-label`, and `<title>` per shape;
+ * - themeable, using `--v-*` variables to work in light and dark modes.
  *
  * ```html
- * <div v-chart="{ type: 'line', data: vendas, labels: meses, smooth: true }"></div>
- * <div v-chart="vendas" v-chart-type="bar"></div>
+ * <div v-chart="{ type: 'line', data: sales, labels: months, smooth: true }"></div>
+ * <div v-chart="sales" v-chart-type="bar"></div>
  * ```
  */
-/** Tipos de grafico suportados. */
+/** Supported chart types. */
 type ChartType = 'line' | 'area' | 'bar' | 'column' | 'stacked' | 'pie' | 'donut' | 'sparkline' | 'radar' | 'scatter' | 'progress';
-/** Formato aplicado aos valores exibidos. */
+/** Format applied to displayed values. */
 type ChartFormat = 'number' | 'currency' | 'percent';
-/** Ponto nomeado. `x` e `y` sao usados apenas por `scatter`. */
+/** Named point. `x` and `y` are used only by `scatter`. */
 interface ChartPoint {
     label?: string;
     value?: number;
     x?: number;
     y?: number;
 }
-/** Serie nomeada, usada em graficos com mais de uma linha ou barra. */
+/** Named series, used in charts with multiple lines or bars. */
 interface ChartSeriesInput {
     name: string;
     data: number[];
     color?: string;
 }
-/** Formatos aceitos em `options.data`. */
+/** Formats accepted in `options.data`. */
 type ChartData = number | number[] | ChartPoint[] | ChartSeriesInput[];
-/** Configuracao de um grafico. */
+/** Configuration of a chart. */
 interface ChartOptions {
-    /** Tipo do grafico. Padrao `line`. */
+    /** Chart type. Default `line`. */
     type?: ChartType;
-    /** Dados, em qualquer um dos formatos aceitos. */
+    /** Data, in any of the accepted formats. */
     data: ChartData;
-    /** Rotulos do eixo de categorias. */
+    /** Category axis labels. */
     labels?: string[];
-    /** Nome da serie unica, usado na legenda e no tooltip. */
+    /** Name of the single series, used in legend and tooltip. */
     name?: string;
-    /** Paleta. Quando ausente, usa as cores da marca. */
+    /** Palette. When absent, uses brand colors. */
     colors?: string[];
-    /** Altura em pixels. Varia conforme o tipo quando ausente. */
+    /** Height in pixels. Varies by type when absent. */
     height?: number;
-    /** Largura usada quando o container ainda nao tem medida. */
+    /** Width used when the container has no measurement yet. */
     width?: number;
-    /** Linhas de grade e rotulos do eixo de valores. Padrao `true`. */
+    /** Grid lines and value axis labels. Default `true`. */
     showGrid?: boolean;
-    /** Legenda clicavel. Padrao `true` quando faz sentido para o tipo. */
+    /** Clickable legend. Default `true` when it makes sense for the type. */
     showLegend?: boolean;
-    /** Escreve o valor de cada ponto, barra ou fatia. */
+    /** Writes the value of each point, bar, or slice. */
     showValues?: boolean;
-    /** Anima o desenho na entrada. Padrao `true`. */
+    /** Animates drawing on entry. Default `true`. */
     animate?: boolean;
-    /** Curvas suaves em linhas e areas, com Catmull-Rom em Bezier. */
+    /** Smooth curves in lines and areas, with Catmull-Rom to Bezier. */
     smooth?: boolean;
-    /** Teto da escala. Em `progress` define o valor equivalente a 100 por cento. */
+    /** Scale ceiling. In `progress` defines the value equivalent to 100 percent. */
     max?: number;
-    /** Piso da escala. */
+    /** Scale floor. */
     min?: number;
-    /** Formatacao dos valores. Padrao `number`. */
+    /** Value formatting. Default `number`. */
     format?: ChartFormat;
-    /** Tooltip ao passar o mouse. Padrao `true`. */
+    /** Tooltip on mouse over. Default `true`. */
     tooltip?: boolean;
 }
-/** Controle devolvido por `renderChart`. */
+/** Control returned by `renderChart`. */
 interface ChartInstance {
-    /** Container onde o grafico foi desenhado. */
+    /** Container where the chart was drawn. */
     el: HTMLElement;
-    /** Opcoes em uso no momento. */
+    /** Options currently in use. */
     readonly options: ChartOptions;
-    /** Aplica novas opcoes e redesenha. */
+    /** Applies new options and redraws. */
     update(next: Partial<ChartOptions>): void;
-    /** Remove listeners, observadores e o conteudo gerado. */
+    /** Removes listeners, observers, and generated content. */
     destroy(): void;
 }
 /**
- * Formata um valor conforme `options.format`. O formato `percent` apenas
- * acrescenta o simbolo, porque em painel o dado ja chega na escala de 0 a 100.
+ * Formats a value according to `options.format`. The `percent` format only
+ * adds the symbol, because in a dashboard the data usually already comes in the 0 to 100 scale.
  */
 declare function formatChartValue(value: number, format?: ChartFormat): string;
 /**
- * Desenha um grafico dentro de um elemento e devolve o controle da instancia.
+ * Draws a chart inside an element and returns instance control.
  *
  * ```js
- * const grafico = V.renderChart(document.querySelector('#vendas'), {
+ * const chart = V.renderChart(document.querySelector('#sales'), {
  *   type: 'area',
  *   data: [12, 19, 8, 25, 30],
- *   labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai'],
+ *   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
  *   smooth: true,
  * })
- * grafico.update({ data: novosDados })
+ * chart.update({ data: newData })
  * ```
  *
- * @param el container que recebe o SVG. O conteudo anterior e substituido.
- * @param options tipo, dados e ajustes visuais
+ * @param el container that receives the SVG. Previous content is replaced.
+ * @param options type, data, and visual adjustments
  */
 declare function renderChart(el: HTMLElement, options: ChartOptions): ChartInstance;
-/** Tudo do modulo reunido, para expor como `V.charts`. */
+/** Everything from the module gathered, to expose as `V.charts`. */
 declare const charts: {
     render: typeof renderChart;
     format: typeof formatChartValue;
@@ -486,14 +484,14 @@ declare const charts: {
 /**
  * @module runtime/magics
  *
- * Variaveis magicas: valores globais disponiveis dentro de qualquer expressao
- * `v-*`, sem precisar declarar nada.
+ * Magic variables: global values available inside any `v-*` expression,
+ * without needing to declare anything.
  *
  * ```html
- * <button v-click="$toast.success('Salvo!')">Salvar</button>
- * <div v-show="$screen.mobile">Voce esta no celular</div>
- * <p v-show="!$network.online">Voce esta offline.</p>
- * <span>{ $store.carrinho.total }</span>
+ * <button v-click="$toast.success('Saved!')">Save</button>
+ * <div v-show="$screen.mobile">You're on mobile</div>
+ * <p v-show="!$network.online">You're offline.</p>
+ * <span>{ $store.cart.total }</span>
  * ```
  */
 declare const screen: {
@@ -504,117 +502,117 @@ declare const screen: {
     desktop: boolean;
     portrait: boolean;
     landscape: boolean;
-    /** Verifica uma media query arbitraria. */
+    /** Check an arbitrary media query. */
     matches(query: string): boolean;
 };
 declare const network: {
     online: boolean;
-    /** Tipo de conexao informado pelo navegador, quando disponivel. */
+    /** Connection type reported by the browser, when available. */
     type: string;
-    /** `true` quando o usuario pediu economia de dados. */
+    /** `true` when the user requested data saving mode. */
     saveData: boolean;
     slow: boolean;
 };
 declare const clipboard: {
-    /** Copia texto, com fallback para navegadores sem a API moderna. */
+    /** Copy text, with fallback for browsers without the modern API. */
     copy(text: string): Promise<boolean>;
-    /** Le o conteudo da area de transferencia, quando o usuario permitir. */
+    /** Read clipboard content, when the user allows. */
     read(): Promise<string>;
 };
 
 /**
  * @module ui/dialog
  *
- * Motor de dialogos acessiveis: modal generico, `alert`, `confirm` e `prompt`.
+ * Accessible dialog engine: generic modal, `alert`, `confirm`, and `prompt`.
  *
- * Todos compartilham o mesmo nucleo: fundo escurecido, trava de rolagem, foco
- * preso dentro do painel, devolucao do foco ao fechar, fechamento por Escape ou
- * clique no fundo, animacao de entrada e saida e empilhamento de varios
- * dialogos abertos ao mesmo tempo.
+ * All share the same core: darkened backdrop, scroll lock, focus trapped
+ * within the panel, focus restored on close, closing via Escape or backdrop
+ * click, entrance and exit animations, and stacking of multiple open dialogs
+ * at the same time.
  *
  * ```js
  * V.modal.open('#login')
- * await V.alert('Arquivo enviado.')
- * if (await V.confirm('Excluir o pedido?')) remover()
- * const nome = await V.prompt('Como devemos te chamar?')
+ * await V.alert('File uploaded.')
+ * if (await V.confirm('Delete the order?')) remove()
+ * const name = await V.prompt('What should we call you?')
  * ```
  *
  * ```html
- * <button v-modal="#login">Entrar</button>
+ * <button v-modal="#login">Sign in</button>
  * <div id="login" v-modal-content>
- *   <h2>Entrar</h2>
- *   <button v-modal-close>Fechar</button>
+ *   <h2>Sign in</h2>
+ *   <button v-modal-close>Close</button>
  * </div>
- * <button v-confirm="Excluir mesmo?" v-click="excluir()">Excluir</button>
+ * <button v-confirm="Delete for real?" v-click="remove()">Delete</button>
  * ```
  */
-/** Textos dos botoes e mensagens padrao, todos configuraveis. */
+/** Button texts and default messages, all configurable. */
 interface DialogLabels {
     confirm: string;
     cancel: string;
     ok: string;
     close: string;
-    /** Mensagem usada por `v-confirm` quando o atributo vem vazio. */
+    /** Message used by `v-confirm` when the attribute is empty. */
     confirmQuestion: string;
-    /** Erro mostrado pelo `prompt` quando o campo obrigatorio fica vazio. */
+    /** Error shown by `prompt` when the required field is empty. */
     required: string;
 }
 declare const settings: {
-    /** Duracao da animacao de entrada e saida, em milissegundos. */
+    /** Duration of entrance and exit animation, in milliseconds. */
     duration: number;
-    /** Tamanho padrao dos dialogos criados por `dialog()`. */
+    /** Default size of dialogs created by `dialog()`. */
     size: DialogSize;
 };
 type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 type DialogTone = 'default' | 'success' | 'warning' | 'danger';
 type DialogIcon = 'info' | 'success' | 'warning' | 'danger' | 'question' | 'none';
-/** Opcoes comuns a qualquer dialogo. */
+/** Common options for any dialog. */
 interface ModalOptions {
-    /** Fecha ao clicar no fundo escurecido. Padrao `true`. */
+    /** Close when clicking the darkened backdrop. Default `true`. */
     closeOnBackdrop?: boolean;
-    /** Fecha ao pressionar Escape. Padrao `true`. */
+    /** Close when pressing Escape. Default `true`. */
     closeOnEscape?: boolean;
-    /** Largura maxima do painel. Padrao `md`. */
+    /** Maximum width of the panel. Default `md`. */
     size?: DialogSize;
-    /** Alinhamento vertical. Padrao `center`. */
+    /** Vertical alignment. Default `center`. */
     position?: 'center' | 'top';
-    /** Trava a rolagem da pagina enquanto estiver aberto. Padrao `true`. */
+    /** Lock page scrolling while open. Default `true`. */
     lockScroll?: boolean;
-    /** Devolve o foco ao elemento anterior ao fechar. Padrao `true`. */
+    /** Restore focus to the previous element on close. Default `true`. */
     restoreFocus?: boolean;
-    /** Mostra o botao de fechar no canto. Padrao `true`. */
+    /** Show the close button in the corner. Default `true`. */
     closable?: boolean;
-    /** Remove fundo, borda e sombra do painel. */
+    /** Remove background, border, and shadow from the panel. */
     plain?: boolean;
-    /** Classes extras aplicadas ao painel. */
+    /** Extra classes applied to the panel. */
     className?: string;
-    /** Seletor ou elemento que recebe o foco inicial. */
+    /** Selector or element that receives initial focus. */
     initialFocus?: string | HTMLElement | null;
-    /** Rotulo lido por leitores de tela quando nao ha titulo visivel. */
+    /** Label read by screen readers when there is no visible title. */
     ariaLabel?: string;
     onOpen?(handle: DialogHandle): void;
     onClose?(result: unknown, handle: DialogHandle): void;
 }
-/** Controle de um dialogo aberto. */
+/** Control of an open dialog. */
 interface DialogHandle {
     id: string;
-    /** Camada fixa que cobre a tela. */
+    /** Fixed layer covering the screen. */
     root: HTMLElement;
-    /** Painel onde o conteudo aparece. */
+    /** Panel where the content appears. */
     panel: HTMLElement;
-    /** Corpo do painel, util para injetar conteudo depois de aberto. */
+    /** Panel body, useful for injecting content after opening. */
     body: HTMLElement;
-    /** Chave usada por `modal.close('#login')`. */
+    /** Key used by `modal.close('#login')`. */
     key: string | null;
-    /** Elemento da pagina adotado pelo dialogo, quando houver. */
+    /** Page element adopted by the dialog, if any. */
     source: HTMLElement | null;
-    /** Fecha o dialogo, resolvendo `closed` com o resultado. */
+    /** Close the dialog, resolving `closed` with the result. */
     close(result?: unknown): void;
-    /** Resolvida quando o dialogo termina de fechar. */
+    /** Resolved when the dialog finishes closing. */
     closed: Promise<unknown>;
 }
 /**
- * Controle dos modais montados a partir de elementos que ja existem na pagina.
+ * Control of modals created from elements already on the page.
  *
  * ```js
  * V.modal.open('#login', { size: 'sm' })
@@ -623,87 +621,87 @@ interface DialogHandle {
  * ```
  */
 declare const modal: {
-    /** Abre um elemento da pagina como modal. Aceita seletor ou o proprio elemento. */
+    /** Open a page element as a modal. Accepts a selector or the element itself. */
     open(target: string | HTMLElement, options?: ModalOptions): DialogHandle | null;
-    /** Fecha o modal indicado, ou o que estiver no topo da pilha. */
+    /** Close the indicated modal, or the one at the top of the stack. */
     close(target?: string | HTMLElement, result?: unknown): void;
-    /** Fecha todos os dialogos abertos, do topo para a base. */
+    /** Close all open dialogs, from top to bottom. */
     closeAll(result?: unknown): void;
-    /** Abre se estiver fechado, fecha se estiver aberto. */
+    /** Open if closed, close if open. */
     toggle(target: string | HTMLElement, options?: ModalOptions): DialogHandle | null;
-    /** Informa se um modal especifico, ou qualquer um, esta aberto. */
+    /** Check if a specific modal, or any, is open. */
     isOpen(target?: string | HTMLElement): boolean;
-    /** Dialogos abertos, do mais antigo ao mais recente. */
+    /** Open dialogs, from oldest to newest. */
     readonly opened: DialogHandle[];
-    /** Quantidade de dialogos abertos. */
+    /** Number of open dialogs. */
     readonly count: number;
-    /** Ajusta duracao da animacao e tamanho padrao. */
+    /** Adjust animation duration and default size. */
     configure(options: Partial<typeof settings>): void;
-    /** Troca os textos padrao dos botoes. */
+    /** Change the default button texts. */
     labels(next: Partial<DialogLabels>): DialogLabels;
 };
-/** Botao mostrado no rodape de um dialogo. */
+/** Button shown in a dialog footer. */
 interface DialogButton {
     label: string;
-    /** Valor entregue pela promessa quando este botao e clicado. */
+    /** Value delivered by the promise when this button is clicked. */
     value?: unknown;
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-    /** Fecha o dialogo ao clicar. Padrao `true`. */
+    /** Close the dialog on click. Default `true`. */
     close?: boolean;
-    /** Recebe o foco assim que o dialogo abre. */
+    /** Receive focus as soon as the dialog opens. */
     autofocus?: boolean;
-    /** Executa antes de fechar. Devolver `false` mantem o dialogo aberto. */
+    /** Execute before closing. Return `false` to keep the dialog open. */
     onClick?(handle: DialogHandle): unknown;
 }
-/** Opcoes de `V.dialog()`. */
+/** Options for `V.dialog()`. */
 interface DialogOptions extends ModalOptions {
     title?: string;
     description?: string;
-    /** Texto simples do corpo, inserido sem interpretar HTML. */
+    /** Plain text body, inserted without interpreting HTML. */
     text?: string;
-    /** HTML do corpo. Use apenas com conteudo proprio. */
+    /** Body HTML. Use only with your own content. */
     html?: string;
-    /** No pronto para virar o corpo, util para formularios montados a mao. */
+    /** Ready node to become the body, useful for hand-built forms. */
     node?: Node;
     buttons?: DialogButton[];
     icon?: DialogIcon;
     tone?: DialogTone;
 }
 /**
- * Dialogo generico com titulo, descricao, conteudo e botoes.
+ * Generic dialog with title, description, content, and buttons.
  *
  * ```js
- * const escolha = await V.dialog({
- *   title: 'Publicar agora?',
- *   description: 'A alteracao fica visivel para todo mundo.',
+ * const choice = await V.dialog({
+ *   title: 'Publish now?',
+ *   description: 'The change will be visible to everyone.',
  *   buttons: [
- *     { label: 'Cancelar', variant: 'secondary', value: null },
- *     { label: 'Publicar', variant: 'primary', value: 'publicar', autofocus: true }
+ *     { label: 'Cancel', variant: 'secondary', value: null },
+ *     { label: 'Publish', variant: 'primary', value: 'publish', autofocus: true }
  *   ]
  * })
  * ```
  *
- * @returns o `value` do botao clicado, ou `null` quando o dialogo e dispensado
+ * @returns the `value` of the clicked button, or `null` when the dialog is dismissed
  */
 declare function dialog<T = unknown>(options: DialogOptions): Promise<T | null>;
-/** Opcoes de `V.alert()`. */
+/** Options for `V.alert()`. */
 interface AlertOptions extends ModalOptions {
     title?: string;
     description?: string;
     icon?: DialogIcon;
     tone?: DialogTone;
-    /** Texto do unico botao. Padrao `OK`. */
+    /** Text of the single button. Default `OK`. */
     confirmLabel?: string;
 }
 /**
- * Aviso com um unico botao.
+ * Alert with a single button.
  *
  * ```js
- * await V.alert('Pedido enviado com sucesso.', { icon: 'success' })
+ * await V.alert('Order sent successfully.', { icon: 'success' })
  * ```
  */
 declare function alert(message: string, options?: AlertOptions): Promise<void>;
-/** Opcoes de `V.confirm()`. */
+/** Options for `V.confirm()`. */
 interface ConfirmOptions extends ModalOptions {
     title?: string;
     description?: string;
@@ -711,115 +709,115 @@ interface ConfirmOptions extends ModalOptions {
     tone?: DialogTone;
     confirmLabel?: string;
     cancelLabel?: string;
-    /** Atalho para `tone: 'danger'`, com botao vermelho. */
+    /** Shortcut for `tone: 'danger'`, with red button. */
     danger?: boolean;
 }
 /**
- * Pergunta de sim ou nao.
+ * Yes or no question.
  *
  * ```js
- * if (await V.confirm('Excluir o pedido?', { danger: true })) remover()
+ * if (await V.confirm('Delete the order?', { danger: true })) remove()
  * ```
  */
 declare function confirm(message: string, options?: ConfirmOptions): Promise<boolean>;
-/** Tipos aceitos pelo campo do `prompt`. */
+/** Types accepted by the `prompt` field. */
 type PromptType = 'text' | 'password' | 'email' | 'number' | 'textarea';
-/** Opcoes de `V.prompt()`. */
+/** Options for `V.prompt()`. */
 interface PromptOptions extends ModalOptions {
     title?: string;
     description?: string;
     icon?: DialogIcon;
     type?: PromptType;
-    /** Valor inicial do campo. */
+    /** Initial field value. */
     value?: string;
     placeholder?: string;
     hint?: string;
     required?: boolean;
     confirmLabel?: string;
     cancelLabel?: string;
-    /** Devolva uma mensagem para bloquear o envio, ou `null` para liberar. */
+    /** Return a message to block submission, or `null` to allow. */
     validate?(value: string): string | null | undefined;
 }
 /**
- * Pergunta que espera um texto. O campo ja abre focado e a validacao mantem o
- * dialogo aberto enquanto o valor nao for aceito.
+ * Question expecting text input. The field opens focused and validation keeps
+ * the dialog open until the value is accepted.
  *
  * ```js
- * const email = await V.prompt('E-mail para contato', {
+ * const email = await V.prompt('Contact email', {
  *   type: 'email',
  *   required: true,
- *   validate: (v) => v.includes('@') ? null : 'Informe um e-mail valido.'
+ *   validate: (v) => v.includes('@') ? null : 'Please enter a valid email.'
  * })
  * ```
  *
- * @returns o texto digitado, ou `null` quando o usuario cancela
+ * @returns the typed text, or `null` when the user cancels
  */
 declare function prompt(label: string, options?: PromptOptions): Promise<string | null>;
 
 /**
  * @module ui/palette
  *
- * Paleta configuravel da Voodoo. A partir de poucas cores base a funcao gera a
- * escala completa de tons (50 a 900), a versao de tema escuro e a cor de texto
- * com melhor contraste sobre cada cor, tudo escrito como variaveis CSS no
+ * Voodoo's configurable palette. From a few base colors, the function generates
+ * the complete scale of tones (50 to 900), the dark theme version, and the text
+ * color with the best contrast over each color, all written as CSS variables in
  * `:root`.
  *
- * O calculo acontece em OKLCH, um espaco perceptualmente uniforme: degraus com
- * a mesma diferenca de luminancia parecem igualmente distantes para o olho, o
- * que nao acontece em HSL. A cor de texto usa o calculo real de luminancia
- * relativa da WCAG, entao o resultado e sempre legivel.
+ * The calculation happens in OKLCH, a perceptually uniform color space: steps with
+ * the same difference in luminance appear equally distant to the eye, which does not
+ * happen in HSL. The text color uses the real WCAG relative luminance calculation,
+ * so the result is always readable.
  *
  * ```js
  * V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' })
- * V.palette({ preset: 'oceano' })
+ * V.palette({ preset: 'ocean' })
  * ```
  */
-/** Cor no espaco sRGB, com canais de 0 a 255. */
+/** Color in sRGB space, with channels from 0 to 255. */
 interface RgbColor {
     r: number;
     g: number;
     b: number;
 }
-/** Cor em OKLCH: luminancia perceptual (0 a 1), croma e matiz em graus. */
+/** Color in OKLCH: perceptual luminance (0 to 1), chroma and hue in degrees. */
 interface OklchColor {
     l: number;
     c: number;
     h: number;
 }
 /**
- * Le uma cor escrita como `#abc`, `#aabbcc`, `rgb(...)` ou `hsl(...)`.
- * Devolve `null` quando o texto nao descreve uma cor conhecida.
+ * Read a color written as `#abc`, `#aabbcc`, `rgb(...)` or `hsl(...)`.
+ * Returns `null` when the text does not describe a known color.
  */
 declare function parseColor(input: string): RgbColor | null;
-/** Converte sRGB em OKLCH. */
+/** Convert sRGB to OKLCH. */
 declare function rgbToOklch(color: RgbColor): OklchColor;
 /**
- * Converte OKLCH em sRGB. Cores fora do gamut do monitor perdem croma aos
- * poucos ate caberem, o que preserva matiz e luminancia em vez de recortar os
- * canais e mudar a cor percebida.
+ * Convert OKLCH to sRGB. Colors outside the monitor's gamut gradually lose chroma
+ * until they fit, which preserves hue and luminance instead of clipping channels
+ * and changing the perceived color.
  */
 declare function oklchToRgb(color: OklchColor): RgbColor;
-/** Escreve uma cor sRGB como `#rrggbb`. */
+/** Write an sRGB color as `#rrggbb`. */
 declare function toHex(color: RgbColor): string;
-/** Escreve uma cor sRGB como `rgba(r, g, b, alpha)`. */
+/** Write an sRGB color as `rgba(r, g, b, alpha)`. */
 declare function toRgba(color: RgbColor, alpha: number): string;
-/** Razao de contraste da WCAG entre duas cores, de 1 a 21. */
+/** WCAG contrast ratio between two colors, from 1 to 21. */
 declare function contrastRatio(a: RgbColor | string, b: RgbColor | string): number;
 /**
- * Escolhe preto ou branco para o texto sobre a cor informada, comparando a
- * razao de contraste real das duas opcoes.
+ * Choose black or white for text over the given color, comparing the real
+ * contrast ratio of the two options.
  */
 declare function contrastText(color: RgbColor | string): string;
-/** Escala de tons de uma cor, com os degraus de 50 a 900. */
+/** Scale of tones for a color, with steps from 50 to 900. */
 type ColorScale = Record<string, string>;
 /**
- * Gera a escala de uma cor base.
+ * Generate the scale for a base color.
  *
- * @param color cor base em qualquer formato aceito por `parseColor`
- * @param dark quando `true`, gera a escala do tema escuro (papeis invertidos)
+ * @param color base color in any format accepted by `parseColor`
+ * @param dark when `true`, generates the dark theme scale (inverted roles)
  */
 declare function colorScale(color: string | RgbColor, dark?: boolean): ColorScale;
-/** Conjunto de cores base de um preset. */
+/** Set of base colors for a preset. */
 interface PaletteColors {
     primary: string;
     accent: string;
@@ -827,59 +825,59 @@ interface PaletteColors {
     warning: string;
     danger: string;
     info: string;
-    /** Cor que tinge fundos, textos e bordas. Padrao: matiz da primaria. */
+    /** Color that tints backgrounds, texts, and borders. Default: hue of primary. */
     neutral?: string;
 }
-/** Nomes dos presets prontos. */
+/** Names of ready-made presets. */
 type PresetName = 'violeta' | 'oceano' | 'floresta' | 'poente' | 'grafite';
-/** Opcoes aceitas por `V.palette()`. */
+/** Options accepted by `V.palette()`. */
 interface PaletteOptions extends Partial<PaletteColors> {
-    /** Preset usado como ponto de partida. As cores informadas sobrescrevem. */
+    /** Preset used as starting point. Provided colors override it. */
     preset?: PresetName;
-    /** Raio das bordas, como `12px` ou `0.75rem`. */
+    /** Border radius, like `12px` or `0.75rem`. */
     radius?: string;
-    /** Familia principal. A pagina continua responsavel por carregar a fonte. */
+    /** Primary font family. The page remains responsible for loading the font. */
     font?: string;
-    /** Familia monoespacada usada por `VCodeBlock`. */
+    /** Monospaced font family used by `VCodeBlock`. */
     monoFont?: string;
-    /** Salva a escolha em localStorage. Padrao `true`. */
+    /** Save the choice in localStorage. Default `true`. */
     persist?: boolean;
 }
-/** Paleta ja resolvida, com todas as escalas calculadas. */
+/** Resolved palette, with all scales calculated. */
 interface ResolvedPalette {
     colors: PaletteColors;
     radius: string;
     font: string;
     monoFont: string;
-    /** Escalas do tema claro, por nome de cor. */
+    /** Light theme scales, by color name. */
     light: Record<string, ColorScale>;
-    /** Escalas do tema escuro, por nome de cor. */
+    /** Dark theme scales, by color name. */
     dark: Record<string, ColorScale>;
-    /** Cor de texto sobre cada cor base, calculada pela WCAG. */
+    /** Text color over each base color, calculated by WCAG. */
     contrast: Record<string, string>;
     css: string;
 }
 /**
- * Aplica uma paleta. Gera as escalas, escreve as variaveis CSS no `:root`,
- * cria as versoes de tema escuro e salva a escolha em localStorage.
+ * Apply a palette. Generates the scales, writes CSS variables to `:root`,
+ * creates dark theme versions, and saves the choice in localStorage.
  *
  * ```js
  * V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' })
  * ```
  *
- * @returns a paleta resolvida, com as escalas e o CSS gerado
+ * @returns the resolved palette, with scales and generated CSS
  */
 declare function applyPalette(options?: PaletteOptions): ResolvedPalette;
 /**
- * Aplica a paleta salva em localStorage, ou o preset padrao quando nao existe
- * escolha anterior. Chamada automaticamente pelos componentes de UI.
+ * Apply the palette saved in localStorage, or the default preset when there is no
+ * previous choice. Called automatically by UI components.
  */
 declare function initPalette(): ResolvedPalette;
-/** Garante que as variaveis da paleta existam antes de qualquer componente. */
+/** Ensure that palette variables exist before any component. */
 declare function ensurePalette(): void;
 /**
- * Paleta da Voodoo. Chame como funcao para aplicar, ou use os utilitarios
- * anexados para inspecionar cores e contraste.
+ * Voodoo's palette. Call as a function to apply, or use the attached utilities
+ * to inspect colors and contrast.
  *
  * ```js
  * V.palette({ preset: 'oceano' })
@@ -888,31 +886,31 @@ declare function ensurePalette(): void;
  * ```
  */
 declare const palette: typeof applyPalette & {
-    /** Presets prontos, indexados pelo nome. */
+    /** Ready-made presets, indexed by name. */
     presets: Record<PresetName, PaletteColors>;
-    /** Nomes dos presets disponiveis. */
+    /** Names of available presets. */
     readonly names: PresetName[];
-    /** Paleta em uso, ou `null` antes da primeira aplicacao. */
+    /** Palette in use, or `null` before the first application. */
     readonly current: ResolvedPalette | null;
-    /** Opcoes usadas na ultima aplicacao. */
+    /** Options used in the last application. */
     readonly options: PaletteOptions | null;
-    /** Aplica a paleta salva, ou o padrao quando nao ha nada salvo. */
+    /** Apply the saved palette, or the default when there is nothing saved. */
     init: typeof initPalette;
-    /** Garante que as variaveis existam, sem sobrescrever o que ja foi aplicado. */
+    /** Ensure variables exist, without overwriting what has already been applied. */
     ensure: typeof ensurePalette;
-    /** Volta ao preset padrao e apaga a escolha salva. */
+    /** Return to the default preset and clear the saved choice. */
     reset(): ResolvedPalette;
-    /** Troca apenas o preset, mantendo raio e fonte atuais. */
+    /** Change only the preset, maintaining current radius and font. */
     use(name: PresetName): ResolvedPalette;
-    /** Escala de tons de uma cor qualquer. */
+    /** Scale of tones for any color. */
     scale: typeof colorScale;
-    /** Preto ou branco, conforme o melhor contraste WCAG sobre a cor. */
+    /** Black or white, depending on the best WCAG contrast over the color. */
     contrastText: typeof contrastText;
-    /** Razao de contraste WCAG entre duas cores. */
+    /** WCAG contrast ratio between two colors. */
     contrastRatio: typeof contrastRatio;
-    /** Luminancia relativa WCAG de uma cor. */
+    /** WCAG relative luminance of a color. */
     luminance(color: string | RgbColor): number;
-    /** Conversores expostos para quem quiser gerar cores derivadas. */
+    /** Converters exposed for those who want to generate derived colors. */
     convert: {
         parseColor: typeof parseColor;
         rgbToOklch: typeof rgbToOklch;
@@ -925,10 +923,10 @@ declare const palette: typeof applyPalette & {
 /**
  * @module router
  *
- * Roteador de aplicacao de pagina unica, sem nenhuma dependencia externa.
+ * Single-page application router with no external dependencies.
  *
- * Dois modos: `history`, que usa a History API e URLs limpas, e `hash`, que
- * guarda a rota depois do `#` e funciona ate abrindo o arquivo direto do disco.
+ * Two modes: `history`, which uses the History API and clean URLs, and `hash`, which
+ * stores the route after `#` and works even when opening the file directly from disk.
  *
  * ```js
  * V.router({
@@ -954,128 +952,128 @@ declare const palette: typeof applyPalette & {
  * <main v-router-view>Carregando...</main>
  * ```
  */
-/** Definicao de uma rota, associada a um padrao como `/usuarios/:id`. */
+/** Definition of a route, associated with a pattern like `/usuarios/:id`. */
 interface RouteRecord {
-    /** Nome do componente registrado que sera montado dentro de `v-router-view`. */
+    /** Name of the registered component that will be mounted inside `v-router-view`. */
     component?: string;
-    /** URL de um HTML remoto carregado e inserido no lugar do componente. */
+    /** URL of remote HTML loaded and inserted in place of the component. */
     view?: string;
-    /** Titulo aplicado em `document.title` ao entrar na rota. */
+    /** Title applied to `document.title` when entering the route. */
     title?: string;
-    /** Nome da rota, util para `$route.name` e para navegacao por nome. */
+    /** Route name, useful for `$route.name` and for navigation by name. */
     name?: string;
-    /** Dados livres da rota, disponiveis em `$route.meta`. */
+    /** Free-form data of the route, available in `$route.meta`. */
     meta?: Record<string, unknown>;
-    /** Redireciona para outro caminho assim que a rota casa. */
+    /** Redirects to another path as soon as the route matches. */
     redirect?: string;
-    /** Guard exclusivo desta rota, executado antes do `beforeEach` global. */
+    /** Guard exclusive to this route, executed before the global `beforeEach`. */
     beforeEnter?: NavigationGuard;
 }
-/** Estado da rota atual. E o objeto exposto por `$route`. */
+/** Current route state. It is the object exposed by `$route`. */
 interface RouteLocation {
-    /** Caminho sem query e sem hash, sempre comecando com barra. */
+    /** Path without query and without hash, always starting with a slash. */
     path: string;
-    /** Caminho completo, com query e hash. */
+    /** Full path, with query and hash. */
     fullPath: string;
-    /** Parametros extraidos do padrao, como `{ id: '42' }`. */
+    /** Parameters extracted from the pattern, like `{ id: '42' }`. */
     params: Record<string, string>;
-    /** Query string ja convertida em objeto. */
+    /** Query string already converted to an object. */
     query: Record<string, string>;
-    /** Ancora da URL, sem o `#`. */
+    /** URL anchor, without the `#`. */
     hash: string;
-    /** Nome declarado na rota casada. */
+    /** Name declared in the matched route. */
     name: string;
-    /** Metadados declarados na rota casada. */
+    /** Metadata declared in the matched route. */
     meta: Record<string, unknown>;
-    /** Padrao que casou, como `/usuarios/:id`. `null` quando nada casou. */
+    /** Pattern that matched, like `/usuarios/:id`. `null` when nothing matched. */
     matched: string | null;
 }
 /**
- * Guard de navegacao. Devolva `false` para cancelar, uma string para
- * redirecionar, ou `true`, `undefined` ou nada para deixar seguir.
+ * Navigation guard. Return `false` to cancel, a string to redirect,
+ * or `true`, `undefined`, or nothing to allow passage.
  */
 type NavigationGuard = (to: RouteLocation, from: RouteLocation) => boolean | string | void | Promise<boolean | string | void>;
-/** Hook executado depois que a navegacao foi concluida. */
+/** Hook executed after navigation is completed. */
 type NavigationHook = (to: RouteLocation, from: RouteLocation) => void;
 /**
- * Controle de rolagem. Devolva a posicao vertical desejada, ou `false` para
- * assumir a rolagem manualmente.
+ * Scroll control. Return the desired vertical position, or `false` to
+ * handle scrolling manually.
  */
 type ScrollBehavior = (to: RouteLocation, from: RouteLocation, saved: number | null) => number | false | void;
 interface RouterOptions {
-    /** `history` usa URLs limpas, `hash` guarda a rota depois do `#`. */
+    /** `history` uses clean URLs, `hash` stores the route after `#`. */
     mode?: 'history' | 'hash';
-    /** Prefixo comum de todas as rotas no modo `history`. Padrao `/`. */
+    /** Common prefix for all routes in `history` mode. Default `/`. */
     base?: string;
-    /** Mapa de padrao para definicao de rota. */
+    /** Map of pattern to route definition. */
     routes: Record<string, RouteRecord>;
-    /** Guard global executado antes de cada navegacao. */
+    /** Global guard executed before each navigation. */
     beforeEach?: NavigationGuard;
-    /** Hook global executado depois de cada navegacao. */
+    /** Global hook executed after each navigation. */
     afterEach?: NavigationHook;
-    /** Classe aplicada por `v-link` quando a rota comeca com o destino. */
+    /** Class applied by `v-link` when the route starts with the target. */
     linkActiveClass?: string;
-    /** Classe aplicada por `v-link` quando a rota e exatamente o destino. */
+    /** Class applied by `v-link` when the route is exactly the target. */
     linkExactActiveClass?: string;
-    /** Usa a View Transitions API na troca de pagina. Padrao `true`. */
+    /** Uses the View Transitions API when switching pages. Default `true`. */
     transition?: boolean;
-    /** Modelo do titulo, com `%s` no lugar do titulo da rota. */
+    /** Title template, with `%s` in place of the route title. */
     titleTemplate?: string;
-    /** Controle fino da rolagem apos cada navegacao. */
+    /** Fine control of scrolling after each navigation. */
     scrollBehavior?: ScrollBehavior;
 }
 interface NavigateOptions {
-    /** Substitui a entrada atual do historico em vez de empilhar uma nova. */
+    /** Replaces the current history entry instead of stacking a new one. */
     replace?: boolean;
-    /** Estado extra guardado na entrada do historico. */
+    /** Extra state saved in the history entry. */
     state?: Record<string, unknown>;
-    /** Desliga a rolagem automatica desta navegacao. */
+    /** Disables automatic scrolling for this navigation. */
     scroll?: boolean;
-    /** Navega mesmo quando o destino e igual a rota atual. */
+    /** Navigates even when the target is the same as the current route. */
     force?: boolean;
 }
 /**
- * Rota atual, reativa. Qualquer expressao que leia `$route` se atualiza sozinha
- * quando a navegacao acontece.
+ * Current route, reactive. Any expression that reads `$route` updates itself
+ * when navigation happens.
  */
 declare const route: RouteLocation;
 /**
- * Navega para um caminho sem recarregar a pagina.
+ * Navigates to a path without reloading the page.
  *
  * ```js
  * await V.navigate('/usuarios/42')
  * await V.navigate('/login', { replace: true })
  * ```
  *
- * @returns `true` quando a navegacao aconteceu, `false` quando um guard cancelou.
+ * @returns `true` when navigation happened, `false` when a guard canceled.
  */
 declare function navigate(target: string, options?: NavigateOptions): Promise<boolean>;
 interface RouterApi {
     (options: RouterOptions): RouterApi;
-    /** Rota atual, reativa. */
+    /** Current route, reactive. */
     readonly current: RouteLocation;
-    /** Empilha uma nova entrada no historico. */
+    /** Stacks a new entry in history. */
     push(target: string, options?: NavigateOptions): Promise<boolean>;
-    /** Substitui a entrada atual do historico. */
+    /** Replaces the current history entry. */
     replace(target: string, options?: NavigateOptions): Promise<boolean>;
-    /** Alias de `push`, mesma funcao exposta em `V.navigate`. */
+    /** Alias of `push`, same function exposed in `V.navigate`. */
     navigate(target: string, options?: NavigateOptions): Promise<boolean>;
-    /** Volta uma entrada no historico. */
+    /** Goes back one entry in history. */
     back(): void;
-    /** Avanca uma entrada no historico. */
+    /** Goes forward one entry in history. */
     forward(): void;
-    /** Anda `delta` entradas no historico. */
+    /** Goes `delta` entries in history. */
     go(delta: number): void;
-    /** Resolve um destino sem navegar. */
+    /** Resolves a destination without navigating. */
     resolve(target: string): RouteLocation;
     addRoute(pattern: string, record: RouteRecord): void;
     removeRoute(pattern: string): void;
-    /** Padroes registrados, do mais especifico para o menos especifico. */
+    /** Registered patterns, from most specific to least specific. */
     patterns(): string[];
-    /** Desliga os ouvintes de historico. */
+    /** Disconnects the history listeners. */
     stop(): void;
     clearViewCache(url?: string): void;
-    /** `true` depois que `V.router({...})` foi chamado. */
+    /** `true` after `V.router({...})` is called. */
     readonly ready: boolean;
 }
 declare const router: RouterApi;
@@ -1083,9 +1081,9 @@ declare const router: RouterApi;
 /**
  * @module i18n
  *
- * Internacionalizacao reativa. Trocar o idioma nao recarrega a pagina: todo
- * texto que passou por `t()` e todo formatador de numero, moeda ou data se
- * atualiza sozinho, porque tudo le o mesmo estado reativo.
+ * Reactive internationalization. Changing the language doesn't reload the page: all text
+ * that went through `t()` and all number, currency, and date formatters update themselves
+ * because everything reads the same reactive state.
  *
  * ```js
  * V.i18n({
@@ -1106,64 +1104,64 @@ declare const router: RouterApi;
  * <span>{ $t('comum.salvar') } em { $locale }</span>
  * ```
  */
-/** Arvore de mensagens de um idioma. Aceita aninhamento em qualquer nivel. */
+/** Message tree for a language. Accepts nesting at any level. */
 interface MessageTree {
     [key: string]: string | MessageTree;
 }
-/** Valores usados na interpolacao de `{chave}`. */
+/** Values used in the interpolation of `{key}`. */
 type TranslateParams = Record<string, unknown> | number;
 interface I18nOptions {
-    /** Idioma inicial. Perde para o idioma salvo e para o detectado. */
+    /** Initial language. Loses to the saved language and to the detected language. */
     locale?: string;
-    /** Idioma usado quando a chave nao existe no idioma atual. */
+    /** Language used when the key doesn't exist in the current language. */
     fallback?: string;
-    /** Mensagens por idioma. */
+    /** Messages per language. */
     messages?: Record<string, MessageTree>;
-    /** Moeda padrao de `c()`. Cai em `config.currency`. */
+    /** Default currency of `c()`. Falls to `config.currency`. */
     currency?: string;
-    /** Guarda o idioma escolhido no localStorage. Padrao `true`. */
+    /** Saves the chosen language in localStorage. Default `true`. */
     persist?: boolean | string;
-    /** Detecta o idioma do navegador quando nada foi salvo. Padrao `true`. */
+    /** Detects the browser's language when nothing was saved. Default `true`. */
     detect?: boolean;
-    /** Modelo de URL para carregamento sob demanda, com `{locale}`. */
+    /** URL template for on-demand loading, with `{locale}`. */
     loadPath?: string;
 }
 /**
- * Traduz uma chave no idioma atual.
+ * Translates a key in the current language.
  *
- * A busca tenta o idioma atual, depois idiomas parecidos, depois o fallback e,
- * se nada existir, devolve a propria chave, que sempre e melhor do que texto
- * vazio na tela.
+ * The search tries the current language, then similar languages, then the fallback,
+ * and if nothing exists, returns the key itself, which is always better than empty
+ * text on the screen.
  *
  * ```js
  * t('comum.salvar')              // 'Salvar'
  * t('ola', { nome: 'Ana' })      // 'Ola, Ana!'
  * t('itens', { n: 3 })           // '3 itens'
- * t('itens', 3)                  // atalho do mesmo caso
+ * t('itens', 3)                  // shortcut for the same case
  * ```
  */
 declare function t(key: string, params?: TranslateParams): string;
-/** `true` quando a chave existe no idioma atual ou no fallback. */
+/** `true` when the key exists in the current language or in the fallback. */
 declare function te(key: string, locale?: string): boolean;
-/** Formata um numero no idioma atual. */
+/** Formats a number in the current language. */
 declare function n(value: number | string, options?: Intl.NumberFormatOptions): string;
-/** Formata um valor como moeda no idioma atual. */
+/** Formats a value as currency in the current language. */
 declare function c(value: number | string, currency?: string): string;
-/** Formata uma data no idioma atual. Aceita preset ou mascara textual. */
+/** Formats a date in the current language. Accepts preset or text mask. */
 declare function d(value: Date | string | number, format?: string | Intl.DateTimeFormatOptions): string;
-/** Tempo relativo no idioma atual, como `ha 5 minutos`. */
+/** Relative time in the current language, like 'ha 5 minutos'. */
 declare function rt(value: Date | string | number): string;
-/** Idioma ativo. */
+/** Active language. */
 declare function getLocale(): string;
-/** Mensagens de um idioma, ou do idioma atual quando nenhum for informado. */
+/** Messages of a language, or of the current language when none is provided. */
 declare function messagesOf(locale?: string): MessageTree;
 /**
- * Adiciona mensagens a um idioma, mesclando com o que ja existe.
- * Retorna o proprio idioma, para encadear.
+ * Adds messages to a language, merging with what already exists.
+ * Returns the language itself, for chaining.
  */
 declare function addMessages(locale: string, messages: MessageTree): string;
 /**
- * Carrega mensagens sob demanda.
+ * Loads messages on demand.
  *
  * ```js
  * await V.i18n.loadMessages('es', '/i18n/es.json')
@@ -1172,24 +1170,24 @@ declare function addMessages(locale: string, messages: MessageTree): string;
  */
 declare function loadMessages(locale: string, source: string | MessageTree): Promise<void>;
 /**
- * Troca o idioma ativo. A pagina inteira se atualiza na hora, sem recarregar.
+ * Changes the active language. The entire page updates immediately without reloading.
  *
- * Quando `loadPath` foi configurado e o idioma ainda nao tem mensagens, o
- * arquivo e buscado em segundo plano e a promessa resolve quando ele chega.
+ * When `loadPath` was configured and the language doesn't have messages yet, the file
+ * is fetched in the background and the promise resolves when it arrives.
  */
 declare function setLocale(locale: string): Promise<void>;
 /**
- * Escolhe o melhor idioma do navegador entre os que existem.
- * Devolve `null` quando nenhum idioma do navegador tem mensagens.
+ * Chooses the best browser language among those that exist.
+ * Returns `null` when no browser language has messages.
  */
 declare function detectLocale(): string | null;
 interface I18nApi {
     (options?: I18nOptions): I18nApi;
-    /** Idioma ativo, reativo quando lido dentro de um efeito. */
+    /** Active language, reactive when read within an effect. */
     readonly locale: string;
-    /** Idioma usado quando a chave nao existe no idioma atual. */
+    /** Language used when the key doesn't exist in the current language. */
     readonly fallback: string;
-    /** Idiomas com mensagens carregadas. */
+    /** Languages with loaded messages. */
     readonly locales: string[];
     t: typeof t;
     te: typeof te;
@@ -1205,18 +1203,18 @@ interface I18nApi {
     detectLocale: typeof detectLocale;
 }
 /**
- * O objeto i18n e uma funcao chamavel que tambem carrega a API. Os acessos
- * dinamicos sao copiados com getOwnPropertyDescriptors, o que mantem cada
- * getter vivo. Com Object.assign eles seriam executados uma unica vez e o
- * idioma ficaria congelado no valor inicial.
+ * The i18n object is a callable function that also loads the API. Dynamic accesses
+ * are copied with getOwnPropertyDescriptors, which keeps each getter alive. With
+ * Object.assign they would be executed once and the language would be frozen at
+ * the initial value.
  */
 declare const i18n: I18nApi;
 
 /**
  * @module forms/validate
  *
- * Motor de validacao com registro extensivel de regras, mensagens em portugues
- * e apresentacao automatica dos erros no proprio HTML.
+ * Validation engine with extensible rule registration, messages in Portuguese,
+ * and automatic error presentation in HTML.
  *
  * ```html
  * <form v-submit="/api/users" v-validate>
@@ -1225,11 +1223,11 @@ declare const i18n: I18nApi;
  * </form>
  * ```
  */
-/** Elementos que a validacao entende como campo de formulario. */
+/** Elements that validation understands as form fields. */
 type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-/** Resultado de uma regra: `true` aprova, `false` reprova, texto reprova com mensagem. */
+/** Rule result: `true` approves, `false` rejects, text rejects with message. */
 type ValidatorResult = boolean | string;
-/** Funcao de uma regra. Recebe o valor em texto, o parametro e o proprio campo. */
+/** Rule function. Receives the value as text, parameter, and the field itself. */
 type ValidatorFn = (value: string, param: string | undefined, el: FormField) => ValidatorResult | Promise<ValidatorResult>;
 interface FieldValidationResult {
     valid: boolean;
@@ -1241,33 +1239,33 @@ interface FormValidationResult {
     errors: Record<string, string>;
 }
 interface SerializeOptions {
-    /** Forca a saida em `FormData`, mesmo sem arquivos. */
+    /** Force output as `FormData`, even without files. */
     formData?: boolean;
-    /** Inclui campos desabilitados. Padrao `false`. */
+    /** Include disabled fields. Default `false`. */
     includeDisabled?: boolean;
-    /** Remove espacos nas pontas dos textos. Padrao `true`. */
+    /** Remove spaces at text ends. Default `true`. */
     trim?: boolean;
-    /** Converte campos numericos para `number`. Padrao `true`. */
+    /** Convert numeric fields to `number`. Default `true`. */
     numbers?: boolean;
 }
 /**
- * Registra uma regra de validacao e cria a directive `v-validate-<nome>`.
+ * Registers a validation rule and creates the `v-validate-<name>` directive.
  *
  * ```js
  * V.validator('par', (value) => Number(value) % 2 === 0, 'Informe um numero par.')
  * ```
  */
 declare function validator(name: string, fn: ValidatorFn, defaultMessage?: string): void;
-/** Limpa todos os erros visiveis de um formulario. */
+/** Clears all visible errors from a form. */
 declare function clearErrors(form: HTMLElement): void;
 /**
- * Aplica no HTML os erros vindos do servidor. Mensagens sem campo
- * correspondente aparecem em um resumo no topo do formulario.
+ * Applies server errors to the HTML. Messages without a corresponding field
+ * appear in a summary at the top of the form.
  */
 declare function showFormErrors(form: HTMLElement, errors: unknown): Record<string, string>;
 /**
- * Atalho geral: valida um formulario inteiro ou um campo isolado, decidindo
- * pelo tipo do elemento recebido.
+ * General shortcut: validates an entire form or a single field, deciding
+ * based on the element type received.
  *
  * ```js
  * await V.validate(document.forms[0])          // { valid, errors }
@@ -1276,17 +1274,17 @@ declare function showFormErrors(form: HTMLElement, errors: unknown): Record<stri
  */
 declare function validate(target: HTMLElement | FormField): Promise<FormValidationResult | FieldValidationResult>;
 /**
- * Transforma o formulario em objeto JavaScript, respeitando nomes como
- * `user[endereco][rua]` e `tags[]`. Devolve `FormData` quando houver arquivo
- * selecionado ou quando `options.formData` for verdadeiro.
+ * Transforms the form into a JavaScript object, respecting names like
+ * `user[address][street]` and `tags[]`. Returns `FormData` when a file is
+ * selected or when `options.formData` is true.
  */
 declare function serializeForm(form: HTMLElement, options?: SerializeOptions): Record<string, unknown> | FormData;
 
 /**
  * @module forms/mask
  *
- * Mascaras de digitacao que preservam a posicao do cursor, inclusive quando o
- * usuario edita o meio do texto ou apaga um separador.
+ * Input masks that preserve cursor position, even when the user edits the middle
+ * of text or deletes a separator.
  *
  * ```html
  * <input v-mask="cpf">
@@ -1295,14 +1293,14 @@ declare function serializeForm(form: HTMLElement, options?: SerializeOptions): R
  * <input v-mask-currency="R$ " v-mask-decimals="2">
  * ```
  */
-/** Funcao que formata um valor cru. Usada por mascaras dinamicas. */
+/** Function that formats a raw value. Used by dynamic masks. */
 type MaskResolver = (value: string) => string;
-/** Uma mascara e um padrao de caracteres ou uma funcao de formatacao. */
+/** A mask is either a character pattern or a formatting function. */
 type MaskPattern = string | MaskResolver;
-/** Mascaras nomeadas disponiveis para `v-mask` e `applyMask`. */
+/** Named masks available for `v-mask` and `applyMask`. */
 declare const masks: Map<string, MaskPattern>;
 /**
- * Registra uma mascara nomeada.
+ * Registers a named mask.
  *
  * ```js
  * V.registerMask('processo', '9999999-99.9999.9.99.9999')
@@ -1311,32 +1309,32 @@ declare const masks: Map<string, MaskPattern>;
  */
 declare function registerMask(name: string, patternOrFn: MaskPattern): void;
 interface CurrencyMaskOptions {
-    /** Texto antes do numero. Padrao `R$ `. */
+    /** Text before the number. Default `R$ `. */
     prefix?: string;
-    /** Texto depois do numero. */
+    /** Text after the number. */
     suffix?: string;
-    /** Casas decimais. Padrao `2`. */
+    /** Decimal places. Default `2`. */
     decimals?: number;
-    /** Separador decimal. Padrao `,`. */
+    /** Decimal separator. Default `,`. */
     decimal?: string;
-    /** Separador de milhar. Padrao `.`. */
+    /** Thousands separator. Default `.`. */
     thousands?: string;
 }
 /**
- * Formata um valor como moeda, digitando da direita para a esquerda.
+ * Formats a value as currency, typing right-to-left.
  *
  * ```js
  * V.maskCurrency('123456')  // 'R$ 1.234,56'
  * ```
  */
 declare function maskCurrency(value: string, options?: CurrencyMaskOptions): string;
-/** Formata porcentagem com duas casas, no mesmo estilo da moeda. */
+/** Formats percentage with two decimal places in the same style as currency. */
 declare function maskPercent(value: string, decimals?: number): string;
 /**
- * Aplica uma mascara a um valor. O padrao pode ser o nome de uma mascara
- * registrada ou um padrao de caracteres.
+ * Applies a mask to a value. The pattern can be a registered mask name or
+ * a character pattern.
  *
- * Tokens: `9` digito, `A` letra, `S` alfanumerico, `*` qualquer, `\` escape.
+ * Tokens: `9` digit, `A` letter, `S` alphanumeric, `*` any character, `\` escape.
  *
  * ```js
  * V.applyMask('12345678901', 'cpf')      // '123.456.789-01'
@@ -1345,8 +1343,8 @@ declare function maskPercent(value: string, decimals?: number): string;
  */
 declare function applyMask(value: string, pattern: string): string;
 /**
- * Remove a formatacao. Para mascaras numericas devolve o numero em texto,
- * pronto para virar `Number`.
+ * Removes formatting. For numeric masks, returns the number as text,
+ * ready to become a `Number`.
  *
  * ```js
  * V.unmask('123.456.789-01')             // '12345678901'
@@ -1355,8 +1353,8 @@ declare function applyMask(value: string, pattern: string): string;
  */
 declare function unmask(value: string, pattern?: string): string;
 /**
- * Atalho publico das mascaras. Pode ser chamado como funcao e tambem carrega os
- * utilitarios do modulo.
+ * Public shortcut to masks. Can be called as a function and also loads the
+ * module utilities.
  *
  * ```js
  * V.mask('12345678901', 'cpf')      // '123.456.789-01'
@@ -1376,80 +1374,79 @@ declare const mask: ((value: string, pattern: string) => string) & {
 /**
  * @module devtools/bus
  *
- * Barramento de eventos das devtools. Vive em um arquivo separado do inspetor
- * para continuar sendo tree shakeable: quem apenas reporta atividade paga
- * poucos bytes, e o painel visual so entra no pacote quando `xray()` e
- * realmente importado.
+ * Event bus for devtools. Lives in a separate file from the inspector to remain
+ * tree-shakeable: code that only reports activity pays minimal bytes, and the
+ * visual panel only enters the bundle when `xray()` is actually imported.
  *
- * Emitir sem nenhum ouvinte registrado custa uma busca em `Map` e nada mais,
- * entao qualquer modulo pode reportar atividade sem medo.
+ * Emitting with no registered listeners costs a `Map` lookup and nothing more,
+ * so any module can report activity safely.
  *
  * ```ts
  * import { devtoolsBus } from '../devtools/bus';
  *
- * // Reportando uma requisicao de rede a partir de uma directive:
- * const inicio = performance.now();
- * const dados = await http.get('/api/usuarios');
+ * // Reporting a network request from a directive:
+ * const start = performance.now();
+ * const data = await http.get('/api/users');
  * devtoolsBus.emit('network', {
  *   method: 'GET',
- *   url: '/api/usuarios',
+ *   url: '/api/users',
  *   status: 200,
  *   ok: true,
- *   duration: performance.now() - inicio,
+ *   duration: performance.now() - start,
  *   source: 'v-get',
  * });
  * ```
  */
-/** Requisicao reportada para a aba Rede do inspetor. */
+/** Network request reported to the devtools Network tab. */
 interface DevtoolsNetworkEvent {
-    /** Metodo HTTP em maiusculas, como `GET` ou `POST`. */
+    /** HTTP method in uppercase, like `GET` or `POST`. */
     method: string;
-    /** URL final da requisicao. */
+    /** Final URL of the request. */
     url: string;
-    /** Codigo de status, quando a resposta chegou. */
+    /** Status code, when the response arrived. */
     status?: number;
-    /** `true` quando a resposta foi bem sucedida. */
+    /** `true` when the response was successful. */
     ok?: boolean;
-    /** Duracao em milissegundos. */
+    /** Duration in milliseconds. */
     duration?: number;
-    /** Mensagem de erro, quando a requisicao falhou. */
+    /** Error message, when the request failed. */
     error?: string;
-    /** Quem disparou, como `v-get`, `http` ou `router`. */
+    /** Who triggered it, like `v-get`, `http` or `router`. */
     source?: string;
 }
-/** Evento de DOM disparado por uma directive, mostrado na aba Eventos. */
+/** DOM event triggered by a directive, shown in the Events tab. */
 interface DevtoolsDomEvent {
-    /** Nome do evento, como `click` ou `submit`. */
+    /** Event name, like `click` or `submit`. */
     type: string;
-    /** Elemento que recebeu o evento. */
+    /** Element that received the event. */
     el?: Element | null;
-    /** Expressao ou detalhe associado, apenas para exibicao. */
+    /** Expression or detail associated, for display purposes only. */
     detail?: unknown;
-    /** Quem reportou, como `v-on` ou `component.emit`. */
+    /** Who reported it, like `v-on` or `component.emit`. */
     source?: string;
 }
-/** Troca de rota reportada pelo roteador. */
+/** Route change reported by the router. */
 interface DevtoolsNavigationEvent {
     from: string;
     to: string;
-    /** `true` quando um guard cancelou a navegacao. */
+    /** `true` when a guard cancelled the navigation. */
     cancelled?: boolean;
-    /** Padrao de rota casado, quando houver. */
+    /** Matched route pattern, if any. */
     matched?: string | null;
 }
-/** Troca de idioma reportada pelo modulo de i18n. */
+/** Locale change reported by the i18n module. */
 interface DevtoolsLocaleEvent {
     from: string;
     to: string;
 }
-/** Atualizacao reativa reportada manualmente por um modulo. */
+/** Reactive update reported manually by a module. */
 interface DevtoolsUpdateEvent {
     el?: Element | null;
-    /** Nome da chave que mudou, quando conhecido. */
+    /** Name of the key that changed, when known. */
     key?: string;
     source?: string;
 }
-/** Mapa de tipos de evento aceitos pelo barramento. */
+/** Map of event types accepted by the bus. */
 interface DevtoolsEventMap {
     network: DevtoolsNetworkEvent;
     event: DevtoolsDomEvent;
@@ -1459,117 +1456,116 @@ interface DevtoolsEventMap {
 }
 type DevtoolsEventType = keyof DevtoolsEventMap;
 /**
- * Barramento simples de publicacao e assinatura usado pelas devtools.
+ * Simple publish-subscribe bus used by devtools.
  *
- * Para reportar uma requisicao de rede a partir de outro modulo, emita o tipo
- * `network` com `{ method, url, status, ok, duration, source }`. A aba Rede do
- * inspetor lista tudo que chegar por ai, mesmo quando a requisicao nao passou
- * pelo cliente `http` da Voodoo.
+ * To report a network request from another module, emit the `network` type
+ * with `{ method, url, status, ok, duration, source }`. The devtools Network
+ * tab lists everything that arrives through it, even when the request did not
+ * go through Voodoo's `http` client.
  */
 declare const devtoolsBus: {
-    /** Publica um evento. Sem ouvintes, a chamada e praticamente gratuita. */
+    /** Publishes an event. With no listeners, the call is practically free. */
     emit<K extends DevtoolsEventType>(type: K, data: DevtoolsEventMap[K]): void;
-    /** Assina um tipo de evento. Devolve a funcao que cancela a assinatura. */
+    /** Subscribes to an event type. Returns the function that unsubscribes. */
     on<K extends DevtoolsEventType>(type: K, callback: (data: DevtoolsEventMap[K]) => void): () => void;
-    /** Cancela uma assinatura especifica. */
+    /** Cancels a specific subscription. */
     off<K extends DevtoolsEventType>(type: K, callback: (data: DevtoolsEventMap[K]) => void): void;
-    /** Remove todos os ouvintes, de um tipo ou de todos. */
+    /** Removes all listeners of a type or all listeners. */
     clear(type?: DevtoolsEventType): void;
-    /** Quantidade de ouvintes registrados em um tipo. */
+    /** Number of listeners registered for a type. */
     count(type: DevtoolsEventType): number;
 };
 
 /**
  * @module devtools/xray
  *
- * Inspetor visual de reatividade da Voodoo. Roda dentro da propria pagina, sem
- * extensao de navegador e sem servidor.
+ * Visual reactivity inspector for Voodoo. Runs inside the page itself, without
+ * browser extension or server.
  *
- * Ligado, ele contorna todo elemento que tem directives, mostra um cartao com o
- * escopo daquele elemento, abre um painel com abas de estado, componentes,
- * stores, eventos, rede e desempenho, e faz o elemento piscar toda vez que um
- * efeito reativo escreve nele. Esse e o efeito raio-x: da para ver a
- * reatividade acontecendo.
+ * When enabled, it outlines every element with directives, shows a card with
+ * that element's scope, opens a panel with tabs for state, components, stores,
+ * events, network and performance, and flashes the element every time a
+ * reactive effect writes to it. That's the x-ray effect: you can see reactivity
+ * happening.
  *
  * ```js
- * V.xray()            // liga e desliga
- * V.xray(true)        // forca ligar
+ * V.xray()            // toggle
+ * V.xray(true)        // force enable
  * ```
  *
- * O modulo nao registra nada ao ser importado. Nenhum listener, nenhum estilo e
- * nenhum timer existe antes da primeira chamada, entao ele e tree shakeable e
- * nao custa nada em producao.
+ * The module registers nothing when imported. No listeners, no styles, and no
+ * timers exist before the first call, so it's tree-shakeable and costs nothing
+ * in production.
  */
 
-/** Liga o inspetor. Chamar duas vezes nao duplica nada. */
+/** Enables the inspector. Calling twice doesn't duplicate anything. */
 declare function enableXray(): void;
-/** Desliga o inspetor e devolve a pagina ao estado original. */
+/** Disables the inspector and returns the page to its original state. */
 declare function disableXray(): void;
-/** `true` quando o inspetor esta ligado. */
+/** `true` when the inspector is enabled. */
 declare function isXrayEnabled(): boolean;
 /**
- * Liga e desliga o inspetor visual de reatividade.
+ * Enables and disables the visual reactivity inspector.
  *
  * ```js
- * V.xray()        // alterna
- * V.xray(true)    // liga
- * V.xray(false)   // desliga
+ * V.xray()        // toggle
+ * V.xray(true)    // enable
+ * V.xray(false)   // disable
  * ```
  *
- * A primeira chamada tambem instala o atalho `Ctrl+Shift+X`.
+ * The first call also installs the `Ctrl+Shift+X` shortcut.
  *
- * @param force ligue ou desligue explicitamente. Sem argumento, alterna.
- * @returns o estado depois da chamada.
+ * @param force enable or disable explicitly. Without argument, toggles.
+ * @returns the state after the call.
  */
 declare function xray(force?: boolean): boolean;
 
 /**
  * @module devtools/launcher
  *
- * Widget flutuante das devtools.
+ * Floating widget for devtools.
  *
- * O inspetor `xray` sempre existiu, mas so abria por chamada no console. Este
- * modulo coloca um botao na propria pagina: ele aparece quando as devtools
- * estao ligadas, mostra atividade em tempo real e abre o painel completo com um
- * clique.
+ * The `xray` inspector always existed, but only opened via console call. This
+ * module adds a button to the page itself: it appears when devtools are on,
+ * shows live activity, and opens the full panel with a click.
  *
- * Ligar pelo HTML, sem escrever JavaScript nenhum:
+ * Enable via HTML without writing any JavaScript:
  *
  * ```html
  * <script src="voodoo.full.min.js" devtools defer></script>
  * ```
  *
- * As formas equivalentes tambem valem: `data-devtools`, `devtools="true"` e
- * `window.VOODOO_DEVTOOLS = true` antes do carregamento.
+ * Equivalent forms also work: `data-devtools`, `devtools="true"` and
+ * `window.VOODOO_DEVTOOLS = true` before loading.
  *
- * Ligar por JavaScript:
+ * Enable via JavaScript:
  *
  * ```js
- * V.devtoolsWidget()       // alterna
- * V.devtoolsWidget(true)   // mostra
- * V.devtoolsWidget(false)  // esconde
+ * V.devtoolsWidget()       // toggle
+ * V.devtoolsWidget(true)   // show
+ * V.devtoolsWidget(false)  // hide
  * ```
  *
- * O modulo nao faz nada ao ser importado: nenhum listener, nenhum estilo e
- * nenhum timer existe antes da primeira chamada de `mountDevtoolsWidget()`.
+ * The module does nothing when imported: no listeners, no styles, and
+ * no timers exist before the first call to `mountDevtoolsWidget()`.
  */
-/** Mostra o widget flutuante. Chamar duas vezes nao duplica nada. */
+/** Shows the floating widget. Calling twice doesn't duplicate anything. */
 declare function mountDevtoolsWidget(): void;
-/** Remove o widget e todos os listeners que ele criou. */
+/** Removes the widget and all listeners it created. */
 declare function unmountDevtoolsWidget(): void;
-/** `true` quando o widget esta na tela. */
+/** `true` when the widget is on screen. */
 declare function isDevtoolsWidgetMounted(): boolean;
 /**
- * Mostra e esconde o widget flutuante das devtools.
+ * Shows and hides the devtools floating widget.
  *
  * ```js
- * V.devtoolsWidget()       // alterna
- * V.devtoolsWidget(true)   // mostra
- * V.devtoolsWidget(false)  // esconde
+ * V.devtoolsWidget()       // toggle
+ * V.devtoolsWidget(true)   // show
+ * V.devtoolsWidget(false)  // hide
  * ```
  *
- * @param force mostre ou esconda explicitamente. Sem argumento, alterna.
- * @returns o estado depois da chamada.
+ * @param force show or hide explicitly. Without argument, toggles.
+ * @returns the state after the call.
  */
 declare function devtoolsWidget(force?: boolean): boolean;
 
@@ -1577,9 +1573,9 @@ declare function devtoolsWidget(force?: boolean): boolean;
  * Voodoo.js
  * JavaScript feels like magic.
  *
- * Ponto de entrada para bundlers. Importar este modulo nao mexe no DOM: quem
- * inicializa a pagina e `browser.ts`, usado no build de CDN, ou uma chamada
- * explicita a `V.start()`.
+ * Entry point for bundlers. Importing this module does not touch the DOM: the page
+ * is initialized by `browser.ts`, used in the CDN build, or an explicit call to
+ * `V.start()`.
  *
  * ```ts
  * import V from 'voodoojs'
@@ -1592,11 +1588,11 @@ declare function devtoolsWidget(force?: boolean): boolean;
  */
 
 /**
- * `V` e ao mesmo tempo uma funcao e um objeto.
+ * `V` is at once a function and an object.
  *
  * ```js
- * V('#lista .item').addClass('ativo')   // colecao encadeavel
- * V.toast.success('Pronto')             // servicos
+ * V('#list .item').addClass('active')   // chainable collection
+ * V.toast.success('Done')               // services
  * ```
  */
 interface Voodoo extends Omit<typeof core, never> {

@@ -309,4 +309,4 @@ applies to listeners installed on `window` and `document` by `.window`, `.outsid
 
 ---
 
-Previous: [State and stores](state-and-stores.md) · Next: [HTTP](http.md)
+Previous: [State and stores](estado-e-stores.md) · Next: [HTTP](http.md)

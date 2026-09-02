@@ -1,5 +1,5 @@
-import { handleError } from './chunk-PKGMG3DB.js';
-import { avisar } from './chunk-S3U6BJNJ.js';
+import { handleError } from './chunk-DVD2FAS5.js';
+import { warn } from './chunk-UGX5TOOI.js';
 
 /**
  * Voodoo.js v0.3.0
@@ -127,7 +127,7 @@ function describeWgslType(text, structs = {}) {
       kind: "vector",
       scalar,
       size: n * unit,
-      // vec3 alinha como vec4: e a pegadinha classica de quem escreve o offset a mao.
+      // vec3 aligns like vec4: the classic gotcha when writing offsets by hand.
       align: (n === 3 ? 4 : n) * unit,
       components: n
     };
@@ -538,11 +538,11 @@ async function init(options = {}) {
     };
     device.lost?.then((info) => {
       gpu2.destroyed = true;
-      avisar(`o dispositivo WebGPU foi perdido (${info.reason}): ${info.message}`);
+      warn(`WebGPU device was lost (${info.reason}): ${info.message}`);
     }).catch(() => void 0);
     return gpu2;
   } catch (err) {
-    avisar(`WebGPU disponivel mas o dispositivo nao abriu: ${String(err)}`);
+    warn(`WebGPU available but device failed to open: ${String(err)}`);
     return null;
   }
 }
@@ -844,7 +844,7 @@ function bindFromReflection(gpu2, reflection, visibility, initial, textures, lab
       entries: layoutEntries(bindings, visibility)
     });
   } catch (err) {
-    avisar(`a reflexao do shader "${label}" nao montou o bind group layout: ${String(err)}`);
+    warn(`shader reflection for "${label}" failed to build bind group layout: ${String(err)}`);
     return { layout: null, group: null, uniforms: uniformValues, sampler: null, fromReflection: false };
   }
   let sampler = null;
@@ -880,20 +880,20 @@ function bindFromReflection(gpu2, reflection, visibility, initial, textures, lab
     });
     return { layout, group, uniforms: uniformValues, sampler, fromReflection: true };
   } catch (err) {
-    avisar(`a reflexao do shader "${label}" nao montou o bind group: ${String(err)}`);
+    warn(`shader reflection for "${label}" failed to build bind group: ${String(err)}`);
     return { layout, group: null, uniforms: uniformValues, sampler, fromReflection: false };
   }
 }
 function reportCompilation(module, label, source) {
   if (typeof module.getCompilationInfo !== "function") return;
-  const linhas = source.split("\n");
+  const lines = source.split("\n");
   module.getCompilationInfo().then((info) => {
-    const erros = info.messages.filter((m) => m.type === "error");
-    if (erros.length === 0) return;
-    const detalhe = erros.map((m) => `  linha ${m.lineNum}: ${m.message}
-  > ${(linhas[m.lineNum - 1] ?? "").trim()}`).join("\n");
-    handleError(new Error(`shader "${label}" nao compilou:
-${detalhe}`), "V.gpu shader");
+    const errors = info.messages.filter((m) => m.type === "error");
+    if (errors.length === 0) return;
+    const detail = errors.map((m) => `  line ${m.lineNum}: ${m.message}
+  > ${(lines[m.lineNum - 1] ?? "").trim()}`).join("\n");
+    handleError(new Error(`shader "${label}" did not compile:
+${detail}`), "V.gpu shader");
   }).catch(() => void 0);
 }
 function noEffect(reflection) {
@@ -910,13 +910,13 @@ function effect(gpu2, wgsl, options = {}) {
   const reflection = reflectWgsl(wgsl);
   if (!live(gpu2) || !wgsl) return noEffect(reflection);
   const label = options.label ?? "voodoo-effect";
-  const temVertex = !!findEntry(reflection, "vertex");
-  const source = temVertex ? wgsl : `${FULLSCREEN_VERTEX}
+  const hasVertex = !!findEntry(reflection, "vertex");
+  const source = hasVertex ? wgsl : `${FULLSCREEN_VERTEX}
 ${wgsl}`;
-  const vertexEntry = temVertex ? findEntry(reflection, "vertex").name : "voodooFullscreen";
+  const vertexEntry = hasVertex ? findEntry(reflection, "vertex").name : "voodooFullscreen";
   const fragmentEntry = options.entry ?? findEntry(reflection, "fragment")?.name;
   if (!fragmentEntry) {
-    avisar(`o shader "${label}" nao declara nenhuma funcao @fragment.`);
+    warn(`shader "${label}" does not declare a @fragment function.`);
     return noEffect(reflection);
   }
   let module;
@@ -1006,7 +1006,7 @@ function compute(gpu2, wgsl, options = {}) {
   const label = options.label ?? "voodoo-compute";
   const entry = options.entry ?? findEntry(reflection, "compute")?.name;
   if (!entry) {
-    avisar(`o shader "${label}" nao declara nenhuma funcao @compute.`);
+    warn(`shader "${label}" does not declare a @compute function.`);
     return noCompute(reflection);
   }
   let module;
@@ -1049,7 +1049,7 @@ function compute(gpu2, wgsl, options = {}) {
       return noCompute(reflection);
     }
   }
-  const padrao = options.workgroups ?? [1, 1, 1];
+  const default_ = options.workgroups ?? [1, 1, 1];
   let alive = true;
   const handle = {
     reflection,
@@ -1060,7 +1060,7 @@ function compute(gpu2, wgsl, options = {}) {
     },
     dispatch(pass, workgroups) {
       if (!alive || !pipeline) return;
-      const [x, y, z] = workgroups ?? padrao;
+      const [x, y, z] = workgroups ?? default_;
       pass.setPipeline(pipeline);
       if (bound.group) pass.setBindGroup(0, bound.group);
       pass.dispatchWorkgroups(Math.max(1, x), y ?? 1, z ?? 1);
@@ -1170,8 +1170,8 @@ function destroy(gpu2) {
     gpu2.device.destroy();
   } catch {
   }
-  sharedContext?.then((atual) => {
-    if (atual === gpu2) resetShared();
+  sharedContext?.then((current) => {
+    if (current === gpu2) resetShared();
   });
 }
 var gpu = {
@@ -1187,10 +1187,10 @@ var gpu = {
   frame,
   frameLoop,
   destroy,
-  /** Leitura de WGSL, util sozinha para inspecionar um shader. */
+  /** WGSL reading, useful on its own for inspecting a shader. */
   reflect: reflectWgsl
 };
 
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct };
-//# sourceMappingURL=chunk-7ROVC52J.js.map
-//# sourceMappingURL=chunk-7ROVC52J.js.map
+//# sourceMappingURL=chunk-PQD23OCQ.js.map
+//# sourceMappingURL=chunk-PQD23OCQ.js.map

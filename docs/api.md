@@ -19,7 +19,7 @@ V.toast.success('Ready');              // services
 | Member | Description |
 | --- | --- |
 | `V.version` | Published version |
-| `V.config` | Global configuration. See [Installation](installation.md) |
+| `V.config` | Global configuration. See [Installation](instalacao.md) |
 | `V.start(root?)` | Walks and initializes. Called by itself in browser builds |
 | `V.walk(node, scope?)` | Initializes a piece of DOM |
 | `V.refresh(root?)` | Reinitializes a root |
@@ -51,7 +51,7 @@ V.toast.success('Ready');              // services
 | `V.markRaw(value)` | Marks an object to never become a proxy |
 | `V.unref(value)` | `value.value` when it's a ref |
 
-See [Reactivity](reactivity.md).
+See [Reactivity](reatividade.md).
 
 ## State
 
@@ -79,7 +79,7 @@ See [Reactivity](reactivity.md).
 | `V.PRIORITY` | Priority constants |
 | `V.Scope` | The scope class |
 
-See [Components](components.md) and [Plugins](plugins.md).
+See [Components](componentes.md) and [Plugins](plugins.md).
 
 ## Expressions
 
@@ -94,7 +94,7 @@ See [Components](components.md) and [Plugins](plugins.md).
 | `V.globals` | List of allowed globals |
 | `V.VoodooSyntaxError`, `V.VoodooRuntimeError` | Error classes |
 
-See [Expressions](expressions.md).
+See [Expressions](expressoes.md).
 
 ## Chainable DOM
 
@@ -127,7 +127,7 @@ See [Expressions](expressions.md).
 | `V.fromHtml(html)` | Creates elements without inserting in document |
 | `V.Collection` | The `VoodooCollection` class |
 
-See [Migrating from jQuery](migrating-from-jquery.md).
+See [Migrating from jQuery](migrando-do-jquery.md).
 
 ## HTTP
 
@@ -175,7 +175,7 @@ See [HTTP](http.md).
 | `V.registerMask(name, patternOrFn)` | Registers a mask |
 | `V.masks` | `Map` with masks |
 
-See [Forms](forms.md), [Validation](validation.md), and [Masks](masks.md).
+See [Forms](formularios.md), [Validation](validacao.md), and [Masks](mascaras.md).
 
 ## Interface
 
@@ -199,7 +199,7 @@ See [Forms](forms.md), [Validation](validation.md), and [Masks](masks.md).
 | `V.injectStyle(id, css)` | Injects CSS once |
 | `V.ensureTokens()` | Ensures `--v-*` variables |
 
-See [Interface](interface.md) and [Theme and palette](theme-and-palette.md).
+See [Interface](interface.md) and [Theme and palette](tema-e-paleta.md).
 
 ## Transitions
 
@@ -247,7 +247,7 @@ See [Interface](interface.md) and [Theme and palette](theme-and-palette.md).
 `capitalize`, `titleCase`, `escapeHtml`, `stripTags`, `formatCurrency`, `formatNumber`,
 `formatDate`, `relativeTime`, `formatFileSize`, `formatPercent`, `setFormatDefaults`.
 
-See [Utilities](utilities.md).
+See [Utilities](utilitarios.md).
 
 > `V.once` is the event bus. The `once` utility, which executes a function only once,
 > is in direct import: `import { once } from 'voodoojs/utils'`.
@@ -264,7 +264,7 @@ See [Utilities](utilities.md).
 | `V.motion` | Ready presets |
 | `V.easings` | Ready curves |
 
-See [Animations](animations.md).
+See [Animations](animacoes.md).
 
 ## Charts (full)
 
@@ -275,7 +275,7 @@ See [Animations](animations.md).
 | `V.charts` | `{ render, format, colors }` |
 | `V.chartColors` | Default chart palette |
 
-See [Charts](charts.md).
+See [Charts](graficos.md).
 
 ## Router (full)
 
@@ -288,7 +288,7 @@ See [Charts](charts.md).
 | `V.route` | Current route, reactive |
 | `V.resolveRoute(destination)` | Resolves without navigating |
 
-See [Router](router.md).
+See [Router](roteador.md).
 
 ## Languages (full)
 
@@ -301,7 +301,7 @@ See [Router](router.md).
 | `V.t(key, params?)` | Translates |
 | `V.setLocale(language)`, `V.getLocale()` | |
 
-See [Languages](languages.md).
+See [Languages](idiomas.md).
 
 ## Devtools (full)
 
@@ -427,4 +427,4 @@ import type {
 
 ---
 
-Previous: [Utilities](utilities.md) · Next: [Security](security.md)
+Previous: [Utilities](utilitarios.md) · Next: [Security](seguranca.md)

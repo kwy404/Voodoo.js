@@ -87,7 +87,7 @@ function flushJobs() {
       counts.set(job, count);
       if (count > RECURSION_LIMIT) {
         warn(
-          "Loop infinito de atualizacao detectado. Um efeito reativo esta se disparando de novo sem parar. Verifique se alguma expressao escreve em um estado que ela mesma le."
+          "Infinite update loop detected. A reactive effect keeps triggering itself without ever settling. Check whether some expression writes to state that it also reads."
         );
         continue;
       }
@@ -131,7 +131,7 @@ function handleError(err, context) {
     errorHandler(err, context);
     return;
   }
-  console.error(`[Voodoo] erro em ${context}:`, err);
+  console.error(`[Voodoo] error in ${context}:`, err);
 }
 function warn(msg, ...args) {
   console.warn(`[Voodoo] ${msg}`, ...args);
@@ -369,13 +369,13 @@ var init_reactivity = __esm({
         __publicField(this, "fn", fn);
         __publicField(this, "id", effectId++);
         __publicField(this, "active", true);
-        /** `true` enquanto o efeito espera na fila do agendador. */
+        /** `true` while the effect is waiting in the scheduler queue. */
         __publicField(this, "queued", false);
         __publicField(this, "deps", []);
         __publicField(this, "parent");
         __publicField(this, "scheduler");
         __publicField(this, "onStop");
-        /** Callbacks de limpeza registrados pelo proprio efeito. */
+        /** Cleanup callbacks registered by the effect itself. */
         __publicField(this, "cleanups", []);
         this.scheduler = options?.scheduler;
         this.onStop = options?.onStop;
@@ -402,7 +402,7 @@ var init_reactivity = __esm({
           this.parent = void 0;
         }
       }
-      /** Registra uma funcao chamada antes da proxima execucao e ao parar. */
+      /** Registers a function called before the next run and on stop. */
       onInvalidate(fn) {
         this.cleanups.push(fn);
       }
@@ -735,12 +735,12 @@ var init_registry = __esm({
       DATA: 70,
       COMPONENT: 65,
       REF: 60,
-      // O binding vem antes do modelo de proposito.
+      // Binding comes before model on purpose.
       //
-      // `v-model` escreve o valor no campo, e `:min`, `:max` e `:step` mudam o que
-      // o navegador aceita como valor. Na ordem contraria o campo recebia o valor
-      // com as regras antigas ainda no lugar, e o proprio navegador arredondava ou
-      // grampeava: `0.12` virava `0` enquanto o `step` anterior fosse `1`.
+      // `v-model` writes the value to the field, and `:min`, `:max`, `:step` change
+      // what the browser accepts as a value. In reverse order, the field would receive
+      // the value with the old rules still in place, and the browser itself would round
+      // or clamp: `0.12` would become `0` if the previous `step` was `1`.
       BIND: 45,
       MODEL: 40,
       DEFAULT: 0,
@@ -926,7 +926,7 @@ function tokenize(source) {
     }
     if (ch === "/" && source[i + 1] === "*") {
       const end = source.indexOf("*/", i + 2);
-      if (end === -1) throw new VoodooSyntaxError("Comentario de bloco nao fechado", source, i);
+      if (end === -1) throw new VoodooSyntaxError("Unclosed block comment", source, i);
       i = end + 2;
       continue;
     }
@@ -954,7 +954,7 @@ function tokenize(source) {
         }
       }
       const parsed = Number(raw.replace(/_/g, ""));
-      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Numero invalido", source, start2);
+      if (Number.isNaN(parsed)) throw new VoodooSyntaxError("Invalid number", source, start2);
       tokens.push({ type: "num", value: raw, parsed, start: start2, end: i });
       continue;
     }
@@ -969,36 +969,36 @@ function tokenize(source) {
             if (source[i + 1] === "{") {
               const close = source.indexOf("}", i);
               if (close === -1)
-                throw new VoodooSyntaxError("Escape unicode nao fechado", source, start2);
-              const digitos = source.slice(i + 2, close);
-              if (!/^[0-9a-fA-F]+$/.test(digitos) || parseInt(digitos, 16) > 1114111)
+                throw new VoodooSyntaxError("Unclosed Unicode escape", source, start2);
+              const digits = source.slice(i + 2, close);
+              if (!/^[0-9a-fA-F]+$/.test(digits) || parseInt(digits, 16) > 1114111)
                 throw new VoodooSyntaxError(
-                  `Escape unicode invalido "\\u{${digitos}}"`,
+                  `Invalid Unicode escape "\\u{${digits}}"`,
                   source,
                   i - 1
                 );
-              out += String.fromCodePoint(parseInt(digitos, 16));
+              out += String.fromCodePoint(parseInt(digits, 16));
               i = close + 1;
             } else {
-              const digitos = source.slice(i + 1, i + 5);
-              if (!/^[0-9a-fA-F]{4}$/.test(digitos))
+              const digits = source.slice(i + 1, i + 5);
+              if (!/^[0-9a-fA-F]{4}$/.test(digits))
                 throw new VoodooSyntaxError(
-                  "Escape unicode invalido: \\u precisa de 4 digitos hexadecimais",
+                  "Invalid Unicode escape: \\u needs 4 hexadecimal digits",
                   source,
                   i - 1
                 );
-              out += String.fromCharCode(parseInt(digitos, 16));
+              out += String.fromCharCode(parseInt(digits, 16));
               i += 5;
             }
           } else if (esc === "x") {
-            const digitos = source.slice(i + 1, i + 3);
-            if (!/^[0-9a-fA-F]{2}$/.test(digitos))
+            const digits = source.slice(i + 1, i + 3);
+            if (!/^[0-9a-fA-F]{2}$/.test(digits))
               throw new VoodooSyntaxError(
-                "Escape hexadecimal invalido: \\x precisa de 2 digitos hexadecimais",
+                "Invalid hexadecimal escape: \\x needs 2 hexadecimal digits",
                 source,
                 i - 1
               );
-            out += String.fromCharCode(parseInt(digitos, 16));
+            out += String.fromCharCode(parseInt(digits, 16));
             i += 3;
           } else {
             out += ESCAPES[esc] ?? esc;
@@ -1008,7 +1008,7 @@ function tokenize(source) {
           out += source[i++];
         }
       }
-      if (i >= len) throw new VoodooSyntaxError("String nao fechada", source, start2);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed string", source, start2);
       i++;
       tokens.push({ type: "str", value: out, parsed: out, start: start2, end: i });
       continue;
@@ -1048,14 +1048,14 @@ function tokenize(source) {
             expr += source[i++];
           }
           if (depth !== 0)
-            throw new VoodooSyntaxError("Interpolacao de template nao fechada", source, start2);
+            throw new VoodooSyntaxError("Unclosed template interpolation", source, start2);
           i++;
           exprs.push(expr);
           continue;
         }
         current2 += source[i++];
       }
-      if (i >= len) throw new VoodooSyntaxError("Template literal nao fechado", source, start2);
+      if (i >= len) throw new VoodooSyntaxError("Unclosed template literal", source, start2);
       i++;
       quasis.push(current2);
       tokens.push({
@@ -1086,7 +1086,7 @@ function tokenize(source) {
       tokens.push({ type: "punct", value: matched, start: start2, end: i });
       continue;
     }
-    throw new VoodooSyntaxError(`Caractere inesperado "${ch}"`, source, i);
+    throw new VoodooSyntaxError(`Unexpected character "${ch}"`, source, i);
   }
   tokens.push({ type: "eof", value: "", start: len, end: len });
   return tokens;
@@ -1150,14 +1150,14 @@ var Parser = class {
     if (!this.isPunct(value)) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Esperava "${value}" mas encontrou "${t.value || "fim da expressao"}"`,
+        `Expected "${value}" but found "${t.value || "end of expression"}"`,
         this.source,
         t.start
       );
     }
     return this.next();
   }
-  /** Ponto de entrada: uma ou mais expressoes separadas por `;` ou `,` no topo. */
+  /** Entry point: one or more expressions separated by `;` or `,` at the top. */
   parseProgram() {
     const body = [];
     while (this.peek().type !== "eof") {
@@ -1171,24 +1171,24 @@ var Parser = class {
   parseExpression() {
     return this.parseAssignment();
   }
-  /** Sobe um nivel de recursao e recusa a expressao quando passa do teto. */
-  entrar() {
+  /** Raises recursion level and rejects expression when exceeding limit. */
+  enterLevel() {
     if (++this.depth > MAX_DEPTH) {
       const t = this.peek();
       throw new VoodooSyntaxError(
-        `Expressao aninhada demais (limite de ${MAX_DEPTH} niveis)`,
+        `Expression too deeply nested (limit of ${MAX_DEPTH} levels)`,
         this.source,
         t.start
       );
     }
   }
   parseAssignment() {
-    this.entrar();
-    const node = this.parseAssignmentInterno();
+    this.enterLevel();
+    const node = this.parseAssignmentInternal();
     this.depth--;
     return node;
   }
-  parseAssignmentInterno() {
+  parseAssignmentInternal() {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
@@ -1202,7 +1202,7 @@ var Parser = class {
     const t = this.peek();
     if (t.type === "punct" && ASSIGN_OPS.has(t.value)) {
       if (left.t !== "id" && left.t !== "member") {
-        throw new VoodooSyntaxError("Alvo de atribuicao invalido", this.source, t.start);
+        throw new VoodooSyntaxError("Invalid assignment target", this.source, t.start);
       }
       this.next();
       const value = this.parseAssignment();
@@ -1211,8 +1211,8 @@ var Parser = class {
     return left;
   }
   /**
-   * Tenta ler `( params ) =>`. Se o que vem depois do parentese de fechamento
-   * nao for `=>`, volta a posicao original e deixa o caminho normal seguir.
+   * Tries to read `( params ) =>`. If what comes after the closing parenthesis
+   * is not `=>`, returns to original position and lets normal parsing continue.
    */
   tryParseParenArrow() {
     const start2 = this.pos;
@@ -1255,12 +1255,12 @@ var Parser = class {
     return test;
   }
   parseBinary(minPrec) {
-    this.entrar();
-    const node = this.parseBinarioInterno(minPrec);
+    this.enterLevel();
+    const node = this.parseBinaryInternal(minPrec);
     this.depth--;
     return node;
   }
-  parseBinarioInterno(minPrec) {
+  parseBinaryInternal(minPrec) {
     let left = this.parseUnary();
     for (; ; ) {
       const t = this.peek();
@@ -1277,12 +1277,12 @@ var Parser = class {
     return left;
   }
   parseUnary() {
-    this.entrar();
-    const node = this.parseUnarioInterno();
+    this.enterLevel();
+    const node = this.parseUnaryInternal();
     this.depth--;
     return node;
   }
-  parseUnarioInterno() {
+  parseUnaryInternal() {
     const t = this.peek();
     if ((t.type === "punct" || t.type === "ident") && UNARY_OPS.has(t.value)) {
       this.next();
@@ -1308,7 +1308,7 @@ var Parser = class {
         this.next();
         const prop = this.next();
         if (prop.type !== "ident") {
-          throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+          throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
         }
         expr = { t: "member", o: expr, p: { t: "lit", v: prop.value }, computed: false, opt: false };
       } else if (this.isPunct("?.")) {
@@ -1323,7 +1323,7 @@ var Parser = class {
         } else {
           const prop = this.next();
           if (prop.type !== "ident") {
-            throw new VoodooSyntaxError("Nome de propriedade invalido", this.source, prop.start);
+            throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
           }
           expr = {
             t: "member",
@@ -1372,7 +1372,7 @@ var Parser = class {
       const part = t.tpl;
       if (templateDepth >= MAX_TEMPLATE_DEPTH) {
         throw new VoodooSyntaxError(
-          `Template literal aninhado demais (limite de ${MAX_TEMPLATE_DEPTH} niveis)`,
+          `Template literal too deeply nested (limit of ${MAX_TEMPLATE_DEPTH} levels)`,
           this.source,
           t.start
         );
@@ -1407,7 +1407,7 @@ var Parser = class {
       if (t.value === "{") return this.parseObjectLiteral();
     }
     throw new VoodooSyntaxError(
-      `Token inesperado "${t.value || "fim da expressao"}"`,
+      `Unexpected token "${t.value || "end of expression"}"`,
       this.source,
       t.start
     );
@@ -1444,7 +1444,7 @@ var Parser = class {
       } else {
         const keyToken = this.next();
         if (keyToken.type !== "ident" && keyToken.type !== "str" && keyToken.type !== "num") {
-          throw new VoodooSyntaxError("Chave de objeto invalida", this.source, keyToken.start);
+          throw new VoodooSyntaxError("Invalid object key", this.source, keyToken.start);
         }
         const key = String(keyToken.parsed ?? keyToken.value);
         if (this.isPunct(":")) {
@@ -1517,21 +1517,21 @@ var VoodooRuntimeError = class extends Error {
   constructor(message, expression) {
     super(expression ? `${message}
 
-Expressao: ${expression}` : message);
+Expression: ${expression}` : message);
     __publicField(this, "expression", expression);
     this.name = "VoodooRuntimeError";
   }
 };
 var SPREAD = /* @__PURE__ */ Symbol("spread");
-var CHAVES_BLOQUEADAS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
+var BLOCKED_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 function chaveBloqueada(key) {
-  return typeof key === "string" && CHAVES_BLOQUEADAS.has(key);
+  return typeof key === "string" && BLOCKED_KEYS.has(key);
 }
-function checarChave(key, expressao) {
+function checkKey(key, expression) {
   if (chaveBloqueada(key)) {
     throw new VoodooRuntimeError(
-      `Acesso bloqueado a "${String(key)}": expressoes de template nao alcancam a cadeia de prototipos. Exponha um metodo no estado em vez disso.`,
-      expressao
+      `Access blocked to "${String(key)}": template expressions cannot reach the prototype chain. Expose a method in state instead.`,
+      expression
     );
   }
   return key;
@@ -1549,7 +1549,7 @@ function evaluate(node, scope) {
       return out;
     }
     case "id": {
-      checarChave(node.n);
+      checkKey(node.n);
       const owner = scope.lookup(node.n);
       if (owner) return owner[node.n];
       if (node.n in allowedGlobals) return allowedGlobals[node.n];
@@ -1560,10 +1560,10 @@ function evaluate(node, scope) {
       if (obj == null) {
         if (node.opt) return void 0;
         throw new VoodooRuntimeError(
-          `Nao foi possivel ler "${describeKey(node, scope)}" de ${obj === null ? "null" : "undefined"}`
+          `Could not read "${describeKey(node, scope)}" from ${obj === null ? "null" : "undefined"}`
         );
       }
-      const key = checarChave(
+      const key = checkKey(
         node.computed ? evaluate(node.p, scope) : node.p.v
       );
       return obj[key];
@@ -1576,16 +1576,16 @@ function evaluate(node, scope) {
         if (obj == null) {
           if (node.callee.opt || node.opt) return void 0;
           throw new VoodooRuntimeError(
-            `Nao foi possivel chamar "${describeKey(node.callee, scope)}" de ${obj === null ? "null" : "undefined"}`
+            `Could not call "${describeKey(node.callee, scope)}" from ${obj === null ? "null" : "undefined"}`
           );
         }
-        const key = checarChave(
+        const key = checkKey(
           node.callee.computed ? evaluate(node.callee.p, scope) : node.callee.p.v
         );
         thisArg = obj;
         fn = obj[key];
       } else if (node.callee.t === "id") {
-        checarChave(node.callee.n);
+        checkKey(node.callee.n);
         const owner = scope.lookup(node.callee.n);
         if (owner) {
           thisArg = owner;
@@ -1599,7 +1599,7 @@ function evaluate(node, scope) {
       if (fn == null && node.opt) return void 0;
       if (typeof fn !== "function") {
         const name = node.callee.t === "id" ? node.callee.n : describeKey(node.callee, scope);
-        throw new VoodooRuntimeError(`"${name}" nao e uma funcao`);
+        throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
       return fn.apply(thisArg, evalArgs(node.args, scope));
     }
@@ -1625,7 +1625,7 @@ function evaluate(node, scope) {
         case "void":
           return void 0;
       }
-      throw new VoodooRuntimeError(`Operador unario nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported unary operator: ${node.op}`);
     }
     case "update": {
       const old = Number(evaluate(node.a, scope));
@@ -1670,7 +1670,7 @@ function evaluate(node, scope) {
         case "instanceof":
           return l instanceof r;
       }
-      throw new VoodooRuntimeError(`Operador nao suportado: ${node.op}`);
+      throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
     }
     case "logic": {
       const l = evaluate(node.l, scope);
@@ -1712,7 +1712,7 @@ function evaluate(node, scope) {
             value = current2 ** operand;
             break;
           default:
-            throw new VoodooRuntimeError(`Atribuicao nao suportada: ${node.op}`);
+            throw new VoodooRuntimeError(`Unsupported assignment: ${node.op}`);
         }
       }
       assign(node.target, value, scope);
@@ -1733,7 +1733,7 @@ function evaluate(node, scope) {
         if (prop.spread) {
           Object.assign(out, evaluate(prop.spread, scope));
         } else {
-          const key = checarChave(
+          const key = checkKey(
             prop.key !== null ? prop.key : String(evaluate(prop.keyExpr, scope))
           );
           out[key] = evaluate(prop.value, scope);
@@ -1758,7 +1758,7 @@ function evaluate(node, scope) {
       return last;
     }
   }
-  throw new VoodooRuntimeError(`No desconhecido: ${node.t}`);
+  throw new VoodooRuntimeError(`Unknown node: ${node.t}`);
 }
 function evalArgs(args, scope) {
   const out = [];
@@ -1774,29 +1774,29 @@ function evalArgs(args, scope) {
 }
 function assign(target, value, scope) {
   if (target.t === "id") {
-    checarChave(target.n);
+    checkKey(target.n);
     scope.set(target.n, value);
     return;
   }
   if (target.t === "member") {
     const obj = evaluate(target.o, scope);
     if (obj == null) {
-      throw new VoodooRuntimeError("Nao foi possivel escrever em null ou undefined");
+      throw new VoodooRuntimeError("Could not write to null or undefined");
     }
-    const key = checarChave(
+    const key = checkKey(
       target.computed ? evaluate(target.p, scope) : target.p.v
     );
     obj[key] = value;
     return;
   }
-  throw new VoodooRuntimeError("Alvo de atribuicao invalido");
+  throw new VoodooRuntimeError("Invalid assignment target");
 }
 function describeKey(node, scope) {
   if (node.t === "member") {
     return node.computed ? String(evaluate(node.p, scope)) : String(node.p.v);
   }
   if (node.t === "id") return node.n;
-  return "valor";
+  return "value";
 }
 function stringify(value) {
   if (value == null) return "";
@@ -1824,29 +1824,29 @@ function magic(name, getter) {
 }
 var Scope = class _Scope {
   constructor(data2 = {}, parent = null, el = null) {
-    /** Dados proprios deste escopo, normalmente um proxy reativo. */
+    /** Data local to this scope, normally a reactive proxy. */
     __publicField(this, "data");
     __publicField(this, "parent");
-    /** Elemento que criou o escopo. Usado por `$el` e `$refs`. */
+    /** Element that created the scope. Used by `$el` and `$refs`. */
     __publicField(this, "el");
-    /** Referencias declaradas com `v-ref` dentro deste escopo. */
+    /** References declared with `v-ref` within this scope. */
     __publicField(this, "refs", {});
-    /** Instancia de componente, quando este escopo pertence a um. */
+    /** Component instance, when this scope belongs to one. */
     __publicField(this, "component", null);
-    /** Valores entregues por `provide`, visiveis para os escopos de baixo. */
+    /** Values delivered by `provide`, visible to lower scopes. */
     __publicField(this, "provides", null);
     __publicField(this, "magicCache", null);
     this.data = data2;
     this.parent = parent;
     this.el = el;
   }
-  /** Escopo raiz da cadeia. */
+  /** Root scope of the chain. */
   get root() {
     let s = this;
     while (s.parent) s = s.parent;
     return s;
   }
-  /** Procura um valor de `provide` subindo a cadeia de escopos. */
+  /** Look up a `provide` value by traveling up the scope chain. */
   inject(key, fallback) {
     let s = this;
     while (s) {
@@ -1855,7 +1855,7 @@ var Scope = class _Scope {
     }
     return fallback;
   }
-  /** Escopo de componente mais proximo, subindo a cadeia. */
+  /** Nearest component scope, traveling up the chain. */
   get owner() {
     let s = this;
     while (s) {
@@ -1864,7 +1864,7 @@ var Scope = class _Scope {
     }
     return null;
   }
-  /** Conjunto de refs visiveis, mesclando os escopos ancestrais. */
+  /** Set of visible refs, merging ancestor scopes. */
   get allRefs() {
     const chain = [];
     let s = this;
@@ -1908,7 +1908,7 @@ var Scope = class _Scope {
   child(vars = {}, el = null) {
     return new _Scope(vars, this, el ?? this.el);
   }
-  /** Cria um escopo filho reativo, usado por `v-data` e por `v-for`. */
+  /** Create a reactive child scope, used by `v-data` and `v-for`. */
   reactiveChild(vars, el = null) {
     return new _Scope(reactive(vars), this, el ?? this.el);
   }
@@ -1942,73 +1942,73 @@ init_registry();
 
 // src/runtime/avisos.ts
 init_registry();
-function emDesenvolvimento() {
+function inDevelopment() {
   return config.devtools === true;
 }
-function descreverElemento(el) {
-  if (!el) return "(sem elemento)";
+function describeElement(el) {
+  if (!el) return "(no element)";
   let out = el.tagName.toLowerCase();
   if (el.id) out += `#${el.id}`;
   const classes = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean);
   if (classes.length) out += `.${classes.slice(0, 2).join(".")}`;
   return `<${out}>`;
 }
-function avisar(mensagem) {
-  if (!emDesenvolvimento()) return;
-  console.warn(`[Voodoo] ${mensagem}`);
+function warn2(message) {
+  if (!inDevelopment()) return;
+  console.warn(`[Voodoo] ${message}`);
 }
-var jaAvisado = /* @__PURE__ */ new Set();
-function avisarUmaVez(chave, mensagem) {
-  if (!emDesenvolvimento()) return;
-  if (jaAvisado.has(chave)) return;
-  jaAvisado.add(chave);
-  console.warn(`[Voodoo] ${mensagem}`);
+var alreadyWarned = /* @__PURE__ */ new Set();
+function warnOnce(key, message) {
+  if (!inDevelopment()) return;
+  if (alreadyWarned.has(key)) return;
+  alreadyWarned.add(key);
+  console.warn(`[Voodoo] ${message}`);
 }
-var ATRIBUTOS_AUXILIARES = /* @__PURE__ */ new Set([
+var AUXILIARY_ATTRIBUTES = /* @__PURE__ */ new Set([
   "confirm-title",
   "confirm-label",
   "confirm-cancel",
   "hold-duration"
 ]);
-function avisarDirectiveDesconhecida(el, raw, nome) {
-  if (!emDesenvolvimento()) return;
-  if (ATRIBUTOS_AUXILIARES.has(nome)) return;
-  avisarUmaVez(
-    `directive-desconhecida:${nome}`,
-    `directive desconhecida "${raw}" em ${descreverElemento(el)}. Nenhuma directive chamada "${nome}" foi registrada. Verifique a grafia ou registre com V.directive("${nome}", ...).`
+function warnUnknownDirective(el, raw, name) {
+  if (!inDevelopment()) return;
+  if (AUXILIARY_ATTRIBUTES.has(name)) return;
+  warnOnce(
+    `unknown-directive:${name}`,
+    `unknown directive "${raw}" at ${describeElement(el)}. No directive named "${name}" was registered. Check the spelling or register with V.directive("${name}", ...).`
   );
 }
-function avisarComponenteDesconhecido(el, nome) {
-  avisarUmaVez(
-    `componente-desconhecido:${nome}`,
-    `componente "${nome}" nao registrado em ${descreverElemento(el)}. Registre com V.component("${nome}", { ... }) antes de usar a tag, ou remova o atributo para deixar o elemento como HTML comum.`
+function warnUnknownComponent(el, name) {
+  warnOnce(
+    `unknown-component:${name}`,
+    `component "${name}" not registered at ${describeElement(el)}. Register with V.component("${name}", { ... }) before using the tag, or remove the attribute to leave the element as plain HTML.`
   );
 }
-function avisarExpressaoInvalida(el, raw, expressao, err) {
-  if (!emDesenvolvimento()) return;
-  const motivo = err instanceof Error ? err.message.split("\n")[0] : String(err);
-  avisar(
-    `expressao invalida em ${raw}="${expressao}" no elemento ${descreverElemento(el)}.
-Motivo: ${motivo}
-Sugestao: expressoes de atributo aceitam um valor so. Se a logica for maior que uma linha, mova para um metodo do componente e chame o metodo aqui.`
+function warnInvalidExpression(el, raw, expression, err) {
+  if (!inDevelopment()) return;
+  const reason = err instanceof Error ? err.message.split("\n")[0] : String(err);
+  warn2(
+    `invalid expression in ${raw}="${expression}" on element ${describeElement(el)}.
+Reason: ${reason}
+Suggestion: attribute expressions accept a single value. If the logic spans more than one line, move it to a component method and call the method here.`
   );
 }
-function avisarChaveDuplicada(el, chave, expressao) {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `chave duplicada "${String(chave)}" em v-for="${expressao}" no elemento ${descreverElemento(el)}. Duas linhas com a mesma chave fazem a lista reaproveitar o bloco errado ao reordenar. Use uma chave unica, como o id do item.`
+function warnDuplicateKey(el, key, expression) {
+  if (!inDevelopment()) return;
+  warn2(
+    `duplicate key "${String(key)}" in v-for="${expression}" on element ${describeElement(el)}. Two rows with the same key cause the list to reuse the wrong block when reordering. Use a unique key, like the item id.`
   );
 }
-function avisarPropObrigatoria(el, componente, prop) {
-  if (!emDesenvolvimento()) return;
-  avisar(
-    `prop obrigatoria "${prop}" ausente no componente "${componente}" em ${descreverElemento(el)}. Passe o valor na tag, com ${prop}="..." para um texto fixo ou :${prop}="expressao" para um valor do estado.`
+function warnRequiredProp(el, component, prop) {
+  if (!inDevelopment()) return;
+  warn2(
+    `required prop "${prop}" missing from component "${component}" at ${describeElement(el)}. Pass the value on the tag with ${prop}="..." for a fixed value or :${prop}="expression" for a state value.`
   );
 }
-function avisarAlias(alias, canonico) {
-  avisarUmaVez(
+function warnAlias(alias, canonical) {
+  warnOnce(
     `alias:${alias}`,
-    `"${alias}" e um apelido de "${canonico}" e continua funcionando, mas o nome oficial e "${canonico}". Prefira "${canonico}" em codigo novo.`
+    `"${alias}" is an alias for "${canonical}" and still works, but the official name is "${canonical}". Prefer "${canonical}" in new code.`
   );
 }
 
@@ -2040,9 +2040,9 @@ function trackEffectScope(node, scope) {
   if (!list) nodeEffectScopes.set(node, list = []);
   list.push(scope);
 }
-var remocoesIgnoradas = /* @__PURE__ */ new WeakSet();
+var ignoredRemovals = /* @__PURE__ */ new WeakSet();
 function removeQuietly(node) {
-  remocoesIgnoradas.add(node);
+  ignoredRemovals.add(node);
   node.remove();
 }
 function addCleanup(node, fn) {
@@ -2052,11 +2052,11 @@ function addCleanup(node, fn) {
 }
 function destroy(node) {
   if (node.nodeType === 1) {
-    const filhos = [];
-    for (let filho = node.firstChild; filho; filho = filho.nextSibling) {
-      if (filho.nodeType === 1 || filho.nodeType === 3) filhos.push(filho);
+    const children = [];
+    for (let child = node.firstChild; child; child = child.nextSibling) {
+      if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
-    for (let i = filhos.length - 1; i >= 0; i--) destroy(filhos[i]);
+    for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -2154,19 +2154,19 @@ function hasDirective(el, name) {
 function queryDirective(root, name) {
   const out = [];
   const set2 = directiveIndex.get(name);
-  const raiz = root;
+  const root_ = root;
   if (set2) {
     for (const el of set2) {
       if (!el.isConnected) continue;
-      if (raiz.contains && raiz.contains(el) && el !== raiz) out.push(el);
+      if (root_.contains && root_.contains(el) && el !== root_) out.push(el);
     }
   }
-  const vistos = new Set(out);
+  const seen = new Set(out);
   for (const el of Array.from(
     root.querySelectorAll(`[${config.prefix}${name}],[data-v-${name}]`)
   )) {
-    if (vistos.has(el)) continue;
-    vistos.add(el);
+    if (seen.has(el)) continue;
+    seen.add(el);
     out.push(el);
   }
   out.sort(
@@ -2175,10 +2175,10 @@ function queryDirective(root, name) {
   return out;
 }
 function closestDirective(el, name) {
-  let atual = el;
-  while (atual) {
-    if (hasDirective(atual, name)) return atual;
-    atual = atual.parentElement;
+  let current2 = el;
+  while (current2) {
+    if (hasDirective(current2, name)) return current2;
+    current2 = current2.parentElement;
   }
   return null;
 }
@@ -2210,14 +2210,14 @@ function stripAttributes(el) {
   if (!config.cleanAttributes) return;
   let map = attributeCache.get(el);
   if (!map) attributeCache.set(el, map = /* @__PURE__ */ new Map());
-  const remover = [];
+  const toRemove = [];
   for (let i = 0; i < el.attributes.length; i++) {
     const attr2 = el.attributes[i];
     if (!isVoodooAttribute(attr2.name)) continue;
     map.set(attr2.name, attr2.value);
-    remover.push(attr2.name);
+    toRemove.push(attr2.name);
   }
-  for (const name of remover) el.removeAttribute(name);
+  for (const name of toRemove) el.removeAttribute(name);
 }
 function restoreAttributes(el) {
   const map = attributeCache.get(el);
@@ -2245,10 +2245,10 @@ function evaluateIn(expression, scope, context, el) {
   try {
     return evaluate(parse(expression), scope);
   } catch (err) {
-    if (emDesenvolvimento()) {
-      avisarExpressaoInvalida(el ?? scope.el, context ?? "expressao", expression, err);
+    if (inDevelopment()) {
+      warnInvalidExpression(el ?? scope.el, context ?? "expression", expression, err);
     }
-    handleError(err, context ? `${context} ("${expression}")` : `expressao "${expression}"`);
+    handleError(err, context ? `${context} ("${expression}")` : `expression "${expression}"`);
     return void 0;
   }
 }
@@ -2259,8 +2259,8 @@ function markSkipChildren(el) {
 function runDirective(el, attr2, scope) {
   const def = directives.get(attr2.name);
   if (!def) {
-    if (emDesenvolvimento() && attr2.raw.startsWith(config.prefix)) {
-      avisarDirectiveDesconhecida(el, attr2.raw, attr2.name);
+    if (inDevelopment() && attr2.raw.startsWith(config.prefix)) {
+      warnUnknownDirective(el, attr2.raw, attr2.name);
     }
     return;
   }
@@ -2335,12 +2335,12 @@ function walk(node, scope) {
   const dataAttr = attrs.find((a) => a.name === "data");
   const componentAttr = attrs.find((a) => a.name === "component");
   const componentName = componentAttr ? componentAttr.expression || "" : tagComponent || "";
-  let montouComponente = false;
+  let mountedComponent = false;
   if (componentName && componentMounter) {
     const created = componentMounter(el, componentName, current2);
     if (created) {
       current2 = created;
-      montouComponente = true;
+      mountedComponent = true;
       nodeScopes.set(el, current2);
     }
   } else if (dataAttr || componentAttr) {
@@ -2348,10 +2348,10 @@ function walk(node, scope) {
     current2 = current2.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
     nodeScopes.set(el, current2);
   }
-  const escopoDosAtributos = montouComponente ? activeScope2 : current2;
+  const attributeScope = mountedComponent ? activeScope2 : current2;
   for (const attr2 of attrs) {
     if (attr2.name === "data" || attr2.name === "component") continue;
-    runDirective(el, attr2, escopoDosAtributos);
+    runDirective(el, attr2, attributeScope);
   }
   stripAttributes(el);
   if (!skipChildren.has(el)) walkChildren(el, current2);
@@ -2364,79 +2364,79 @@ function walkChildren(el, scope) {
   }
   for (const child of list) walk(child, nodeScopes.get(child) ?? scope);
 }
-var LIMITE_EXPRESSAO = 500;
-var expressaoValida = /* @__PURE__ */ new Map();
-function pareceExpressao(texto) {
-  const limpo = texto.trim();
-  if (!limpo) return false;
-  const guardado = expressaoValida.get(limpo);
-  if (guardado !== void 0) return guardado;
-  let valida = true;
+var EXPRESSION_LIMIT = 500;
+var validExpressions = /* @__PURE__ */ new Map();
+function looksLikeExpression(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const cached = validExpressions.get(trimmed);
+  if (cached !== void 0) return cached;
+  let valid = true;
   try {
-    valida = parse(limpo).t !== "seq";
+    valid = parse(trimmed).t !== "seq";
   } catch {
-    valida = false;
+    valid = false;
   }
-  expressaoValida.set(limpo, valida);
-  return valida;
+  validExpressions.set(trimmed, valid);
+  return valid;
 }
-function fecharChave(fonte, inicio) {
-  let nivel = 0;
-  let aspas = null;
-  for (let i = inicio; i < fonte.length; i++) {
-    const c = fonte[i];
-    if (aspas) {
+function closeBrace(source, start2) {
+  let level = 0;
+  let quote = null;
+  for (let i = start2; i < source.length; i++) {
+    const c = source[i];
+    if (quote) {
       if (c === "\\") i++;
-      else if (c === aspas) aspas = null;
+      else if (c === quote) quote = null;
       continue;
     }
     if (c === '"' || c === "'" || c === "`") {
-      aspas = c;
+      quote = c;
       continue;
     }
-    if (c === "{") nivel++;
+    if (c === "{") level++;
     else if (c === "}") {
-      nivel--;
-      if (nivel === 0) return i;
+      level--;
+      if (level === 0) return i;
     }
   }
   return -1;
 }
-function fatiarTexto(raw) {
+function sliceText(raw) {
   const segments = [];
   let literal = "";
   let i = 0;
-  const guardarLiteral = () => {
+  const saveLiteral = () => {
     if (literal) segments.push({ text: literal });
     literal = "";
   };
   while (i < raw.length) {
-    const abre = raw.indexOf("{", i);
-    if (abre === -1) {
+    const open = raw.indexOf("{", i);
+    if (open === -1) {
       literal += raw.slice(i);
       break;
     }
-    literal += raw.slice(i, abre);
-    const duplo = raw[abre + 1] === "{";
-    const fecha = duplo ? raw.indexOf("}}", abre + 2) : fecharChave(raw, abre);
-    if (fecha === -1) {
-      literal += raw[abre];
-      i = abre + 1;
+    literal += raw.slice(i, open);
+    const double = raw[open + 1] === "{";
+    const close = double ? raw.indexOf("}}", open + 2) : closeBrace(raw, open);
+    if (close === -1) {
+      literal += raw[open];
+      i = open + 1;
       continue;
     }
-    const expressao = duplo ? raw.slice(abre + 2, fecha) : raw.slice(abre + 1, fecha);
-    const fim = duplo ? fecha + 2 : fecha + 1;
-    const cabe = duplo || expressao.length <= LIMITE_EXPRESSAO;
-    if (cabe && pareceExpressao(expressao)) {
-      guardarLiteral();
-      segments.push({ expression: expressao.trim() });
-      i = fim;
+    const expression = double ? raw.slice(open + 2, close) : raw.slice(open + 1, close);
+    const end = double ? close + 2 : close + 1;
+    const fits = double || expression.length <= EXPRESSION_LIMIT;
+    if (fits && looksLikeExpression(expression)) {
+      saveLiteral();
+      segments.push({ expression: expression.trim() });
+      i = end;
       continue;
     }
-    literal += raw[abre];
-    i = abre + 1;
+    literal += raw[open];
+    i = open + 1;
   }
-  guardarLiteral();
+  saveLiteral();
   return segments;
 }
 var NO_INTERPOLATION = /* @__PURE__ */ new Set(["PRE", "CODE", "SCRIPT", "STYLE", "TEXTAREA"]);
@@ -2444,15 +2444,15 @@ function bindTextNode(node, scope) {
   const raw = node.textContent;
   if (!raw || raw.indexOf("{") === -1) return;
   if (initialized.has(node)) return;
-  let ancestral = node.parentElement;
-  while (ancestral) {
-    if (NO_INTERPOLATION.has(ancestral.tagName)) return;
-    if (ancestral.hasAttribute(`${config.prefix}ignore`) || ancestral.hasAttribute(`${config.prefix}pre`) || ancestral.hasAttribute("data-v-ignore") || ancestral.hasAttribute("data-v-pre")) {
+  let ancestor = node.parentElement;
+  while (ancestor) {
+    if (NO_INTERPOLATION.has(ancestor.tagName)) return;
+    if (ancestor.hasAttribute(`${config.prefix}ignore`) || ancestor.hasAttribute(`${config.prefix}pre`) || ancestor.hasAttribute("data-v-ignore") || ancestor.hasAttribute("data-v-pre")) {
       return;
     }
-    ancestral = ancestral.parentElement;
+    ancestor = ancestor.parentElement;
   }
-  const segments = fatiarTexto(raw);
+  const segments = sliceText(raw);
   if (!segments.some((s) => s.expression)) return;
   initialized.add(node);
   const owner = new EffectScope(true);
@@ -2462,7 +2462,7 @@ function bindTextNode(node, scope) {
     () => effect(() => {
       let out = "";
       for (const segment of segments) {
-        out += segment.text ?? stringify(evaluateIn(segment.expression, scope, "interpolacao"));
+        out += segment.text ?? stringify(evaluateIn(segment.expression, scope, "interpolation"));
       }
       if (node.textContent !== out) node.textContent = out;
     }, { scope: owner })
@@ -2498,8 +2498,8 @@ function observeDOM(target) {
     for (const mutation of mutations) {
       for (let i = 0; i < mutation.removedNodes.length; i++) {
         const removed = mutation.removedNodes[i];
-        if (remocoesIgnoradas.has(removed)) {
-          remocoesIgnoradas.delete(removed);
+        if (ignoredRemovals.has(removed)) {
+          ignoredRemovals.delete(removed);
           continue;
         }
         if (removed.nodeType === 1 && !removed.isConnected) destroy(removed);
@@ -2536,32 +2536,32 @@ function defineComponent(name, definition) {
 }
 function mountPending(normalized) {
   if (typeof document === "undefined" || !document.body) return;
-  const semHifen = normalized.replace(/-/g, "");
-  const seletores = [normalized, semHifen, `[${config.prefix}component="${normalized}"]`];
-  for (const seletor of seletores) {
-    let encontrados;
+  const noHyphen = normalized.replace(/-/g, "");
+  const selectors = [normalized, noHyphen, `[${config.prefix}component="${normalized}"]`];
+  for (const selector of selectors) {
+    let found;
     try {
-      encontrados = Array.from(document.querySelectorAll(seletor));
+      found = Array.from(document.querySelectorAll(selector));
     } catch {
       continue;
     }
-    for (const el of encontrados) {
+    for (const el of found) {
       if (getScope(el)?.component) continue;
-      if (temAncestralPendente(el)) continue;
-      const escopo = findScope(el.parentNode);
+      if (hasPendingAncestor(el)) continue;
+      const scope = findScope(el.parentNode);
       if (isInitialized(el)) {
         destroy(el);
         restoreAttributes(el);
       }
-      walk(el, escopo);
+      walk(el, scope);
     }
   }
 }
-function temAncestralPendente(el) {
-  let atual = el.parentElement;
-  while (atual && atual !== document.body) {
-    if (hasDirectives(atual) && !isInitialized(atual)) return true;
-    atual = atual.parentElement;
+function hasPendingAncestor(el) {
+  let current2 = el.parentElement;
+  while (current2 && current2 !== document.body) {
+    if (hasDirectives(current2) && !isInitialized(current2)) return true;
+    current2 = current2.parentElement;
   }
   return false;
 }
@@ -2595,7 +2595,7 @@ function propDefinitions(def) {
 function camelize(name) {
   return name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
 }
-function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
+function resolveProps(el, defs, parentScope, owner, componentName) {
   const props = reactive({});
   const known = Object.keys(defs);
   const lookup = /* @__PURE__ */ new Map();
@@ -2627,7 +2627,7 @@ function resolveProps(el, defs, parentScope, owner, nomeDoComponente) {
   }
   for (const key of known) {
     if (defs[key].required && props[key] === void 0) {
-      avisarPropObrigatoria(el, nomeDoComponente, key);
+      warnRequiredProp(el, componentName, key);
     }
   }
   return props;
@@ -2674,13 +2674,13 @@ function mountComponent(el, name, parentScope) {
   const normalized = name ? normalizeComponentName(name) : "";
   const definition = normalized ? components.get(normalized) ?? components.get(componentAliases.get(normalized) ?? "") ?? {} : {};
   if (normalized && !components.has(normalized) && !componentAliases.has(normalized)) {
-    avisarComponenteDesconhecido(el, name);
+    warnUnknownComponent(el, name);
   }
   const owner = new EffectScope(true);
   const defs = propDefinitions(definition);
   const props = resolveProps(el, defs, parentScope, owner, normalized || "inline");
-  if (!definition.state && definition.data) avisarAlias("data()", "state()");
-  if (definition.destroyed) avisarAlias("destroyed()", "unmounted()");
+  if (!definition.state && definition.data) warnAlias("data()", "state()");
+  if (definition.destroyed) warnAlias("destroyed()", "unmounted()");
   const stateFactory = definition.state ?? definition.data;
   let stateRaw = {};
   const instance = {};
@@ -2690,7 +2690,7 @@ function mountComponent(el, name, parentScope) {
   try {
     stateRaw = stateFactory ? stateFactory.call(instance, props) ?? {} : {};
   } catch (err) {
-    handleError(err, `state() do componente "${name}"`);
+    handleError(err, `state() of component "${name}"`);
   }
   const dataAttr = el.getAttribute(`${config.prefix}data`);
   if (dataAttr) {
@@ -2699,22 +2699,22 @@ function mountComponent(el, name, parentScope) {
   }
   if (definition.provide) {
     try {
-      const fornecidos = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
-      if (fornecidos && typeof fornecidos === "object") {
-        scope.provides = { ...fornecidos };
+      const provided = typeof definition.provide === "function" ? definition.provide.call(instance) : definition.provide;
+      if (provided && typeof provided === "object") {
+        scope.provides = { ...provided };
       }
     } catch (err) {
-      handleError(err, `provide() do componente "${name}"`);
+      handleError(err, `provide() of component "${name}"`);
     }
   }
   if (definition.inject) {
-    const pedidos = Array.isArray(definition.inject) ? definition.inject.map((chave) => [chave, { from: chave }]) : Object.entries(definition.inject).map(
-      ([chave, opcoes]) => [chave, opcoes ?? {}]
+    const requests = Array.isArray(definition.inject) ? definition.inject.map((key) => [key, { from: key }]) : Object.entries(definition.inject).map(
+      ([key, options]) => [key, options ?? {}]
     );
-    for (const [chave, opcoes] of pedidos) {
-      const de = opcoes.from ?? chave;
-      const valor = parentScope.inject(de, opcoes.default);
-      if (!(chave in stateRaw)) stateRaw[chave] = valor;
+    for (const [key, options] of requests) {
+      const from = options.from ?? key;
+      const value = parentScope.inject(from, options.default);
+      if (!(key in stateRaw)) stateRaw[key] = value;
     }
   }
   const state = reactive(stateRaw);
@@ -2864,268 +2864,268 @@ init_reactivity();
 init_registry();
 
 // src/runtime/boot.ts
-var LIMITE_ESPERA = 1e4;
-var PASSOS_ESTAVEIS = 2;
-var fila = [];
-var observador = null;
-var versaoDoDom = 0;
-var versaoNoPassoAnterior = -1;
-var passosSemMudanca = 0;
-var agendado = false;
-function agora() {
+var WAIT_LIMIT = 1e4;
+var STABLE_STEPS = 2;
+var queue2 = [];
+var observer2 = null;
+var domVersion = 0;
+var domVersionAtPreviousStep = -1;
+var stepsWithoutChange = 0;
+var scheduled = false;
+function now() {
   return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
 }
-function observarMudancas() {
-  if (observador || typeof MutationObserver === "undefined" || typeof document === "undefined") {
+function observeChanges() {
+  if (observer2 || typeof MutationObserver === "undefined" || typeof document === "undefined") {
     return;
   }
-  const raiz = document.documentElement;
-  if (!raiz) return;
-  observador = new MutationObserver(() => {
-    versaoDoDom++;
+  const root = document.documentElement;
+  if (!root) return;
+  observer2 = new MutationObserver(() => {
+    domVersion++;
   });
-  observador.observe(raiz, { childList: true, subtree: true });
+  observer2.observe(root, { childList: true, subtree: true });
 }
-function agendarPasso() {
-  if (agendado) return;
-  agendado = true;
-  const executar = () => {
-    agendado = false;
-    passo();
+function scheduleStep() {
+  if (scheduled) return;
+  scheduled = true;
+  const execute = () => {
+    scheduled = false;
+    step();
   };
   if (typeof requestAnimationFrame === "function") {
-    let disparado = false;
-    const uma = () => {
-      if (disparado) return;
-      disparado = true;
-      executar();
+    let fired = false;
+    const one = () => {
+      if (fired) return;
+      fired = true;
+      execute();
     };
-    requestAnimationFrame(uma);
-    setTimeout(uma, 32);
+    requestAnimationFrame(one);
+    setTimeout(one, 32);
     return;
   }
-  setTimeout(executar, 0);
+  setTimeout(execute, 0);
 }
-function passo() {
-  if (versaoDoDom === versaoNoPassoAnterior) passosSemMudanca++;
-  else passosSemMudanca = 0;
-  versaoNoPassoAnterior = versaoDoDom;
-  const instante = agora();
-  for (let i = fila.length - 1; i >= 0; i--) {
-    const tarefa = fila[i];
-    let valor = null;
+function step() {
+  if (domVersion === domVersionAtPreviousStep) stepsWithoutChange++;
+  else stepsWithoutChange = 0;
+  domVersionAtPreviousStep = domVersion;
+  const now_ = now();
+  for (let i = queue2.length - 1; i >= 0; i--) {
+    const task = queue2[i];
+    let value = null;
     try {
-      valor = tarefa.pronto();
+      value = task.ready();
     } catch {
-      valor = null;
+      value = null;
     }
-    if (valor) {
-      fila.splice(i, 1);
-      tarefa.acao(valor);
+    if (value) {
+      queue2.splice(i, 1);
+      task.action(value);
       continue;
     }
-    if (instante - tarefa.desde > LIMITE_ESPERA) {
-      fila.splice(i, 1);
-      tarefa.aoDesistir?.();
+    if (now_ - task.since > WAIT_LIMIT) {
+      queue2.splice(i, 1);
+      task.onGiveUp?.();
     }
   }
-  if (fila.length) agendarPasso();
+  if (queue2.length) scheduleStep();
 }
-function enfileirar(tarefa) {
-  let valor = null;
+function enqueue(task) {
+  let value = null;
   try {
-    valor = tarefa.pronto();
+    value = task.ready();
   } catch {
-    valor = null;
+    value = null;
   }
-  if (valor) {
-    tarefa.acao(valor);
+  if (value) {
+    task.action(value);
     return;
   }
-  observarMudancas();
-  fila.push({ ...tarefa, desde: agora() });
-  agendarPasso();
+  observeChanges();
+  queue2.push({ ...task, since: now() });
+  scheduleStep();
 }
-function documentoEstavel() {
+function documentStable() {
   if (typeof document === "undefined" || !document.body) return false;
-  return passosSemMudanca >= PASSOS_ESTAVEIS;
+  return stepsWithoutChange >= STABLE_STEPS;
 }
-function documentoParado() {
+function documentStopped() {
   if (typeof document === "undefined" || !document.body) return false;
-  return versaoDoDom === 0;
+  return domVersion === 0;
 }
-function whenReady(acao) {
+function whenReady(action) {
   if (typeof document === "undefined") return;
-  enfileirar({
-    pronto: () => documentoEstavel() ? document.body : null,
-    acao: () => acao(),
-    // Passado o limite, comeca assim mesmo: uma pagina que nunca para de mudar
-    // ainda merece ser inicializada.
-    aoDesistir: () => {
-      if (document.body) acao();
+  enqueue({
+    ready: () => documentStable() ? document.body : null,
+    action: () => action(),
+    // Past the limit, start anyway: a page that never stops changing
+    // still deserves to be initialized.
+    onGiveUp: () => {
+      if (document.body) action();
     }
   });
 }
-function whenBodyReady(acao) {
+function whenBodyReady(action) {
   if (typeof document === "undefined") return;
-  if (documentoParado()) {
-    void Promise.resolve().then(acao);
+  if (documentStopped()) {
+    void Promise.resolve().then(action);
     return;
   }
-  enfileirar({
-    pronto: () => documentoEstavel() ? document.body : null,
-    acao: () => acao(),
-    aoDesistir: () => {
-      if (document.body) acao();
+  enqueue({
+    ready: () => documentStable() ? document.body : null,
+    action: () => action(),
+    onGiveUp: () => {
+      if (document.body) action();
     }
   });
 }
-function whenElement(alvo, acao, aoDesistir) {
-  if (typeof alvo !== "string") {
-    acao(alvo);
+function whenElement(target, action, onGiveUp) {
+  if (typeof target !== "string") {
+    action(target);
     return;
   }
   if (typeof document === "undefined") return;
-  enfileirar({
-    pronto: () => document.querySelector(alvo),
-    acao: (el) => acao(el),
-    aoDesistir
+  enqueue({
+    ready: () => document.querySelector(target),
+    action: (el) => action(el),
+    onGiveUp
   });
 }
 
 // src/runtime/app.ts
-var contador = 0;
+var counter = 0;
 var directiveRegistrar = null;
 function setDirectiveRegistrar(fn) {
   directiveRegistrar = fn;
 }
 function createApp(options = {}) {
-  const name = `voodoo-app-${++contador}`;
-  const { components: locais, ...raiz } = options;
+  const name = `voodoo-app-${++counter}`;
+  const { components: local, ...root } = options;
   const config_ = { globalProperties: {} };
-  const providos = {};
-  const registradosPorEsteApp = [];
+  const provided = {};
+  const registeredByThisApp = [];
   let container2 = null;
-  let htmlOriginal = "";
-  let instancia = null;
-  let esperando = [];
-  function registrarLocais() {
-    if (!locais) return;
-    for (const [nome, definicao] of Object.entries(locais)) {
-      const normalizado = normalizeComponentName(nome);
-      if (components.has(normalizado)) continue;
-      defineComponent(normalizado, definicao);
-      registradosPorEsteApp.push(normalizado);
+  let originalHTML = "";
+  let instance = null;
+  let waiting = [];
+  function registerLocal() {
+    if (!local) return;
+    for (const [name2, definition] of Object.entries(local)) {
+      const normalized = normalizeComponentName(name2);
+      if (components.has(normalized)) continue;
+      defineComponent(normalized, definition);
+      registeredByThisApp.push(normalized);
     }
   }
-  function montarEm(el) {
-    if (instancia) return instancia;
+  function mountOn(el) {
+    if (instance) return instance;
     container2 = el;
-    htmlOriginal = el.innerHTML;
+    originalHTML = el.innerHTML;
     Object.assign(allowedGlobals, config_.globalProperties);
-    registrarLocais();
-    const definicao = { ...raiz };
-    if (Object.keys(providos).length) {
-      const anterior = definicao.provide;
-      definicao.provide = () => ({
-        ...typeof anterior === "function" ? anterior() : anterior ?? {},
-        ...providos
+    registerLocal();
+    const definition = { ...root };
+    if (Object.keys(provided).length) {
+      const previous = definition.provide;
+      definition.provide = () => ({
+        ...typeof previous === "function" ? previous() : previous ?? {},
+        ...provided
       });
     }
-    defineComponent(name, definicao);
+    defineComponent(name, definition);
     el.setAttribute(`${config.prefix}component`, name);
     try {
       walk(el, rootScope);
     } catch (err) {
-      handleError(err, `montagem da aplicacao "${name}"`);
+      handleError(err, `application mounting "${name}"`);
       return null;
     }
-    instancia = getScope(el)?.component ?? null;
-    if (instancia) {
-      const fila2 = esperando;
-      esperando = [];
-      for (const resolver of fila2) resolver(instancia);
+    instance = getScope(el)?.component ?? null;
+    if (instance) {
+      const queue3 = waiting;
+      waiting = [];
+      for (const resolver of queue3) resolver(instance);
     }
-    return instancia;
+    return instance;
   }
   const app = {
     name,
     config: config_,
     get instance() {
-      return instancia;
+      return instance;
     },
     get container() {
       return container2;
     },
     get isMounted() {
-      return instancia !== null;
+      return instance !== null;
     },
-    component(nome, definicao) {
-      const normalizado = normalizeComponentName(nome);
-      if (definicao === void 0) {
-        return (locais && locais[nome]) ?? components.get(normalizado);
+    component(name2, definition) {
+      const normalized = normalizeComponentName(name2);
+      if (definition === void 0) {
+        return (local && local[name2]) ?? components.get(normalized);
       }
-      if (locais) locais[nome] = definicao;
-      else options.components = { [nome]: definicao };
-      if (instancia && !components.has(normalizado)) {
-        defineComponent(normalizado, definicao);
-        registradosPorEsteApp.push(normalizado);
+      if (local) local[name2] = definition;
+      else options.components = { [name2]: definition };
+      if (instance && !components.has(normalized)) {
+        defineComponent(normalized, definition);
+        registeredByThisApp.push(normalized);
       }
       return app;
     },
-    directive(nome, definicao) {
-      directiveRegistrar?.(nome, definicao);
+    directive(name2, definition) {
+      directiveRegistrar?.(name2, definition);
       return app;
     },
-    use(plugin, opcoes) {
-      usePlugin(globalThis_V(), plugin, opcoes);
+    use(plugin, options2) {
+      usePlugin(globalThis_V(), plugin, options2);
       return app;
     },
-    provide(chave, valor) {
-      providos[chave] = valor;
+    provide(key, value) {
+      provided[key] = value;
       return app;
     },
-    mount(alvo) {
-      if (instancia) return instancia;
-      if (typeof alvo !== "string") return montarEm(alvo);
-      let resultado = null;
+    mount(target) {
+      if (instance) return instance;
+      if (typeof target !== "string") return mountOn(target);
+      let result = null;
       whenElement(
-        alvo,
+        target,
         (el) => {
-          resultado = montarEm(el);
+          result = mountOn(el);
         },
         () => {
           console.warn(
-            `[Voodoo] createApp().mount("${alvo}") nao encontrou o elemento. A aplicacao continua sem montar.`
+            `[Voodoo] createApp().mount("${target}") did not find the element. The application remains unmounted.`
           );
         }
       );
-      return resultado;
+      return result;
     },
     whenMounted() {
-      if (instancia) return Promise.resolve(instancia);
-      return new Promise((resolve2) => esperando.push(resolve2));
+      if (instance) return Promise.resolve(instance);
+      return new Promise((resolve2) => waiting.push(resolve2));
     },
     unmount() {
       if (!container2) return;
       destroy(container2);
       container2.removeAttribute(`${config.prefix}component`);
-      container2.innerHTML = htmlOriginal;
+      container2.innerHTML = originalHTML;
       components.delete(name);
-      for (const nome of registradosPorEsteApp) components.delete(nome);
-      registradosPorEsteApp.length = 0;
-      instancia = null;
+      for (const name2 of registeredByThisApp) components.delete(name2);
+      registeredByThisApp.length = 0;
+      instance = null;
       container2 = null;
     }
   };
   return app;
 }
-var objetoV = null;
+var objectV = null;
 function setAppHost(V2) {
-  objetoV = V2;
+  objectV = V2;
 }
 function globalThis_V() {
-  return objetoV;
+  return objectV;
 }
 
 // src/runtime/magics.ts
@@ -3334,15 +3334,15 @@ function throttle(fn, wait2 = 250) {
   let timer = null;
   let lastArgs = null;
   const throttled = function(...args) {
-    const now = Date.now();
+    const now2 = Date.now();
     lastArgs = args;
-    const remaining = wait2 - (now - last);
+    const remaining = wait2 - (now2 - last);
     if (remaining <= 0) {
       if (timer) {
         clearTimeout(timer);
         timer = null;
       }
-      last = now;
+      last = now2;
       fn.apply(this, args);
     } else if (!timer) {
       timer = setTimeout(() => {
@@ -3626,7 +3626,7 @@ var HttpError = class extends Error {
   get status() {
     return this.response?.status ?? 0;
   }
-  /** `true` quando o erro foi de rede, timeout ou cancelamento. */
+  /** `true` when error is network, timeout, or cancellation. */
   get isNetworkError() {
     return !this.response;
   }
@@ -3700,8 +3700,8 @@ async function flushOfflineQueue() {
       });
       sent++;
     } catch {
-      const novos = readQueue();
-      writeQueue([...list.slice(index), ...novos]);
+      const newItems = readQueue();
+      writeQueue([...list.slice(index), ...newItems]);
       break;
     }
   }
@@ -3766,8 +3766,8 @@ async function parseResponse(response, type) {
 }
 var METODOS_SEGUROS = /* @__PURE__ */ new Set(["GET", "HEAD", "OPTIONS"]);
 function temChaveDeIdempotencia(headers) {
-  for (const [nome, valor] of Object.entries(headers)) {
-    if (nome.toLowerCase() === "idempotency-key" && String(valor).trim() !== "") return true;
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === "idempotency-key" && String(value).trim() !== "") return true;
   }
   return false;
 }
@@ -3776,9 +3776,9 @@ function podeRepetir(method, config2, headers, url2) {
   if (config2.retryUnsafe === true) return true;
   if (temChaveDeIdempotencia(headers)) return true;
   if ((config2.retry ?? 0) > 0) {
-    avisarUmaVez(
-      `http:retry-inseguro:${method} ${url2}`,
-      `retry ignorado em ${method} ${url2}: repetir um metodo que muda estado pode aplicar a mesma operacao duas vezes quando a resposta se perde no caminho. Libere com retryUnsafe: true ou envie um cabecalho Idempotency-Key.`
+    warnOnce(
+      `http:retry-unsafe:${method} ${url2}`,
+      `retry ignored on ${method} ${url2}: retrying a method that changes state may apply the same operation twice if the response is lost in transit. Allow with retryUnsafe: true or send an Idempotency-Key header.`
     );
   }
   return false;
@@ -3867,7 +3867,7 @@ async function request(input) {
           continue;
         }
         const error2 = new HttpError(
-          `Requisicao falhou com status ${response.status}`,
+          `Request failed with status ${response.status}`,
           result,
           config2
         );
@@ -3897,7 +3897,7 @@ async function request(input) {
       }
     }
   }
-  const message = lastError?.name === "TimeoutError" ? `Tempo esgotado apos ${config2.timeout}ms` : `Falha de rede ao acessar ${url2}`;
+  const message = lastError?.name === "TimeoutError" ? `Timeout after ${config2.timeout}ms` : `Network failure accessing ${url2}`;
   const error = new HttpError(message, void 0, config2, lastError);
   for (const interceptor of errorInterceptors) interceptor(error);
   throw error;
@@ -3929,9 +3929,9 @@ var http = {
   head(url2, options = {}) {
     return shortcut({ ...options, url: url2, method: "HEAD" });
   },
-  /** Requisicao completa, com status e cabecalhos. */
+  /** Full request with status and headers. */
   request,
-  /** Envia arquivos com progresso real, usando XMLHttpRequest. */
+  /** Upload files with real progress using XMLHttpRequest. */
   upload(url2, data2, options = {}) {
     return new Promise((resolve2, reject) => {
       const xhr = new XMLHttpRequest();
@@ -3961,15 +3961,15 @@ var http = {
           }
         }
         if (xhr.status >= 200 && xhr.status < 300) resolve2(data3);
-        else reject(new HttpError(`Upload falhou com status ${xhr.status}`));
+        else reject(new HttpError(`Upload failed with status ${xhr.status}`));
       });
-      xhr.addEventListener("error", () => reject(new HttpError("Falha de rede no upload")));
-      xhr.addEventListener("abort", () => reject(new HttpError("Upload cancelado")));
+      xhr.addEventListener("error", () => reject(new HttpError("Network failure during upload")));
+      xhr.addEventListener("abort", () => reject(new HttpError("Upload canceled")));
       options.signal?.addEventListener("abort", () => xhr.abort());
       xhr.send(data2);
     });
   },
-  /** Server-Sent Events com reconexao automatica do proprio navegador. */
+  /** Server-Sent Events with automatic reconnection by the browser. */
   sse(url2, handlers = {}) {
     const source = new EventSource(buildURL({ url: url2 }));
     source.addEventListener("message", (event) => {
@@ -3983,7 +3983,7 @@ var http = {
     if (handlers.error) source.addEventListener("error", handlers.error);
     return source;
   },
-  /** Le uma resposta em streaming, linha a linha (NDJSON). */
+  /** Read a streaming response line by line (NDJSON). */
   async stream(url2, onLine, options = {}) {
     const response = await fetch(buildURL({ url: url2, params: options.params }), {
       headers: { ...defaults.headers, ...options.headers },
@@ -4032,12 +4032,12 @@ var http = {
       }
     }
   },
-  /** Define cabecalhos enviados em toda requisicao. */
+  /** Set headers sent on every request. */
   setHeader(name, value) {
     if (value === null) delete defaults.headers[name];
     else defaults.headers[name] = value;
   },
-  /** Atalho para autenticacao por token. */
+  /** Shortcut for token-based authentication. */
   setToken(token, scheme = "Bearer") {
     this.setHeader("Authorization", token ? `${scheme} ${token}` : null);
   },
@@ -4120,7 +4120,7 @@ function container(position) {
   element.className = "v-toaster";
   element.setAttribute("data-pos", position);
   element.setAttribute("role", "region");
-  element.setAttribute("aria-label", "Notificacoes");
+  element.setAttribute("aria-label", "Notifications");
   document.body.appendChild(element);
   containers.set(position, element);
   return element;
@@ -4194,7 +4194,7 @@ function render(options) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "v-toast-close";
-        button.setAttribute("aria-label", "Fechar notificacao");
+        button.setAttribute("aria-label", "Close notification");
         button.innerHTML = "&times;";
         button.addEventListener("click", close);
         element.appendChild(button);
@@ -4235,7 +4235,7 @@ function normalize(input, type) {
   return typeof input === "string" ? { title: input, type } : { type, ...input };
 }
 var toast = Object.assign(
-  /** Notificacao neutra. */
+  /** Neutral notification. */
   (message, options = {}) => render({ ...normalize(message, "default"), ...options }),
   {
     success: (message, options = {}) => render({ ...normalize(message, "success"), ...options }),
@@ -4244,43 +4244,43 @@ var toast = Object.assign(
     info: (message, options = {}) => render({ ...normalize(message, "info"), ...options }),
     loading: (message, options = {}) => render({ ...normalize(message, "loading"), duration: 0, ...options }),
     /**
-     * Acompanha uma promessa: mostra carregando, depois sucesso ou erro.
+     * Monitor a promise: show loading, then success or error.
      *
      * ```js
-     * V.toast.promise(salvar(), {
-     *   loading: 'Salvando...',
-     *   success: (dados) => `Salvo com id ${dados.id}`,
-     *   error: 'Nao foi possivel salvar'
+     * V.toast.promise(save(), {
+     *   loading: 'Saving...',
+     *   success: (data) => `Saved with id ${data.id}`,
+     *   error: 'Failed to save'
      * })
      * ```
      */
     async promise(promise, messages2 = {}) {
-      const handle = render({ title: messages2.loading ?? "Carregando...", type: "loading", duration: 0 });
+      const handle = render({ title: messages2.loading ?? "Loading...", type: "loading", duration: 0 });
       try {
         const value = await promise;
         handle.update({
-          title: typeof messages2.success === "function" ? messages2.success(value) : messages2.success ?? "Pronto",
+          title: typeof messages2.success === "function" ? messages2.success(value) : messages2.success ?? "Done",
           type: "success",
           duration: settings.duration
         });
         return value;
       } catch (err) {
         handle.update({
-          title: typeof messages2.error === "function" ? messages2.error(err) : messages2.error ?? "Algo deu errado",
+          title: typeof messages2.error === "function" ? messages2.error(err) : messages2.error ?? "Something went wrong",
           type: "error",
           duration: settings.duration
         });
         throw err;
       }
     },
-    /** Fecha todas as notificacoes abertas. */
+    /** Close all open notifications. */
     clear() {
       for (const [position, element] of containers) {
         element.remove();
         containers.delete(position);
       }
     },
-    /** Ajusta duracao, posicao e limite padrao. */
+    /** Adjust default duration, position, and limit. */
     configure(options) {
       Object.assign(settings, options);
     },
@@ -4387,17 +4387,17 @@ var cookie = {
   }
 };
 var url = {
-  /** Le um parametro da URL atual. */
+  /** Reads a parameter from the current URL. */
   get(key, fallback) {
     if (typeof location === "undefined") return fallback;
     return new URLSearchParams(location.search).get(key) ?? fallback;
   },
-  /** Le todos os parametros como objeto. */
+  /** Reads all parameters as an object. */
   all() {
     if (typeof location === "undefined") return {};
     return Object.fromEntries(new URLSearchParams(location.search));
   },
-  /** Escreve um parametro sem recarregar a pagina. */
+  /** Writes a parameter without reloading the page. */
   set(key, value, replace = true) {
     if (typeof location === "undefined") return;
     const next = new URL(location.href);
@@ -4408,7 +4408,7 @@ var url = {
   remove(key, replace = true) {
     this.set(key, null, replace);
   },
-  /** Aplica varios parametros de uma vez. */
+  /** Applies multiple parameters at once. */
   merge(params, replace = true) {
     if (typeof location === "undefined") return;
     const next = new URL(location.href);
@@ -4421,7 +4421,7 @@ var url = {
 };
 var memoryCache = /* @__PURE__ */ new Map();
 var cache2 = {
-  /** Guarda um valor. `ttl` em milissegundos, `0` significa sem expiracao. */
+  /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
   set(key, value, ttl = 0) {
     memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
     return value;
@@ -4444,7 +4444,7 @@ var cache2 = {
   clear() {
     memoryCache.clear();
   },
-  /** Executa a funcao apenas quando o valor nao estiver em cache. */
+  /** Executes the function only when the value is not in cache. */
   async remember(key, ttl, factory) {
     const hit = this.get(key);
     if (hit !== void 0) return hit;
@@ -4458,11 +4458,11 @@ var cache2 = {
 };
 var THEME_KEY = "voodoo:theme";
 var theme = {
-  /** Tema escolhido pelo usuario, ou `system` quando nunca foi definido. */
+  /** Theme chosen by the user, or `system` when never set. */
   get current() {
     return storage.get(THEME_KEY) ?? "system";
   },
-  /** Tema efetivamente aplicado, resolvendo `system`. */
+  /** Theme effectively applied, resolving `system`. */
   get resolved() {
     const value = this.current;
     if (value !== "system") return value;
@@ -4478,7 +4478,7 @@ var theme = {
     this.set(next);
     return next;
   },
-  /** Escreve `data-theme` no elemento raiz e avisa a pagina. */
+  /** Writes `data-theme` on the root element and notifies the page. */
   apply() {
     if (typeof document === "undefined") return;
     const value = this.current;
@@ -4490,7 +4490,7 @@ var theme = {
       new CustomEvent("voodoo:theme", { detail: { theme: value, resolved: this.resolved } })
     );
   },
-  /** Aplica o tema salvo assim que a pagina carrega. */
+  /** Applies the saved theme as soon as the page loads. */
   init() {
     if (typeof document === "undefined") return;
     this.apply();
@@ -4509,7 +4509,7 @@ var screen = reactive({
   desktop: false,
   portrait: false,
   landscape: false,
-  /** Verifica uma media query arbitraria. */
+  /** Check an arbitrary media query. */
   matches(query2) {
     return typeof matchMedia !== "undefined" && matchMedia(query2).matches;
   }
@@ -4526,9 +4526,9 @@ function updateScreen() {
 }
 var network = reactive({
   online: true,
-  /** Tipo de conexao informado pelo navegador, quando disponivel. */
+  /** Connection type reported by the browser, when available. */
   type: "unknown",
-  /** `true` quando o usuario pediu economia de dados. */
+  /** `true` when the user requested data saving mode. */
   saveData: false,
   slow: false
 });
@@ -4543,7 +4543,7 @@ function updateNetwork() {
   }
 }
 var clipboard = {
-  /** Copia texto, com fallback para navegadores sem a API moderna. */
+  /** Copy text, with fallback for browsers without the modern API. */
   async copy(text) {
     try {
       if (navigator.clipboard?.writeText) {
@@ -4566,7 +4566,7 @@ var clipboard = {
       return false;
     }
   },
-  /** Le o conteudo da area de transferencia, quando o usuario permitir. */
+  /** Read clipboard content, when the user allows. */
   async read() {
     try {
       return await navigator.clipboard.readText();
@@ -4906,7 +4906,7 @@ function setValue(expression, scope, value) {
     };
     evaluate(assignment, scope);
   } catch (err) {
-    handleError(err, `atribuicao em "${expression}"`);
+    handleError(err, `assignment in "${expression}"`);
   }
 }
 function transitionOptions(el) {
@@ -5072,7 +5072,7 @@ defineDirective(
     const match = FOR_PATTERN.exec(expression);
     if (!match) {
       handleError(
-        new Error(`Sintaxe invalida em v-for="${expression}". Use "item in itens".`),
+        new Error(`Invalid syntax in v-for="${expression}". Use "item in items".`),
         "v-for"
       );
       return;
@@ -5107,7 +5107,7 @@ defineDirective(
       const used = /* @__PURE__ */ new Set();
       entries.forEach((vars, index) => {
         const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
-        if (keyExpression && used.has(key)) avisarChaveDuplicada(el, key, expression);
+        if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
         const existing = previous.get(key);
         if (existing && !used.has(key)) {
           used.add(key);
@@ -5210,23 +5210,23 @@ function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
   if (name === "class") return applyClass(el, value);
   if (name === "style") return applyStyle(el, value);
   if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
-    avisar(
-      `:srcdoc recusado em ${descreverElemento(el)}: o valor vira um documento com script ativo dentro do iframe, do mesmo jeito que v-html vira markup. Se o conteudo for confiavel, escreva :srcdoc.dangerous="..."; para desligar esta protecao na aplicacao inteira, defina V.config.sanitizeUrls = false.`
+    warn2(
+      `:srcdoc refused in ${describeElement(el)}: the value becomes a document with active script inside the iframe, the same way v-html becomes markup. If the content is trusted, write :srcdoc.dangerous="..."; to turn off this protection on the entire application, set V.config.sanitizeUrls = false.`
     );
     el.removeAttribute(name);
     return;
   }
   if (config.sanitizeUrls && !asProp) {
     if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
-      avisar(
-        `valor recusado em :${name} de ${descreverElemento(el)}: "${value.slice(0, 60)}" usa um esquema que executa codigo. Use um endereco http(s) ou relativo. Para desligar esta protecao, defina V.config.sanitizeUrls = false.`
+      warn2(
+        `value refused in :${name} of ${describeElement(el)}: "${value.slice(0, 60)}" uses a scheme that executes code. Use an http(s) or relative address. To turn off this protection, set V.config.sanitizeUrls = false.`
       );
       el.removeAttribute(name);
       return;
     }
     if (name.length > 2 && /^on[a-z]/.test(name)) {
-      avisar(
-        `atributo "${name}" recusado em ${descreverElemento(el)}: ligar evento por atributo cria um manipulador embutido. Use @${name.slice(2)}="..." no lugar.`
+      warn2(
+        `attribute "${name}" refused in ${describeElement(el)}: linking event by attribute creates an inline handler. Use @${name.slice(2)}="..." instead.`
       );
       el.removeAttribute(name);
       return;
@@ -5357,7 +5357,7 @@ function runHandler(expression, scope, event, el) {
       value.call(scope.data, isEmit ? payload : event);
     }
   } catch (err) {
-    handleError(err, `evento ${event.type} ("${expression}")`);
+    handleError(err, `event ${event.type} ("${expression}")`);
   }
 }
 var EVENT_ALIASES = {
@@ -5372,7 +5372,7 @@ var EVENT_ALIASES = {
   submitform: "submit"
 };
 var customEvents = {
-  /** Segurar pressionado. Duracao pela modificador, como `@hold.1s`. */
+  /** Hold pressed. Duration via modifier, like `@hold.1s`. */
   hold(el, run, modifiers, cleanup) {
     const holdFor = parseDuration(
       typeof modifiers.duration === "string" && modifiers.duration || Object.keys(modifiers).find((m) => /^[\d.]+(ms|s)?$/.test(m)) || el.getAttribute(`${config.prefix}hold-duration`) || 800,
@@ -5416,7 +5416,7 @@ var customEvents = {
       el.removeEventListener("click", swallowClick, true);
     });
   },
-  /** Clique em qualquer lugar fora do elemento. */
+  /** Click anywhere outside the element. */
   outside(el, run, _modifiers, cleanup) {
     const handler = (event) => {
       if (!el.isConnected) return;
@@ -5426,24 +5426,24 @@ var customEvents = {
     document.addEventListener("click", handler, true);
     cleanup(() => document.removeEventListener("click", handler, true));
   },
-  /** Elemento entrou na area visivel. */
+  /** Element entered visible area. */
   visible(el, run, modifiers, cleanup) {
     if (typeof IntersectionObserver === "undefined") {
       run(new CustomEvent("visible"));
       return;
     }
-    const observer2 = new IntersectionObserver(
+    const observer3 = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           run(new CustomEvent("visible", { detail: entry }));
-          if (modifiers.repeat !== true) observer2.unobserve(el);
+          if (modifiers.repeat !== true) observer3.unobserve(el);
         }
       },
       { threshold: Number(modifiers.threshold ?? 0.1), rootMargin: String(modifiers.margin ?? "0px") }
     );
-    observer2.observe(el);
-    cleanup(() => observer2.disconnect());
+    observer3.observe(el);
+    cleanup(() => observer3.disconnect());
   }
 };
 for (const direction of ["left", "right", "up", "down"]) {
@@ -5707,7 +5707,7 @@ defineDirective(
     const selector = expression.trim() || "body";
     const target = selector === "body" ? document.body : document.querySelector(selector);
     if (!target) {
-      handleError(new Error(`Destino de v-teleport nao encontrado: ${selector}`), "v-teleport");
+      handleError(new Error(`v-teleport destination not found: ${selector}`), "v-teleport");
       return;
     }
     const placeholder = document.createComment(" v-teleport ");
@@ -5839,7 +5839,7 @@ function renderJSON(value, depth = 0) {
   if (value == null) return "";
   if (typeof value !== "object") return escapeHtml(String(value));
   if (Array.isArray(value)) {
-    if (!value.length) return '<p class="v-json-empty">Nenhum resultado.</p>';
+    if (!value.length) return '<p class="v-json-empty">No results.</p>';
     const allObjects = value.every((item) => item && typeof item === "object" && !Array.isArray(item));
     if (allObjects && depth === 0) {
       const columns = Array.from(
@@ -5865,7 +5865,7 @@ function renderJSON(value, depth = 0) {
 function renderWithTemplate(selector, data2, scope, target) {
   const template = document.querySelector(selector);
   if (!template) {
-    handleError(new Error(`Template nao encontrado: ${selector}`), "v-template");
+    handleError(new Error(`Template not found: ${selector}`), "v-template");
     return;
   }
   for (const child of Array.from(target.children)) destroy(child);
@@ -5887,8 +5887,8 @@ var inFlight = /* @__PURE__ */ new WeakMap();
 async function runRequest(options) {
   const { el, scope, method } = options;
   const settings3 = readSettings(el, scope);
-  const dialogoCuidaDaPergunta = directives.has(`confirm`);
-  if (settings3.confirmMessage && !dialogoCuidaDaPergunta) {
+  const dialogHandlesTheQuestion = directives.has(`confirm`);
+  if (settings3.confirmMessage && !dialogHandlesTheQuestion) {
     const confirmed = await askConfirmation(settings3.confirmMessage);
     if (!confirmed) return;
   }
@@ -5954,12 +5954,12 @@ async function runRequest(options) {
     }
   } catch (err) {
     if (err?.name === "AbortError") return;
-    const message = err instanceof HttpError ? extractMessage(err) ?? err.message : err?.message ?? "Erro desconhecido";
+    const message = err instanceof HttpError ? extractMessage(err) ?? err.message : err?.message ?? "Unknown error";
     if (settings3.toastError) toast.error(settings3.toastError);
     else if (!settings3.onError) toast.error(message);
     if (settings3.onError) callHandler(settings3.onError, scope, el, { error: err, message });
     dispatch(el, "voodoo:error", { error: err, message });
-    handleError(err, `requisicao ${method} ${options.url}`);
+    handleError(err, `request ${method} ${options.url}`);
   } finally {
     stopLoading();
     inFlight.delete(el);
@@ -5972,7 +5972,7 @@ function dispatch(el, type, detail) {
 }
 function callHandler(expression, scope, el, extra) {
   const local = scope.child({ $el: el, ...extra });
-  const value = evaluateIn(expression, local, "callback HTTP");
+  const value = evaluateIn(expression, local, "HTTP callback");
   if (typeof value === "function") value.call(scope.data, extra.data ?? extra.error);
 }
 async function askConfirmation(message) {
@@ -6032,18 +6032,18 @@ function installTrigger({ el, cleanup, run }) {
       run();
       return;
     }
-    const observer2 = new IntersectionObserver(
+    const observer3 = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           run();
-          if (!modifiers.includes("repeat")) observer2.unobserve(el);
+          if (!modifiers.includes("repeat")) observer3.unobserve(el);
         }
       },
       { rootMargin: "80px" }
     );
-    observer2.observe(el);
-    cleanup(() => observer2.disconnect());
+    observer3.observe(el);
+    cleanup(() => observer3.disconnect());
     return;
   }
   const once2 = modifiers.includes("once");
@@ -6096,18 +6096,18 @@ defineDirective("load-visible", ({ el, scope, cleanup, expression }) => {
     void runRequest({ el, scope, method: "GET", url: url2 });
     return;
   }
-  const observer2 = new IntersectionObserver(
+  const observer3 = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        observer2.unobserve(el);
+        observer3.unobserve(el);
         void runRequest({ el, scope, method: "GET", url: url2 });
       }
     },
     { rootMargin: "120px" }
   );
-  observer2.observe(el);
-  cleanup(() => observer2.disconnect());
+  observer3.observe(el);
+  cleanup(() => observer3.disconnect());
 });
 defineDirective("search", ({ el, scope, expression, cleanup }) => {
   const input = el;
@@ -6216,7 +6216,7 @@ function emit(name, payload) {
     try {
       handler(payload);
     } catch (err) {
-      handleError(err, `evento "${name}"`);
+      handleError(err, `event "${name}"`);
     }
   }
 }
@@ -6275,11 +6275,11 @@ function data(values) {
 }
 var version = "0.3.0";
 var core = {
-  // Utilitarios primeiro: nomes proprios da Voodoo podem sobrescrever.
+  // Utilities first: Voodoo's own names can override.
   ...utils_exports,
   version,
   config,
-  // Reatividade
+  // Reactivity
   reactive,
   ref,
   shallowRef,
@@ -6295,23 +6295,23 @@ var core = {
   effectScope,
   EffectScope,
   flushSync,
-  // Estado
+  // State
   data,
   store,
   stores: allStores,
   removeStore,
   storeNames,
   scope: rootScope,
-  // Componentes e directives
+  // Components and directives
   component: defineComponent,
   components,
   directive,
   directives,
   magic,
   magics,
-  // Modo aplicacao
+  // Application mode
   createApp,
-  // Ciclo de vida do DOM
+  // DOM lifecycle
   start,
   whenReady,
   whenElement,
@@ -6323,7 +6323,7 @@ var core = {
   findScope,
   addCleanup,
   parseAttribute,
-  // Expressoes
+  // Expressions
   parse,
   tokenize,
   evaluate,
@@ -6331,11 +6331,11 @@ var core = {
   stringify,
   clearParseCache,
   globals: allowedGlobals,
-  // Servicos
+  // Services
   http,
   request,
   HttpError,
-  /** Recurso reativo por JavaScript, equivalente a `v-resource`. */
+  /** Reactive resource via JavaScript, equivalent to `v-resource`. */
   resource: createResource,
   toast,
   storage,
@@ -6347,7 +6347,7 @@ var core = {
   clipboard,
   screen,
   network,
-  // Animacao
+  // Animation
   enter,
   leave,
   fadeIn,
@@ -6355,10 +6355,10 @@ var core = {
   slideUp,
   slideDown,
   viewTransition,
-  // Estilo
+  // Styling
   injectStyle,
   ensureTokens,
-  // Eventos globais
+  // Global events
   on,
   once: onceEvent,
   off,
@@ -6367,11 +6367,11 @@ var core = {
   use(plugin, options) {
     usePlugin(core, plugin, options);
   },
-  /** Define o tratamento de erros da aplicacao inteira. */
+  /** Defines error handling for the entire application. */
   onError(handler) {
     setErrorHandler(handler);
   },
-  /** Instancias de componente montadas, para inspecao. */
+  /** Mounted component instances for inspection. */
   instances,
   Scope,
   PRIORITY,
@@ -6565,23 +6565,23 @@ function bindingsOf(el) {
 }
 var VoodooCollection = class _VoodooCollection {
   constructor(elements = []) {
-    /** Quantidade de elementos da colecao. */
+    /** Number of elements in the collection. */
     __publicField(this, "length");
-    /** Elementos da colecao, na ordem em que foram encontrados. */
+    /** Elements of the collection, in the order they were found. */
     __publicField(this, "elements");
     this.elements = elements;
     this.length = elements.length;
     const indexed = this;
     for (let i = 0; i < elements.length; i++) indexed[i] = elements[i];
   }
-  /** Permite `for (const el of query('.item'))`. */
+  /** Enables `for (const el of query('.item'))`. */
   [Symbol.iterator]() {
     return this.elements[Symbol.iterator]();
   }
   // -------------------------------------------------------------------------
-  // Travessia
+  // Traversal
   // -------------------------------------------------------------------------
-  /** Descendentes que casam com o seletor. */
+  /** Descendants that match the selector. */
   find(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6592,7 +6592,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Ancestral mais proximo, incluindo o proprio elemento. */
+  /** Nearest ancestor, including the element itself. */
   closest(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6601,7 +6601,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Elemento pai de cada item, opcionalmente filtrado. */
+  /** Parent element of each item, optionally filtered. */
   parent(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6610,7 +6610,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Todos os ancestrais, do mais proximo ao mais distante. */
+  /** All ancestors, from nearest to farthest. */
   parents(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6622,7 +6622,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Filhos diretos, opcionalmente filtrados. */
+  /** Direct children, optionally filtered. */
   children(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6632,7 +6632,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Irmaos, sem incluir os proprios elementos. */
+  /** Siblings, excluding the elements themselves. */
   siblings(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6645,7 +6645,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Proximo irmao de cada elemento. */
+  /** Next sibling of each element. */
   next(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6654,7 +6654,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Irmao anterior de cada elemento. */
+  /** Previous sibling of each element. */
   prev(selector) {
     const out = [];
     for (const el of this.elements) {
@@ -6663,52 +6663,52 @@ var VoodooCollection = class _VoodooCollection {
     }
     return new _VoodooCollection(distinct(out));
   }
-  /** Somente o primeiro elemento. */
+  /** Only the first element. */
   first() {
     return this.eq(0);
   }
-  /** Somente o ultimo elemento. */
+  /** Only the last element. */
   last() {
     return this.eq(-1);
   }
-  /** Elemento na posicao informada. Indices negativos contam do fim. */
+  /** Element at the specified position. Negative indices count from the end. */
   eq(index) {
     const position = index < 0 ? this.elements.length + index : index;
     const el = this.elements[position];
     return new _VoodooCollection(el ? [el] : []);
   }
-  /** Mantem apenas os elementos que passam no filtro. */
+  /** Keeps only elements that pass the filter. */
   filter(test) {
     const out = this.elements.filter(
       (el, index) => typeof test === "function" ? test(el, index) : el.matches(test)
     );
     return new _VoodooCollection(out);
   }
-  /** Remove da colecao os elementos que passam no filtro. */
+  /** Removes from the collection elements that pass the filter. */
   not(test) {
     const out = this.elements.filter(
       (el, index) => typeof test === "function" ? !test(el, index) : !el.matches(test)
     );
     return new _VoodooCollection(out);
   }
-  /** Mantem os elementos que contem o descendente informado. */
+  /** Keeps elements that contain the specified descendant. */
   has(target) {
     const out = this.elements.filter(
       (el) => typeof target === "string" ? el.querySelector(target) !== null : el.contains(target)
     );
     return new _VoodooCollection(out);
   }
-  /** Verifica se ao menos um elemento casa com o filtro. */
+  /** Checks if at least one element matches the filter. */
   is(test) {
     return this.elements.some(
       (el, index) => typeof test === "function" ? test(el, index) : el.matches(test)
     );
   }
-  /** Projeta cada elemento em um valor e devolve um array comum. */
+  /** Projects each element to a value and returns a regular array. */
   map(fn) {
     return this.elements.map((el, index) => fn(el, index));
   }
-  /** Percorre a colecao. Dentro da funcao, `this` e o elemento atual. */
+  /** Iterates over the collection. Inside the function, `this` is the current element. */
   each(fn) {
     for (let i = 0; i < this.elements.length; i++) {
       const el = this.elements[i];
@@ -6721,15 +6721,15 @@ var VoodooCollection = class _VoodooCollection {
     const index = Number(rest[0]);
     return this.elements[index < 0 ? this.elements.length + index : index];
   }
-  /** Copia dos elementos como array comum. */
+  /** Copy of elements as a regular array. */
   toArray() {
     return this.elements.slice();
   }
-  /** Junta outros elementos a colecao, sem repetir. */
+  /** Joins other elements to the collection without duplication. */
   add(input, context) {
     return new _VoodooCollection(distinct([...this.elements, ...resolve(input, context)]));
   }
-  /** Recorte da colecao, com a mesma semantica de `Array.prototype.slice`. */
+  /** Slice of the collection with the same semantics as `Array.prototype.slice`. */
   slice(start2, end) {
     return new _VoodooCollection(this.elements.slice(start2, end));
   }
@@ -6801,7 +6801,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Remove um ou varios atributos, separados por espaco. */
+  /** Removes one or more space-separated attributes. */
   removeAttr(name) {
     const list = names(name);
     for (const el of this.elements) for (const attribute of list) el.removeAttribute(attribute);
@@ -6877,14 +6877,14 @@ var VoodooCollection = class _VoodooCollection {
     for (const el of this.elements) setStyle(el, "height", rest[0]);
     return this;
   }
-  /** Posicao do primeiro elemento em relacao ao documento. */
+  /** Position of the first element relative to the document. */
   offset() {
     const el = this.elements[0];
     if (!el) return { top: 0, left: 0 };
     const rect = el.getBoundingClientRect();
     return { top: rect.top + window.scrollY, left: rect.left + window.scrollX };
   }
-  /** Posicao do primeiro elemento em relacao ao ancestral posicionado. */
+  /** Position of the first element relative to the positioned ancestor. */
   position() {
     const el = this.elements[0];
     if (!el) return { top: 0, left: 0 };
@@ -6899,19 +6899,19 @@ var VoodooCollection = class _VoodooCollection {
   // -------------------------------------------------------------------------
   // Classes
   // -------------------------------------------------------------------------
-  /** Adiciona uma ou varias classes separadas por espaco. */
+  /** Adds one or more space-separated classes. */
   addClass(value) {
     const list = names(value);
     if (list.length) for (const el of this.elements) el.classList.add(...list);
     return this;
   }
-  /** Remove uma ou varias classes separadas por espaco. */
+  /** Removes one or more space-separated classes. */
   removeClass(value) {
     const list = names(value);
     if (list.length) for (const el of this.elements) el.classList.remove(...list);
     return this;
   }
-  /** Alterna classes. O segundo argumento forca ligar ou desligar. */
+  /** Toggles classes. The second argument forces on or off. */
   toggleClass(value, force) {
     const list = names(value);
     for (const el of this.elements) {
@@ -6922,19 +6922,19 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Verdadeiro quando algum elemento tem todas as classes informadas. */
+  /** True when some element has all the specified classes. */
   hasClass(value) {
     const list = names(value);
     if (!list.length) return false;
     return this.elements.some((el) => list.every((cls) => el.classList.contains(cls)));
   }
   // -------------------------------------------------------------------------
-  // Manipulacao de DOM
+  // DOM manipulation
   // -------------------------------------------------------------------------
   /**
-   * Base de `append`, `prepend`, `before` e `after`. Quando a colecao tem mais
-   * de um elemento, cada destino recebe uma copia e o ultimo fica com o
-   * original, que e o comportamento esperado por quem vem do jQuery.
+   * Base of `append`, `prepend`, `before`, and `after`. When the collection has more
+   * than one element, each destination receives a copy and the last gets the
+   * original, which is the expected behavior for those coming from jQuery.
    */
   insert(content, place) {
     const total = this.elements.length;
@@ -6946,23 +6946,23 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Insere conteudo no fim de cada elemento. */
+  /** Inserts content at the end of each element. */
   append(content) {
     return this.insert(content, (el, node) => el.appendChild(node));
   }
-  /** Insere conteudo no inicio de cada elemento. */
+  /** Inserts content at the beginning of each element. */
   prepend(content) {
     return this.insert(content, (el, node) => el.insertBefore(node, el.firstChild));
   }
-  /** Insere conteudo antes de cada elemento. */
+  /** Inserts content before each element. */
   before(content) {
     return this.insert(content, (el, node) => el.parentNode?.insertBefore(node, el));
   }
-  /** Insere conteudo depois de cada elemento. */
+  /** Inserts content after each element. */
   after(content) {
     return this.insert(content, (el, node) => el.parentNode?.insertBefore(node, el.nextSibling));
   }
-  /** Move os elementos da colecao para dentro do destino. */
+  /** Moves the collection's elements into the target. */
   appendTo(target) {
     const targets = resolve(target);
     for (let i = 0; i < targets.length; i++) {
@@ -6972,7 +6972,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Move os elementos da colecao para o inicio do destino. */
+  /** Moves the collection's elements to the beginning of the target. */
   prependTo(target) {
     const targets = resolve(target);
     for (let i = 0; i < targets.length; i++) {
@@ -6984,7 +6984,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Troca cada elemento pelo conteudo informado, desmontando o antigo. */
+  /** Replaces each element with the provided content, unmounting the old one. */
   replaceWith(content) {
     for (const el of this.elements) {
       const parent = el.parentNode;
@@ -6995,7 +6995,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Envolve cada elemento com o HTML ou elemento informado. */
+  /** Wraps each element with the provided HTML or element. */
   wrap(wrapper) {
     for (const el of this.elements) {
       const model = resolve(wrapper)[0];
@@ -7008,7 +7008,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Remove o pai de cada elemento, mantendo os filhos no lugar. */
+  /** Removes the parent of each element, keeping children in place. */
   unwrap() {
     const parents = /* @__PURE__ */ new Set();
     for (const el of this.elements) {
@@ -7024,7 +7024,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Remove os elementos do documento e desmonta os efeitos reativos. */
+  /** Removes elements from the document and unmounts reactive effects. */
   remove() {
     for (const el of this.elements) {
       destroy(el);
@@ -7032,7 +7032,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Esvazia os elementos, desmontando o conteudo removido. */
+  /** Empties elements, unmounting removed content. */
   empty() {
     for (const el of this.elements) {
       for (const child of Array.from(el.childNodes)) destroy(child);
@@ -7040,7 +7040,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Copia os elementos. A copia nasce sem directives inicializadas. */
+  /** Clones elements. The clone starts without directives initialized. */
   clone(deep = true) {
     return new _VoodooCollection(this.elements.map((el) => el.cloneNode(deep)));
   }
@@ -7069,8 +7069,8 @@ var VoodooCollection = class _VoodooCollection {
     return this;
   }
   /**
-   * Remove escutas registradas por `on`. Sem argumentos remove todas, com tipo
-   * remove as daquele evento, e com seletor ou funcao afina ainda mais.
+   * Removes listeners registered by `on`. Without arguments removes all, with type
+   * removes those for that event, and with selector or function refines further.
    */
   off(types, selectorOrHandler, handler) {
     const wantedSelector = typeof selectorOrHandler === "string" ? selectorOrHandler : null;
@@ -7109,8 +7109,8 @@ var VoodooCollection = class _VoodooCollection {
     return this.on(types, wrapper);
   }
   /**
-   * Dispara um evento. Eventos nativos com metodo proprio, como `click` e
-   * `focus`, usam o metodo do elemento quando nao ha `detail`.
+   * Dispatches an event. Native events with their own method, like `click` and
+   * `focus`, use the element's method when there is no `detail`.
    */
   trigger(type, detail) {
     for (const el of this.elements) {
@@ -7124,7 +7124,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Dispara um evento customizado que sobe pela arvore, no estilo componente. */
+  /** Dispatches a custom event that bubbles up the tree, component-style. */
   emit(type, detail) {
     for (const el of this.elements) {
       const event = new CustomEvent(type, { detail, bubbles: true, cancelable: true });
@@ -7134,19 +7134,19 @@ var VoodooCollection = class _VoodooCollection {
     return this;
   }
   // -------------------------------------------------------------------------
-  // Visibilidade e animacao
+  // Visibility and animation
   // -------------------------------------------------------------------------
-  /** Mostra os elementos restaurando o display anterior. */
+  /** Shows elements by restoring their previous display value. */
   show() {
     for (const el of this.elements) showElement(el);
     return this;
   }
-  /** Esconde os elementos guardando o display atual. */
+  /** Hides elements while saving their current display value. */
   hide() {
     for (const el of this.elements) hideElement(el);
     return this;
   }
-  /** Alterna a visibilidade. O argumento forca mostrar ou esconder. */
+  /** Toggles visibility. The argument forces show or hide. */
   toggle(force) {
     for (const el of this.elements) {
       const visible = force === void 0 ? elementHidden(el) : force;
@@ -7155,7 +7155,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Aparecimento com fade. */
+  /** Appearance with fade. */
   fadeIn(duration = 220) {
     for (const el of this.elements) {
       el.removeAttribute("hidden");
@@ -7163,17 +7163,17 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Desaparecimento com fade, terminando escondido. */
+  /** Disappearance with fade, ending hidden. */
   fadeOut(duration = 220) {
     for (const el of this.elements) void fadeOut(el, duration);
     return this;
   }
-  /** Recolhe a altura ate zero. */
+  /** Collapses height to zero. */
   slideUp(duration = 240) {
     for (const el of this.elements) void slideUp(el, duration);
     return this;
   }
-  /** Expande a altura ate o conteudo. */
+  /** Expands height to content. */
   slideDown(duration = 240) {
     for (const el of this.elements) {
       el.removeAttribute("hidden");
@@ -7181,7 +7181,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Alterna entre recolher e expandir. */
+  /** Toggles between collapse and expand. */
   slideToggle(duration = 240) {
     for (const el of this.elements) {
       if (elementHidden(el)) {
@@ -7193,7 +7193,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Animacao pela Web Animations API. */
+  /** Animation via Web Animations API. */
   animate(keyframes, options = 300) {
     for (const el of this.elements) {
       if (typeof el.animate !== "function") continue;
@@ -7201,15 +7201,15 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Rola a pagina ate o primeiro elemento. */
+  /** Scrolls the page to the first element. */
   scrollIntoView(options = { behavior: "smooth", block: "start" }) {
     this.elements[0]?.scrollIntoView(options);
     return this;
   }
   // -------------------------------------------------------------------------
-  // Formulario
+  // Form
   // -------------------------------------------------------------------------
-  /** Serializa os campos do primeiro elemento no formato de query string. */
+  /** Serializes the first element's fields as a query string. */
   serialize() {
     const el = this.elements[0];
     if (!el) return "";
@@ -7227,9 +7227,8 @@ var VoodooCollection = class _VoodooCollection {
     return params.toString();
   }
   /**
-   * Serializa os campos em um objeto. Nomes repetidos e nomes terminados em
-   * `[]` viram array, caixas de selecao viram booleano e campos numericos viram
-   * numero.
+   * Serializes fields into an object. Repeated names and names ending in
+   * `[]` become arrays, checkboxes become booleans, and numeric fields become numbers.
    */
   serializeObject() {
     const el = this.elements[0];
@@ -7280,17 +7279,17 @@ var VoodooCollection = class _VoodooCollection {
     }
     return out;
   }
-  /** Coloca o foco no primeiro elemento. */
+  /** Sets focus on the first element. */
   focus(options) {
     this.elements[0]?.focus(options);
     return this;
   }
-  /** Tira o foco de todos os elementos. */
+  /** Removes focus from all elements. */
   blur() {
     for (const el of this.elements) el.blur();
     return this;
   }
-  /** Seleciona o texto dos campos da colecao. */
+  /** Selects the text of the collection's fields. */
   select() {
     for (const el of this.elements) {
       const field = el;
@@ -7299,11 +7298,11 @@ var VoodooCollection = class _VoodooCollection {
     return this;
   }
   // -------------------------------------------------------------------------
-  // Integracao com o runtime da Voodoo
+  // Integration with Voodoo runtime
   // -------------------------------------------------------------------------
   /**
-   * Inicializa as directives dos elementos da colecao, herdando o escopo do pai.
-   * Com `force`, desmonta antes para reiniciar do zero.
+   * Initializes directives for the collection's elements, inheriting the parent's scope.
+   * With `force`, unmounts first to restart from scratch.
    */
   walk(force = false) {
     for (const el of this.elements) {
@@ -7312,7 +7311,7 @@ var VoodooCollection = class _VoodooCollection {
     }
     return this;
   }
-  /** Desmonta efeitos, escutas e componentes, mantendo os elementos no DOM. */
+  /** Unmounts effects, listeners, and components while keeping elements in the DOM. */
   destroy() {
     for (const el of this.elements) destroy(el);
     return this;
@@ -7527,12 +7526,12 @@ function autoScroll() {
   else if (window.innerWidth - x < zone) window.scrollBy(speed, 0);
 }
 function startScrollLoop() {
-  const step = () => {
+  const step2 = () => {
     if (!session2 || session2.keyboard) return;
     autoScroll();
-    scrollFrame = requestAnimationFrame(step);
+    scrollFrame = requestAnimationFrame(step2);
   };
-  scrollFrame = requestAnimationFrame(step);
+  scrollFrame = requestAnimationFrame(step2);
 }
 function stopScrollLoop() {
   if (scrollFrame) cancelAnimationFrame(scrollFrame);
@@ -7690,7 +7689,7 @@ function finishDrag() {
           order: orderOf(current2.startList)
         });
       }
-      announce(`Item movido para a posicao ${newIndex + 1} de ${itemsOf(list).length}`);
+      announce(`Item moved to position ${newIndex + 1} of ${itemsOf(list).length}`);
     }
   }
   if (drop && info) {
@@ -7704,7 +7703,7 @@ function finishDrag() {
     const event = new CustomEvent("voodoo:drop", { detail, bubbles: true });
     drop.dispatchEvent(event);
     callExpression(info.expression, info.scope, drop, event, detail);
-    announce("Item solto na area de destino");
+    announce("Item dropped in drop zone");
   }
   dispatch2(current2.item, "voodoo:drag-end", { item: current2.item, data: current2.data });
   teardown(current2);
@@ -7714,7 +7713,7 @@ function cancelDrag() {
   if (!current2) return;
   restorePosition(current2);
   dispatch2(current2.item, "voodoo:drag-cancel", { item: current2.item });
-  announce("Arraste cancelado");
+  announce("Drag canceled");
   teardown(current2);
 }
 function onDragKeyDown(event) {
@@ -7806,7 +7805,7 @@ function keyboardMove(item, key) {
     if (target < 0 || target >= siblings.length) return false;
     if (forward) list.insertBefore(item, siblings[target].nextSibling);
     else list.insertBefore(item, siblings[target]);
-    announce(`Posicao ${target + 1} de ${siblings.length}`);
+    announce(`Position ${target + 1} of ${siblings.length}`);
     item.focus();
     return true;
   }
@@ -7817,7 +7816,7 @@ function keyboardMove(item, key) {
     const next = lists[position + (key === "ArrowRight" ? 1 : -1)];
     if (!next) return false;
     next.appendChild(item);
-    announce(`Movido para a lista ${lists.indexOf(next) + 1} de ${lists.length}`);
+    announce(`Moved to list ${lists.indexOf(next) + 1} of ${lists.length}`);
     item.focus();
     return true;
   }
@@ -7842,7 +7841,7 @@ defineDirective("sortable", ({ el, expression, cleanup }) => {
     handle
   };
   sortableRegistry.set(el, info);
-  if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", "Lista reordenavel");
+  if (!el.hasAttribute("aria-label")) el.setAttribute("aria-label", "Sortable list");
   const prepare = (item) => {
     if (!item.hasAttribute("tabindex")) item.setAttribute("tabindex", "0");
     if (!item.hasAttribute("aria-grabbed")) item.setAttribute("aria-grabbed", "false");
@@ -7850,10 +7849,10 @@ defineDirective("sortable", ({ el, expression, cleanup }) => {
     else item.classList.add("v-drag-handle");
   };
   for (const item of itemsOf(el)) prepare(item);
-  const observer2 = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => {
+  const observer3 = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => {
     for (const item of itemsOf(el)) prepare(item);
   });
-  observer2?.observe(el, { childList: true });
+  observer3?.observe(el, { childList: true });
   installPointerDrag(
     el,
     {
@@ -7878,7 +7877,7 @@ defineDirective("sortable", ({ el, expression, cleanup }) => {
       event.preventDefault();
       if (session2 && session2.item === item) {
         finishDrag();
-        announce("Item solto");
+        announce("Item dropped");
         return;
       }
       if (session2) return;
@@ -7892,7 +7891,7 @@ defineDirective("sortable", ({ el, expression, cleanup }) => {
         y: 0,
         keyboard: true
       });
-      announce("Item pego. Use as setas para mover e espaco para soltar.");
+      announce("Item grabbed. Use arrow keys to move and space to drop.");
       return;
     }
     if (!session2 || session2.item !== item) return;
@@ -7903,7 +7902,7 @@ defineDirective("sortable", ({ el, expression, cleanup }) => {
   el.addEventListener("keydown", onKeyDown);
   cleanup(() => {
     el.removeEventListener("keydown", onKeyDown);
-    observer2?.disconnect();
+    observer3?.disconnect();
     sortableRegistry.delete(el);
   });
 });
@@ -7922,7 +7921,7 @@ defineDirective("draggable", ({ el, expression, scope, cleanup }) => {
   if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
   el.setAttribute("aria-grabbed", "false");
   if (!el.hasAttribute("aria-roledescription")) {
-    el.setAttribute("aria-roledescription", "item arrastavel");
+    el.setAttribute("aria-roledescription", "draggable item");
   }
   const readData = () => dataExpression ? evaluateIn(dataExpression, scope, "v-draggable-data") : null;
   installPointerDrag(
@@ -7946,7 +7945,7 @@ defineDirective("draggable", ({ el, expression, scope, cleanup }) => {
     session2.overDrop = active;
     if (!device.reducedMotion) active.scrollIntoView({ block: "nearest", behavior: "smooth" });
     else active.scrollIntoView({ block: "nearest" });
-    announce(active.getAttribute("aria-label") || `Destino ${cursor + 1} de ${targets.length}`);
+    announce(active.getAttribute("aria-label") || `Target ${cursor + 1} of ${targets.length}`);
   };
   const onKeyDown = (event) => {
     if (event.key === " " || event.key === "Spacebar") {
@@ -7970,7 +7969,7 @@ defineDirective("draggable", ({ el, expression, scope, cleanup }) => {
       targets = session2 ? droppableTargets(session2) : [];
       cursor = 0;
       if (targets.length) highlight();
-      else announce("Nenhum destino disponivel");
+      else announce("No targets available");
       return;
     }
     if (!session2 || session2.item !== el || !targets.length) return;
@@ -8427,7 +8426,7 @@ var Collapse = class {
     if (!this.open) panel.style.display = "none";
     this.sync();
   }
-  /** Atualiza `aria-expanded` dos gatilhos e avisa quem observa. */
+  /** Updates trigger's `aria-expanded` and notifies observers. */
   sync() {
     for (const trigger2 of this.triggers) {
       trigger2.setAttribute("aria-expanded", String(this.open));
@@ -8494,7 +8493,7 @@ var Popup = class {
     __publicField(this, "placement");
     __publicField(this, "open", false);
     __publicField(this, "lastFocus", null);
-    /** Lugar original do painel, para devolver quando a directive e desmontada. */
+    /** Original location of the panel, to restore when directive is unmounted. */
     __publicField(this, "homeParent");
     __publicField(this, "homeNext");
     __publicField(this, "reposition", () => {
@@ -8523,9 +8522,9 @@ var Popup = class {
       const current2 = items.indexOf(document.activeElement);
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        const step = event.key === "ArrowDown" ? 1 : -1;
-        const next = (current2 + step + items.length) % items.length;
-        items[current2 === -1 && step === -1 ? items.length - 1 : next].focus();
+        const step2 = event.key === "ArrowDown" ? 1 : -1;
+        const next = (current2 + step2 + items.length) % items.length;
+        items[current2 === -1 && step2 === -1 ? items.length - 1 : next].focus();
         return;
       }
       if (event.key === "Home") {
@@ -8558,7 +8557,7 @@ var Popup = class {
     trigger2.setAttribute("aria-controls", panel.id);
     trigger2.setAttribute("aria-expanded", "false");
   }
-  /** Itens navegaveis pelas setas, apenas no modo menu. */
+  /** Items navigable with arrow keys, menu mode only. */
   items() {
     return Array.from(this.panel.querySelectorAll('[role="menuitem"]'));
   }
@@ -8599,7 +8598,7 @@ var Popup = class {
     if (this.open) this.hide(true);
     else this.show();
   }
-  /** Remove listeners e devolve o painel para onde ele estava. */
+  /** Removes listeners and returns the panel to its original location. */
   dispose() {
     this.hide();
     document.removeEventListener("pointerdown", this.onDocumentPointerDown, true);
@@ -8886,7 +8885,7 @@ defineOption("accordion-item");
 defineOption("accordion-single");
 var Drawer = class {
   constructor(panel) {
-    /** Marca o lugar de origem do painel enquanto ele fica no corpo do documento. */
+    /** Marks the original location of the panel while it's in the document body. */
     __publicField(this, "origem", null);
     __publicField(this, "panel");
     __publicField(this, "triggers", /* @__PURE__ */ new Set());
@@ -8918,7 +8917,7 @@ var Drawer = class {
     ensureId(panel, "v-drawer");
     panel.hidden = true;
   }
-  /** Mantem `aria-expanded` dos gatilhos em dia. */
+  /** Keeps trigger's `aria-expanded` up to date. */
   sync() {
     for (const trigger2 of this.triggers) {
       trigger2.setAttribute("aria-expanded", String(this.open));
@@ -9020,7 +9019,7 @@ defineDirective("drawer-close", ({ el, expression, cleanup }) => {
   if (!panel) return;
   makeInteractive(el, cleanup);
   if (!el.hasAttribute("aria-label") && !el.textContent?.trim()) {
-    el.setAttribute("aria-label", "Fechar");
+    el.setAttribute("aria-label", "Close");
   }
   const onClick = (event) => {
     event.preventDefault();
@@ -9037,7 +9036,7 @@ defineDirective("theme-toggle", ({ el, cleanup }) => {
     el.setAttribute("aria-pressed", String(dark));
     el.dataset.vTheme = theme.resolved;
     if (!el.hasAttribute("aria-label")) {
-      el.setAttribute("aria-label", dark ? "Mudar para tema claro" : "Mudar para tema escuro");
+      el.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
     }
   };
   const onClick = (event) => {
@@ -9199,7 +9198,7 @@ defineDirective("sticky", ({ el, expression, cleanup }) => {
   el.classList.add("v-sticky");
   el.style.setProperty("--v-sticky-offset", `${offset}px`);
   if (typeof IntersectionObserver === "undefined") return;
-  const observer2 = new IntersectionObserver(
+  const observer3 = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         const stuck = entry.intersectionRatio < 1 && entry.boundingClientRect.top <= offset + 1;
@@ -9208,8 +9207,8 @@ defineDirective("sticky", ({ el, expression, cleanup }) => {
     },
     { threshold: [1], rootMargin: `-${offset + 1}px 0px 0px 0px` }
   );
-  observer2.observe(el);
-  cleanup(() => observer2.disconnect());
+  observer3.observe(el);
+  cleanup(() => observer3.disconnect());
 });
 defineOption("sticky-offset");
 defineDirective("visible", ({ el, expression, scope, modifiers, cleanup }) => {
@@ -9220,18 +9219,18 @@ defineDirective("visible", ({ el, expression, scope, modifiers, cleanup }) => {
     callExpression(expression, scope, el, void 0, { visible: true });
     return;
   }
-  const observer2 = new IntersectionObserver(
+  const observer3 = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
         callExpression(expression, scope, el, void 0, entry);
-        if (!repeat) observer2.unobserve(el);
+        if (!repeat) observer3.unobserve(el);
       }
     },
     { threshold, rootMargin: margin }
   );
-  observer2.observe(el);
-  cleanup(() => observer2.disconnect());
+  observer3.observe(el);
+  cleanup(() => observer3.disconnect());
 });
 defineDirective("infinite-scroll", ({ el, expression, scope, cleanup }) => {
   const distance = readOption(el, "infinite-distance") || "200px";
@@ -9260,15 +9259,15 @@ defineDirective("infinite-scroll", ({ el, expression, scope, cleanup }) => {
   sentinel.setAttribute("aria-hidden", "true");
   sentinel.style.cssText = "width:100%;height:1px;pointer-events:none";
   el.appendChild(sentinel);
-  const observer2 = new IntersectionObserver(
+  const observer3 = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) if (entry.isIntersecting) run();
     },
     { rootMargin: `0px 0px ${distance} 0px` }
   );
-  observer2.observe(sentinel);
+  observer3.observe(sentinel);
   cleanup(() => {
-    observer2.disconnect();
+    observer3.disconnect();
     sentinel.remove();
   });
 });
@@ -9302,18 +9301,18 @@ function setupLazy(el, source, cleanup, asBackground) {
     load();
     return;
   }
-  const observer2 = new IntersectionObserver(
+  const observer3 = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        observer2.disconnect();
+        observer3.disconnect();
         load();
       }
     },
     { rootMargin: "200px" }
   );
-  observer2.observe(el);
-  cleanup(() => observer2.disconnect());
+  observer3.observe(el);
+  cleanup(() => observer3.disconnect());
 }
 defineDirective("lazy-src", ({ el, expression, cleanup }) => {
   setupLazy(el, expression.trim(), cleanup, false);
@@ -9340,13 +9339,13 @@ defineDirective("skeleton", ({ el, expression, effect: effect2, evaluate: evalua
   }
   apply(true);
   if (typeof MutationObserver === "undefined") return;
-  const observer2 = new MutationObserver(() => {
+  const observer3 = new MutationObserver(() => {
     if (!hasContent()) return;
     apply(false);
-    observer2.disconnect();
+    observer3.disconnect();
   });
-  observer2.observe(el, { childList: true, subtree: true, characterData: true });
-  cleanup(() => observer2.disconnect());
+  observer3.observe(el, { childList: true, subtree: true, characterData: true });
+  cleanup(() => observer3.disconnect());
 });
 async function copyText(text) {
   try {
@@ -9372,7 +9371,7 @@ async function copyText(text) {
 }
 function flashCopied(el, ok) {
   ensureUi();
-  const label = readOption(el, "copy-label") || (ok ? "Copiado!" : "Nao foi possivel copiar");
+  const label = readOption(el, "copy-label") || (ok ? "Copied!" : "Could not copy");
   el.dataset.vCopyLabel = label;
   el.classList.add(ok ? "v-copied" : "v-copy-failed");
   announce(label);
@@ -9426,7 +9425,7 @@ defineOption("copy-label");
 function printElement(target, title) {
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
-  frame.setAttribute("title", "Impressao");
+  frame.setAttribute("title", "Print");
   frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"],style')).map((node) => node.outerHTML).join("\n");
   frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>${styles}</head><body>${target.outerHTML}</body></html>`;
@@ -9580,13 +9579,13 @@ defineDirective("resizable", ({ el, expression, cleanup }) => {
       handle.addEventListener("pointercancel", onUp);
     });
     handle.addEventListener("keydown", (event) => {
-      const step = event.shiftKey ? 4 : 16;
+      const step2 = event.shiftKey ? 4 : 16;
       const rect = el.getBoundingClientRect();
       let handled = true;
-      if (event.key === "ArrowRight" && direction !== "bottom") el.style.width = `${rect.width + step}px`;
-      else if (event.key === "ArrowLeft" && direction !== "bottom") el.style.width = `${Math.max(32, rect.width - step)}px`;
-      else if (event.key === "ArrowDown" && direction !== "right") el.style.height = `${rect.height + step}px`;
-      else if (event.key === "ArrowUp" && direction !== "right") el.style.height = `${Math.max(32, rect.height - step)}px`;
+      if (event.key === "ArrowRight" && direction !== "bottom") el.style.width = `${rect.width + step2}px`;
+      else if (event.key === "ArrowLeft" && direction !== "bottom") el.style.width = `${Math.max(32, rect.width - step2)}px`;
+      else if (event.key === "ArrowDown" && direction !== "right") el.style.height = `${rect.height + step2}px`;
+      else if (event.key === "ArrowUp" && direction !== "right") el.style.height = `${Math.max(32, rect.height - step2)}px`;
       else handled = false;
       if (!handled) return;
       event.preventDefault();
@@ -9606,7 +9605,7 @@ defineDirective("resizable", ({ el, expression, cleanup }) => {
       "aria-orientation",
       direction === "bottom" ? "horizontal" : "vertical"
     );
-    handle.setAttribute("aria-label", "Redimensionar");
+    handle.setAttribute("aria-label", "Resize");
     startResize(handle, direction);
     el.appendChild(handle);
     handles.push(handle);
@@ -9637,14 +9636,14 @@ function commandPalette() {
   overlay.className = "v-command";
   overlay.setAttribute("role", "dialog");
   overlay.setAttribute("aria-modal", "true");
-  overlay.setAttribute("aria-label", "Paleta de comandos");
+  overlay.setAttribute("aria-label", "Command palette");
   const box = document.createElement("div");
   box.className = "v-command-box";
   const input = document.createElement("input");
   input.className = "v-command-input";
   input.type = "search";
-  input.placeholder = "Buscar comando...";
-  input.setAttribute("aria-label", "Buscar comando");
+  input.placeholder = "Search command...";
+  input.setAttribute("aria-label", "Search command");
   input.setAttribute("role", "combobox");
   input.setAttribute("aria-expanded", "true");
   input.setAttribute("autocomplete", "off");
@@ -9676,7 +9675,7 @@ function commandPalette() {
     if (!visible.length) {
       const empty = document.createElement("li");
       empty.className = "v-command-empty";
-      empty.textContent = "Nenhum comando encontrado";
+      empty.textContent = "No command found";
       list.appendChild(empty);
       return;
     }
@@ -9873,7 +9872,7 @@ function formatMessage(template, data2) {
   const parts = param.split(",");
   const replacements = {
     param,
-    field: data2.field ?? "campo",
+    field: data2.field ?? "field",
     value: data2.value ?? "",
     min: (parts[0] ?? "").trim(),
     max: (parts[1] ?? parts[0] ?? "").trim()
@@ -9920,7 +9919,7 @@ function fieldValue(el) {
   return el.value ?? "";
 }
 function fieldKey(el) {
-  return el.name || el.id || `campo-${el.tagName.toLowerCase()}`;
+  return el.name || el.id || `field-${el.tagName.toLowerCase()}`;
 }
 function fieldLabel(el) {
   const custom = readDirectiveAttr(el, "label");
@@ -9933,7 +9932,7 @@ function fieldLabel(el) {
   const wrapper = el.closest("label");
   const wrapperText = wrapper?.textContent?.trim();
   if (wrapperText) return wrapperText.replace(/\s*\*$/, "");
-  return el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.name || "campo";
+  return el.getAttribute("aria-label") || el.getAttribute("placeholder") || el.name || "field";
 }
 function cssEscape(value) {
   const api = globalThis.CSS;
@@ -10124,7 +10123,7 @@ validator("regex", (value, param, el) => {
   try {
     return new RegExp(param, flags).test(value);
   } catch {
-    warn(`Expressao regular invalida em ${config.prefix}regex: ${param}`);
+    warn(`Invalid regular expression in ${config.prefix}regex: ${param}`);
     return true;
   }
 });
@@ -10266,7 +10265,7 @@ function errorHost(el) {
   if (selector && typeof document !== "undefined") {
     const host = (el.form ?? el.closest("form"))?.querySelector(selector) ?? document.querySelector(selector);
     if (host) return { parent: host, anchor: null };
-    warn(`Destino de ${config.prefix}error-target nao encontrado: ${selector}`);
+    warn(`Target for ${config.prefix}error-target not found: ${selector}`);
   }
   const parent = el.parentElement;
   return parent ? { parent, anchor: el } : null;
@@ -10423,7 +10422,7 @@ async function validateField(el, options = {}) {
     try {
       outcome = await definition.fn(value, rule.param || void 0, el);
     } catch (err) {
-      warn(`Regra "${rule.name}" falhou ao executar`, err);
+      warn(`Rule "${rule.name}" failed to execute`, err);
       continue;
     }
     if (outcome === true) continue;
@@ -10620,7 +10619,7 @@ async function runFieldValidation(el) {
 }
 function bindFieldValidation(el, cleanup) {
   if (!isFormField(el)) {
-    warn(`${config.prefix}validate so funciona em input, select ou textarea.`);
+    warn(`${config.prefix}validate only works on input, select, or textarea.`);
     return;
   }
   if (boundFields.has(el)) return;
@@ -10806,7 +10805,7 @@ function defineFormOption(name, validate2) {
     declaredOptions.set(owner, bag);
     if (!isRequestHost(owner) && !isRequestHost(el)) {
       warn(
-        `${config.prefix}${name} precisa de um elemento com ${config.prefix}submit, ${config.prefix}upload, ${config.prefix}dropzone ou ${config.prefix}autosave.`
+        `${config.prefix}${name} needs an element with ${config.prefix}submit, ${config.prefix}upload, ${config.prefix}dropzone, or ${config.prefix}autosave.`
       );
       return;
     }
@@ -10817,7 +10816,7 @@ function defineFormOption(name, validate2) {
 var HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 defineFormOption(
   "method",
-  (value) => value && !HTTP_METHODS.includes(value.trim().toUpperCase()) ? `${config.prefix}method recebeu um verbo desconhecido: ${value}` : null
+  (value) => value && !HTTP_METHODS.includes(value.trim().toUpperCase()) ? `${config.prefix}method received an unknown verb: ${value}` : null
 );
 defineFormOption("redirect");
 defineFormOption("reset-success");
@@ -10837,7 +10836,7 @@ defineDirective("loading", ({ el, expression }) => {
   declaredOptions.set(owner, bag);
   const target = loadingTarget(expression);
   if (!target) {
-    warn(`Elemento de ${config.prefix}loading nao encontrado: ${expression}`);
+    warn(`${config.prefix}loading element not found: ${expression}`);
     return;
   }
   toggleLoadingTarget(target, false);
@@ -10976,7 +10975,7 @@ function swapContent2(ctx, data2) {
   if (!selector || typeof data2 !== "string") return;
   const target = document.querySelector(selector);
   if (!target) {
-    warn(`Destino de ${config.prefix}target nao encontrado: ${selector}`);
+    warn(`${config.prefix}target destination not found: ${selector}`);
     return;
   }
   const mode = (readOption2(ctx.host, "swap") || "innerHTML").trim().toLowerCase();
@@ -11017,7 +11016,7 @@ function swapContent2(ctx, data2) {
       target.replaceWith(...nodes);
       break;
     default:
-      warn(`Modo desconhecido em ${config.prefix}swap: ${mode}`);
+      warn(`Unknown mode in ${config.prefix}swap: ${mode}`);
       return;
   }
   for (const node of nodes) if (node.nodeType === 1) walk(node, scope);
@@ -11037,7 +11036,7 @@ function handleSuccess(ctx, data2, status) {
   }
   const successToast = readOption2(host, "toast-success");
   if (successToast !== null) {
-    toast.success(successToast || state.message || "Tudo certo!");
+    toast.success(successToast || state.message || "All set!");
   }
   runCallback(ctx, "on-success", data2, { status });
   emit2(form, "voodoo:success", { data: data2, status, form, state });
@@ -11064,7 +11063,7 @@ function handleFailure(ctx, error) {
   }
   const errorToast = readOption2(host, "toast-error");
   if (errorToast !== null) {
-    toast.error(errorToast || messageFrom(data2) || "Nao foi possivel enviar o formulario.");
+    toast.error(errorToast || messageFrom(data2) || "Could not submit the form.");
   }
   runCallback(ctx, "on-error", data2, httpError);
   emit2(form, "voodoo:error", {
@@ -11090,7 +11089,7 @@ async function sendForm(ctx, rawUrl) {
   if (state.loading) return;
   const confirmMessage = readOption2(host, "confirm");
   if (confirmMessage !== null && typeof window !== "undefined") {
-    if (!window.confirm(confirmMessage || "Confirma esta acao?")) return;
+    if (!window.confirm(confirmMessage || "Confirm this action?")) return;
   }
   if (isValidatedForm(form)) {
     clearErrors(form);
@@ -11168,7 +11167,7 @@ function progressElement(host) {
   if (selector) {
     const found = document.querySelector(selector);
     if (found) return found;
-    warn(`Barra de ${config.prefix}progress nao encontrada: ${selector}`);
+    warn(`${config.prefix}progress bar not found: ${selector}`);
     return null;
   }
   const existing = host.nextElementSibling;
@@ -11220,7 +11219,7 @@ async function sendFiles(ctx, rawUrl, files, fieldName) {
   const { state, form, host } = ctx;
   const url2 = resolveUrl(rawUrl, ctx.scope);
   if (!url2) {
-    warn(`${config.prefix}upload precisa da URL de destino.`);
+    warn(`${config.prefix}upload needs a destination URL.`);
     return;
   }
   const bar = progressElement(host);
@@ -11256,7 +11255,7 @@ async function sendFiles(ctx, rawUrl, files, fieldName) {
 defineDirective("upload", ({ el, scope, expression, cleanup }) => {
   const input = el;
   if (input.tagName !== "INPUT" || (input.getAttribute("type") || "").toLowerCase() !== "file") {
-    warn(`${config.prefix}upload precisa de um <input type="file">.`);
+    warn(`${config.prefix}upload needs an <input type="file">.`);
     return;
   }
   ensureStyles2();
@@ -11276,7 +11275,7 @@ defineDirective("dropzone", ({ el, scope, expression, cleanup }) => {
   el.classList.add("v-dropzone");
   if (!el.hasAttribute("tabindex")) el.tabIndex = 0;
   if (!el.hasAttribute("role")) el.setAttribute("role", "button");
-  if (!el.textContent?.trim()) el.textContent = "Arraste arquivos aqui ou clique para escolher";
+  if (!el.textContent?.trim()) el.textContent = "Drag files here or click to choose";
   const form = el.closest("form") ?? el;
   const state = ensureFormState(form);
   const ctx = { host: el, form, scope, state };
@@ -11352,16 +11351,16 @@ defineDirective("dropzone", ({ el, scope, expression, cleanup }) => {
 });
 var AUTOSAVE_TEXTS = {
   idle: "",
-  saving: "Salvando...",
-  saved: "Alteracoes salvas",
-  error: "Nao foi possivel salvar"
+  saving: "Saving...",
+  saved: "Changes saved",
+  error: "Could not save"
 };
 function autosaveStatusElement(host) {
   const selector = readOption2(host, "autosave-status");
   if (selector) {
     const found = document.querySelector(selector);
     if (found) return found;
-    warn(`Elemento de ${config.prefix}autosave-status nao encontrado: ${selector}`);
+    warn(`${config.prefix}autosave-status element not found: ${selector}`);
   }
   const existing = host.querySelector(".v-autosave-status");
   if (existing) return existing;
@@ -11386,7 +11385,7 @@ defineDirective("autosave", ({ el, scope, expression, modifiers, cleanup }) => {
   const save = async () => {
     const url2 = resolveUrl(expression, scope);
     if (!url2) {
-      warn(`${config.prefix}autosave precisa da URL de destino.`);
+      warn(`${config.prefix}autosave needs a destination URL.`);
       return;
     }
     if (state.loading) return;
@@ -11431,7 +11430,7 @@ defineDirective("autosave", ({ el, scope, expression, modifiers, cleanup }) => {
 defineDirective("guard", ({ el, expression, cleanup }) => {
   const form = (el.tagName === "FORM" ? el : el.closest("form")) ?? el;
   const state = ensureFormState(form);
-  const message = expression.trim() || "Existem alteracoes que ainda nao foram salvas.";
+  const message = expression.trim() || "There are unsaved changes.";
   const onChange = () => {
     state.dirty = true;
   };
@@ -11645,75 +11644,75 @@ magic("$history", (scope) => scope.el ? findController(scope.el) : null);
 
 // src/sound/index.ts
 init_registry();
-var contexto = null;
-var volumeGeral = 0.35;
-var silenciado = false;
-var carregouPreferencia = false;
-var CHAVE_VOLUME = "voodoo:sound:volume";
-var CHAVE_SILENCIO = "voodoo:sound:muted";
-function carregarPreferencia() {
-  if (carregouPreferencia) return;
-  carregouPreferencia = true;
-  const salvo = storage.get(CHAVE_VOLUME);
-  if (typeof salvo === "number" && salvo >= 0 && salvo <= 1) volumeGeral = salvo;
-  const mudo = storage.get(CHAVE_SILENCIO);
-  if (typeof mudo === "boolean") silenciado = mudo;
-  if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches && storage.get(CHAVE_VOLUME) === void 0) {
-    volumeGeral = 0.18;
+var audioContext = null;
+var masterVolume = 0.35;
+var isMuted = false;
+var hasLoadedPreference = false;
+var VOLUME_KEY = "voodoo:sound:volume";
+var MUTE_KEY = "voodoo:sound:muted";
+function loadPreference() {
+  if (hasLoadedPreference) return;
+  hasLoadedPreference = true;
+  const savedVolume = storage.get(VOLUME_KEY);
+  if (typeof savedVolume === "number" && savedVolume >= 0 && savedVolume <= 1) masterVolume = savedVolume;
+  const savedMute = storage.get(MUTE_KEY);
+  if (typeof savedMute === "boolean") isMuted = savedMute;
+  if (typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches && storage.get(VOLUME_KEY) === void 0) {
+    masterVolume = 0.18;
   }
 }
-function obterContexto() {
+function getAudioContext() {
   if (typeof window === "undefined") return null;
-  if (contexto) {
-    if (contexto.state === "suspended") void contexto.resume();
-    return contexto;
+  if (audioContext) {
+    if (audioContext.state === "suspended") void audioContext.resume();
+    return audioContext;
   }
-  const Construtor = window.AudioContext ?? window.webkitAudioContext;
-  if (!Construtor) return null;
+  const Constructor = window.AudioContext ?? window.webkitAudioContext;
+  if (!Constructor) return null;
   try {
-    contexto = new Construtor();
-    return contexto;
+    audioContext = new Constructor();
+    return audioContext;
   } catch {
     return null;
   }
 }
-function tocarCamada(ctx, camada, volumeDoEfeito) {
-  const inicio = ctx.currentTime + (camada.atraso ?? 0);
-  const fim = inicio + camada.duracao;
-  const oscilador = ctx.createOscillator();
-  oscilador.type = camada.forma ?? "sine";
-  oscilador.frequency.setValueAtTime(camada.frequencia, inicio);
-  if (camada.ate !== void 0 && camada.ate !== camada.frequencia) {
-    oscilador.frequency.exponentialRampToValueAtTime(Math.max(1, camada.ate), fim);
+function playLayer(ctx, layer, effectVolume) {
+  const start2 = ctx.currentTime + (layer.atraso ?? 0);
+  const end = start2 + layer.duracao;
+  const oscillator = ctx.createOscillator();
+  oscillator.type = layer.forma ?? "sine";
+  oscillator.frequency.setValueAtTime(layer.frequencia, start2);
+  if (layer.ate !== void 0 && layer.ate !== layer.frequencia) {
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, layer.ate), end);
   }
-  const ganho = ctx.createGain();
-  const pico = volumeGeral * volumeDoEfeito * (camada.volume ?? 1);
-  const ataque = camada.ataque ?? 8e-3;
-  ganho.gain.setValueAtTime(1e-4, inicio);
-  ganho.gain.exponentialRampToValueAtTime(Math.max(1e-4, pico), inicio + ataque);
-  ganho.gain.exponentialRampToValueAtTime(1e-4, fim);
-  oscilador.connect(ganho);
-  ganho.connect(ctx.destination);
-  oscilador.start(inicio);
-  oscilador.stop(fim + 0.02);
+  const gain = ctx.createGain();
+  const peak = masterVolume * effectVolume * (layer.volume ?? 1);
+  const attack = layer.ataque ?? 8e-3;
+  gain.gain.setValueAtTime(1e-4, start2);
+  gain.gain.exponentialRampToValueAtTime(Math.max(1e-4, peak), start2 + attack);
+  gain.gain.exponentialRampToValueAtTime(1e-4, end);
+  oscillator.connect(gain);
+  gain.connect(ctx.destination);
+  oscillator.start(start2);
+  oscillator.stop(end + 0.02);
 }
 var efeitos = {
-  /** Toque seco de confirmacao, para botoes comuns. */
+  /** Dry confirmation tap, for common buttons. */
   click: {
     volume: 0.5,
     camadas: [{ frequencia: 660, ate: 440, duracao: 0.06, forma: "triangle" }]
   },
-  /** Estalo curto e agudo, bom para alternar algo. */
+  /** Short, high-pitched pop, good for toggling. */
   pop: {
     volume: 0.5,
     camadas: [{ frequencia: 880, ate: 1320, duracao: 0.07, forma: "sine" }]
   },
-  /** Roce leve, para passar o mouse por cima. */
+  /** Gentle brush, for passing the mouse over. */
   hover: {
     volume: 0.22,
     camadas: [{ frequencia: 1200, duracao: 0.035, forma: "sine" }]
   },
-  /** Duas notas subindo, para dar certo. */
+  /** Two rising notes, for success. */
   success: {
     volume: 0.6,
     camadas: [
@@ -11721,7 +11720,7 @@ var efeitos = {
       { frequencia: 783.99, duracao: 0.18, forma: "sine", atraso: 0.09 }
     ]
   },
-  /** Tres notas subindo, para conclusao de fluxo. */
+  /** Three rising notes, for flow completion. */
   complete: {
     volume: 0.6,
     camadas: [
@@ -11730,7 +11729,7 @@ var efeitos = {
       { frequencia: 1046.5, duracao: 0.22, forma: "sine", atraso: 0.18 }
     ]
   },
-  /** Duas notas descendo, para erro. */
+  /** Two falling notes, for error. */
   error: {
     volume: 0.6,
     camadas: [
@@ -11738,7 +11737,7 @@ var efeitos = {
       { frequencia: 261.63, duracao: 0.24, forma: "square", volume: 0.5, atraso: 0.1 }
     ]
   },
-  /** Aviso curto de atencao. */
+  /** Short warning alert. */
   warning: {
     volume: 0.55,
     camadas: [
@@ -11746,7 +11745,7 @@ var efeitos = {
       { frequencia: 587.33, duracao: 0.14, forma: "triangle", atraso: 0.14 }
     ]
   },
-  /** Sino discreto, para notificacao que chega. */
+  /** Discrete bell, for incoming notification. */
   notify: {
     volume: 0.5,
     camadas: [
@@ -11754,22 +11753,22 @@ var efeitos = {
       { frequencia: 1318.51, duracao: 0.3, forma: "sine", atraso: 0.08, volume: 0.6 }
     ]
   },
-  /** Toque bem curto para digitacao. */
+  /** Very short tap for typing. */
   type: {
     volume: 0.18,
     camadas: [{ frequencia: 2200, duracao: 0.018, forma: "square" }]
   },
-  /** Deslizar de abertura, para painel, gaveta e modal. */
+  /** Slide up for opening a panel, drawer, or modal. */
   open: {
     volume: 0.4,
     camadas: [{ frequencia: 330, ate: 660, duracao: 0.14, forma: "sine" }]
   },
-  /** Deslizar de fechamento. */
+  /** Slide down for closing. */
   close: {
     volume: 0.4,
     camadas: [{ frequencia: 660, ate: 330, duracao: 0.14, forma: "sine" }]
   },
-  /** Recusa curta, para acao bloqueada. */
+  /** Short denial, for blocked action. */
   deny: {
     volume: 0.5,
     camadas: [
@@ -11777,7 +11776,7 @@ var efeitos = {
       { frequencia: 180, duracao: 0.12, forma: "square", volume: 0.5, atraso: 0.07 }
     ]
   },
-  /** Moeda, para pontuacao e recompensa. */
+  /** Coin, for score and reward. */
   coin: {
     volume: 0.45,
     camadas: [
@@ -11785,7 +11784,7 @@ var efeitos = {
       { frequencia: 1318.51, duracao: 0.16, forma: "square", atraso: 0.05 }
     ]
   },
-  /** Passagem de nivel, mais festiva. */
+  /** Level up, more festive. */
   levelup: {
     volume: 0.55,
     camadas: [
@@ -11795,13 +11794,13 @@ var efeitos = {
       { frequencia: 1046.5, duracao: 0.26, forma: "square", atraso: 0.21 }
     ]
   },
-  /** Batida grave, para arrastar e soltar. */
+  /** Deep hit, for drag and drop. */
   drop: {
     volume: 0.5,
     camadas: [{ frequencia: 180, ate: 90, duracao: 0.12, forma: "triangle" }]
   }
 };
-var NOTAS = {
+var NOTES = {
   do: 261.63,
   "do#": 277.18,
   re: 293.66,
@@ -11814,7 +11813,7 @@ var NOTAS = {
   la: 440,
   "la#": 466.16,
   si: 493.88,
-  // Nomes em ingles, para quem prefere.
+  // English names, for those who prefer.
   c: 261.63,
   d: 293.66,
   e: 329.63,
@@ -11823,34 +11822,34 @@ var NOTAS = {
   a: 440,
   b: 493.88
 };
-function frequenciaDaNota(nome) {
-  const limpo = String(nome).trim().toLowerCase();
-  const casamento = /^([a-z]+#?)(\d)?$/.exec(limpo);
-  if (!casamento) return null;
-  const base = NOTAS[casamento[1]];
+function getFrequencyForNote(name) {
+  const clean = String(name).trim().toLowerCase();
+  const match = /^([a-z]+#?)(\d)?$/.exec(clean);
+  if (!match) return null;
+  const base = NOTES[match[1]];
   if (base === void 0) return null;
-  const oitava = casamento[2] ? Number(casamento[2]) : 4;
-  return base * 2 ** (oitava - 4);
+  const octave = match[2] ? Number(match[2]) : 4;
+  return base * 2 ** (octave - 4);
 }
-var arquivos = /* @__PURE__ */ new Map();
-function tocarArquivo(url2, volume) {
-  let elemento = arquivos.get(url2);
-  if (!elemento) {
-    elemento = new Audio(url2);
-    elemento.preload = "auto";
-    arquivos.set(url2, elemento);
+var audioFiles = /* @__PURE__ */ new Map();
+function playAudioFile(url2, volume) {
+  let element = audioFiles.get(url2);
+  if (!element) {
+    element = new Audio(url2);
+    element.preload = "auto";
+    audioFiles.set(url2, element);
   }
-  elemento.volume = Math.max(0, Math.min(1, volumeGeral * volume));
-  elemento.currentTime = 0;
-  void elemento.play().catch(() => {
+  element.volume = Math.max(0, Math.min(1, masterVolume * volume));
+  element.currentTime = 0;
+  void element.play().catch(() => {
   });
 }
-function pareceCaminho(valor) {
-  return /^(https?:)?\/\//.test(valor) || /^[./]/.test(valor) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(valor);
+function looksLikePath(value) {
+  return /^(https?:)?\/\//.test(value) || /^[./]/.test(value) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(value);
 }
 var sound = {
   /**
-   * Toca um efeito pelo nome, ou um arquivo pelo caminho.
+   * Plays an effect by name, or a file by path.
    *
    * ```js
    * V.sound.play('success')
@@ -11858,135 +11857,135 @@ var sound = {
    * V.sound.play('click', { volume: 0.5 })
    * ```
    */
-  play(nome, opcoes = {}) {
-    carregarPreferencia();
-    if (silenciado || !nome) return;
-    const valor = String(nome).trim();
-    const volume = opcoes.volume ?? 1;
-    if (pareceCaminho(valor)) {
-      tocarArquivo(valor, volume);
+  play(name, options = {}) {
+    loadPreference();
+    if (isMuted || !name) return;
+    const value = String(name).trim();
+    const volume = options.volume ?? 1;
+    if (looksLikePath(value)) {
+      playAudioFile(value, volume);
       return;
     }
-    const efeito = efeitos[valor];
-    if (!efeito) {
-      const frequencia = frequenciaDaNota(valor);
-      if (frequencia !== null) this.tone(frequencia, 200, { volume });
+    const effect2 = efeitos[value];
+    if (!effect2) {
+      const frequency = getFrequencyForNote(value);
+      if (frequency !== null) this.tone(frequency, 200, { volume });
       return;
     }
-    const ctx = obterContexto();
+    const ctx = getAudioContext();
     if (!ctx) return;
-    const tom = opcoes.tom ?? 1;
-    const volumeDoEfeito = (efeito.volume ?? 1) * volume;
-    for (const camada of efeito.camadas) {
-      tocarCamada(
+    const pitch = options.tom ?? 1;
+    const effectVolume = (effect2.volume ?? 1) * volume;
+    for (const layer of effect2.camadas) {
+      playLayer(
         ctx,
-        tom === 1 ? camada : {
-          ...camada,
-          frequencia: camada.frequencia * tom,
-          ate: camada.ate === void 0 ? void 0 : camada.ate * tom
+        pitch === 1 ? layer : {
+          ...layer,
+          frequencia: layer.frequencia * pitch,
+          ate: layer.ate === void 0 ? void 0 : layer.ate * pitch
         },
-        volumeDoEfeito
+        effectVolume
       );
     }
   },
   /**
-   * Toca uma frequencia pura.
+   * Plays a pure frequency.
    *
    * ```js
    * V.sound.tone(440, 300)
    * ```
    *
-   * @param frequencia hertz
-   * @param duracao milissegundos
+   * @param frequency hertz
+   * @param duration milliseconds
    */
-  tone(frequencia, duracao = 200, opcoes = {}) {
-    carregarPreferencia();
-    if (silenciado) return;
-    const ctx = obterContexto();
+  tone(frequency, duration = 200, options = {}) {
+    loadPreference();
+    if (isMuted) return;
+    const ctx = getAudioContext();
     if (!ctx) return;
-    tocarCamada(
+    playLayer(
       ctx,
-      { frequencia, duracao: duracao / 1e3, forma: opcoes.forma ?? "sine" },
-      opcoes.volume ?? 0.5
+      { frequencia: frequency, duracao: duration / 1e3, forma: options.forma ?? "sine" },
+      options.volume ?? 0.5
     );
   },
   /**
-   * Toca uma nota pelo nome.
+   * Plays a note by name.
    *
    * ```js
    * V.sound.note('la', 300)
    * V.sound.note('do5', 200)
    * ```
    */
-  note(nome, duracao = 250, opcoes = {}) {
-    const frequencia = frequenciaDaNota(nome);
-    if (frequencia === null) return;
-    this.tone(frequencia, duracao, opcoes);
+  note(name, duration = 250, options = {}) {
+    const frequency = getFrequencyForNote(name);
+    if (frequency === null) return;
+    this.tone(frequency, duration, options);
   },
   /**
-   * Toca uma sequencia de notas.
+   * Plays a sequence of notes.
    *
    * ```js
    * V.sound.melody(['do', 'mi', 'sol', 'do5'], 140)
    * ```
    *
-   * @param notas nomes de nota, ou frequencias em hertz
-   * @param intervalo milissegundos entre uma nota e a seguinte
+   * @param notes note names, or frequencies in hertz
+   * @param interval milliseconds between one note and the next
    */
-  melody(notas, intervalo = 150, opcoes = {}) {
-    carregarPreferencia();
-    if (silenciado) return;
-    notas.forEach((nota, indice) => {
-      const frequencia = typeof nota === "number" ? nota : frequenciaDaNota(nota);
-      if (frequencia === null) return;
-      setTimeout(() => this.tone(frequencia, intervalo * 1.6, opcoes), indice * intervalo);
+  melody(notes, interval = 150, options = {}) {
+    loadPreference();
+    if (isMuted) return;
+    notes.forEach((note, index) => {
+      const frequency = typeof note === "number" ? note : getFrequencyForNote(note);
+      if (frequency === null) return;
+      setTimeout(() => this.tone(frequency, interval * 1.6, options), index * interval);
     });
   },
   /**
-   * Le ou ajusta o volume geral, de 0 a 1. A escolha fica guardada.
+   * Reads or adjusts the master volume, from 0 to 1. The choice is saved.
    *
    * ```js
-   * V.sound.volume()      // le
-   * V.sound.volume(0.6)   // ajusta
+   * V.sound.volume()      // read
+   * V.sound.volume(0.6)   // adjust
    * ```
    */
-  volume(valor) {
-    carregarPreferencia();
-    if (valor === void 0) return volumeGeral;
-    volumeGeral = Math.max(0, Math.min(1, valor));
-    storage.set(CHAVE_VOLUME, volumeGeral);
-    return volumeGeral;
+  volume(value) {
+    loadPreference();
+    if (value === void 0) return masterVolume;
+    masterVolume = Math.max(0, Math.min(1, value));
+    storage.set(VOLUME_KEY, masterVolume);
+    return masterVolume;
   },
-  /** Silencia. Passe `false` para voltar a tocar. */
-  mute(valor = true) {
-    carregarPreferencia();
-    silenciado = valor;
-    storage.set(CHAVE_SILENCIO, silenciado);
+  /** Mutes sound. Pass `false` to unmute. */
+  mute(value = true) {
+    loadPreference();
+    isMuted = value;
+    storage.set(MUTE_KEY, isMuted);
   },
-  /** Volta a tocar. */
+  /** Unmutes sound. */
   unmute() {
     this.mute(false);
   },
-  /** Alterna entre silencio e som, e devolve o novo estado. */
+  /** Toggles between muted and unmuted, and returns the new state. */
   toggle() {
-    carregarPreferencia();
-    this.mute(!silenciado);
-    return silenciado;
+    loadPreference();
+    this.mute(!isMuted);
+    return isMuted;
   },
-  /** `true` quando esta silenciado. */
+  /** `true` when muted. */
   get muted() {
-    carregarPreferencia();
-    return silenciado;
+    loadPreference();
+    return isMuted;
   },
-  /** Nomes de todos os efeitos disponiveis. */
+  /** Names of all available effects. */
   get names() {
     return Object.keys(efeitos);
   },
   /**
-   * Registra um efeito proprio.
+   * Registers a custom effect.
    *
    * ```js
-   * V.sound.define('meuAviso', {
+   * V.sound.define('myWarning', {
    *   volume: 0.5,
    *   camadas: [
    *     { frequencia: 700, duracao: 0.1 },
@@ -11995,49 +11994,49 @@ var sound = {
    * })
    * ```
    */
-  define(nome, efeito) {
-    efeitos[nome] = efeito;
+  define(name, effect2) {
+    efeitos[name] = effect2;
   },
-  /** Carrega um arquivo antes da hora, para nao atrasar no primeiro toque. */
+  /** Preloads a file to avoid delay on first play. */
   preload(...urls) {
     for (const url2 of urls) {
-      if (arquivos.has(url2)) continue;
-      const elemento = new Audio(url2);
-      elemento.preload = "auto";
-      arquivos.set(url2, elemento);
+      if (audioFiles.has(url2)) continue;
+      const element = new Audio(url2);
+      element.preload = "auto";
+      audioFiles.set(url2, element);
     }
   }
 };
 defineDirective("sound", ({ el, arg, expression, modifiers, scope, cleanup, evaluate: evaluate2 }) => {
-  const evento = arg || "click";
-  const resolver = () => {
-    const bruto = expression.trim();
-    if (!bruto) return "click";
-    if (efeitos[bruto] || pareceCaminho(bruto) || frequenciaDaNota(bruto) !== null) return bruto;
-    const valor = evaluate2();
-    return typeof valor === "string" ? valor : bruto;
+  const event = arg || "click";
+  const resolve2 = () => {
+    const raw = expression.trim();
+    if (!raw) return "click";
+    if (efeitos[raw] || looksLikePath(raw) || getFrequencyForNote(raw) !== null) return raw;
+    const value = evaluate2();
+    return typeof value === "string" ? value : raw;
   };
   const volume = modifiers.volume !== void 0 ? Number(modifiers.volume) : void 0;
-  const tocar = () => {
-    sound.play(resolver(), volume === void 0 ? {} : { volume });
+  const play = () => {
+    sound.play(resolve2(), volume === void 0 ? {} : { volume });
   };
-  el.addEventListener(evento, tocar);
-  cleanup(() => el.removeEventListener(evento, tocar));
+  el.addEventListener(event, play);
+  cleanup(() => el.removeEventListener(event, play));
 });
 defineDirective("mute", ({ el, cleanup }) => {
-  const sincronizar = () => {
-    const mudo = sound.muted;
-    el.setAttribute("aria-pressed", String(mudo));
-    el.classList.toggle("v-muted", mudo);
+  const sync = () => {
+    const isMuted2 = sound.muted;
+    el.setAttribute("aria-pressed", String(isMuted2));
+    el.classList.toggle("v-muted", isMuted2);
   };
-  const alternar = () => {
+  const toggle = () => {
     sound.toggle();
-    sincronizar();
+    sync();
     if (!sound.muted) sound.play("pop");
   };
-  el.addEventListener("click", alternar);
-  sincronizar();
-  cleanup(() => el.removeEventListener("click", alternar));
+  el.addEventListener("click", toggle);
+  sync();
+  cleanup(() => el.removeEventListener("click", toggle));
 });
 magic("$sound", () => sound);
 
@@ -12221,8 +12220,8 @@ function colorScale(color, dark = false) {
   const lightness = dark ? DARK_L : LIGHT_L;
   const chroma = dark ? DARK_C : LIGHT_C;
   const out = {};
-  SCALE_STEPS.forEach((step, index) => {
-    out[String(step)] = oklchToHex({
+  SCALE_STEPS.forEach((step2, index) => {
+    out[String(step2)] = oklchToHex({
       l: lightness[index],
       c: base.c * chroma[index],
       h: base.h
@@ -12317,8 +12316,8 @@ function buildTheme(colors, dark) {
     const base = rgbToOklch(rgb);
     const scale = colorScale(rgb, dark);
     scales[role] = scale;
-    for (const step of SCALE_STEPS) {
-      vars[`--v-${role}-${step}`] = scale[String(step)];
+    for (const step2 of SCALE_STEPS) {
+      vars[`--v-${role}-${step2}`] = scale[String(step2)];
     }
     const main = dark ? { l: Math.max(base.l, 0.62), c: base.c * 0.95, h: base.h } : base;
     const hover = dark ? { l: Math.min(main.l + 0.07, 0.94), c: main.c * 0.95, h: main.h } : { l: Math.max(main.l - 0.055, 0.12), c: main.c, h: main.h };
@@ -12346,10 +12345,10 @@ function buildTheme(colors, dark) {
   const hue = rgbToOklch(neutralRgb).h;
   const neutral = (l, c) => oklchToHex({ l, c, h: hue });
   const neutralScale = {};
-  SCALE_STEPS.forEach((step, index) => {
+  SCALE_STEPS.forEach((step2, index) => {
     const lightnessList = dark ? DARK_L : LIGHT_L;
-    neutralScale[String(step)] = neutral(lightnessList[index], 0.012);
-    vars[`--v-neutral-${step}`] = neutralScale[String(step)];
+    neutralScale[String(step2)] = neutral(lightnessList[index], 0.012);
+    vars[`--v-neutral-${step2}`] = neutralScale[String(step2)];
   });
   scales.neutral = neutralScale;
   if (dark) {
@@ -12407,7 +12406,7 @@ function resolveOptions(options) {
   };
   for (const role of ROLES) {
     if (parseColor(colors[role])) continue;
-    console.warn(`[Voodoo] cor invalida em palette.${role}: "${colors[role]}". Usando o preset.`);
+    console.warn(`[Voodoo] invalid color in palette.${role}: "${colors[role]}". Using preset.`);
     colors[role] = preset[role];
   }
   return {
@@ -12440,7 +12439,7 @@ function applyPalette(options = {}) {
     "--v-font-mono": mono
   };
   const css = [
-    "/* Paleta gerada por V.palette(). Nao edite a mao. */",
+    "/* Palette generated by V.palette(). Do not edit manually. */",
     block(":root", { ...shared, ...light.vars }),
     `@media (prefers-color-scheme: dark) {
 ${block(':root:not([data-theme="light"])', dark.vars)}
@@ -12483,61 +12482,61 @@ function ensurePalette() {
   initPalette();
 }
 var palette = Object.assign(applyPalette, {
-  /** Presets prontos, indexados pelo nome. */
+  /** Ready-made presets, indexed by name. */
   presets,
-  /** Nomes dos presets disponiveis. */
+  /** Names of available presets. */
   get names() {
     return Object.keys(presets);
   },
-  /** Paleta em uso, ou `null` antes da primeira aplicacao. */
+  /** Palette in use, or `null` before the first application. */
   get current() {
     return current;
   },
-  /** Opcoes usadas na ultima aplicacao. */
+  /** Options used in the last application. */
   get options() {
     return currentOptions;
   },
-  /** Aplica a paleta salva, ou o padrao quando nao ha nada salvo. */
+  /** Apply the saved palette, or the default when there is nothing saved. */
   init: initPalette,
-  /** Garante que as variaveis existam, sem sobrescrever o que ja foi aplicado. */
+  /** Ensure variables exist, without overwriting what has already been applied. */
   ensure: ensurePalette,
-  /** Volta ao preset padrao e apaga a escolha salva. */
+  /** Return to the default preset and clear the saved choice. */
   reset() {
     storage.remove(STORAGE_KEY);
     return applyPalette({ persist: false });
   },
-  /** Troca apenas o preset, mantendo raio e fonte atuais. */
+  /** Change only the preset, maintaining current radius and font. */
   use(name) {
     return applyPalette({ ...currentOptions ?? {}, preset: name, primary: void 0, accent: void 0 });
   },
-  /** Escala de tons de uma cor qualquer. */
+  /** Scale of tones for any color. */
   scale: colorScale,
-  /** Preto ou branco, conforme o melhor contraste WCAG sobre a cor. */
+  /** Black or white, depending on the best WCAG contrast over the color. */
   contrastText,
-  /** Razao de contraste WCAG entre duas cores. */
+  /** WCAG contrast ratio between two colors. */
   contrastRatio,
-  /** Luminancia relativa WCAG de uma cor. */
+  /** WCAG relative luminance of a color. */
   luminance(color) {
     const rgb = typeof color === "string" ? parseColor(color) : color;
     return rgb ? relativeLuminance(rgb) : 0;
   },
-  /** Conversores expostos para quem quiser gerar cores derivadas. */
+  /** Converters exposed for those who want to generate derived colors. */
   convert: { parseColor, rgbToOklch, oklchToRgb, toHex, toRgba }
 });
 
 // src/ui/dialog.ts
 var labels = {
-  confirm: "Confirmar",
-  cancel: "Cancelar",
+  confirm: "Confirm",
+  cancel: "Cancel",
   ok: "OK",
-  close: "Fechar",
-  confirmQuestion: "Tem certeza?",
-  required: "Preencha este campo."
+  close: "Close",
+  confirmQuestion: "Are you sure?",
+  required: "Please fill in this field."
 };
 var settings2 = {
-  /** Duracao da animacao de entrada e saida, em milissegundos. */
+  /** Duration of entrance and exit animation, in milliseconds. */
   duration: 220,
-  /** Tamanho padrao dos dialogos criados por `dialog()`. */
+  /** Default size of dialogs created by `dialog()`. */
   size: "md"
 };
 var CSS4 = `
@@ -12890,11 +12889,11 @@ function findByKey(key) {
   });
 }
 var modal = {
-  /** Abre um elemento da pagina como modal. Aceita seletor ou o proprio elemento. */
+  /** Open a page element as a modal. Accepts a selector or the element itself. */
   open(target, options = {}) {
     const element = resolveTarget2(target);
     if (!element) {
-      console.warn(`[Voodoo] modal.open: alvo nao encontrado (${String(target)}).`);
+      console.warn(`[Voodoo] modal.open: target not found (${String(target)}).`);
       return null;
     }
     const key = keyOf(target) ?? (element.id ? `#${element.id}` : null);
@@ -12909,7 +12908,7 @@ var modal = {
       labelledBy: heading?.id ?? null
     });
   },
-  /** Fecha o modal indicado, ou o que estiver no topo da pilha. */
+  /** Close the indicated modal, or the one at the top of the stack. */
   close(target, result) {
     if (target === void 0) {
       top()?.handle.close(result);
@@ -12919,11 +12918,11 @@ var modal = {
     const entry = key ? findByKey(key) : void 0;
     entry?.handle.close(result);
   },
-  /** Fecha todos os dialogos abertos, do topo para a base. */
+  /** Close all open dialogs, from top to bottom. */
   closeAll(result) {
     for (const entry of [...stack].reverse()) entry.handle.close(result);
   },
-  /** Abre se estiver fechado, fecha se estiver aberto. */
+  /** Open if closed, close if open. */
   toggle(target, options = {}) {
     const key = keyOf(target);
     const entry = key ? findByKey(key) : void 0;
@@ -12933,25 +12932,25 @@ var modal = {
     }
     return this.open(target, options);
   },
-  /** Informa se um modal especifico, ou qualquer um, esta aberto. */
+  /** Check if a specific modal, or any, is open. */
   isOpen(target) {
     if (target === void 0) return stack.length > 0;
     const key = keyOf(target);
     return !!(key && findByKey(key));
   },
-  /** Dialogos abertos, do mais antigo ao mais recente. */
+  /** Open dialogs, from oldest to newest. */
   get opened() {
     return stack.map((entry) => entry.handle);
   },
-  /** Quantidade de dialogos abertos. */
+  /** Number of open dialogs. */
   get count() {
     return stack.length;
   },
-  /** Ajusta duracao da animacao e tamanho padrao. */
+  /** Adjust animation duration and default size. */
   configure(options) {
     Object.assign(settings2, options);
   },
-  /** Troca os textos padrao dos botoes. */
+  /** Change the default button texts. */
   labels(next) {
     Object.assign(labels, next);
     return labels;
@@ -13485,13 +13484,13 @@ function installMask(input, options, cleanup) {
 }
 function maskableInput(el, directive2) {
   if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") {
-    warn(`${config.prefix}${directive2} so funciona em input ou textarea.`);
+    warn(`${config.prefix}${directive2} only works on input or textarea.`);
     return null;
   }
   const input = el;
   const type = (input.getAttribute("type") || "text").toLowerCase();
   if (type === "number" || type === "range" || type === "date" || type === "color") {
-    warn(`${config.prefix}${directive2} nao combina com input type="${type}". Use type="text".`);
+    warn(`${config.prefix}${directive2} doesn't work with input type="${type}". Use type="text".`);
     return null;
   }
   return input;
@@ -13503,7 +13502,7 @@ defineDirective(
     if (!input) return;
     const pattern = expression.trim();
     if (!pattern) {
-      warn(`${config.prefix}mask precisa de um padrao ou do nome de uma mascara.`);
+      warn(`${config.prefix}mask needs a pattern or mask name.`);
       return;
     }
     const key = pattern.toLowerCase();

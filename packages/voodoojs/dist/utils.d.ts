@@ -1,18 +1,18 @@
 /**
  * @module utils
  *
- * Utilitarios puros. Nenhum deles toca no DOM, entao o modulo roda igual em
- * navegador, Node, Bun e Deno. Tudo aqui e tree shakeable.
+ * Pure utilities. None of them touch the DOM, so the module works the same in
+ * browser, Node, Bun, and Deno. Everything here is tree-shakeable.
  */
-/** UUID v4. Usa `crypto.randomUUID` quando disponivel. */
+/** UUID v4. Uses `crypto.randomUUID` when available. */
 declare function uuid(): string;
-/** Identificador curto, util para ids de elementos. */
+/** Short identifier, useful for element ids. */
 declare function uid(prefix?: string): string;
-/** Pausa a execucao. `await V.sleep(500)`. */
+/** Pauses execution. `await V.sleep(500)`. */
 declare function sleep(ms: number): Promise<void>;
 /**
- * Converte `"300"`, `"300ms"`, `"1.5s"` e `"2m"` em milissegundos.
- * Aceita `null` porque a origem mais comum e `getAttribute`, que devolve null.
+ * Converts `"300"`, `"300ms"`, `"1.5s"`, and `"2m"` to milliseconds.
+ * Accepts `null` because the most common source is `getAttribute`, which returns null.
  */
 declare function parseDuration(value: string | number | null | undefined, fallback?: number): number;
 interface DebouncedFunction<T extends (...args: any[]) => any> {
@@ -21,84 +21,83 @@ interface DebouncedFunction<T extends (...args: any[]) => any> {
     flush(): void;
 }
 /**
- * Adia a execucao ate parar de ser chamada por `wait` ms.
+ * Delays execution until it stops being called for `wait` ms.
  *
  * ```js
- * const buscar = V.debounce(fetchProdutos, 300)
+ * const search = V.debounce(fetchProducts, 300)
  * ```
  */
 declare function debounce<T extends (...args: any[]) => any>(fn: T, wait?: number, immediate?: boolean): DebouncedFunction<T>;
-/** Limita a no maximo uma execucao a cada `wait` ms. */
+/** Limits to at most one execution every `wait` ms. */
 declare function throttle<T extends (...args: any[]) => any>(fn: T, wait?: number): DebouncedFunction<T>;
-/** Executa a funcao uma unica vez e memoriza o retorno. */
+/** Executes the function once and memoizes the return value. */
 declare function once<T extends (...args: any[]) => any>(fn: T): T;
-/** Cache de resultado por argumento. */
+/** Result cache by argument. */
 declare function memoize<T extends (...args: any[]) => any>(fn: T, keyFn?: (...args: Parameters<T>) => string): T & {
     cache: Map<string, ReturnType<T>>;
 };
-/** Copia profunda. Usa `structuredClone` quando existir. */
+/** Deep copy. Uses `structuredClone` when available. */
 declare function clone<T>(value: T): T;
-/** Mescla objetos em profundidade. Arrays sao substituidos, nao concatenados. */
+/** Deep merges objects. Arrays are replaced, not concatenated. */
 declare function merge<T extends Record<string, any>>(target: T, ...sources: Array<Partial<T>>): T;
-/** Agrupa por chave ou por funcao. */
+/** Groups by key or by function. */
 declare function groupBy<T>(list: T[], key: string | ((item: T) => string | number)): Record<string, T[]>;
-/** Remove duplicados. Aceita chave para objetos. */
+/** Removes duplicates. Accepts key for objects. */
 declare function unique<T>(list: T[], key?: string | ((item: T) => unknown)): T[];
-/** Divide em blocos de tamanho fixo. */
+/** Divides into fixed-size chunks. */
 declare function chunk<T>(list: T[], size?: number): T[][];
-/** Ordena por chave sem alterar o array original. */
+/** Sorts by key without altering the original array. */
 declare function sortBy<T>(list: T[], key: string | ((item: T) => any), direction?: 'asc' | 'desc'): T[];
-/** Le um caminho aninhado com seguranca: `get(obj, 'a.b.0.c')`. */
+/** Safely reads a nested path: `get(obj, 'a.b.0.c')`. */
 declare function get<T = unknown>(object: unknown, path: string, fallback?: T): T | undefined;
-/** Escreve em um caminho aninhado, criando os objetos do meio. */
+/** Writes to a nested path, creating intermediate objects. */
 declare function set(object: Record<string, any>, path: string, value: unknown): void;
-/** Numero aleatorio inteiro entre min e max, inclusive. */
+/** Random integer between min and max, inclusive. */
 declare function random(min?: number, max?: number): number;
-/** Sorteia um item de uma lista. */
+/** Randomly picks an item from a list. */
 declare function sample<T>(list: T[]): T | undefined;
-/** Converte texto em slug de URL, removendo acentos. */
+/** Converts text to URL slug, removing accents. */
 declare function slugify(text: string, separator?: string): string;
-/** Corta o texto respeitando o limite e adiciona reticencias. */
+/** Truncates text at limit and adds ellipsis. */
 declare function truncate(text: string, length?: number, suffix?: string): string;
-/** Primeira letra maiuscula. */
+/** First letter uppercase. */
 declare function capitalize(text: string): string;
-/** Primeira letra de cada palavra em maiuscula. */
+/** First letter of each word uppercase. */
 declare function titleCase(text: string): string;
-/** Escapa caracteres perigosos para interpolar texto em HTML. */
+/** Escapes dangerous characters for interpolating text in HTML. */
 declare function escapeHtml(text: string): string;
-/** Remove todas as tags de um HTML, deixando somente o texto. */
+/** Removes all tags from HTML, leaving only text. */
 declare function stripTags(html: string): string;
 interface FormatOptions {
     locale?: string;
     currency?: string;
 }
-/** Define o locale e a moeda usados pelos formatadores. */
+/** Sets the locale and currency used by formatters. */
 declare function setFormatDefaults(locale?: string, currency?: string): void;
-/** Formata como moeda: `formatCurrency(1234.5)` devolve `R$ 1.234,50`. */
+/** Formats as currency: `formatCurrency(1234.5)` returns `R$ 1.234,50`. */
 declare function formatCurrency(value: number | string, options?: FormatOptions): string;
-/** Formata numero com separadores locais. */
+/** Formats number with locale separators. */
 declare function formatNumber(value: number | string, options?: Intl.NumberFormatOptions & FormatOptions): string;
-/** Formata datas aceitando Date, timestamp ou string ISO. */
+/** Formats dates accepting Date, timestamp, or ISO string. */
 declare function formatDate(value: Date | string | number, format?: string | Intl.DateTimeFormatOptions, locale?: string): string;
-/** Tempo relativo legivel: `ha 5 minutos`, `em 2 dias`. */
+/** Human-readable relative time: `5 minutes ago`, `in 2 days`. */
 declare function relativeTime(value: Date | string | number, locale?: string): string;
-/** Tamanho de arquivo legivel: `1.4 MB`. */
+/** Human-readable file size: `1.4 MB`. */
 declare function formatFileSize(bytes: number, decimals?: number): string;
-/** Percentual formatado. */
+/** Formatted percentage. */
 declare function formatPercent(value: number, decimals?: number, locale?: string): string;
-/** `true` quando existe DOM disponivel. */
+/** `true` when DOM is available. */
 declare const isBrowser: boolean;
 /**
- * Consulta uma media query com seguranca.
+ * Safely queries a media query.
  *
- * `matchMedia` nao existe em todo lugar: falta no jsdom e em webviews antigas.
- * Sem esta guarda, ler `device.reducedMotion` lancava TypeError, e como as
- * directives de interface leem essa propriedade no meio de abrir e fechar
- * paineis, a excecao interrompia o metodo e deixava `aria-expanded` e o foco
- * no estado errado.
+ * `matchMedia` doesn't exist everywhere: it's missing in jsdom and old webviews.
+ * Without this guard, reading `device.reducedMotion` would throw TypeError, and since
+ * UI directives read this property while opening and closing panels, the exception
+ * would interrupt the method and leave `aria-expanded` and focus in the wrong state.
  */
 declare function matchesMedia(query: string): boolean;
-/** Informacoes do dispositivo, calculadas sob demanda. */
+/** Device information, calculated on demand. */
 declare const device: {
     readonly touch: boolean;
     readonly mobile: boolean;
