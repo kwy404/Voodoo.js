@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: v-show and v-if</title>
+<style>
+  body { margin: 0; }
+
+  /* `#panel` gets its display from the stylesheet, never from an inline style.
+     A v-show that "restores" visibility by writing display:block would break
+     the flex layout, and only a real cascade can catch that. */
+  #panel { display: flex; gap: 8px; height: 60px; }
+  #panel > span { width: 40px; }
+
+  #stack { display: grid; grid-template-columns: 1fr; }
+  .measured { height: 50px; background: #ddd; }
+
+  /* Height only. The element starts hidden through an inline `display: none`,
+     the usual way of not flashing content before Voodoo has mounted, and
+     v-show has to be able to take that inline value back off. Note this is the
+     only form v-show can undo: `display: none` coming from a stylesheet rule
+     stays, because v-show restores `element.style.display`, which never held
+     the rule in the first place. */
+  #inline-hidden { height: 30px; }
+</style>
+</head>
+<body>
+  <main id="app" v-data="{ open: true, revealed: false, status: 'ready' }">
+    <div id="panel" v-show="open"><span>a</span><span>b</span></div>
+
+    <div id="stack">
+      <div id="measured-one" class="measured" v-show="open">one</div>
+      <div id="measured-two" class="measured">two</div>
+    </div>
+
+    <div id="inline-hidden" style="display: none" v-show="revealed">revealed</div>
+
+    <p id="branch-loading" v-if="status === 'loading'">Loading</p>
+    <p id="branch-error" v-else-if="status === 'error'">Failed</p>
+    <p id="branch-ready" v-else>Ready</p>
+
+    <button id="toggle-open" @click="open = !open">toggle panel</button>
+    <button id="toggle-revealed" @click="revealed = !revealed">toggle revealed</button>
+    <button id="set-loading" @click="status = 'loading'">loading</button>
+    <button id="set-error" @click="status = 'error'">error</button>
+    <button id="set-ready" @click="status = 'ready'">ready</button>
+  </main>
+
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

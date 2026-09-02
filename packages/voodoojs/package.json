@@ -1,7 +1,7 @@
 {
   "name": "voodoojs",
-  "version": "0.4.6",
-  "description": "Voodoo.js: o framework JavaScript HTML-first. Construa aplicacoes reativas direto no HTML: reatividade granular, componentes, HTTP, formularios, validacao, roteador e UI. Sem build obrigatorio, sem dependencias, sem Virtual DOM, sem eval. JavaScript feels like magic.",
+  "version": "0.5.0",
+  "description": "Voodoo.js: the HTML-first JavaScript framework. Build reactive applications directly in HTML: fine-grained reactivity, components, HTTP, forms, validation, router and UI. No mandatory build step, no runtime dependencies, no Virtual DOM, no eval.",
   "keywords": [
     "javascript",
     "framework",
@@ -103,6 +103,7 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "README.md"
   ],
   "scripts": {
@@ -115,11 +116,12 @@
     "url": "git+https://github.com/kwy404/Voodoo.js.git",
     "directory": "packages/voodoojs"
   },
-  "homepage": "https://voodoojs.dev",
+  "homepage": "https://kwy404.github.io/Voodoo.js/",
   "bugs": {
     "url": "https://github.com/kwy404/Voodoo.js/issues"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "author": "kwy404 (https://github.com/kwy404)"
 }

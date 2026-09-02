@@ -1,6 +1,6 @@
 {
   "name": "@voodoo/cli",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "description": "Linha de comando da Voodoo.js: cria projetos, monta builds sob medida e copia componentes para o seu codigo.",
   "license": "MIT",
   "type": "module",

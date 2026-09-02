@@ -13,9 +13,19 @@ dist/
 !packages/voodoojs/dist/
 !packages/voodoojs/dist/**
 
+# Source maps are build output that nothing loads at runtime. They were 32 files
+# and roughly 12 MB, which is most of what every commit was carrying and most of
+# what the published npm tarball weighed. They are still generated on every
+# build and still attached to releases; they just do not belong in history.
+packages/voodoojs/dist/*.map
+
 # Arquivos de trabalho interno. A documentacao publica (README, docs/,
 # CONTRIBUTING, ARCHITECTURE, ROADMAP e companhia) e versionada de proposito:
 # ela e parte do projeto, nao rascunho de maquina.
 CONTRACT.md
 lista-temp.mjs
 verifica-temp.mjs
+
+# npm auth tokens. A .npmrc holding an _authToken must never be committed.
+.npmrc
+!.npmrc.example

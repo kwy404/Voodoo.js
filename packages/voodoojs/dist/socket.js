@@ -1,7 +1,7 @@
-import { socketSupported, createSocket, socket } from './chunk-GTP64V6Z.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-GTP64V6Z.js';
-import { evaluateIn, readAttr } from './chunk-EHXWLNEJ.js';
-import { reactive } from './chunk-CJTLXVLF.js';
+import { socketSupported, createSocket, socket } from './chunk-RJUNPXQF.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-RJUNPXQF.js';
+import { evaluateIn, readAttr } from './chunk-34CGORMO.js';
+import { reactive } from './chunk-NNU6WOOU.js';
 import { warnAlias } from './chunk-A2UOVQBP.js';
 import { parseDuration } from './chunk-234ZLC6W.js';
 import { defineDirective, PRIORITY, config } from './chunk-5777LJVW.js';

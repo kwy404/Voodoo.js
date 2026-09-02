@@ -377,20 +377,16 @@ var Voodoo = (() => {
       effectId = 0;
       ReactiveEffect = class {
         constructor(fn, options) {
-          __publicField(this, "fn", fn);
-          __publicField(this, "id", effectId++);
-          __publicField(this, "active", true);
-          /** `true` while the effect is waiting in the scheduler queue. */
-          __publicField(this, "queued", false);
-          __publicField(this, "deps", []);
-          __publicField(this, "parent");
-          __publicField(this, "scheduler");
-          __publicField(this, "onStop");
-          /** Cleanup callbacks registered by the effect itself. */
-          __publicField(this, "cleanups", []);
           var _a2;
+          this.fn = fn;
+          this.id = effectId++;
+          this.active = true;
+          this.queued = false;
+          this.deps = [];
+          this.parent = void 0;
           this.scheduler = options == null ? void 0 : options.scheduler;
           this.onStop = options == null ? void 0 : options.onStop;
+          this.cleanups = [];
           const scope = (_a2 = options == null ? void 0 : options.scope) != null ? _a2 : activeScope;
           if (scope) scope.effects.push(this);
         }
@@ -441,11 +437,11 @@ var Voodoo = (() => {
       };
       EffectScope = class {
         constructor(detached = false) {
-          __publicField(this, "effects", []);
-          __publicField(this, "cleanups", []);
-          __publicField(this, "children", []);
-          __publicField(this, "active", true);
-          __publicField(this, "parent");
+          this.effects = [];
+          this.cleanups = [];
+          this.children = [];
+          this.active = true;
+          this.parent = void 0;
           if (!detached && activeScope) {
             this.parent = activeScope;
             activeScope.children.push(this);
@@ -2013,19 +2009,13 @@ Expression: ${expression}` : message);
     magics.set(name.startsWith("$") ? name : `$${name}`, getter);
   }
   var Scope = class _Scope {
+    // Assignment order matches the order the fields were declared in before, so
+    // the properties are created in the same sequence they always were.
     constructor(data2 = {}, parent = null, el = null) {
-      /** Data local to this scope, normally a reactive proxy. */
-      __publicField(this, "data");
-      __publicField(this, "parent");
-      /** Element that created the scope. Used by `$el` and `$refs`. */
-      __publicField(this, "el");
-      /** References declared with `v-ref` within this scope. */
-      __publicField(this, "refs", {});
-      /** Component instance, when this scope belongs to one. */
-      __publicField(this, "component", null);
-      /** Values delivered by `provide`, visible to lower scopes. */
-      __publicField(this, "provides", null);
-      __publicField(this, "magicCache", null);
+      this.refs = {};
+      this.component = null;
+      this.provides = null;
+      this.magicCache = null;
       this.data = data2;
       this.parent = parent;
       this.el = el;
@@ -2317,9 +2307,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         }
       }
     } else {
-      const attrs = el.attributes;
-      for (let i = 0; i < attrs.length; i++) {
-        const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+      const names2 = attributeNames(el);
+      for (let i = 0; i < names2.length; i++) {
+        const name = names2[i];
+        if (!looksLikeDirective(name)) continue;
+        const parsed = parseAttribute(name, el.getAttribute(name));
         if (parsed) {
           out.push(parsed);
           indexDirective(el, parsed.name);
@@ -2328,6 +2320,14 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     }
     if (out.length < 2) return out;
     return out.sort((a, b) => priorityOf(b) - priorityOf(a));
+  }
+  var canListAttributeNames = typeof Element !== "undefined" && !!Element.prototype.getAttributeNames;
+  function attributeNames(el) {
+    if (canListAttributeNames) return el.getAttributeNames();
+    return Array.from(el.attributes, (a) => a.name);
+  }
+  function looksLikeDirective(name) {
+    return isVoodooAttribute(name) || name.charCodeAt(0) === 46 && name.length > 1;
   }
   function priorityOf(attr2) {
     var _a2, _b;
@@ -2367,16 +2367,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   }
   function stripAttributes(el) {
     if (!config.cleanAttributes) return;
+    const names2 = attributeNames(el);
     let map = attributeCache.get(el);
     if (!map) attributeCache.set(el, map = /* @__PURE__ */ new Map());
-    const toRemove = [];
-    for (let i = 0; i < el.attributes.length; i++) {
-      const attr2 = el.attributes[i];
-      if (!isVoodooAttribute(attr2.name)) continue;
-      map.set(attr2.name, attr2.value);
-      toRemove.push(attr2.name);
+    for (let i = 0; i < names2.length; i++) {
+      const name = names2[i];
+      if (!isVoodooAttribute(name)) continue;
+      map.set(name, el.getAttribute(name));
+      el.removeAttribute(name);
     }
-    for (const name of toRemove) el.removeAttribute(name);
   }
   function restoreAttributes(el) {
     const map = attributeCache.get(el);
@@ -2423,9 +2422,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       }
       return;
     }
-    const scopeOwner = new EffectScope(true);
-    addCleanup(el, () => scopeOwner.stop());
-    trackEffectScope(el, scopeOwner);
+    let scopeOwner = null;
+    const ownerScope = () => {
+      if (!scopeOwner) {
+        const created = scopeOwner = new EffectScope(true);
+        addCleanup(el, () => created.stop());
+        trackEffectScope(el, created);
+      }
+      return scopeOwner;
+    };
     const ctx = {
       el,
       scope,
@@ -2437,7 +2442,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         return evaluateIn(expression != null ? expression : attr2.expression, scope, attr2.raw, el);
       },
       effect(fn) {
-        scopeOwner.run(() => effect(fn, { scope: scopeOwner }));
+        const owner = ownerScope();
+        owner.run(() => effect(fn, { scope: owner }));
       },
       cleanup(fn) {
         addCleanup(el, fn);
@@ -2471,14 +2477,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     if (node.nodeType !== 1) return;
     const el = node;
     if (initialized.has(el)) return;
-    if (HTML_SKIP.has(el.tagName)) return;
+    const tag = el.tagName;
+    if (HTML_SKIP.has(tag)) return;
     if (el.hasAttribute(`${config.prefix}ignore`) || el.hasAttribute(`${config.prefix}pre`)) {
       initialized.add(el);
       return;
     }
     let current2 = activeScope2;
     const attrs = collectDirectives(el);
-    const tagComponent = el.hasAttribute(`${config.prefix}component`) ? null : resolveComponentTag(el.tagName);
+    const tagComponent = components.size === 0 && componentAliases.size === 0 ? null : el.hasAttribute(`${config.prefix}component`) ? null : resolveComponentTag(tag);
     if (attrs.length === 0 && !tagComponent) {
       walkChildren(el, current2);
       return;
@@ -4342,6 +4349,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     element.setAttribute("data-type", type);
     element.setAttribute("role", type === "error" ? "alert" : "status");
     element.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    element.setAttribute("aria-atomic", "true");
     let closed = false;
     let timer = null;
     const close = () => {
@@ -5335,6 +5343,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(anchor, el);
       const template = el.cloneNode(true);
       template.removeAttribute(`${p2}for`);
+      template.removeAttribute(":key");
+      template.removeAttribute(`${p2}bind:key`);
+      template.removeAttribute(`${p2}key`);
       removeQuietly(el);
       let blocks = [];
       const clearAll = () => {

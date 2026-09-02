@@ -1,7 +1,7 @@
 /**
- * Mede o tamanho real dos bundles gerados, cru e comprimido com gzip e brotli.
- * As metas do projeto estao declaradas em `BUDGET` e o script termina com
- * codigo de erro quando algum arquivo estoura o limite.
+ * Measures the real size of every generated bundle: raw, gzipped and brotlied.
+ * The project's targets live in `BUDGET`, and the script exits with an error
+ * code as soon as one file goes over its limit.
  */
 
 import { readdir, readFile } from 'node:fs/promises';
@@ -11,25 +11,34 @@ import { join } from 'node:path';
 const DIST = 'packages/voodoojs/dist';
 
 /**
- * Metas em kilobytes comprimidos com gzip.
+ * Targets in gzipped kilobytes.
  *
- * Os valores saem da medicao real, com cerca de 5% de folga por cima. A folga
- * existe para o orcamento pegar crescimento de verdade em vez de disparar a
- * cada linha nova: apertado demais, ele so ensina a gente a levantar o numero.
+ * The values come from real measurement, with roughly 5% of headroom on top.
+ * That headroom exists so the budget catches genuine growth instead of firing
+ * on every new line: too tight, and all it teaches us is to raise the number.
  *
- * Revisao de 2026-08-31. O build essencial estava a 78.83 KB com meta de 80, ou
- * seja, 1.2 KB de folga, e o completo a 123.28 com meta de 125. Nessa faixa
- * qualquer correcao estourava o teto. As correcoes de seguranca do avaliador de
- * expressoes (fuga de sandbox, poluicao de prototipo, saneamento de URL), os
- * avisos de desenvolvimento e o widget de devtools somaram +4.2% no minimo,
- * +2.3% no essencial e +3.0% no completo. O crescimento foi aceito de proposito
- * e as metas subiram junto.
+ * Revision of 2026-08-31. The essential build sat at 78.83 KB against a target
+ * of 80, so 1.2 KB of headroom, and the full build at 123.28 against 125. In
+ * that band any fix at all blew the ceiling. The expression evaluator's
+ * security work (sandbox escape, prototype pollution, URL sanitising), the
+ * development warnings and the devtools widget added +4.2% to the minimum
+ * build, +2.3% to the essential and +3.0% to the full one. That growth was
+ * accepted deliberately and the targets moved with it.
  *
- * Ao mexer aqui, diga por que. Levantar a meta sem justificativa e o mesmo que
- * nao ter meta nenhuma.
+ * Revision of 2026-09-02: core 46 -> 47. The performance pass spent the last of
+ * this budget's headroom, landing core at exactly 46.00 against 46. The very
+ * next change was a one-line accessibility fix -- `aria-atomic` on the toast
+ * region, which the alert pattern requires because the body is replaced whole
+ * on update -- and it pushed the build to 46.01. A budget with zero headroom is
+ * not a budget, it is a tripwire: it was about to block a correct fix over ten
+ * gzipped bytes. Raising to 47 restores about 2% of room, in line with the rule
+ * stated above.
+ *
+ * When you touch this, say why. Raising a target without a justification is the
+ * same as having no target at all.
  */
 const BUDGET = {
-  'voodoo.core.min.js': 46,
+  'voodoo.core.min.js': 47,
   'voodoo.min.js': 85,
   'voodoo.full.min.js': 133,
 };

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: CSP enforcement control</title>
+</head>
+<body>
+  <!--
+    No framework here. This page exists only to find out whether the browser is
+    enforcing the policy on this origin, by having the page's own script try to
+    compile a string. Served from /csp it must be refused; served from
+    /fixtures it must succeed.
+  -->
+  <p id="probe">eval probe</p>
+  <script src="eval-probe.js"></script>
+</body>
+</html>

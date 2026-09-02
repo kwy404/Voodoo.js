@@ -33,6 +33,59 @@ Everything below serves one of those four.
 
 ---
 
+## Where it stands today
+
+Measured, not estimated. Re-run `npm run quality` and
+`benchmarks/competitors/run-competitors.mjs` to refresh these.
+
+**Quality gate: 5.9 / 10.** The four criteria above are not met yet, and this is
+what is holding each one back.
+
+| Dimension | Score | What it would take |
+| --- | ---: | --- |
+| Correctness | 10.0 | Nothing. 1158 tests across 37 files, all passing |
+| TypeScript | 9.0 | Nothing blocking |
+| Documentation | 9.0 | English parity for the remaining Portuguese guides |
+| Security | 8.0 | Reviewed `innerHTML` exceptions are documented, not removed |
+| Bundle | 8.0 | See size below |
+| Memory | 8.0 | Leak suite passes; more scenarios would raise confidence |
+| API compatibility | 8.0 | Snapshot exists; tiers are not yet binding |
+| Accessibility | 5.3 | Eight WAI-ARIA gaps in shipped UI components |
+| Unit / Integration | 3.0 | The suite does not separate the two |
+| Performance | 3.0 | Measurements exist; no frozen baseline to regress against |
+| Dead code | 1.5 | Exports reachable only from tests |
+| Browser tests | 1.0 | Everything runs in jsdom. For a DOM framework, this is the biggest credibility gap |
+
+**Performance**, 1000 rows, production builds, DOM verified identical to a
+hand-written vanilla baseline:
+
+| | Voodoo | best in test | vanilla floor |
+| --- | ---: | ---: | ---: |
+| create | 119.55 ms, 6th of 7 | 41.59 ms | 41.59 ms |
+| update | 4.82 ms, level with vanilla | 0.91 ms (Solid) | 6.59 ms |
+| clear | 31.16 ms, **last** | 18.89 ms (Solid) | 19.63 ms |
+
+Update is where the no-VDOM design pays off: roughly 19x ahead of Alpine, the
+closest comparison. Create and clear are where it costs, and clear has not
+improved.
+
+**Distribution.** Not published to npm, which is the single largest adoption
+blocker: no install path, no badge, no dependency tooling, nobody writing
+plugins. Before publishing:
+
+- `author` is missing from `package.json`
+- `description` is still Portuguese
+- `homepage` points at `voodoojs.dev`, which does not resolve; the live site is
+  `https://kwy404.github.io/Voodoo.js/`
+- The tarball is 18 MB unpacked, and **12.38 MB of that is sourcemaps**. Shipping
+  them is good practice, shipping them for every build variant is not
+
+**Size.** 45.15 KB gzip for `core`, 81.67 for the default build, 128.22 for
+`full`, against roughly 14 KB for Alpine and 4 KB for Preact. This is the most
+honest argument against adopting Voodoo, and it is stated in the README rather
+than hidden.
+
+
 ## 1. API stabilization
 
 The largest blocker for `1.0`, and the least glamorous.

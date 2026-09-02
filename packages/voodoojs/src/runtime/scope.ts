@@ -19,22 +19,38 @@ export function magic(name: string, getter: MagicGetter): void {
   magics.set(name.startsWith('$') ? name : `$${name}`, getter);
 }
 
+/**
+ * Fields are `declare`d and assigned in the constructor, not initialised at the
+ * declaration.
+ *
+ * With `useDefineForClassFields` and a build target below native class fields,
+ * `refs = {}` compiles to an `Object.defineProperty` call. A list creates two of
+ * these scopes per row, so a thousand rows meant thousands of defines before any
+ * work happened. Plain assignment produces the same own, writable, enumerable,
+ * configurable properties, in the same order.
+ */
 export class Scope implements EvalScope {
   /** Data local to this scope, normally a reactive proxy. */
-  data: Record<string, any>;
-  parent: Scope | null;
+  declare data: Record<string, any>;
+  declare parent: Scope | null;
   /** Element that created the scope. Used by `$el` and `$refs`. */
-  el: Element | null;
+  declare el: Element | null;
   /** References declared with `v-ref` within this scope. */
-  refs: Record<string, Element> = {};
+  declare refs: Record<string, Element>;
   /** Component instance, when this scope belongs to one. */
-  component: any = null;
+  declare component: any;
   /** Values delivered by `provide`, visible to lower scopes. */
-  provides: Record<string, unknown> | null = null;
+  declare provides: Record<string, unknown> | null;
 
-  private magicCache: Map<string, Record<string, unknown>> | null = null;
+  private declare magicCache: Map<string, Record<string, unknown>> | null;
 
+  // Assignment order matches the order the fields were declared in before, so
+  // the properties are created in the same sequence they always were.
   constructor(data: Record<string, any> = {}, parent: Scope | null = null, el: Element | null = null) {
+    this.refs = {};
+    this.component = null;
+    this.provides = null;
+    this.magicCache = null;
     this.data = data;
     this.parent = parent;
     this.el = el;

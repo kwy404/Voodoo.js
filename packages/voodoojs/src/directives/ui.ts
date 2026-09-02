@@ -773,6 +773,19 @@ class Popup {
     if (!items.length) return;
     const current = items.indexOf(document.activeElement as HTMLElement);
 
+    // Enter and Space activate the focused item and close the menu, as the
+    // menu-button pattern requires. Without this a menu item that is a plain
+    // `[tabindex]` element — not a button or a link — can be reached with the
+    // arrows and then never used from the keyboard.
+    if (event.key === 'Enter' || event.key === ' ') {
+      const item = items[current];
+      if (!item) return;
+      event.preventDefault();
+      this.hide(true);
+      item.click();
+      return;
+    }
+
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       const step = event.key === 'ArrowDown' ? 1 : -1;
@@ -888,11 +901,28 @@ defineDirective('dropdown', ({ el, expression, cleanup }) => {
     popup.toggle();
   };
   const onTriggerKey = (event: KeyboardEvent): void => {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!popup.open) popup.show();
+      const items = popup.items();
+      if (items.length) items[event.key === 'ArrowDown' ? 0 : items.length - 1].focus();
+      return;
+    }
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    // Enter and Space must open the menu *and* put focus on its first item;
+    // opening while leaving focus on the trigger strands a keyboard user.
+    //
+    // The activation may already have happened: `makeInteractive` turns these
+    // keys into a click on a trigger that is not a native button, and a click
+    // handler above toggles the menu. `defaultPrevented` is how we know, so the
+    // menu is never toggled twice by a single keystroke. On a native button
+    // nothing has run yet, and preventing the default here also suppresses the
+    // browser's own click, leaving exactly one toggle.
+    const alreadyActivated = event.defaultPrevented;
     event.preventDefault();
-    if (!popup.open) popup.show();
-    const items = popup.items();
-    if (items.length) items[event.key === 'ArrowDown' ? 0 : items.length - 1].focus();
+    if (!alreadyActivated) popup.toggle();
+    if (popup.open) popup.items()[0]?.focus();
   };
 
   el.addEventListener('click', onClick);
@@ -937,6 +967,18 @@ defineDirective('tooltip', ({ el, expression, cleanup }) => {
 
   const placement = parsePlacement(readOption(el, 'tooltip-position'), 'top');
   const delay = parseDuration(readOption(el, 'tooltip-delay'), 200);
+
+  // The tooltip pattern requires the trigger to be focusable: a balloon that
+  // only answers `mouseenter` does not exist for anyone navigating by keyboard,
+  // and `el.focus()` on a plain `<span>` is a no-op, so the `focusin` handler
+  // below would never fire. Elements that are not focusable on their own are
+  // put in the tab order here; native controls are left as the author wrote
+  // them, and so is any element that already carries a `tabindex`. A disabled
+  // control is skipped too: `disabled` beats `tabindex`, so the attribute would
+  // buy nothing and only claim a focusability the element does not have.
+  const addedTabIndex =
+    !el.hasAttribute('tabindex') && !el.hasAttribute('disabled') && !el.matches(FOCUSABLE);
+  if (addedTabIndex) el.setAttribute('tabindex', '0');
 
   let bubble: HTMLElement | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -993,16 +1035,29 @@ defineDirective('tooltip', ({ el, expression, cleanup }) => {
     if (event.key === 'Escape') close();
   };
 
+  /**
+   * Touch has no hover, so a tap has to reveal the balloon. Moving focus to the
+   * trigger takes the same path a keyboard user takes, which keeps one way in
+   * instead of two. Only for triggers we made focusable: a real button or link
+   * gets focus from the browser and must not be interfered with.
+   */
+  const onPointerDown = (): void => {
+    if (addedTabIndex) el.focus();
+  };
+
   el.addEventListener('mouseenter', schedule);
   el.addEventListener('focusin', open);
+  el.addEventListener('pointerdown', onPointerDown);
   el.addEventListener('mouseleave', close);
   el.addEventListener('focusout', close);
   el.addEventListener('keydown', onEscape);
 
   cleanup(() => {
     close();
+    if (addedTabIndex) el.removeAttribute('tabindex');
     el.removeEventListener('mouseenter', schedule);
     el.removeEventListener('focusin', open);
+    el.removeEventListener('pointerdown', onPointerDown);
     el.removeEventListener('mouseleave', close);
     el.removeEventListener('focusout', close);
     el.removeEventListener('keydown', onEscape);
@@ -1025,6 +1080,18 @@ defineDirective('tabs', ({ el, expression, cleanup }) => {
   const idOf = (tab: HTMLElement, index: number): string => attrOf(tab, 'tab') || String(index);
   const list = tabs[0].parentElement;
   if (list && !list.hasAttribute('role')) list.setAttribute('role', 'tablist');
+
+  // The tabs pattern asks the tablist to declare its axis, because the axis is
+  // what the arrow keys follow: Left/Right along a horizontal list, Up/Down
+  // along a vertical one. The keys that do not belong to the axis are left to
+  // the browser, so Up/Down still scroll a page of horizontal tabs.
+  //
+  // An `aria-orientation` written by the author decides; horizontal is the
+  // default, and it is written out rather than implied so the attribute always
+  // matches the keys that are actually handled.
+  const vertical =
+    (list?.getAttribute('aria-orientation') || '').trim().toLowerCase() === 'vertical';
+  list?.setAttribute('aria-orientation', vertical ? 'vertical' : 'horizontal');
 
   const urlKey = hasAttrOf(el, 'tabs-url') ? attrOf(el, 'tabs-url') || 'tab' : null;
 
@@ -1076,9 +1143,12 @@ defineDirective('tabs', ({ el, expression, cleanup }) => {
     if (!tab || !tabs.includes(tab)) return;
 
     const current = tabs.indexOf(tab);
+    const forward = vertical ? 'ArrowDown' : 'ArrowRight';
+    const backward = vertical ? 'ArrowUp' : 'ArrowLeft';
+
     let next = -1;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (current + 1) % tabs.length;
-    else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (current - 1 + tabs.length) % tabs.length;
+    if (event.key === forward) next = (current + 1) % tabs.length;
+    else if (event.key === backward) next = (current - 1 + tabs.length) % tabs.length;
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = tabs.length - 1;
     if (next === -1) return;
@@ -1140,6 +1210,23 @@ defineDirective('accordion', ({ el, cleanup }) => {
     header.classList.add('v-accordion-header', 'v-focus-ring');
     if (!header.hasAttribute('role')) header.setAttribute('role', 'button');
     if (!header.hasAttribute('tabindex')) header.setAttribute('tabindex', '0');
+
+    // The accordion pattern names three things on the header: that it controls
+    // a panel, which panel, and whether that panel is open right now. Written
+    // here so the header is complete the moment it is rendered; the controller
+    // keeps `aria-expanded` current from then on, on every open and close.
+    ensureId(panel, 'v-accordion-panel');
+    header.setAttribute('aria-controls', panel.id);
+    header.setAttribute('aria-expanded', String(controller.open));
+
+    // And the panel is a region labelled by its header, so a screen reader that
+    // jumps straight into the content still says which section it is in. The
+    // APG advises against it past six panels, where a landmark per section
+    // turns the landmark list into noise rather than a map.
+    if (items.length <= 6 && !panel.hasAttribute('role')) {
+      panel.setAttribute('role', 'region');
+      panel.setAttribute('aria-labelledby', ensureId(header, 'v-accordion-header'));
+    }
 
     headers.push(header);
     controllers.push(controller);
@@ -1217,6 +1304,24 @@ class Drawer {
     if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
     ensureId(panel, 'v-drawer');
     panel.hidden = true;
+    this.label();
+  }
+
+  /**
+   * Gives the dialog an accessible name, which the WAI-ARIA dialog-modal
+   * pattern requires: without one a screen reader announces "dialog" and
+   * nothing else. A heading written inside the drawer becomes the label. An
+   * `aria-label` or `aria-labelledby` already on the panel always wins, and
+   * a drawer with no heading at all is left alone rather than mislabelled.
+   *
+   * Runs again on every open so a heading rendered after mount still counts.
+   */
+  private label(): void {
+    const panel = this.panel;
+    if (panel.hasAttribute('aria-labelledby') || panel.hasAttribute('aria-label')) return;
+    const heading = panel.querySelector<HTMLElement>('[data-drawer-title],h1,h2,h3,h4');
+    if (!heading) return;
+    panel.setAttribute('aria-labelledby', ensureId(heading, 'v-drawer-title'));
   }
 
   private onKeyDown = (event: KeyboardEvent): void => {
@@ -1266,11 +1371,20 @@ class Drawer {
     }
 
     this.panel.hidden = false;
+    this.label();
     lockScroll();
-    requestAnimationFrame(() => {
+
+    // Motion is opt-out here. `device.reducedMotion` reads the
+    // `prefers-reduced-motion: reduce` media query, and when the user has asked
+    // for less motion the open state is applied in this same frame: no waiting
+    // for a frame that only exists to let the slide-in transition start, so the
+    // drawer is simply there. Closing already takes the same shortcut below.
+    const settle = (): void => {
       this.backdrop?.classList.add('v-in');
       this.panel.classList.add('v-open');
-    });
+    };
+    if (device.reducedMotion) settle();
+    else requestAnimationFrame(settle);
 
     document.addEventListener('keydown', this.onKeyDown, true);
     document.addEventListener('pointerdown', this.onPointerDown, true);
@@ -2210,6 +2324,8 @@ export function commandPalette(): void {
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', 'Command palette');
+  // Focusable so the trap below always has somewhere to put focus back.
+  overlay.tabIndex = -1;
 
   const box = document.createElement('div');
   box.className = 'v-command-box';
@@ -2237,7 +2353,24 @@ export function commandPalette(): void {
   let visible: CommandOption[] = commands;
   let cursor = 0;
 
+  /**
+   * Focus trap. The palette says `aria-modal="true"`, and that is a promise:
+   * nothing behind it is reachable. Cycling Tab is only half of it, because
+   * focus also moves by other routes — a script calling `focus()`, a click that
+   * lands on the page behind, a browser control handing focus back to the
+   * document. Anything that ends up outside the overlay is returned to the
+   * search field, which is where the palette is driven from anyway.
+   */
+  const keepFocusTrapped = (event: FocusEvent): void => {
+    const target = event.target as Node | null;
+    if (!target || overlay.contains(target)) return;
+    input.focus();
+  };
+
   const close = (): void => {
+    // Released before focus is handed back, or the trap would fight the
+    // restore and pull focus into an overlay that is on its way out.
+    document.removeEventListener('focusin', keepFocusTrapped, true);
     document.removeEventListener('keydown', onKeyDown, true);
     overlay.remove();
     unlockScroll();
@@ -2294,7 +2427,9 @@ export function commandPalette(): void {
     const active = list.children[cursor] as HTMLElement | undefined;
     if (active) {
       input.setAttribute('aria-activedescendant', active.id);
-      active.scrollIntoView({ block: 'nearest' });
+      // Optional call: `scrollIntoView` is missing in some non-browser DOMs, and
+      // losing the palette to a TypeError costs far more than losing a scroll.
+      active.scrollIntoView?.({ block: 'nearest' });
     }
   };
 
@@ -2341,6 +2476,7 @@ export function commandPalette(): void {
 
   render();
   input.focus();
+  document.addEventListener('focusin', keepFocusTrapped, true);
 }
 
 defineDirective('command', ({ el, expression, cleanup }) => {

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: v-for</title>
+<style>
+  /* Rows are laid out for real so the reorder assertions can be made against
+     geometry as well as against document order. */
+  #list { list-style: none; margin: 0; padding: 0; }
+  .row { display: block; height: 40px; }
+</style>
+</head>
+<body>
+  <main id="app" v-data="{
+    items: [
+      { id: 'a', label: 'Alpha' },
+      { id: 'b', label: 'Bravo' },
+      { id: 'c', label: 'Charlie' },
+      { id: 'd', label: 'Delta' }
+    ]
+  }">
+    <ul id="list">
+      <li v-for="item in items" :key="item.id" class="row" :data-id="item.id">
+        <span class="label">{ item.label }</span>
+        <!--
+          Deliberately NOT bound with v-model. Its value lives only in the DOM
+          node, so it survives a reorder if and only if the node itself was
+          moved rather than rebuilt.
+        -->
+        <input class="note" type="text" aria-label="note">
+      </li>
+    </ul>
+
+    <button id="reverse" @click="items = items.slice().reverse()">reverse</button>
+    <button id="rotate" @click="items = items.slice(1).concat(items.slice(0, 1))">rotate</button>
+    <button id="drop-bravo" @click="items = items.filter(item => item.id !== 'b')">drop bravo</button>
+    <button id="insert-echo" @click="items = items.slice(0, 1).concat([{ id: 'e', label: 'Echo' }]).concat(items.slice(1))">insert echo</button>
+    <button id="rename-charlie" @click="items = items.map(item => item.id === 'c' ? { id: 'c', label: 'Changed' } : item)">rename charlie</button>
+    <button id="clear" @click="items = []">clear</button>
+
+    <p id="count">{ items.length }</p>
+  </main>
+
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

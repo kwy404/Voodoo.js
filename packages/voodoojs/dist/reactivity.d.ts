@@ -60,8 +60,20 @@ declare function pauseTracking(): void;
 declare function enableTracking(): void;
 declare function resetTracking(): void;
 declare function getActiveEffect(): ReactiveEffect | undefined;
+/**
+ * Why every field here is `declare`d and then assigned in the constructor.
+ *
+ * The package compiles with `useDefineForClassFields`, and the build target is
+ * below the level where class fields exist natively, so a field written as
+ * `active = true` is emitted as an `Object.defineProperty` call. This class is
+ * built once per binding on the page — one per row of a list, thousands of times
+ * on a real screen — and the CPU profile of a thousand-row build showed the
+ * define helper alone above one percent of total time. `declare` removes the
+ * emitted definition, the constructor creates the same own, writable,
+ * enumerable, configurable properties by plain assignment, and the assignment
+ * order is kept identical so the object shape does not change.
+ */
 declare class ReactiveEffect<T = any> {
-    fn: () => T;
     readonly id: number;
     active: boolean;
     /** `true` while the effect is waiting in the scheduler queue. */
@@ -72,6 +84,7 @@ declare class ReactiveEffect<T = any> {
     onStop: (() => void) | undefined;
     /** Cleanup callbacks registered by the effect itself. */
     cleanups: Array<() => void>;
+    fn: () => T;
     constructor(fn: () => T, options?: EffectOptions);
     run(): T | undefined;
     /** Registers a function called before the next run and on stop. */
@@ -95,6 +108,7 @@ interface EffectRunner<T = any> {
  */
 declare function effect<T = any>(fn: () => T, options?: EffectOptions): EffectRunner<T>;
 declare function stop(runner: EffectRunner | ReactiveEffect): void;
+/** Fields are `declare`d and assigned in the constructor for the reason given on `ReactiveEffect`. */
 declare class EffectScope {
     effects: ReactiveEffect[];
     cleanups: Array<() => void>;

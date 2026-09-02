@@ -214,21 +214,42 @@ export function getActiveEffect(): ReactiveEffect | undefined {
 
 let effectId = 0;
 
+/**
+ * Why every field here is `declare`d and then assigned in the constructor.
+ *
+ * The package compiles with `useDefineForClassFields`, and the build target is
+ * below the level where class fields exist natively, so a field written as
+ * `active = true` is emitted as an `Object.defineProperty` call. This class is
+ * built once per binding on the page — one per row of a list, thousands of times
+ * on a real screen — and the CPU profile of a thousand-row build showed the
+ * define helper alone above one percent of total time. `declare` removes the
+ * emitted definition, the constructor creates the same own, writable,
+ * enumerable, configurable properties by plain assignment, and the assignment
+ * order is kept identical so the object shape does not change.
+ */
 export class ReactiveEffect<T = any> {
-  readonly id = effectId++;
-  active = true;
+  declare readonly id: number;
+  declare active: boolean;
   /** `true` while the effect is waiting in the scheduler queue. */
-  queued = false;
-  deps: Dep[] = [];
-  parent: ReactiveEffect | undefined = undefined;
-  scheduler: EffectScheduler | undefined;
-  onStop: (() => void) | undefined;
+  declare queued: boolean;
+  declare deps: Dep[];
+  declare parent: ReactiveEffect | undefined;
+  declare scheduler: EffectScheduler | undefined;
+  declare onStop: (() => void) | undefined;
   /** Cleanup callbacks registered by the effect itself. */
-  cleanups: Array<() => void> = [];
+  declare cleanups: Array<() => void>;
+  declare fn: () => T;
 
-  constructor(public fn: () => T, options?: EffectOptions) {
+  constructor(fn: () => T, options?: EffectOptions) {
+    this.fn = fn;
+    this.id = effectId++;
+    this.active = true;
+    this.queued = false;
+    this.deps = [];
+    this.parent = undefined;
     this.scheduler = options?.scheduler;
     this.onStop = options?.onStop;
+    this.cleanups = [];
     const scope = options?.scope ?? activeScope;
     if (scope) scope.effects.push(this);
   }
@@ -325,14 +346,20 @@ export function stop(runner: EffectRunner | ReactiveEffect): void {
 
 let activeScope: EffectScope | undefined;
 
+/** Fields are `declare`d and assigned in the constructor for the reason given on `ReactiveEffect`. */
 export class EffectScope {
-  effects: ReactiveEffect[] = [];
-  cleanups: Array<() => void> = [];
-  children: EffectScope[] = [];
-  active = true;
-  parent: EffectScope | undefined;
+  declare effects: ReactiveEffect[];
+  declare cleanups: Array<() => void>;
+  declare children: EffectScope[];
+  declare active: boolean;
+  declare parent: EffectScope | undefined;
 
   constructor(detached = false) {
+    this.effects = [];
+    this.cleanups = [];
+    this.children = [];
+    this.active = true;
+    this.parent = undefined;
     if (!detached && activeScope) {
       this.parent = activeScope;
       activeScope.children.push(this);

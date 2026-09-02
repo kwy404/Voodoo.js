@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Voodoo browser test: modal</title>
+<style>
+  body { margin: 0; }
+  /* Tall enough that the document actually scrolls, so the scroll lock has
+     something to lock. */
+  #filler { height: 3000px; }
+</style>
+</head>
+<body>
+  <main id="app" v-data="{ opened: 0 }">
+    <button id="open-login" v-modal="#login">Sign in</button>
+    <button id="elsewhere">Elsewhere on the page</button>
+
+    <!--
+      The dialog content lives in the page. `v-modal-content` hides it until
+      the modal adopts it, and it must come back to exactly this spot on close.
+    -->
+    <div id="login" v-modal-content>
+      <h2 id="login-title">Sign in</h2>
+      <input id="email" type="email" aria-label="Email">
+      <input id="password" type="password" aria-label="Password">
+      <button id="submit">Submit</button>
+      <button id="cancel" v-modal-close>Cancel</button>
+    </div>
+
+    <p id="after-login">Marker that must stay right after the dialog content.</p>
+    <div id="filler"></div>
+  </main>
+
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

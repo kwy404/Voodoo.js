@@ -137,6 +137,10 @@ function render(options: ToastOptions): ToastHandle {
   element.setAttribute('data-type', type);
   element.setAttribute('role', type === 'error' ? 'alert' : 'status');
   element.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+  // The body is replaced wholesale when a toast is updated, so the region has to
+  // be announced as a unit. Without this a screen reader reads only the changed
+  // node, which on a toast is often a fragment with no context.
+  element.setAttribute('aria-atomic', 'true');
 
   let closed = false;
   let timer: ReturnType<typeof setTimeout> | null = null;

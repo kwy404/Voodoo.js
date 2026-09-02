@@ -320,6 +320,16 @@ defineDirective(
 
     const template = el.cloneNode(true) as Element;
     template.removeAttribute(`${p}for`);
+    // The key expression was just read off the original element, and `v-bind`
+    // treats `key` as a no-op precisely because `v-for` is the one that consumes
+    // it. Left on the template it was pure freight: every row cloned the
+    // attribute, parsed it, built a directive context to run a binding that
+    // returns immediately, and then removed the attribute again. A row whose
+    // only attribute was the key now carries no directive at all, so the walker
+    // takes it down its cheap path.
+    template.removeAttribute(':key');
+    template.removeAttribute(`${p}bind:key`);
+    template.removeAttribute(`${p}key`);
     // Silent removal: the original element becomes a template, is not leaving the
     // scene, so the observer should not unmount the list's effect.
     removeQuietly(el);

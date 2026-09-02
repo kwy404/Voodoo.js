@@ -1490,8 +1490,6 @@ function evictOldest() {
     if (++removidos >= alvo) break;
   }
 }
-
-// src/runtime/walker.ts
 var attributeCache = /* @__PURE__ */ new WeakMap();
 function readAttr(el, name) {
   const cached = attributeCache.get(el)?.get(name);

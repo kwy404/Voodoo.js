@@ -1,6 +1,6 @@
 {
   "name": "voodoo-monorepo",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "private": true,
   "description": "Voodoo.js: the HTML-first JavaScript framework. Build reactive applications directly in HTML.",
   "workspaces": [
@@ -11,8 +11,12 @@
     "dev": "npm run dev --workspace=voodoojs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:browser": "npm run build --workspace=voodoojs && playwright test",
+    "test:browser:only": "playwright test",
+    "test:browser:install": "playwright install chromium",
     "coverage": "vitest run --coverage",
     "typecheck": "tsc -p packages/voodoojs/tsconfig.json --noEmit",
+    "typecheck:browser": "tsc -p packages/voodoojs/test/browser/tsconfig.json --noEmit",
     "format": "prettier --write \"**/*.{ts,js,json,md,html,css}\"",
     "size": "node scripts/size.mjs",
     "serve": "node scripts/serve.mjs",
@@ -24,6 +28,7 @@
     "check:links": "node scripts/check-links.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@vitest/coverage-v8": "^2.1.8",
     "jsdom": "^25.0.1",
     "prettier": "^3.3.3",

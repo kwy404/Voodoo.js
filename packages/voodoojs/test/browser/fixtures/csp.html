@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: strict CSP</title>
+</head>
+<body>
+  <!--
+    There is not one line of inline JavaScript on this page, and there cannot
+    be: served from the /csp mount the policy is `script-src 'self'`, which
+    rejects inline scripts as well as every form of runtime compilation. Both
+    scripts are same-origin files.
+
+    Everything below is an expression the framework has to evaluate: property
+    access, arithmetic, a ternary, string building, a method call, an arrow
+    function passed to `filter`, computed member access, an object literal, and
+    assignment from an event handler. If any of it went through `eval` or
+    `new Function`, the browser would refuse it and this page would render
+    nothing.
+  -->
+  <main id="app" v-data="{
+    count: 2,
+    user: { first: 'Ada', last: 'Lovelace' },
+    prices: [10, 25, 40, 55],
+    limit: 30,
+    theme: 'light'
+  }">
+    <p id="sum">{ count + 3 }</p>
+    <p id="name">{ user.first + ' ' + user.last }</p>
+    <p id="upper">{ user.last.toUpperCase() }</p>
+    <p id="ternary">{ count > 1 ? 'many' : 'one' }</p>
+    <p id="computed">{ user['fir' + 'st'] }</p>
+    <p id="cheap">{ prices.filter(price => price < limit).join('|') }</p>
+    <p id="total">{ prices.reduce((sum, price) => sum + price, 0) }</p>
+    <p id="nested">{ { a: count * 10 }.a }</p>
+
+    <ul id="list">
+      <li v-for="(price, index) in prices" :key="index" class="price">{ index }: { price }</li>
+    </ul>
+
+    <button id="bump" @click="count++">bump</button>
+    <button id="raise" @click="limit = 100">raise limit</button>
+    <button id="dark" @click="theme = theme === 'light' ? 'dark' : 'light'">flip theme</button>
+
+    <span id="theme-out" :data-theme="theme" :class="{ 'is-dark': theme === 'dark' }">{ theme }</span>
+
+    <input id="typed" v-model="user.first" type="text">
+    <p id="typed-out">{ user.first }</p>
+
+    <p id="conditional" v-if="count > 4">over four</p>
+    <p id="conditional-else" v-else>four or fewer</p>
+  </main>
+
+  <!--
+    Only the framework. The control that checks whether the policy is really
+    being enforced lives on its own page, `probe.html`, so that its deliberate
+    refusals never land in this page's console or violation log — this page has
+    to be able to claim both are empty.
+  -->
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

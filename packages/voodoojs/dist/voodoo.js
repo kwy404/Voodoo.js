@@ -377,20 +377,16 @@ var Voodoo = (() => {
       effectId = 0;
       ReactiveEffect = class {
         constructor(fn, options) {
-          __publicField(this, "fn", fn);
-          __publicField(this, "id", effectId++);
-          __publicField(this, "active", true);
-          /** `true` while the effect is waiting in the scheduler queue. */
-          __publicField(this, "queued", false);
-          __publicField(this, "deps", []);
-          __publicField(this, "parent");
-          __publicField(this, "scheduler");
-          __publicField(this, "onStop");
-          /** Cleanup callbacks registered by the effect itself. */
-          __publicField(this, "cleanups", []);
           var _a2;
+          this.fn = fn;
+          this.id = effectId++;
+          this.active = true;
+          this.queued = false;
+          this.deps = [];
+          this.parent = void 0;
           this.scheduler = options == null ? void 0 : options.scheduler;
           this.onStop = options == null ? void 0 : options.onStop;
+          this.cleanups = [];
           const scope = (_a2 = options == null ? void 0 : options.scope) != null ? _a2 : activeScope;
           if (scope) scope.effects.push(this);
         }
@@ -441,11 +437,11 @@ var Voodoo = (() => {
       };
       EffectScope = class {
         constructor(detached = false) {
-          __publicField(this, "effects", []);
-          __publicField(this, "cleanups", []);
-          __publicField(this, "children", []);
-          __publicField(this, "active", true);
-          __publicField(this, "parent");
+          this.effects = [];
+          this.cleanups = [];
+          this.children = [];
+          this.active = true;
+          this.parent = void 0;
           if (!detached && activeScope) {
             this.parent = activeScope;
             activeScope.children.push(this);
@@ -2013,19 +2009,13 @@ Expression: ${expression}` : message);
     magics.set(name.startsWith("$") ? name : `$${name}`, getter);
   }
   var Scope = class _Scope {
+    // Assignment order matches the order the fields were declared in before, so
+    // the properties are created in the same sequence they always were.
     constructor(data2 = {}, parent = null, el = null) {
-      /** Data local to this scope, normally a reactive proxy. */
-      __publicField(this, "data");
-      __publicField(this, "parent");
-      /** Element that created the scope. Used by `$el` and `$refs`. */
-      __publicField(this, "el");
-      /** References declared with `v-ref` within this scope. */
-      __publicField(this, "refs", {});
-      /** Component instance, when this scope belongs to one. */
-      __publicField(this, "component", null);
-      /** Values delivered by `provide`, visible to lower scopes. */
-      __publicField(this, "provides", null);
-      __publicField(this, "magicCache", null);
+      this.refs = {};
+      this.component = null;
+      this.provides = null;
+      this.magicCache = null;
       this.data = data2;
       this.parent = parent;
       this.el = el;
@@ -2317,9 +2307,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         }
       }
     } else {
-      const attrs = el.attributes;
-      for (let i = 0; i < attrs.length; i++) {
-        const parsed = parseAttribute(attrs[i].name, attrs[i].value);
+      const names2 = attributeNames(el);
+      for (let i = 0; i < names2.length; i++) {
+        const name = names2[i];
+        if (!looksLikeDirective(name)) continue;
+        const parsed = parseAttribute(name, el.getAttribute(name));
         if (parsed) {
           out.push(parsed);
           indexDirective(el, parsed.name);
@@ -2328,6 +2320,14 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     }
     if (out.length < 2) return out;
     return out.sort((a, b) => priorityOf(b) - priorityOf(a));
+  }
+  var canListAttributeNames = typeof Element !== "undefined" && !!Element.prototype.getAttributeNames;
+  function attributeNames(el) {
+    if (canListAttributeNames) return el.getAttributeNames();
+    return Array.from(el.attributes, (a) => a.name);
+  }
+  function looksLikeDirective(name) {
+    return isVoodooAttribute(name) || name.charCodeAt(0) === 46 && name.length > 1;
   }
   function priorityOf(attr2) {
     var _a2, _b;
@@ -2413,16 +2413,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   }
   function stripAttributes(el) {
     if (!config.cleanAttributes) return;
+    const names2 = attributeNames(el);
     let map = attributeCache.get(el);
     if (!map) attributeCache.set(el, map = /* @__PURE__ */ new Map());
-    const toRemove = [];
-    for (let i = 0; i < el.attributes.length; i++) {
-      const attr2 = el.attributes[i];
-      if (!isVoodooAttribute(attr2.name)) continue;
-      map.set(attr2.name, attr2.value);
-      toRemove.push(attr2.name);
+    for (let i = 0; i < names2.length; i++) {
+      const name = names2[i];
+      if (!isVoodooAttribute(name)) continue;
+      map.set(name, el.getAttribute(name));
+      el.removeAttribute(name);
     }
-    for (const name of toRemove) el.removeAttribute(name);
   }
   function restoreAttributes(el) {
     const map = attributeCache.get(el);
@@ -2469,9 +2468,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       }
       return;
     }
-    const scopeOwner = new EffectScope(true);
-    addCleanup(el, () => scopeOwner.stop());
-    trackEffectScope(el, scopeOwner);
+    let scopeOwner = null;
+    const ownerScope = () => {
+      if (!scopeOwner) {
+        const created = scopeOwner = new EffectScope(true);
+        addCleanup(el, () => created.stop());
+        trackEffectScope(el, created);
+      }
+      return scopeOwner;
+    };
     const ctx = {
       el,
       scope,
@@ -2483,7 +2488,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         return evaluateIn(expression != null ? expression : attr2.expression, scope, attr2.raw, el);
       },
       effect(fn) {
-        scopeOwner.run(() => effect(fn, { scope: scopeOwner }));
+        const owner = ownerScope();
+        owner.run(() => effect(fn, { scope: owner }));
       },
       cleanup(fn) {
         addCleanup(el, fn);
@@ -2517,14 +2523,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     if (node.nodeType !== 1) return;
     const el = node;
     if (initialized.has(el)) return;
-    if (HTML_SKIP.has(el.tagName)) return;
+    const tag = el.tagName;
+    if (HTML_SKIP.has(tag)) return;
     if (el.hasAttribute(`${config.prefix}ignore`) || el.hasAttribute(`${config.prefix}pre`)) {
       initialized.add(el);
       return;
     }
     let current2 = activeScope2;
     const attrs = collectDirectives(el);
-    const tagComponent = el.hasAttribute(`${config.prefix}component`) ? null : resolveComponentTag(el.tagName);
+    const tagComponent = components.size === 0 && componentAliases.size === 0 ? null : el.hasAttribute(`${config.prefix}component`) ? null : resolveComponentTag(tag);
     if (attrs.length === 0 && !tagComponent) {
       walkChildren(el, current2);
       return;
@@ -4388,6 +4395,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     element.setAttribute("data-type", type);
     element.setAttribute("role", type === "error" ? "alert" : "status");
     element.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    element.setAttribute("aria-atomic", "true");
     let closed = false;
     let timer = null;
     const close = () => {
@@ -5381,6 +5389,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       (_a2 = el.parentNode) == null ? void 0 : _a2.insertBefore(anchor, el);
       const template = el.cloneNode(true);
       template.removeAttribute(`${p2}for`);
+      template.removeAttribute(":key");
+      template.removeAttribute(`${p2}bind:key`);
+      template.removeAttribute(`${p2}key`);
       removeQuietly(el);
       let blocks = [];
       const clearAll = () => {
@@ -8871,6 +8882,14 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         const items = this.items();
         if (!items.length) return;
         const current2 = items.indexOf(document.activeElement);
+        if (event.key === "Enter" || event.key === " ") {
+          const item = items[current2];
+          if (!item) return;
+          event.preventDefault();
+          this.hide(true);
+          item.click();
+          return;
+        }
         if (event.key === "ArrowDown" || event.key === "ArrowUp") {
           event.preventDefault();
           const step2 = event.key === "ArrowDown" ? 1 : -1;
@@ -8993,11 +9012,19 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       popup.toggle();
     };
     const onTriggerKey = (event) => {
-      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+      var _a2;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        if (!popup.open) popup.show();
+        const items = popup.items();
+        if (items.length) items[event.key === "ArrowDown" ? 0 : items.length - 1].focus();
+        return;
+      }
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const alreadyActivated = event.defaultPrevented;
       event.preventDefault();
-      if (!popup.open) popup.show();
-      const items = popup.items();
-      if (items.length) items[event.key === "ArrowDown" ? 0 : items.length - 1].focus();
+      if (!alreadyActivated) popup.toggle();
+      if (popup.open) (_a2 = popup.items()[0]) == null ? void 0 : _a2.focus();
     };
     el.addEventListener("click", onClick);
     el.addEventListener("keydown", onTriggerKey);
@@ -9031,6 +9058,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     if (!text) return;
     const placement = parsePlacement(readOption(el, "tooltip-position"), "top");
     const delay = parseDuration(readOption(el, "tooltip-delay"), 200);
+    const addedTabIndex = !el.hasAttribute("tabindex") && !el.hasAttribute("disabled") && !el.matches(FOCUSABLE);
+    if (addedTabIndex) el.setAttribute("tabindex", "0");
     let bubble = null;
     let timer = null;
     const build = () => {
@@ -9079,15 +9108,21 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     const onEscape = (event) => {
       if (event.key === "Escape") close();
     };
+    const onPointerDown = () => {
+      if (addedTabIndex) el.focus();
+    };
     el.addEventListener("mouseenter", schedule);
     el.addEventListener("focusin", open);
+    el.addEventListener("pointerdown", onPointerDown);
     el.addEventListener("mouseleave", close);
     el.addEventListener("focusout", close);
     el.addEventListener("keydown", onEscape);
     cleanup(() => {
       close();
+      if (addedTabIndex) el.removeAttribute("tabindex");
       el.removeEventListener("mouseenter", schedule);
       el.removeEventListener("focusin", open);
+      el.removeEventListener("pointerdown", onPointerDown);
       el.removeEventListener("mouseleave", close);
       el.removeEventListener("focusout", close);
       el.removeEventListener("keydown", onEscape);
@@ -9103,6 +9138,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     const idOf = (tab, index) => attrOf(tab, "tab") || String(index);
     const list = tabs[0].parentElement;
     if (list && !list.hasAttribute("role")) list.setAttribute("role", "tablist");
+    const vertical = ((list == null ? void 0 : list.getAttribute("aria-orientation")) || "").trim().toLowerCase() === "vertical";
+    list == null ? void 0 : list.setAttribute("aria-orientation", vertical ? "vertical" : "horizontal");
     const urlKey = hasAttrOf(el, "tabs-url") ? attrOf(el, "tabs-url") || "tab" : null;
     tabs.forEach((tab, index) => {
       const id = idOf(tab, index);
@@ -9144,9 +9181,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       const tab = closestDirective(event.target, "tab");
       if (!tab || !tabs.includes(tab)) return;
       const current2 = tabs.indexOf(tab);
+      const forward = vertical ? "ArrowDown" : "ArrowRight";
+      const backward = vertical ? "ArrowUp" : "ArrowLeft";
       let next = -1;
-      if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (current2 + 1) % tabs.length;
-      else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (current2 - 1 + tabs.length) % tabs.length;
+      if (event.key === forward) next = (current2 + 1) % tabs.length;
+      else if (event.key === backward) next = (current2 - 1 + tabs.length) % tabs.length;
       else if (event.key === "Home") next = 0;
       else if (event.key === "End") next = tabs.length - 1;
       if (next === -1) return;
@@ -9193,6 +9232,13 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       header.classList.add("v-accordion-header", "v-focus-ring");
       if (!header.hasAttribute("role")) header.setAttribute("role", "button");
       if (!header.hasAttribute("tabindex")) header.setAttribute("tabindex", "0");
+      ensureId(panel, "v-accordion-panel");
+      header.setAttribute("aria-controls", panel.id);
+      header.setAttribute("aria-expanded", String(controller.open));
+      if (items.length <= 6 && !panel.hasAttribute("role")) {
+        panel.setAttribute("role", "region");
+        panel.setAttribute("aria-labelledby", ensureId(header, "v-accordion-header"));
+      }
       headers.push(header);
       controllers2.push(controller);
     }
@@ -9271,6 +9317,23 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
       ensureId(panel, "v-drawer");
       panel.hidden = true;
+      this.label();
+    }
+    /**
+     * Gives the dialog an accessible name, which the WAI-ARIA dialog-modal
+     * pattern requires: without one a screen reader announces "dialog" and
+     * nothing else. A heading written inside the drawer becomes the label. An
+     * `aria-label` or `aria-labelledby` already on the panel always wins, and
+     * a drawer with no heading at all is left alone rather than mislabelled.
+     *
+     * Runs again on every open so a heading rendered after mount still counts.
+     */
+    label() {
+      const panel = this.panel;
+      if (panel.hasAttribute("aria-labelledby") || panel.hasAttribute("aria-label")) return;
+      const heading = panel.querySelector("[data-drawer-title],h1,h2,h3,h4");
+      if (!heading) return;
+      panel.setAttribute("aria-labelledby", ensureId(heading, "v-drawer-title"));
     }
     /** Keeps trigger's `aria-expanded` up to date. */
     sync() {
@@ -9295,12 +9358,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         document.body.appendChild(this.panel);
       }
       this.panel.hidden = false;
+      this.label();
       lockScroll();
-      requestAnimationFrame(() => {
+      const settle = () => {
         var _a3;
         (_a3 = this.backdrop) == null ? void 0 : _a3.classList.add("v-in");
         this.panel.classList.add("v-open");
-      });
+      };
+      if (device.reducedMotion) settle();
+      else requestAnimationFrame(settle);
       document.addEventListener("keydown", this.onKeyDown, true);
       document.addEventListener("pointerdown", this.onPointerDown, true);
       ((_b = focusableIn(this.panel)[0]) != null ? _b : this.panel).focus();
@@ -10013,6 +10079,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "Command palette");
+    overlay.tabIndex = -1;
     const box = document.createElement("div");
     box.className = "v-command-box";
     const input = document.createElement("input");
@@ -10034,7 +10101,13 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     lockScroll();
     let visible = commands;
     let cursor = 0;
+    const keepFocusTrapped = (event) => {
+      const target = event.target;
+      if (!target || overlay.contains(target)) return;
+      input.focus();
+    };
     const close = () => {
+      document.removeEventListener("focusin", keepFocusTrapped, true);
       document.removeEventListener("keydown", onKeyDown, true);
       overlay.remove();
       unlockScroll();
@@ -10047,6 +10120,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       option.el.click();
     };
     const render2 = () => {
+      var _a2;
       list.replaceChildren();
       if (!visible.length) {
         const empty = document.createElement("li");
@@ -10084,7 +10158,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       const active = list.children[cursor];
       if (active) {
         input.setAttribute("aria-activedescendant", active.id);
-        active.scrollIntoView({ block: "nearest" });
+        (_a2 = active.scrollIntoView) == null ? void 0 : _a2.call(active, { block: "nearest" });
       }
     };
     const filter = () => {
@@ -10125,6 +10199,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     document.addEventListener("keydown", onKeyDown, true);
     render2();
     input.focus();
+    document.addEventListener("focusin", keepFocusTrapped, true);
   }
   defineDirective("command", ({ el, expression, cleanup }) => {
     ensureUi();

@@ -12,6 +12,8 @@ No mandatory build step · No runtime dependencies · No Virtual DOM · No confi
 [![CI](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml/badge.svg)](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-FFB35C.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6.svg)](#typescript)
+[![npm](https://img.shields.io/npm/v/voodoojs.svg?label=npm&color=CB3837)](https://www.npmjs.com/package/voodoojs)
+[![downloads](https://img.shields.io/npm/dm/voodoojs.svg?label=downloads&color=CB3837)](https://www.npmjs.com/package/voodoojs)
 [![voodoo.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.min.js?branch=main&label=voodoo.min.js)](packages/voodoojs/dist/voodoo.min.js)
 
 <img src="brand/mascot/vudu-wave.svg" alt="Vudu, the Voodoo.js mascot" width="120">
@@ -38,7 +40,7 @@ Save this file. Open it in a browser. It works.
 </div>
 ```
 
-No bundler, no `npm install`, no config file, no JSX. Just HTML that thinks.
+No bundler, no build step, no config file, no JSX. Just HTML that thinks.
 
 ### The same idea, doing real work
 
@@ -159,40 +161,25 @@ Every row below is part of the shipped runtime.
 
 ## Installation
 
-> **Note on npm.** The `voodoojs` package is not published to the npm registry yet. The npm and CDN
-> instructions below are written for the moment it is. Until then use the direct download or a
-> local build — both work today.
+**A script tag, and nothing to install**
 
-**Direct download, or build it locally — both work right now**
+```html
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.4/dist/voodoo.min.js" defer></script>
+```
+
+That is the whole installation. The library starts itself once the page is ready.
+[unpkg](https://unpkg.com/voodoojs@0.4/dist/voodoo.min.js) serves the same file if you prefer it.
+
+The tag above is pinned to the `0.4` line, so patch releases arrive without an edit. Pin the exact
+version — `voodoojs@0.4.6` — if you would rather approve every update yourself.
+
+**npm**
 
 ```bash
-curl -O https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js
-# or
-git clone https://github.com/kwy404/Voodoo.js.git
-cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
-```
-
-```html
-<script src="voodoo.min.js" defer></script>
-```
-
-**CDN straight from the repository (works right now)**
-
-```html
-<script src="https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/packages/voodoojs/dist/voodoo.min.js" defer></script>
-```
-
-**CDN, npm and ES Modules (once published)**
-
-The npm-backed CDN paths below do not resolve yet, because the package is not on the registry.
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
-<script src="https://unpkg.com/voodoojs/dist/voodoo.min.js" defer></script>
+npm install voodoojs
 ```
 
 ```js
-// npm install voodoojs   (planned, not on the registry yet)
 import V from 'voodoojs'
 V.start()
 
@@ -200,6 +187,21 @@ V.start()
 import { reactive, computed } from 'voodoojs/reactivity'
 import { http } from 'voodoojs/http'
 import { debounce } from 'voodoojs/utils'
+```
+
+**Vendor the file, or build it yourself**
+
+For pages that must not reach a third-party host, or an air-gapped network:
+
+```bash
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.4/dist/voodoo.min.js
+# or build from source
+git clone https://github.com/kwy404/Voodoo.js.git
+cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
+```
+
+```html
+<script src="voodoo.min.js" defer></script>
 ```
 
 **CLI**
@@ -485,25 +487,48 @@ Median of 30 samples, in milliseconds, lower is better. Voodoo.js in bold:
 
 | | create 1k | update every 10th | clear 1k | minified |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 41.59 | 6.60 | 19.63 | 0.6 KB |
-| Solid 1.9.15 | 85.58 | 0.91 | 18.89 | 16.7 KB |
-| Preact 10.29.8 | 78.29 | 2.19 | 27.65 | 10.7 KB |
-| React 19.2.8 | 85.89 | 4.46 | 30.60 | 189.3 KB |
-| Vue 3.5.42 | 81.88 | 13.91 | 29.35 | 62.5 KB |
-| Alpine 3.17.1 | 169.71 | 90.64 | 27.31 | 55.2 KB |
-| **Voodoo.js** | **119.55** | **4.82** | **31.16** | **412.4 KB** |
+| vanilla JS | 48.74 | 7.52 | 21.06 | 0.6 KB |
+| Preact 10.29.8 | 91.62 | 2.59 | 29.48 | 10.7 KB |
+| **Voodoo.js** | **97.70** | **5.42** | **30.44** | **416.9 KB** |
+| React 19.2.8 | 100.23 | 4.63 | 33.59 | 189.3 KB |
+| Vue 3.5.42 | 110.56 | 19.21 | 31.65 | 62.5 KB |
+| Solid 1.9.15 | 111.63 | 0.91 | 19.99 | 16.7 KB |
+| Alpine 3.17.1 | 179.47 | 104.51 | 31.39 | 55.2 KB |
 
-Read honestly. On update Voodoo sits in the same band as hand-written vanilla and is roughly
-**19x faster than Alpine**, which is the fair comparison: Alpine is also HTML-first and also
-interprets expressions at runtime rather than compiling them. That update figure carried a
-**49.1% coefficient of variation**, so it is a range, not a ranking — we are not claiming to beat
-vanilla on the strength of a noisy sample.
+Read honestly. On create Voodoo is **third of seven** — behind hand-written vanilla and Preact,
+ahead of React, Vue and Solid. On clear it is **fourth**. Both were substantially worse before the
+optimisation pass described below, and neither is a victory lap: vanilla still creates a list twice
+as fast as we do.
 
-On create Voodoo is **sixth of seven**, ahead of Alpine but behind every compiled and Virtual-DOM
-framework. On clear it is **last**. Neither is a good result and neither is hidden here.
+On update Voodoo sits just ahead of hand-written vanilla and roughly **19x ahead of Alpine**, which
+is the fair comparison, since Alpine is also HTML-first and also interprets expressions at runtime
+rather than compiling them. Treat that number as a range rather than a ranking: the update scenario
+is the noisiest of the three, and a paired A/B against the pre-optimisation build measured **no
+change at all** on update. We are not claiming to have beaten vanilla on the strength of one sample.
 
-Solid wins update by a wide margin because a compiler generates its update path. Voodoo has no
-build step, and that is the trade it makes.
+Solid wins update by a wide margin because a compiler generates its update path. Voodoo has no build
+step, and that is the trade it makes.
+
+**Where the gain came from.** A paired harness loaded both builds in one process and interleaved
+their samples, alternating order each round, so the machine's 20–40% drift between runs cancels out.
+A null A/B of identical sources measured +-0.5 ms, which is the noise floor everything below clears:
+
+| | before | after | |
+| --- | ---: | ---: | --- |
+| create 1k | 129.98 ms | **82.98 ms** | **-36.2%**, won 45 of 45 rounds |
+| clear 1k | 28.14 ms | **15.59 ms** | **-44.6%**, won 38 of 45 |
+| update | 2.60 ms | 2.71 ms | no measurable change |
+
+Four changes account for nearly all of it: reading `getAttributeNames()` instead of indexing the
+live `attributes` collection, `v-for` stripping the key attribute off its row template so each
+clone stops parsing an attribute only to no-op on it, class fields declared rather than emitted as
+`Object.defineProperty` calls under `useDefineForClassFields`, and building a directive's effect
+scope only when something actually needs one.
+
+Six other "obvious" optimisations were measured and **reverted** because they landed inside the
+noise floor. They are listed in [`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md)
+along with the ones that worked, because a list of what did not help is worth as much to the next
+person as the list of what did.
 
 Also worth stating plainly: **Voodoo is by far the largest bundle in this table.** If bundle size
 is your main constraint, Alpine and Preact are the honest recommendation. Method, per-framework

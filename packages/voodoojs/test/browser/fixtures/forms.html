@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: v-model</title>
+</head>
+<body>
+  <main id="app" v-data="{
+    name: '',
+    bio: 'start',
+    colour: 'green',
+    palette: ['red'],
+    subscribed: false,
+    tags: ['news'],
+    plan: 'free',
+    quantity: 2
+  }">
+    <label for="name">Name</label>
+    <input id="name" v-model="name" type="text">
+    <p id="name-out">{ name }</p>
+
+    <textarea id="bio" v-model="bio"></textarea>
+    <p id="bio-out">{ bio }</p>
+
+    <select id="colour" v-model="colour">
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+    </select>
+    <p id="colour-out">{ colour }</p>
+
+    <select id="palette" v-model="palette" multiple>
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+    </select>
+    <p id="palette-out">{ palette.join(',') }</p>
+
+    <input id="subscribed" v-model="subscribed" type="checkbox">
+    <p id="subscribed-out">{ subscribed ? 'yes' : 'no' }</p>
+
+    <input id="tag-news" v-model="tags" type="checkbox" value="news">
+    <input id="tag-offers" v-model="tags" type="checkbox" value="offers">
+    <input id="tag-events" v-model="tags" type="checkbox" value="events">
+    <p id="tags-out">{ tags.join(',') }</p>
+
+    <input id="plan-free" v-model="plan" type="radio" value="free">
+    <input id="plan-pro" v-model="plan" type="radio" value="pro">
+    <p id="plan-out">{ plan }</p>
+
+    <input id="quantity" v-model="quantity" type="number">
+    <p id="quantity-out">{ quantity }</p>
+    <p id="quantity-type">{ typeof quantity }</p>
+    <p id="quantity-total">{ quantity * 3 }</p>
+
+    <!-- Writing to state from a handler must push back into every control. -->
+    <button id="fill" @click="name = 'Ada'; bio = 'from state'; colour = 'blue'; palette = ['green','blue']; subscribed = true; tags = ['offers','events']; plan = 'pro'; quantity = 7">fill from state</button>
+  </main>
+
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

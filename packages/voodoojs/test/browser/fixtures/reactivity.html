@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: reactivity</title>
+</head>
+<body>
+  <!--
+    Nothing on this page is set up by a test script: the state, the handlers and
+    the bindings are the HTML itself, which is the way the framework is meant to
+    be used and the way a user would hit it.
+  -->
+  <main id="app" v-data="{ count: 0, name: 'World', log: [] }">
+    <p id="greeting">Hello, { name }!</p>
+    <p id="count">{ count }</p>
+    <p id="doubled" v-text="count * 2"></p>
+    <p id="parity">{ count % 2 === 0 ? 'even' : 'odd' }</p>
+
+    <button id="increment" @click="count++">increment</button>
+    <button id="add-five" v-on:click="count = count + 5">add five</button>
+    <button id="rename" @click="name = 'Voodoo'">rename</button>
+    <button id="reset" @click="count = 0; name = 'World'">reset</button>
+
+    <span id="badge" :class="{ 'is-high': count > 3 }" :data-count="count">badge</span>
+    <div id="bar" :style="{ width: (count * 10) + 'px' }"></div>
+
+    <button id="track" @click="log.push('click ' + log.length)">track</button>
+    <ul id="log"><li v-for="entry in log" class="log-entry">{ entry }</li></ul>
+  </main>
+
+  <script src="/dist/voodoo.min.js"></script>
+</body>
+</html>

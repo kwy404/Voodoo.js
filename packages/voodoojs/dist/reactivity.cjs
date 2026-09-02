@@ -118,19 +118,15 @@ function getActiveEffect() {
 var effectId = 0;
 var ReactiveEffect = class {
   constructor(fn, options) {
-    __publicField(this, "fn", fn);
-    __publicField(this, "id", effectId++);
-    __publicField(this, "active", true);
-    /** `true` while the effect is waiting in the scheduler queue. */
-    __publicField(this, "queued", false);
-    __publicField(this, "deps", []);
-    __publicField(this, "parent");
-    __publicField(this, "scheduler");
-    __publicField(this, "onStop");
-    /** Cleanup callbacks registered by the effect itself. */
-    __publicField(this, "cleanups", []);
+    this.fn = fn;
+    this.id = effectId++;
+    this.active = true;
+    this.queued = false;
+    this.deps = [];
+    this.parent = void 0;
     this.scheduler = options?.scheduler;
     this.onStop = options?.onStop;
+    this.cleanups = [];
     const scope = options?.scope ?? activeScope;
     if (scope) scope.effects.push(this);
   }
@@ -197,11 +193,11 @@ function stop(runner) {
 var activeScope;
 var EffectScope = class {
   constructor(detached = false) {
-    __publicField(this, "effects", []);
-    __publicField(this, "cleanups", []);
-    __publicField(this, "children", []);
-    __publicField(this, "active", true);
-    __publicField(this, "parent");
+    this.effects = [];
+    this.cleanups = [];
+    this.children = [];
+    this.active = true;
+    this.parent = void 0;
     if (!detached && activeScope) {
       this.parent = activeScope;
       activeScope.children.push(this);
