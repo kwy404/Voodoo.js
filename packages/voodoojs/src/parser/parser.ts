@@ -155,8 +155,39 @@ class Parser {
     const body: Node[] = [];
     while (this.peek().type !== 'eof') {
       body.push(this.parseExpression());
-      while (this.isPunct(';')) this.next();
+      // Both separators are accepted. `@click="a++; b++"` and
+      // `@click="a++, b++"` are equally natural to write in an attribute, and
+      // the comma used to fail with a confusing "unexpected token".
+      while (this.isPunct(';') || this.isPunct(',')) this.next();
     }
+    if (body.length === 0) return { t: 'lit', v: undefined };
+    if (body.length === 1) return body[0];
+    return { t: 'seq', body };
+  }
+
+
+  /**
+   * Parses the body of an arrow function.
+   *
+   * A `{` right after `=>` opens a block, as in JavaScript, and the block's
+   * last value is what the arrow returns. Without this, the common
+   * `(() => { count = 42 })()` failed to parse, because `{` was read as the
+   * start of an object literal and `=` inside it made no sense.
+   *
+   * To return an object literal, wrap it in parentheses exactly as JavaScript
+   * requires: `() => ({ a: 1 })`.
+   */
+  private parseArrowBody(): Node {
+    if (!this.isPunct('{')) return this.parseAssignment();
+
+    this.next(); // {
+    const body: Node[] = [];
+    while (!this.isPunct('}') && this.peek().type !== 'eof') {
+      body.push(this.parseExpression());
+      while (this.isPunct(';') || this.isPunct(',')) this.next();
+    }
+    this.expect('}');
+
     if (body.length === 0) return { t: 'lit', v: undefined };
     if (body.length === 1) return body[0];
     return { t: 'seq', body };
@@ -190,7 +221,7 @@ class Parser {
     if (this.peek().type === 'ident' && this.isPunct('=>', 1)) {
       const param = this.next().value;
       this.next(); // =>
-      return { t: 'arrow', params: [param], body: this.parseAssignment() };
+      return { t: 'arrow', params: [param], body: this.parseArrowBody() };
     }
 
     // Arrow function with parentheses: `(a, b) => a + b`
@@ -244,7 +275,7 @@ class Parser {
     }
     this.expect(')');
     this.expect('=>');
-    return { t: 'arrow', params, body: this.parseAssignment() };
+    return { t: 'arrow', params, body: this.parseArrowBody() };
   }
 
   private parseConditional(): Node {
@@ -386,6 +417,29 @@ class Parser {
 
   private parsePrimary(): Node {
     const t = this.peek();
+
+    // `function (a, b) { ... }` as an expression, which is what makes the
+    // classic `(function () { ... })()` work. It produces the same node an
+    // arrow does: there is no `this` to bind inside an expression, and no
+    // `arguments`, so the two forms behave identically here. A name, as in
+    // `function nome() {}`, is parsed and ignored, because there is nowhere
+    // for it to be hoisted to.
+    if (t.type === 'ident' && t.value === 'function') {
+      this.next();
+      if (this.peek().type === 'ident') this.next(); // optional name
+      this.expect('(');
+      const params: string[] = [];
+      while (!this.isPunct(')')) {
+        const param = this.next();
+        if (param.type !== 'ident') {
+          throw new VoodooSyntaxError('Expected a parameter name', this.source, param.start);
+        }
+        params.push(param.value);
+        if (this.isPunct(',')) this.next();
+      }
+      this.expect(')');
+      return { t: 'arrow', params, body: this.parseArrowBody() };
+    }
 
     if (t.type === 'num' || t.type === 'str') {
       this.next();

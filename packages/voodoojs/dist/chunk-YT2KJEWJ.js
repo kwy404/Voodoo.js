@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-3MG773JD.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-3DK5HG37.js';
-import { config, directives, components } from './chunk-U5C24RIK.js';
-import { __publicField } from './chunk-MFABP4D6.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-IFYWVIEZ.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-4AOINMNW.js';
+import { config, directives, components } from './chunk-PZOS2NII.js';
+import { __publicField } from './chunk-WFHZL4FY.js';
 
 /**
- * Voodoo.js v0.4.2
+ * Voodoo.js v0.4.3
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -343,8 +343,32 @@ var Parser = class {
     const body = [];
     while (this.peek().type !== "eof") {
       body.push(this.parseExpression());
-      while (this.isPunct(";")) this.next();
+      while (this.isPunct(";") || this.isPunct(",")) this.next();
     }
+    if (body.length === 0) return { t: "lit", v: void 0 };
+    if (body.length === 1) return body[0];
+    return { t: "seq", body };
+  }
+  /**
+   * Parses the body of an arrow function.
+   *
+   * A `{` right after `=>` opens a block, as in JavaScript, and the block's
+   * last value is what the arrow returns. Without this, the common
+   * `(() => { count = 42 })()` failed to parse, because `{` was read as the
+   * start of an object literal and `=` inside it made no sense.
+   *
+   * To return an object literal, wrap it in parentheses exactly as JavaScript
+   * requires: `() => ({ a: 1 })`.
+   */
+  parseArrowBody() {
+    if (!this.isPunct("{")) return this.parseAssignment();
+    this.next();
+    const body = [];
+    while (!this.isPunct("}") && this.peek().type !== "eof") {
+      body.push(this.parseExpression());
+      while (this.isPunct(";") || this.isPunct(",")) this.next();
+    }
+    this.expect("}");
     if (body.length === 0) return { t: "lit", v: void 0 };
     if (body.length === 1) return body[0];
     return { t: "seq", body };
@@ -373,7 +397,7 @@ var Parser = class {
     if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
       const param = this.next().value;
       this.next();
-      return { t: "arrow", params: [param], body: this.parseAssignment() };
+      return { t: "arrow", params: [param], body: this.parseArrowBody() };
     }
     if (this.isPunct("(")) {
       const arrow = this.tryParseParenArrow();
@@ -422,7 +446,7 @@ var Parser = class {
     }
     this.expect(")");
     this.expect("=>");
-    return { t: "arrow", params, body: this.parseAssignment() };
+    return { t: "arrow", params, body: this.parseArrowBody() };
   }
   parseConditional() {
     const test = this.parseBinary(0);
@@ -544,6 +568,22 @@ var Parser = class {
   }
   parsePrimary() {
     const t = this.peek();
+    if (t.type === "ident" && t.value === "function") {
+      this.next();
+      if (this.peek().type === "ident") this.next();
+      this.expect("(");
+      const params = [];
+      while (!this.isPunct(")")) {
+        const param = this.next();
+        if (param.type !== "ident") {
+          throw new VoodooSyntaxError("Expected a parameter name", this.source, param.start);
+        }
+        params.push(param.value);
+        if (this.isPunct(",")) this.next();
+      }
+      this.expect(")");
+      return { t: "arrow", params, body: this.parseArrowBody() };
+    }
     if (t.type === "num" || t.type === "str") {
       this.next();
       return { t: "lit", v: t.parsed };
@@ -674,6 +714,34 @@ var SafeObject = /* @__PURE__ */ Object.freeze({
   is: Object.is,
   hasOwn: Object.hasOwn ?? ((o, k) => Object.prototype.hasOwnProperty.call(o, k))
 });
+var DELIBERATELY_WITHHELD = /* @__PURE__ */ new Set([
+  "eval",
+  "Function",
+  "window",
+  "globalThis",
+  "self",
+  "top",
+  "parent",
+  "document",
+  "fetch",
+  "XMLHttpRequest",
+  "importScripts",
+  "require",
+  "process",
+  "Reflect",
+  "Proxy",
+  "WebAssembly",
+  "localStorage",
+  "sessionStorage",
+  "indexedDB",
+  "navigator",
+  "location",
+  "history",
+  "crypto",
+  "Worker",
+  "SharedWorker",
+  "ServiceWorker"
+]);
 var allowedGlobals = {
   Math,
   JSON,
@@ -780,6 +848,16 @@ function evaluate(node, scope) {
       if (fn == null && node.opt) return void 0;
       if (typeof fn !== "function") {
         const name = node.callee.t === "id" ? node.callee.n : describeKey(node.callee, scope);
+        if (node.callee.t === "id" && !scope.lookup(name) && !(name in allowedGlobals)) {
+          if (DELIBERATELY_WITHHELD.has(name)) {
+            throw new VoodooRuntimeError(
+              `"${name}" is blocked. Expressions run in a sandbox without access to it.`
+            );
+          }
+          throw new VoodooRuntimeError(
+            `"${name}" was not found. Expressions cannot reach window: expose it with V.config.globals.${name} = ..., or put it in scope with V.data({ ${name} }).`
+          );
+        }
         throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
       return fn.apply(thisArg, evalArgs(node.args, scope));
@@ -1655,5 +1733,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, walk };
-//# sourceMappingURL=chunk-XARI77IA.js.map
-//# sourceMappingURL=chunk-XARI77IA.js.map
+//# sourceMappingURL=chunk-YT2KJEWJ.js.map
+//# sourceMappingURL=chunk-YT2KJEWJ.js.map

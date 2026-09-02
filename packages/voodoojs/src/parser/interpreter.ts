@@ -60,6 +60,43 @@ const SafeObject = /* @__PURE__ */ Object.freeze({
     ((o: object, k: PropertyKey): boolean => Object.prototype.hasOwnProperty.call(o, k)),
 });
 
+/**
+ * Names the sandbox refuses on purpose.
+ *
+ * They exist only to shape the error message: nothing here is reachable either
+ * way. The point is not to answer "it was not found, expose it with
+ * V.config.globals" for a name nobody should be exposing, which would be
+ * instructions for undoing the sandbox.
+ */
+const DELIBERATELY_WITHHELD = /* @__PURE__ */ new Set([
+  'eval',
+  'Function',
+  'window',
+  'globalThis',
+  'self',
+  'top',
+  'parent',
+  'document',
+  'fetch',
+  'XMLHttpRequest',
+  'importScripts',
+  'require',
+  'process',
+  'Reflect',
+  'Proxy',
+  'WebAssembly',
+  'localStorage',
+  'sessionStorage',
+  'indexedDB',
+  'navigator',
+  'location',
+  'history',
+  'crypto',
+  'Worker',
+  'SharedWorker',
+  'ServiceWorker',
+]);
+
 export const allowedGlobals: Record<string, unknown> = {
   Math,
   JSON,
@@ -204,6 +241,27 @@ export function evaluate(node: Node, scope: EvalScope): any {
       if (fn == null && node.opt) return undefined;
       if (typeof fn !== 'function') {
         const name = node.callee.t === 'id' ? node.callee.n : describeKey(node.callee, scope);
+
+        // A bare name that resolves nowhere is almost always a global the page
+        // defined and never exposed, not a typo. Saying "is not a function"
+        // sends people hunting for a bug in their own code, when the answer is
+        // that expressions cannot reach `window` by design and the name has to
+        // be handed over explicitly.
+        if (node.callee.t === 'id' && !scope.lookup(name) && !(name in allowedGlobals)) {
+          // Except for the names that are withheld on purpose. Telling someone
+          // how to hand `eval` to a template would be advice that undoes the
+          // sandbox, so those get told they are blocked and nothing else.
+          if (DELIBERATELY_WITHHELD.has(name)) {
+            throw new VoodooRuntimeError(
+              `"${name}" is blocked. Expressions run in a sandbox without access to it.`
+            );
+          }
+          throw new VoodooRuntimeError(
+            `"${name}" was not found. Expressions cannot reach window: expose it with ` +
+              `V.config.globals.${name} = ..., or put it in scope with V.data({ ${name} }).`
+          );
+        }
+
         throw new VoodooRuntimeError(`"${name}" is not a function`);
       }
 

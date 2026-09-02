@@ -68,7 +68,7 @@ describe('globais fora do alcance', () => {
   it('chamar um global proibido reclama em vez de executar', () => {
     const r = tenta('eval("1+1")');
     expect(r.ok).toBe(false);
-    expect(r.erro).toContain('is not a function');
+    expect(r.erro).toContain('is blocked');
   });
 
   it('import nao e uma funcao disponivel', () => {
