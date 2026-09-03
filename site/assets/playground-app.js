@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.6/dist/voodoo.full.min.js';
+  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.7/dist/voodoo.full.min.js';
   var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
 
   var code = document.getElementById('code');

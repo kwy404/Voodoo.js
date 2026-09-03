@@ -168,14 +168,14 @@ Every row below is part of the shipped runtime.
 **A script tag, and nothing to install**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.6/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.7/dist/voodoo.min.js" defer></script>
 ```
 
 That is the whole installation. The library starts itself once the page is ready.
-[unpkg](https://unpkg.com/voodoojs@0.6/dist/voodoo.min.js) serves the same file if you prefer it.
+[unpkg](https://unpkg.com/voodoojs@0.7/dist/voodoo.min.js) serves the same file if you prefer it.
 
 The tag above is pinned to the `0.4` line, so patch releases arrive without an edit. Pin the exact
-version — `voodoojs@0.6.2` — if you would rather approve every update yourself.
+version — `voodoojs@0.7.0` — if you would rather approve every update yourself.
 
 **npm**
 
@@ -198,7 +198,7 @@ import { debounce } from 'voodoojs/utils'
 For pages that must not reach a third-party host, or an air-gapped network:
 
 ```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.6/dist/voodoo.min.js
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.7/dist/voodoo.min.js
 # or build from source
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
