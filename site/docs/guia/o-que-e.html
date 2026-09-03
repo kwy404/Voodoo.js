@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>O que é a Voodoo.js e quando usar · Documentação</title>
-<meta name="description" content="Que problema a Voodoo.js resolve, para que tipo de página ela foi feita, quando vale mais a pena escolher outra ferramenta e o que ela faz de diferente.">
+<title>What Voodoo.js is and when to use it · Documentation</title>
+<meta name="description" content="What problem Voodoo.js solves, the kind of page it was built for, when another tool is the better call, and what it does differently.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/o-que-e">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,163 +14,164 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Começando</p>
-<h1>O que é a Voodoo.js e quando usar</h1>
+<p class="doc-migalha">Getting started</p>
+<h1>What Voodoo.js is and when to use it</h1>
 <p class="doc-resumo">
-  A Voodoo.js é o framework JavaScript HTML-first: você constrói aplicações reativas direto no
-  HTML, descrevendo o comportamento da página em atributos. Ela foi feita para o meio do caminho:
-  páginas que precisam de interatividade de verdade, mas que não justificam virar uma aplicação
-  inteira em JavaScript.
+  Voodoo.js is the HTML-first JavaScript framework: you build reactive applications straight in
+  the HTML, describing the behaviour of the page in attributes. It was built for the middle
+  ground: pages that need real interactivity, but that do not justify turning into a whole
+  JavaScript application.
 </p>
 
-<h2 id="o-problema">O problema que ela resolve</h2>
+<h2 id="o-problema">The problem it solves</h2>
 
 <p>
-  Você quer uma lista que filtra, um formulário que valida e envia por AJAX, um modal e um aviso
-  de sucesso. São quatro comportamentos comuns, e existem dois caminhos batidos para chegar lá.
-</p>
-
-<p>
-  Pelo caminho do jQuery, cada um vira um punhado de <code>addEventListener</code>, seletor e
-  manipulação manual do DOM. Funciona, e depois de seis meses ninguém mais sabe qual trecho
-  escreve em qual elemento.
+  You want a list that filters, a form that validates and submits over AJAX, a modal and a success
+  message. Four ordinary behaviours, and there are two well-worn roads to get there.
 </p>
 
 <p>
-  Pelo caminho do Vue ou do React, cada um vira um componente — e junto vêm um passo de build, um
-  bundler, um arquivo de configuração e uma pasta de dependências com centenas de megabytes. Para
-  uma página. Que já era HTML.
+  Down the jQuery road, each one turns into a handful of <code>addEventListener</code> calls,
+  selectors and manual DOM work. It works, and six months later nobody knows which snippet writes
+  into which element.
 </p>
 
 <p>
-  A resposta da Voodoo é a terceira: os atributos descrevem o comportamento, e a biblioteca cuida
-  do resto.
+  Down the Vue or React road, each one turns into a component — and with it come a build step, a
+  bundler, a config file and a dependency folder weighing hundreds of megabytes. For one page.
+  That was already HTML.
+</p>
+
+<p>
+  Voodoo's answer is the third road: the attributes describe the behaviour, and the library takes
+  care of the rest.
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>O que você quer</th><th>O que você escreve</th></tr></thead>
+<thead><tr><th>What you want</th><th>What you write</th></tr></thead>
 <tbody>
-<tr><td>Contador que reage</td><td><code>&lt;button @click="n++"&gt;</code></td></tr>
-<tr><td>Mostrar quando logado</td><td><code>&lt;div v-show="logado"&gt;</code></td></tr>
-<tr><td>Repetir uma lista</td><td><code>&lt;li v-for="u in usuarios"&gt;</code></td></tr>
-<tr><td>Campo ligado ao estado</td><td><code>&lt;input v-model="busca"&gt;</code></td></tr>
-<tr><td>Carregar dados da API</td><td><code>&lt;div v-get="/api/users" v-target="#lista"&gt;</code></td></tr>
-<tr><td>Formulário AJAX validado</td><td><code>&lt;form v-submit="/api/users" v-validate&gt;</code></td></tr>
-<tr><td>Máscara de CPF</td><td><code>&lt;input v-mask="cpf"&gt;</code></td></tr>
-<tr><td>Confirmar antes de excluir</td><td><code>&lt;button v-delete="/api/x" v-confirm="Excluir?"&gt;</code></td></tr>
-<tr><td>Aviso de sucesso</td><td><code>&lt;button @click="$toast.success('Salvo!')"&gt;</code></td></tr>
-<tr><td>Som no clique</td><td><code>&lt;button v-sound="click"&gt;</code></td></tr>
-<tr><td>Gráfico de linha</td><td><code>&lt;div v-chart="{ type: 'line', data: vendas }"&gt;</code></td></tr>
-<tr><td>Estado que sobrevive ao F5</td><td><code>&lt;div v-data="{...}" v-persist="rascunho"&gt;</code></td></tr>
+<tr><td>A counter that reacts</td><td><code>&lt;button @click="n++"&gt;</code></td></tr>
+<tr><td>Show it when signed in</td><td><code>&lt;div v-show="loggedIn"&gt;</code></td></tr>
+<tr><td>Repeat a list</td><td><code>&lt;li v-for="u in users"&gt;</code></td></tr>
+<tr><td>A field bound to state</td><td><code>&lt;input v-model="search"&gt;</code></td></tr>
+<tr><td>Load data from an API</td><td><code>&lt;div v-get="/api/users" v-target="#list"&gt;</code></td></tr>
+<tr><td>A validated AJAX form</td><td><code>&lt;form v-submit="/api/users" v-validate&gt;</code></td></tr>
+<tr><td>A CPF mask</td><td><code>&lt;input v-mask="cpf"&gt;</code></td></tr>
+<tr><td>Confirm before deleting</td><td><code>&lt;button v-delete="/api/x" v-confirm="Delete?"&gt;</code></td></tr>
+<tr><td>A success message</td><td><code>&lt;button @click="$toast.success('Saved!')"&gt;</code></td></tr>
+<tr><td>A sound on click</td><td><code>&lt;button v-sound="click"&gt;</code></td></tr>
+<tr><td>A line chart</td><td><code>&lt;div v-chart="{ type: 'line', data: sales }"&gt;</code></td></tr>
+<tr><td>State that survives F5</td><td><code>&lt;div v-data="{...}" v-persist="draft"&gt;</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="o-que-e-diferente">O que ela faz de diferente</h2>
+<h2 id="o-que-e-diferente">What it does differently</h2>
 
-<h3 id="html-limpo">O HTML fica limpo no final</h3>
+<h3 id="html-limpo">The HTML ends up clean</h3>
 
 <p>
-  Depois que uma directive é processada, o atributo <code>v-*</code> sai do documento. No inspetor
-  do navegador você vê <code>&lt;button&gt;Salvar&lt;/button&gt;</code>, e não
-  <code>&lt;button v-click="salvar()" v-loading="#spin"&gt;</code>. O comportamento continua
-  funcionando porque o valor fica guardado no runtime.
+  Once a directive has been processed, the <code>v-*</code> attribute leaves the document. In the
+  browser inspector you see <code>&lt;button&gt;Save&lt;/button&gt;</code>, not
+  <code>&lt;button v-click="save()" v-loading="#spin"&gt;</code>. The behaviour keeps working
+  because the value is held in the runtime.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Consequência prática</span>
+  <span class="doc-aviso__rotulo">Practical consequence</span>
   <p>
-    Nunca escreva CSS nem <code>querySelectorAll</code> apoiado em seletores como
-    <code>[v-tab]</code>: no momento em que você procurar, o atributo já não existe. Use classes
-    ou <code>data-*</code>, que permanecem. Quem precisa do comportamento antigo pode desligar
-    isso em <code>V.config.cleanAttributes</code>.
+    Never write CSS or a <code>querySelectorAll</code> that leans on selectors like
+    <code>[v-tab]</code>: by the time you look, the attribute is already gone. Use classes or
+    <code>data-*</code>, which stay. If you need the old behaviour, you can turn this off in
+    <code>V.config.cleanAttributes</code>.
   </p>
 </div>
 
-<h3 id="sem-eval">Sem <code>eval</code> e sem <code>new Function</code></h3>
+<h3 id="sem-eval">No <code>eval</code> and no <code>new Function</code></h3>
 
 <p>
-  As expressões dos atributos passam por um lexer, um parser Pratt e um interpretador de árvore
-  escritos à mão. A biblioteca roda sob Content Security Policy restritiva, sem
-  <code>unsafe-eval</code>. Isso também explica por que a expressão aceita menos coisas do que
-  JavaScript inteiro: não existe <code>function</code>, não existe <code>new</code>, e os globais
-  liberados são uma lista fechada.
+  Attribute expressions go through a lexer, a Pratt parser and a tree interpreter written by hand.
+  The library runs under a restrictive Content Security Policy, with no <code>unsafe-eval</code>.
+  That also explains why an expression accepts less than full JavaScript: there is no
+  <code>function</code>, there is no <code>new</code>, and the globals it exposes are a closed
+  list.
 </p>
 
-<h3 id="granular">Atualizações granulares, sem Virtual DOM</h3>
+<h3 id="granular">Granular updates, with no Virtual DOM</h3>
 
 <p>
-  O rastreamento é por chave. Quando <code>count</code> muda, apenas os efeitos que leram
-  <code>count</code> rodam de novo, e cada efeito escreve somente no nó que ele mesmo criou. Não
-  existe árvore virtual para comparar, nem render de componente inteiro por causa de um número.
+  Tracking is per key. When <code>count</code> changes, only the effects that read
+  <code>count</code> run again, and each effect writes only into the node it created itself. There
+  is no virtual tree to diff, and no whole-component render because of one number.
 </p>
 
-<h3 id="interpolacao">Interpolação com chave simples</h3>
+<h3 id="interpolacao">Interpolation with a single brace</h3>
 
 <p>
-  <code>{ variavel }</code> é a forma padrão. <code>{{ variavel }}</code> também é aceita, para
-  quem vem do Vue e tem o dedo viciado.
+  <code>{ variable }</code> is the standard form. <code>{{ variable }}</code> is accepted too, for
+  anyone coming from Vue whose fingers are already trained.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 3 }"&gt;
-  &lt;p&gt;Uma chave: { n * 2 }&lt;/p&gt;
-  &lt;p&gt;Duas chaves: {{ n * 2 }}&lt;/p&gt;
+  &lt;p&gt;One brace: { n * 2 }&lt;/p&gt;
+  &lt;p&gt;Two braces: {{ n * 2 }}&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h3 id="zero-dependencias">Zero dependências em tempo de execução</h3>
+<h3 id="zero-dependencias">Zero runtime dependencies</h3>
 
 <p>
-  Nada de React, Vue, lodash, jQuery ou Axios por baixo. Só APIs do navegador. O arquivo que você
-  baixa é o projeto inteiro.
+  No React, Vue, lodash, jQuery or Axios underneath. Only browser APIs. The file you download is
+  the whole project.
 </p>
 
-<h2 id="para-quem-e">Para quem ela é</h2>
+<h2 id="para-quem-e">Who it is for</h2>
 
 <ul>
-  <li><b>Painéis administrativos</b> gerados no servidor com Laravel, Rails, Django, Spring ou PHP puro.</li>
-  <li><b>Landing pages e sites de conteúdo</b> que precisam de um pouco de vida sem carregar um framework inteiro.</li>
-  <li><b>Protótipos</b>, onde abrir um arquivo e ver o resultado vale mais do que qualquer arquitetura.</li>
-  <li><b>Times pequenos</b> que não querem manter um pipeline de build só para mostrar uma tabela.</li>
-  <li><b>Projetos legados</b>, onde a biblioteca convive com o código que já existe, porque ela nunca toma conta da página inteira.</li>
+  <li><b>Admin panels</b> rendered on the server with Laravel, Rails, Django, Spring or plain PHP.</li>
+  <li><b>Landing pages and content sites</b> that need a bit of life without loading a whole framework.</li>
+  <li><b>Prototypes</b>, where opening a file and seeing the result is worth more than any architecture.</li>
+  <li><b>Small teams</b> that do not want to maintain a build pipeline just to show a table.</li>
+  <li><b>Legacy projects</b>, where the library lives alongside the code that is already there, because it never takes over the whole page.</li>
 </ul>
 
-<h2 id="quando-nao-usar">Quando não usar</h2>
+<h2 id="quando-nao-usar">When not to use it</h2>
 
 <p>
-  Vale dizer com clareza, porque escolher a ferramenta errada custa caro depois.
+  Worth saying plainly, because picking the wrong tool is expensive later.
 </p>
 
 <ul>
   <li>
-    <b>Aplicação muito grande, com dezenas de telas e um time grande.</b> Componentes de arquivo
-    único, roteamento aninhado e checagem de tipo em tempo de compilação são vantagens reais do
-    Vue, do React e do Svelte nesse tamanho.
+    <b>A very large application, with dozens of screens and a large team.</b> Single-file
+    components, nested routing and compile-time type checking are real advantages of Vue, React
+    and Svelte at that size.
   </li>
   <li>
-    <b>Você precisa de renderização no servidor com hidratação.</b> A Voodoo roda no navegador.
-    Ela convive bem com HTML vindo do servidor, mas não hidrata nada. Os módulos puros
-    (reatividade, HTTP, utilitários) funcionam em Node.
+    <b>You need server rendering with hydration.</b> Voodoo runs in the browser. It sits happily
+    next to HTML that came from the server, but it hydrates nothing. The pure modules
+    (reactivity, HTTP, utilities) do work in Node.
   </li>
   <li>
-    <b>Aplicativo móvel nativo.</b> Não existe equivalente ao React Native aqui.
+    <b>A native mobile app.</b> There is no React Native equivalent here.
   </li>
   <li>
-    <b>Listas com dezenas de milhares de linhas atualizando ao mesmo tempo.</b> O
-    <code>v-for</code> reaproveita elementos por chave, mas não faz virtualização.
+    <b>Lists of tens of thousands of rows updating at once.</b> <code>v-for</code> reuses elements
+    by key, but it does not virtualize.
   </li>
   <li>
-    <b>Você quer o menor arquivo possível e só precisa de dois ou três comportamentos.</b>
-    O Alpine.js pode ser a escolha melhor.
+    <b>You want the smallest possible file and you only need two or three behaviours.</b>
+    Alpine.js may be the better choice.
   </li>
   <li>
-    <b>Seu time já domina outro framework e o projeto já está em pé.</b> Trocar por trocar não paga.
+    <b>Your team already knows another framework and the project is already standing.</b> Swapping
+    for the sake of swapping does not pay.
   </li>
 </ul>
 
-<h2 id="comparativo">Comparativo honesto</h2>
+<h2 id="comparativo">An honest comparison</h2>
 
 <div class="doc-tabela">
 <table>
@@ -178,51 +179,52 @@
 <tr><th></th><th>Voodoo.js</th><th>Alpine.js</th><th>HTMX</th><th>Vue 3</th><th>React 19</th><th>jQuery</th></tr>
 </thead>
 <tbody>
-<tr><td>Tamanho gzip</td><td>42 a 124 KB</td><td>15 KB</td><td>14 KB</td><td>34 KB</td><td>45 KB</td><td>30 KB</td></tr>
-<tr><td>Precisa de build</td><td>Não</td><td>Não</td><td>Não</td><td>Recomendado</td><td>Sim</td><td>Não</td></tr>
-<tr><td>Reatividade</td><td>Sim</td><td>Sim</td><td>Não</td><td>Sim</td><td>Sim</td><td>Não</td></tr>
-<tr><td>Componentes</td><td>Sim</td><td>Limitado</td><td>Não</td><td>Sim</td><td>Sim</td><td>Não</td></tr>
-<tr><td>HTTP declarativo</td><td>Sim</td><td>Não</td><td>Sim</td><td>Não</td><td>Não</td><td>Não</td></tr>
-<tr><td>Formulário e validação</td><td>Incluído</td><td>Não</td><td>Não</td><td>Biblioteca</td><td>Biblioteca</td><td>Plugin</td></tr>
-<tr><td>Máscaras de campo</td><td>Incluído</td><td>Não</td><td>Não</td><td>Biblioteca</td><td>Biblioteca</td><td>Plugin</td></tr>
-<tr><td>Componentes de interface</td><td>29 prontos</td><td>Não</td><td>Não</td><td>Biblioteca</td><td>Biblioteca</td><td>jQuery UI</td></tr>
-<tr><td>Gráficos</td><td>Incluído</td><td>Não</td><td>Não</td><td>Biblioteca</td><td>Biblioteca</td><td>Plugin</td></tr>
-<tr><td>Animação com mola</td><td>Incluído</td><td>Não</td><td>Não</td><td>Biblioteca</td><td>Biblioteca</td><td>Básico</td></tr>
-<tr><td>Roteador</td><td>Incluído</td><td>Não</td><td>Parcial</td><td>Oficial</td><td>Biblioteca</td><td>Não</td></tr>
-<tr><td>Funciona com CSP restritiva</td><td>Sim</td><td>Não</td><td>Sim</td><td>Com build</td><td>Sim</td><td>Sim</td></tr>
-<tr><td>Ecossistema</td><td>Novo</td><td>Médio</td><td>Médio</td><td>Enorme</td><td>Enorme</td><td>Enorme</td></tr>
+<tr><td>Gzipped size</td><td>42 to 124 KB</td><td>15 KB</td><td>14 KB</td><td>34 KB</td><td>45 KB</td><td>30 KB</td></tr>
+<tr><td>Needs a build</td><td>No</td><td>No</td><td>No</td><td>Recommended</td><td>Yes</td><td>No</td></tr>
+<tr><td>Reactivity</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Components</td><td>Yes</td><td>Limited</td><td>No</td><td>Yes</td><td>Yes</td><td>No</td></tr>
+<tr><td>Declarative HTTP</td><td>Yes</td><td>No</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Forms and validation</td><td>Included</td><td>No</td><td>No</td><td>Library</td><td>Library</td><td>Plugin</td></tr>
+<tr><td>Field masks</td><td>Included</td><td>No</td><td>No</td><td>Library</td><td>Library</td><td>Plugin</td></tr>
+<tr><td>UI components</td><td>29 ready-made</td><td>No</td><td>No</td><td>Library</td><td>Library</td><td>jQuery UI</td></tr>
+<tr><td>Charts</td><td>Included</td><td>No</td><td>No</td><td>Library</td><td>Library</td><td>Plugin</td></tr>
+<tr><td>Spring animation</td><td>Included</td><td>No</td><td>No</td><td>Library</td><td>Library</td><td>Basic</td></tr>
+<tr><td>Router</td><td>Included</td><td>No</td><td>Partial</td><td>Official</td><td>Library</td><td>No</td></tr>
+<tr><td>Works under a strict CSP</td><td>Yes</td><td>No</td><td>Yes</td><td>With a build</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Ecosystem</td><td>New</td><td>Medium</td><td>Medium</td><td>Huge</td><td>Huge</td><td>Huge</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  A leitura honesta: Alpine e HTMX são menores porque fazem menos. Vue e React têm ecossistema,
-  ferramental e comunidade que a Voodoo não tem. A Voodoo entrega, em um arquivo, o conjunto que
-  normalmente exige juntar cinco bibliotecas.
+  The honest reading: Alpine and HTMX are smaller because they do less. Vue and React have an
+  ecosystem, tooling and a community that Voodoo does not have. What Voodoo delivers, in one file,
+  is the set you would normally assemble out of five libraries.
 </p>
 
-<h2 id="roadmap">O que ainda não existe</h2>
+<h2 id="roadmap">What does not exist yet</h2>
 
 <p>
-  Esta lista está aqui para que ninguém procure na documentação achando que já foi entregue.
+  This list is here so that nobody goes hunting through the documentation for something that has
+  not been delivered.
 </p>
 
 <div class="doc-aviso doc-aviso--roadmap">
   <span class="doc-aviso__rotulo">Roadmap</span>
   <ul>
-    <li><b>Renderização no servidor e hidratação.</b> Hoje a biblioteca só monta no navegador.</li>
-    <li><b>Virtualização de listas.</b> O <code>v-for</code> renderiza todos os itens da fonte.</li>
-    <li><b>Extensão de navegador para as devtools.</b> O inspetor <code>xray</code> roda dentro da própria página.</li>
-    <li><b>Rotas aninhadas.</b> O <code>v-router-view</code> renderiza uma única saída, sem hierarquia.</li>
-    <li><b>Transições próprias por rota.</b> O roteador usa a View Transitions API quando o navegador oferece, e nada além disso.</li>
-    <li><b>Componentes de data e de upload prontos.</b> Existem <code>VInput</code> e <code>VSelect</code>, mas ainda não um seletor de data.</li>
-    <li><b>Tipos gerados para os templates.</b> As expressões de atributo não têm checagem estática.</li>
+    <li><b>Server rendering and hydration.</b> Today the library only mounts in the browser.</li>
+    <li><b>List virtualization.</b> <code>v-for</code> renders every item in the source.</li>
+    <li><b>A browser extension for the devtools.</b> The <code>xray</code> inspector runs inside the page itself.</li>
+    <li><b>Nested routes.</b> <code>v-router-view</code> renders a single outlet, with no hierarchy.</li>
+    <li><b>Per-route transitions of its own.</b> The router uses the View Transitions API when the browser offers it, and nothing beyond that.</li>
+    <li><b>Ready-made date and upload components.</b> There are <code>VInput</code> and <code>VSelect</code>, but not a date picker yet.</li>
+    <li><b>Generated types for templates.</b> Attribute expressions have no static checking.</li>
   </ul>
 </div>
 
 <p>
-  A página de <a href="depurando.html">problemas comuns</a> lista, em separado, os detalhes
-  conhecidos que dependem de correção e as formas de contornar cada um enquanto isso.
+  The <a href="depurando.html">common problems</a> page lists, separately, the known details that
+  are waiting on a fix and how to work around each one in the meantime.
 </p>
 
 </article>

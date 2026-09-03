@@ -1,121 +1,148 @@
 /* ==========================================================================
-   Documentação da Voodoo.js
-   Folha de estilo própria da pasta /docs. Não depende da landing page.
-   Paleta: roxo #6D3BF5, roxo claro #9B7BFF, magenta #FF3D8B,
-           âmbar #FFB35C, menta #2ED9A5, tinta #14111F, creme #FBF7F2.
+   Voodoo.js documentation
+
+   The same design system as site/index.html, site/components.html and
+   site/playground.html: one accent, flat surfaces, no gradients and no
+   decorative layers. The documentation used to ship its own six-hue brand
+   palette on a near-black canvas, which is why it read as a different
+   product from the rest of the site.
+
+   Token names are English. The theme attribute stays `data-tema`, with the
+   values `claro` and `escuro`, because that is the contract docs.js already
+   implements across all 44 pages.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. Tokens
+
+   Three states, in the shape the rest of the site uses: light is the base,
+   the system preference wins unless the reader picked a theme, and an
+   explicit choice wins over the system in both directions.
    -------------------------------------------------------------------------- */
 
 :root {
+  --ink: #16141c;
+  --ink-soft: #57526a;
+  --ink-faint: #8b8598;
+  --bg: #ffffff;
+  --bg-soft: #faf9fb;
+  --bg-code: #f6f5f8;
+  --line: #e7e4ec;
+  --accent: #5b2ee5;
+  --accent-soft: #f1ecfe;
+  --accent-ink: #ffffff;
+  --fill: #e9e6f0;
+
+  /* Only overlays use this: the mobile drawer's backdrop. */
+  --scrim: rgba(22, 20, 28, 0.45);
+
+  /* Syntax highlighting. The same four hues the landing page uses, so a
+     snippet looks identical whichever page a reader lands on. */
+  --code-tag: #8250df;
+  --code-attr: #0550ae;
+  --code-str: #0a7b56;
+  --code-key: #cf222e;
+  --code-muted: var(--ink-faint);
+
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Metrics */
+  --top-h: 3.75rem;
+  --nav-w: 17.5rem;
+  --toc-w: 15rem;
+  --measure: 46rem;
+  --radius: 10px;
+  --radius-sm: 7px;
+
   color-scheme: light;
-
-  /* Marca */
-  --roxo: #6d3bf5;
-  --roxo-claro: #9b7bff;
-  --magenta: #ff3d8b;
-  --ambar: #ffb35c;
-  --menta: #2ed9a5;
-  --tinta: #14111f;
-  --creme: #fbf7f2;
-
-  /* Tema escuro, o padrão */
-
-  /* Realce de sintaxe */
-  --cod-comentario: #6f6890;
-  --cod-tag: #9b7bff;
-  --cod-atributo: #2ed9a5;
-  --cod-texto-literal: #ffb35c;
-  --cod-numero: #ff3d8b;
-  --cod-palavra: #ff7fb0;
-  --cod-funcao: #7fd6ff;
-  --cod-magia: #ffb35c;
-  --cod-directive: #ff3d8b;
-  --cod-pontuacao: #877fa8;
-
-  /* Métricas */
-  --topo-altura: 3.75rem;
-  --menu-largura: 17.5rem;
-  --indice-largura: 15rem;
-  --leitura: 46rem;
-  --raio: 0.625rem;
-  --raio-p: 0.375rem;
-
-  /* Tipografia */
-  --fonte: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    "Noto Sans", Arial, sans-serif;
-  --fonte-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", "Cascadia Mono",
-    Menlo, Consolas, "Liberation Mono", monospace;
-
-  --fundo: var(--creme);
-  --fundo-2: #ffffff;
-  --fundo-3: #f2ecfd;
-  --superficie: #ffffff;
-  --superficie-2: #f5f0ff;
-  --borda: #e3dced;
-  --borda-forte: #cec4e2;
-  --texto: #1d182c;
-  --texto-2: #514a68;
-  --texto-3: #7a7292;
-  --acento: #5b2ce0;
-  --acento-forte: #471fc0;
-  --acento-fundo: rgba(109, 59, 245, 0.1);
-  --sombra: 0 1px 2px rgba(30, 20, 60, 0.06), 0 8px 24px rgba(30, 20, 60, 0.08);
-  --sombra-suave: 0 1px 3px rgba(30, 20, 60, 0.08);
-  --realce-selecao: rgba(109, 59, 245, 0.18);
-  --cod-fundo: #17132a;
-  --cod-texto: #e7e3f5;
 }
 
-/* Dark is now an override rather than the default. Every documentation page
-   used to hardcode data-tema="escuro" in its markup, which overruled both the
-   system preference and the reader's own saved choice. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]) {
+  html:root:not([data-tema="claro"]) {
+    --ink: #f2f0f6;
+    --ink-soft: #b3adc2;
+    --ink-faint: #837d93;
+    --bg: #131118;
+    --bg-soft: #191722;
+    --bg-code: #1d1a26;
+    --line: #2b2735;
+    --accent: #a688ff;
+    --accent-soft: #221c3a;
+    --accent-ink: #16141c;
+    --fill: #2f2b3d;
+
+    --scrim: rgba(0, 0, 0, 0.6);
+
+    --code-tag: #d2a8ff;
+    --code-attr: #79c0ff;
+    --code-str: #7ee2b8;
+    --code-key: #ff7b72;
+
     color-scheme: dark;
-    --fundo: #0f0d18;
-    --fundo-2: #14111f;
-    --fundo-3: #1c1830;
-    --superficie: #191527;
-    --superficie-2: #221d38;
-    --borda: #2c2643;
-    --borda-forte: #3d3560;
-    --texto: #ece9f5;
-    --texto-2: #b3acc9;
-    --texto-3: #837c9c;
-    --acento: var(--roxo-claro);
-    --acento-forte: #b39bff;
-    --acento-fundo: rgba(109, 59, 245, 0.18);
-    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-    --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.3);
-    --realce-selecao: rgba(155, 123, 255, 0.32);
-    --cod-fundo: #100d1c;
-    --cod-texto: #ddd8ee;
   }
 }
 
-:root[data-tema="escuro"] {
+html:root[data-tema="escuro"] {
+  --ink: #f2f0f6;
+  --ink-soft: #b3adc2;
+  --ink-faint: #837d93;
+  --bg: #131118;
+  --bg-soft: #191722;
+  --bg-code: #1d1a26;
+  --line: #2b2735;
+  --accent: #a688ff;
+  --accent-soft: #221c3a;
+  --accent-ink: #16141c;
+  --fill: #2f2b3d;
+
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --code-tag: #d2a8ff;
+  --code-attr: #79c0ff;
+  --code-str: #7ee2b8;
+  --code-key: #ff7b72;
+
   color-scheme: dark;
-  --fundo: #0f0d18;
-  --fundo-2: #14111f;
-  --fundo-3: #1c1830;
-  --superficie: #191527;
-  --superficie-2: #221d38;
-  --borda: #2c2643;
-  --borda-forte: #3d3560;
-  --texto: #ece9f5;
-  --texto-2: #b3acc9;
-  --texto-3: #837c9c;
-  --acento: var(--roxo-claro);
-  --acento-forte: #b39bff;
-  --acento-fundo: rgba(109, 59, 245, 0.18);
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-  --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --realce-selecao: rgba(155, 123, 255, 0.32);
-  --cod-fundo: #100d1c;
-  --cod-texto: #ddd8ee;
+}
+
+/* --------------------------------------------------------------------------
+   1b. The library's own tokens
+
+   Every page here can run a live example, and the library paints its built-in
+   UI from --v-*. Left unmapped those keep the library's default palette, so a
+   demo comes out white while the page around it is dark — the white result
+   pane this file used to show on the documentation home page.
+
+   !important is required rather than lazy: V.palette() writes
+   :root:not([data-theme="light"]), which outranks any plain selector we can
+   write. html:root also outranks the plain :root the library injects into
+   <head> later, which would otherwise win on source order.
+
+   --v-surface-3 has no default at all in the library: the progress track, the
+   skeleton fill and the switch rail paint with it, and unmapped they render as
+   empty boxes.
+   -------------------------------------------------------------------------- */
+
+html:root {
+  --v-surface: var(--bg) !important;
+  --v-surface-2: var(--bg-soft) !important;
+  --v-surface-3: var(--fill) !important;
+  --v-border: var(--line) !important;
+  --v-text: var(--ink) !important;
+  --v-text-muted: var(--ink-faint) !important;
+  --v-primary: var(--accent) !important;
+  --v-radius: var(--radius);
+  --v-radius-sm: var(--radius-sm);
+  --v-font-sans: var(--font);
+}
+
+/* The command palette and dialogs land on top of the sticky header. */
+.v-command,
+.v-modal,
+.v-drawer {
+  z-index: 200;
 }
 
 /* --------------------------------------------------------------------------
@@ -130,7 +157,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: calc(var(--topo-altura) + 1.5rem);
+  scroll-padding-top: calc(var(--top-h) + 1.5rem);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -149,9 +176,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--fundo);
-  color: var(--texto);
-  font-family: var(--fonte);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
   font-size: 16px;
   line-height: 1.7;
   overflow-x: hidden;
@@ -159,11 +186,11 @@ body {
 }
 
 ::selection {
-  background: var(--realce-selecao);
+  background: var(--accent-soft);
 }
 
 a {
-  color: var(--acento);
+  color: var(--accent);
   text-decoration: none;
 }
 
@@ -172,7 +199,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 2px solid var(--acento-forte);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 3px;
 }
@@ -188,7 +215,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   3. Pular para o conteúdo
+   3. Skip link
    -------------------------------------------------------------------------- */
 
 .pular-para-conteudo {
@@ -197,42 +224,43 @@ button {
   top: -4rem;
   z-index: 200;
   padding: 0.6rem 1rem;
-  border-radius: var(--raio-p);
-  background: var(--roxo);
-  color: #fff;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
   transition: top 0.15s ease;
 }
 
 .pular-para-conteudo:focus {
   top: 0.75rem;
+  text-decoration: none;
 }
 
 /* --------------------------------------------------------------------------
-   4. Barra superior
+   4. Header
    -------------------------------------------------------------------------- */
 
 .doc-topo {
   position: sticky;
   top: 0;
   z-index: 60;
-  height: var(--topo-altura);
+  height: var(--top-h);
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0 1rem;
-  background: color-mix(in srgb, var(--fundo) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--borda);
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
 }
 
 .doc-topo__marca {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  color: var(--texto);
+  gap: 0.55rem;
+  font-weight: 680;
+  font-size: 1.03rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
   white-space: nowrap;
 }
 
@@ -240,25 +268,46 @@ button {
   text-decoration: none;
 }
 
-.doc-topo__marca img {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-.doc-topo__marca em {
-  font-style: normal;
-  color: var(--roxo-claro);
+.doc-topo__marca svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
 }
 
 .doc-topo__etiqueta {
   padding: 0.1rem 0.45rem;
-  border: 1px solid var(--borda-forte);
+  border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--texto-2);
+  color: var(--ink-soft);
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+/* Site navigation. The documentation used to be an island: nothing here
+   linked back to the home page, the playground, the components or the
+   examples. */
+
+.doc-topo__site {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.doc-topo__site a {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.doc-topo__site a:hover {
+  color: var(--ink);
+  background: var(--bg-soft);
+  text-decoration: none;
 }
 
 .doc-topo__espaco {
@@ -275,59 +324,59 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.15rem;
+  height: 2.15rem;
   padding: 0;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-p);
-  background: var(--superficie);
-  color: var(--texto-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .doc-botao-icone:hover {
-  border-color: var(--borda-forte);
-  color: var(--texto);
+  border-color: var(--ink-faint);
+  color: var(--ink);
 }
 
 .doc-botao-icone svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 .doc-topo__menu-btn {
   display: none;
 }
 
-/* Busca */
+/* Search */
 
 .doc-busca {
   position: relative;
-  flex: 0 1 22rem;
+  flex: 0 1 20rem;
   min-width: 0;
 }
 
 .doc-busca__campo {
   width: 100%;
-  height: 2.25rem;
-  padding: 0 0.75rem 0 2.2rem;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-p);
-  background: var(--superficie);
-  color: var(--texto);
+  height: 2.15rem;
+  padding: 0 0.75rem 0 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--ink);
   font: inherit;
   font-size: 0.9rem;
 }
 
 .doc-busca__campo::placeholder {
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-busca__campo:focus {
-  border-color: var(--acento);
+  border-color: var(--accent);
   outline: 2px solid transparent;
-  box-shadow: 0 0 0 3px var(--acento-fundo);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .doc-busca__lupa {
@@ -337,7 +386,7 @@ button {
   transform: translateY(-50%);
   width: 1rem;
   height: 1rem;
-  color: var(--texto-3);
+  color: var(--ink-faint);
   pointer-events: none;
 }
 
@@ -351,10 +400,9 @@ button {
   margin: 0;
   padding: 0.35rem;
   list-style: none;
-  background: var(--fundo-2);
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
-  box-shadow: var(--sombra);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .doc-busca__resultados[hidden] {
@@ -368,14 +416,14 @@ button {
 .doc-busca__link {
   display: block;
   padding: 0.5rem 0.6rem;
-  border-radius: var(--raio-p);
-  color: var(--texto);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
 }
 
 .doc-busca__link:hover,
 .doc-busca__link:focus-visible,
 .doc-busca__link[aria-selected="true"] {
-  background: var(--acento-fundo);
+  background: var(--accent-soft);
   text-decoration: none;
 }
 
@@ -388,54 +436,53 @@ button {
 .doc-busca__caminho {
   display: block;
   font-size: 0.75rem;
-  color: var(--acento);
+  color: var(--accent);
 }
 
 .doc-busca__trecho {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--texto-2);
-  overflow: hidden;
   display: -webkit-box;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .doc-busca__marca {
   background: transparent;
-  color: var(--acento-forte);
+  color: var(--accent);
   font-weight: 700;
 }
 
 .doc-busca__vazio {
   padding: 0.75rem 0.6rem;
-  color: var(--texto-2);
+  color: var(--ink-soft);
   font-size: 0.9rem;
 }
 
 /* --------------------------------------------------------------------------
-   5. Estrutura da página
+   5. Page structure
    -------------------------------------------------------------------------- */
 
 .doc-layout {
   display: grid;
-  grid-template-columns: var(--menu-largura) minmax(0, 1fr) var(--indice-largura);
+  grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--toc-w);
   gap: 0;
   max-width: 96rem;
   margin: 0 auto;
   align-items: start;
 }
 
-/* Menu lateral */
+/* Sidebar */
 
 .doc-menu {
   position: sticky;
-  top: var(--topo-altura);
-  height: calc(100vh - var(--topo-altura));
+  top: var(--top-h);
+  height: calc(100vh - var(--top-h));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1.5rem 1rem 4rem;
-  border-right: 1px solid var(--borda);
+  border-right: 1px solid var(--line);
   font-size: 0.9rem;
 }
 
@@ -450,14 +497,14 @@ button {
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-menu__lista {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-left: 1px solid var(--borda);
+  border-left: 1px solid var(--line);
 }
 
 .doc-menu__link {
@@ -465,36 +512,56 @@ button {
   padding: 0.32rem 0.6rem;
   margin-left: -1px;
   border-left: 2px solid transparent;
-  color: var(--texto-2);
+  color: var(--ink-soft);
   line-height: 1.45;
 }
 
 .doc-menu__link:hover {
-  color: var(--texto);
+  color: var(--ink);
   text-decoration: none;
 }
 
 .doc-menu__link[aria-current="page"] {
-  color: var(--acento-forte);
-  border-left-color: var(--acento);
-  background: var(--acento-fundo);
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
   font-weight: 600;
-  border-radius: 0 var(--raio-p) var(--raio-p) 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .doc-menu__numero {
   display: inline-block;
   min-width: 1.5rem;
-  color: var(--texto-3);
+  color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
+}
+
+/* The site links repeat inside the drawer, where the header cannot show
+   them. Hidden on the desktop layout, where the header has room. */
+.doc-menu__site {
+  display: none;
+  margin: 0 0 1.5rem;
+  padding: 0 0 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.doc-menu__site a {
+  display: block;
+  padding: 0.32rem 0.6rem;
+  color: var(--ink-soft);
+}
+
+.doc-menu__site a:hover {
+  color: var(--ink);
+  text-decoration: none;
 }
 
 .doc-menu__fechar {
   display: none;
 }
 
-/* Conteúdo */
+/* Content */
 
 .doc-conteudo {
   min-width: 0;
@@ -502,15 +569,15 @@ button {
 }
 
 .doc-artigo {
-  max-width: var(--leitura);
+  max-width: var(--measure);
 }
 
-/* Índice da página */
+/* On this page */
 
 .doc-indice {
   position: sticky;
-  top: var(--topo-altura);
-  max-height: calc(100vh - var(--topo-altura));
+  top: var(--top-h);
+  max-height: calc(100vh - var(--top-h));
   overflow-y: auto;
   padding: 2.5rem 1rem 4rem 0;
   font-size: 0.85rem;
@@ -522,14 +589,14 @@ button {
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-indice__lista {
   margin: 0;
   padding: 0;
   list-style: none;
-  border-left: 1px solid var(--borda);
+  border-left: 1px solid var(--line);
 }
 
 .doc-indice__link {
@@ -537,12 +604,12 @@ button {
   padding: 0.25rem 0 0.25rem 0.75rem;
   margin-left: -1px;
   border-left: 2px solid transparent;
-  color: var(--texto-3);
+  color: var(--ink-faint);
   line-height: 1.45;
 }
 
 .doc-indice__link:hover {
-  color: var(--texto);
+  color: var(--ink);
   text-decoration: none;
 }
 
@@ -552,8 +619,8 @@ button {
 }
 
 .doc-indice__link[aria-current="true"] {
-  color: var(--acento-forte);
-  border-left-color: var(--acento);
+  color: var(--accent);
+  border-left-color: var(--accent);
   font-weight: 600;
 }
 
@@ -562,7 +629,7 @@ button {
 }
 
 /* --------------------------------------------------------------------------
-   6. Tipografia do artigo
+   6. Article typography
    -------------------------------------------------------------------------- */
 
 .doc-artigo > :first-child {
@@ -571,51 +638,51 @@ button {
 
 .doc-migalha {
   margin: 0 0 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--magenta);
+  color: var(--ink-faint);
 }
 
 .doc-artigo h1 {
   margin: 0 0 0.75rem;
-  font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.6rem);
+  font-size: clamp(1.85rem, 1.35rem + 1.9vw, 2.5rem);
   line-height: 1.15;
   letter-spacing: -0.025em;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .doc-resumo {
   margin: 0 0 2.25rem;
   font-size: 1.1rem;
   line-height: 1.65;
-  color: var(--texto-2);
+  color: var(--ink-soft);
 }
 
 .doc-artigo h2 {
   margin: 3rem 0 1rem;
-  padding-top: 0.5rem;
-  font-size: 1.5rem;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-  font-weight: 700;
-  border-top: 1px solid var(--borda);
   padding-top: 1.75rem;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 660;
+  border-top: 1px solid var(--line);
 }
 
 .doc-artigo h3 {
   margin: 2rem 0 0.75rem;
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   line-height: 1.3;
-  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-weight: 660;
 }
 
 .doc-artigo h4 {
   margin: 1.5rem 0 0.5rem;
   font-size: 1rem;
-  font-weight: 700;
-  color: var(--texto-2);
+  font-weight: 660;
+  color: var(--ink-soft);
 }
 
 .doc-artigo p {
@@ -638,29 +705,29 @@ button {
 }
 
 .doc-artigo strong {
-  color: var(--texto);
-  font-weight: 700;
+  color: var(--ink);
+  font-weight: 660;
 }
 
 .doc-artigo hr {
   height: 1px;
   margin: 2.5rem 0;
   border: 0;
-  background: var(--borda);
+  background: var(--line);
 }
 
 .doc-artigo blockquote {
   margin: 1.25rem 0;
   padding: 0.1rem 1rem;
-  border-left: 3px solid var(--roxo);
-  color: var(--texto-2);
+  border-left: 2px solid var(--line);
+  color: var(--ink-soft);
 }
 
-/* Âncora dos títulos */
+/* Heading anchors */
 
 .doc-ancora {
   margin-left: 0.4rem;
-  color: var(--texto-3);
+  color: var(--ink-faint);
   opacity: 0;
   font-weight: 400;
   text-decoration: none;
@@ -672,29 +739,29 @@ h3:hover .doc-ancora,
   opacity: 1;
 }
 
-/* Código embutido */
+/* Inline code */
 
 .doc-artigo :not(pre) > code {
   padding: 0.12em 0.36em;
-  border: 1px solid var(--borda);
-  border-radius: 0.3rem;
-  background: var(--superficie-2);
-  color: var(--acento-forte);
-  font-family: var(--fonte-mono);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--bg-code);
+  color: var(--ink);
+  font-family: var(--mono);
   font-size: 0.86em;
   word-break: break-word;
 }
 
 /* --------------------------------------------------------------------------
-   7. Blocos de código
+   7. Code blocks
    -------------------------------------------------------------------------- */
 
 .doc-bloco-codigo {
   position: relative;
   margin: 0 0 1.25rem;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
-  background: var(--cod-fundo);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-code);
   overflow: hidden;
 }
 
@@ -702,11 +769,11 @@ h3:hover .doc-ancora,
   position: absolute;
   top: 0.5rem;
   left: 0.85rem;
-  font-family: var(--fonte-mono);
+  font-family: var(--mono);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #6f6890;
+  color: var(--ink-faint);
   pointer-events: none;
 }
 
@@ -719,10 +786,10 @@ h3:hover .doc-ancora,
 
 .doc-bloco-codigo code {
   display: block;
-  font-family: var(--fonte-mono);
+  font-family: var(--mono);
   font-size: 0.845rem;
   line-height: 1.65;
-  color: var(--cod-texto);
+  color: var(--ink);
   tab-size: 2;
   white-space: pre;
 }
@@ -735,10 +802,10 @@ h3:hover .doc-ancora,
   align-items: center;
   gap: 0.3rem;
   padding: 0.25rem 0.55rem;
-  border: 1px solid #322b4d;
-  border-radius: var(--raio-p);
-  background: #1b1730;
-  color: #b3acc9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink-soft);
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
@@ -752,14 +819,14 @@ h3:hover .doc-ancora,
 }
 
 .doc-copiar:hover {
-  color: var(--creme);
-  border-color: var(--roxo);
+  color: var(--ink);
+  border-color: var(--ink-faint);
 }
 
 .doc-copiar[data-estado="ok"] {
   opacity: 1;
-  color: var(--menta);
-  border-color: var(--menta);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .doc-copiar svg {
@@ -767,32 +834,32 @@ h3:hover .doc-ancora,
   height: 0.85rem;
 }
 
-/* Realce de sintaxe */
+/* Syntax highlighting */
 
-.tk-comentario { color: var(--cod-comentario); font-style: italic; }
-.tk-tag { color: var(--cod-tag); }
-.tk-atributo { color: var(--cod-atributo); }
-.tk-directive { color: var(--cod-directive); font-weight: 600; }
-.tk-texto { color: var(--cod-texto-literal); }
-.tk-numero { color: var(--cod-numero); }
-.tk-palavra { color: var(--cod-palavra); }
-.tk-funcao { color: var(--cod-funcao); }
-.tk-magia { color: var(--cod-magia); font-weight: 600; }
-.tk-pontuacao { color: var(--cod-pontuacao); }
-.tk-propriedade { color: var(--cod-atributo); }
-.tk-seletor { color: var(--cod-tag); }
-.tk-interp { color: var(--menta); font-weight: 600; }
+.tk-comentario { color: var(--code-muted); font-style: italic; }
+.tk-tag { color: var(--code-tag); }
+.tk-seletor { color: var(--code-tag); }
+.tk-funcao { color: var(--code-tag); }
+.tk-atributo { color: var(--code-attr); }
+.tk-propriedade { color: var(--code-attr); }
+.tk-magia { color: var(--code-attr); font-weight: 600; }
+.tk-texto { color: var(--code-str); }
+.tk-interp { color: var(--code-str); font-weight: 600; }
+.tk-palavra { color: var(--code-key); }
+.tk-numero { color: var(--code-key); }
+.tk-directive { color: var(--code-key); font-weight: 600; }
+.tk-pontuacao { color: var(--code-muted); }
 
 /* --------------------------------------------------------------------------
-   8. Exemplo ao vivo
+   8. Live example
    -------------------------------------------------------------------------- */
 
 .doc-exemplo {
   margin: 0 0 1.5rem;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   overflow: hidden;
-  background: var(--superficie);
+  background: var(--bg);
 }
 
 .doc-exemplo__cabecalho {
@@ -800,17 +867,17 @@ h3:hover .doc-ancora,
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 0.75rem;
-  border-bottom: 1px solid var(--borda);
-  background: var(--superficie-2);
-  font-size: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-exemplo__cabecalho b {
-  color: var(--menta);
+  color: var(--accent);
   font-weight: 700;
 }
 
@@ -821,7 +888,7 @@ h3:hover .doc-ancora,
 
 .doc-exemplo__codigo {
   min-width: 0;
-  border-right: 1px solid var(--borda);
+  border-right: 1px solid var(--line);
 }
 
 .doc-exemplo__codigo .doc-bloco-codigo {
@@ -831,9 +898,12 @@ h3:hover .doc-ancora,
   height: 100%;
 }
 
+/* The result pane. This used to be a hardcoded surface that stayed pale in
+   dark mode; it is a theme token now, and the iframe inside it is handed the
+   same palette by docs.js. */
 .doc-exemplo__palco {
   min-width: 0;
-  background: var(--fundo-2);
+  background: var(--bg);
 }
 
 .doc-exemplo__palco iframe {
@@ -842,6 +912,7 @@ h3:hover .doc-ancora,
   min-height: 8rem;
   border: 0;
   background: transparent;
+  color-scheme: normal;
 }
 
 .doc-exemplo--empilhado .doc-exemplo__corpo {
@@ -850,18 +921,18 @@ h3:hover .doc-ancora,
 
 .doc-exemplo--empilhado .doc-exemplo__codigo {
   border-right: 0;
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--line);
 }
 
 /* --------------------------------------------------------------------------
-   9. Tabelas
+   9. Tables
    -------------------------------------------------------------------------- */
 
 .doc-tabela {
   margin: 0 0 1.5rem;
   overflow-x: auto;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .doc-tabela table {
@@ -876,16 +947,16 @@ h3:hover .doc-ancora,
   padding: 0.6rem 0.8rem;
   text-align: left;
   vertical-align: top;
-  border-bottom: 1px solid var(--borda);
+  border-bottom: 1px solid var(--line);
 }
 
 .doc-tabela thead th {
-  background: var(--superficie-2);
-  font-size: 0.78rem;
+  background: var(--bg-soft);
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--texto-2);
+  color: var(--ink-soft);
   white-space: nowrap;
 }
 
@@ -898,16 +969,19 @@ h3:hover .doc-ancora,
 }
 
 /* --------------------------------------------------------------------------
-   10. Avisos
+   10. Callouts
+
+   One accent. The variants differ by the label they carry, not by a second
+   and third hue, which is what made the old sheet read as decorated.
    -------------------------------------------------------------------------- */
 
 .doc-aviso {
   margin: 0 0 1.35rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid var(--borda-forte);
-  border-left: 3px solid var(--roxo);
-  border-radius: var(--raio-p);
-  background: var(--superficie);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
   font-size: 0.95rem;
 }
 
@@ -918,60 +992,47 @@ h3:hover .doc-ancora,
 .doc-aviso__rotulo {
   display: block;
   margin-bottom: 0.25rem;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--roxo-claro);
+  color: var(--accent);
 }
 
-.doc-aviso--atencao {
-  border-left-color: var(--ambar);
-}
-.doc-aviso--atencao .doc-aviso__rotulo {
-  color: var(--ambar);
-}
-
-.doc-aviso--perigo {
-  border-left-color: var(--magenta);
-}
-.doc-aviso--perigo .doc-aviso__rotulo {
-  color: var(--magenta);
-}
-
+.doc-aviso--atencao,
+.doc-aviso--perigo,
 .doc-aviso--dica {
-  border-left-color: var(--menta);
-}
-.doc-aviso--dica .doc-aviso__rotulo {
-  color: var(--menta);
+  border-left-color: var(--accent);
 }
 
 .doc-aviso--roadmap {
-  border-left-color: var(--texto-3);
+  border-left-color: var(--line);
 }
+
 .doc-aviso--roadmap .doc-aviso__rotulo {
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 /* --------------------------------------------------------------------------
-   11. Cartões
+   11. Cards, steps and keys
    -------------------------------------------------------------------------- */
 
 .doc-artigo kbd {
   display: inline-block;
   min-width: 1.6em;
   padding: 0.1em 0.4em;
-  border: 1px solid var(--borda-forte);
+  border: 1px solid var(--line);
   border-bottom-width: 2px;
-  border-radius: 0.3rem;
-  background: var(--superficie-2);
-  color: var(--texto);
-  font-family: var(--fonte-mono);
+  border-radius: 5px;
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-family: var(--mono);
   font-size: 0.78em;
   line-height: 1.5;
   text-align: center;
   white-space: nowrap;
 }
+
 .doc-cartoes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
@@ -985,45 +1046,44 @@ h3:hover .doc-ancora,
   display: block;
   height: 100%;
   padding: 1rem 1.1rem;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  background: var(--superficie);
-  color: var(--texto);
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  color: var(--ink);
+  transition: border-color 0.15s ease;
 }
 
 .doc-cartao:hover {
-  border-color: var(--acento);
+  border-color: var(--accent);
   text-decoration: none;
-  transform: translateY(-2px);
 }
 
 .doc-cartao b {
   display: block;
   margin-bottom: 0.2rem;
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 660;
 }
 
 .doc-cartao span {
   display: block;
   font-size: 0.88rem;
   line-height: 1.55;
-  color: var(--texto-2);
+  color: var(--ink-soft);
 }
 
 .doc-cartao em {
   display: block;
   margin-bottom: 0.35rem;
   font-style: normal;
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--magenta);
+  color: var(--accent);
 }
 
-/* Passos numerados */
+/* Numbered steps */
 
 .doc-passos {
   counter-reset: passo;
@@ -1049,39 +1109,39 @@ h3:hover .doc-ancora,
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  background: var(--acento-fundo);
-  border: 1px solid var(--acento);
-  color: var(--acento-forte);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  color: var(--accent);
   font-size: 0.85rem;
   font-weight: 700;
   line-height: 1;
 }
 
 /* --------------------------------------------------------------------------
-   12. Rodapé e navegação entre páginas
+   12. Footer and page-to-page navigation
    -------------------------------------------------------------------------- */
 
 .doc-paginacao {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.85rem;
-  max-width: var(--leitura);
+  max-width: var(--measure);
   margin-top: 3.5rem;
   padding-top: 2rem;
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--line);
 }
 
 .doc-paginacao__link {
   display: block;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  color: var(--texto);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
   transition: border-color 0.15s ease;
 }
 
 .doc-paginacao__link:hover {
-  border-color: var(--acento);
+  border-color: var(--accent);
   text-decoration: none;
 }
 
@@ -1092,26 +1152,26 @@ h3:hover .doc-ancora,
 
 .doc-paginacao__rotulo {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-paginacao__titulo {
   display: block;
-  font-weight: 700;
-  color: var(--acento);
+  font-weight: 660;
+  color: var(--accent);
 }
 
 .doc-rodape {
-  max-width: var(--leitura);
+  max-width: var(--measure);
   margin-top: 2.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--borda);
+  border-top: 1px solid var(--line);
   font-size: 0.85rem;
-  color: var(--texto-3);
+  color: var(--ink-faint);
 }
 
 .doc-rodape p {
@@ -1119,7 +1179,7 @@ h3:hover .doc-ancora,
 }
 
 /* --------------------------------------------------------------------------
-   13. Página inicial da documentação
+   13. Documentation home page
    -------------------------------------------------------------------------- */
 
 .doc-capa {
@@ -1128,18 +1188,16 @@ h3:hover .doc-ancora,
 
 .doc-capa__titulo {
   margin: 0 0 0.75rem;
-  font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.2rem);
+  font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3rem);
   line-height: 1.08;
   letter-spacing: -0.03em;
-  font-weight: 800;
+  font-weight: 700;
 }
 
+/* This was a three-stop gradient clipped to the text. Flat accent now. */
 .doc-capa__titulo em {
   font-style: normal;
-  background: linear-gradient(100deg, var(--roxo-claro), var(--magenta) 55%, var(--ambar));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 .doc-numeros {
@@ -1154,30 +1212,31 @@ h3:hover .doc-ancora,
 .doc-numeros li {
   margin: 0;
   padding: 0.85rem 1rem;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  background: var(--superficie);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
 }
 
 .doc-numeros b {
   display: block;
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--acento-forte);
+  color: var(--ink);
 }
 
 .doc-numeros span {
   font-size: 0.82rem;
-  color: var(--texto-2);
+  color: var(--ink-soft);
 }
 
+/* This was a gradient wash over a surface. Flat now. */
 .doc-trilha {
   margin: 0 0 2rem;
   padding: 1.25rem 1.35rem;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
-  background: linear-gradient(160deg, var(--acento-fundo), transparent 70%), var(--superficie);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
 }
 
 .doc-trilha h2 {
@@ -1188,21 +1247,31 @@ h3:hover .doc-ancora,
 }
 
 /* --------------------------------------------------------------------------
-   14. Responsivo
+   14. Responsive
    -------------------------------------------------------------------------- */
 
 @media (max-width: 1180px) {
   .doc-layout {
-    grid-template-columns: var(--menu-largura) minmax(0, 1fr);
+    grid-template-columns: var(--nav-w) minmax(0, 1fr);
   }
   .doc-indice {
     display: none;
   }
 }
 
+@media (max-width: 1080px) {
+  /* The site links move into the drawer, where there is room for them. */
+  .doc-topo__site {
+    display: none;
+  }
+  .doc-menu__site {
+    display: block;
+  }
+}
+
 @media (max-width: 900px) {
   :root {
-    --leitura: 100%;
+    --measure: 100%;
   }
 
   .doc-topo {
@@ -1226,7 +1295,7 @@ h3:hover .doc-ancora,
     padding: 1.75rem 1rem 4rem;
   }
 
-  /* O menu vira gaveta */
+  /* The sidebar becomes a drawer */
   .doc-menu {
     position: fixed;
     top: 0;
@@ -1235,9 +1304,8 @@ h3:hover .doc-ancora,
     width: min(20rem, 86vw);
     height: 100dvh;
     padding-top: 1rem;
-    background: var(--fundo-2);
-    border-right: 1px solid var(--borda-forte);
-    box-shadow: var(--sombra);
+    background: var(--bg);
+    border-right: 1px solid var(--line);
     transform: translateX(-102%);
     transition: transform 0.22s ease;
     visibility: hidden;
@@ -1255,6 +1323,14 @@ h3:hover .doc-ancora,
     right: 0.75rem;
   }
 
+  .doc-menu__site {
+    margin-top: 2.25rem;
+  }
+
+  .doc-menu__site + .doc-menu__grupo {
+    margin-top: 0;
+  }
+
   .doc-menu__grupo:first-of-type {
     margin-top: 2rem;
   }
@@ -1263,8 +1339,7 @@ h3:hover .doc-ancora,
     position: fixed;
     inset: 0;
     z-index: 70;
-    background: rgba(10, 8, 18, 0.6);
-    backdrop-filter: blur(2px);
+    background: var(--scrim);
   }
 
   .doc-vidro[hidden] {
@@ -1277,7 +1352,7 @@ h3:hover .doc-ancora,
 
   .doc-exemplo__codigo {
     border-right: 0;
-    border-bottom: 1px solid var(--borda);
+    border-bottom: 1px solid var(--line);
   }
 
   .doc-paginacao {
@@ -1316,6 +1391,36 @@ h3:hover .doc-ancora,
 
   .doc-numeros {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* At 380px the header still has to fit a menu button, the mark, the search
+   field and two icon buttons without pushing the page sideways. */
+@media (max-width: 420px) {
+  .doc-topo {
+    gap: 0.35rem;
+    padding: 0 0.6rem;
+  }
+
+  .doc-topo__espaco {
+    display: none;
+  }
+
+  .doc-botao-icone {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .doc-conteudo {
+    padding: 1.5rem 0.85rem 3.5rem;
+  }
+
+  .doc-cartoes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc-passos > li {
+    padding-left: 2.15rem;
   }
 }
 

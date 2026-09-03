@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Listas e por que a chave importa · Documentação da Voodoo.js</title>
-<meta name="description" content="O v-for sobre arrays, números, textos, objetos, Map e Set; o papel do :key ao reordenar e filtrar; e por que v-for e v-if não convivem no mesmo elemento.">
+<title>Lists and why the key matters · Voodoo.js documentation</title>
+<meta name="description" content="v-for over arrays, numbers, strings, objects, Map and Set; what :key does when reordering and filtering; and why v-for and v-if do not share an element.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/listas">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,195 +14,194 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Listas e por que a chave importa</h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>Lists and why the key matters</h1>
 <p class="doc-resumo">
-  Você tem uma lista e quer um elemento para cada item. O <code>v-for</code> faz isso, e o
-  <code>:key</code> é o que separa uma lista que se comporta de uma lista que perde o foco do
-  campo toda vez que alguém filtra.
+  You have a list and you want one element per item. <code>v-for</code> does that, and
+  <code>:key</code> is what separates a list that behaves from a list that loses the focus of a
+  field every time someone filters it.
 </p>
 
-<h2 id="basico">O básico</h2>
+<h2 id="basico">The basics</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ produtos: [
-  { id: 1, nome: 'Caneca', preco: 39 },
-  { id: 2, nome: 'Camiseta', preco: 89 }
+<pre data-lang="html"><code>&lt;div v-data="{ products: [
+  { id: 1, name: 'Mug', price: 39 },
+  { id: 2, name: 'Shirt', price: 89 }
 ] }"&gt;
   &lt;ul&gt;
-    &lt;li v-for="p in produtos" :key="p.id"&gt;{ p.nome } — R$ { p.preco }&lt;/li&gt;
+    &lt;li v-for="p in products" :key="p.id"&gt;{ p.name } — $ { p.price }&lt;/li&gt;
   &lt;/ul&gt;
-  &lt;button @click="produtos.push({ id: Date.now(), nome: 'Novo', preco: 10 })"&gt;
-    Adicionar
+  &lt;button @click="products.push({ id: Date.now(), name: 'New', price: 10 })"&gt;
+    Add
   &lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="formas">Todas as formas aceitas</h2>
+<h2 id="formas">Every accepted form</h2>
 
 <p>
-  <code>v-for</code> não se limita a arrays. <code>in</code> e <code>of</code> são equivalentes.
+  <code>v-for</code> is not limited to arrays. <code>in</code> and <code>of</code> are equivalent.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{
-  usuarios: [{ id: 1, nome: 'Ana' }, { id: 2, nome: 'Beto' }],
-  configuracoes: { tema: 'escuro', idioma: 'pt-BR' }
+  users: [{ id: 1, name: 'Ann' }, { id: 2, name: 'Bob' }],
+  settings: { theme: 'dark', language: 'en-US' }
 }"&gt;
-  &lt;p&gt;Com índice:&lt;/p&gt;
-  &lt;ul&gt;&lt;li v-for="(usuario, i) in usuarios" :key="usuario.id"&gt;{ i }: { usuario.nome }&lt;/li&gt;&lt;/ul&gt;
+  &lt;p&gt;With an index:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="(user, i) in users" :key="user.id"&gt;{ i }: { user.name }&lt;/li&gt;&lt;/ul&gt;
 
-  &lt;p&gt;Sobre um objeto:&lt;/p&gt;
-  &lt;ul&gt;&lt;li v-for="(valor, chave) in configuracoes"&gt;{ chave } = { valor }&lt;/li&gt;&lt;/ul&gt;
+  &lt;p&gt;Over an object:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="(value, key) in settings"&gt;{ key } = { value }&lt;/li&gt;&lt;/ul&gt;
 
-  &lt;p&gt;Sobre um número:&lt;/p&gt;
+  &lt;p&gt;Over a number:&lt;/p&gt;
   &lt;ul&gt;&lt;li v-for="n in 3"&gt;Item { n }&lt;/li&gt;&lt;/ul&gt;
 
-  &lt;p&gt;Sobre um texto:&lt;/p&gt;
-  &lt;ul&gt;&lt;li v-for="letra in 'abc'"&gt;{ letra }&lt;/li&gt;&lt;/ul&gt;
+  &lt;p&gt;Over a string:&lt;/p&gt;
+  &lt;ul&gt;&lt;li v-for="letter in 'abc'"&gt;{ letter }&lt;/li&gt;&lt;/ul&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Arrays, números, textos, objetos, <code>Map</code> e <code>Set</code> funcionam. Sobre um
-  número, a contagem começa em 1 — <code>v-for="n in 3"</code> dá 1, 2 e 3.
+  Arrays, numbers, strings, objects, <code>Map</code> and <code>Set</code> all work. Over a number,
+  counting starts at 1 — <code>v-for="n in 3"</code> gives 1, 2 and 3.
 </p>
 
 <p>
-  Para repetir um grupo de elementos sem um invólucro, o <code>&lt;template&gt;</code> vale aqui
-  também:
+  To repeat a group of elements with no wrapper, <code>&lt;template&gt;</code> works here too:
 </p>
 
 <pre data-lang="html"><code>&lt;dl&gt;
-  &lt;template v-for="p in produtos" :key="p.id"&gt;
-    &lt;dt&gt;{ p.nome }&lt;/dt&gt;
-    &lt;dd&gt;{ p.preco }&lt;/dd&gt;
+  &lt;template v-for="p in products" :key="p.id"&gt;
+    &lt;dt&gt;{ p.name }&lt;/dt&gt;
+    &lt;dd&gt;{ p.price }&lt;/dd&gt;
   &lt;/template&gt;
 &lt;/dl&gt;</code></pre>
 
-<h2 id="chave">Por que a chave importa</h2>
+<h2 id="chave">Why the key matters</h2>
 
 <p>
-  O <code>:key</code> diz à Voodoo como reconhecer o mesmo item entre duas atualizações. Sem
-  chave, a biblioteca só sabe a posição: se a lista é reordenada ou filtrada, ela reaproveita o
-  elemento da posição 1 para o novo item da posição 1, seja ele qual for.
+  <code>:key</code> tells Voodoo how to recognize the same item across two updates. With no key,
+  the library only knows the position: if the list is reordered or filtered, it reuses the element
+  at position 1 for whatever the new item at position 1 happens to be.
 </p>
 
 <p>
-  Na prática isso significa campo perdendo o foco, texto em edição sumindo e rolagem pulando.
-  Compare as duas listas abaixo: digite em um dos campos e depois clique em embaralhar.
+  In practice that means fields losing focus, text being edited disappearing and the scroll
+  jumping. Compare the two lists below: type into one of the fields and then click to shuffle.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ tarefas: [
-  { id: 1, texto: 'Comprar café' },
-  { id: 2, texto: 'Responder e-mail' },
-  { id: 3, texto: 'Pagar boleto' }
+<pre data-lang="html"><code>&lt;div v-data="{ tasks: [
+  { id: 1, text: 'Buy coffee' },
+  { id: 2, text: 'Answer email' },
+  { id: 3, text: 'Pay the bill' }
 ] }"&gt;
-  &lt;button @click="tarefas.reverse()"&gt;Inverter a ordem&lt;/button&gt;
+  &lt;button @click="tasks.reverse()"&gt;Reverse the order&lt;/button&gt;
 
-  &lt;p&gt;&lt;b&gt;Com :key&lt;/b&gt;&lt;/p&gt;
-  &lt;div v-for="t in tarefas" :key="t.id"&gt;&lt;input v-model="t.texto"&gt;&lt;/div&gt;
+  &lt;p&gt;&lt;b&gt;With :key&lt;/b&gt;&lt;/p&gt;
+  &lt;div v-for="t in tasks" :key="t.id"&gt;&lt;input v-model="t.text"&gt;&lt;/div&gt;
 
-  &lt;p&gt;&lt;b&gt;Sem :key&lt;/b&gt;&lt;/p&gt;
-  &lt;div v-for="t in tarefas"&gt;&lt;input v-model="t.texto"&gt;&lt;/div&gt;
+  &lt;p&gt;&lt;b&gt;Without :key&lt;/b&gt;&lt;/p&gt;
+  &lt;div v-for="t in tasks"&gt;&lt;input v-model="t.text"&gt;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Regra prática</span>
+  <span class="doc-aviso__rotulo">Rule of thumb</span>
   <p>
-    Sempre que a lista puder ser reordenada, filtrada ou ter itens removidos do meio, coloque
-    <code>:key</code>. A chave precisa ser estável e única na lista: o <code>id</code> do banco
-    serve; o índice da posição, não — ele muda junto com a ordem, que é justamente o problema que
-    a chave deveria resolver.
+    Whenever the list can be reordered, filtered or have items removed from the middle, put a
+    <code>:key</code> on it. The key has to be stable and unique within the list: the
+    <code>id</code> from the database works; the position index does not — it changes along with
+    the order, which is exactly the problem the key was supposed to solve.
   </p>
 </div>
 
-<h2 id="filtrando">Filtrando e ordenando</h2>
+<h2 id="filtrando">Filtering and sorting</h2>
 
 <p>
-  Não existe filtro embutido na directive: a expressão do <code>v-for</code> aceita qualquer
-  expressão que devolva uma coleção, então <code>filter</code>, <code>slice</code> e
-  <code>sort</code> resolvem — com a ressalva de que <code>sort</code> altera o array original,
-  então vale copiar antes.
+  There is no filter built into the directive: the <code>v-for</code> expression accepts any
+  expression that returns a collection, so <code>filter</code>, <code>slice</code> and
+  <code>sort</code> handle it — with the caveat that <code>sort</code> mutates the original array,
+  so it is worth copying first.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{
-  busca: '',
-  produtos: [
-    { id: 1, nome: 'Caneca', preco: 39 },
-    { id: 2, nome: 'Camiseta', preco: 89 },
-    { id: 3, nome: 'Caderno', preco: 25 }
+  search: '',
+  products: [
+    { id: 1, name: 'Mug', price: 39 },
+    { id: 2, name: 'Shirt', price: 89 },
+    { id: 3, name: 'Notebook', price: 25 }
   ]
 }"&gt;
-  &lt;input v-model="busca" placeholder="Filtrar..."&gt;
+  &lt;input v-model="search" placeholder="Filter..."&gt;
 
   &lt;ul&gt;
-    &lt;li v-for="p in produtos.filter(p =&gt; p.nome.toLowerCase().includes(busca.toLowerCase()))"
+    &lt;li v-for="p in products.filter(p =&gt; p.name.toLowerCase().includes(search.toLowerCase()))"
         :key="p.id"&gt;
-      { p.nome } — R$ { p.preco }
+      { p.name } — $ { p.price }
     &lt;/li&gt;
   &lt;/ul&gt;
 
-  &lt;p v-if="!produtos.some(p =&gt; p.nome.toLowerCase().includes(busca.toLowerCase()))"&gt;
-    Nada encontrado.
+  &lt;p v-if="!products.some(p =&gt; p.name.toLowerCase().includes(search.toLowerCase()))"&gt;
+    Nothing found.
   &lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Quando a expressão fica longa demais para caber no atributo, mova-a para uma função do
-  <code>v-data</code> — o resultado é o mesmo e o HTML volta a ser legível.
+  When the expression gets too long for the attribute, move it into a function on the
+  <code>v-data</code> — the result is the same and the HTML is readable again.
 </p>
 
-<h2 id="for-e-if">v-for e v-if não convivem no mesmo elemento</h2>
+<h2 id="for-e-if">v-for and v-if do not share an element</h2>
 
 <p>
-  Os dois assumem o controle daquele nó, então a biblioteca não tem como decidir quem manda.
-  Coloque a condição em um filho, ou envolva a repetição em um <code>&lt;template&gt;</code>.
+  Both take control of that node, so the library has no way of deciding which one wins. Put the
+  condition on a child, or wrap the repetition in a <code>&lt;template&gt;</code>.
 </p>
 
-<pre data-lang="html"><code>&lt;!-- não faça isso --&gt;
-&lt;li v-for="n in lista" v-if="n % 2 === 0"&gt;{ n }&lt;/li&gt;
+<pre data-lang="html"><code>&lt;!-- do not do this --&gt;
+&lt;li v-for="n in list" v-if="n % 2 === 0"&gt;{ n }&lt;/li&gt;
 
-&lt;!-- faça isso --&gt;
-&lt;li v-for="n in lista"&gt;
+&lt;!-- do this --&gt;
+&lt;li v-for="n in list"&gt;
   &lt;span v-if="n % 2 === 0"&gt;{ n }&lt;/span&gt;
 &lt;/li&gt;
 
-&lt;!-- ou filtre na própria expressão --&gt;
-&lt;li v-for="n in lista.filter(n =&gt; n % 2 === 0)"&gt;{ n }&lt;/li&gt;</code></pre>
+&lt;!-- or filter in the expression itself --&gt;
+&lt;li v-for="n in list.filter(n =&gt; n % 2 === 0)"&gt;{ n }&lt;/li&gt;</code></pre>
 
-<h2 id="dentro-do-item">O que existe dentro de cada item</h2>
+<h2 id="dentro-do-item">What exists inside each item</h2>
 
 <p>
-  Cada iteração cria um escopo próprio. Dentro dele valem a variável do item, o índice quando
-  declarado, e tudo que os escopos de fora oferecem. As variáveis mágicas continuam disponíveis,
-  <code>$el</code> apontando para o elemento daquela iteração.
+  Each iteration creates a scope of its own. Inside it you have the item variable, the index when
+  declared, and everything the outer scopes offer. The magic variables stay available, with
+  <code>$el</code> pointing at the element of that iteration.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ etiqueta: 'Produto', itens: ['Caneca', 'Camiseta'] }"&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ label: 'Product', items: ['Mug', 'Shirt'] }"&gt;
   &lt;ul&gt;
-    &lt;li v-for="(item, i) in itens"&gt;
-      { etiqueta } { i + 1 }: { item }
-      &lt;button @click="itens.splice(i, 1)"&gt;remover&lt;/button&gt;
+    &lt;li v-for="(item, i) in items"&gt;
+      { label } { i + 1 }: { item }
+      &lt;button @click="items.splice(i, 1)"&gt;remove&lt;/button&gt;
     &lt;/li&gt;
   &lt;/ul&gt;
-  &lt;p v-if="!itens.length"&gt;A lista está vazia.&lt;/p&gt;
+  &lt;p v-if="!items.length"&gt;The list is empty.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="limite">O limite que vale conhecer</h2>
+<h2 id="limite">The limit worth knowing about</h2>
 
 <p>
-  O <code>v-for</code> renderiza todos os itens da fonte: não existe virtualização. Para listas de
-  algumas centenas de linhas isso é irrelevante. Para dezenas de milhares atualizando ao mesmo
-  tempo, pagine, use rolagem infinita com <code>v-infinite-scroll</code>, ou escolha uma
-  ferramenta que virtualize. A página de <a href="../referencia/desempenho.html">desempenho</a>
-  mede o custo real com números.
+  <code>v-for</code> renders every item in the source: there is no virtualization. For lists of a
+  few hundred rows that is irrelevant. For tens of thousands updating at once, paginate, use
+  infinite scrolling with <code>v-infinite-scroll</code>, or pick a tool that virtualizes. The
+  <a href="../referencia/desempenho.html">performance</a> page measures the real cost with
+  numbers.
 </p>
 
 </article>

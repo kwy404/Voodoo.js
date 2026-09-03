@@ -1,0 +1,1464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kanban board — Voodoo.js</title>
+<meta name="description" content="A Kanban board built with Voodoo.js: four columns, cards dragged between them with the mouse, touch or the keyboard, a create and edit modal, filters and local persistence. One HTML file, no build step.">
+<!-- Essential bundle: this demo uses directives, components, dialogs and drag and drop. -->
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Example: Kanban board
+
+     House rule: no CSS keyed on a v-* attribute, because Voodoo strips
+     those attributes from the HTML once it has processed them. Only
+     ordinary classes, data-* attributes and the classes the library
+     itself applies while dragging appear in here.
+     ================================================================== */
+
+  /* The same tokens the landing page and the example index use, kept
+     inline so this folder can be copied out of the repository and still
+     look like itself. */
+  :root {
+    --ink: #16141c; --ink-soft: #57526a; --ink-faint: #8b8598;
+    --bg: #ffffff; --bg-soft: #faf9fb; --line: #e7e4ec;
+    --accent: #5b2ee5; --accent-soft: #f1ecfe;
+    --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+
+  /* Three states, the same shape V.palette() and V.theme write: the system
+     preference decides unless the visitor picked a theme, and an explicit
+     choice wins in both directions. A page pinned light while the library
+     follows the operating system is how you get dark widgets on white
+     paper with invisible labels. */
+  @media (prefers-color-scheme: dark) {
+    html:root:not([data-theme='light']) {
+      --ink: #f2f0f6; --ink-soft: #b3adc2; --ink-faint: #837d93;
+      --bg: #131118; --bg-soft: #191722; --line: #2b2735;
+      --accent: #a688ff; --accent-soft: #221c3a;
+      color-scheme: dark;
+    }
+  }
+
+  html:root[data-theme='dark'] {
+    --ink: #f2f0f6; --ink-soft: #b3adc2; --ink-faint: #837d93;
+    --bg: #131118; --bg-soft: #191722; --line: #2b2735;
+    --accent: #a688ff; --accent-soft: #221c3a;
+    color-scheme: dark;
+  }
+
+  /* Extras this page needs, kept apart from the shared token block so the
+     block above stays copy-and-paste identical everywhere it appears. */
+  :root {
+    --radius: 12px;
+    --radius-sm: 8px;
+    --wrap: 1180px;
+    --on-accent: #ffffff;
+    --danger: #b02a25;
+    --prio-high: #b02a25;
+    --prio-medium: #96690f;
+    --prio-low: #2f7a58;
+    --shadow: 0 14px 34px rgba(20, 17, 31, 0.16);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html:root:not([data-theme='light']) {
+      --on-accent: #17121f;
+      --danger: #f19189;
+      --prio-high: #e8877e;
+      --prio-medium: #d7ab63;
+      --prio-low: #74c3a0;
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  html:root[data-theme='dark'] {
+    --on-accent: #17121f;
+    --danger: #f19189;
+    --prio-high: #e8877e;
+    --prio-medium: #d7ab63;
+    --prio-low: #74c3a0;
+    --shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
+  }
+
+  /* The library paints its own built-in UI (the confirm dialog, the toasts,
+     the drag ghost) from these. Mapping them onto the page palette keeps
+     the widgets and the page in one theme. !important is required:
+     V.palette() writes :root:not([data-theme="light"]), which outranks any
+     plain selector. */
+  html:root {
+    --v-surface: var(--bg) !important;
+    --v-surface-2: var(--bg-soft) !important;
+    --v-surface-3: var(--bg-soft) !important;
+    --v-border: var(--line) !important;
+    --v-text: var(--ink) !important;
+    --v-text-muted: var(--ink-faint) !important;
+    --v-primary: var(--accent) !important;
+  }
+
+  /* ---------------- base ---------------- */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { margin: 0; line-height: 1.2; letter-spacing: -0.02em; font-weight: 640; }
+  p { margin: 0; }
+  a { color: inherit; }
+  button { font: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .kb-sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .kb-skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 40;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+  .kb-skip:focus { left: 12px; top: 12px; }
+
+  .kb-wrap {
+    width: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ---------------- top bar ---------------- */
+  .kb-top {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .kb-top-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 60px;
+    flex-wrap: wrap;
+    padding-block: 8px;
+  }
+
+  .kb-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 680;
+    font-size: 16.5px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .kb-brand svg { width: 22px; height: 22px; flex: none; }
+
+  .kb-nav { display: flex; gap: 2px; }
+
+  .kb-nav a {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .kb-nav a:hover { color: var(--ink); background: var(--bg-soft); }
+
+  /* ---------------- page ---------------- */
+  .kb-page { padding: 34px 0 60px; }
+
+  /* Keeps the interpolation braces from flashing before Voodoo starts.
+     The class comes off at the end of the script, right after V.start(). */
+  .kb-app.is-hidden { visibility: hidden; }
+
+  .kb-head {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+
+  h1 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.03em; font-weight: 700; }
+
+  .kb-lead {
+    margin-top: 8px;
+    font-size: 15.5px;
+    color: var(--ink-soft);
+    max-width: 54ch;
+  }
+
+  .kb-head-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: auto;
+  }
+
+  /* ---------------- buttons and fields ---------------- */
+  .kb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 12px;
+    font-size: 14px;
+    font-weight: 560;
+    line-height: 1.4;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+  .kb-btn:hover { background: var(--bg-soft); border-color: var(--ink-faint); }
+
+  .kb-btn--primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .kb-btn--primary:hover { background: var(--accent); border-color: var(--accent); opacity: 0.9; }
+
+  .kb-btn--quiet {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ink-soft);
+  }
+  .kb-btn--quiet:hover { background: var(--bg-soft); border-color: transparent; color: var(--ink); }
+
+  .kb-btn--sm { padding: 4px 9px; font-size: 13px; }
+  .kb-btn--danger { color: var(--danger); }
+
+  .kb-input,
+  .kb-select,
+  .kb-textarea {
+    width: 100%;
+    padding: 8px 11px;
+    font-family: inherit;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+  .kb-input::placeholder,
+  .kb-textarea::placeholder { color: var(--ink-faint); }
+  .kb-textarea { resize: vertical; min-height: 76px; }
+
+  /* ---------------- toolbar ---------------- */
+  .kb-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    margin-bottom: 18px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .kb-search { flex: 1 1 240px; min-width: 180px; }
+  .kb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .kb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    font-size: 13px;
+    font-weight: 560;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+  }
+  .kb-chip::before {
+    content: "";
+    width: 7px; height: 7px; flex: none;
+    border-radius: 50%;
+    background: var(--kb-color, var(--ink-faint));
+  }
+  .kb-chip:hover { border-color: var(--ink-faint); color: var(--ink); }
+  .kb-chip.is-active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    font-weight: 640;
+  }
+
+  .kb-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+
+  .kb-summary {
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- board ----------------
+     The board is its own horizontal scroll area, so four columns can be
+     narrower than the viewport without the page ever scrolling sideways. */
+  .kb-board {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+  }
+
+  .kb-col {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 250px;
+    max-height: min(70vh, 620px);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .kb-col__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 11px 11px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .kb-col__name {
+    font-size: 12.5px;
+    font-weight: 660;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kb-count {
+    padding: 1px 8px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kb-spacer { flex: 1 1 auto; }
+
+  .kb-add {
+    flex: none;
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--ink-faint);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+  }
+  .kb-add:hover { background: var(--bg-soft); border-color: var(--line); color: var(--accent); }
+  .kb-add svg { width: 15px; height: 15px; }
+
+  /* The body is what scrolls. The list fills the free height so the whole
+     column is a drop area, even when it holds nothing. */
+  .kb-col__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 150px;
+    overflow-y: auto;
+    padding: 12px;
+    scrollbar-width: thin;
+  }
+
+  .kb-list {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-height: 80px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Empty-column notice. It has to stay out of the way of the pointer,
+     otherwise the drag never sees the list underneath it. */
+  .kb-empty {
+    position: absolute;
+    inset: 12px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    pointer-events: none;
+    font-size: 13.5px;
+    color: var(--ink-faint);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ---------------- card ---------------- */
+  .kb-card {
+    --kb-prio: var(--line);
+    position: relative;
+    display: flex;
+    gap: 8px;
+    padding: 11px 12px 11px 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    transition: border-color 140ms ease;
+  }
+  .kb-card::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px; bottom: 9px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--kb-prio);
+  }
+  .kb-card:hover { border-color: var(--ink-faint); }
+  .kb-card[data-priority="high"]   { --kb-prio: var(--prio-high); }
+  .kb-card[data-priority="medium"] { --kb-prio: var(--prio-medium); }
+  .kb-card[data-priority="low"]    { --kb-prio: var(--prio-low); }
+
+  /* Drag handle. Keeping touch-action: none on the handle alone leaves the
+     rest of the card clickable and lets a finger scroll the column. */
+  .kb-handle {
+    flex: none;
+    width: 14px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--ink-faint);
+    opacity: 0.45;
+    cursor: grab;
+    touch-action: none;
+    transition: opacity 140ms ease;
+  }
+  .kb-card:hover .kb-handle,
+  .kb-card:focus-within .kb-handle { opacity: 1; }
+  .kb-handle svg { width: 10px; height: 16px; fill: currentColor; pointer-events: none; }
+
+  .kb-card__body { flex: 1 1 auto; min-width: 0; }
+
+  .kb-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .kb-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 9px 1px 7px;
+    font-size: 11.5px;
+    font-weight: 620;
+    letter-spacing: 0.01em;
+    color: var(--ink-soft);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  .kb-tag::before {
+    content: "";
+    width: 6px; height: 6px; flex: none;
+    border-radius: 50%;
+    background: var(--kb-color, var(--ink-faint));
+  }
+
+  .kb-priority { font-size: 12px; color: var(--ink-faint); }
+
+  .kb-card__title {
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .kb-card__text {
+    margin-top: 5px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    overflow-wrap: anywhere;
+  }
+
+  .kb-card__actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 9px;
+    opacity: 0.7;
+    transition: opacity 140ms ease;
+  }
+  .kb-card:hover .kb-card__actions,
+  .kb-card:focus-within .kb-card__actions { opacity: 1; }
+
+  /* ---------------- drag and drop feedback ----------------
+     The library injects its own CSS into <head> at runtime, which means
+     after this block. Every rule here uses two classes so it wins on
+     selector weight. */
+  .kb-list .kb-card.v-dragging {
+    opacity: 0.35;
+    outline: 2px dashed var(--accent);
+    outline-offset: -2px;
+  }
+  .kb-card.v-grabbed {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .kb-card.v-drag-ghost {
+    position: fixed;
+    margin: 0;
+    opacity: 0.96;
+    background: var(--bg);
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+  .kb-col .kb-list.v-drop-active {
+    outline: 1px dashed var(--line);
+    outline-offset: 4px;
+    background: transparent;
+  }
+  .kb-col .kb-list.v-drop-over {
+    outline: 2px dashed var(--accent);
+    outline-offset: 4px;
+    background: var(--accent-soft);
+  }
+
+  /* ---------------- modal ---------------- */
+  .kb-modal-root {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .kb-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(16, 14, 22, 0.5);
+  }
+
+  .kb-modal {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 520px;
+    max-height: min(88vh, 660px);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  /* The form carries the body and the footer, so it repeats the panel's
+     flexible column and only the body scrolls. */
+  .kb-modal form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .kb-modal__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .kb-modal__title { font-size: 17px; }
+
+  .kb-modal__close {
+    margin-left: auto;
+    flex: none;
+    width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ink-faint);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .kb-modal__close:hover { background: var(--bg-soft); border-color: var(--line); color: var(--ink); }
+
+  .kb-modal__body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 18px;
+  }
+
+  .kb-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 18px;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--line);
+  }
+
+  .kb-field + .kb-field,
+  .kb-field + .kb-grid,
+  .kb-grid + .kb-field { margin-top: 14px; }
+
+  .kb-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 620;
+    color: var(--ink-soft);
+  }
+
+  .kb-error {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--danger);
+  }
+
+  .kb-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  /* ---------------- hint ---------------- */
+  .kb-hint {
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--ink-faint);
+    text-align: center;
+  }
+
+  .kb-kbd {
+    display: inline-block;
+    margin: 0 2px;
+    padding: 1px 6px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+  }
+
+  /* ---------------- small screens ---------------- */
+  @media (max-width: 640px) {
+    .kb-wrap { padding: 0 16px; }
+    .kb-page { padding: 26px 0 48px; }
+    .kb-head-actions { margin-left: 0; }
+    .kb-toolbar-end { margin-left: 0; width: 100%; }
+    .kb-grid { grid-template-columns: minmax(0, 1fr); }
+    .kb-col { max-height: 74vh; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<a class="kb-skip" href="#main">Skip to content</a>
+
+<div class="kb-top">
+  <div class="kb-wrap kb-top-in">
+    <a class="kb-brand" href="../">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
+      </svg>
+      Voodoo.js
+    </a>
+
+    <nav class="kb-nav" aria-label="Breadcrumb">
+      <a href="../../">Home</a>
+      <a href="../">All examples</a>
+    </nav>
+  </div>
+</div>
+
+<main id="main" class="kb-wrap kb-page">
+<div class="kb-app is-hidden" v-component="kanban-board">
+
+  <header class="kb-head">
+    <div>
+      <h1>Kanban board</h1>
+      <p class="kb-lead">Drag the cards between the columns with the mouse, a finger or the
+        keyboard. Everything stays saved in this browser.</p>
+    </div>
+    <div class="kb-head-actions">
+      <button class="kb-btn kb-btn--sm" type="button" v-click="restoreSample">Restore the sample</button>
+      <button class="kb-btn kb-btn--sm" type="button" v-click="toggleTheme">
+        { theme === 'dark' ? 'Light theme' : 'Dark theme' }
+      </button>
+    </div>
+  </header>
+
+  <section class="kb-toolbar" aria-label="Board filters">
+    <div class="kb-search">
+      <label class="kb-sr-only" for="kb-search">Search the cards</label>
+      <input id="kb-search" class="kb-input" type="search" placeholder="Search by title or description"
+             v-model="search" v-debounce="200">
+    </div>
+
+    <div class="kb-chips" role="group" aria-label="Filter by label">
+      <button class="kb-chip" type="button" v-click="filterByLabel('')"
+              v-class="{ 'is-active': !labelFilter }"
+              :aria-pressed="!labelFilter ? 'true' : 'false'">
+        All
+      </button>
+      <button class="kb-chip" type="button" v-for="tag in labels" :key="tag.id"
+              :style="{ '--kb-color': tag.color }"
+              v-class="{ 'is-active': labelFilter === tag.id }"
+              :aria-pressed="labelFilter === tag.id ? 'true' : 'false'"
+              v-click="filterByLabel(tag.id)">
+        { tag.name }
+      </button>
+    </div>
+
+    <div class="kb-toolbar-end">
+      <p class="kb-summary">{ summary }</p>
+      <button class="kb-btn kb-btn--sm" type="button" v-show="hasFilter" v-click="clearFilters">
+        Clear filters
+      </button>
+    </div>
+  </section>
+
+  <!-- The four columns are written out by hand rather than generated with
+       v-for. That way every card list is walked on the initial page load,
+       which is when Voodoo wires up the reactivity behind v-for.
+
+       All the lists share the "board" group, so a card travels freely from
+       one column to another. -->
+  <div class="kb-board" v-dnd-group="board">
+
+    <!-- ---------- To do ---------- -->
+    <section class="kb-col">
+      <header class="kb-col__top">
+        <h2 class="kb-col__name">To do</h2>
+        <span class="kb-count">{ counts.todo.visible }</span>
+        <span class="kb-spacer"></span>
+        <button class="kb-add" type="button" v-click="openNew('todo')" aria-label="New card in To do">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-col__body">
+        <ul class="kb-list" v-sortable v-sortable-group="board" v-sortable-handle=".kb-handle"
+            data-column="todo" aria-label="Cards in To do"
+            @voodoo:sorted="onSorted($event)">
+          <li class="kb-card" v-for="card in byColumn.todo" :key="card.id"
+              :data-id="card.id" :data-priority="card.priority"
+              v-show="isVisible(card)">
+            <span class="kb-handle" aria-hidden="true">
+              <svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>
+            </span>
+            <div class="kb-card__body">
+              <div class="kb-card__meta">
+                <span class="kb-tag" :style="{ '--kb-color': labelColor(card.label) }">{ labelName(card.label) }</span>
+                <span class="kb-priority">Priority: { priorityName(card.priority) }</span>
+              </div>
+              <h3 class="kb-card__title">{ card.title }</h3>
+              <p class="kb-card__text" v-show="card.description">{ card.description }</p>
+              <div class="kb-card__actions" @keydown.space.stop="noop()">
+                <button class="kb-btn kb-btn--quiet kb-btn--sm" type="button" v-click.stop="openEdit(card)">Edit</button>
+                <button class="kb-btn kb-btn--quiet kb-btn--sm kb-btn--danger" type="button" v-click.stop="removeCard(card)">Delete</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-empty" v-show="counts.todo.visible === 0">
+          { counts.todo.total ? 'No card matches the current filter.' : 'Nothing here yet. Drop a card in this column.' }
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- In progress ---------- -->
+    <section class="kb-col">
+      <header class="kb-col__top">
+        <h2 class="kb-col__name">In progress</h2>
+        <span class="kb-count">{ counts.doing.visible }</span>
+        <span class="kb-spacer"></span>
+        <button class="kb-add" type="button" v-click="openNew('doing')" aria-label="New card in In progress">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-col__body">
+        <ul class="kb-list" v-sortable v-sortable-group="board" v-sortable-handle=".kb-handle"
+            data-column="doing" aria-label="Cards in In progress"
+            @voodoo:sorted="onSorted($event)">
+          <li class="kb-card" v-for="card in byColumn.doing" :key="card.id"
+              :data-id="card.id" :data-priority="card.priority"
+              v-show="isVisible(card)">
+            <span class="kb-handle" aria-hidden="true">
+              <svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>
+            </span>
+            <div class="kb-card__body">
+              <div class="kb-card__meta">
+                <span class="kb-tag" :style="{ '--kb-color': labelColor(card.label) }">{ labelName(card.label) }</span>
+                <span class="kb-priority">Priority: { priorityName(card.priority) }</span>
+              </div>
+              <h3 class="kb-card__title">{ card.title }</h3>
+              <p class="kb-card__text" v-show="card.description">{ card.description }</p>
+              <div class="kb-card__actions" @keydown.space.stop="noop()">
+                <button class="kb-btn kb-btn--quiet kb-btn--sm" type="button" v-click.stop="openEdit(card)">Edit</button>
+                <button class="kb-btn kb-btn--quiet kb-btn--sm kb-btn--danger" type="button" v-click.stop="removeCard(card)">Delete</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-empty" v-show="counts.doing.visible === 0">
+          { counts.doing.total ? 'No card matches the current filter.' : 'Nothing here yet. Drop a card in this column.' }
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- In review ---------- -->
+    <section class="kb-col">
+      <header class="kb-col__top">
+        <h2 class="kb-col__name">In review</h2>
+        <span class="kb-count">{ counts.review.visible }</span>
+        <span class="kb-spacer"></span>
+        <button class="kb-add" type="button" v-click="openNew('review')" aria-label="New card in In review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-col__body">
+        <ul class="kb-list" v-sortable v-sortable-group="board" v-sortable-handle=".kb-handle"
+            data-column="review" aria-label="Cards in In review"
+            @voodoo:sorted="onSorted($event)">
+          <li class="kb-card" v-for="card in byColumn.review" :key="card.id"
+              :data-id="card.id" :data-priority="card.priority"
+              v-show="isVisible(card)">
+            <span class="kb-handle" aria-hidden="true">
+              <svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>
+            </span>
+            <div class="kb-card__body">
+              <div class="kb-card__meta">
+                <span class="kb-tag" :style="{ '--kb-color': labelColor(card.label) }">{ labelName(card.label) }</span>
+                <span class="kb-priority">Priority: { priorityName(card.priority) }</span>
+              </div>
+              <h3 class="kb-card__title">{ card.title }</h3>
+              <p class="kb-card__text" v-show="card.description">{ card.description }</p>
+              <div class="kb-card__actions" @keydown.space.stop="noop()">
+                <button class="kb-btn kb-btn--quiet kb-btn--sm" type="button" v-click.stop="openEdit(card)">Edit</button>
+                <button class="kb-btn kb-btn--quiet kb-btn--sm kb-btn--danger" type="button" v-click.stop="removeCard(card)">Delete</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-empty" v-show="counts.review.visible === 0">
+          { counts.review.total ? 'No card matches the current filter.' : 'Nothing here yet. Drop a card in this column.' }
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Done ---------- -->
+    <section class="kb-col">
+      <header class="kb-col__top">
+        <h2 class="kb-col__name">Done</h2>
+        <span class="kb-count">{ counts.done.visible }</span>
+        <span class="kb-spacer"></span>
+        <button class="kb-add" type="button" v-click="openNew('done')" aria-label="New card in Done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </header>
+      <div class="kb-col__body">
+        <ul class="kb-list" v-sortable v-sortable-group="board" v-sortable-handle=".kb-handle"
+            data-column="done" aria-label="Cards in Done"
+            @voodoo:sorted="onSorted($event)">
+          <li class="kb-card" v-for="card in byColumn.done" :key="card.id"
+              :data-id="card.id" :data-priority="card.priority"
+              v-show="isVisible(card)">
+            <span class="kb-handle" aria-hidden="true">
+              <svg viewBox="0 0 10 16" aria-hidden="true"><circle cx="3" cy="3" r="1"/><circle cx="7" cy="3" r="1"/><circle cx="3" cy="8" r="1"/><circle cx="7" cy="8" r="1"/><circle cx="3" cy="13" r="1"/><circle cx="7" cy="13" r="1"/></svg>
+            </span>
+            <div class="kb-card__body">
+              <div class="kb-card__meta">
+                <span class="kb-tag" :style="{ '--kb-color': labelColor(card.label) }">{ labelName(card.label) }</span>
+                <span class="kb-priority">Priority: { priorityName(card.priority) }</span>
+              </div>
+              <h3 class="kb-card__title">{ card.title }</h3>
+              <p class="kb-card__text" v-show="card.description">{ card.description }</p>
+              <div class="kb-card__actions" @keydown.space.stop="noop()">
+                <button class="kb-btn kb-btn--quiet kb-btn--sm" type="button" v-click.stop="openEdit(card)">Edit</button>
+                <button class="kb-btn kb-btn--quiet kb-btn--sm kb-btn--danger" type="button" v-click.stop="removeCard(card)">Delete</button>
+              </div>
+            </div>
+          </li>
+        </ul>
+        <p class="kb-empty" v-show="counts.done.visible === 0">
+          { counts.done.total ? 'No card matches the current filter.' : 'Nothing here yet. Drop a card in this column.' }
+        </p>
+      </div>
+    </section>
+
+  </div>
+
+  <p class="kb-hint">
+    From the keyboard: reach a card with <kbd class="kb-kbd">Tab</kbd>,
+    pick it up with <kbd class="kb-kbd">Space</kbd>, move it with the arrow keys and drop it with
+    <kbd class="kb-kbd">Space</kbd> again. <kbd class="kb-kbd">Esc</kbd> cancels the drag.
+  </p>
+
+  <!-- Create and edit modal, mounted with v-if. -->
+  <div class="kb-modal-root" v-if="modalOpen" v-transition="fade" v-escape="closeModal()">
+    <div class="kb-backdrop" v-click="closeModal()"></div>
+
+    <div class="kb-modal" v-focus-trap
+         role="dialog" aria-modal="true" aria-labelledby="kb-modal-title">
+      <div class="kb-modal__header">
+        <h2 class="kb-modal__title" id="kb-modal-title">{ modalTitle }</h2>
+        <button class="kb-modal__close" type="button" v-click="closeModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <form @submit.prevent="saveCard()">
+        <div class="kb-modal__body">
+          <div class="kb-field">
+            <label class="kb-label" for="kb-field-title">Title</label>
+            <input id="kb-field-title" class="kb-input" type="text" maxlength="80"
+                   placeholder="What needs to be done?" v-model="draft.title">
+            <p class="kb-error" v-show="error">{ error }</p>
+          </div>
+
+          <div class="kb-field">
+            <label class="kb-label" for="kb-field-description">Description</label>
+            <textarea id="kb-field-description" class="kb-textarea" rows="3" maxlength="240"
+                      placeholder="Details, acceptance criteria, links" v-model="draft.description"></textarea>
+          </div>
+
+          <div class="kb-grid">
+            <div class="kb-field">
+              <label class="kb-label" for="kb-field-label">Label</label>
+              <select id="kb-field-label" class="kb-select" v-model="draft.label">
+                <option v-for="tag in labels" :key="tag.id" :value="tag.id">{ tag.name }</option>
+              </select>
+            </div>
+            <div class="kb-field">
+              <label class="kb-label" for="kb-field-priority">Priority</label>
+              <select id="kb-field-priority" class="kb-select" v-model="draft.priority">
+                <option v-for="pri in priorities" :key="pri.id" :value="pri.id">{ pri.name }</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="kb-field">
+            <label class="kb-label" for="kb-field-column">Column</label>
+            <select id="kb-field-column" class="kb-select" v-model="draft.column">
+              <option v-for="col in columns" :key="col.id" :value="col.id">{ col.name }</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kb-modal__footer">
+          <button class="kb-btn" type="button" v-click="closeModal()">Cancel</button>
+          <button class="kb-btn kb-btn--primary" type="submit">{ editingId ? 'Save changes' : 'Create card' }</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* Key this board is stored under in localStorage. */
+  var KEY = 'voodoo:kanban:board';
+
+  /* The ids below also appear in the HTML, in data-column. Changing one
+     side asks for a change on the other. */
+  var COLUMNS = [
+    { id: 'todo',   name: 'To do' },
+    { id: 'doing',  name: 'In progress' },
+    { id: 'review', name: 'In review' },
+    { id: 'done',   name: 'Done' }
+  ];
+
+  var LABELS = [
+    { id: 'bug',         name: 'Bug',         color: '#c2453c' },
+    { id: 'improvement', name: 'Improvement', color: '#2f7d5c' },
+    { id: 'urgent',      name: 'Urgent',      color: '#b03f74' },
+    { id: 'design',      name: 'Design',      color: '#6d4de6' },
+    { id: 'docs',        name: 'Docs',        color: '#2f6f9e' }
+  ];
+
+  var PRIORITIES = [
+    { id: 'high',   name: 'High' },
+    { id: 'medium', name: 'Medium' },
+    { id: 'low',    name: 'Low' }
+  ];
+
+  /* ------------------------------------------------------------------
+     Data helpers
+     ------------------------------------------------------------------ */
+
+  function card(id, title, description, label, priority, column) {
+    return {
+      id: id,
+      title: title,
+      description: description,
+      label: label,
+      priority: priority,
+      column: column
+    };
+  }
+
+  function sample() {
+    return [
+      card('c-01', 'Design the pricing page', 'Three plans, with the middle one highlighted.', 'design', 'high', 'todo'),
+      card('c-02', 'Write the install guide', 'Step by step, with the CDN and with npm.', 'docs', 'medium', 'todo'),
+      card('c-03', 'Filter the board by label', 'It has to work alongside the text search.', 'improvement', 'low', 'todo'),
+      card('c-04', 'Drag a card on a phone', 'Check touch and the automatic column scroll.', 'urgent', 'high', 'doing'),
+      card('c-05', 'Modal closes on Esc', 'It also has to close on an outside click and on the button.', 'improvement', 'medium', 'doing'),
+      card('c-06', 'Button contrast in the dark theme', 'The text disappears on the light purple.', 'bug', 'high', 'review'),
+      card('c-07', 'Review the interface copy', 'No stray gerunds and no abbreviations.', 'docs', 'low', 'review'),
+      card('c-08', 'Save the board in the browser', 'Reloading the page has to bring everything back.', 'improvement', 'medium', 'done'),
+      card('c-09', 'Light and dark themes', 'Every colour coming out of the design tokens.', 'design', 'low', 'done')
+    ];
+  }
+
+  /* Checks that a value is one of the known options. */
+  function oneOf(value, list, fallback) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === value) return value;
+    }
+    return fallback;
+  }
+
+  function text(value) {
+    return typeof value === 'string' ? value : '';
+  }
+
+  /* Reads the saved board. Returns null when nothing was ever stored, and
+     an array, possibly empty, when a valid board exists. */
+  function load() {
+    var saved = V.storage.get(KEY, null);
+    if (!saved || !Array.isArray(saved.cards)) return null;
+
+    var list = [];
+    saved.cards.forEach(function (raw) {
+      if (!raw || typeof raw !== 'object') return;
+      var id = text(raw.id);
+      var title = text(raw.title).trim();
+      if (!id || !title) return;
+      list.push(card(
+        id,
+        title,
+        text(raw.description),
+        oneOf(raw.label, LABELS, 'improvement'),
+        oneOf(raw.priority, PRIORITIES, 'medium'),
+        oneOf(raw.column, COLUMNS, COLUMNS[0].id)
+      ));
+    });
+    return list;
+  }
+
+  /* ------------------------------------------------------------------
+     Component
+     ------------------------------------------------------------------ */
+
+  V.component('kanban-board', {
+
+    state: function () {
+      var stored = load();
+      return {
+        columns: COLUMNS,
+        labels: LABELS,
+        priorities: PRIORITIES,
+
+        /* A single list holding every card. The column a card sits in is a
+           field, and its position inside the column is the array order. */
+        cards: stored === null ? sample() : stored,
+
+        search: '',
+        labelFilter: '',
+
+        modalOpen: false,
+        editingId: null,
+        error: '',
+        draft: {
+          title: '',
+          description: '',
+          label: 'improvement',
+          priority: 'medium',
+          column: COLUMNS[0].id
+        },
+
+        theme: V.theme.resolved
+      };
+    },
+
+    computed: {
+
+      /* Cards grouped by column, in the array's own order. This is where
+         every list on the board gets its v-for from. */
+      byColumn: function () {
+        var map = {};
+        this.columns.forEach(function (col) { map[col.id] = []; });
+        this.cards.forEach(function (c) {
+          if (map[c.column]) map[c.column].push(c);
+        });
+        return map;
+      },
+
+      /* Total and visible count per column, for the counter in the header. */
+      counts: function () {
+        var self = this;
+        var map = {};
+        this.columns.forEach(function (col) { map[col.id] = { total: 0, visible: 0 }; });
+        this.cards.forEach(function (c) {
+          var target = map[c.column];
+          if (!target) return;
+          target.total += 1;
+          if (self.isVisible(c)) target.visible += 1;
+        });
+        return map;
+      },
+
+      visibleTotal: function () {
+        var self = this;
+        return this.cards.filter(function (c) { return self.isVisible(c); }).length;
+      },
+
+      hasFilter: function () {
+        return !!this.labelFilter || !!String(this.search).trim();
+      },
+
+      summary: function () {
+        var total = this.cards.length;
+        if (!this.hasFilter) {
+          return total + (total === 1 ? ' card on the board' : ' cards on the board');
+        }
+        return this.visibleTotal + ' of ' + total + ' cards';
+      },
+
+      modalTitle: function () {
+        return this.editingId ? 'Edit card' : 'New card';
+      }
+    },
+
+    methods: {
+
+      /* ---------- simple lookups ---------- */
+
+      isVisible: function (c) {
+        if (this.labelFilter && c.label !== this.labelFilter) return false;
+        var term = String(this.search).trim().toLowerCase();
+        if (!term) return true;
+        return (c.title + ' ' + c.description).toLowerCase().indexOf(term) !== -1;
+      },
+
+      labelColor: function (id) {
+        for (var i = 0; i < LABELS.length; i++) {
+          if (LABELS[i].id === id) return LABELS[i].color;
+        }
+        return 'var(--ink-faint)';
+      },
+
+      labelName: function (id) {
+        for (var i = 0; i < LABELS.length; i++) {
+          if (LABELS[i].id === id) return LABELS[i].name;
+        }
+        return 'No label';
+      },
+
+      priorityName: function (id) {
+        for (var i = 0; i < PRIORITIES.length; i++) {
+          if (PRIORITIES[i].id === id) return PRIORITIES[i].name;
+        }
+        return 'Medium';
+      },
+
+      /* The sortable list uses the space bar to pick a card up and put it
+         down. On the buttons inside a card the same key has to keep
+         activating the button, so the event stops before it reaches the
+         list. This method exists only to give that @keydown a body. */
+      noop: function () {
+        return undefined;
+      },
+
+      /* ---------- filters ---------- */
+
+      filterByLabel: function (id) {
+        this.labelFilter = this.labelFilter === id ? '' : id;
+      },
+
+      clearFilters: function () {
+        this.search = '';
+        this.labelFilter = '';
+      },
+
+      /* ---------- drag and drop ----------
+
+         By the time this method runs, v-sortable has already moved the node
+         in the DOM. The work here is to rebuild the array so it tells the
+         very same story, otherwise the next render undoes the move.
+
+         The event carries in detail: { item, oldIndex, newIndex, from, to,
+         order }. The order field is the list of data-id values for that
+         list in its new order, which is why every card carries :data-id.
+         When a card changes column the event fires twice, once per list,
+         each time with the order of the list that fired it. So the column
+         to rebuild is decided by the list that received the event, not by
+         detail.to.
+
+         One detail that matters: the filter hides a card with v-show, it
+         never removes it from the v-for. That keeps order describing the
+         whole column, so no hidden card is lost in the rebuild. */
+      onSorted: function (event) {
+        var detail = event.detail || {};
+        var list = event.currentTarget || event.target;
+        if (!list || typeof list.getAttribute !== 'function') return;
+
+        var columnId = list.getAttribute('data-column');
+        var order = Array.isArray(detail.order) ? detail.order : [];
+        if (!columnId || !order.length) return;
+
+        this.applyOrder(columnId, order);
+      },
+
+      /* Rebuilds the whole list from one column's new order. */
+      applyOrder: function (columnId, order) {
+        var map = {};
+        this.cards.forEach(function (c) { map[c.id] = c; });
+
+        /* Every card named in the order now belongs to this column. */
+        var named = {};
+        var inColumn = [];
+        order.forEach(function (id) {
+          var target = map[id];
+          if (!target || named[id]) return;
+          named[id] = true;
+          target.column = columnId;
+          inColumn.push(target);
+        });
+        if (!inColumn.length) return;
+
+        var others = this.cards.filter(function (c) { return !named[c.id]; });
+
+        /* Rebuild column by column, keeping the relative order of every
+           card that was not touched. */
+        var next = [];
+        this.columns.forEach(function (col) {
+          if (col.id === columnId) {
+            inColumn.forEach(function (c) { next.push(c); });
+          }
+          others.forEach(function (c) { if (c.column === col.id) next.push(c); });
+        });
+
+        /* Safety net: no card may vanish during the rebuild. */
+        var inside = {};
+        next.forEach(function (c) { inside[c.id] = true; });
+        this.cards.forEach(function (c) { if (!inside[c.id]) next.push(c); });
+
+        this.cards = next;
+        this.save();
+      },
+
+      /* ---------- modal ---------- */
+
+      openNew: function (columnId) {
+        this.editingId = null;
+        this.error = '';
+        this.draft = {
+          title: '',
+          description: '',
+          label: 'improvement',
+          priority: 'medium',
+          column: oneOf(columnId, COLUMNS, COLUMNS[0].id)
+        };
+        this.modalOpen = true;
+        this.focusTitle();
+      },
+
+      openEdit: function (c) {
+        this.editingId = c.id;
+        this.error = '';
+        this.draft = {
+          title: c.title,
+          description: c.description,
+          label: c.label,
+          priority: c.priority,
+          column: c.column
+        };
+        this.modalOpen = true;
+        this.focusTitle();
+      },
+
+      closeModal: function () {
+        this.modalOpen = false;
+        this.editingId = null;
+        this.error = '';
+      },
+
+      /* The field only exists once v-if has mounted the modal, so the focus
+         waits for the update queue to finish. */
+      focusTitle: function () {
+        V.nextTick(function () {
+          var field = document.getElementById('kb-field-title');
+          if (field) field.focus();
+        });
+      },
+
+      saveCard: function () {
+        var title = String(this.draft.title || '').trim();
+        if (!title) {
+          this.error = 'Write a title for the card.';
+          this.focusTitle();
+          return;
+        }
+
+        var description = String(this.draft.description || '').trim();
+        var label = oneOf(this.draft.label, LABELS, 'improvement');
+        var priority = oneOf(this.draft.priority, PRIORITIES, 'medium');
+        var column = oneOf(this.draft.column, COLUMNS, COLUMNS[0].id);
+
+        if (this.editingId) {
+          var wanted = this.editingId;
+          var target = null;
+          this.cards.forEach(function (c) { if (c.id === wanted) target = c; });
+          if (target) {
+            target.title = title;
+            target.description = description;
+            target.label = label;
+            target.priority = priority;
+            target.column = column;
+          }
+          V.toast.success('Card updated.');
+        } else {
+          this.cards.push(card(V.uid('card-'), title, description, label, priority, column));
+          V.toast.success('Card created.');
+        }
+
+        this.save();
+        this.closeModal();
+      },
+
+      /* ---------- delete and restore ---------- */
+
+      removeCard: function (c) {
+        var self = this;
+        var id = c.id;
+        V.confirm('The card "' + c.title + '" will be removed from the board.', {
+          title: 'Delete the card?',
+          danger: true,
+          confirmLabel: 'Delete'
+        }).then(function (confirmed) {
+          if (!confirmed) return;
+          self.cards = self.cards.filter(function (item) { return item.id !== id; });
+          self.save();
+          V.toast.success('Card deleted.');
+        });
+      },
+
+      restoreSample: function () {
+        var self = this;
+        V.confirm('The current board will be erased and the sample cards come back.', {
+          title: 'Restore the sample?',
+          danger: true,
+          confirmLabel: 'Restore'
+        }).then(function (confirmed) {
+          if (!confirmed) return;
+          self.cards = sample();
+          self.clearFilters();
+          self.save();
+          V.toast.info('Board restored.');
+        });
+      },
+
+      /* ---------- theme and persistence ---------- */
+
+      toggleTheme: function () {
+        this.theme = V.theme.toggle();
+      },
+
+      save: function () {
+        var list = this.cards.map(function (c) {
+          return card(c.id, c.title, c.description, c.label, c.priority, c.column);
+        });
+        V.storage.set(KEY, { version: 1, cards: list });
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+
+  /* The board is mounted, so now it can show. */
+  var app = document.querySelector('.kb-app');
+  if (app) app.classList.remove('is-hidden');
+});
+</script>
+
+</body>
+</html>

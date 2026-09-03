@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Condicionais · Documentação da Voodoo.js</title>
-<meta name="description" content="v-show alterna o CSS, v-if insere e remove o elemento. Quando usar cada um, como encadear v-else-if e v-else, e o que acontece com o estado do que está dentro.">
+<title>Conditionals · Voodoo.js documentation</title>
+<meta name="description" content="v-show toggles the CSS, v-if inserts and removes the element. When to use each, how to chain v-else-if and v-else, and what happens to the state of whatever is inside.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/condicionais">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,158 +14,158 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Condicionais</h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>Conditionals</h1>
 <p class="doc-resumo">
-  Um trecho da página só deve aparecer em certas situações. Existem dois caminhos para isso, e a
-  escolha entre eles muda o desempenho e o que acontece com o estado do que está dentro.
+  Part of the page should only show up in certain situations. There are two roads to that, and the
+  choice between them changes performance and what happens to the state of whatever is inside.
 </p>
 
-<h2 id="v-show">v-show alterna o CSS</h2>
+<h2 id="v-show">v-show toggles the CSS</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ aberto: false }"&gt;
-  &lt;button @click="aberto = !aberto"&gt;Detalhes&lt;/button&gt;
-  &lt;div v-show="aberto"&gt;Este bloco continua no DOM o tempo todo.&lt;/div&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ open: false }"&gt;
+  &lt;button @click="open = !open"&gt;Details&lt;/button&gt;
+  &lt;div v-show="open"&gt;This block stays in the DOM the whole time.&lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-show</code> só mexe no <code>display</code>. O elemento nunca sai do documento: ele
-  existe, ocupa lugar na árvore, mantém o que foi digitado dentro dele e continua acessível a
-  <code>querySelector</code>.
+  <code>v-show</code> only touches <code>display</code>. The element never leaves the document: it
+  exists, it holds its place in the tree, it keeps whatever was typed inside it and it stays
+  reachable by <code>querySelector</code>.
 </p>
 
-<h2 id="v-if">v-if insere e remove</h2>
+<h2 id="v-if">v-if inserts and removes</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ nota: 7 }"&gt;
-  &lt;input type="range" min="0" max="10" v-model.number="nota"&gt;
-  &lt;p&gt;Nota: { nota }&lt;/p&gt;
-  &lt;p v-if="nota &gt;= 9"&gt;Ótimo&lt;/p&gt;
-  &lt;p v-else-if="nota &gt;= 6"&gt;Bom&lt;/p&gt;
-  &lt;p v-else&gt;Precisa melhorar&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ grade: 7 }"&gt;
+  &lt;input type="range" min="0" max="10" v-model.number="grade"&gt;
+  &lt;p&gt;Grade: { grade }&lt;/p&gt;
+  &lt;p v-if="grade &gt;= 9"&gt;Excellent&lt;/p&gt;
+  &lt;p v-else-if="grade &gt;= 6"&gt;Good&lt;/p&gt;
+  &lt;p v-else&gt;Needs work&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-if</code> cria e destrói o elemento de verdade. No lugar dele fica um nó de comentário,
-  que serve de âncora para a biblioteca saber onde reinserir quando a condição voltar a ser
-  verdadeira.
+  <code>v-if</code> really does create and destroy the element. What stays in its place is a
+  comment node, which the library uses as an anchor to know where to reinsert once the condition
+  becomes true again.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Irmãos imediatos</span>
+  <span class="doc-aviso__rotulo">Immediate siblings</span>
   <p>
-    <code>v-else-if</code> e <code>v-else</code> precisam ser irmãos imediatos do
-    <code>v-if</code>, sem nada no meio. Um comentário HTML entre eles quebra a corrente, e o
-    <code>v-else</code> passa a ser um elemento solto, sempre visível.
+    <code>v-else-if</code> and <code>v-else</code> have to be immediate siblings of the
+    <code>v-if</code>, with nothing in between. An HTML comment between them breaks the chain, and
+    the <code>v-else</code> becomes a loose element that is always visible.
   </p>
 </div>
 
-<h2 id="template">Condicionando um grupo sem inventar uma div</h2>
+<h2 id="template">Conditioning a group without inventing a div</h2>
 
 <p>
-  Quando o que você quer esconder são vários elementos irmãos, e envolver tudo em uma
-  <code>&lt;div&gt;</code> estragaria o layout — dentro de uma tabela, de uma lista ou de um
-  <i>grid</i> —, use <code>&lt;template&gt;</code>. Ele não vira elemento nenhum na tela.
+  When what you want to hide is several sibling elements, and wrapping them in a
+  <code>&lt;div&gt;</code> would wreck the layout — inside a table, a list or a <i>grid</i> — use
+  <code>&lt;template&gt;</code>. It becomes no element at all on screen.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ carregado: true }"&gt;
-  &lt;button @click="carregado = !carregado"&gt;Alternar&lt;/button&gt;
-  &lt;template v-if="carregado"&gt;
-    &lt;h4&gt;Título&lt;/h4&gt;
-    &lt;p&gt;Os dois elementos aparecem e somem juntos, sem nenhum invólucro.&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ loaded: true }"&gt;
+  &lt;button @click="loaded = !loaded"&gt;Toggle&lt;/button&gt;
+  &lt;template v-if="loaded"&gt;
+    &lt;h4&gt;Title&lt;/h4&gt;
+    &lt;p&gt;Both elements appear and disappear together, with no wrapper.&lt;/p&gt;
   &lt;/template&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="qual-usar">Qual usar</h2>
+<h2 id="qual-usar">Which one to use</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Use</th></tr></thead>
+<thead><tr><th>Situation</th><th>Use</th></tr></thead>
 <tbody>
-<tr><td>Alterna muitas vezes, como um acordeão</td><td><code>v-show</code></td></tr>
-<tr><td>Quase nunca aparece, ou é pesado</td><td><code>v-if</code></td></tr>
-<tr><td>Precisa desmontar o que está dentro</td><td><code>v-if</code></td></tr>
-<tr><td>Precisa manter o estado do que está dentro</td><td><code>v-show</code></td></tr>
-<tr><td>Depende de dados que ainda não chegaram</td><td><code>v-if</code></td></tr>
+<tr><td>Toggles often, like an accordion</td><td><code>v-show</code></td></tr>
+<tr><td>Almost never shows up, or is heavy</td><td><code>v-if</code></td></tr>
+<tr><td>Has to unmount what is inside</td><td><code>v-if</code></td></tr>
+<tr><td>Has to keep the state of what is inside</td><td><code>v-show</code></td></tr>
+<tr><td>Depends on data that has not arrived yet</td><td><code>v-if</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  A diferença fica visível em um campo de texto. Digite nos dois e alterne:
+  The difference is visible in a text field. Type into both and toggle:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ visivel: true }"&gt;
-  &lt;button @click="visivel = !visivel"&gt;Esconder e mostrar&lt;/button&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ visible: true }"&gt;
+  &lt;button @click="visible = !visible"&gt;Hide and show&lt;/button&gt;
 
-  &lt;div v-show="visivel"&gt;
-    &lt;label&gt;com v-show &lt;input placeholder="digite aqui"&gt;&lt;/label&gt;
+  &lt;div v-show="visible"&gt;
+    &lt;label&gt;with v-show &lt;input placeholder="type here"&gt;&lt;/label&gt;
   &lt;/div&gt;
 
-  &lt;div v-if="visivel"&gt;
-    &lt;label&gt;com v-if &lt;input placeholder="digite aqui"&gt;&lt;/label&gt;
+  &lt;div v-if="visible"&gt;
+    &lt;label&gt;with v-if &lt;input placeholder="type here"&gt;&lt;/label&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O campo do <code>v-show</code> lembra o que foi digitado. O do <code>v-if</code> volta vazio,
-  porque o elemento deixou de existir e um novo foi criado no lugar.
+  The <code>v-show</code> field remembers what was typed. The <code>v-if</code> one comes back
+  empty, because the element stopped existing and a new one was created in its place.
 </p>
 
-<h2 id="v-cloak">Escondendo até a biblioteca iniciar</h2>
+<h2 id="v-cloak">Hiding until the library starts</h2>
 
 <p>
-  Antes de a Voodoo montar, o HTML bruto aparece por um instante — com chaves, com o
-  <code>v-else</code> visível junto do <code>v-if</code>. O <code>v-cloak</code> resolve: a
-  biblioteca remove o atributo quando termina aquele trecho.
+  Before Voodoo mounts, the raw HTML shows for an instant — braces and all, with the
+  <code>v-else</code> visible next to the <code>v-if</code>. <code>v-cloak</code> solves it: the
+  library removes the attribute when it finishes that stretch.
 </p>
 
 <pre data-lang="html"><code>&lt;style&gt;
   [v-cloak] { display: none !important; }
 &lt;/style&gt;
 
-&lt;div v-cloak v-data="{ pronto: false }"&gt;
-  &lt;p v-if="pronto"&gt;Pronto&lt;/p&gt;
-  &lt;p v-else&gt;Carregando...&lt;/p&gt;
+&lt;div v-cloak v-data="{ ready: false }"&gt;
+  &lt;p v-if="ready"&gt;Ready&lt;/p&gt;
+  &lt;p v-else&gt;Loading...&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 
-<h2 id="outras">Condições que não vêm do estado</h2>
+<h2 id="outras">Conditions that do not come from state</h2>
 
 <p>
-  Algumas condições comuns têm directive própria, e evitam guardar no estado uma informação que o
-  navegador já tem:
+  Some common conditions have a directive of their own, and save you from keeping information in
+  state that the browser already has:
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>Mostra quando</th></tr></thead>
+<thead><tr><th>Directive</th><th>Shows when</th></tr></thead>
 <tbody>
-<tr><td><code>v-online</code></td><td>O navegador está com conexão</td></tr>
-<tr><td><code>v-offline</code></td><td>O navegador está sem conexão</td></tr>
-<tr><td><code>v-visible</code></td><td>O elemento entra na tela, útil para animar na rolagem</td></tr>
-<tr><td><code>v-idle</code></td><td>O usuário fica parado pelo tempo indicado</td></tr>
-<tr><td><code>v-loading</code></td><td>Uma requisição daquele elemento está em andamento</td></tr>
+<tr><td><code>v-online</code></td><td>The browser has a connection</td></tr>
+<tr><td><code>v-offline</code></td><td>The browser has no connection</td></tr>
+<tr><td><code>v-visible</code></td><td>The element enters the viewport, handy for animating on scroll</td></tr>
+<tr><td><code>v-idle</code></td><td>The user has been idle for the time given</td></tr>
+<tr><td><code>v-loading</code></td><td>A request from that element is in flight</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  E, dentro de qualquer expressão, <code>$screen</code>, <code>$network</code> e
-  <code>$device</code> respondem sobre tamanho de tela, conexão e tipo de aparelho:
+  And, inside any expression, <code>$screen</code>, <code>$network</code> and
+  <code>$device</code> answer about screen size, connection and kind of device:
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{}"&gt;
-  &lt;p v-show="$screen.mobile"&gt;Você está em uma tela pequena.&lt;/p&gt;
-  &lt;p v-show="!$screen.mobile"&gt;Você está em uma tela grande.&lt;/p&gt;
-  &lt;p v-show="!$network.online"&gt;Você está offline.&lt;/p&gt;
+  &lt;p v-show="$screen.mobile"&gt;You are on a small screen.&lt;/p&gt;
+  &lt;p v-show="!$screen.mobile"&gt;You are on a large screen.&lt;/p&gt;
+  &lt;p v-show="!$network.online"&gt;You are offline.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 

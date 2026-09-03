@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Instalação e primeiro arquivo · Documentação da Voodoo.js</title>
-<meta name="description" content="Como instalar a Voodoo.js: escolher um dos três arquivos, apontar uma tag script e escrever o primeiro HTML, linha por linha. Inclui a configuração pela própria tag.">
+<title>Installation and your first file · Voodoo.js documentation</title>
+<meta name="description" content="How to install Voodoo.js: pick one of the three files, point a script tag at it and write the first HTML, line by line. Includes configuring from the tag itself.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/instalacao">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,286 +14,284 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Começando</p>
-<h1>Instalação e primeiro arquivo</h1>
+<p class="doc-migalha">Getting started</p>
+<h1>Installation and your first file</h1>
 <p class="doc-resumo">
-  A Voodoo.js é um arquivo pronto. Você baixa, coloca junto do seu HTML, aponta uma tag, e
-  acabou. Não existe instalador, não existe passo de build, não existe arquivo de configuração
-  obrigatório.
+  Voodoo.js is a finished file. You download it, drop it next to your HTML, point a tag at it, and
+  that is it. There is no installer, no build step, and no mandatory config file.
 </p>
 
-<h2 id="escolher">1. Escolha e baixe o arquivo</h2>
+<h2 id="escolher">1. Pick and download the file</h2>
 
 <p>
-  São três arquivos publicados. Todos são o mesmo projeto, cortado em pontos diferentes. Escolha
-  um só.
+  Three files are published. They are all the same project, cut at different points. Pick one.
 </p>
 
 <div class="doc-tabela">
 <table>
 <thead>
-<tr><th>Arquivo</th><th>O que vem dentro</th><th>Gzip</th><th>Download</th></tr>
+<tr><th>File</th><th>What is inside</th><th>Gzip</th><th>Download</th></tr>
 </thead>
 <tbody>
 <tr>
   <td><code>voodoo.core.min.js</code></td>
-  <td>Reatividade, expressões, componentes, DOM encadeável, directives de estado, renderização, eventos e requisições por atributo</td>
+  <td>Reactivity, expressions, components, chainable DOM, state directives, rendering, events and requests by attribute</td>
   <td><b>42 KB</b></td>
-  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.core.min.js">baixar</a></td>
+  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.core.min.js">download</a></td>
 </tr>
 <tr>
   <td><code>voodoo.min.js</code></td>
-  <td>O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som</td>
+  <td>The above, plus forms with validation, masks, the full UI kit, drag and drop, dialogs, toasts and sound</td>
   <td><b>79 KB</b></td>
-  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js">baixar</a></td>
+  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js">download</a></td>
 </tr>
 <tr>
   <td><code>voodoo.full.min.js</code></td>
-  <td>Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos</td>
+  <td>Everything, plus charts, physics animation, the router, languages, the reactivity inspector and 29 ready-made components</td>
   <td><b>124 KB</b></td>
-  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js">baixar</a></td>
+  <td><a href="https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js">download</a></td>
 </tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Na dúvida, comece pelo <code>voodoo.min.js</code>. Ele cobre a maioria das páginas. Troque pelo
-  completo no dia em que precisar de gráfico, animação com mola, roteador, idiomas ou dos
-  componentes prontos. Trocar é reescrever o <code>src</code> da tag: o HTML que você já escreveu
-  continua igual.
+  When in doubt, start with <code>voodoo.min.js</code>. It covers most pages. Switch to the full
+  one the day you need a chart, spring animation, the router, languages or the ready-made
+  components. Switching means rewriting the <code>src</code> of the tag: the HTML you already
+  wrote stays exactly the same.
 </p>
 
-<p>Pelo terminal:</p>
+<p>From the terminal:</p>
 
 <pre data-lang="bash"><code>curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js</code></pre>
 
 <p>
-  Ou baixe o repositório inteiro pelo botão <b>Code</b>, ou pela
-  <a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">release v0.5.0</a>, e pegue os
-  arquivos de <code>packages/voodoojs/dist/</code>. Cada arquivo tem um <code>.map</code> ao lado;
-  copie os dois se quiser depurar o código original no inspetor.
+  Or download the whole repository from the <b>Code</b> button, or from the
+  <a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">v0.5.0 release</a>, and take
+  the files out of <code>packages/voodoojs/dist/</code>. Each file has a <code>.map</code> next to
+  it; copy both if you want to debug the original code in the inspector.
 </p>
 
-<h2 id="apontar">2. Aponte uma tag para o arquivo</h2>
+<h2 id="apontar">2. Point a tag at the file</h2>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" defer&gt;&lt;/script&gt;</code></pre>
 
 <p>
-  Acabou. Não existe <code>V.init()</code> para chamar: a biblioteca começa sozinha assim que a
-  página fica pronta, publica o objeto global <code>V</code> (e <code>Voodoo</code>, o mesmo
-  objeto), aplica o tema salvo, aplica a paleta salva e percorre o <code>document.body</code>
-  ligando os atributos <code>v-*</code>.
+  Done. There is no <code>V.init()</code> to call: the library starts on its own as soon as the
+  page is ready, publishes the global <code>V</code> object (and <code>Voodoo</code>, the same
+  object), applies the saved theme, applies the saved palette and walks
+  <code>document.body</code> binding the <code>v-*</code> attributes.
 </p>
 
 <p>
-  O <code>defer</code> faz o navegador terminar de ler o HTML antes de executar o arquivo. Sem
-  ele, a biblioteca inicia mais cedo e o <code>MutationObserver</code> acaba fazendo o trabalho
-  de novo — funciona, mas custa mais.
+  <code>defer</code> makes the browser finish reading the HTML before running the file. Without
+  it, the library starts earlier and the <code>MutationObserver</code> ends up doing the work
+  again — it works, but it costs more.
 </p>
 
-<h2 id="escrever">3. Escreva HTML</h2>
+<h2 id="escrever">3. Write HTML</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++"&gt;Clicou { n } vezes&lt;/button&gt;
+  &lt;button @click="n++"&gt;Clicked { n } times&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Abra o arquivo no navegador. Clique. O número muda. Esse é o ciclo inteiro.
+  Open the file in the browser. Click. The number changes. That is the whole cycle.
 </p>
 
-<h2 id="primeiro-arquivo">Seu primeiro arquivo, linha por linha</h2>
+<h2 id="primeiro-arquivo">Your first file, line by line</h2>
 
 <p>
-  Crie um <code>index.html</code> ao lado do <code>voodoo.min.js</code> que você baixou:
+  Create an <code>index.html</code> next to the <code>voodoo.min.js</code> you downloaded:
 </p>
 
 <pre data-lang="html"><code>&lt;!doctype html&gt;
-&lt;html lang="pt-BR"&gt;
+&lt;html lang="en"&gt;
 &lt;head&gt;
   &lt;meta charset="utf-8"&gt;
-  &lt;title&gt;Meu primeiro Voodoo&lt;/title&gt;
+  &lt;title&gt;My first Voodoo&lt;/title&gt;
   &lt;script src="voodoo.min.js" defer&gt;&lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
 
-&lt;div v-data="{ nome: '', count: 0 }"&gt;
+&lt;div v-data="{ name: '', count: 0 }"&gt;
 
-  &lt;input v-model="nome" placeholder="Seu nome"&gt;
-  &lt;h1&gt;Olá, { nome || 'estranho' }!&lt;/h1&gt;
+  &lt;input v-model="name" placeholder="Your name"&gt;
+  &lt;h1&gt;Hello, { name || 'stranger' }!&lt;/h1&gt;
 
   &lt;button @click="count--"&gt;-&lt;/button&gt;
   &lt;strong&gt;{ count }&lt;/strong&gt;
   &lt;button @click="count++"&gt;+&lt;/button&gt;
 
-  &lt;p v-show="count &gt; 5"&gt;Você clicou bastante.&lt;/p&gt;
+  &lt;p v-show="count &gt; 5"&gt;You have clicked a lot.&lt;/p&gt;
 
 &lt;/div&gt;
 
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
 
-<p>É este o resultado, rodando aqui:</p>
+<p>This is the result, running right here:</p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ nome: '', count: 0 }"&gt;
-  &lt;input v-model="nome" placeholder="Seu nome"&gt;
-  &lt;h3&gt;Olá, { nome || 'estranho' }!&lt;/h3&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ name: '', count: 0 }"&gt;
+  &lt;input v-model="name" placeholder="Your name"&gt;
+  &lt;h3&gt;Hello, { name || 'stranger' }!&lt;/h3&gt;
   &lt;div class="linha"&gt;
     &lt;button @click="count--"&gt;-&lt;/button&gt;
     &lt;strong&gt;{ count }&lt;/strong&gt;
     &lt;button @click="count++"&gt;+&lt;/button&gt;
   &lt;/div&gt;
-  &lt;p v-show="count &gt; 5"&gt;Você clicou bastante.&lt;/p&gt;
+  &lt;p v-show="count &gt; 5"&gt;You have clicked a lot.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <ol>
   <li>
-    <code>&lt;script src="voodoo.min.js" defer&gt;</code> carrega a biblioteca.
+    <code>&lt;script src="voodoo.min.js" defer&gt;</code> loads the library.
   </li>
   <li>
-    <code>v-data="{ nome: '', count: 0 }"</code> cria um <b>escopo</b>: duas variáveis que valem
-    para aquele <code>&lt;div&gt;</code> e para tudo que estiver dentro dele.
+    <code>v-data="{ name: '', count: 0 }"</code> creates a <b>scope</b>: two variables that hold
+    for that <code>&lt;div&gt;</code> and for everything inside it.
   </li>
   <li>
-    <code>v-model="nome"</code> liga o campo à variável nos dois sentidos. Digitou, mudou a
-    variável; mudou a variável, mudou o campo.
+    <code>v-model="name"</code> binds the field to the variable in both directions. Type, and the
+    variable changes; change the variable, and the field changes.
   </li>
   <li>
-    <code>{ nome || 'estranho' }</code> é <b>interpolação</b>: escreve o valor no texto e se
-    atualiza sozinha.
+    <code>{ name || 'stranger' }</code> is <b>interpolation</b>: it writes the value into the text
+    and updates itself.
   </li>
   <li>
-    <code>@click="count++"</code> executa a expressão no clique e avisa quem depende de
+    <code>@click="count++"</code> runs the expression on click and notifies whoever depends on
     <code>count</code>.
   </li>
   <li>
-    <code>v-show="count &gt; 5"</code> mostra o parágrafo apenas quando a condição é verdadeira.
+    <code>v-show="count &gt; 5"</code> shows the paragraph only while the condition is true.
   </li>
 </ol>
 
 <p>
-  <b>O que observar:</b> você não escreveu uma linha de JavaScript solto. Não existe
-  <code>querySelector</code>, não existe <code>addEventListener</code>, não existe uma função de
-  renderizar. Abra o inspetor depois de carregar: os atributos <code>v-model</code>,
-  <code>@click</code> e <code>v-show</code> sumiram. Sobrou HTML limpo.
+  <b>What to notice:</b> you did not write a single line of loose JavaScript. There is no
+  <code>querySelector</code>, no <code>addEventListener</code>, no render function. Open the
+  inspector after it loads: the <code>v-model</code>, <code>@click</code> and <code>v-show</code>
+  attributes are gone. What is left is clean HTML.
 </p>
 
-<h2 id="piscar">Evitando o piscar do conteúdo</h2>
+<h2 id="piscar">Avoiding the flash of raw content</h2>
 
 <p>
-  Entre o navegador desenhar o HTML e a biblioteca iniciar existe um instante em que o texto bruto
-  aparece na tela — inclusive as chaves da interpolação. O <code>v-cloak</code> resolve: a
-  biblioteca remove o atributo quando termina de montar aquele trecho.
+  Between the browser painting the HTML and the library starting there is an instant where the raw
+  text shows on screen — braces of the interpolation included. <code>v-cloak</code> solves it: the
+  library removes the attribute when it finishes mounting that stretch.
 </p>
 
 <pre data-lang="html"><code>&lt;style&gt;
   [v-cloak] { display: none !important; }
 &lt;/style&gt;
 
-&lt;div v-cloak v-data="{ carregando: true }"&gt;
-  &lt;p&gt;{ carregando ? 'Carregando...' : 'Pronto' }&lt;/p&gt;
+&lt;div v-cloak v-data="{ loading: true }"&gt;
+  &lt;p&gt;{ loading ? 'Loading...' : 'Ready' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 
 <p>
-  A regra de <code>[v-cloak]</code> já vem no CSS que a biblioteca injeta, mas declarar no seu
-  próprio arquivo garante que ela exista antes do primeiro quadro — que é justamente o momento
-  que interessa.
+  The <code>[v-cloak]</code> rule already ships in the CSS the library injects, but declaring it in
+  your own file guarantees it exists before the first frame — which is exactly the moment that
+  matters.
 </p>
 
-<h2 id="config-tag">Configuração pela própria tag</h2>
+<h2 id="config-tag">Configuring from the tag itself</h2>
 
 <p>
-  O jeito mais rápido de configurar é por atributos na tag do script, sem escrever JavaScript
-  nenhum:
+  The fastest way to configure is with attributes on the script tag, without writing any
+  JavaScript at all:
 </p>
 
 <pre data-lang="html"><code>&lt;script
   src="voodoo.min.js"
-  data-base-url="https://api.exemplo.com"
-  data-locale="pt-BR"
+  data-base-url="https://api.example.com"
+  data-locale="en-US"
   defer
 &gt;&lt;/script&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Atributo</th><th>Efeito</th></tr></thead>
+<thead><tr><th>Attribute</th><th>Effect</th></tr></thead>
 <tbody>
-<tr><td><code>data-manual</code></td><td>Não inicia sozinha. Você chama <code>V.start()</code> quando quiser</td></tr>
-<tr><td><code>data-defer-init</code></td><td>O mesmo que <code>data-manual</code></td></tr>
-<tr><td><code>data-prefix</code></td><td>Troca o prefixo dos atributos, por exemplo <code>data-v-</code></td></tr>
-<tr><td><code>data-base-url</code></td><td>URL base das requisições de <code>V.http</code> e das directives HTTP</td></tr>
-<tr><td><code>data-locale</code></td><td>Idioma usado por formatadores de data, número e moeda</td></tr>
-<tr><td><code>data-devtools</code></td><td>Liga avisos detalhados no console</td></tr>
-<tr><td><code>data-no-styles</code></td><td>Não injeta o CSS dos componentes de interface</td></tr>
-<tr><td><code>data-no-observer</code></td><td>Desliga o <code>MutationObserver</code> que inicializa HTML criado depois</td></tr>
-<tr><td><code>data-keep-attributes</code></td><td>Mantém os atributos <code>v-*</code> no HTML depois de processados</td></tr>
+<tr><td><code>data-manual</code></td><td>Does not start on its own. You call <code>V.start()</code> when you want to</td></tr>
+<tr><td><code>data-defer-init</code></td><td>The same as <code>data-manual</code></td></tr>
+<tr><td><code>data-prefix</code></td><td>Changes the attribute prefix, for example <code>data-v-</code></td></tr>
+<tr><td><code>data-base-url</code></td><td>Base URL for <code>V.http</code> requests and for the HTTP directives</td></tr>
+<tr><td><code>data-locale</code></td><td>Locale used by the date, number and currency formatters</td></tr>
+<tr><td><code>data-devtools</code></td><td>Turns on detailed warnings in the console</td></tr>
+<tr><td><code>data-no-styles</code></td><td>Does not inject the CSS for the UI components</td></tr>
+<tr><td><code>data-no-observer</code></td><td>Turns off the <code>MutationObserver</code> that initializes HTML created later</td></tr>
+<tr><td><code>data-keep-attributes</code></td><td>Keeps the <code>v-*</code> attributes in the HTML after they are processed</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  A lista completa de opções, com o valor padrão de cada uma, está na
-  <a href="../referencia/configuracao.html">referência de configuração</a>.
+  The full list of options, with the default value of each, is in the
+  <a href="../referencia/configuracao.html">configuration reference</a>.
 </p>
 
-<h2 id="quando-manual">Quando você precisa do <code>data-manual</code></h2>
+<h2 id="quando-manual">When you need <code>data-manual</code></h2>
 
 <p>
-  A inicialização automática acontece cedo, de propósito. Se a sua página registra componentes,
-  directives próprias ou dados globais em outro arquivo, esse registro precisa acontecer
-  <b>antes</b> da primeira varredura — senão a biblioteca passa por uma tag que ainda não conhece.
+  Automatic start-up happens early, on purpose. If your page registers components, its own
+  directives or global data in another file, that registration has to happen <b>before</b> the
+  first sweep — otherwise the library walks past a tag it does not know yet.
 </p>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-manual defer&gt;&lt;/script&gt;
-&lt;script src="meus-componentes.js" defer&gt;&lt;/script&gt;
+&lt;script src="my-components.js" defer&gt;&lt;/script&gt;
 &lt;script defer&gt;
-  V.config.locale = 'pt-BR';
-  V.config.currency = 'BRL';
-  V.http.setBaseURL('https://api.exemplo.com');
+  V.config.locale = 'en-US';
+  V.config.currency = 'USD';
+  V.http.setBaseURL('https://api.example.com');
   V.start();
 &lt;/script&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Regra simples</span>
+  <span class="doc-aviso__rotulo">A simple rule</span>
   <p>
-    Quem chama <code>V.start()</code> é sempre o último script da lista. Qualquer arquivo que
-    registre componente, directive ou dado entra antes dele.
+    Whoever calls <code>V.start()</code> is always the last script in the list. Any file that
+    registers a component, a directive or data goes in before it.
   </p>
 </div>
 
-<h2 id="prefixo">Prefixo válido para HTML estrito</h2>
+<h2 id="prefixo">A prefix that passes strict HTML</h2>
 
 <p>
-  Se o seu validador de HTML reclamar de <code>v-text</code>, troque o prefixo:
+  If your HTML validator complains about <code>v-text</code>, change the prefix:
 </p>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-prefix="data-v-" defer&gt;&lt;/script&gt;
 
 &lt;div data-v-data="{ n: 0 }"&gt;
-  &lt;button data-v-click="n++"&gt;Somar&lt;/button&gt;
+  &lt;button data-v-click="n++"&gt;Add&lt;/button&gt;
   &lt;b data-v-text="n"&gt;&lt;/b&gt;
 &lt;/div&gt;</code></pre>
 
 <p>
-  A biblioteca sempre aceita <code>data-v-nome</code>, mesmo quando o prefixo configurado é outro.
-  Os atalhos <code>:atributo</code> e <code>@evento</code> continuam funcionando nos dois modos.
+  The library always accepts <code>data-v-name</code>, even when the configured prefix is another
+  one. The <code>:attribute</code> and <code>@event</code> shorthands keep working in both modes.
 </p>
 
-<h2 id="verificando">Verificando se deu certo</h2>
+<h2 id="verificando">Checking that it worked</h2>
 
 <pre data-lang="html"><code>&lt;script&gt;
   document.addEventListener('voodoo:ready', (e) =&gt; {
-    console.log('Voodoo', V.version, 'iniciada em', e.detail.root);
+    console.log('Voodoo', V.version, 'started on', e.detail.root);
   });
 &lt;/script&gt;</code></pre>
 
 <p>
-  Se o console imprimir a versão, a biblioteca carregou e montou. Se não imprimir nada, o caminho
-  do <code>src</code> está errado — a aba de rede do inspetor confirma em um segundo.
+  If the console prints the version, the library loaded and mounted. If it prints nothing, the
+  <code>src</code> path is wrong — the network tab of the inspector confirms that in a second.
 </p>
 
 </article>

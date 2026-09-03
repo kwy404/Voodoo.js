@@ -2,11 +2,9 @@
  * Minimal static server for opening the site, the demos and the brand gallery
  * with no dependencies at all.
  *
- * It assembles the same layout the Pages workflow publishes: `site/` is the
- * root, and the folders that workflow copies alongside it are mounted where it
- * puts them. Before this, a link written as `examples/` resolved to
- * `site/examples/` locally and 404'd, while the same link worked in production,
- * so the site could only be tested after deploying it.
+ * `site/` is the root, the same as the published site. The examples live inside
+ * it now, so `examples/` resolves identically here and in production; only the
+ * folders that genuinely sit outside site/ are still mounted.
  *
  * Usage:
  *   node scripts/serve.mjs            serves the assembled site on port 5173
@@ -30,8 +28,6 @@ const rootDir = explicitRoot ?? join(repoRoot, 'site');
 const MOUNTS = explicitRoot
   ? {}
   : {
-      '/examples': join(repoRoot, 'examples'),
-      '/design-system': join(repoRoot, 'design-system'),
       '/brand': join(repoRoot, 'brand'),
       '/packages': join(repoRoot, 'packages'),
     };

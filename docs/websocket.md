@@ -69,7 +69,7 @@ there for the module to hang on:
 > (`dist/socket.js`) are different runtimes: directives registered by the module don't appear in
 > the IIFE registry. On a page, you either use both in ESM (`dist/index.js` + `dist/socket.js`,
 > which share chunks), or you use `V.socket` from the IIFE without directives. The demo in
-> [`examples/chat-realtime/`](../examples/chat-tempo-real/) shows the ESM path working.
+> [`examples/chat-realtime/`](../site/examples/chat-tempo-real/) shows the ESM path working.
 
 ## Complete demo
 

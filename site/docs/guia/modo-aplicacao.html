@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Os dois modos: atributos e createApp · Documentação da Voodoo.js</title>
-<meta name="description" content="O modo de atributos, sobre o HTML que já existe, e o modo aplicação com createApp().mount('#app'), no formato do Vue: opções, componentes locais, provide e inject, plugins e o agendador próprio.">
+<title>The two modes: attributes and createApp · Voodoo.js documentation</title>
+<meta name="description" content="Attribute mode, over the HTML you already have, and application mode with createApp().mount('#app'), in Vue's shape: options, local components, provide and inject, plugins and the scheduler of its own.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/modo-aplicacao">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,206 +14,207 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Começando</p>
-<h1>Os dois modos: atributos e <code>createApp</code></h1>
+<p class="doc-migalha">Getting started</p>
+<h1>The two modes: attributes and <code>createApp</code></h1>
 <p class="doc-resumo">
-  A Voodoo.js tem dois jeitos de assumir uma página, e os dois valem. O primeiro liga atributos ao
-  HTML que já existe. O segundo descreve a aplicação em JavaScript e monta em uma raiz, no mesmo
-  formato do Vue. Você escolhe por página, e pode usar os dois na mesma.
+  Voodoo.js has two ways of taking over a page, and both are valid. The first binds attributes to
+  the HTML that is already there. The second describes the application in JavaScript and mounts it
+  on a root, in the same shape as Vue. You choose per page, and you can use both on the same one.
 </p>
 
-<h2 id="atributos">Modo atributos, sobre o HTML que já existe</h2>
+<h2 id="atributos">Attribute mode, over the HTML you already have</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++"&gt;Cliques: { n }&lt;/button&gt;
+  &lt;button @click="n++"&gt;Clicks: { n }&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  É o modo padrão: você aponta a tag do script, escreve atributos, e a biblioteca percorre o
-  documento. Serve bem a páginas geradas no servidor, onde o HTML já vem pronto e só falta
-  comportamento.
+  This is the default mode: you point the script tag, you write attributes, and the library walks
+  the document. It suits server-rendered pages well, where the HTML arrives finished and only the
+  behaviour is missing.
 </p>
 
-<h2 id="createapp">Modo aplicação, com createApp</h2>
+<h2 id="createapp">Application mode, with createApp</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div id="contador"&gt;&lt;/div&gt;
+<pre data-lang="html"><code>&lt;div id="counter"&gt;&lt;/div&gt;
 
 &lt;script&gt;
   V.createApp({
     data: () =&gt; ({ n: 0 }),
-    computed: { dobro() { return this.n * 2 } },
-    methods: { somar() { this.n++ } },
+    computed: { double() { return this.n * 2 } },
+    methods: { add() { this.n++ } },
     template: `
-      &lt;button @click="somar()"&gt;Cliques: { n }&lt;/button&gt;
-      &lt;p&gt;Dobro: { dobro }&lt;/p&gt;
+      &lt;button @click="add()"&gt;Clicks: { n }&lt;/button&gt;
+      &lt;p&gt;Double: { double }&lt;/p&gt;
     `
-  }).mount('#contador');
+  }).mount('#counter');
 &lt;/script&gt;</code></pre>
 </div>
 
 <p>
-  Aqui a aplicação inteira mora em JavaScript: estado, computados, métodos, watchers, ciclo de
-  vida e o HTML do template. O container começa vazio e recebe o resultado. Quem vem do Vue vai
-  reconhecer tudo, inclusive os nomes.
+  Here the whole application lives in JavaScript: state, computed values, methods, watchers, the
+  lifecycle and the template HTML. The container starts empty and receives the result. Anyone
+  coming from Vue will recognize all of it, names included.
 </p>
 
-<h2 id="opcoes">As opções</h2>
+<h2 id="opcoes">The options</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>O que é</th></tr></thead>
+<thead><tr><th>Option</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>data</code> ou <code>state</code></td><td>Função que devolve o estado inicial</td></tr>
-<tr><td><code>computed</code></td><td>Valores derivados, com cache</td></tr>
-<tr><td><code>methods</code></td><td>Funções, com <code>this</code> na instância</td></tr>
-<tr><td><code>watch</code></td><td>Reage à mudança de uma chave</td></tr>
-<tr><td><code>template</code></td><td>HTML da raiz. Aceita todas as directives</td></tr>
-<tr><td><code>components</code></td><td>Componentes visíveis só dentro desta aplicação</td></tr>
-<tr><td><code>provide</code></td><td>Valores entregues à árvore inteira</td></tr>
-<tr><td><code>inject</code></td><td>Valores buscados em um <code>provide</code> acima</td></tr>
-<tr><td><code>style</code></td><td>CSS injetado uma vez</td></tr>
-<tr><td><code>beforeMount</code>, <code>mounted</code>, <code>updated</code>, <code>beforeUnmount</code>, <code>unmounted</code></td><td>Ciclo de vida</td></tr>
+<tr><td><code>data</code> or <code>state</code></td><td>A function returning the initial state</td></tr>
+<tr><td><code>computed</code></td><td>Derived values, cached</td></tr>
+<tr><td><code>methods</code></td><td>Functions, with <code>this</code> on the instance</td></tr>
+<tr><td><code>watch</code></td><td>Reacts to a key changing</td></tr>
+<tr><td><code>template</code></td><td>The root HTML. Accepts every directive</td></tr>
+<tr><td><code>components</code></td><td>Components visible only inside this application</td></tr>
+<tr><td><code>provide</code></td><td>Values handed to the whole tree</td></tr>
+<tr><td><code>inject</code></td><td>Values fetched from a <code>provide</code> above</td></tr>
+<tr><td><code>style</code></td><td>CSS injected once</td></tr>
+<tr><td><code>beforeMount</code>, <code>mounted</code>, <code>updated</code>, <code>beforeUnmount</code>, <code>unmounted</code></td><td>Lifecycle</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="instancia">A instância do app</h2>
+<h2 id="instancia">The app instance</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Member</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>app.mount(alvo)</code></td><td>Monta em um seletor ou elemento. Devolve a instância raiz</td></tr>
-<tr><td><code>app.unmount()</code></td><td>Desmonta e devolve o container ao HTML original</td></tr>
-<tr><td><code>app.component(nome, def)</code></td><td>Registra um componente para esta aplicação</td></tr>
-<tr><td><code>app.directive(nome, def)</code></td><td>Registra uma directive</td></tr>
-<tr><td><code>app.use(plugin, opções)</code></td><td>Instala um plugin</td></tr>
-<tr><td><code>app.provide(chave, valor)</code></td><td>Entrega um valor à árvore</td></tr>
-<tr><td><code>app.config.globalProperties</code></td><td>Valores liberados dentro das expressões</td></tr>
-<tr><td><code>app.instance</code>, <code>app.container</code>, <code>app.isMounted</code></td><td>Estado da montagem</td></tr>
-<tr><td><code>app.whenMounted()</code></td><td>Promessa resolvida com a instância quando montar</td></tr>
+<tr><td><code>app.mount(target)</code></td><td>Mounts on a selector or element. Returns the root instance</td></tr>
+<tr><td><code>app.unmount()</code></td><td>Unmounts and gives the container back its original HTML</td></tr>
+<tr><td><code>app.component(name, def)</code></td><td>Registers a component for this application</td></tr>
+<tr><td><code>app.directive(name, def)</code></td><td>Registers a directive</td></tr>
+<tr><td><code>app.use(plugin, options)</code></td><td>Installs a plugin</td></tr>
+<tr><td><code>app.provide(key, value)</code></td><td>Hands a value to the tree</td></tr>
+<tr><td><code>app.config.globalProperties</code></td><td>Values exposed inside expressions</td></tr>
+<tr><td><code>app.instance</code>, <code>app.container</code>, <code>app.isMounted</code></td><td>Mount state</td></tr>
+<tr><td><code>app.whenMounted()</code></td><td>A promise resolved with the instance once it mounts</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="componentes">Componentes locais, provide e inject</h2>
+<h2 id="componentes">Local components, provide and inject</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div id="painel"&gt;&lt;/div&gt;
+<pre data-lang="html"><code>&lt;div id="panel"&gt;&lt;/div&gt;
 
 &lt;script&gt;
   V.createApp({
-    provide: { usuario: 'Ana' },
+    provide: { user: 'Ann' },
     components: {
-      'cartao-painel': {
-        props: ['titulo'],
-        template: '&lt;article&gt;&lt;b&gt;{ titulo }&lt;/b&gt; &lt;slot&gt;&lt;/slot&gt;&lt;/article&gt;'
+      'panel-card': {
+        props: ['title'],
+        template: '&lt;article&gt;&lt;b&gt;{ title }&lt;/b&gt; &lt;slot&gt;&lt;/slot&gt;&lt;/article&gt;'
       },
-      'rodape-painel': {
-        inject: ['usuario'],
-        template: '&lt;small&gt;Logado como { usuario }&lt;/small&gt;'
+      'panel-footer': {
+        inject: ['user'],
+        template: '&lt;small&gt;Signed in as { user }&lt;/small&gt;'
       }
     },
     template: `
-      &lt;cartao-painel titulo="Receita"&gt;R$ 128.400&lt;/cartao-painel&gt;
-      &lt;rodape-painel&gt;&lt;/rodape-painel&gt;
+      &lt;panel-card title="Revenue"&gt;$128,400&lt;/panel-card&gt;
+      &lt;panel-footer&gt;&lt;/panel-footer&gt;
     `
-  }).mount('#painel');
+  }).mount('#panel');
 &lt;/script&gt;</code></pre>
 </div>
 
 <p>
-  Os componentes declarados em <code>components</code> saem do registro quando a aplicação é
-  desmontada, então duas aplicações na mesma página podem ter um <code>cartao</code> cada uma sem
-  brigar por nome. <code>provide</code> e <code>inject</code> funcionam como no Vue: o valor desce
-  pela árvore, e o componente pede pelo nome, com <code>default</code> quando ninguém forneceu.
+  Components declared in <code>components</code> leave the registry when the application is
+  unmounted, so two applications on the same page can each have a <code>card</code> of their own
+  without fighting over the name. <code>provide</code> and <code>inject</code> work as they do in
+  Vue: the value goes down the tree, and the component asks for it by name, with
+  <code>default</code> for when nobody provided it.
 </p>
 
-<h2 id="agendador">O agendador próprio</h2>
+<h2 id="agendador">The scheduler of its own</h2>
 
 <p>
-  Esta é a diferença que vale mais no dia a dia. A Voodoo não usa
-  <code>DOMContentLoaded</code> nem <code>document.readyState</code> para decidir quando começar:
-  ela tem o próprio laço, que pergunta se o que ela precisa já existe e parou de mudar.
+  This is the difference that pays off most day to day. Voodoo does not use
+  <code>DOMContentLoaded</code> or <code>document.readyState</code> to decide when to start: it has
+  a loop of its own, which asks whether what it needs already exists and has stopped changing.
 </p>
 
-<p>Na prática, <code>mount</code> aceita um alvo que ainda não está na página:</p>
+<p>In practice, <code>mount</code> accepts a target that is not on the page yet:</p>
 
 <pre data-lang="html"><code>&lt;script&gt;
-  // O container ainda nem existe. A montagem espera por ele.
-  const app = V.createApp({ template: '&lt;p&gt;montei quando deu&lt;/p&gt;' });
-  app.mount('#tela-2');
+  // The container does not even exist yet. The mount waits for it.
+  const app = V.createApp({ template: '&lt;p&gt;mounted when it could&lt;/p&gt;' });
+  app.mount('#screen-2');
 
-  // ...outro script, outro momento, e a aplicação monta sozinha.
+  // ...another script, another moment, and the application mounts by itself.
 &lt;/script&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Vue e React</th><th>Voodoo.js</th></tr></thead>
+<thead><tr><th>Situation</th><th>Vue and React</th><th>Voodoo.js</th></tr></thead>
 <tbody>
-<tr><td>Script no <code>&lt;head&gt;</code>, sem <code>defer</code></td><td>Falha: o container não existe</td><td>Monta quando o container aparece</td></tr>
-<tr><td>Container criado por outro script</td><td>Falha, ou exige orquestração</td><td>Monta sozinho</td></tr>
-<tr><td>Página já carregada faz tempo</td><td>Monta na hora</td><td>Monta na hora</td></tr>
+<tr><td>Script in the <code>&lt;head&gt;</code>, without <code>defer</code></td><td>Fails: the container does not exist</td><td>Mounts when the container shows up</td></tr>
+<tr><td>Container created by another script</td><td>Fails, or demands orchestration</td><td>Mounts by itself</td></tr>
+<tr><td>Page loaded a long time ago</td><td>Mounts right away</td><td>Mounts right away</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  As três funções do agendador estão publicadas: <code>V.whenReady(fn)</code>, que espera o
-  documento ter corpo e parar de crescer, <code>V.whenElement(seletor, fn)</code>, que espera um
-  elemento, e <code>V.ready(fn?)</code>, que também devolve promessa.
+  The scheduler's three functions are published: <code>V.whenReady(fn)</code>, which waits for the
+  document to have a body and stop growing, <code>V.whenElement(selector, fn)</code>, which waits
+  for an element, and <code>V.ready(fn?)</code>, which also returns a promise.
 </p>
 
-<pre data-lang="js"><code>V.whenElement('#grafico', (el) =&gt; V.renderChart(el, { type: 'line', data: serie }));
+<pre data-lang="js"><code>V.whenElement('#chart', (el) =&gt; V.renderChart(el, { type: 'line', data: series }));
 await V.ready();</code></pre>
 
-<h2 id="convivendo">Os dois modos na mesma página</h2>
+<h2 id="convivendo">Both modes on the same page</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ fora: 'atributos' }"&gt;
-  &lt;p&gt;Este pedaço é o modo { fora }.&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ outside: 'attribute' }"&gt;
+  &lt;p&gt;This piece is { outside } mode.&lt;/p&gt;
 &lt;/div&gt;
 
-&lt;div id="parte-app"&gt;&lt;/div&gt;
+&lt;div id="app-part"&gt;&lt;/div&gt;
 
 &lt;script&gt;
   V.createApp({
-    data: () =&gt; ({ dentro: 'createApp' }),
-    template: '&lt;p&gt;E este é o modo { dentro }.&lt;/p&gt;'
-  }).mount('#parte-app');
+    data: () =&gt; ({ inside: 'createApp' }),
+    template: '&lt;p&gt;And this one is { inside } mode.&lt;/p&gt;'
+  }).mount('#app-part');
 &lt;/script&gt;</code></pre>
 </div>
 
 <p>
-  Os dois compartilham a mesma reatividade, os mesmos stores e as mesmas directives. Um
-  <code>$store</code> criado em qualquer lugar aparece nos dois lados, o que faz da adoção uma
-  escolha por tela, e não pelo projeto inteiro.
+  The two share the same reactivity, the same stores and the same directives. A
+  <code>$store</code> created anywhere shows up on both sides, which makes adoption a choice per
+  screen rather than for the whole project.
 </p>
 
-<h2 id="qual-usar">Qual usar</h2>
+<h2 id="qual-usar">Which one to use</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Modo</th></tr></thead>
+<thead><tr><th>Situation</th><th>Mode</th></tr></thead>
 <tbody>
-<tr><td>Página gerada por Laravel, Rails, Django ou PHP</td><td>Atributos</td></tr>
-<tr><td>Um trecho interativo dentro de um site de conteúdo</td><td>Atributos</td></tr>
-<tr><td>Tela inteira montada no cliente, com muitos componentes</td><td><code>createApp</code></td></tr>
-<tr><td>Você vem do Vue e quer o formato conhecido</td><td><code>createApp</code></td></tr>
-<tr><td>Precisa desmontar e remontar a interface</td><td><code>createApp</code>, pelo <code>unmount</code></td></tr>
+<tr><td>A page rendered by Laravel, Rails, Django or PHP</td><td>Attributes</td></tr>
+<tr><td>One interactive stretch inside a content site</td><td>Attributes</td></tr>
+<tr><td>A whole screen mounted on the client, with many components</td><td><code>createApp</code></td></tr>
+<tr><td>You come from Vue and want the familiar shape</td><td><code>createApp</code></td></tr>
+<tr><td>You need to unmount and remount the interface</td><td><code>createApp</code>, through <code>unmount</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">O que não muda entre os dois</span>
+  <span class="doc-aviso__rotulo">What does not change between them</span>
   <p>
-    Directives, expressões, componentes, stores, HTTP declarativo, formulários, máscaras,
-    interface, animações e gráficos são os mesmos. <code>createApp</code> muda de onde vem o HTML
-    e quem manda na raiz, e nada mais.
+    Directives, expressions, components, stores, declarative HTTP, forms, masks, the UI kit,
+    animations and charts are the same. <code>createApp</code> changes where the HTML comes from
+    and who owns the root, and nothing else.
   </p>
 </div>
 

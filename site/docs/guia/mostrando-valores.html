@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mostrando valores na tela · Documentação da Voodoo.js</title>
-<meta name="description" content="Interpolação com chave simples, v-text e v-html: as três formas de escrever um valor do estado na página, e a diferença entre elas que realmente importa.">
+<title>Showing values on screen · Voodoo.js documentation</title>
+<meta name="description" content="Single-brace interpolation, v-text and v-html: the three ways of writing a value from state into the page, and the one difference between them that really matters.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/mostrando-valores">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,169 +14,168 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Mostrando valores na tela</h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>Showing values on screen</h1>
 <p class="doc-resumo">
-  O valor já está no estado. Falta colocá-lo na página. Existem três formas, e a diferença entre
-  elas cabe em uma frase: interpolação e <code>v-text</code> escapam o HTML sozinhos,
-  <code>v-html</code> não escapa nada.
+  The value is already in the state. What is left is putting it on the page. There are three ways,
+  and the difference between them fits in one sentence: interpolation and <code>v-text</code>
+  escape the HTML for you, <code>v-html</code> escapes nothing.
 </p>
 
-<h2 id="interpolacao">Interpolação</h2>
+<h2 id="interpolacao">Interpolation</h2>
 
 <p>
-  A forma mais curta é escrever a expressão entre chaves, direto no texto:
+  The shortest form is to write the expression between braces, right in the text:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ usuario: { nome: 'Ana' }, total: 1234.5 }"&gt;
-  &lt;p&gt;Bem-vinda, { usuario.nome }.&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ user: { name: 'Ann' }, total: 1234.5 }"&gt;
+  &lt;p&gt;Welcome, { user.name }.&lt;/p&gt;
   &lt;p&gt;Total: { total.toFixed(2) }&lt;/p&gt;
-  &lt;p&gt;{ total &gt; 1000 ? 'Compra grande' : 'Compra normal' }&lt;/p&gt;
+  &lt;p&gt;{ total &gt; 1000 ? 'Large order' : 'Normal order' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  A Voodoo usa <b>chave simples</b>: <code>{ variavel }</code>. A forma dupla
-  <code>{{ variavel }}</code>, do Vue, também funciona, para quem já tem o costume. As duas
-  convivem no mesmo arquivo.
+  Voodoo uses a <b>single brace</b>: <code>{ variable }</code>. The double form
+  <code>{{ variable }}</code>, from Vue, works too, for anyone already in the habit. The two live
+  side by side in the same file.
 </p>
 
 <p>
-  A expressão pode fazer conta, chamar método, comparar e encadear — é o mesmo subconjunto de
-  JavaScript aceito em qualquer atributo, descrito na
-  <a href="../referencia/objeto-v.html#expressoes">referência de expressões</a>.
+  The expression can do arithmetic, call a method, compare and chain — it is the same subset of
+  JavaScript accepted in any attribute, described in the
+  <a href="../referencia/objeto-v.html#expressoes">expression reference</a>.
 </p>
 
-<h3 id="onde-nao-interpola">Onde a interpolação não acontece</h3>
+<h3 id="onde-nao-interpola">Where interpolation does not happen</h3>
 
 <p>
-  Dentro de <code>&lt;pre&gt;</code>, <code>&lt;code&gt;</code>, <code>&lt;script&gt;</code>,
-  <code>&lt;style&gt;</code> e <code>&lt;textarea&gt;</code> a varredura não entra. Assim você
-  mostra exemplos de código na página sem que a biblioteca tente avaliar as chaves — é exatamente
-  o que esta documentação faz.
+  Inside <code>&lt;pre&gt;</code>, <code>&lt;code&gt;</code>, <code>&lt;script&gt;</code>,
+  <code>&lt;style&gt;</code> and <code>&lt;textarea&gt;</code> the sweep does not go in. That is how
+  you show code examples on a page without the library trying to evaluate the braces — exactly what
+  this documentation does.
 </p>
 
 <p>
-  Para desligar a varredura em qualquer outra subárvore, existe o <code>v-ignore</code>:
+  To turn the sweep off in any other subtree, there is <code>v-ignore</code>:
 </p>
 
 <pre data-lang="html"><code>&lt;div v-ignore&gt;
-  Este bloco fica exatamente como está, chaves e tudo: { não avaliado }
+  This block stays exactly as it is, braces and all: { not evaluated }
 &lt;/div&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Objeto dentro da expressão, e quebra de linha</span>
+  <span class="doc-aviso__rotulo">An object inside the expression, and line breaks</span>
   <p>
-    As duas coisas funcionam: <code>{ $t('itens', { n: total }) }</code> conta as chaves e acha o
-    fechamento certo, e uma expressão longa pode ser quebrada em várias linhas. O critério é
-    analisar: o que a biblioteca consegue ler como expressão vira valor, e o que não consegue
-    continua sendo texto exatamente como você escreveu — um trecho de CSS colado no parágrafo, por
-    exemplo, fica intacto.
+    Both work: <code>{ $t('items', { n: total }) }</code> counts the braces and finds the right
+    closing one, and a long expression can be broken over several lines. The test is parsing: what
+    the library can read as an expression becomes a value, and what it cannot stays as text exactly
+    as you wrote it — a stretch of CSS pasted into the paragraph, for instance, comes through
+    untouched.
   </p>
 </div>
 
 <h2 id="v-text">v-text</h2>
 
 <p>
-  Quando o texto inteiro do elemento vem do estado, <code>v-text</code> é mais direto e não
-  depende de chaves:
+  When the entire text of the element comes from state, <code>v-text</code> is more direct and
+  does not depend on braces:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ usuario: { nome: 'Ana' }, total: 1234.5 }"&gt;
-  &lt;p&gt;&lt;span v-text="usuario.nome"&gt;&lt;/span&gt;&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ user: { name: 'Ann' }, total: 1234.5 }"&gt;
+  &lt;p&gt;&lt;span v-text="user.name"&gt;&lt;/span&gt;&lt;/p&gt;
   &lt;p&gt;&lt;span v-text="'Total: ' + total.toFixed(2)"&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-text</code> escreve <b>texto</b>. Se o valor tiver <code>&lt;b&gt;</code> dentro, aparece
-  a palavra <code>&lt;b&gt;</code> na tela, e não um negrito. O conteúdo que estiver escrito no
-  elemento é substituído — o que também serve como texto de espera, visível antes de a biblioteca
-  iniciar.
+  <code>v-text</code> writes <b>text</b>. If the value has a <code>&lt;b&gt;</code> inside, the word
+  <code>&lt;b&gt;</code> shows up on screen, not bold type. Whatever content is written in the
+  element is replaced — which also makes it a placeholder, visible before the library starts.
 </p>
 
 <h2 id="v-html">v-html</h2>
 
 <p>
-  Quando o valor é HTML de verdade e você confia na origem dele:
+  When the value really is HTML and you trust where it came from:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ conteudo: '&lt;b&gt;negrito&lt;/b&gt; e &lt;i&gt;itálico&lt;/i&gt;' }"&gt;
-  &lt;p v-html="conteudo"&gt;&lt;/p&gt;
-  &lt;p v-text="conteudo"&gt;&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ content: '&lt;b&gt;bold&lt;/b&gt; and &lt;i&gt;italic&lt;/i&gt;' }"&gt;
+  &lt;p v-html="content"&gt;&lt;/p&gt;
+  &lt;p v-text="content"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os dois parágrafos recebem o mesmo valor. O primeiro mostra o negrito; o segundo mostra as tags
-  escritas por extenso. Essa é a diferença inteira.
+  Both paragraphs get the same value. The first shows the bold type; the second shows the tags
+  spelled out. That is the whole difference.
 </p>
 
 <p>
-  O HTML inserido é percorrido pela Voodoo, então ele pode trazer directives dentro e elas
-  funcionam. Isso é poderoso e perigoso ao mesmo tempo.
+  The inserted HTML is walked by Voodoo, so it can bring directives inside and they work. That is
+  powerful and dangerous at the same time.
 </p>
 
 <div class="doc-aviso doc-aviso--perigo">
-  <span class="doc-aviso__rotulo">Nunca com conteúdo de terceiros</span>
+  <span class="doc-aviso__rotulo">Never with third-party content</span>
   <p>
-    Comentário de usuário, campo de formulário, resposta de API pública: nada disso entra em um
-    <code>v-html</code> sem passar por uma limpeza antes. Como o HTML inserido é processado pela
-    biblioteca, um texto malicioso não precisa nem de <code>&lt;script&gt;</code> para fazer
-    estrago. A página de <a href="../referencia/seguranca.html">segurança</a> detalha o modelo de
-    ameaça e o que a biblioteca protege sozinha.
+    A user comment, a form field, the response of a public API: none of that goes into a
+    <code>v-html</code> without being sanitized first. Because the inserted HTML is processed by
+    the library, malicious text does not even need a <code>&lt;script&gt;</code> to do damage. The
+    <a href="../referencia/seguranca.html">security</a> page spells out the threat model and what
+    the library guards against on its own.
   </p>
 </div>
 
-<h2 id="qual-usar">Qual usar</h2>
+<h2 id="qual-usar">Which one to use</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Use</th></tr></thead>
+<thead><tr><th>Situation</th><th>Use</th></tr></thead>
 <tbody>
-<tr><td>Um valor no meio de uma frase</td><td>Interpolação</td></tr>
-<tr><td>O elemento inteiro é o valor</td><td><code>v-text</code></td></tr>
-<tr><td>A expressão tem chaves dentro</td><td><code>v-text</code></td></tr>
-<tr><td>O valor é HTML confiável, vindo de um editor seu</td><td><code>v-html</code></td></tr>
-<tr><td>O valor veio de fora</td><td>Interpolação ou <code>v-text</code>, nunca <code>v-html</code></td></tr>
+<tr><td>A value in the middle of a sentence</td><td>Interpolation</td></tr>
+<tr><td>The whole element is the value</td><td><code>v-text</code></td></tr>
+<tr><td>The expression has braces inside it</td><td><code>v-text</code></td></tr>
+<tr><td>The value is trusted HTML, out of an editor of yours</td><td><code>v-html</code></td></tr>
+<tr><td>The value came from outside</td><td>Interpolation or <code>v-text</code>, never <code>v-html</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="formatando">Formatando na hora de mostrar</h2>
+<h2 id="formatando">Formatting at display time</h2>
 
 <p>
-  Os utilitários de formatação estão disponíveis dentro das expressões, o que evita guardar no
-  estado uma versão já formatada do mesmo dado:
+  The formatting utilities are available inside expressions, which saves you from keeping an
+  already-formatted copy of the same data in state:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ preco: 1234.5, quando: '2026-08-29T10:30:00' }"&gt;
-  &lt;p&gt;Moeda: { $c(preco) }&lt;/p&gt;
-  &lt;p&gt;Moeda em dólar: { $c(preco, 'USD') }&lt;/p&gt;
-  &lt;p&gt;Número: { $n(preco) }&lt;/p&gt;
-  &lt;p&gt;Data: { $d(quando) }&lt;/p&gt;
-  &lt;p&gt;Tempo relativo: { $rt(quando) }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ price: 1234.5, when: '2026-08-29T10:30:00' }"&gt;
+  &lt;p&gt;Currency: { $c(price) }&lt;/p&gt;
+  &lt;p&gt;Currency in dollars: { $c(price, 'USD') }&lt;/p&gt;
+  &lt;p&gt;Number: { $n(price) }&lt;/p&gt;
+  &lt;p&gt;Date: { $d(when) }&lt;/p&gt;
+  &lt;p&gt;Relative time: { $rt(when) }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no build completo</span>
+  <span class="doc-aviso__rotulo">Full build only</span>
   <p>
-    <code>$n</code>, <code>$c</code>, <code>$d</code> e <code>$rt</code> vêm com o módulo de
-    idiomas, que existe apenas no <code>voodoo.full.min.js</code>. Nos outros dois arquivos existem
-    <code>V.formatCurrency</code>, <code>V.formatNumber</code> e <code>V.formatDate</code>, que
-    fazem o mesmo a partir do JavaScript e podem ser liberados dentro das expressões por
+    <code>$n</code>, <code>$c</code>, <code>$d</code> and <code>$rt</code> come with the languages
+    module, which exists only in <code>voodoo.full.min.js</code>. In the other two files there are
+    <code>V.formatCurrency</code>, <code>V.formatNumber</code> and <code>V.formatDate</code>, which
+    do the same from JavaScript and can be exposed inside expressions through
     <code>V.config.globals</code>.
   </p>
 </div>
 
 <p>
-  A lista inteira está na <a href="../referencia/utilitarios.html">referência de utilitários</a>.
-  O idioma e a moeda usados vêm de <code>V.config.locale</code> e
+  The whole list is in the <a href="../referencia/utilitarios.html">utilities reference</a>. The
+  locale and currency in use come from <code>V.config.locale</code> and
   <code>V.config.currency</code>.
 </p>
 

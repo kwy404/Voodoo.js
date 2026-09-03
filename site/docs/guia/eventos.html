@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Eventos e modificadores · Documentação da Voodoo.js</title>
-<meta name="description" content="As três formas de escutar um evento, os modificadores que resolvem prevent, stop, outside, debounce e throttle, as teclas, os eventos que a Voodoo inventa e o que existe dentro do handler.">
+<title>Events and modifiers · Voodoo.js documentation</title>
+<meta name="description" content="The three ways of listening to an event, the modifiers that cover prevent, stop, outside, debounce and throttle, the keys, the events Voodoo invents, and what exists inside the handler.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/eventos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,163 +14,164 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Eventos e modificadores</h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>Events and modifiers</h1>
 <p class="doc-resumo">
-  O usuário clica, digita, envia. Alguma coisa precisa acontecer. Toda a escuta de eventos cabe em
-  um atributo, e os modificadores dão de graça o que normalmente vira código de apoio:
-  <code>preventDefault</code>, <code>stopPropagation</code>, clique fora, espera de digitação.
+  The user clicks, types, submits. Something has to happen. All of the event listening fits in one
+  attribute, and the modifiers hand you for free what normally turns into support code:
+  <code>preventDefault</code>, <code>stopPropagation</code>, click-outside, waiting for typing to
+  stop.
 </p>
 
-<h2 id="tres-escritas">Três escritas, o mesmo resultado</h2>
+<h2 id="tres-escritas">Three spellings, the same result</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++"&gt;Somar&lt;/button&gt;
-  &lt;button v-on:click="n = 0"&gt;Zerar&lt;/button&gt;
-  &lt;button v-click="n--"&gt;Subtrair&lt;/button&gt;
+  &lt;button @click="n++"&gt;Add&lt;/button&gt;
+  &lt;button v-on:click="n = 0"&gt;Reset&lt;/button&gt;
+  &lt;button v-click="n--"&gt;Subtract&lt;/button&gt;
   &lt;p&gt;{ n }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>@evento</code> é a mais curta, <code>v-on:evento</code> é a completa, e
-  <code>v-click</code>, <code>v-input</code>, <code>v-keyup</code> e outros atalhos existem para
-  quem prefere um nome único por linha. Escolha uma e mantenha no projeto inteiro.
+  <code>@event</code> is the shortest, <code>v-on:event</code> is the full one, and
+  <code>v-click</code>, <code>v-input</code>, <code>v-keyup</code> and other shorthands exist for
+  anyone who prefers a single name per line. Pick one and keep it across the project.
 </p>
 
-<h2 id="modificadores">Modificadores</h2>
+<h2 id="modificadores">Modifiers</h2>
 
 <p>
-  Depois do nome do evento, um ponto liga comportamentos comuns:
+  After the event name, a dot turns on common behaviours:
 </p>
 
-<pre data-lang="html"><code>&lt;form @submit.prevent="salvar()"&gt;Não recarrega a página&lt;/form&gt;
-&lt;div class="overlay" @click.self="fechar()"&gt;Só o clique no próprio overlay conta&lt;/div&gt;
-&lt;button @click.once="comecar()"&gt;Roda uma vez e desliga&lt;/button&gt;
-&lt;div @keydown.escape.window="fechar()"&gt;Escuta no window inteiro&lt;/div&gt;
-&lt;div @click.outside="fecharMenu()"&gt;Clique em qualquer lugar fora daqui&lt;/div&gt;</code></pre>
+<pre data-lang="html"><code>&lt;form @submit.prevent="save()"&gt;Does not reload the page&lt;/form&gt;
+&lt;div class="overlay" @click.self="close()"&gt;Only a click on the overlay itself counts&lt;/div&gt;
+&lt;button @click.once="start()"&gt;Runs once and switches off&lt;/button&gt;
+&lt;div @keydown.escape.window="close()"&gt;Listens on the whole window&lt;/div&gt;
+&lt;div @click.outside="closeMenu()"&gt;A click anywhere outside here&lt;/div&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Modificador</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Modifier</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>.prevent</code></td><td><code>preventDefault()</code> antes de rodar a expressão</td></tr>
-<tr><td><code>.stop</code></td><td><code>stopPropagation()</code>, o evento não sobe</td></tr>
-<tr><td><code>.self</code></td><td>Só dispara quando o alvo é o próprio elemento</td></tr>
-<tr><td><code>.once</code></td><td>Roda uma vez e remove o ouvinte</td></tr>
-<tr><td><code>.capture</code></td><td>Escuta na fase de captura</td></tr>
-<tr><td><code>.passive</code></td><td>Marca o ouvinte como passivo, útil em rolagem e toque</td></tr>
-<tr><td><code>.window</code></td><td>Instala o ouvinte no <code>window</code></td></tr>
-<tr><td><code>.document</code></td><td>Instala o ouvinte no <code>document</code></td></tr>
-<tr><td><code>.outside</code></td><td>Dispara em cliques fora do elemento</td></tr>
-<tr><td><code>.debounce</code></td><td>Espera o usuário parar antes de rodar</td></tr>
-<tr><td><code>.throttle</code></td><td>Limita a uma execução por intervalo</td></tr>
+<tr><td><code>.prevent</code></td><td><code>preventDefault()</code> before running the expression</td></tr>
+<tr><td><code>.stop</code></td><td><code>stopPropagation()</code>, the event does not bubble</td></tr>
+<tr><td><code>.self</code></td><td>Only fires when the target is the element itself</td></tr>
+<tr><td><code>.once</code></td><td>Runs once and removes the listener</td></tr>
+<tr><td><code>.capture</code></td><td>Listens in the capture phase</td></tr>
+<tr><td><code>.passive</code></td><td>Marks the listener as passive, useful for scroll and touch</td></tr>
+<tr><td><code>.window</code></td><td>Installs the listener on <code>window</code></td></tr>
+<tr><td><code>.document</code></td><td>Installs the listener on <code>document</code></td></tr>
+<tr><td><code>.outside</code></td><td>Fires on clicks outside the element</td></tr>
+<tr><td><code>.debounce</code></td><td>Waits for the user to stop before running</td></tr>
+<tr><td><code>.throttle</code></td><td>Limits it to one run per interval</td></tr>
 </tbody>
 </table>
 </div>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ texto: '', vezes: 0 }"&gt;
-  &lt;input v-model="texto" @input.debounce="vezes++" v-debounce="500"&gt;
-  &lt;p&gt;Digitou: { texto }&lt;/p&gt;
-  &lt;p&gt;Disparou { vezes } vezes, contando meio segundo de silêncio.&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ text: '', times: 0 }"&gt;
+  &lt;input v-model="text" @input.debounce="times++" v-debounce="500"&gt;
+  &lt;p&gt;Typed: { text }&lt;/p&gt;
+  &lt;p&gt;Fired { times } times, counting half a second of silence.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="teclas">Teclas</h2>
+<h2 id="teclas">Keys</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ ultimo: 'nada ainda' }"&gt;
-  &lt;input placeholder="Enter, Esc ou Ctrl+Enter"
-         @keyup.enter="ultimo = 'Enter'"
-         @keydown.esc="ultimo = 'Esc'"
-         @keydown.ctrl.enter="ultimo = 'Ctrl+Enter'"&gt;
-  &lt;p&gt;Última tecla reconhecida: { ultimo }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ last: 'nothing yet' }"&gt;
+  &lt;input placeholder="Enter, Esc or Ctrl+Enter"
+         @keyup.enter="last = 'Enter'"
+         @keydown.esc="last = 'Esc'"
+         @keydown.ctrl.enter="last = 'Ctrl+Enter'"&gt;
+  &lt;p&gt;Last key recognized: { last }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Nomes aceitos: <code>.enter</code>, <code>.esc</code> ou <code>.escape</code>,
+  Accepted names: <code>.enter</code>, <code>.esc</code> or <code>.escape</code>,
   <code>.space</code>, <code>.tab</code>, <code>.delete</code>, <code>.backspace</code>,
-  <code>.up</code>, <code>.down</code>, <code>.left</code>, <code>.right</code>, qualquer letra de
-  <code>.a</code> a <code>.z</code> e qualquer dígito de <code>.0</code> a <code>.9</code>. As
-  teclas de sistema são <code>.ctrl</code>, <code>.shift</code>, <code>.alt</code> e
-  <code>.meta</code>, e combinam com as demais na mesma escrita.
+  <code>.up</code>, <code>.down</code>, <code>.left</code>, <code>.right</code>, any letter from
+  <code>.a</code> to <code>.z</code> and any digit from <code>.0</code> to <code>.9</code>. The
+  system keys are <code>.ctrl</code>, <code>.shift</code>, <code>.alt</code> and
+  <code>.meta</code>, and they combine with the rest in the same spelling.
 </p>
 
-<pre data-lang="html"><code>&lt;div @keydown.meta.k.window.prevent="abrirBusca()"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html"><code>&lt;div @keydown.meta.k.window.prevent="openSearch()"&gt;&lt;/div&gt;</code></pre>
 
-<h2 id="eventos-inventados">Eventos que o navegador não tem</h2>
+<h2 id="eventos-inventados">Events the browser does not have</h2>
 
 <p>
-  Alguns comportamentos aparecem o tempo todo em interface e não existem como evento nativo. A
-  Voodoo os oferece com o mesmo formato dos outros:
+  Some behaviours turn up all the time in interfaces and do not exist as a native event. Voodoo
+  offers them in the same shape as the others:
 </p>
 
-<pre data-lang="html"><code>&lt;button @hold.2s="apagarTudo()"&gt;Segure dois segundos para apagar&lt;/button&gt;
-&lt;div @visible="carregarMais()"&gt;Dispara quando entra na área visível&lt;/div&gt;
-&lt;div @swipeleft="proximo()" @swiperight="anterior()"&gt;Gestos de arrastar&lt;/div&gt;
-&lt;button v-hotkey="ctrl+k" @click="abrirPaleta()"&gt;Atalho global de teclado&lt;/button&gt;</code></pre>
+<pre data-lang="html"><code>&lt;button @hold.2s="deleteEverything()"&gt;Hold for two seconds to delete&lt;/button&gt;
+&lt;div @visible="loadMore()"&gt;Fires when it enters the visible area&lt;/div&gt;
+&lt;div @swipeleft="next()" @swiperight="previous()"&gt;Swipe gestures&lt;/div&gt;
+&lt;button v-hotkey="ctrl+k" @click="openPalette()"&gt;A global keyboard shortcut&lt;/button&gt;</code></pre>
 
 <p>
-  E alguns apelidos mais legíveis para eventos que já existem: <code>@hover</code> para
-  <code>mouseenter</code>, <code>@unhover</code> para <code>mouseleave</code>, <code>@tap</code>
-  para <code>click</code>, <code>@press</code> para <code>pointerdown</code>,
-  <code>@release</code> para <code>pointerup</code>, <code>@rightclick</code> para
-  <code>contextmenu</code> e <code>@type</code> para <code>input</code>.
+  And some more readable aliases for events that already exist: <code>@hover</code> for
+  <code>mouseenter</code>, <code>@unhover</code> for <code>mouseleave</code>, <code>@tap</code>
+  for <code>click</code>, <code>@press</code> for <code>pointerdown</code>,
+  <code>@release</code> for <code>pointerup</code>, <code>@rightclick</code> for
+  <code>contextmenu</code> and <code>@type</code> for <code>input</code>.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ estado: 'parado' }"&gt;
-  &lt;button @hold.1s="estado = 'segurou um segundo!'"
-          @hover="estado = 'passou o mouse'"
-          @unhover="estado = 'saiu'"&gt;
-    Passe o mouse, ou segure o clique
+<pre data-lang="html"><code>&lt;div v-data="{ state: 'idle' }"&gt;
+  &lt;button @hold.1s="state = 'held for a second!'"
+          @hover="state = 'moused over'"
+          @unhover="state = 'left'"&gt;
+    Hover, or hold the click
   &lt;/button&gt;
-  &lt;p&gt;{ estado }&lt;/p&gt;
+  &lt;p&gt;{ state }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="dentro-do-handler">Dentro do handler</h2>
+<h2 id="dentro-do-handler">Inside the handler</h2>
 
 <p>
-  Três variáveis estão sempre disponíveis na expressão de um evento:
+  Three variables are always available in an event expression:
 </p>
 
-<pre data-lang="html"><code>&lt;input @input="busca = $event.target.value"&gt;
-&lt;button @click="$el.classList.add('clicado')"&gt;Uso o próprio elemento&lt;/button&gt;
-&lt;section @filtro="aplicar($detail)"&gt;Recebo o detalhe de um evento customizado&lt;/section&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input @input="search = $event.target.value"&gt;
+&lt;button @click="$el.classList.add('clicked')"&gt;I use the element itself&lt;/button&gt;
+&lt;section @filter="apply($detail)"&gt;I receive the detail of a custom event&lt;/section&gt;</code></pre>
 
 <p>
-  <code>$event</code> é o evento, <code>$el</code> é o elemento e <code>$detail</code> é o
-  <code>detail</code> de um <code>CustomEvent</code>.
+  <code>$event</code> is the event, <code>$el</code> is the element and <code>$detail</code> is the
+  <code>detail</code> of a <code>CustomEvent</code>.
 </p>
 
-<h2 id="eventos-proprios">Emitindo os seus próprios eventos</h2>
+<h2 id="eventos-proprios">Emitting events of your own</h2>
 
 <p>
-  <code>$dispatch</code> emite um <code>CustomEvent</code> que sobe pela árvore, o que permite a
-  um trecho avisar outro sem que os dois compartilhem estado.
+  <code>$dispatch</code> emits a <code>CustomEvent</code> that bubbles up the tree, which lets one
+  stretch of the page tell another without the two sharing state.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ recebido: '' }" @produto-escolhido="recebido = $detail.nome"&gt;
-  &lt;button @click="$dispatch('produto-escolhido', { nome: 'Caneca' })"&gt;Escolher caneca&lt;/button&gt;
-  &lt;button @click="$dispatch('produto-escolhido', { nome: 'Camiseta' })"&gt;Escolher camiseta&lt;/button&gt;
-  &lt;p&gt;Escolhido: { recebido || 'nada' }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ received: '' }" @product-picked="received = $detail.name"&gt;
+  &lt;button @click="$dispatch('product-picked', { name: 'Mug' })"&gt;Pick the mug&lt;/button&gt;
+  &lt;button @click="$dispatch('product-picked', { name: 'Shirt' })"&gt;Pick the shirt&lt;/button&gt;
+  &lt;p&gt;Picked: { received || 'nothing' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="limpeza">Limpeza automática</h2>
+<h2 id="limpeza">Automatic cleanup</h2>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Você não precisa remover nada</span>
+  <span class="doc-aviso__rotulo">You do not have to remove anything</span>
   <p>
-    Todo ouvinte instalado por uma directive é removido sozinho quando o elemento sai do DOM,
-    inclusive os que foram registrados em <code>window</code> ou <code>document</code> pelos
-    modificadores <code>.window</code> e <code>.document</code>. Um <code>v-if</code> que fecha
-    leva junto tudo o que estava escutando lá dentro.
+    Every listener installed by a directive is removed on its own when the element leaves the DOM,
+    including the ones registered on <code>window</code> or <code>document</code> by the
+    <code>.window</code> and <code>.document</code> modifiers. A <code>v-if</code> that closes
+    takes everything that was listening inside it along.
   </p>
 </div>
 

@@ -1,104 +1,111 @@
 /* ==========================================================================
-   Documentação da Voodoo.js
-   Navegação, busca, índice lateral, realce de sintaxe e exemplos ao vivo.
-   Sem nenhuma dependência externa.
+   Voodoo.js documentation
+   Navigation, search, on-this-page index, syntax highlighting and live
+   examples. No external dependencies.
+
+   The theme attribute is `data-tema`, with the values `claro` and `escuro`.
+   That name is the existing contract across all 44 documentation pages, so it
+   stays in Portuguese while everything a reader sees is English.
    ========================================================================== */
 
 (function () {
   'use strict';
 
   // ------------------------------------------------------------------------
-  // 1. Mapa de páginas. É a única fonte de verdade da navegação.
+  // 1. Page map. The single source of truth for the navigation.
+
+  //    The ids are the file names on disk and stay in Portuguese; the titles
+  //    are what a reader sees, so they are English.
   // ------------------------------------------------------------------------
 
   var NAVEGACAO = [
     {
-      titulo: 'Começando',
+      titulo: 'Getting started',
       paginas: [
-        { id: '', titulo: 'Documentação', curto: 'Início' },
-        { id: 'guia/o-que-e', titulo: 'O que é a Voodoo.js e quando usar' },
-        { id: 'guia/instalacao', titulo: 'Instalação e primeiro arquivo' },
-        { id: 'guia/modo-aplicacao', titulo: 'Os dois modos: atributos e createApp' }
+        { id: '', titulo: 'Documentation', curto: 'Home' },
+        { id: 'guia/o-que-e', titulo: 'What Voodoo.js is and when to use it' },
+        { id: 'guia/instalacao', titulo: 'Installation and your first file' },
+        { id: 'guia/modo-aplicacao', titulo: 'The two modes: attributes and createApp' }
       ]
     },
     {
-      titulo: 'Fundamentos',
+      titulo: 'Fundamentals',
       paginas: [
-        { id: 'guia/estado-e-escopo', titulo: 'Estado e escopo com v-data' },
-        { id: 'guia/mostrando-valores', titulo: 'Mostrando valores na tela' },
-        { id: 'guia/condicionais', titulo: 'Condicionais' },
-        { id: 'guia/listas', titulo: 'Listas e por que a chave importa' },
-        { id: 'guia/eventos', titulo: 'Eventos e modificadores' },
-        { id: 'guia/campos-e-v-model', titulo: 'Campos de formulário com v-model' },
-        { id: 'guia/atributos-classes-estilos', titulo: 'Atributos, classes e estilos' }
+        { id: 'guia/estado-e-escopo', titulo: 'State and scope with v-data' },
+        { id: 'guia/mostrando-valores', titulo: 'Showing values on screen' },
+        { id: 'guia/condicionais', titulo: 'Conditionals' },
+        { id: 'guia/listas', titulo: 'Lists, and why the key matters' },
+        { id: 'guia/eventos', titulo: 'Events and modifiers' },
+        { id: 'guia/campos-e-v-model', titulo: 'Form fields with v-model' },
+        { id: 'guia/atributos-classes-estilos', titulo: 'Attributes, classes and styles' }
       ]
     },
     {
-      titulo: 'Dados e formulários',
+      titulo: 'Data and forms',
       paginas: [
-        { id: 'guia/buscando-dados', titulo: 'Buscando dados de um servidor' },
-        { id: 'guia/formularios', titulo: 'Formulários que validam e enviam sozinhos' },
-        { id: 'guia/mascaras', titulo: 'Máscaras de campo' }
+        { id: 'guia/buscando-dados', titulo: 'Fetching data from a server' },
+        { id: 'guia/formularios', titulo: 'Forms that validate and submit themselves' },
+        { id: 'guia/mascaras', titulo: 'Input masks' }
       ]
     },
     {
-      titulo: 'Componentes e estado',
+      titulo: 'Components and state',
       paginas: [
-        { id: 'guia/componentes', titulo: 'Componentes: props, slots, eventos e ciclo de vida' },
-        { id: 'guia/componentes-prontos', titulo: 'Componentes prontos' },
-        { id: 'guia/stores', titulo: 'Estado global com stores' },
-        { id: 'guia/estado-persistente', titulo: 'Estado que persiste, sincroniza e desfaz' }
+        { id: 'guia/componentes', titulo: 'Components: props, slots, events and lifecycle' },
+        { id: 'guia/componentes-prontos', titulo: 'Built-in components' },
+        { id: 'guia/stores', titulo: 'Global state with stores' },
+        { id: 'guia/estado-persistente', titulo: 'State that persists, syncs and undoes' }
       ]
     },
     {
-      titulo: 'Interface e efeitos',
+      titulo: 'Interface and effects',
       paginas: [
-        { id: 'guia/interface', titulo: 'Modal, abas, menu, gaveta, arrastar e soltar' },
-        { id: 'guia/animacoes', titulo: 'Animações' },
-        { id: 'guia/som', titulo: 'Som' },
-        { id: 'guia/graficos', titulo: 'Gráficos' },
-        { id: 'guia/roteador', titulo: 'Roteador' },
-        { id: 'guia/idiomas', titulo: 'Idiomas' },
-        { id: 'guia/tema-e-paleta', titulo: 'Tema e paleta' }
+        { id: 'guia/interface', titulo: 'Modal, tabs, menu, drawer, drag and drop' },
+        { id: 'guia/animacoes', titulo: 'Animations' },
+        { id: 'guia/som', titulo: 'Sound' },
+        { id: 'guia/graficos', titulo: 'Charts' },
+        { id: 'guia/roteador', titulo: 'Router' },
+        { id: 'guia/idiomas', titulo: 'Languages' },
+        { id: 'guia/tema-e-paleta', titulo: 'Theme and palette' }
       ]
     },
     {
-      titulo: 'Estendendo e depurando',
+      titulo: 'Extending and debugging',
       paginas: [
-        { id: 'guia/directives-e-plugins', titulo: 'Directives próprias e plugins' },
-        { id: 'guia/inspetor', titulo: 'O inspetor de reatividade' },
-        { id: 'guia/depurando', titulo: 'Depurando problemas comuns' }
+        { id: 'guia/directives-e-plugins', titulo: 'Custom directives and plugins' },
+        { id: 'guia/inspetor', titulo: 'The reactivity inspector' },
+        { id: 'guia/depurando', titulo: 'Debugging common problems' }
       ]
     },
     {
-      titulo: 'Referência',
+      titulo: 'Reference',
       paginas: [
-        { id: 'referencia/directives', titulo: 'Directives por categoria' },
-        { id: 'referencia/objeto-v', titulo: 'O objeto V' },
-        { id: 'referencia/magias', titulo: 'Variáveis mágicas' },
-        { id: 'referencia/componentes-prontos', titulo: 'Componentes prontos e props' },
-        { id: 'referencia/http', titulo: 'Cliente HTTP' },
-        { id: 'referencia/utilitarios', titulo: 'Utilitários' },
-        { id: 'referencia/validacao', titulo: 'Regras de validação' },
-        { id: 'referencia/mascaras', titulo: 'Máscaras' },
-        { id: 'referencia/graficos', titulo: 'Tipos de gráfico' },
-        { id: 'referencia/configuracao', titulo: 'Configuração' }
+        { id: 'referencia/directives', titulo: 'Directives by category' },
+        { id: 'referencia/objeto-v', titulo: 'The V object' },
+        { id: 'referencia/magias', titulo: 'Magic variables' },
+        { id: 'referencia/componentes-prontos', titulo: 'Built-in components and their props' },
+        { id: 'referencia/http', titulo: 'HTTP client' },
+        { id: 'referencia/utilitarios', titulo: 'Utilities' },
+        { id: 'referencia/validacao', titulo: 'Validation rules' },
+        { id: 'referencia/mascaras', titulo: 'Masks' },
+        { id: 'referencia/graficos', titulo: 'Chart types' },
+        { id: 'referencia/configuracao', titulo: 'Configuration' }
       ]
     },
     {
-      titulo: 'Qualidade e migração',
+      titulo: 'Quality and migration',
       paginas: [
-        { id: 'referencia/seguranca', titulo: 'Segurança' },
-        { id: 'referencia/desempenho', titulo: 'Desempenho' },
-        { id: 'referencia/migracao-jquery', titulo: 'Migrando do jQuery' },
-        { id: 'referencia/migracao-alpine', titulo: 'Migrando do Alpine' },
-        { id: 'referencia/migracao-vue', titulo: 'Migrando do Vue' },
-        { id: 'referencia/perguntas-frequentes', titulo: 'Perguntas frequentes' }
+        { id: 'referencia/seguranca', titulo: 'Security' },
+        { id: 'referencia/desempenho', titulo: 'Performance' },
+        { id: 'referencia/migracao-jquery', titulo: 'Migrating from jQuery' },
+        { id: 'referencia/migracao-alpine', titulo: 'Migrating from Alpine' },
+        { id: 'referencia/migracao-vue', titulo: 'Migrating from Vue' },
+        { id: 'referencia/perguntas-frequentes', titulo: 'Frequently asked questions' }
       ]
     }
   ];
 
-  // Lista plana, usada pela navegação anterior e próxima.
+  // Flat list, used by the previous/next navigation.
   var LINEAR = [];
   NAVEGACAO.forEach(function (grupo) {
     grupo.paginas.forEach(function (pagina) {
@@ -107,7 +114,7 @@
   });
 
   // ------------------------------------------------------------------------
-  // 2. Caminhos
+  // 2. Paths
   // ------------------------------------------------------------------------
 
   var esteScript =
@@ -119,7 +126,11 @@
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
   var RUNTIME = new URL('../voodoo.full.min.js', RAIZ).href; // .../site/voodoo.full.min.js
-  var MARCA = new URL('../assets/brand/logo/voodoo-mark.svg', RAIZ).href;
+
+  // One level above the documentation is the site itself. Resolving it from
+  // the script URL rather than from location means the header links work the
+  // same from /docs/, /docs/guia/ and /docs/referencia/.
+  var SITE = new URL('../', RAIZ).pathname; // .../site/
 
   function href(id) {
     return id ? RAIZ.pathname + id + '.html' : RAIZ.pathname;
@@ -142,7 +153,7 @@
   });
 
   // ------------------------------------------------------------------------
-  // 3. Utilidades
+  // 3. Helpers
   // ------------------------------------------------------------------------
 
   function esc(texto) {
@@ -193,36 +204,95 @@
   };
 
   // ------------------------------------------------------------------------
-  // 4. Tema
+  // 4. Theme
+  //
+  //    Three states, the same shape the stylesheet uses: the system preference
+  //    governs until the reader picks a theme, and an explicit choice then wins
+  //    in both directions.
+  //
+  //    This used to read `data-tema !== "claro" ? "escuro"`, so on a light
+  //    system with no saved choice it resolved to dark, pinned data-tema
+  //    ="escuro" on the document and wrote that to storage on the very first
+  //    load. The page went dark, the reader never asked for it, and the live
+  //    example inside the iframe went dark with it while the library's own
+  //    palette stayed on the light defaults it picks from prefers-color-scheme
+  //    — a white result pane on a dark page.
   // ------------------------------------------------------------------------
 
   var CHAVE_TEMA = 'voodoo-docs-tema';
 
-  function temaAtual() {
-    return document.documentElement.getAttribute('data-tema') === 'claro' ? 'claro' : 'escuro';
+  function temaSalvo() {
+    try {
+      var valor = localStorage.getItem(CHAVE_TEMA);
+      return valor === 'claro' || valor === 'escuro' ? valor : null;
+    } catch (erro) {
+      return null; /* private mode */
+    }
   }
 
+  function temaDoSistema() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'escuro'
+      : 'claro';
+  }
+
+  // The theme actually painted right now: the explicit attribute if the page
+  // carries one, then the reader's saved choice, then the system.
+  function temaAtual() {
+    var marcado = document.documentElement.getAttribute('data-tema');
+    if (marcado === 'claro' || marcado === 'escuro') return marcado;
+    return temaSalvo() || temaDoSistema();
+  }
+
+  // Sets the attribute and remembers the choice. Only the toggle calls this.
   function aplicarTema(tema) {
     document.documentElement.setAttribute('data-tema', tema);
     try {
       localStorage.setItem(CHAVE_TEMA, tema);
     } catch (erro) {
-      /* modo privado, segue sem persistir */
+      /* private mode, carry on without persisting */
     }
+    sincronizarTema();
+  }
+
+  // Repaints everything that depends on the theme without touching the
+  // document attribute, so a reader who never chose keeps following the system.
+  function sincronizarTema() {
+    var tema = temaAtual();
     var botao = document.getElementById('doc-tema');
     if (botao) {
       var claro = tema === 'claro';
+      var rotulo = claro ? 'Switch to dark theme' : 'Switch to light theme';
       botao.innerHTML = claro ? ICONES.lua : ICONES.sol;
-      botao.setAttribute('aria-label', claro ? 'Usar tema escuro' : 'Usar tema claro');
-      botao.setAttribute('title', claro ? 'Usar tema escuro' : 'Usar tema claro');
+      botao.setAttribute('aria-label', rotulo);
+      botao.setAttribute('title', rotulo);
     }
     document.querySelectorAll('iframe[data-palco]').forEach(function (quadro) {
       try {
         quadro.contentDocument.documentElement.setAttribute('data-tema', tema);
       } catch (erro) {
-        /* ainda carregando */
+        /* still loading */
       }
     });
+  }
+
+  function ligarTema() {
+    // A saved choice is the reader's own explicit decision, so pin it on the
+    // document. Without a saved choice nothing is written and the stylesheet's
+    // prefers-color-scheme block governs.
+    var salvo = temaSalvo();
+    if (salvo) document.documentElement.setAttribute('data-tema', salvo);
+
+    if (window.matchMedia) {
+      var consulta = window.matchMedia('(prefers-color-scheme: dark)');
+      var aoMudar = function () {
+        if (!document.documentElement.hasAttribute('data-tema')) sincronizarTema();
+      };
+      if (consulta.addEventListener) consulta.addEventListener('change', aoMudar);
+      else if (consulta.addListener) consulta.addListener(aoMudar);
+    }
+
+    sincronizarTema();
   }
 
   // ------------------------------------------------------------------------
@@ -445,30 +515,66 @@
   // 7. Exemplos ao vivo
   // ------------------------------------------------------------------------
 
+  // The stage is a separate document, so it needs the design system in full.
+  // Three states in the same shape as docs.css, and then the library's own
+  // --v-* tokens pointed at those. Every colour below is a token: the previous
+  // version hardcoded a dark violet palette here, which is why a stage could
+  // not follow the page.
+  var TOKENS_IFRAME =
+    ':root{' +
+    '--ink:#16141c;--ink-soft:#57526a;--ink-faint:#8b8598;' +
+    '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
+    '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
+    'color-scheme:light}' +
+    '@media (prefers-color-scheme:dark){html:root:not([data-tema="claro"]){' +
+    '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
+    '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
+    '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
+    'color-scheme:dark}}' +
+    'html:root[data-tema="escuro"]{' +
+    '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
+    '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
+    '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
+    'color-scheme:dark}' +
+    // The library injects :root{--v-surface:#fff;...} into this document's
+    // <head> and only darkens it for prefers-color-scheme or [data-theme].
+    // It never sees data-tema, so a reader on a light system who chose the
+    // dark theme got white component surfaces on a dark stage. !important is
+    // required: V.palette() writes :root:not([data-theme="light"]), which
+    // outranks any plain selector, and html:root beats the plain :root the
+    // library appends later in source order.
+    // --v-surface-3 has no default at all — the progress track, the skeleton
+    // fill and the switch rail paint with it and render invisible unmapped.
+    'html:root{' +
+    '--v-surface:var(--bg)!important;' +
+    '--v-surface-2:var(--bg-soft)!important;' +
+    '--v-surface-3:var(--fill)!important;' +
+    '--v-border:var(--line)!important;' +
+    '--v-text:var(--ink)!important;' +
+    '--v-text-muted:var(--ink-faint)!important;' +
+    '--v-primary:var(--accent)!important;' +
+    '--v-radius:10px;--v-radius-sm:7px}';
+
   var BASE_IFRAME =
+    TOKENS_IFRAME +
     '*,*::before,*::after{box-sizing:border-box}' +
-    'html{color-scheme:dark}' +
-    'html[data-tema="claro"]{color-scheme:light}' +
-    'body{margin:0;padding:16px;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
-    'background:transparent;color:#ece9f5}' +
-    'html[data-tema="claro"] body{color:#1d182c}' +
+    'body{margin:0;padding:16px;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",' +
+    'Roboto,Helvetica,Arial,sans-serif;background:transparent;color:var(--ink)}' +
     '[v-cloak]{display:none!important}' +
     'h1,h2,h3,h4,p,ul,ol{margin:0 0 .6rem}' +
     'ul,ol{padding-left:1.2rem}' +
-    'button{font:inherit;padding:.4rem .8rem;border:1px solid #3d3560;border-radius:8px;' +
-    'background:#221d38;color:#ece9f5;cursor:pointer}' +
-    'button:hover{border-color:#6d3bf5}' +
-    'html[data-tema="claro"] button{background:#f5f0ff;color:#1d182c;border-color:#cec4e2}' +
-    'input,select,textarea{font:inherit;padding:.4rem .6rem;border:1px solid #3d3560;border-radius:8px;' +
-    'background:#191527;color:#ece9f5;max-width:100%}' +
-    'html[data-tema="claro"] input,html[data-tema="claro"] select,html[data-tema="claro"] textarea' +
-    '{background:#fff;color:#1d182c;border-color:#cec4e2}' +
-    'input[type=checkbox],input[type=radio]{width:auto;accent-color:#6d3bf5}' +
+    'button{font:inherit;padding:.4rem .8rem;border:1px solid var(--line);border-radius:7px;' +
+    'background:var(--bg-soft);color:var(--ink);cursor:pointer}' +
+    'button:hover{border-color:var(--accent)}' +
+    'input,select,textarea{font:inherit;padding:.4rem .6rem;border:1px solid var(--line);' +
+    'border-radius:7px;background:var(--bg);color:var(--ink);max-width:100%}' +
+    'input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}' +
+    'input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}' +
     'label{display:inline-flex;align-items:center;gap:.4rem}' +
     'table{border-collapse:collapse;width:100%;font-size:.9rem}' +
-    'th,td{padding:.35rem .5rem;border-bottom:1px solid #2c2643;text-align:left}' +
-    'code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}' +
-    'a{color:#9b7bff}' +
+    'th,td{padding:.35rem .5rem;border-bottom:1px solid var(--line);text-align:left}' +
+    'code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.9em}' +
+    'a{color:var(--accent)}' +
     '.linha{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem}';
 
   function montarExemplos(raiz) {

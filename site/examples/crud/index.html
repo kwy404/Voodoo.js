@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User CRUD — Voodoo.js</title>
+<meta name="description" content="Create, read, update and delete users with Voodoo.js: validated forms, input masks, loading states and a simulated REST layer, in a single HTML file.">
+<link rel="stylesheet" href="../../design-system/voodoo-ui.css">
+<!-- Core bundle: this demo uses reactivity, directives, forms, masks, validation, dialogs and notifications. -->
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ------------------------------------------------------------------
+     Page palette. The same tokens the landing page and the examples
+     index use, so this demo reads as the same product.
+
+     Three states on purpose: no attribute follows the operating system,
+     data-theme="light" pins light, data-theme="dark" pins dark. The
+     library paints its own widgets (toasts, dialogs, tooltips) from the
+     --v-* tokens, and those follow prefers-color-scheme; a page that
+     pinned itself light would end up with dark widgets on white paper.
+     ------------------------------------------------------------------ */
+  :root {
+    --ink: #16141c;
+    --ink-soft: #57526a;
+    --ink-faint: #8b8598;
+    --bg: #ffffff;
+    --bg-soft: #faf9fb;
+    --line: #e7e4ec;
+    --accent: #5b2ee5;
+    --accent-soft: #f1ecfe;
+    --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    color-scheme: light;
+
+    /* Extras this page needs, defined once per theme like the rest. */
+    --on-accent: #ffffff;
+    --danger: #b42318;
+    --danger-soft: #fdeceb;
+    --overlay: rgba(22, 20, 28, 0.45);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html:root:not([data-theme='light']) {
+      --ink: #f2f0f6;
+      --ink-soft: #b3adc2;
+      --ink-faint: #837d93;
+      --bg: #131118;
+      --bg-soft: #191722;
+      --line: #2b2735;
+      --accent: #a688ff;
+      --accent-soft: #221c3a;
+      color-scheme: dark;
+
+      --on-accent: #131118;
+      --danger: #ff9a92;
+      --danger-soft: #2b1a1d;
+      --overlay: rgba(6, 4, 12, 0.62);
+    }
+  }
+
+  html:root[data-theme='dark'] {
+    --ink: #f2f0f6;
+    --ink-soft: #b3adc2;
+    --ink-faint: #837d93;
+    --bg: #131118;
+    --bg-soft: #191722;
+    --line: #2b2735;
+    --accent: #a688ff;
+    --accent-soft: #221c3a;
+    color-scheme: dark;
+
+    --on-accent: #131118;
+    --danger: #ff9a92;
+    --danger-soft: #2b1a1d;
+    --overlay: rgba(6, 4, 12, 0.62);
+  }
+
+  /* ------------------------------------------------------------------
+     The library's own tokens, pointed at the palette above. !important
+     is required: V.palette() writes :root:not([data-theme="light"]),
+     which outranks any plain selector.
+     ------------------------------------------------------------------ */
+  html:root {
+    --v-surface: var(--bg) !important;
+    --v-surface-2: var(--bg-soft) !important;
+    --v-border: var(--line) !important;
+    --v-text: var(--ink) !important;
+    --v-text-muted: var(--ink-faint) !important;
+    --v-primary: var(--accent) !important;
+
+    /* The rest of the library palette, so built-in widgets match too. */
+    --v-color-bg: var(--bg) !important;
+    --v-surface-3: var(--bg-soft) !important;
+    --v-border-strong: var(--line) !important;
+    --v-text-subtle: var(--ink-faint) !important;
+    --v-overlay: var(--overlay) !important;
+    --v-focus-ring: var(--accent) !important;
+
+    --v-primary-hover: var(--accent) !important;
+    --v-primary-active: var(--accent) !important;
+    --v-primary-contrast: var(--on-accent) !important;
+    --v-primary-soft: var(--accent-soft) !important;
+    --v-primary-soft-text: var(--accent) !important;
+
+    --v-accent: var(--accent) !important;
+    --v-accent-hover: var(--accent) !important;
+    --v-accent-contrast: var(--on-accent) !important;
+    --v-accent-soft: var(--accent-soft) !important;
+    --v-accent-soft-text: var(--accent) !important;
+
+    --v-info: var(--accent) !important;
+    --v-info-soft: var(--accent-soft) !important;
+    --v-info-contrast: var(--on-accent) !important;
+
+    --v-danger: var(--danger) !important;
+    --v-danger-hover: var(--danger) !important;
+    --v-danger-soft: var(--danger-soft) !important;
+    --v-danger-contrast: var(--on-accent) !important;
+
+    --v-font-sans: var(--font) !important;
+    --v-font-display: var(--font) !important;
+    --v-font-mono: var(--mono) !important;
+
+    /* Flat surfaces: no shadows and no glow anywhere. */
+    --v-shadow: none !important;
+    --v-shadow-sm: none !important;
+    --v-shadow-md: none !important;
+    --v-shadow-lg: none !important;
+    --v-shadow-glow: none !important;
+
+    --v-radius-sm: 6px !important;
+    --v-radius-md: 8px !important;
+    --v-radius-lg: 10px !important;
+    --v-radius-xl: 12px !important;
+
+    /* One stacking order for both stylesheets. The library injects its own
+       tokens into <head> at startup with --v-z-modal:1000, which lands
+       below the design system's --v-z-backdrop:1200; the drawer then sits
+       under its own backdrop and the backdrop swallows every click on the
+       form. Restating the whole scale keeps backdrop < drawer < toast. */
+    --v-z-backdrop: 1200 !important;
+    --v-z-modal: 1300 !important;
+    --v-z-drawer: 1300 !important;
+    --v-z-toast: 1400 !important;
+    --v-z-tooltip: 1500 !important;
+  }
+
+  /* ---------- base ---------- */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 640;
+  }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- top bar ---------- */
+  .top {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .top-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 60px;
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 680;
+    font-size: 16.5px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand svg { width: 24px; height: 24px; flex: none; }
+
+  .top nav { display: flex; gap: 4px; margin-left: 6px; }
+
+  .top nav a {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .top nav a:hover,
+  .top nav a[aria-current='page'] {
+    color: var(--ink);
+    background: var(--bg-soft);
+  }
+
+  .top .theme-toggle { margin-left: auto; }
+
+  /* The toggle swaps its icon from aria-pressed, which the directive keeps
+     up to date. aria-pressed is a plain attribute, so it stays in the HTML. */
+  .theme-toggle .icon-moon { display: none; }
+  .theme-toggle[aria-pressed='true'] .icon-sun { display: none; }
+  .theme-toggle[aria-pressed='true'] .icon-moon { display: block; }
+
+  /* ---------- page head ---------- */
+  .page { padding-bottom: 64px; }
+
+  .page-head { padding: 44px 0 26px; max-width: 46rem; }
+  .page-head h1 { font-size: clamp(28px, 4.6vw, 40px); }
+  .page-head p {
+    margin: 12px 0 0;
+    color: var(--ink-soft);
+    font-size: 16.5px;
+  }
+
+  /* ---------- summary ---------- */
+  /* One hairline grid: the 1px gap over a --line background draws the
+     dividers, so no card needs a border or a shadow of its own. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    margin: 0 0 26px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .stat { background: var(--bg); padding: 16px 18px; }
+
+  .stat__label {
+    display: block;
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-weight: 620;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .stat__value {
+    display: block;
+    margin-top: 4px;
+    font-size: 28px;
+    font-weight: 640;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .stat--accent .stat__value { color: var(--accent); }
+
+  /* ---------- list panel ---------- */
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+
+  .search { position: relative; flex: 1 1 240px; min-width: 180px; }
+  .search .v-input { padding-left: 38px; }
+
+  .search__icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-faint);
+    pointer-events: none;
+    display: flex;
+  }
+
+  .switch-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .table-wrap { border: 0; border-radius: 0; }
+
+  .v-table thead th {
+    background: var(--bg);
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-weight: 620;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- cells ---------- */
+  .person { display: flex; align-items: center; gap: 12px; }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 660;
+    letter-spacing: 0.02em;
+  }
+
+  .avatar--admin {
+    border-color: var(--accent-soft);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .person__name { font-weight: 620; color: var(--ink); }
+  .person__email { color: var(--ink-soft); font-size: 13px; }
+
+  .mono {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* Flat role chips. The label carries the meaning; only the
+     administrator earns the accent. */
+  .role {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    font-weight: 620;
+    white-space: nowrap;
+  }
+
+  .role--admin {
+    border-color: var(--accent-soft);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .role--editor { color: var(--ink); }
+
+  .row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .row-actions .v-btn { color: var(--ink-soft); }
+  .row-actions .v-btn:hover:not(:disabled) { background: var(--bg-soft); color: var(--ink); }
+
+  .btn-danger { color: var(--danger) !important; }
+  .btn-danger:hover:not(:disabled) { background: var(--danger-soft) !important; color: var(--danger) !important; }
+
+  /* ---------- states ---------- */
+  .state { padding: 64px 20px; text-align: center; }
+
+  .state__icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 16px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--bg-soft);
+    color: var(--ink-faint);
+  }
+
+  .state__title { font-size: 18px; }
+
+  .state__text {
+    margin: 8px auto 20px;
+    max-width: 34rem;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+
+  .loading { padding: 8px 16px 16px; }
+
+  .skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .skeleton-row:last-child { border-bottom: 0; }
+  .skeleton-row__text { flex: 1; display: grid; gap: 8px; }
+
+  /* ---------- form drawer ---------- */
+  .form-drawer { width: min(30rem, 100%); }
+  .form-drawer .v-drawer__body { color: var(--ink); }
+  .form-drawer .v-drawer__footer .v-btn { flex: 1 1 0; }
+
+  .fields { display: grid; gap: 16px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .hint {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .note {
+    margin: 26px 0 0;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+
+  /* ---------- responsive ---------- */
+  /* Once the five columns stop fitting, CPF and phone step aside so the row
+     actions stay reachable without scrolling the table sideways. With those
+     columns gone the table must also stop forcing its own minimum width. */
+  @media (max-width: 940px) {
+    .col-optional { display: none; }
+    .v-table { min-width: 0; }
+  }
+
+  @media (max-width: 760px) {
+    .wrap { padding: 0 18px; }
+    .page-head { padding-top: 32px; }
+    .pair { grid-template-columns: 1fr; }
+    .toolbar .new-user { flex: 1 1 100%; }
+  }
+
+  /* Below this width auto-fit drops to two columns and the third cell
+     leaves a gap in the hairline grid, so the summary stacks instead. */
+  @media (max-width: 560px) {
+    .stats { grid-template-columns: 1fr; }
+
+    /* The row actions drop to their icons, which shortens how far the
+       table has to scroll. Each button keeps its aria-label. */
+    .row-actions .btn-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .row-actions .v-btn { padding: 0; width: 2rem; }
+    .person__email { font-size: 12.5px; }
+  }
+
+  @media (max-width: 460px) {
+    .top-in { gap: 8px; padding: 10px 0; }
+    .top nav { margin-left: 0; }
+    .stat__value { font-size: 24px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="../">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor"></path>
+      </svg>
+      Voodoo.js
+    </a>
+
+    <nav aria-label="Main">
+      <a href="../../">Home</a>
+      <a href="../" aria-current="page">Examples</a>
+    </nav>
+
+    <!-- The name stays put and aria-pressed carries the state, so the
+         accessible name never goes stale after a toggle. -->
+    <button type="button" class="v-btn v-btn--ghost v-btn--icon theme-toggle"
+            v-theme-toggle aria-pressed="false" aria-label="Dark theme">
+      <svg class="icon-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+      </svg>
+      <svg class="icon-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap page" v-component="crud-users" style="visibility: hidden;">
+
+  <div class="page-head">
+    <h1>User accounts</h1>
+    <p>
+      Create, read, update and delete against a REST layer, with per-field validation,
+      input masks, loading states and an error path you can actually trigger.
+    </p>
+  </div>
+
+  <section class="stats" aria-label="Directory summary">
+    <div class="stat">
+      <span class="stat__label">Registered</span>
+      <span class="stat__value">{ users.length }</span>
+    </div>
+    <div class="stat">
+      <span class="stat__label">Administrators</span>
+      <span class="stat__value">{ totalAdmins }</span>
+    </div>
+    <div class="stat stat--accent">
+      <span class="stat__label">On screen now</span>
+      <span class="stat__value">{ filtered.length }</span>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Users">
+    <div class="toolbar">
+      <div class="search">
+        <span class="search__icon" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-3.2-3.2"></path>
+          </svg>
+        </span>
+        <input class="v-input" type="search" v-model="search" v-debounce="350"
+               placeholder="Search by name, e-mail, CPF or phone"
+               aria-label="Search users">
+      </div>
+
+      <label class="switch-label">
+        <input class="v-switch" type="checkbox" v-model="unstable">
+        Simulate API instability
+      </label>
+
+      <button type="button" class="v-btn v-btn--primary new-user" @click="openNew()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        New user
+      </button>
+    </div>
+
+    <div class="loading" v-show="loading" aria-live="polite">
+      <div class="skeleton-row" v-for="n in 5" :key="n">
+        <span class="v-skeleton v-skeleton--circle" style="width: 34px; height: 34px;"></span>
+        <span class="skeleton-row__text">
+          <span class="v-skeleton v-skeleton--text v-skeleton--w-50"></span>
+          <span class="v-skeleton v-skeleton--text v-skeleton--w-75"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="state" v-show="noResults">
+      <span class="state__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.2-3.2"></path>
+        </svg>
+      </span>
+      <h2 class="state__title">{ term ? 'Nothing found for ' + term : 'No users yet' }</h2>
+      <p class="state__text">{ term ? 'Check the spelling, or clear the search to see the whole list.' : 'The list is empty. Start by adding the first person on the team.' }</p>
+      <button type="button" class="v-btn v-btn--secondary" v-show="term" @click="clearSearch()">Clear search</button>
+      <button type="button" class="v-btn v-btn--primary" v-show="!term" @click="openNew()">Add the first user</button>
+    </div>
+
+    <!-- The table uses v-show, not v-if, so the v-for is never unmounted.
+         The list stays alive across every search, create, edit and delete. -->
+    <div class="v-table-wrap table-wrap" v-show="hasResults">
+      <table class="v-table v-table--hover">
+        <thead>
+          <tr>
+            <th scope="col">User</th>
+            <th scope="col" class="col-optional">CPF</th>
+            <th scope="col" class="col-optional">Phone</th>
+            <th scope="col">Role</th>
+            <th scope="col"><span class="v-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="u in filtered" :key="u.id">
+            <td>
+              <span class="person">
+                <span class="avatar" :class="'avatar--' + u.role" aria-hidden="true">{ initials(u.name) }</span>
+                <span>
+                  <span class="person__name">{ u.name }</span><br>
+                  <span class="person__email">{ u.email }</span>
+                </span>
+              </span>
+            </td>
+            <td class="mono col-optional">{ u.cpf }</td>
+            <td class="mono col-optional">{ u.phone }</td>
+            <td>
+              <span class="role" :class="roleClass(u.role)">{ roleLabel(u.role) }</span>
+            </td>
+            <td>
+              <span class="row-actions">
+                <button type="button" class="v-btn v-btn--ghost v-btn--sm"
+                        @click="openEdit(u)" :aria-label="'Edit ' + u.name">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                  </svg>
+                  <span class="btn-text">Edit</span>
+                </button>
+                <button type="button" class="v-btn v-btn--ghost v-btn--sm btn-danger"
+                        @click="remove(u)" :disabled="deletingId === u.id" :aria-label="'Delete ' + u.name">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path>
+                  </svg>
+                  <span class="btn-text">Delete</span>
+                </button>
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="note">
+    Voodoo.js demo. The API is simulated in memory, so nothing leaves this tab and a reload brings everything back.
+  </p>
+
+  <!-- The form drawer. It always stays in the HTML, and open or closed is
+       read from aria-hidden, which is what the design system styles. -->
+  <div class="v-drawer-root" aria-hidden="true" :aria-hidden="panelOpen ? 'false' : 'true'">
+    <div class="v-backdrop" @click="close()"></div>
+
+    <form class="v-drawer form-drawer" v-ref="userForm" v-validate
+          @submit.prevent="save()" @keydown.esc="close()"
+          aria-labelledby="crud-panel-title">
+      <header class="v-drawer__header">
+        <h2 class="v-drawer__title" id="crud-panel-title">{ panelTitle }</h2>
+        <button type="button" class="v-btn v-btn--ghost v-btn--icon" @click="close()" aria-label="Close panel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="v-drawer__body">
+        <div class="fields">
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-name">Full name</label>
+            <input class="v-input" id="crud-name" name="name" type="text" autocomplete="off"
+                   v-model="form.name" v-required v-minlength="3"
+                   placeholder="Amelia Hartley Brooks">
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-email">E-mail</label>
+            <input class="v-input" id="crud-email" name="email" type="email" autocomplete="off"
+                   v-model="form.email" v-required v-email
+                   placeholder="amelia@example.com">
+          </div>
+
+          <div class="pair">
+            <div class="v-field">
+              <label class="v-label v-label--required" for="crud-cpf">CPF</label>
+              <input class="v-input" id="crud-cpf" name="cpf" type="text" inputmode="numeric" autocomplete="off"
+                     v-model="form.cpf" v-mask="cpf" v-required v-cpf
+                     placeholder="000.000.000-00">
+            </div>
+
+            <div class="v-field">
+              <label class="v-label v-label--required" for="crud-phone">Phone</label>
+              <input class="v-input" id="crud-phone" name="phone" type="text" inputmode="numeric" autocomplete="off"
+                     v-model="form.phone" v-mask="phone" v-required v-phone
+                     placeholder="(11) 90000-0000">
+            </div>
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-role">Access role</label>
+            <select class="v-select" id="crud-role" name="role" v-model="form.role" v-required>
+              <option value="">Pick a role</option>
+              <option v-for="r in roles" :key="r.value" :value="r.value">{ r.label }</option>
+            </select>
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-password">Password</label>
+            <input class="v-input" id="crud-password" name="password" type="password" autocomplete="new-password"
+                   v-model="form.password" v-required v-minlength="8"
+                   placeholder="At least 8 characters">
+          </div>
+
+          <div class="v-field">
+            <label class="v-label v-label--required" for="crud-confirmation">Confirm password</label>
+            <input class="v-input" id="crud-confirmation" name="confirmation" type="password" autocomplete="new-password"
+                   v-model="form.confirmation" v-required v-match="#crud-password"
+                   placeholder="Repeat the password">
+          </div>
+
+          <p class="hint">
+            The password is asked for on both screens only to exercise the confirmation rule. It is never stored anywhere.
+          </p>
+        </div>
+      </div>
+
+      <footer class="v-drawer__footer">
+        <button type="button" class="v-btn v-btn--secondary" @click="close()" :disabled="saving">Cancel</button>
+        <button type="submit" class="v-btn v-btn--primary"
+                :class="saving ? 'is-loading' : ''" :disabled="saving">{ submitLabel }</button>
+      </footer>
+    </form>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ------------------------------------------------------------------
+     Wording for the rules this form uses. The `match` rule talks about
+     "fields" in general, and here it only guards the password
+     confirmation, so it gets a message of its own.
+     ------------------------------------------------------------------ */
+  Object.assign(V.messages, {
+    required: 'This field is required.',
+    email: 'Enter a valid e-mail address.',
+    minlength: 'Use at least {param} characters.',
+    cpf: 'Enter a valid CPF.',
+    phone: 'Enter a valid phone number, area code included.',
+    match: 'The two passwords do not match.'
+  });
+
+  /* Accepted roles. The same list feeds the select and the table chips. */
+  var ROLES = [
+    { value: 'admin', label: 'Administrator', className: 'role--admin' },
+    { value: 'editor', label: 'Editor', className: 'role--editor' },
+    { value: 'reader', label: 'Reader', className: 'role--reader' }
+  ];
+
+  /* ------------------------------------------------------------------
+     Simulated API: an in-memory array with latency and random failure.
+     There is no server here, so this array stands in for the database.
+     ------------------------------------------------------------------ */
+  var LATENCY = 420;
+  var FAILURE_RATE = 0.25;
+
+  var DATABASE = [
+    { id: 'usr-1', name: 'Amelia Hartley Brooks', email: 'amelia.brooks@example.com', cpf: '529.982.247-25', phone: '(11) 98812-4477', role: 'admin' },
+    { id: 'usr-2', name: 'Jonah Peter Almeida', email: 'jonah.almeida@example.com', cpf: '390.533.447-05', phone: '(21) 3344-5566', role: 'editor' },
+    { id: 'usr-3', name: 'Clara Regina Nunes', email: 'clara.nunes@example.com', cpf: '153.509.460-56', phone: '(31) 99654-1020', role: 'reader' },
+    { id: 'usr-4', name: 'Raphael Teixeira Lima', email: 'raphael.lima@example.com', cpf: '875.948.210-92', phone: '(41) 98877-3311', role: 'editor' },
+    { id: 'usr-5', name: 'Beatrice Moraes Campos', email: 'beatrice.campos@example.com', cpf: '064.784.420-63', phone: '(51) 3222-8080', role: 'reader' },
+    { id: 'usr-6', name: 'Diego Fontes Barreto', email: 'diego.barreto@example.com', cpf: '287.654.321-42', phone: '(71) 99123-4567', role: 'admin' }
+  ];
+
+  function copy(record) {
+    return {
+      id: record.id,
+      name: record.name,
+      email: record.email,
+      cpf: record.cpf,
+      phone: record.phone,
+      role: record.role
+    };
+  }
+
+  function listAll() {
+    return DATABASE.map(copy);
+  }
+
+  function indexOfId(id) {
+    for (var i = 0; i < DATABASE.length; i++) {
+      if (DATABASE[i].id === id) return i;
+    }
+    return -1;
+  }
+
+  function emailInUse(email, ignoreId) {
+    var target = String(email).toLowerCase();
+    for (var i = 0; i < DATABASE.length; i++) {
+      if (DATABASE[i].id !== ignoreId && DATABASE[i].email.toLowerCase() === target) return true;
+    }
+    return false;
+  }
+
+  /* Writes a new record or updates the existing one. Throws a business
+     error, which the page shows as a red notification. */
+  function writeRecord(id, data) {
+    if (emailInUse(data.email, id)) {
+      throw new Error('This e-mail already belongs to someone else.');
+    }
+    if (id) {
+      var position = indexOfId(id);
+      if (position === -1) throw new Error('This record no longer exists.');
+      DATABASE[position] = Object.assign(copy(DATABASE[position]), data);
+      return copy(DATABASE[position]);
+    }
+    var created = Object.assign({ id: V.uid('usr-') }, data);
+    DATABASE.unshift(created);
+    return copy(created);
+  }
+
+  function deleteRecord(id) {
+    var position = indexOfId(id);
+    if (position === -1) throw new Error('This record had already been removed.');
+    DATABASE.splice(position, 1);
+    return true;
+  }
+
+  function errorMessage(error) {
+    return error && error.message ? error.message : 'Something went wrong. Try again.';
+  }
+
+  function digits(text) {
+    return String(text).replace(/\D/g, '');
+  }
+
+  /* ------------------------------------------------------------------
+     Component. All the logic lives here, where `this` works.
+     ------------------------------------------------------------------ */
+  V.component('crud-users', {
+
+    state: function () {
+      return {
+        roles: ROLES,
+        users: [],
+        loading: true,
+        saving: false,
+        deletingId: '',
+        search: '',
+        unstable: true,
+        panelOpen: false,
+        editingId: '',
+        form: {
+          name: '',
+          email: '',
+          cpf: '',
+          phone: '',
+          role: '',
+          password: '',
+          confirmation: ''
+        }
+      };
+    },
+
+    computed: {
+      term: function () {
+        return this.search.trim();
+      },
+
+      /* The search arrives late because of the v-debounce on the field, so
+         this computed only recalculates once typing stops. */
+      filtered: function () {
+        var wanted = this.term.toLowerCase();
+        if (!wanted) return this.users;
+
+        var numbers = digits(wanted);
+        return this.users.filter(function (u) {
+          if (u.name.toLowerCase().indexOf(wanted) !== -1) return true;
+          if (u.email.toLowerCase().indexOf(wanted) !== -1) return true;
+          if (u.role.indexOf(wanted) !== -1) return true;
+          if (numbers && digits(u.cpf).indexOf(numbers) !== -1) return true;
+          if (numbers && digits(u.phone).indexOf(numbers) !== -1) return true;
+          return false;
+        });
+      },
+
+      totalAdmins: function () {
+        return this.users.filter(function (u) { return u.role === 'admin'; }).length;
+      },
+
+      noResults: function () {
+        return !this.loading && this.filtered.length === 0;
+      },
+
+      hasResults: function () {
+        return !this.loading && this.filtered.length > 0;
+      },
+
+      panelTitle: function () {
+        return this.editingId ? 'Edit user' : 'New user';
+      },
+
+      submitLabel: function () {
+        if (this.saving) return 'Saving...';
+        return this.editingId ? 'Save changes' : 'Add user';
+      }
+    },
+
+    mounted: function () {
+      // The page only appears once the directives have run, so the
+      // interpolation braces never flash on screen.
+      this.$el.style.visibility = 'visible';
+      this.load();
+    },
+
+    methods: {
+
+      /* ----------------------------------------------------------------
+         Access layer for the simulated API
+         ---------------------------------------------------------------- */
+
+      /* Waits out the latency, rolls for a failure, and only then runs
+         the operation. */
+      request: function (run) {
+        var self = this;
+        return V.sleep(LATENCY).then(function () {
+          if (self.unstable && Math.random() < FAILURE_RATE) {
+            throw new Error('The simulated API did not answer in time. Try again.');
+          }
+          return run();
+        });
+      },
+
+      /* The first load never fails, so the demo always opens with data. */
+      load: function () {
+        var self = this;
+        this.loading = true;
+        V.sleep(LATENCY + 260).then(function () {
+          self.users = listAll();
+          self.loading = false;
+        });
+      },
+
+      /* ----------------------------------------------------------------
+         Side drawer
+         ---------------------------------------------------------------- */
+
+      openNew: function () {
+        this.editingId = '';
+        this.fillForm({ name: '', email: '', cpf: '', phone: '', role: '' });
+        this.openPanel();
+      },
+
+      openEdit: function (user) {
+        this.editingId = user.id;
+        this.fillForm(user);
+        this.openPanel();
+      },
+
+      fillForm: function (source) {
+        this.form.name = source.name || '';
+        this.form.email = source.email || '';
+        this.form.cpf = source.cpf || '';
+        this.form.phone = source.phone || '';
+        this.form.role = source.role || '';
+        this.form.password = '';
+        this.form.confirmation = '';
+      },
+
+      openPanel: function () {
+        var formEl = this.$refs.userForm;
+        if (formEl) V.clearErrors(formEl);
+        this.panelOpen = true;
+
+        // Focus can only move into the field once the drawer is visible.
+        V.nextTick(function () {
+          var field = formEl ? formEl.querySelector('#crud-name') : null;
+          if (field) field.focus();
+        });
+      },
+
+      close: function () {
+        if (this.saving) return;
+        this.panelOpen = false;
+        this.editingId = '';
+        this.fillForm({});
+        var formEl = this.$refs.userForm;
+        if (formEl) V.clearErrors(formEl);
+      },
+
+      /* ----------------------------------------------------------------
+         Saving
+         ---------------------------------------------------------------- */
+
+      save: function () {
+        if (this.saving) return;
+
+        var self = this;
+        var creating = !this.editingId;
+
+        // The library already drew the rules from the form's attributes.
+        // Here we only ask for the result and carry on if it is valid.
+        V.validateForm(this.$refs.userForm)
+          .then(function (result) {
+            if (!result.valid) {
+              V.toast.error('Check the highlighted fields before saving.');
+              return null;
+            }
+
+            var id = self.editingId;
+            var data = self.formData();
+            self.saving = true;
+
+            return self.request(function () { return writeRecord(id, data); });
+          })
+          .then(function (record) {
+            self.saving = false;
+            if (!record) return;
+
+            self.users = listAll();
+            self.close();
+
+            V.toast.success(creating ? 'User added.' : 'User updated.', {
+              description: record.name
+            });
+          })
+          .catch(function (error) {
+            self.saving = false;
+            V.toast.error('Could not save.', { description: errorMessage(error) });
+          });
+      },
+
+      formData: function () {
+        // CPF and phone leave the state already masked, because v-mask
+        // formats the value before v-model writes it.
+        return {
+          name: this.form.name.trim(),
+          email: this.form.email.trim().toLowerCase(),
+          cpf: this.form.cpf,
+          phone: this.form.phone,
+          role: this.form.role
+        };
+      },
+
+      /* ----------------------------------------------------------------
+         Deleting
+         ---------------------------------------------------------------- */
+
+      remove: function (user) {
+        var self = this;
+        var name = user.name;
+        var id = user.id;
+
+        V.confirm(name + ' will be removed from the list. This cannot be undone.', {
+          title: 'Delete user',
+          danger: true,
+          confirmLabel: 'Delete',
+          cancelLabel: 'Keep'
+        })
+          .then(function (confirmed) {
+            if (!confirmed) return null;
+            self.deletingId = id;
+            return self.request(function () { return deleteRecord(id); });
+          })
+          .then(function (deleted) {
+            self.deletingId = '';
+            if (!deleted) return;
+            self.users = listAll();
+            V.toast.success('User removed.', { description: name });
+          })
+          .catch(function (error) {
+            self.deletingId = '';
+            V.toast.error('Could not delete.', { description: errorMessage(error) });
+          });
+      },
+
+      /* ----------------------------------------------------------------
+         Table helpers
+         ---------------------------------------------------------------- */
+
+      clearSearch: function () {
+        this.search = '';
+      },
+
+      roleLabel: function (value) {
+        for (var i = 0; i < ROLES.length; i++) {
+          if (ROLES[i].value === value) return ROLES[i].label;
+        }
+        return value;
+      },
+
+      roleClass: function (value) {
+        for (var i = 0; i < ROLES.length; i++) {
+          if (ROLES[i].value === value) return ROLES[i].className;
+        }
+        return '';
+      },
+
+      initials: function (name) {
+        var parts = String(name).trim().split(/\s+/);
+        var first = parts[0] ? parts[0].charAt(0) : '';
+        var last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : '';
+        return (first + last).toUpperCase();
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+});
+</script>
+
+</body>
+</html>

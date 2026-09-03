@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estado e escopo com v-data · Documentação da Voodoo.js</title>
-<meta name="description" content="Onde a página guarda o que precisa lembrar: o v-data, o que é escopo, como a leitura sobe a cadeia, para onde vai a escrita e o que exatamente é reativo.">
+<title>State and scope with v-data · Voodoo.js documentation</title>
+<meta name="description" content="Where a page keeps what it needs to remember: v-data, what a scope is, how a read walks up the chain, where a write lands, and what exactly is reactive.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/estado-e-escopo">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,226 +14,227 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Estado e escopo com <code>v-data</code></h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>State and scope with <code>v-data</code></h1>
 <p class="doc-resumo">
-  Toda página interativa precisa lembrar de alguma coisa: se o menu está aberto, o que foi
-  digitado, quais itens estão na lista. Na Voodoo isso mora em um <code>v-data</code>, e o
-  pedaço de HTML que o declara é o dono daquele estado.
+  Every interactive page has to remember something: whether the menu is open, what was typed,
+  which items are on the list. In Voodoo that lives in a <code>v-data</code>, and the piece of
+  HTML that declares it owns that state.
 </p>
 
-<h2 id="o-basico">O básico</h2>
+<h2 id="o-basico">The basics</h2>
 
 <p>
-  O valor do <code>v-data</code> é um objeto. Cada chave vira uma variável disponível naquele
-  elemento e em tudo que estiver dentro dele.
+  The value of <code>v-data</code> is an object. Each key becomes a variable available on that
+  element and on everything inside it.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ aberto: false, itens: ['pão', 'leite'] }"&gt;
-  &lt;button @click="aberto = !aberto"&gt;Alternar menu&lt;/button&gt;
-  &lt;p v-show="aberto"&gt;{ itens.length } itens na lista&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ open: false, items: ['bread', 'milk'] }"&gt;
+  &lt;button @click="open = !open"&gt;Toggle menu&lt;/button&gt;
+  &lt;p v-show="open"&gt;{ items.length } items on the list&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Não existe declaração em outro arquivo, não existe <code>setState</code>, não existe passo de
-  registro. O objeto do atributo <b>é</b> o estado.
+  There is no declaration in another file, no <code>setState</code>, no registration step. The
+  object in the attribute <b>is</b> the state.
 </p>
 
-<h2 id="escopo">Escopo, e o que um escopo enxerga do outro</h2>
+<h2 id="escopo">Scope, and what one scope sees of another</h2>
 
 <p>
-  Cada <code>v-data</code> cria um escopo. Escopos aninham, e o de dentro enxerga o de fora.
+  Each <code>v-data</code> creates a scope. Scopes nest, and the inner one sees the outer one.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ tema: 'escuro' }"&gt;
-  &lt;div v-data="{ aberto: false }"&gt;
-    &lt;button @click="aberto = !aberto"&gt;Tema atual: { tema }&lt;/button&gt;
-    &lt;p v-show="aberto"&gt;O botão enxerga <b>tema</b> e <b>aberto</b> ao mesmo tempo.&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ theme: 'dark' }"&gt;
+  &lt;div v-data="{ open: false }"&gt;
+    &lt;button @click="open = !open"&gt;Current theme: { theme }&lt;/button&gt;
+    &lt;p v-show="open"&gt;The button sees <b>theme</b> and <b>open</b> at the same time.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<p>Duas regras evitam praticamente toda a surpresa daqui:</p>
+<p>Two rules head off practically every surprise here:</p>
 
 <ul>
   <li>
-    <b>A leitura sobe a cadeia.</b> A Voodoo procura a variável no <code>v-data</code> mais
-    próximo, depois nos ancestrais, depois na raiz.
+    <b>A read walks up the chain.</b> Voodoo looks for the variable in the nearest
+    <code>v-data</code>, then in the ancestors, then at the root.
   </li>
   <li>
-    <b>A escrita vai para quem já tem a chave.</b> Escrever em <code>tema</code> de dentro do
-    escopo interno altera o <code>tema</code> do escopo externo, e não uma cópia. Uma chave que
-    não existe em lugar nenhum é criada no escopo local.
+    <b>A write goes to whoever already has the key.</b> Writing to <code>theme</code> from inside
+    the inner scope changes the outer scope's <code>theme</code>, not a copy. A key that exists
+    nowhere is created in the local scope.
   </li>
 </ul>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">O erro clássico</span>
+  <span class="doc-aviso__rotulo">The classic mistake</span>
   <p>
-    Escrever <code>@click="abrto = true"</code> com um erro de digitação não estoura nada: a
-    biblioteca cria a chave <code>abrto</code> no escopo local, e o <code>v-show="aberto"</code>
-    continua parado, sem nenhuma mensagem. Se um valor não reage, comece conferindo o nome.
-    Ligar <code>data-devtools</code> na tag do script transforma esses casos em aviso no console.
+    Writing <code>@click="opne = true"</code> with a typo blows up nothing: the library creates the
+    key <code>opne</code> in the local scope, and the <code>v-show="open"</code> stays put, with no
+    message at all. If a value does not react, start by checking the name. Turning on
+    <code>data-devtools</code> in the script tag turns these cases into a console warning.
   </p>
 </div>
 
-<h2 id="o-que-e-reativo">O que é reativo</h2>
+<h2 id="o-que-e-reativo">What is reactive</h2>
 
 <p>
-  Tudo que está dentro de um <code>v-data</code> vira um objeto observado, em profundidade.
-  Trocar um valor, empurrar um item em uma lista, apagar uma chave: qualquer uma dessas coisas
-  reexecuta apenas os pedaços da página que leram aquele valor.
+  Everything inside a <code>v-data</code> becomes an observed object, all the way down. Changing a
+  value, pushing an item onto a list, deleting a key: any of those re-runs only the pieces of the
+  page that read that value.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ carrinho: [] }"&gt;
-  &lt;button @click="carrinho.push({ nome: 'Caneca', preco: 39 })"&gt;Adicionar&lt;/button&gt;
-  &lt;button @click="carrinho.pop()"&gt;Remover&lt;/button&gt;
-  &lt;p&gt;{ carrinho.length } itens, total { carrinho.reduce((s, i) =&gt; s + i.preco, 0) }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ cart: [] }"&gt;
+  &lt;button @click="cart.push({ name: 'Mug', price: 39 })"&gt;Add&lt;/button&gt;
+  &lt;button @click="cart.pop()"&gt;Remove&lt;/button&gt;
+  &lt;p&gt;{ cart.length } items, total { cart.reduce((s, i) =&gt; s + i.price, 0) }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O parágrafo se atualiza porque leu <code>carrinho.length</code>. Um outro parágrafo que não leia
-  nada de <code>carrinho</code> nem chega a ser visitado — é isso que a documentação quer dizer
-  com <i>atualização granular</i>.
+  The paragraph updates because it read <code>cart.length</code>. Another paragraph that reads
+  nothing from <code>cart</code> is never even visited — that is what the documentation means by
+  <i>granular updates</i>.
 </p>
 
-<h3 id="metodos-de-array">Métodos de array funcionam todos</h3>
+<h3 id="metodos-de-array">Every array method works</h3>
 
 <p>
   <code>push</code>, <code>pop</code>, <code>splice</code>, <code>sort</code>,
-  <code>reverse</code>, <code>shift</code> e <code>unshift</code> disparam a atualização. Atribuir
-  por índice (<code>lista[2] = 'x'</code>) e mexer em <code>lista.length</code> também. Não existe
-  a limitação clássica de precisar trocar o array inteiro.
+  <code>reverse</code>, <code>shift</code> and <code>unshift</code> all trigger the update.
+  Assigning by index (<code>list[2] = 'x'</code>) and touching <code>list.length</code> do too.
+  The classic limitation of having to replace the whole array does not exist here.
 </p>
 
-<h2 id="funcoes-no-estado">Onde ficam as funções</h2>
+<h2 id="funcoes-no-estado">Where the functions live</h2>
 
 <p>
-  O valor do <code>v-data</code> é uma expressão, não um bloco de JavaScript: ele aceita objetos,
-  listas, números e textos, mas <b>não</b> aceita métodos escritos ali dentro. Isto <i>não</i>
-  funciona:
+  The value of <code>v-data</code> is an expression, not a block of JavaScript: it takes objects,
+  lists, numbers and strings, but it does <b>not</b> take methods written inside it. This does
+  <i>not</i> work:
 </p>
 
-<pre data-lang="html"><code>&lt;!-- não funciona: o parser de expressões não aceita corpo de função --&gt;
-&lt;div v-data="{ itens: [], total() { return this.itens.length } }"&gt;</code></pre>
+<pre data-lang="html"><code>&lt;!-- does not work: the expression parser does not accept a function body --&gt;
+&lt;div v-data="{ items: [], total() { return this.items.length } }"&gt;</code></pre>
 
 <p>
-  Lógica com mais de uma linha mora em um dos três lugares abaixo, e o HTML chama pelo nome:
+  Logic longer than one line lives in one of the three places below, and the HTML calls it by
+  name:
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
     V.data({
-      precos: { Caneca: 39, Camiseta: 89 },
-      total(itens) {
-        return itens.reduce((soma, nome) =&gt; soma + this.precos[nome], 0);
+      prices: { Mug: 39, Shirt: 89 },
+      total(items) {
+        return items.reduce((sum, name) =&gt; sum + this.prices[name], 0);
       }
     });
   &lt;/script&gt;
 
-  &lt;div v-data="{ itens: ['Caneca'] }"&gt;
-    &lt;button @click="itens.push('Camiseta')"&gt;Adicionar camiseta&lt;/button&gt;
-    &lt;p&gt;{ itens.length } itens, R$ { total(itens) }&lt;/p&gt;
+  &lt;div v-data="{ items: ['Mug'] }"&gt;
+    &lt;button @click="items.push('Shirt')"&gt;Add a shirt&lt;/button&gt;
+    &lt;p&gt;{ items.length } items, $ { total(items) }&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>A função é usada</th><th>Escreva em</th></tr></thead>
+<thead><tr><th>The function is used</th><th>Write it in</th></tr></thead>
 <tbody>
-<tr><td>Por uma página inteira</td><td><code>V.data({ ... })</code>, o escopo raiz</td></tr>
-<tr><td>Junto de um estado compartilhado</td><td>Um <a href="stores.html">store</a>, onde <code>this</code> é o próprio store</td></tr>
-<tr><td>Só por um pedaço reaproveitável</td><td>Os <code>methods</code> de um <a href="componentes.html">componente</a></td></tr>
+<tr><td>By a whole page</td><td><code>V.data({ ... })</code>, the root scope</td></tr>
+<tr><td>Alongside shared state</td><td>A <a href="stores.html">store</a>, where <code>this</code> is the store itself</td></tr>
+<tr><td>Only by one reusable piece</td><td>The <code>methods</code> of a <a href="componentes.html">component</a></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Expressões curtas continuam cabendo no atributo — <code>@click="itens.push('x')"</code>,
-  <code>{ itens.filter(i =&gt; i.pago).length }</code>. O limite é o corpo de função, não o
-  tamanho.
+  Short expressions still fit in the attribute — <code>@click="items.push('x')"</code>,
+  <code>{ items.filter(i =&gt; i.paid).length }</code>. The limit is the function body, not the
+  length.
 </p>
 
-<h2 id="v-init">Rodando algo assim que o escopo nasce</h2>
+<h2 id="v-init">Running something the moment the scope is born</h2>
 
 <p>
-  O <code>v-init</code> executa uma expressão uma única vez, logo depois que o escopo é criado.
-  Serve para preparar valores derivados, disparar uma primeira busca ou ler algo do documento.
+  <code>v-init</code> runs an expression exactly once, right after the scope is created. It is
+  there to prepare derived values, fire a first fetch or read something off the document.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.config.globals.horaAgora = () =&gt; new Date().toLocaleTimeString();
+    V.config.globals.timeNow = () =&gt; new Date().toLocaleTimeString();
   &lt;/script&gt;
 
-  &lt;div v-data="{ agora: '' }" v-init="agora = horaAgora()"&gt;
-    &lt;p&gt;Este quadro abriu às { agora }.&lt;/p&gt;
+  &lt;div v-data="{ now: '' }" v-init="now = timeNow()"&gt;
+    &lt;p&gt;This box opened at { now }.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O exemplo passa por <code>V.config.globals</code> porque a expressão de um atributo não aceita
-  <code>new</code>: ela é um subconjunto de JavaScript, e construtores ficam de fora. Tudo que
-  precisa de <code>new</code>, de <code>function</code> ou de mais de uma linha vive em um script
-  e entra na expressão pelo nome.
+  The example goes through <code>V.config.globals</code> because an attribute expression does not
+  accept <code>new</code>: it is a subset of JavaScript, and constructors are left out. Anything
+  that needs <code>new</code>, <code>function</code> or more than one line lives in a script and
+  enters the expression by name.
 </p>
 
-<h2 id="onde-guardar">Onde guardar cada coisa</h2>
+<h2 id="onde-guardar">Where to keep each thing</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>O dado é</th><th>Guarde em</th></tr></thead>
+<thead><tr><th>The data is</th><th>Keep it in</th></tr></thead>
 <tbody>
-<tr><td>Usado só por aquele bloco de HTML</td><td><code>v-data</code> no elemento que envolve o bloco</td></tr>
-<tr><td>Usado por partes distantes da página</td><td><a href="stores.html">Store global</a>, com <code>$store</code></td></tr>
-<tr><td>Precisa sobreviver ao F5</td><td><code>v-persist</code>, na página de <a href="estado-persistente.html">estado persistente</a></td></tr>
-<tr><td>Vem de um servidor</td><td><a href="buscando-dados.html">Directives de HTTP</a>, que já escrevem no escopo</td></tr>
-<tr><td>É a mesma coisa repetida em vários lugares</td><td><a href="componentes.html">Um componente</a>, com o estado dentro dele</td></tr>
+<tr><td>Used only by that block of HTML</td><td><code>v-data</code> on the element that wraps the block</td></tr>
+<tr><td>Used by distant parts of the page</td><td>A <a href="stores.html">global store</a>, with <code>$store</code></td></tr>
+<tr><td>Required to survive an F5</td><td><code>v-persist</code>, on the <a href="estado-persistente.html">persistent state</a> page</td></tr>
+<tr><td>Coming from a server</td><td><a href="buscando-dados.html">HTTP directives</a>, which already write into the scope</td></tr>
+<tr><td>The same thing repeated in several places</td><td><a href="componentes.html">A component</a>, with the state inside it</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="fora-do-html">Lendo e escrevendo o escopo pelo JavaScript</h2>
+<h2 id="fora-do-html">Reading and writing the scope from JavaScript</h2>
 
 <p>
-  Às vezes o valor precisa mudar a partir de código solto — um <i>callback</i> de outra biblioteca,
-  um <code>setInterval</code>, um evento do próprio navegador. <code>V.getScope(elemento)</code>
-  devolve o escopo daquele nó, e <code>.data</code> é o objeto reativo: escrever nele atualiza a
-  tela do mesmo jeito que uma directive.
+  Sometimes the value has to change from loose code — a <i>callback</i> from another library, a
+  <code>setInterval</code>, an event from the browser itself. <code>V.getScope(element)</code>
+  returns that node's scope, and <code>.data</code> is the reactive object: writing to it updates
+  the screen exactly the way a directive does.
 </p>
 
-<pre data-lang="html"><code>&lt;div id="painel" v-data="{ online: true }"&gt;
-  &lt;p&gt;{ online ? 'Conectado' : 'Sem conexão' }&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div id="panel" v-data="{ online: true }"&gt;
+  &lt;p&gt;{ online ? 'Connected' : 'No connection' }&lt;/p&gt;
 &lt;/div&gt;
 
 &lt;script&gt;
-  const painel = V.getScope(document.getElementById('painel')).data;
-  addEventListener('offline', () =&gt; { painel.online = false; });
-  addEventListener('online',  () =&gt; { painel.online = true; });
+  const panel = V.getScope(document.getElementById('panel')).data;
+  addEventListener('offline', () =&gt; { panel.online = false; });
+  addEventListener('online',  () =&gt; { panel.online = true; });
 &lt;/script&gt;</code></pre>
 
 <p>
-  <code>V.getScope(no)</code> devolve o escopo declarado naquele nó, ou <code>undefined</code> se
-  ele não declarou nenhum. <code>V.findScope(no)</code> sobe pelos ancestrais até achar um, e cai
-  no escopo raiz quando não encontra. O escopo raiz é <code>V.scope</code>, e
-  <code>V.data({ ... })</code> escreve nele valores visíveis para a página inteira.
+  <code>V.getScope(node)</code> returns the scope declared on that node, or <code>undefined</code>
+  if it declared none. <code>V.findScope(node)</code> walks up the ancestors until it finds one,
+  and falls back to the root scope when it does not. The root scope is <code>V.scope</code>, and
+  <code>V.data({ ... })</code> writes values into it that the whole page can see.
 </p>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Existe caminho pronto para isso</span>
+  <span class="doc-aviso__rotulo">There is a ready-made path for this</span>
   <p>
-    Para esse caso específico, as directives <code>v-online</code> e <code>v-offline</code> já
-    fazem o trabalho sem JavaScript. O exemplo vale como forma de alcançar o escopo de fora,
-    que é o que interessa aqui.
+    For this specific case, the <code>v-online</code> and <code>v-offline</code> directives already
+    do the work without JavaScript. The example stands as a way of reaching the scope from the
+    outside, which is what matters here.
   </p>
 </div>
 

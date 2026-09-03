@@ -58,8 +58,6 @@ jobs:
 
           # Runnable examples, plus everything they load by relative path.
           mkdir -p _site/packages/voodoojs
-          cp -r examples            _site/examples
-          cp -r design-system       _site/design-system
           cp -r brand               _site/brand
           cp -r packages/voodoojs/dist _site/packages/voodoojs/dist
 

@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Todo list — Voodoo.js</title>
+<meta name="description" content="A complete todo list built with Voodoo.js: add, complete, edit inline, filter, reorder by dragging, and persist in localStorage. One HTML file, no build step.">
+<!-- Essential bundle: reactivity, directives, interface, forms and drag and drop. -->
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.min.js" data-manual defer></script>
+<style>
+  /* ==================================================================
+     Example: todo list
+
+     The same tokens the landing page and the example index use, kept
+     inline so this folder can be copied out of the repository and
+     still look like itself.
+     ================================================================== */
+  :root {
+    --ink: #16141c; --ink-soft: #57526a; --ink-faint: #8b8598;
+    --bg: #ffffff; --bg-soft: #faf9fb; --line: #e7e4ec;
+    --accent: #5b2ee5; --accent-soft: #f1ecfe;
+    --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+    color-scheme: light;
+  }
+
+  /* Three states, the same shape V.palette() writes, so the page and the
+     library's own UI can never disagree: the system preference wins unless
+     the visitor picked a theme, and an explicit choice wins in both
+     directions. A page pinned light while the palette follows the OS is how
+     you get dark widgets on white paper. */
+  @media (prefers-color-scheme: dark) {
+    html:root:not([data-theme='light']) {
+      --ink: #f2f0f6; --ink-soft: #b3adc2; --ink-faint: #837d93;
+      --bg: #131118; --bg-soft: #191722; --line: #2b2735;
+      --accent: #a688ff; --accent-soft: #221c3a;
+      color-scheme: dark;
+    }
+  }
+
+  html:root[data-theme='dark'] {
+    --ink: #f2f0f6; --ink-soft: #b3adc2; --ink-faint: #837d93;
+    --bg: #131118; --bg-soft: #191722; --line: #2b2735;
+    --accent: #a688ff; --accent-soft: #221c3a;
+    color-scheme: dark;
+  }
+
+  /* Extras this page needs, kept apart from the shared token block. */
+  :root {
+    --radius: 10px;
+    --radius-sm: 8px;
+    --wrap: 720px;
+  }
+
+  /* The library styles its built-in UI (drag ghost, toasts, dialogs) from
+     --v-* variables it injects at runtime. Map them onto the page palette so
+     the widgets follow the same theme. !important is required: V.palette()
+     writes :root:not([data-theme="light"]), which outranks a plain selector. */
+  html:root {
+    --v-surface: var(--bg) !important;
+    --v-surface-2: var(--bg-soft) !important;
+    --v-border: var(--line) !important;
+    --v-text: var(--ink) !important;
+    --v-text-muted: var(--ink-faint) !important;
+    --v-primary: var(--accent) !important;
+  }
+
+  /* ---------- base ---------- */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 640; }
+  p { margin: 0; }
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .td-skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 40;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+  }
+  .td-skip:focus { left: 12px; top: 12px; }
+
+  .td-wrap {
+    width: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ---------- top bar ---------- */
+  .td-top {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .td-top-in {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 60px;
+    flex-wrap: wrap;
+    padding-block: 8px;
+  }
+
+  .td-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 680;
+    font-size: 16.5px;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .td-brand svg { width: 22px; height: 22px; flex: none; }
+
+  .td-nav { display: flex; gap: 2px; margin-right: auto; }
+
+  .td-nav a {
+    padding: 6px 10px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .td-nav a:hover { color: var(--ink); background: var(--bg-soft); }
+
+  /* ---------- page ---------- */
+  .td-page { padding: 40px 0 72px; }
+
+  /* The app only appears once Voodoo has mounted, so the interpolation
+     braces never flash. The class is added from JavaScript. */
+  .td-app { opacity: 0; }
+  body.td-ready .td-app { opacity: 1; transition: opacity 220ms ease; }
+
+  .td-head { margin-bottom: 28px; }
+
+  .td-lead {
+    margin-top: 8px;
+    color: var(--ink-soft);
+    font-size: 16px;
+    max-width: 52ch;
+  }
+
+  /* ---------- card ---------- */
+  .td-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    padding: 20px;
+  }
+
+  /* ---------- composer ---------- */
+  .td-composer { display: flex; gap: 10px; align-items: stretch; }
+
+  .td-input {
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+
+  .td-input::placeholder { color: var(--ink-faint); }
+  .td-input:hover { border-color: var(--ink-faint); }
+  .td-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+
+  .td-new { flex: 1 1 auto; }
+
+  .td-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 560;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .td-btn--primary {
+    flex: none;
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+
+  .td-btn--primary:hover { opacity: 0.9; }
+
+  html:root[data-theme='dark'] .td-btn--primary { color: #16141c; }
+  @media (prefers-color-scheme: dark) {
+    html:root:not([data-theme='light']) .td-btn--primary { color: #16141c; }
+  }
+
+  .td-btn--quiet { color: var(--ink-soft); }
+  .td-btn--quiet:hover { color: var(--ink); background: var(--bg-soft); }
+
+  .td-icon-btn {
+    flex: none;
+    padding: 7px;
+    border-radius: 7px;
+    color: var(--ink-soft);
+  }
+
+  .td-icon-btn:hover { color: var(--ink); background: var(--bg-soft); }
+
+  /* ---------- progress ---------- */
+  .td-progress {
+    height: 4px;
+    margin: 20px 0 16px;
+    border-radius: 999px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .td-progress__bar {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 320ms ease;
+  }
+
+  /* ---------- filter bar ---------- */
+  .td-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .td-filters { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .td-filter {
+    padding: 6px 11px;
+    font-size: 14px;
+    font-weight: 520;
+    color: var(--ink-soft);
+    border-radius: 999px;
+  }
+
+  .td-filter:hover { color: var(--ink); background: var(--bg-soft); }
+
+  .td-filter--on,
+  .td-filter--on:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .td-count {
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+  }
+
+  .td-filter--on .td-count { color: inherit; }
+
+  .td-pending {
+    font-size: 14px;
+    color: var(--ink-faint);
+  }
+
+  /* ---------- list ---------- */
+  .td-list {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .td-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    overflow: hidden;
+    animation: td-in 220ms ease both;
+    transition: border-color 140ms ease, background-color 140ms ease;
+  }
+
+  .td-item:hover { border-color: var(--ink-faint); }
+  .td-item--done { background: var(--bg-soft); }
+  .td-item--editing { border-color: var(--accent); }
+
+  /* Drag handle drawn with CSS only: no image, no emoji. */
+  .td-handle {
+    flex: none;
+    width: 14px;
+    height: 24px;
+    border-radius: 3px;
+    color: var(--ink-faint);
+    opacity: 0.5;
+    background-image: radial-gradient(currentColor 1.4px, transparent 1.5px);
+    background-size: 6px 6px;
+    background-position: 0 2px;
+    transition: opacity 140ms ease;
+  }
+
+  .td-item:hover .td-handle,
+  .td-item:focus-within .td-handle { opacity: 1; }
+
+  .td-body {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .td-check {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .td-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    cursor: text;
+    transition: color 180ms ease;
+  }
+
+  .td-item--done .td-text {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    color: var(--ink-faint);
+  }
+
+  .td-edit { flex: 1 1 auto; min-width: 0; font-size: 15px; padding: 5px 9px; }
+
+  .td-remove {
+    flex: none;
+    padding: 5px;
+    border-radius: 6px;
+    color: var(--ink-faint);
+    opacity: 0.7;
+    transition: opacity 140ms ease, color 140ms ease;
+  }
+
+  .td-item:hover .td-remove,
+  .td-remove:focus-visible { opacity: 1; }
+  .td-remove:hover { color: var(--ink); background: var(--bg-soft); }
+
+  /* ---------- empty state ---------- */
+  .td-empty {
+    text-align: center;
+    padding: 40px 20px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    animation: td-in 260ms ease both;
+  }
+
+  .td-empty__title { font-size: 16px; font-weight: 600; }
+  .td-empty__hint { margin-top: 6px; color: var(--ink-faint); font-size: 14.5px; }
+
+  /* ---------- card footer ---------- */
+  .td-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .td-done-label { font-size: 14px; color: var(--ink-faint); }
+
+  /* ---------- notes ---------- */
+  .td-note {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+
+  .td-note strong { color: var(--ink); font-weight: 620; }
+
+  .td-help {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    margin-top: 16px;
+    color: var(--ink-faint);
+    font-size: 13.5px;
+  }
+
+  .td-help span { display: inline-flex; align-items: center; gap: 7px; }
+
+  kbd {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--bg);
+    color: var(--ink-soft);
+  }
+
+  /* ---------- icons ---------- */
+  .td-icon {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Theme switch: the icon follows the resolved theme. data-theme="dark" and
+     data-theme="light" come from V.theme, and the media query covers the
+     "follow the system" case. */
+  .td-icon--sun { display: none; }
+  .td-icon--moon { display: block; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .td-icon--sun { display: block; }
+    :root:not([data-theme="light"]) .td-icon--moon { display: none; }
+  }
+
+  :root[data-theme="dark"] .td-icon--sun { display: block; }
+  :root[data-theme="dark"] .td-icon--moon { display: none; }
+  :root[data-theme="light"] .td-icon--sun { display: none; }
+  :root[data-theme="light"] .td-icon--moon { display: block; }
+
+  /* ---------- animation ---------- */
+  @keyframes td-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* The exit has to finish before the item leaves the array. remove() marks
+     the item, waits for the animation, and only then touches the list;
+     otherwise v-for would delete the node straight away. */
+  @keyframes td-out {
+    0% {
+      opacity: 1;
+      transform: none;
+      max-height: 8rem;
+      margin-bottom: 8px;
+      padding-block: 11px;
+    }
+    55% {
+      opacity: 0;
+      transform: translateX(36px);
+      max-height: 8rem;
+      margin-bottom: 8px;
+      padding-block: 11px;
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(36px);
+      max-height: 0;
+      margin-bottom: 0;
+      padding-block: 0;
+      border-width: 0;
+    }
+  }
+
+  .td-item--leaving { pointer-events: none; }
+  .td-item.td-item--leaving { animation: td-out 240ms ease forwards; }
+
+  /* The drag ghost is a clone of the item and gets its position from an
+     inline transform. Without cancelling the animation here, it would
+     overwrite that transform and the ghost would stick in the corner. */
+  .td-item.v-drag-ghost {
+    animation: none;
+    border-color: var(--accent);
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 560px) {
+    .td-page { padding: 28px 0 56px; }
+    .td-card { padding: 16px; }
+    .td-composer { flex-direction: column; }
+    .td-btn--primary { width: 100%; }
+    .td-bar { align-items: flex-start; }
+    h1 { font-size: 24px; }
+  }
+
+  /* ---------- reduced motion ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 1ms !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<a class="td-skip" href="#main">Skip to content</a>
+
+<div class="td-top">
+  <div class="td-wrap td-top-in">
+    <a class="td-brand" href="../">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
+      </svg>
+      Voodoo.js
+    </a>
+
+    <nav class="td-nav" aria-label="Breadcrumb">
+      <a href="../../">Home</a>
+      <a href="../">All examples</a>
+    </nav>
+
+    <button type="button" class="td-btn td-icon-btn" v-theme-toggle aria-label="Toggle dark mode">
+      <svg class="td-icon td-icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"></path>
+      </svg>
+      <svg class="td-icon td-icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.1"></circle>
+        <path d="M12 2.2v2.4M12 19.4v2.4M2.2 12h2.4M19.4 12h2.4M5.1 5.1l1.7 1.7M17.2 17.2l1.7 1.7M18.9 5.1l-1.7 1.7M6.8 17.2l-1.7 1.7"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<main id="main" class="td-wrap td-page">
+  <section class="td-app" v-component="todo-list">
+
+    <header class="td-head">
+      <h1>Todo list</h1>
+      <p class="td-lead">Add, complete, edit, filter and reorder. One HTML file, no build step,
+        and the list survives a reload.</p>
+    </header>
+
+    <div class="td-card">
+
+      <!-- 1. Add: Enter in the field, or click the button. -->
+      <div class="td-composer">
+        <input type="text" class="td-input td-new"
+               v-model="newTask"
+               v-ref="newField"
+               @keyup.enter="add"
+               placeholder="What needs to be done?"
+               aria-label="New task text"
+               maxlength="120" autocomplete="off">
+
+        <button type="button" class="td-btn td-btn--primary" v-click="add">
+          <svg class="td-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5.5v13M5.5 12h13"></path>
+          </svg>
+          <span>Add</span>
+        </button>
+      </div>
+
+      <div class="td-progress" role="progressbar"
+           aria-label="Task progress"
+           aria-valuemin="0" aria-valuemax="100" :aria-valuenow="progress">
+        <div class="td-progress__bar" :style="{ width: progress + '%' }"></div>
+      </div>
+
+      <!-- 5. Filters. The active one is highlighted by :class. -->
+      <div class="td-bar">
+        <div class="td-filters" role="group" aria-label="Filter tasks">
+          <button type="button" class="td-btn td-filter"
+                  :class="{ 'td-filter--on': filter === 'all' }"
+                  :aria-pressed="filter === 'all' ? 'true' : 'false'"
+                  v-click="filter = 'all'">
+            All <span class="td-count">{ total }</span>
+          </button>
+
+          <button type="button" class="td-btn td-filter"
+                  :class="{ 'td-filter--on': filter === 'active' }"
+                  :aria-pressed="filter === 'active' ? 'true' : 'false'"
+                  v-click="filter = 'active'">
+            Active <span class="td-count">{ pending }</span>
+          </button>
+
+          <button type="button" class="td-btn td-filter"
+                  :class="{ 'td-filter--on': filter === 'completed' }"
+                  :aria-pressed="filter === 'completed' ? 'true' : 'false'"
+                  v-click="filter = 'completed'">
+            Completed <span class="td-count">{ completed }</span>
+          </button>
+        </div>
+
+        <!-- 6. Counter with the right singular and plural. -->
+        <span class="td-pending">{ pendingLabel }</span>
+      </div>
+
+      <!-- 9. Drag to reorder. Every item carries :data-id, and the
+           voodoo:sorted event delivers the new order of those same ids. -->
+      <ul class="td-list"
+          v-sortable
+          v-sortable-handle=".td-handle"
+          @voodoo:sorted="reorder($event)"
+          aria-label="Task list. Drag by the handle, or use space and the arrow keys.">
+
+        <li class="td-item"
+            v-for="task in visible"
+            :key="task.id"
+            :data-id="task.id"
+            :class="{ 'td-item--done': task.done, 'td-item--leaving': task.leaving, 'td-item--editing': editingId === task.id }">
+
+          <span class="td-handle" aria-hidden="true" title="Drag to reorder"></span>
+
+          <!-- Space inside the item must not start a keyboard drag, or the
+               space bar would break the checkbox and the editing field. -->
+          <div class="td-body" @keydown.space.stop="true">
+
+            <!-- 2. Complete. v-model writes straight into the list item. -->
+            <input type="checkbox" class="td-check"
+                   v-model="task.done"
+                   @change="onToggle(task)"
+                   :aria-label="'Complete the task: ' + task.title">
+
+            <!-- 3. Double click opens inline editing. -->
+            <span class="td-text"
+                  v-show="editingId !== task.id"
+                  v-dblclick="edit(task)"
+                  title="Double-click to edit">{ task.title }</span>
+
+            <input type="text" class="td-input td-edit"
+                   v-show="editingId === task.id"
+                   v-model="editText"
+                   :data-editing="task.id"
+                   @keyup.enter="saveEdit(task)"
+                   @keyup.esc="cancelEdit"
+                   @blur="saveEdit(task)"
+                   aria-label="Edit the task text"
+                   maxlength="120" autocomplete="off">
+
+            <!-- 4. Remove, with an exit animation before it leaves the array. -->
+            <button type="button" class="td-btn td-remove"
+                    v-click="remove(task)"
+                    :aria-label="'Remove the task: ' + task.title">
+              <svg class="td-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.5 6.5l11 11M17.5 6.5l-11 11"></path>
+              </svg>
+            </button>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Independent v-if blocks, with no v-else chain wrapped around a list. -->
+      <div class="td-empty" v-if="visible.length === 0">
+        <p class="td-empty__title">{ emptyTitle }</p>
+        <p class="td-empty__hint">{ emptyHint }</p>
+      </div>
+
+      <footer class="td-foot" v-if="total > 0">
+        <span class="td-done-label">{ completedLabel }</span>
+
+        <!-- 7. Only shows up while some task is completed. -->
+        <button type="button" class="td-btn td-btn--quiet"
+                v-show="hasCompleted"
+                v-click="clearCompleted">
+          Clear completed
+        </button>
+      </footer>
+    </div>
+
+    <!-- Voodoo's global store, read straight from the HTML through $store. -->
+    <p class="td-note">
+      Since your first visit: <strong>{ $store.stats.created }</strong> tasks created and
+      <strong>{ $store.stats.completed }</strong> marked as done.
+      Those two numbers live in a global store, kept apart from the component state.
+    </p>
+
+    <p class="td-help">
+      <span><kbd>Enter</kbd> adds and saves</span>
+      <span><kbd>Esc</kbd> cancels the edit</span>
+      <span><kbd>Space</kbd> and arrows reorder</span>
+    </p>
+  </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var KEY = 'voodoo:demo:todos';
+  var EXIT = 240; // has to match the duration of the td-out animation
+
+  // ------------------------------------------------------------------
+  // Global store: numbers that survive a reload and belong to no single
+  // component. In the HTML they read as { $store.stats.x }.
+  // ------------------------------------------------------------------
+  V.store('stats', {
+    created: 0,
+    completed: 0,
+    addCreated: function () { this.created = this.created + 1; },
+    addCompleted: function () { this.completed = this.completed + 1; }
+  }, { persist: true });
+
+  // ------------------------------------------------------------------
+  // The component holding all of the list logic.
+  // ------------------------------------------------------------------
+  V.component('todo-list', {
+
+    state: function () {
+      var saved = V.storage.get(KEY, null);
+
+      if (!Array.isArray(saved)) {
+        saved = [
+          { id: V.uid('t'), title: 'Read the Voodoo.js quick start', done: true },
+          { id: V.uid('t'), title: 'Drag this task by the handle on the left', done: false },
+          { id: V.uid('t'), title: 'Double-click the text to edit it', done: false },
+          { id: V.uid('t'), title: 'Check everything and use Clear completed', done: false }
+        ];
+      }
+
+      // Normalise what came out of localStorage: the "leaving" key has to
+      // exist from the start for the reactive proxy to see it change.
+      var tasks = [];
+      for (var i = 0; i < saved.length; i++) {
+        var raw = saved[i] || {};
+        var title = raw.title == null ? '' : String(raw.title);
+        if (!title) continue;
+        tasks.push({
+          id: raw.id ? String(raw.id) : V.uid('t'),
+          title: title,
+          done: raw.done === true,
+          leaving: false
+        });
+      }
+
+      return {
+        tasks: tasks,
+        newTask: '',
+        filter: 'all',
+        editingId: null,
+        editText: ''
+      };
+    },
+
+    computed: {
+      // Items that still count: the ones on their way out no longer do.
+      alive: function () {
+        return this.tasks.filter(function (task) { return !task.leaving; });
+      },
+
+      // What the list shows, according to the chosen filter.
+      visible: function () {
+        var filter = this.filter;
+        return this.tasks.filter(function (task) {
+          if (filter === 'active') return !task.done;
+          if (filter === 'completed') return task.done;
+          return true;
+        });
+      },
+
+      total: function () { return this.alive.length; },
+
+      pending: function () {
+        return this.alive.filter(function (task) { return !task.done; }).length;
+      },
+
+      completed: function () {
+        return this.alive.filter(function (task) { return task.done; }).length;
+      },
+
+      hasCompleted: function () { return this.completed > 0; },
+
+      pendingLabel: function () {
+        var n = this.pending;
+        if (n === 0) return 'All clear here';
+        if (n === 1) return '1 task left';
+        return n + ' tasks left';
+      },
+
+      completedLabel: function () {
+        var n = this.completed;
+        return n === 1 ? '1 task completed' : n + ' tasks completed';
+      },
+
+      progress: function () {
+        if (this.total === 0) return 0;
+        return Math.round((this.completed / this.total) * 100);
+      },
+
+      emptyTitle: function () {
+        if (this.filter === 'active') return 'No active tasks';
+        if (this.filter === 'completed') return 'No completed tasks';
+        return 'Your list is empty';
+      },
+
+      emptyHint: function () {
+        if (this.filter === 'all') {
+          return 'Write the first task in the field above and press Enter.';
+        }
+        return 'Switch the filter to see the other tasks.';
+      }
+    },
+
+    methods: {
+
+      add: function () {
+        var text = String(this.newTask || '').trim();
+        if (!text) return;
+
+        this.tasks.push({ id: V.uid('t'), title: text, done: false, leaving: false });
+        this.newTask = '';
+
+        V.store('stats').addCreated();
+        this.save();
+
+        // After a click on the button, the cursor goes back to the field.
+        if (this.$refs.newField) this.$refs.newField.focus();
+      },
+
+      onToggle: function (task) {
+        if (task.done) V.store('stats').addCompleted();
+        this.save();
+      },
+
+      // ---------------- inline editing ----------------
+
+      edit: function (task) {
+        if (task.leaving) return;
+        this.editingId = task.id;
+        this.editText = task.title;
+
+        var root = this.$el;
+        var target = task.id;
+        V.nextTick(function () {
+          var field = root.querySelector('[data-editing="' + target + '"]');
+          if (!field) return;
+          field.focus();
+          field.select();
+        });
+      },
+
+      // Enter and leaving the field both land here. Esc clears editingId
+      // first, so the check below makes the blur that follows save nothing.
+      saveEdit: function (task) {
+        if (this.editingId !== task.id) return;
+
+        var text = String(this.editText || '').trim();
+        this.editingId = null;
+        this.editText = '';
+
+        if (!text || text === task.title) return;
+        task.title = text;
+        this.save();
+      },
+
+      cancelEdit: function () {
+        this.editingId = null;
+        this.editText = '';
+      },
+
+      // ---------------- removal with an animation ----------------
+
+      // v-for deletes the node the moment the item leaves the array. So the
+      // item is marked first, the animation runs, and the list changes last.
+      remove: function (task) {
+        if (task.leaving) return;
+        if (this.editingId === task.id) this.cancelEdit();
+
+        task.leaving = true;
+        this.save();
+
+        var targets = {};
+        targets[task.id] = true;
+        this.discardLater(targets);
+      },
+
+      clearCompleted: function () {
+        var targets = {};
+        var found = false;
+
+        this.tasks.forEach(function (task) {
+          if (!task.done || task.leaving) return;
+          task.leaving = true;
+          targets[task.id] = true;
+          found = true;
+        });
+
+        if (!found) return;
+        if (this.editingId && targets[this.editingId]) this.cancelEdit();
+        this.save();
+        this.discardLater(targets);
+      },
+
+      discardLater: function (targets) {
+        var self = this;
+        setTimeout(function () {
+          self.tasks = self.tasks.filter(function (task) { return !targets[task.id]; });
+          self.save();
+        }, this.exitDelay());
+      },
+
+      exitDelay: function () {
+        var reduced = typeof window.matchMedia === 'function' &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return reduced ? 0 : EXIT + 40;
+      },
+
+      // ---------------- reordering ----------------
+
+      // $event.detail.order carries the data-ids in the new order of the
+      // visible list. The positions that were on screen are refilled in that
+      // order, so dragging stays correct even with a filter switched on.
+      reorder: function (event) {
+        var detail = event && event.detail ? event.detail : null;
+        var order = detail && detail.order ? detail.order : null;
+        if (!order || order.length < 2) return;
+
+        var byId = {};
+        this.tasks.forEach(function (task) { byId[task.id] = task; });
+
+        var queue = [];
+        order.forEach(function (id) {
+          if (byId[id]) queue.push(byId[id]);
+        });
+        if (queue.length < 2) return;
+
+        var moved = {};
+        queue.forEach(function (task) { moved[task.id] = true; });
+
+        var position = 0;
+        var next = this.tasks.map(function (task) {
+          if (!moved[task.id]) return task;
+          var upcoming = queue[position];
+          position = position + 1;
+          return upcoming;
+        });
+
+        this.tasks = next;
+        this.save();
+      },
+
+      // ---------------- persistence ----------------
+
+      // 8. Persistence. Items in their exit animation are no longer written.
+      save: function () {
+        var clean = [];
+        this.tasks.forEach(function (task) {
+          if (task.leaving) return;
+          clean.push({ id: task.id, title: task.title, done: task.done, leaving: false });
+        });
+        V.storage.set(KEY, clean);
+      }
+    }
+  });
+
+  V.theme.init();
+  V.start();
+  document.body.classList.add('td-ready');
+});
+</script>
+
+</body>
+</html>

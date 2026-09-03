@@ -47,7 +47,7 @@ The `×` at the corner of the button hides the widget only on that tab. An expli
 > attribute still turns on detailed warnings in the console, and Voodoo warns there that the
 > inspector didn't come along.
 
-There's a ready page in [`examples/devtools/`](../examples/devtools/) with counter, list, store,
+There's a ready page in [`examples/devtools/`](../site/examples/devtools/) with counter, list, store,
 component and request, to see the panel tabs reacting to each of those things.
 
 ---

@@ -633,7 +633,7 @@ A documentação existe em dois idiomas: português em [`docs/`](docs/) (complet
 ## Exemplos
 
 Cada exemplo é um único arquivo HTML que você pode abrir direto no navegador. Comece por
-[`examples/index.html`](examples/index.html), ou sirva o repositório inteiro e navegue por eles:
+[`examples/index.html`](site/examples/index.html), ou sirva o repositório inteiro e navegue por eles:
 
 ```bash
 npm run build && npm run serve
@@ -648,15 +648,15 @@ marcação Voodoo e ver rodando na hora.
 
 | Exemplo | O que mostra |
 | --- | --- |
-| [Tarefas](examples/todo/) | Estado, listas, edição no lugar, filtros, reordenação |
-| [CRUD](examples/crud/) | Um componente, formulários, validação, máscaras, toasts, atualização otimista |
-| [Painel](examples/dashboard/) | Gráficos, valores computados reativos, atualização periódica |
-| [Kanban](examples/kanban/) | Arrastar e soltar entre colunas, estado persistido |
-| [Chat](examples/chat/) | Atualização ao vivo, comportamento de rolagem, composição de mensagem |
-| [Chat em tempo real](examples/chat-tempo-real/) | `v-socket` e `v-room` sobre WebSocket de verdade, salas públicas, mensagem privada, presença e volta automática às salas depois de reconectar. Vem com um servidor de teste sem dependência |
-| [E-commerce](examples/ecommerce/) | Catálogo, filtros, store do carrinho, fluxo de compra |
-| [Pokédex](examples/pokedex/) | Consumo de API real, busca, paginação, carregamento sob demanda |
-| [DevTools](examples/devtools/) | Ligar o inspetor por um único atributo na tag do script |
+| [Tarefas](site/examples/todo/) | Estado, listas, edição no lugar, filtros, reordenação |
+| [CRUD](site/examples/crud/) | Um componente, formulários, validação, máscaras, toasts, atualização otimista |
+| [Painel](site/examples/dashboard/) | Gráficos, valores computados reativos, atualização periódica |
+| [Kanban](site/examples/kanban/) | Arrastar e soltar entre colunas, estado persistido |
+| [Chat](site/examples/chat/) | Atualização ao vivo, comportamento de rolagem, composição de mensagem |
+| [Chat em tempo real](site/examples/chat-tempo-real/) | `v-socket` e `v-room` sobre WebSocket de verdade, salas públicas, mensagem privada, presença e volta automática às salas depois de reconectar. Vem com um servidor de teste sem dependência |
+| [E-commerce](site/examples/ecommerce/) | Catálogo, filtros, store do carrinho, fluxo de compra |
+| [Pokédex](site/examples/pokedex/) | Consumo de API real, busca, paginação, carregamento sob demanda |
+| [DevTools](site/examples/devtools/) | Ligar o inspetor por um único atributo na tag do script |
 
 **Gráficos e jogos**
 
@@ -665,10 +665,10 @@ que realmente precisa de canvas.
 
 | Exemplo | O que mostra |
 | --- | --- |
-| [Mundo aberto 3D](examples/mundo-aberto/) | Uma cidade gerada por código em WebGL2 puro, sem biblioteca nenhuma. Ciclo de dia e noite, sombras, névoa, minimapa e velocímetro, com o HUD e os controles ao vivo escritos como marcação Voodoo comum |
-| [Breakout](examples/jogos/breakout/) | Cinco níveis, cápsulas de poder que caem, combo, vidas, recorde persistido e som. Jogável por teclado e por toque |
-| [Tetris](examples/jogos/tetris/) | Saco de sete peças, peça fantasma, guardar peça, wall kick. O tabuleiro é canvas; a fila de próximas é uma grade de spans feita por `v-for` aninhado |
-| [Shaders](examples/shaders/) | Quatro cenas de raymarching em WebGL2 — Mandelbulb, túnel infinito, metaballs e oceano — com o painel de controle inteiro gerado por `v-for` sobre os uniforms de cada cena, e `v-model` ligado direto na GPU |
+| [Mundo aberto 3D](site/examples/mundo-aberto/) | Uma cidade gerada por código em WebGL2 puro, sem biblioteca nenhuma. Ciclo de dia e noite, sombras, névoa, minimapa e velocímetro, com o HUD e os controles ao vivo escritos como marcação Voodoo comum |
+| [Breakout](site/examples/jogos/breakout/) | Cinco níveis, cápsulas de poder que caem, combo, vidas, recorde persistido e som. Jogável por teclado e por toque |
+| [Tetris](site/examples/jogos/tetris/) | Saco de sete peças, peça fantasma, guardar peça, wall kick. O tabuleiro é canvas; a fila de próximas é uma grade de spans feita por `v-for` aninhado |
+| [Shaders](site/examples/shaders/) | Quatro cenas de raymarching em WebGL2 — Mandelbulb, túnel infinito, metaballs e oceano — com o painel de controle inteiro gerado por `v-for` sobre os uniforms de cada cena, e `v-model` ligado direto na GPU |
 
 ## Ecossistema
 
@@ -703,7 +703,7 @@ cd Voodoo.js && npm install
 
 Um monorepo com npm workspaces: [`packages/voodoojs`](packages/voodoojs/) é o framework,
 [`packages/cli`](packages/cli/) é a CLI, mais [`docs/`](docs/), [`site/`](site/) e
-[`examples/`](examples/).
+[`examples/`](site/examples/).
 
 | Comando | O que faz |
 | --- | --- |

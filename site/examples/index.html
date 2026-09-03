@@ -22,6 +22,7 @@
         --line: #e7e4ec;
         --accent: #5b2ee5;
         --accent-soft: #f1ecfe;
+        --fill: #e9e6f0;
         --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
           sans-serif;
         --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
@@ -42,6 +43,7 @@
         --line: #2b2735;
         --accent: #a688ff;
         --accent-soft: #221c3a;
+        --fill: #2f2b3d;
         color-scheme: dark;
         }
       }
@@ -55,6 +57,7 @@
         --line: #2b2735;
         --accent: #a688ff;
         --accent-soft: #221c3a;
+        --fill: #2f2b3d;
         color-scheme: dark;
       }
 
@@ -62,6 +65,12 @@
       html:root {
         --v-surface: var(--bg) !important;
         --v-surface-2: var(--bg-soft) !important;
+        /* The progress track, the skeleton fill and the switch rail all paint
+           with --v-surface-3. Left unmapped it kept the library's own value and
+           vanished against this palette, so the components rendered but looked
+           like empty boxes. It needs a real step of contrast, not another
+           near-white. */
+        --v-surface-3: var(--fill) !important;
         --v-border: var(--line) !important;
         --v-text: var(--ink) !important;
         --v-text-muted: var(--ink-faint) !important;
