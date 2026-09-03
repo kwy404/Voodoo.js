@@ -47,6 +47,14 @@ jobs:
         # checks so teria SKIP para contar.
         run: npm run build
 
+      - name: Baixa o navegador dos testes de browser
+        # Sem este passo as 53 specs do Playwright nao falham por causa do
+        # codigo: falham todas com "Executable doesn't exist", porque o runner
+        # tem a dependencia instalada e nenhum navegador baixado. O relatorio
+        # entao mostra 53 FAIL e uma nota de 2.0 num check que passa inteiro na
+        # maquina de quem escreveu. `npm ci` instala o pacote, nao o Chromium.
+        run: npx playwright install --with-deps chromium
+
       - name: Roda o relatorio de qualidade
         run: npm run quality -- --ci --report
 

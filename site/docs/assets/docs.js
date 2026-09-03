@@ -557,16 +557,32 @@
     '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
     '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
     'color-scheme:light}' +
-    '@media (prefers-color-scheme:dark){html:root:not([data-tema="claro"]){' +
+    // Two attributes, because two things write the theme in here.
+    //
+    // The shell stamps `data-tema` on the frame when it builds it, carrying the
+    // page's theme in. The library writes `data-theme` when something inside
+    // the frame changes it — which is exactly what the v-theme-toggle example
+    // on the theme page does. Keying only on `data-tema` meant that button set
+    // an attribute nothing listened to: it flipped the state, the text said the
+    // theme had changed, and not one colour moved.
+    '@media (prefers-color-scheme:dark){' +
+    'html:root:not([data-tema="claro"]):not([data-theme="light"]){' +
     '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
     '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
     '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
     'color-scheme:dark}}' +
-    'html:root[data-tema="escuro"]{' +
+    'html:root[data-tema="escuro"],html:root[data-theme="dark"]{' +
     '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
     '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
     '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
     'color-scheme:dark}' +
+    // An explicit light choice has to beat the system as well, or the toggle
+    // only works in one direction on a machine set to dark.
+    'html:root[data-theme="light"]{' +
+    '--ink:#16141c;--ink-soft:#57526a;--ink-faint:#8b8598;' +
+    '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
+    '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
+    'color-scheme:light}' +
     // The library injects :root{--v-surface:#fff;...} into this document's
     // <head> and only darkens it for prefers-color-scheme or [data-theme].
     // It never sees data-tema, so a reader on a light system who chose the
