@@ -812,7 +812,7 @@
     github: GITHUB,
     cdn: CDN,
     cdnTag: '<script src="' + CDN + '" defer><\/script>',
-    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js?v=0.6.2',
+    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js',
 
     // Numeros medidos por `node scripts/size.mjs` na raiz do repositorio.
     // Refaca a medida sempre que a biblioteca mudar.

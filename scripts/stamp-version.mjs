@@ -1,39 +1,48 @@
 /**
- * Stamps the package version across the site.
+ * Keeps the version and the asset cache keys honest across the site.
  *
- *   node scripts/stamp-version.mjs          apply
- *   node scripts/stamp-version.mjs --check   report drift, change nothing
+ *   node scripts/stamp-version.mjs           apply
+ *   node scripts/stamp-version.mjs --check    report drift, change nothing
  *
- * Two problems, one cause: the version was written by hand in a dozen places.
+ * Three things drift, and each one cost a real bug before this existed.
  *
- * The visible one is drift. The documentation announced 0.1.0 for five releases,
- * then 0.5.0 while the package was 0.6.0, because nothing tied the number on the
- * page to the number in package.json.
+ * The version people read. The documentation announced 0.1.0 for five releases,
+ * then 0.5.0 while the package was 0.6.0. `V.version` said 0.4.6 while being
+ * 0.6.2, so the library misreported itself to anyone who asked.
  *
- * The invisible one is cache. GitHub Pages serves assets with `max-age=600` and
- * the pages asked for `assets/docs.js` with no version on it, so for ten minutes
- * after a deploy a returning reader kept whatever they had — including, once, a
- * docs.js that threw on every page. A version query makes a deploy invalidate
- * its own assets instead of asking people to hard-refresh.
+ * The CDN pin. It has to follow what is *published*, not what is built: a
+ * bumped package.json means a tag that may not exist on the registry yet, and
+ * pinning the site to one breaks every page at once.
  *
- * Run it after bumping package.json and before committing a release.
+ * The asset cache keys. GitHub Pages serves with `max-age=600`, so an
+ * unversioned URL is served from cache long after a deploy. The first version
+ * of this script keyed them on the package version, which is wrong for a
+ * different reason: site assets change *between* releases. docs.js was fixed
+ * three times within 0.6.2 and kept the URL `?v=0.6.2` throughout, so nobody who
+ * had already loaded the page ever received any of it. The key is a content
+ * hash now: the URL changes exactly when the bytes do.
+ *
+ * Run it before committing anything that touches the site or the version.
  */
 
 import { readFile, writeFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join, dirname, resolve } from 'node:path';
 
 const check = process.argv.includes('--check');
 
 const pkg = JSON.parse(await readFile('packages/voodoojs/package.json', 'utf8'));
-const version = pkg.version;
+const { version } = pkg;
 const minor = version.split('.').slice(0, 2).join('.');
 
+// ---------------------------------------------------------------------------
+// Is the minor line actually on the CDN?
+// ---------------------------------------------------------------------------
+
 /**
- * Whether the CDN can already serve this minor line.
- *
- * Asked rather than assumed: pinning the site to a tag the registry does not
- * have breaks every page at once, and it is the kind of break that only shows
- * up after a deploy. A network failure answers no, which leaves the pin alone.
+ * Asked rather than assumed. A network failure answers no, which leaves the pin
+ * where it is: the safe direction, since a wrong pin breaks the whole site.
  */
 async function cdnHasMinor() {
   try {
@@ -49,6 +58,96 @@ async function cdnHasMinor() {
 
 const pinnable = await cdnHasMinor();
 
+// ---------------------------------------------------------------------------
+// Content hashes
+// ---------------------------------------------------------------------------
+
+const hashes = new Map();
+
+/** Eight hex characters of the file's SHA-256, or null when it is not there. */
+async function contentKey(file) {
+  const key = resolve(file);
+  if (hashes.has(key)) return hashes.get(key);
+
+  let hash = null;
+  if (existsSync(key)) {
+    hash = createHash('sha256')
+      .update(await readFile(key))
+      .digest('hex')
+      .slice(0, 8);
+  }
+  hashes.set(key, hash);
+  return hash;
+}
+
+// ---------------------------------------------------------------------------
+// What gets rewritten
+// ---------------------------------------------------------------------------
+
+/**
+ * Every local asset reference in a file, with the path it resolves to.
+ *
+ * Two shapes: `src`/`href` attributes naming something under assets/, and the
+ * library bundle that docs.js loads through a relative path. Both may already
+ * carry a key, which is replaced rather than appended.
+ */
+const ASSET_PATTERNS = [
+  /(?:src|href)="((?:\.\.\/)*assets\/[\w.-]+\.(?:js|css))(?:\?v=[\w.]+)?"/g,
+  /((?:\.\.\/)+voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\w.]+)?(?=['"])/g,
+];
+
+/** Rewrites one file, returning its new text. */
+async function stamp(file, text) {
+  let out = text;
+
+  // The version people read.
+  out = out.replace(/Voodoo\.js (\d+\.\d+\.\d+)/g, `Voodoo.js ${version}`);
+
+  // The CDN pin, only when the registry has the line. An exact version stays
+  // exact; a minor line stays a minor line.
+  if (pinnable) {
+    out = out.replace(/voodoojs@(\d+\.\d+(?:\.\d+)?)/g, (match, found) =>
+      `voodoojs@${found.split('.').length === 3 ? version : minor}`
+    );
+  }
+
+  // The asset cache keys. Async, so the matches are collected first.
+  for (const pattern of ASSET_PATTERNS) {
+    const jobs = [];
+    out.replace(pattern, (match, path, offset) => {
+      jobs.push({ match, path, offset });
+      return match;
+    });
+
+    // Applied back to front, so earlier offsets stay valid.
+    for (const job of jobs.reverse()) {
+      // The library bundle is the exception to "resolve against the file".
+      // docs.js names it relative to the documentation root at runtime, not to
+      // its own folder, and the copy that ships is the freshly built one the
+      // Pages workflow drops in — not the stale file sitting in site/. Hashing
+      // what is actually deployed is the only key that means anything.
+      const isRuntime = /voodoo(\.core|\.full)?\.min\.js$/.test(job.path);
+      const target = isRuntime
+        ? join('packages/voodoojs/dist', job.path.replace(/^(\.\.\/)+/, ''))
+        : join(dirname(file), job.path);
+
+      const key = await contentKey(target);
+      if (!key) continue;
+      const replacement = job.match.replace(
+        new RegExp(`${job.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\?v=[\\w.]+)?`),
+        `${job.path}?v=${key}`
+      );
+      out = out.slice(0, job.offset) + replacement + out.slice(job.offset + job.match.length);
+    }
+  }
+
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Files
+// ---------------------------------------------------------------------------
+
 /** Every .html and .js under site/, excluding the copied bundles. */
 async function siteFiles(dir = 'site') {
   const out = [];
@@ -59,7 +158,7 @@ async function siteFiles(dir = 'site') {
       continue;
     }
     if (!/\.(html|js)$/.test(entry.name)) continue;
-    // The published bundles carry their own version banner; leave them alone.
+    // The published bundles carry their own banner; they are not rewritten.
     if (/^voodoo(\.core|\.full)?(\.min)?\.js$/.test(entry.name)) continue;
     if (entry.name.endsWith('.min.js')) continue;
     out.push(path);
@@ -67,77 +166,13 @@ async function siteFiles(dir = 'site') {
   return out;
 }
 
-const EDITS = [
-  ...(pinnable
-    ? [
-        {
-          what: 'CDN pin',
-          // A literal, not `new RegExp` with a template: inside a template
-          // literal `\d` collapses to `d`, so the built pattern matched nothing
-          // and the pin silently stayed behind while the report claimed it moved.
-          find: /voodoojs@(\d+\.\d+(?:\.\d+)?)/g,
-          to: (match, found) => {
-            // An exact version stays exact, a minor line stays a minor line.
-            const exact = found.split('.').length === 3;
-            return `voodoojs@${exact ? version : minor}`;
-          },
-        },
-      ]
-    : []),
-  {
-    what: 'visible version',
-    // "Voodoo.js 1.2.3" anywhere in prose, and the docs breadcrumb.
-    find: /Voodoo\.js (\d+\.\d+\.\d+)/g,
-    to: () => `Voodoo.js ${version}`,
-  },
-  // The CDN pin is stamped only when the registry actually has that line.
-  //
-  // The version in package.json exists the moment it is bumped; the version on
-  // npm exists only after someone runs publish. Moving the pin with the bump
-  // would point every page at a tag the registry does not have, and the whole
-  // site would fail to load its library. So the pin follows what is published,
-  // not what is built, and the check below is what tells them apart.
-  {
-    what: 'runtime cache key',
-    // The documentation loads the library itself through docs.js, and that URL
-    // had no version on it. GitHub Pages serves with max-age=600, so for ten
-    // minutes after a deploy every live example kept running the previous
-    // bundle — which is how a router bug that was already fixed carried on
-    // being reported. Stamping assets/ and forgetting the runtime meant
-    // stamping everything except the file that actually matters here.
-    // `(?:\.\.\/)+` and not `*`. With the star this matched a bare
-    // `voodoo.min.js` anywhere, including inside a CDN URL that is already
-    // pinned by version, and stamped `?v=` onto it. A cache key on a URL that
-    // carries its own version is redundant at best and defeats the CDN's
-    // caching at worst. Only paths that climb are local paths.
-    find: /((?:\.\.\/)+voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\d.]+)?(?=['"])/g,
-    to: (m, path) => `${path}?v=${version}`,
-  },
-  {
-    what: 'asset cache key',
-    // Local scripts and stylesheets only: a version query on a CDN URL would
-    // defeat its own caching for no gain.
-    //
-    // The `(?:\.\.\/)*` matters more than it looks. Without it this matched
-    // `assets/docs.js` and missed `../assets/docs.js`, so exactly one page — the
-    // documentation index — got a cache key and the other 43 kept asking for the
-    // unversioned URL and kept being served the stale copy. The bug it was
-    // written to fix survived in every page except the one I happened to check.
-    find: /(src|href)="((?:\.\.\/)*assets\/[\w.-]+\.(?:js|css))(?:\?v=[\d.]+)?"/g,
-    to: (m, attr, path) => `${attr}="${path}?v=${version}"`,
-  },
-];
-
 /**
- * Two version strings live outside site/, and both were written by hand.
+ * Two version strings live in the source and were written by hand.
  *
- * `src/core.ts` is the worse one: it is `V.version`, so the library reported
- * 0.4.6 to anyone who asked while actually being 0.6.2. The banner in
- * tsup.config.ts is the same drift in the file people read first when checking
- * which build they have.
- *
- * They are stamped rather than derived at build time on purpose: a real string
- * in the source works without a bundler, and `--check` is what stops it drifting.
+ * `src/core.ts` is `V.version`, so its drift is visible to every consumer. The
+ * banner in tsup.config.ts is the first thing anyone reads to identify a build.
+ * They stay real strings rather than being injected at build time, so the value
+ * is right without a bundler; `--check` is what stops them drifting.
  */
 const SOURCE_EDITS = [
   {
@@ -152,49 +187,38 @@ const SOURCE_EDITS = [
   },
 ];
 
+const EXTRA_FILES = ['README.md', 'README.pt-BR.md', 'packages/voodoojs/README.md'];
+
+// ---------------------------------------------------------------------------
+// Run
+// ---------------------------------------------------------------------------
+
 let changed = 0;
-const drift = [];
 
 for (const { file, find, to } of SOURCE_EDITS) {
   const before = await readFile(file, 'utf8');
-  const after = before.replace(find, (...args) => {
-    const replacement = to(...args);
-    if (replacement !== args[0]) drift.push({ file, what: 'source version', from: args[0], to: replacement });
-    return replacement;
-  });
+  const after = before.replace(find, to);
   if (after === before) continue;
   changed++;
+  console.log(`  source version   ${file}`);
   if (!check) await writeFile(file, after);
 }
-
-const EXTRA_FILES = ['README.md', 'README.pt-BR.md', 'packages/voodoojs/README.md'];
 
 for (const file of [...(await siteFiles()), ...EXTRA_FILES]) {
   const before = await readFile(file, 'utf8');
-  let after = before;
-
-  for (const edit of EDITS) {
-    after = after.replace(edit.find, (...args) => {
-      const replacement = edit.to(...args);
-      if (replacement !== args[0]) drift.push({ file, what: edit.what, from: args[0], to: replacement });
-      return replacement;
-    });
-  }
-
+  const after = await stamp(file, before);
   if (after === before) continue;
   changed++;
   if (!check) await writeFile(file, after);
 }
 
-const byWhat = {};
-for (const d of drift) byWhat[d.what] = (byWhat[d.what] ?? 0) + 1;
-
 console.log(
-  `version ${version} (CDN ${pinnable ? `pinned to ${minor}` : `left alone: ${minor} is not on the registry yet`})`
+  `version ${version} (CDN ${
+    pinnable ? `pinned to ${minor}` : `left alone: ${minor} is not on the registry`
+  })`
 );
-for (const [what, n] of Object.entries(byWhat)) console.log(`  ${what.padEnd(18)} ${n}`);
-console.log(`\n${changed} file(s) ${check ? 'would change' : 'stamped'}`);
+console.log(`${changed} file(s) ${check ? 'would change' : 'stamped'}`);
 
-// In --check this is a gate: a release must not ship a page announcing the
-// previous version.
+// As a gate: a release must not ship a page announcing the previous version, or
+// an asset URL that no longer matches its content.
 if (check && changed) process.exit(1);
