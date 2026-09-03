@@ -4786,7 +4786,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     init() {
       if (typeof document === "undefined") return;
       this.apply();
-      matchMedia == null ? void 0 : matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (typeof matchMedia === "undefined") return;
+      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
         if (this.current === "system") this.apply();
       });
     }

@@ -4722,7 +4722,8 @@ var theme = {
   init() {
     if (typeof document === "undefined") return;
     this.apply();
-    matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (typeof matchMedia === "undefined") return;
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (this.current === "system") this.apply();
     });
   }

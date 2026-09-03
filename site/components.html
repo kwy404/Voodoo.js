@@ -107,7 +107,7 @@
       .top nav { display: flex; gap: 4px; margin-left: 6px; }
       .top nav a {
         padding: 6px 10px; border-radius: 7px; font-size: 14.5px;
-        color: var(--ink-soft); text-decoration: none; white-space: nowrap;
+        color: var(--ink-soft); text-decoration: none;
       }
       .top nav a:hover, .top nav a[aria-current='page'] { color: var(--ink); background: var(--bg-soft); }
       .top-end { margin-left: auto; }
@@ -142,7 +142,12 @@
         grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;
       }
 
-      .comp { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+      /* No overflow:hidden here. A select, a menu or a tooltip opens a panel
+         that leaves the card, and clipping it cut the options off mid-list. The
+         children that genuinely need clipping do it themselves. */
+      .comp { border: 1px solid var(--line); border-radius: 11px; }
+      .comp header { border-radius: 11px 11px 0 0; }
+      .comp pre { border-radius: 0; }
       .comp header {
         display: flex; align-items: center; gap: 9px; padding: 10px 14px;
         border-bottom: 1px solid var(--line); background: var(--bg-soft);
@@ -156,8 +161,9 @@
 
       .live {
         padding: 18px 14px; display: flex; flex-wrap: wrap; gap: 8px;
-        align-items: center; min-height: 74px;
+        align-items: center; min-height: 74px; position: relative; z-index: 1;
       }
+      .comp:focus-within { position: relative; z-index: 5; }
       .live > * { max-width: 100%; }
 
       .comp pre {
@@ -278,10 +284,14 @@
             </header>
 
             <div class="live">
-              <v-icon-button icon="+" aria-label="Add"></v-icon-button>
+              <v-icon-button icon="plus" label="Add"></v-icon-button>
+              <v-icon-button icon="search" label="Search"></v-icon-button>
+              <v-icon-button icon="trash" label="Delete" variant="ghost"></v-icon-button>
             </div>
 
-            <pre v-ignore><code>&lt;v-icon-button icon="+" aria-label="Add"&gt;&lt;/v-icon-button&gt;</code></pre>
+            <pre v-ignore><code>&lt;v-icon-button icon="plus" label="Add"&gt;&lt;/v-icon-button&gt;
+&lt;v-icon-button icon="search" label="Search"&gt;&lt;/v-icon-button&gt;
+&lt;v-icon-button icon="trash" label="Delete" variant="ghost"&gt;&lt;/v-icon-button&gt;</code></pre>
 
             <p class="props"><code class="prop">icon</code> <code class="prop">label</code> <code class="prop">variant</code> <code class="prop">size</code> <code class="prop">type</code> <code class="prop">disabled</code> <code class="prop">loading</code> <code class="prop">rounded</code></p>
           </article>
@@ -342,10 +352,14 @@
             </header>
 
             <div class="live">
-              <v-select label="Country" :options="['Brazil', 'Portugal', 'Japan']"></v-select>
+              <div v-data="{ countries: ['Brazil', 'Portugal', 'Japan'] }">
+                <v-select label="Country" :options="countries"></v-select>
+              </div>
             </div>
 
-            <pre v-ignore><code>&lt;v-select label="Country" :options="['Brazil', 'Portugal', 'Japan']"&gt;&lt;/v-select&gt;</code></pre>
+            <pre v-ignore><code>&lt;div v-data="{ countries: ['Brazil', 'Portugal', 'Japan'] }"&gt;
+  &lt;v-select label="Country" :options="countries"&gt;&lt;/v-select&gt;
+&lt;/div&gt;</code></pre>
 
             <p class="props"><code class="prop">label</code> <code class="prop">placeholder</code> <code class="prop">searchPlaceholder</code> <code class="prop">emptyText</code> <code class="prop">options</code> <code class="prop">value</code> <code class="prop">hint</code> <code class="prop">error</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">size</code> <code class="prop">multiple</code> <code class="prop">searchable</code> <code class="prop">clearable</code> <code class="prop">disabled</code> <code class="prop">required</code></p>
           </article>
@@ -558,12 +572,20 @@
             </header>
 
             <div class="live">
-              <v-table :columns="['Name', 'Role']"
-                       :rows="[['Ada', 'Engineer'], ['Grace', 'Admiral']]"></v-table>
+              <div v-data="{
+                cols: ['Name', 'Role'],
+                people: [['Ada', 'Engineer'], ['Grace', 'Admiral']]
+              }">
+                <v-table :columns="cols" :rows="people"></v-table>
+              </div>
             </div>
 
-            <pre v-ignore><code>&lt;v-table :columns="['Name', 'Role']"
-         :rows="[['Ada', 'Engineer'], ['Grace', 'Admiral']]"&gt;&lt;/v-table&gt;</code></pre>
+            <pre v-ignore><code>&lt;div v-data="{
+  cols: ['Name', 'Role'],
+  people: [['Ada', 'Engineer'], ['Grace', 'Admiral']]
+}"&gt;
+  &lt;v-table :columns="cols" :rows="people"&gt;&lt;/v-table&gt;
+&lt;/div&gt;</code></pre>
 
             <p class="props"><code class="prop">columns</code> <code class="prop">rows</code> <code class="prop">empty</code> <code class="prop">sortable</code> <code class="prop">dense</code> <code class="prop">striped</code> <code class="prop">hover</code> <code class="prop">caption</code></p>
           </article>
@@ -588,10 +610,14 @@
             </header>
 
             <div class="live">
-              <v-timeline :items="['Opened', 'In review', 'Merged']"></v-timeline>
+              <div v-data="{ events: ['Opened', 'In review', 'Merged'] }">
+                <v-timeline :items="events"></v-timeline>
+              </div>
             </div>
 
-            <pre v-ignore><code>&lt;v-timeline :items="['Opened', 'In review', 'Merged']"&gt;&lt;/v-timeline&gt;</code></pre>
+            <pre v-ignore><code>&lt;div v-data="{ events: ['Opened', 'In review', 'Merged'] }"&gt;
+  &lt;v-timeline :items="events"&gt;&lt;/v-timeline&gt;
+&lt;/div&gt;</code></pre>
 
             <p class="props"><code class="prop">items</code></p>
           </article>
@@ -666,10 +692,14 @@
             </header>
 
             <div class="live">
-              <v-breadcrumb :items="['Home', 'Docs', 'Components']"></v-breadcrumb>
+              <div v-data="{ trail: ['Home', 'Docs', 'Components'] }">
+                <v-breadcrumb :items="trail"></v-breadcrumb>
+              </div>
             </div>
 
-            <pre v-ignore><code>&lt;v-breadcrumb :items="['Home', 'Docs', 'Components']"&gt;&lt;/v-breadcrumb&gt;</code></pre>
+            <pre v-ignore><code>&lt;div v-data="{ trail: ['Home', 'Docs', 'Components'] }"&gt;
+  &lt;v-breadcrumb :items="trail"&gt;&lt;/v-breadcrumb&gt;
+&lt;/div&gt;</code></pre>
 
             <p class="props"><code class="prop">items</code> <code class="prop">separator</code> <code class="prop">ariaLabel</code></p>
           </article>
@@ -694,10 +724,14 @@
             </header>
 
             <div class="live">
-              <v-steps :items="['Cart', 'Address', 'Payment']" value="1"></v-steps>
+              <div v-data="{ stages: ['Cart', 'Address', 'Payment'] }">
+                <v-steps :items="stages" value="1"></v-steps>
+              </div>
             </div>
 
-            <pre v-ignore><code>&lt;v-steps :items="['Cart', 'Address', 'Payment']" value="1"&gt;&lt;/v-steps&gt;</code></pre>
+            <pre v-ignore><code>&lt;div v-data="{ stages: ['Cart', 'Address', 'Payment'] }"&gt;
+  &lt;v-steps :items="stages" value="1"&gt;&lt;/v-steps&gt;
+&lt;/div&gt;</code></pre>
 
             <p class="props"><code class="prop">steps</code> <code class="prop">current</code> <code class="prop">vertical</code> <code class="prop">ariaLabel</code></p>
           </article>

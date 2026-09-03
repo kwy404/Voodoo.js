@@ -87,11 +87,30 @@ function propsOf(body) {
 
 const components = extract();
 
-/** Hand-written demos. Only the ones that need markup to make sense. */
+/**
+ * Hand-written demos, for the components whose markup needs saying.
+ *
+ * Two rules learned the hard way, both by looking at the rendered page:
+ *
+ * 1. Icon names come from ICON_PATHS in the source: check, x, plus, minus,
+ *    search, user, users, mail, lock, eye, calendar, clock, star, info, alert,
+ *    warning, trash, edit, copy, download, upload, settings, home, heart, bell,
+ *    filter, external, refresh, folder, file, image, more, and a few others.
+ *    Anything else makes iconSvg() return an empty string, so the button
+ *    renders a blank span and looks broken. `+` and `close` are not names.
+ *
+ * 2. An array prop needs a scope to be evaluated in. Written bare, `:rows` is
+ *    stringified and a nested array flattens: [['Ada','Engineer'],['Grace',
+ *    'Admiral']] arrived as "Ada,Engineer,Grace,Admiral" and only the table
+ *    headers rendered. Those demos wrap themselves in a v-data.
+ */
 const DEMOS = {
   'v-button':
     '<v-button variant="primary">Save</v-button>\n<v-button variant="ghost">Cancel</v-button>\n<v-button variant="primary" loading>Sending</v-button>',
-  'v-icon-button': '<v-icon-button icon="+" aria-label="Add"></v-icon-button>',
+  'v-icon-button':
+    '<v-icon-button icon="plus" label="Add"></v-icon-button>\n' +
+    '<v-icon-button icon="search" label="Search"></v-icon-button>\n' +
+    '<v-icon-button icon="trash" label="Delete" variant="ghost"></v-icon-button>',
   'v-badge': '<v-badge tone="success">Active</v-badge>\n<v-badge tone="danger">Overdue</v-badge>',
   'v-tag': '<v-tag>design</v-tag>\n<v-tag closable>frontend</v-tag>',
   'v-alert':
@@ -100,7 +119,9 @@ const DEMOS = {
   'v-input': '<v-input label="Email" type="email" placeholder="you@example.com"></v-input>',
   'v-textarea': '<v-textarea label="Notes" rows="3"></v-textarea>',
   'v-select':
-    '<v-select label="Country" :options="[\'Brazil\', \'Portugal\', \'Japan\']"></v-select>',
+    '<div v-data="{ countries: [\'Brazil\', \'Portugal\', \'Japan\'] }">\n' +
+    '  <v-select label="Country" :options="countries"></v-select>\n' +
+    '</div>',
   'v-checkbox': '<v-checkbox label="Remember me"></v-checkbox>',
   'v-radio': '<v-radio name="plan" label="Monthly"></v-radio>',
   'v-switch': '<v-switch label="Notifications"></v-switch>',
@@ -114,12 +135,25 @@ const DEMOS = {
   'v-rating': '<v-rating value="4"></v-rating>',
   'v-stat': '<v-stat label="Revenue" value="R$ 12.480" trend="up"></v-stat>',
   'v-table':
-    '<v-table :columns="[\'Name\', \'Role\']"\n         :rows="[[\'Ada\', \'Engineer\'], [\'Grace\', \'Admiral\']]"></v-table>',
+    '<div v-data="{\n' +
+    '  cols: [\'Name\', \'Role\'],\n' +
+    '  people: [[\'Ada\', \'Engineer\'], [\'Grace\', \'Admiral\']]\n' +
+    '}">\n' +
+    '  <v-table :columns="cols" :rows="people"></v-table>\n' +
+    '</div>',
   'v-pagination': '<v-pagination pages="8" value="3"></v-pagination>',
-  'v-breadcrumb': '<v-breadcrumb :items="[\'Home\', \'Docs\', \'Components\']"></v-breadcrumb>',
-  'v-steps': '<v-steps :items="[\'Cart\', \'Address\', \'Payment\']" value="1"></v-steps>',
+  'v-breadcrumb':
+    '<div v-data="{ trail: [\'Home\', \'Docs\', \'Components\'] }">\n' +
+    '  <v-breadcrumb :items="trail"></v-breadcrumb>\n' +
+    '</div>',
+  'v-steps':
+    '<div v-data="{ stages: [\'Cart\', \'Address\', \'Payment\'] }">\n' +
+    '  <v-steps :items="stages" value="1"></v-steps>\n' +
+    '</div>',
   'v-timeline':
-    '<v-timeline :items="[\'Opened\', \'In review\', \'Merged\']"></v-timeline>',
+    '<div v-data="{ events: [\'Opened\', \'In review\', \'Merged\'] }">\n' +
+    '  <v-timeline :items="events"></v-timeline>\n' +
+    '</div>',
   'v-empty-state':
     '<v-empty-state title="Nothing here yet" text="Add your first item."></v-empty-state>',
   'v-code-block': '<v-code-block code="&lt;div v-data=&quot;{ n: 0 }&quot;&gt;"></v-code-block>',
@@ -355,7 +389,12 @@ const html = `<!doctype html>
         grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;
       }
 
-      .comp { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+      /* No overflow:hidden here. A select, a menu or a tooltip opens a panel
+         that leaves the card, and clipping it cut the options off mid-list. The
+         children that genuinely need clipping do it themselves. */
+      .comp { border: 1px solid var(--line); border-radius: 11px; }
+      .comp header { border-radius: 11px 11px 0 0; }
+      .comp pre { border-radius: 0; }
       .comp header {
         display: flex; align-items: center; gap: 9px; padding: 10px 14px;
         border-bottom: 1px solid var(--line); background: var(--bg-soft);
@@ -369,8 +408,9 @@ const html = `<!doctype html>
 
       .live {
         padding: 18px 14px; display: flex; flex-wrap: wrap; gap: 8px;
-        align-items: center; min-height: 74px;
+        align-items: center; min-height: 74px; position: relative; z-index: 1;
       }
+      .comp:focus-within { position: relative; z-index: 5; }
       .live > * { max-width: 100%; }
 
       .comp pre {

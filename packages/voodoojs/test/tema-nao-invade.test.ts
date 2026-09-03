@@ -167,3 +167,47 @@ describe('where localStorage is unavailable', () => {
     expect(fresh.theme.current).toBe('dark');
   });
 });
+
+describe('where matchMedia does not exist', () => {
+  // `matchMedia?.()` reads as a guard and is not one. Optional chaining protects
+  // against a null or undefined VALUE; an identifier that was never declared
+  // still throws a ReferenceError when it is read. Older webviews and jsdom do
+  // not define it, and init() took the whole library down there.
+  //
+  // Reproducing that needs the property GONE, not set to undefined. Stubbing it
+  // as undefined makes `matchMedia?.()` behave perfectly well, which is why the
+  // first version of this test passed against the bug.
+  function removeMatchMedia(): void {
+    delete (globalThis as Record<string, unknown>).matchMedia;
+    delete (window as unknown as Record<string, unknown>).matchMedia;
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('init does not throw', async () => {
+    removeMatchMedia();
+    vi.resetModules();
+    const fresh = await import('../src/storage');
+
+    expect(() => fresh.theme.init()).not.toThrow();
+  });
+
+  it('a stored choice is still applied without it', async () => {
+    removeMatchMedia();
+    vi.resetModules();
+    const fresh = await import('../src/storage');
+
+    fresh.theme.set('dark');
+    expect(root().getAttribute('data-theme')).toBe('dark');
+  });
+
+  it('resolved falls back to light rather than throwing', async () => {
+    removeMatchMedia();
+    vi.resetModules();
+    const fresh = await import('../src/storage');
+
+    expect(fresh.theme.resolved).toBe('light');
+  });
+});

@@ -325,7 +325,15 @@ export const theme = {
   init(): void {
     if (typeof document === 'undefined') return;
     this.apply();
-    matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
+
+    // `matchMedia?.()` reads as a guard and is not one: optional chaining only
+    // protects against a null or undefined VALUE, never against an identifier
+    // that was never declared. Where the global is absent -- jsdom, older
+    // webviews, some embedded browsers -- the bare name threw a ReferenceError
+    // and took the whole of init() down with it. `typeof` is the only check
+    // that answers for an undeclared name.
+    if (typeof matchMedia === 'undefined') return;
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (this.current === 'system') this.apply();
     });
   },

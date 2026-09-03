@@ -1164,7 +1164,8 @@ var theme = {
   init() {
     if (typeof document === "undefined") return;
     this.apply();
-    matchMedia?.("(prefers-color-scheme: dark)").addEventListener("change", () => {
+    if (typeof matchMedia === "undefined") return;
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (this.current === "system") this.apply();
     });
   }
@@ -10270,5 +10271,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-VCIH4MEK.js.map
-//# sourceMappingURL=chunk-VCIH4MEK.js.map
+//# sourceMappingURL=chunk-7NMQHC33.js.map
+//# sourceMappingURL=chunk-7NMQHC33.js.map
