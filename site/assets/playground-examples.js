@@ -239,7 +239,7 @@
         '        <button v-click="buy">Buy</button>',
         '      </div>`',
         '  });',
-        '</script>'
+        '<\/script>'
       ]
     },
     {
@@ -502,7 +502,7 @@
         '    add(name, price) { this.items.push({ name: name, price: price }); },',
         '    clear() { this.items = []; }',
         '  });',
-        '</script>'
+        '<\/script>'
       ]
     },
     {
@@ -541,7 +541,7 @@
         '  V.directive(\'reverse\', el => {',
         '    el.textContent = el.textContent.split(\'\').reverse().join(\'\');',
         '  });',
-        '</script>'
+        '<\/script>'
       ]
     },
     {

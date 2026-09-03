@@ -897,11 +897,12 @@
           </a>
 
           <nav aria-label="Main">
-            <a href="#start" v-t="nav.start" v-command-item="" v-t:v-command-item="">Get started</a>
-            <a href="#why" v-t="nav.why" v-command-item="" v-t:v-command-item="">Why</a>
-            <a href="#compare" v-t="nav.compare" v-command-item="" v-t:v-command-item="">Comparison</a>
-            <a href="docs/" v-t="nav.docs" v-command-item="" v-t:v-command-item="">Docs</a>
-            <a href="examples/" v-t="nav.examples" v-command-item="" v-t:v-command-item="">Examples</a>
+            <a href="#start" v-t="nav.start" v-command-item="">Get started</a>
+            <a href="#why" v-t="nav.why" v-command-item="">Why</a>
+            <a href="#compare" v-t="nav.compare" v-command-item="">Comparison</a>
+            <a href="docs/" v-t="nav.docs" v-command-item="">Docs</a>
+            <a href="playground.html" v-t="nav.playground" v-command-item="">Playground</a>
+            <a href="examples/" v-t="nav.examples" v-command-item="">Examples</a>
           </nav>
 
           <div class="top-end">
@@ -922,7 +923,7 @@
             </select>
 
             <button class="icon-btn" v-theme-toggle v-t:aria-label="nav.theme" aria-label="Toggle dark mode"
-              v-command-item="" v-t:v-command-item="">
+              v-command-item="">
               <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
@@ -951,6 +952,7 @@
             <a href="#why" @click="menu = false" v-t="nav.why">Why</a>
             <a href="#compare" @click="menu = false" v-t="nav.compare">Comparison</a>
             <a href="docs/" @click="menu = false" v-t="nav.docs">Docs</a>
+            <a href="playground.html" @click="menu = false" v-t="nav.playground">Playground</a>
             <a href="examples/" @click="menu = false" v-t="nav.examples">Examples</a>
             <a href="https://github.com/kwy404/Voodoo.js" @click="menu = false">GitHub</a>
           </div>
@@ -1367,9 +1369,10 @@
       <footer>
         <div class="wrap foot-in">
           <span v-t="foot.mit">MIT licensed</span>
-          <a href="https://github.com/kwy404/Voodoo.js" v-command-item="" v-t:v-command-item="">GitHub</a>
-          <a href="https://www.npmjs.com/package/voodoojs" v-command-item="" v-t:v-command-item="">npm</a>
+          <a href="https://github.com/kwy404/Voodoo.js" v-command-item="">GitHub</a>
+          <a href="https://www.npmjs.com/package/voodoojs" v-command-item="">npm</a>
           <a href="docs/" v-t="nav.docs">Docs</a>
+          <a href="playground.html" v-t="nav.playground">Playground</a>
           <a href="examples/" v-t="nav.examples">Examples</a>
           <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 0.5.0</span>
         </div>

@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Playground — Voodoo.js</title>
+    <meta
+      name="description"
+      content="Write Voodoo.js in the browser and watch it run. Twenty-six examples, an editor and a live preview, with no build step anywhere in the loop."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/playground.html" />
+
+    <style>
+      /* The editor chrome is dark in both themes, the way a code editor is, while
+         the preview pane follows the page so you see your work on the surface it
+         will actually ship on. */
+      :root {
+        --ink: #16141c;
+        --ink-soft: #57526a;
+        --ink-faint: #8b8598;
+        --bg: #ffffff;
+        --bg-soft: #faf9fb;
+        --line: #e7e4ec;
+        --accent: #5b2ee5;
+
+        --chrome: #1e1e2a;
+        --chrome-2: #252534;
+        --chrome-3: #2d2d3d;
+        --chrome-line: #34344a;
+        --chrome-ink: #d6d3e3;
+        --chrome-faint: #8b87a3;
+
+        --c-tag: #d2a8ff;
+        --c-attr: #79c0ff;
+        --c-str: #7ee2b8;
+        --c-com: #7f7a96;
+        --c-key: #ff7b72;
+
+        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+          sans-serif;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+          monospace;
+        --topbar: 46px;
+        --statusbar: 24px;
+        color-scheme: light;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html:root:not([data-theme='light']) {
+          --ink: #f2f0f6;
+          --ink-soft: #b3adc2;
+          --ink-faint: #837d93;
+          --bg: #131118;
+          --bg-soft: #191722;
+          --line: #2b2735;
+          --accent: #a688ff;
+          color-scheme: dark;
+        }
+      }
+
+      html:root[data-theme='dark'] {
+        --ink: #f2f0f6;
+        --ink-soft: #b3adc2;
+        --ink-faint: #837d93;
+        --bg: #131118;
+        --bg-soft: #191722;
+        --line: #2b2735;
+        --accent: #a688ff;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ------------------------------------------------------------- topbar */
+      .topbar {
+        height: var(--topbar);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 0 12px;
+        background: var(--chrome);
+        border-bottom: 1px solid var(--chrome-line);
+        color: var(--chrome-ink);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 660;
+        font-size: 14.5px;
+        letter-spacing: -0.01em;
+        color: #fff;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .brand svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .brand span.tag {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--chrome-3);
+        color: var(--chrome-faint);
+      }
+
+      .topbar nav {
+        display: flex;
+        gap: 2px;
+      }
+
+      .topbar nav a {
+        font-size: 13.5px;
+        padding: 5px 9px;
+        border-radius: 6px;
+        color: var(--chrome-faint);
+        text-decoration: none;
+      }
+
+      .topbar nav a:hover {
+        color: #fff;
+        background: var(--chrome-3);
+      }
+
+      .topbar .end {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .tbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        padding: 0 10px;
+        border: 1px solid var(--chrome-line);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--chrome-ink);
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .tbtn:hover {
+        background: var(--chrome-3);
+      }
+
+      .tbtn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+
+      .tbtn.primary:hover {
+        opacity: 0.9;
+      }
+
+      /* -------------------------------------------------------------- shell */
+      .shell {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr) minmax(0, 1fr);
+        height: calc(100vh - var(--topbar) - var(--statusbar));
+      }
+
+      /* ------------------------------------------------------------ sidebar */
+      .side {
+        background: var(--chrome-2);
+        border-right: 1px solid var(--chrome-line);
+        overflow-y: auto;
+        color: var(--chrome-ink);
+      }
+
+      .side h2 {
+        margin: 0;
+        padding: 11px 14px 7px;
+        font-size: 10.5px;
+        font-weight: 640;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--chrome-faint);
+      }
+
+      .side .group {
+        padding: 9px 14px 3px;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--chrome-faint);
+      }
+
+      .side button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        color: var(--chrome-ink);
+        font: inherit;
+        font-size: 13px;
+        padding: 5px 14px 5px 22px;
+        cursor: pointer;
+        border-left: 2px solid transparent;
+      }
+
+      .side button:hover {
+        background: var(--chrome-3);
+      }
+
+      .side button[aria-current='true'] {
+        background: var(--chrome-3);
+        border-left-color: var(--accent);
+        color: #fff;
+      }
+
+      /* ------------------------------------------------------------- editor */
+      .editor {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--chrome);
+        border-right: 1px solid var(--chrome-line);
+      }
+
+      .tabstrip {
+        display: flex;
+        align-items: stretch;
+        background: var(--chrome-2);
+        border-bottom: 1px solid var(--chrome-line);
+        min-height: 34px;
+      }
+
+      .filetab {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 13px;
+        font-size: 13px;
+        font-family: var(--mono);
+        color: #fff;
+        background: var(--chrome);
+        border-right: 1px solid var(--chrome-line);
+        border-top: 1px solid var(--accent);
+      }
+
+      .filetab .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        flex: none;
+        visibility: hidden;
+      }
+
+      .filetab.dirty .dot {
+        visibility: visible;
+      }
+
+      .desc {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        font-size: 12px;
+        color: var(--chrome-faint);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .code-area {
+        position: relative;
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+      }
+
+      .gutter {
+        flex: none;
+        padding: 12px 0 12px;
+        width: 46px;
+        text-align: right;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--chrome-faint);
+        background: var(--chrome);
+        user-select: none;
+        overflow: hidden;
+      }
+
+      .gutter span {
+        display: block;
+        padding-right: 12px;
+      }
+
+      textarea {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: none;
+        resize: none;
+        padding: 12px 14px 12px 0;
+        background: transparent;
+        color: var(--chrome-ink);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.55;
+        tab-size: 2;
+        white-space: pre;
+        overflow: auto;
+        caret-color: var(--accent);
+      }
+
+      textarea::selection {
+        background: rgba(91, 46, 229, 0.4);
+      }
+
+      /* ------------------------------------------------------------ preview */
+      .preview {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        background: var(--bg);
+      }
+
+      .preview-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 34px;
+        padding: 0 12px;
+        background: var(--bg-soft);
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--ink-faint);
+      }
+
+      .live {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #16a34a;
+        flex: none;
+      }
+
+      .widths {
+        margin-left: auto;
+        display: flex;
+        gap: 3px;
+      }
+
+      .widths button {
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--ink-faint);
+        font: inherit;
+        font-size: 12px;
+        padding: 2px 7px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .widths button:hover {
+        color: var(--ink);
+      }
+
+      .widths button[aria-pressed='true'] {
+        border-color: var(--line);
+        background: var(--bg);
+        color: var(--accent);
+      }
+
+      .frame-wrap {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        justify-content: center;
+        background: var(--bg);
+      }
+
+      iframe {
+        border: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+      }
+
+      /* ---------------------------------------------------------- statusbar */
+      .statusbar {
+        height: var(--statusbar);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 12px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 11.5px;
+      }
+
+      .statusbar .right {
+        margin-left: auto;
+        display: flex;
+        gap: 16px;
+      }
+
+      /* --------------------------------------------------------- responsive */
+      .mobile-switch {
+        display: none;
+      }
+
+      @media (max-width: 1000px) {
+        .shell {
+          grid-template-columns: 190px minmax(0, 1fr);
+        }
+        .preview {
+          display: none;
+        }
+        body.show-preview .editor {
+          display: none;
+        }
+        body.show-preview .preview {
+          display: flex;
+        }
+        .mobile-switch {
+          display: inline-flex;
+        }
+      }
+
+      @media (max-width: 680px) {
+        .shell {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .side {
+          display: none;
+        }
+        body.show-files .side {
+          display: block;
+        }
+        body.show-files .editor,
+        body.show-files .preview {
+          display: none;
+        }
+        .topbar nav {
+          display: none;
+        }
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="topbar">
+      <a class="brand" href="./">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
+        </svg>
+        Voodoo.js
+        <span class="tag">Playground</span>
+      </a>
+
+      <nav aria-label="Main">
+        <a href="./">Home</a>
+        <a href="docs/">Docs</a>
+        <a href="examples/">Examples</a>
+      </nav>
+
+      <div class="end">
+        <button class="tbtn mobile-switch" id="btn-files">Files</button>
+        <button class="tbtn mobile-switch" id="btn-view">Preview</button>
+        <button class="tbtn" id="btn-reset" title="Restore the original example">Reset</button>
+        <button class="tbtn" id="btn-share" title="Copy a link that reopens this code">
+          Share
+        </button>
+        <button class="tbtn primary" id="btn-run" title="Ctrl+Enter">Run</button>
+      </div>
+    </div>
+
+    <div class="shell">
+      <aside class="side">
+        <h2>Examples</h2>
+        <div id="file-list"></div>
+      </aside>
+
+      <div class="editor">
+        <div class="tabstrip">
+          <div class="filetab" id="filetab">
+            <span class="dot" aria-hidden="true"></span>
+            <span id="filename">index.html</span>
+          </div>
+          <div class="desc" id="example-desc"></div>
+        </div>
+
+        <div class="code-area">
+          <div class="gutter" id="gutter" aria-hidden="true"></div>
+          <textarea
+            id="code"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            autocorrect="off"
+            aria-label="HTML editor"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="preview">
+        <div class="preview-head">
+          <span class="live" aria-hidden="true"></span>
+          <span id="preview-label">Live preview</span>
+          <div class="widths" role="group" aria-label="Preview width">
+            <button data-w="100%" aria-pressed="true">Full</button>
+            <button data-w="768px" aria-pressed="false">Tablet</button>
+            <button data-w="380px" aria-pressed="false">Phone</button>
+          </div>
+        </div>
+        <div class="frame-wrap">
+          <iframe id="frame" title="Live preview" sandbox="allow-scripts allow-modals"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <span id="status-example">state</span>
+      <span id="status-lines">1 line</span>
+      <div class="right">
+        <span>Ctrl+Enter to run</span>
+        <span>voodoojs@0.5</span>
+      </div>
+    </div>
+
+    <script src="assets/playground-examples.js"></script>
+    <script>
+      /**
+       * The playground: an editor on the left, the result on the right.
+       *
+       * The preview is a sandboxed iframe that loads the same public CDN build
+       * the documentation hands out, so what runs here is what runs in your page.
+       * There is no compiler in this loop: the code you type is the code that
+       * executes, which is the property the whole framework is built around.
+       */
+      (function () {
+        'use strict';
+
+        var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.full.min.js';
+        var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
+
+        var code = document.getElementById('code');
+        var gutter = document.getElementById('gutter');
+        var frame = document.getElementById('frame');
+        var fileList = document.getElementById('file-list');
+        var filetab = document.getElementById('filetab');
+        var descEl = document.getElementById('example-desc');
+        var statusExample = document.getElementById('status-example');
+        var statusLines = document.getElementById('status-lines');
+
+        var current = examples[0];
+        var timer = null;
+
+        var GROUP_LABEL = {
+          basics: 'Basics',
+          forms: 'Forms',
+          events: 'Events',
+          components: 'Components',
+          http: 'HTTP',
+          ui: 'Interface',
+          visual: 'Visual',
+          state: 'State',
+          advanced: 'Advanced',
+        };
+
+        /** Builds the explorer, grouped the way the examples declare. */
+        function buildList() {
+          var seen = {};
+          var html = '';
+          examples.forEach(function (ex) {
+            if (!seen[ex.group]) {
+              seen[ex.group] = true;
+              html += '<div class="group">' + (GROUP_LABEL[ex.group] || ex.group) + '</div>';
+            }
+            html +=
+              '<button type="button" data-id="' +
+              ex.id +
+              '" aria-current="false">' +
+              ex.title +
+              '</button>';
+          });
+          fileList.innerHTML = html;
+        }
+
+        /** Line numbers, redrawn only when the count actually changes. */
+        var lastCount = -1;
+        function drawGutter() {
+          var n = code.value.split('\n').length;
+          statusLines.textContent = n + (n === 1 ? ' line' : ' lines');
+          if (n === lastCount) return;
+          lastCount = n;
+          var out = '';
+          for (var i = 1; i <= n; i++) out += '<span>' + i + '</span>';
+          gutter.innerHTML = out;
+        }
+
+        /** Rebuilds the iframe document from scratch, so state never leaks between runs. */
+        function run() {
+          var doc =
+            '<!doctype html><html><head><meta charset="utf-8">' +
+            '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+            '<style>' +
+            'body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
+            'margin:0;padding:18px;color:#16141c;background:#fff;line-height:1.6}' +
+            '*{box-sizing:border-box}' +
+            'button{font:inherit;padding:7px 12px;border:1px solid #e7e4ec;border-radius:7px;' +
+            'background:#fff;cursor:pointer;margin:2px 4px 2px 0}' +
+            'button:hover{border-color:#5b2ee5;color:#5b2ee5}' +
+            'input,select,textarea{font:inherit;padding:7px 9px;border:1px solid #e7e4ec;' +
+            'border-radius:7px;margin:2px 0}' +
+            'h1,h2,h3{margin:0 0 8px;line-height:1.2}' +
+            'ul,ol{padding-left:20px}' +
+            '</style></head><body>' +
+            code.value +
+            '<scr' +
+            'ipt src="' +
+            CDN +
+            '" defer></scr' +
+            'ipt></body></html>';
+          frame.srcdoc = doc;
+        }
+
+        /** Debounced, so typing does not rebuild the document on every keystroke. */
+        function scheduleRun() {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(run, 420);
+        }
+
+        function markDirty(dirty) {
+          filetab.className = dirty ? 'filetab dirty' : 'filetab';
+        }
+
+        function load(ex, keepHash) {
+          current = ex;
+          code.value = ex.code.join('\n');
+          descEl.textContent = ex.desc;
+          statusExample.textContent = ex.id;
+          markDirty(false);
+          drawGutter();
+          run();
+
+          var buttons = fileList.querySelectorAll('button');
+          for (var i = 0; i < buttons.length; i++) {
+            buttons[i].setAttribute(
+              'aria-current',
+              buttons[i].getAttribute('data-id') === ex.id ? 'true' : 'false'
+            );
+          }
+          if (!keepHash) history.replaceState(null, '', '#' + ex.id);
+        }
+
+        /** Shared links carry the code itself, so they survive an example being renamed. */
+        function encode(text) {
+          return btoa(unescape(encodeURIComponent(text)));
+        }
+        function decode(text) {
+          return decodeURIComponent(escape(atob(text)));
+        }
+
+        function openFromHash() {
+          var hash = location.hash.slice(1);
+          if (!hash) return false;
+          if (hash.indexOf('code=') === 0) {
+            try {
+              code.value = decode(hash.slice(5));
+              descEl.textContent = 'Shared code';
+              statusExample.textContent = 'shared';
+              markDirty(true);
+              drawGutter();
+              run();
+              return true;
+            } catch (err) {
+              /* fall through to the example list */
+            }
+          }
+          for (var i = 0; i < examples.length; i++) {
+            if (examples[i].id === hash) {
+              load(examples[i], true);
+              return true;
+            }
+          }
+          return false;
+        }
+
+        // ------------------------------------------------------------ wiring
+
+        fileList.addEventListener('click', function (event) {
+          var btn = event.target.closest('button[data-id]');
+          if (!btn) return;
+          for (var i = 0; i < examples.length; i++) {
+            if (examples[i].id === btn.getAttribute('data-id')) {
+              load(examples[i]);
+              document.body.classList.remove('show-files');
+              break;
+            }
+          }
+        });
+
+        code.addEventListener('input', function () {
+          markDirty(true);
+          drawGutter();
+          scheduleRun();
+        });
+
+        // Tab inserts two spaces instead of leaving the editor, which is the one
+        // keyboard behaviour people expect from a code box and never get.
+        code.addEventListener('keydown', function (event) {
+          if (event.key === 'Tab') {
+            event.preventDefault();
+            var start = code.selectionStart;
+            var end = code.selectionEnd;
+            code.value = code.value.slice(0, start) + '  ' + code.value.slice(end);
+            code.selectionStart = code.selectionEnd = start + 2;
+            drawGutter();
+            scheduleRun();
+            return;
+          }
+          if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            run();
+          }
+        });
+
+        // The gutter has to follow the textarea, or the numbers drift on scroll.
+        code.addEventListener('scroll', function () {
+          gutter.scrollTop = code.scrollTop;
+        });
+
+        document.getElementById('btn-run').addEventListener('click', run);
+
+        document.getElementById('btn-reset').addEventListener('click', function () {
+          if (current) load(current);
+        });
+
+        document.getElementById('btn-share').addEventListener('click', function (event) {
+          var url = location.origin + location.pathname + '#code=' + encode(code.value);
+          var btn = event.currentTarget;
+          navigator.clipboard.writeText(url).then(
+            function () {
+              btn.textContent = 'Copied';
+              setTimeout(function () {
+                btn.textContent = 'Share';
+              }, 1400);
+            },
+            function () {
+              btn.textContent = 'Press Ctrl+C';
+              setTimeout(function () {
+                btn.textContent = 'Share';
+              }, 1800);
+            }
+          );
+        });
+
+        document.querySelector('.widths').addEventListener('click', function (event) {
+          var btn = event.target.closest('button[data-w]');
+          if (!btn) return;
+          var all = this.querySelectorAll('button');
+          for (var i = 0; i < all.length; i++) all[i].setAttribute('aria-pressed', 'false');
+          btn.setAttribute('aria-pressed', 'true');
+          frame.style.maxWidth = btn.getAttribute('data-w');
+        });
+
+        document.getElementById('btn-files').addEventListener('click', function () {
+          document.body.classList.toggle('show-files');
+        });
+
+        document.getElementById('btn-view').addEventListener('click', function (event) {
+          document.body.classList.toggle('show-preview');
+          event.currentTarget.textContent = document.body.classList.contains('show-preview')
+            ? 'Code'
+            : 'Preview';
+        });
+
+        window.addEventListener('hashchange', openFromHash);
+
+        // ------------------------------------------------------------- start
+
+        buildList();
+        if (!openFromHash() && examples.length) load(examples[0]);
+      })();
+    </script>
+  </body>
+</html>
