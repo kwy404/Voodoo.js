@@ -1,17 +1,17 @@
 /**
- * Testes de `dom/style`.
+ * Tests for `dom/style`.
  *
- * O modulo guarda os ids ja injetados em um `Set` de escopo de modulo. Como o
- * vitest isola cada arquivo de teste, esse `Set` nasce vazio aqui e so e
- * afetado pelos testes deste arquivo. Ainda assim, cada caso usa um id proprio
- * para nao depender da ordem de execucao.
+ * The module keeps the ids it has already injected in a module scoped `Set`.
+ * Since vitest isolates each test file, that `Set` starts out empty here and is
+ * only affected by the tests in this file. Even so, each case uses an id of its
+ * own so as not to depend on the order of execution.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BASE_TOKENS, ensureTokens, injectStyle } from '../src/dom/style';
 import { config } from '../src/runtime/registry';
 
-/** Quantos blocos com aquele id existem no `head`. */
+/** How many blocks with that id exist in the `head`. */
 function blocos(id: string): number {
   return document.head.querySelectorAll(`style[data-voodoo="${id}"]`).length;
 }
@@ -26,61 +26,61 @@ describe('injectStyle', () => {
     vi.unstubAllGlobals();
   });
 
-  it('injeta o bloco uma vez e marca com data-voodoo', () => {
+  it('injects the block once and marks it with data-voodoo', () => {
     injectStyle('caso-basico', '.a{color:red}');
     expect(blocos('caso-basico')).toBe(1);
     const el = document.head.querySelector('style[data-voodoo="caso-basico"]') as HTMLStyleElement;
     expect(el.textContent).toBe('.a{color:red}');
   });
 
-  it('nao duplica na segunda chamada, mesmo com CSS diferente', () => {
+  it('does not duplicate on the second call, even with different CSS', () => {
     injectStyle('caso-duplo', '.a{color:red}');
     injectStyle('caso-duplo', '.a{color:blue}');
     injectStyle('caso-duplo', '.a{color:green}');
     expect(blocos('caso-duplo')).toBe(1);
     const el = document.head.querySelector('style[data-voodoo="caso-duplo"]') as HTMLStyleElement;
-    // O primeiro CSS vence: repetir a chamada e um no-op, nao uma atualizacao.
+    // The first CSS wins: repeating the call is a no-op, not an update.
     expect(el.textContent).toBe('.a{color:red}');
   });
 
-  it('ids diferentes geram blocos diferentes', () => {
+  it('different ids produce different blocks', () => {
     injectStyle('caso-a', '.a{}');
     injectStyle('caso-b', '.b{}');
     expect(blocos('caso-a')).toBe(1);
     expect(blocos('caso-b')).toBe(1);
   });
 
-  it('respeita config.injectStyles = false e nao marca o id como usado', () => {
+  it('respects config.injectStyles = false and does not mark the id as used', () => {
     config.injectStyles = false;
     injectStyle('caso-desligado', '.a{color:red}');
     expect(blocos('caso-desligado')).toBe(0);
 
-    // O id nao entrou no registro, entao religar a config volta a injetar.
+    // The id never entered the registry, so turning the config back on injects again.
     config.injectStyles = true;
     injectStyle('caso-desligado', '.a{color:red}');
     expect(blocos('caso-desligado')).toBe(1);
   });
 
-  it('nao lanca quando nao existe document', () => {
+  it('does not throw when there is no document', () => {
     vi.stubGlobal('document', undefined);
     expect(() => injectStyle('caso-sem-document', '.a{}')).not.toThrow();
     vi.unstubAllGlobals();
 
-    // Tambem nao marcou o id: com o document de volta, a injecao acontece.
+    // It did not mark the id either: with the document back, the injection happens.
     injectStyle('caso-sem-document', '.a{}');
     expect(blocos('caso-sem-document')).toBe(1);
   });
 
-  it('aceita CSS vazio sem quebrar', () => {
+  it('accepts empty CSS without breaking', () => {
     injectStyle('caso-vazio', '');
     expect(blocos('caso-vazio')).toBe(1);
   });
 });
 
 describe('ensureTokens', () => {
-  it('insere os tokens uma unica vez e com o conteudo de BASE_TOKENS', () => {
-    // Chamado varias vezes de proposito: cada componente de UI chama antes de
-    // desenhar, entao a idempotencia e o contrato principal desta funcao.
+  it('inserts the tokens exactly once and with the content of BASE_TOKENS', () => {
+    // Called several times on purpose: every UI component calls it before
+    // drawing, so idempotence is the main contract of this function.
     ensureTokens();
     ensureTokens();
     ensureTokens();
@@ -89,12 +89,12 @@ describe('ensureTokens', () => {
     expect(el.textContent).toBe(BASE_TOKENS);
   });
 
-  it('BASE_TOKENS traz as variaveis do design system e a regra de v-cloak', () => {
+  it('BASE_TOKENS carries the design system variables and the v-cloak rule', () => {
     expect(BASE_TOKENS).toContain('--v-primary:');
     expect(BASE_TOKENS).toContain('--v-surface:');
     expect(BASE_TOKENS).toContain('--v-z-modal:');
     expect(BASE_TOKENS).toContain('[v-cloak]{display:none !important}');
-    // Tema escuro por preferencia do sistema e por atributo explicito.
+    // Dark theme by system preference and by explicit attribute.
     expect(BASE_TOKENS).toContain('prefers-color-scheme: dark');
     expect(BASE_TOKENS).toContain('[data-theme="dark"]');
   });

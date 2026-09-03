@@ -1,10 +1,10 @@
 /**
- * Contrato de escape e injecao.
+ * The escaping and injection contract.
  *
- * A regra da biblioteca e simples: tudo que escreve texto escapa, e o unico
- * caminho que interpreta HTML e `v-html`, escolhido de proposito por quem
- * escreve o template. Estes testes fixam esse contrato nos dois sentidos, e
- * documentam o que acontece com atributos de URL e de evento.
+ * The library's rule is simple: everything that writes text escapes it, and the
+ * only path that interprets HTML is `v-html`, chosen on purpose by whoever
+ * writes the template. These tests pin that contract down in both directions,
+ * and document what happens with URL attributes and event attributes.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -36,8 +36,8 @@ beforeEach(() => {
   clearWarnings();
 });
 
-describe('v-text escapa sempre', () => {
-  it('nao interpreta HTML vindo do estado', () => {
+describe('v-text always escapes', () => {
+  it('does not interpret HTML coming from the state', () => {
     const { root } = montar('<p v-text="conteudo"></p>', { conteudo: PAYLOAD });
     const p = root.querySelector('p')!;
     expect(p.textContent).toBe(PAYLOAD);
@@ -45,7 +45,7 @@ describe('v-text escapa sempre', () => {
     expect(p.children.length).toBe(0);
   });
 
-  it('continua escapando quando o valor muda depois', async () => {
+  it('keeps escaping when the value changes later', async () => {
     const { root, estado } = montar('<p v-text="c"></p>', { c: 'ola' });
     (estado as Record<string, unknown>).c = '<script>alert(1)</script>';
     await settle();
@@ -54,26 +54,26 @@ describe('v-text escapa sempre', () => {
     expect(p.textContent).toContain('<script>');
   });
 
-  it('escapa tambem quando o valor e um objeto serializado', () => {
+  it('escapes as well when the value is a serialized object', () => {
     const { root } = montar('<p v-text="o"></p>', { o: { html: PAYLOAD } });
     expect(root.querySelector('p')!.children.length).toBe(0);
   });
 });
 
-describe('interpolacao escapa sempre', () => {
-  it('{ x } escreve texto, nunca HTML', () => {
+describe('interpolation always escapes', () => {
+  it('{ x } writes text, never HTML', () => {
     const { root } = montar('<p>{ conteudo }</p>', { conteudo: PAYLOAD });
     const p = root.querySelector('p')!;
     expect(p.textContent).toBe(PAYLOAD);
     expect(p.querySelector('img')).toBeNull();
   });
 
-  it('{{ x }} escreve texto, nunca HTML', () => {
+  it('{{ x }} writes text, never HTML', () => {
     const { root } = montar('<p>{{ conteudo }}</p>', { conteudo: PAYLOAD });
     expect(root.querySelector('p')!.querySelector('img')).toBeNull();
   });
 
-  it('atualizacao reativa continua escapando', async () => {
+  it('a reactive update keeps escaping', async () => {
     const { root, estado } = montar('<p>{ c }</p>', { c: 'ok' });
     (estado as Record<string, unknown>).c = '<b>negrito</b>';
     await settle();
@@ -83,19 +83,19 @@ describe('interpolacao escapa sempre', () => {
   });
 });
 
-describe('v-html injeta HTML de proposito', () => {
-  // Contrato documentado: `v-html` existe justamente para inserir markup. Quem
-  // usa assume a responsabilidade pelo conteudo, do mesmo jeito que em qualquer
-  // outro framework. O teste confirma o contrato para que ele nao mude sem
-  // querer, nao para recomendar o uso com dado de terceiro.
-  it('insere elementos de verdade', () => {
+describe('v-html injects HTML on purpose', () => {
+  // Documented contract: `v-html` exists precisely to insert markup. Whoever
+  // uses it takes responsibility for the content, the same way as in any other
+  // framework. The test confirms the contract so that it does not change by
+  // accident, not to recommend using it with third-party data.
+  it('inserts real elements', () => {
     const { root } = montar('<div v-html="c"></div>', { c: '<b class="x">oi</b>' });
     const div = root.querySelector('div')!;
     expect(div.querySelector('b.x')).not.toBeNull();
     expect(div.querySelector('b')!.textContent).toBe('oi');
   });
 
-  it('troca o conteudo quando o estado muda', async () => {
+  it('swaps the content when the state changes', async () => {
     const { root, estado } = montar('<div v-html="c"></div>', { c: '<i>um</i>' });
     (estado as Record<string, unknown>).c = '<u>dois</u>';
     await settle();
@@ -104,14 +104,14 @@ describe('v-html injeta HTML de proposito', () => {
     expect(div.querySelector('u')!.textContent).toBe('dois');
   });
 
-  it('o HTML inserido tambem ganha directives', async () => {
+  it('the inserted HTML gets directives too', async () => {
     const { root } = montar('<div v-html="c"></div>', { c: '<span v-text="nome"></span>', nome: 'Ana' });
     await settle();
     expect(root.querySelector('span')!.textContent).toBe('Ana');
   });
 });
 
-describe('atributos de URL recusam esquemas que executam codigo', () => {
+describe('URL attributes refuse schemes that run code', () => {
   const perigosos = [
     'javascript:alert(1)',
     'JavaScript:alert(1)',
@@ -124,13 +124,13 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
   ];
 
   for (const valor of perigosos) {
-    it(`:href recusa ${JSON.stringify(valor.slice(0, 24))}`, () => {
+    it(`:href refuses ${JSON.stringify(valor.slice(0, 24))}`, () => {
       const { root } = montar('<a :href="u">link</a>', { u: valor });
       expect(root.querySelector('a')!.hasAttribute('href')).toBe(false);
     });
   }
 
-  it('recusa em :src, :action e :formaction tambem', () => {
+  it('refuses on :src, :action and :formaction as well', () => {
     const { root } = montar(
       '<img :src="u"><form :action="u"></form><button :formaction="u"></button>',
       { u: 'javascript:alert(1)' }
@@ -140,12 +140,12 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
     expect(root.querySelector('button')!.hasAttribute('formaction')).toBe(false);
   });
 
-  it('recusa em :xlink:href, usado dentro de SVG', () => {
+  it('refuses on :xlink:href, used inside SVG', () => {
     const { root } = montar('<a :xlink:href="u">x</a>', { u: 'javascript:alert(1)' });
     expect(root.querySelector('a')!.hasAttribute('xlink:href')).toBe(false);
   });
 
-  it('a protecao tambem vale para o v-bind sem argumento', () => {
+  it('the protection also holds for v-bind with no argument', () => {
     const { root } = montar('<a v-bind="attrs">x</a>', {
       attrs: { href: 'javascript:alert(1)', title: 'ok' },
     });
@@ -154,7 +154,7 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
     expect(a.getAttribute('title')).toBe('ok');
   });
 
-  it('remove o atributo quando um valor bom vira um valor perigoso', async () => {
+  it('removes the attribute when a good value turns into a dangerous one', async () => {
     const { root, estado } = montar('<a :href="u">x</a>', { u: '/inicio' });
     expect(root.querySelector('a')!.getAttribute('href')).toBe('/inicio');
     (estado as Record<string, unknown>).u = 'javascript:alert(1)';
@@ -162,7 +162,7 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
     expect(root.querySelector('a')!.hasAttribute('href')).toBe(false);
   });
 
-  it('enderecos normais passam sem alteracao', () => {
+  it('ordinary addresses pass through unchanged', () => {
     const bons = [
       '/pagina',
       './rel',
@@ -180,7 +180,7 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
     }
   });
 
-  it('V.config.sanitizeUrls = false devolve o comportamento antigo', () => {
+  it('V.config.sanitizeUrls = false brings back the old behaviour', () => {
     config.sanitizeUrls = false;
     try {
       const { root } = montar('<a :href="u">x</a>', { u: 'javascript:alert(1)' });
@@ -191,21 +191,22 @@ describe('atributos de URL recusam esquemas que executam codigo', () => {
   });
 });
 
-describe('atributos de evento nao podem ser ligados por :atributo', () => {
-  // `:onerror="..."` viraria um manipulador embutido, que o navegador executa
-  // como script. Eventos se declaram com `@evento`, que nunca cria atributo.
-  it('recusa :onerror', () => {
+describe('event attributes cannot be bound through :attribute', () => {
+  // `:onerror="..."` would become an inline handler, which the browser runs as
+  // a script. Events are declared with `@event`, which never creates an
+  // attribute.
+  it('refuses :onerror', () => {
     const { root } = montar('<img :onerror="c">', { c: 'window.__invadido = true' });
     expect(root.querySelector('img')!.hasAttribute('onerror')).toBe(false);
   });
 
-  it('recusa :onclick e :onload', () => {
+  it('refuses :onclick and :onload', () => {
     const { root } = montar('<div :onclick="c"></div><img :onload="c">', { c: 'alert(1)' });
     expect(root.querySelector('div')!.hasAttribute('onclick')).toBe(false);
     expect(root.querySelector('img')!.hasAttribute('onload')).toBe(false);
   });
 
-  it('@evento continua funcionando normalmente', () => {
+  it('@event keeps working normally', () => {
     let cliques = 0;
     const { root } = montar('<button @click="contar()">x</button>', {
       contar: () => {
@@ -216,39 +217,39 @@ describe('atributos de evento nao podem ser ligados por :atributo', () => {
     expect(cliques).toBe(1);
   });
 
-  it('atributos que apenas comecam com "on" no meio do nome passam', () => {
+  it('attributes that merely contain "on" in the middle of the name pass', () => {
     const { root } = montar('<div :data-online="v"></div>', { v: 'sim' });
     expect(root.querySelector('div')!.getAttribute('data-online')).toBe('sim');
   });
 });
 
-describe(':srcdoc exige forma explicita', () => {
-  // `srcdoc` escreve um documento inteiro com script ativo, do mesmo jeito que
-  // `v-html` escreve markup. A diferenca e que ele parecia um bind comum, sem
-  // nada no template denunciando o perigo. Agora o perigo tem nome.
-  it('recusa o bind comum', () => {
+describe(':srcdoc demands an explicit form', () => {
+  // `srcdoc` writes a whole document with live script, the same way `v-html`
+  // writes markup. The difference is that it looked like an ordinary bind, with
+  // nothing in the template announcing the danger. Now the danger has a name.
+  it('refuses the ordinary bind', () => {
     const { root } = montar('<iframe :srcdoc="c"></iframe>', { c: '<p>ola</p>' });
     expect(root.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(false);
   });
 
-  it('recusa tambem pelo caminho de propriedade', () => {
+  it('refuses through the property path as well', () => {
     const { root } = montar('<iframe :srcdoc.prop="c"></iframe>', { c: '<p>ola</p>' });
     expect((root.querySelector('iframe') as HTMLIFrameElement).srcdoc || '').toBe('');
   });
 
-  it('recusa dentro do v-bind com objeto', () => {
+  it('refuses inside v-bind with an object', () => {
     const { root } = montar('<iframe v-bind="attrs"></iframe>', {
       attrs: { srcdoc: '<p>ola</p>' },
     });
     expect(root.querySelector('iframe')!.hasAttribute('srcdoc')).toBe(false);
   });
 
-  it('aceita com o modificador .dangerous', () => {
+  it('accepts it with the .dangerous modifier', () => {
     const { root } = montar('<iframe :srcdoc.dangerous="c"></iframe>', { c: '<p>ola</p>' });
     expect(root.querySelector('iframe')!.getAttribute('srcdoc')).toBe('<p>ola</p>');
   });
 
-  it('aceita quando sanitizeUrls esta desligado', () => {
+  it('accepts it when sanitizeUrls is switched off', () => {
     config.sanitizeUrls = false;
     try {
       const { root } = montar('<iframe :srcdoc="c"></iframe>', { c: '<p>ola</p>' });
@@ -258,7 +259,7 @@ describe(':srcdoc exige forma explicita', () => {
     }
   });
 
-  it('explica no console por que recusou', () => {
+  it('explains in the console why it refused', () => {
     config.devtools = true;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
@@ -273,7 +274,7 @@ describe(':srcdoc exige forma explicita', () => {
   });
 });
 
-describe('avisos de recusa', () => {
+describe('refusal warnings', () => {
   let aviso: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -287,7 +288,7 @@ describe('avisos de recusa', () => {
     aviso.mockRestore();
   });
 
-  it('explica no console por que a URL foi recusada', () => {
+  it('explains in the console why the URL was refused', () => {
     montar('<a :href="u">x</a>', { u: 'javascript:alert(1)' });
     const texto = aviso.mock.calls.map((c) => String(c[0])).join('\n');
     expect(texto).toContain('href');

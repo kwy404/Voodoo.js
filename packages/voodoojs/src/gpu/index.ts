@@ -642,7 +642,7 @@ interface Bound {
   group: GPUBindGroup | null;
   uniforms: GpuUniforms;
   sampler: GPUSampler | null;
-  /** `true` quando o layout veio da reflexao, `false` quando caiu no `auto`. */
+  /** `true` when the layout came from reflection, `false` when it fell back to `auto`. */
   fromReflection: boolean;
 }
 

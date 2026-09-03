@@ -1,9 +1,10 @@
 /**
- * Expressoes quebradas nao podem derrubar a pagina.
+ * A broken expression cannot bring the page down.
  *
- * Uma virgula esquecida em um atributo e um erro de quem escreveu o HTML, nao
- * um motivo para o resto da aplicacao parar de funcionar. O contrato e: o erro
- * e reportado, aquele atributo fica sem efeito, e tudo em volta continua vivo.
+ * A comma forgotten in an attribute is a mistake by whoever wrote the HTML, not
+ * a reason for the rest of the application to stop working. The contract is:
+ * the error is reported, that one attribute has no effect, and everything
+ * around it stays alive.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -28,7 +29,7 @@ async function settle(n = 3): Promise<void> {
   for (let i = 0; i < n; i++) await nextTick();
 }
 
-/** Coleta os erros reportados durante o bloco, sem sujar o console. */
+/** Collects the errors reported during the block, without dirtying the console. */
 function comColetaDeErros<T>(fn: (erros: unknown[]) => T): T {
   const erros: unknown[] = [];
   setErrorHandler((err) => erros.push(err));
@@ -50,7 +51,7 @@ afterEach(() => {
   config.devtools = false;
 });
 
-describe('o parser reclama em vez de travar', () => {
+describe('the parser complains instead of hanging', () => {
   const invalidas = [
     '{{',
     'a +',
@@ -74,20 +75,20 @@ describe('o parser reclama em vez de travar', () => {
   ];
 
   for (const fonte of invalidas) {
-    it(`recusa ${JSON.stringify(fonte)} sem travar`, () => {
+    it(`refuses ${JSON.stringify(fonte)} without hanging`, () => {
       let erro: unknown;
       try {
         parse(fonte);
       } catch (err) {
         erro = err;
       }
-      // Ou o parser recusa, ou entende algo inofensivo. O que nao pode e
-      // entrar em laco ou lancar algo que nao seja um erro de verdade.
+      // Either the parser refuses, or it reads something harmless. What it
+      // cannot do is loop forever or throw something that is not a real error.
       if (erro !== undefined) expect(erro).toBeInstanceOf(Error);
     });
   }
 
-  it('o erro de sintaxe traz a posicao e o texto original', () => {
+  it('the syntax error carries the position and the original text', () => {
     let erro: VoodooSyntaxError | undefined;
     try {
       parse('a + + *');
@@ -99,8 +100,8 @@ describe('o parser reclama em vez de travar', () => {
   });
 });
 
-describe('a pagina continua funcionando ao redor do erro', () => {
-  it('um v-text quebrado nao impede o v-text vizinho', () => {
+describe('the page keeps working around the error', () => {
+  it('a broken v-text does not stop the neighbouring v-text', () => {
     comColetaDeErros((erros) => {
       const { root } = montar('<p v-text="a +"></p><p v-text="nome"></p>', { nome: 'Ana' });
       expect(erros.length).toBeGreaterThan(0);
@@ -108,7 +109,7 @@ describe('a pagina continua funcionando ao redor do erro', () => {
     });
   });
 
-  it('uma interpolacao quebrada nao impede a interpolacao seguinte', async () => {
+  it('a broken interpolation does not stop the next interpolation', async () => {
     await comColetaDeErros(async () => {
       const { root, estado } = montar('<p>{ nome }</p>', { nome: 'Ana' });
       expect(root.textContent).toBe('Ana');
@@ -118,7 +119,7 @@ describe('a pagina continua funcionando ao redor do erro', () => {
     });
   });
 
-  it('um @click quebrado nao derruba o clique do vizinho', () => {
+  it('a broken @click does not bring down the neighbour\'s click', () => {
     comColetaDeErros(() => {
       let cliques = 0;
       const { root } = montar('<button @click="a +"></button><button @click="ok()"></button>', {
@@ -133,14 +134,14 @@ describe('a pagina continua funcionando ao redor do erro', () => {
     });
   });
 
-  it('um v-if quebrado deixa o resto da arvore montada', () => {
+  it('a broken v-if leaves the rest of the tree mounted', () => {
     comColetaDeErros(() => {
       const { root } = montar('<div v-if="a +">x</div><p v-text="nome"></p>', { nome: 'Ana' });
       expect(root.querySelector('p')!.textContent).toBe('Ana');
     });
   });
 
-  it('um v-for com sintaxe errada nao quebra a pagina', () => {
+  it('a v-for with wrong syntax does not break the page', () => {
     comColetaDeErros(() => {
       const { root } = montar('<ul><li v-for="isto nao e um for">x</li></ul><p v-text="n"></p>', {
         n: 7,
@@ -150,8 +151,8 @@ describe('a pagina continua funcionando ao redor do erro', () => {
   });
 });
 
-describe('acessos em cadeia com valores nulos no meio', () => {
-  it('a.b.c com b indefinido reporta o erro e devolve undefined', () => {
+describe('chained access with null values in the middle', () => {
+  it('a.b.c with b undefined reports the error and returns undefined', () => {
     comColetaDeErros((erros) => {
       const scope = new Scope(reactive({ a: {} }));
       expect(evaluateIn('a.b.c', scope)).toBeUndefined();
@@ -159,14 +160,14 @@ describe('acessos em cadeia com valores nulos no meio', () => {
     });
   });
 
-  it('cadeia longa com null no meio nao lanca para fora', () => {
+  it('a long chain with null in the middle does not throw outward', () => {
     comColetaDeErros(() => {
       const scope = new Scope(reactive({ a: { b: null } }));
       expect(evaluateIn('a.b.c.d.e', scope)).toBeUndefined();
     });
   });
 
-  it('encadeamento opcional atravessa nulos sem erro nenhum', () => {
+  it('optional chaining crosses nulls with no error at all', () => {
     comColetaDeErros((erros) => {
       const scope = new Scope(reactive({ a: { b: null } }));
       expect(evaluateIn('a?.b?.c?.d', scope)).toBeUndefined();
@@ -174,7 +175,7 @@ describe('acessos em cadeia com valores nulos no meio', () => {
     });
   });
 
-  it('renderiza o resto do texto mesmo com a cadeia quebrada', () => {
+  it('renders the rest of the text even with the chain broken', () => {
     comColetaDeErros(() => {
       const { root } = montar('<p>antes { a.b.c.d } depois</p>', { a: {} });
       expect(root.textContent).toContain('antes');
@@ -183,21 +184,21 @@ describe('acessos em cadeia com valores nulos no meio', () => {
   });
 });
 
-describe('entradas patologicas', () => {
-  it('expressao de 100 mil caracteres nao trava o parser', () => {
+describe('pathological inputs', () => {
+  it('an expression of 100 thousand characters does not hang the parser', () => {
     const gigante = `"${'x'.repeat(100_000)}"`;
     const inicio = Date.now();
     expect(parse(gigante)).toMatchObject({ t: 'lit' });
     expect(Date.now() - inicio).toBeLessThan(3000);
   });
 
-  it('soma com mil termos e avaliada corretamente', () => {
+  it('a sum with a thousand terms is evaluated correctly', () => {
     const soma = Array.from({ length: 1000 }, () => '1').join(' + ');
     const scope = new Scope(reactive({}));
     expect(evaluateIn(soma, scope)).toBe(1000);
   });
 
-  it('aninhamento profundo de parenteses termina', () => {
+  it('deeply nested parentheses terminate', () => {
     const profundo = `${'('.repeat(300)}1${')'.repeat(300)}`;
     let resultado: unknown;
     let erro: unknown;
@@ -206,29 +207,29 @@ describe('entradas patologicas', () => {
     } catch (err) {
       erro = err;
     }
-    // Aceitamos os dois desfechos: avaliar como 1, ou recusar com um erro de
-    // verdade. O que nao pode e o processo ficar preso.
+    // We accept both outcomes: evaluating to 1, or refusing with a real error.
+    // What cannot happen is the process getting stuck.
     expect(erro === undefined ? resultado : erro).toBeDefined();
   });
 
-  it('texto gigante no no de texto nao vira interpolacao por engano', () => {
+  it('huge text in a text node does not become an interpolation by mistake', () => {
     const bruto = `{ ${'palavra '.repeat(2000)}}`;
     const { root } = montar(`<p>${bruto}</p>`, {});
     expect(root.textContent).toContain('palavra');
   });
 
-  it('unicode e acentos funcionam em identificadores e strings', () => {
+  it('unicode and accents work in identifiers and strings', () => {
     const scope = new Scope(reactive({ usuário: { nomé: 'Ana' } }));
     expect(evaluateIn('usuário.nomé', scope)).toBe('Ana');
     expect(evaluateIn('"emoji: 🎩✨"', scope)).toBe('emoji: 🎩✨');
   });
 
-  it('template literal aninhado e avaliado', () => {
+  it('a nested template literal is evaluated', () => {
     const scope = new Scope(reactive({ a: 'A', b: 'B' }));
     expect(evaluateIn('`${a}-${`[${b}]`}`', scope)).toBe('A-[B]');
   });
 
-  it('template literal aberto nao trava', () => {
+  it('an unclosed template literal does not hang', () => {
     let erro: unknown;
     try {
       parse('`${a');
@@ -238,7 +239,7 @@ describe('entradas patologicas', () => {
     expect(erro).toBeInstanceOf(Error);
   });
 
-  it('objeto com muitas chaves e avaliado', () => {
+  it('an object with many keys is evaluated', () => {
     const fonte = `{ ${Array.from({ length: 500 }, (_, i) => `k${i}: ${i}`).join(', ')} }`;
     const valor = evaluateIn<Record<string, number>>(fonte, new Scope(reactive({})));
     expect(Object.keys(valor).length).toBe(500);
@@ -246,8 +247,8 @@ describe('entradas patologicas', () => {
   });
 });
 
-describe('aviso detalhado em modo desenvolvimento', () => {
-  it('diz o atributo, o elemento, a expressao e uma sugestao', () => {
+describe('detailed warning in development mode', () => {
+  it('names the attribute, the element, the expression and a suggestion', () => {
     config.devtools = true;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     comColetaDeErros(() => {
@@ -261,7 +262,7 @@ describe('aviso detalhado em modo desenvolvimento', () => {
     expect(texto).toContain('Suggestion');
   });
 
-  it('em producao nao escreve nada no console', () => {
+  it('in production it writes nothing to the console', () => {
     config.devtools = false;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     comColetaDeErros(() => {

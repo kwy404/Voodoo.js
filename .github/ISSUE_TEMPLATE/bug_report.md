@@ -1,26 +1,26 @@
 ---
-name: Relatar um bug
-about: Alguma coisa não funciona como deveria
+name: Report a bug
+about: Something does not work the way it should
 title: ''
 labels: bug
 assignees: ''
 ---
 
-## O que acontece
+## What happens
 
-Descreva o problema em uma ou duas frases.
+Describe the problem in a sentence or two.
 
-## O que você esperava
+## What you expected
 
-Descreva o comportamento correto.
+Describe the correct behaviour.
 
-## Como reproduzir
+## How to reproduce
 
-Cole um HTML de uma página só que reproduza o problema. Quanto menor, melhor.
+Paste a single-page HTML file that reproduces it. The smaller the better.
 
 ```html
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
@@ -33,59 +33,66 @@ Cole um HTML de uma página só que reproduza o problema. Quanto menor, melhor.
 </html>
 ```
 
-Se preferir, deixe o link de um exemplo online.
+A link to a live example works too. The
+[playground](https://kwy404.github.io/Voodoo.js/playground.html) runs in the
+browser with no account and no setup.
 
-Passos, quando não for óbvio pelo código:
+Steps, when the code alone does not make them obvious:
 
-1. Abra a página
-2. Clique em ...
-3. Veja que ...
+1. Open the page
+2. Click on ...
+3. Notice that ...
 
-## Ambiente
+## Environment
 
-- **Versão da Voodoo.js:** (o valor de `V.version` no console)
-- **Bundle:** mínimo (`voodoo.core.min.js`), essencial (`voodoo.min.js`) ou completo (`voodoo.full.min.js`)
-- **Forma de instalação:** CDN, npm ou download
-- **Se veio por npm:** qual bundler e qual versão
-- **Navegador e versão:** (ex.: Chrome 131, Safari 17.4, Firefox 133)
-- **Sistema operacional:**
-- **Dispositivo:** desktop ou celular
+- **Voodoo.js version:** (the value of `V.version` in the console)
+- **Bundle:** core (`voodoo.core.min.js`), essential (`voodoo.min.js`) or full (`voodoo.full.min.js`)
+- **Installed via:** CDN, npm or download
+- **If npm:** which bundler, and which version
+- **Browser and version:** (e.g. Chrome 131, Safari 17.4, Firefox 133)
+- **Operating system:**
+- **Device:** desktop or mobile
 
-Se o seu navegador for anterior ao mínimo em
+If your browser is older than the minimum in
 [BROWSER_SUPPORT.md](https://github.com/kwy404/Voodoo.js/blob/main/BROWSER_SUPPORT.md),
-diga isso aqui.
+say so here.
 
-## Configuração
+## Configuration
 
-Cole qualquer coisa que você tenha mudado em `V.config`, ou os atributos da tag `<script>`:
+Paste anything you changed in `V.config`, or the attributes on the `<script>` tag:
 
 ```js
 ```
 
-## Mensagens no console
+## Console output
 
-Ligue os avisos detalhados antes de reproduzir:
+Turn on the detailed warnings before reproducing:
 
 ```js
 V.config.devtools = true;
 ```
 
-ou
+or
 
 ```html
 <script src="voodoo.min.js" data-devtools defer></script>
 ```
 
-Cole aqui qualquer erro ou aviso que apareça no console do navegador, incluindo os que
-começam com `[Voodoo]`.
+Paste any error or warning the browser console shows, including the ones that
+start with `[Voodoo]`.
 
 ```
 ```
 
-## Verificações
+## Checks
 
-- [ ] Testei com a versão mais recente
-- [ ] Procurei uma issue parecida antes de abrir esta
-- [ ] O exemplo acima reproduz o problema em uma página limpa, sem outros scripts
-- [ ] Liguei `V.config.devtools = true` e colei os avisos que apareceram
-- [ ] O problema também acontece em uma janela anônima, sem extensões
+- [ ] I tested against the latest version
+- [ ] I searched for a similar issue before opening this one
+- [ ] The example above reproduces it on a clean page, with no other scripts
+- [ ] I turned on `V.config.devtools = true` and pasted the warnings it produced
+- [ ] It also happens in a private window, with no extensions
+
+---
+
+Issues in Portuguese are welcome. English simply reaches more people who can
+help.

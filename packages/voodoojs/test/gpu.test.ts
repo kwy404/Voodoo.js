@@ -1,13 +1,13 @@
 /**
- * Camada GPU.
+ * GPU layer.
  *
- * O ambiente de teste e jsdom, que nao tem WebGPU nenhum. Isso nao e um
- * problema: as duas partes que mais quebram na pratica sao a reflexao de WGSL,
- * que e texto puro, e o caminho de fallback, que so acontece justamente quando
- * nao ha GPU. As duas rodam aqui de verdade.
+ * The test environment is jsdom, which has no WebGPU at all. That is not a
+ * problem: the two parts that break most in practice are WGSL reflection,
+ * which is pure text, and the fallback path, which happens precisely when
+ * there is no GPU. Both of them really run here.
  *
- * O caminho com GPU real fica declarado e e pulado com motivo quando o ambiente
- * nao tem adaptador. Nunca fingido.
+ * The path with a real GPU is declared and is skipped with a reason when the
+ * environment has no adapter. Never faked.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -62,21 +62,21 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Ausencia de WebGPU
+// Absence of WebGPU
 // ---------------------------------------------------------------------------
 
-describe('ambiente sem WebGPU', () => {
-  it('supported() devolve false sem lancar', () => {
+describe('environment without WebGPU', () => {
+  it('supported() returns false without throwing', () => {
     expect(() => supported()).not.toThrow();
     expect(supported()).toBe(false);
   });
 
-  it('init() devolve null sem lancar', async () => {
+  it('init() returns null without throwing', async () => {
     await expect(init()).resolves.toBeNull();
     await expect(init({ powerPreference: 'low-power' })).resolves.toBeNull();
   });
 
-  it('toda a API aceita null e vira operacao vazia', () => {
+  it('the whole API accepts null and turns into a no-op', () => {
     const canvas = document.createElement('canvas');
 
     const tela = surface(null, canvas);
@@ -109,7 +109,7 @@ describe('ambiente sem WebGPU', () => {
     }).not.toThrow();
   });
 
-  it('frame ainda chama o callback, com um quadro que nao faz nada', () => {
+  it('frame still calls the callback, with a frame that does nothing', () => {
     let chamou = false;
     gpuFrame(null, (quadro) => {
       chamou = true;
@@ -120,14 +120,14 @@ describe('ambiente sem WebGPU', () => {
     expect(chamou).toBe(true);
   });
 
-  it('frameLoop nao agenda rAF nenhum e devolve um stop seguro', () => {
+  it('frameLoop schedules no rAF at all and returns a safe stop', () => {
     const espiao = vi.spyOn(globalThis, 'requestAnimationFrame');
     const parar = frameLoop(null, () => undefined);
     expect(espiao).not.toHaveBeenCalled();
     expect(() => parar()).not.toThrow();
   });
 
-  it('o relogio funciona sem GPU', () => {
+  it('the clock works without a GPU', () => {
     const relogio = clock();
     expect(relogio.frame).toBe(0);
     relogio.tick(1000);
@@ -139,14 +139,14 @@ describe('ambiente sem WebGPU', () => {
     expect(relogio.frame).toBe(0);
   });
 
-  it('o relogio limita saltos grandes de delta', () => {
+  it('the clock caps large delta jumps', () => {
     const relogio = clock();
     relogio.tick(0);
     relogio.tick(60_000);
     expect(relogio.delta).toBeLessThanOrEqual(0.25);
   });
 
-  it('o namespace V.gpu expoe a API combinada', () => {
+  it('the V.gpu namespace exposes the combined API', () => {
     for (const nome of [
       'supported',
       'init',
@@ -167,11 +167,11 @@ describe('ambiente sem WebGPU', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Reflexao de WGSL
+// WGSL reflection
 // ---------------------------------------------------------------------------
 
-describe('reflexao de WGSL: limpeza da fonte', () => {
-  it('remove comentarios de linha e de bloco sem mexer na contagem de linhas', () => {
+describe('WGSL reflection: cleaning up the source', () => {
+  it('removes line and block comments without touching the line count', () => {
     const fonte = ['// primeiro', 'let a = 1; // fim', '/* bloco', '   ainda */', 'let b = 2;'].join(
       '\n'
     );
@@ -183,14 +183,14 @@ describe('reflexao de WGSL: limpeza da fonte', () => {
     expect(limpo.split('\n')).toHaveLength(fonte.split('\n').length);
   });
 
-  it('entende comentario de bloco aninhado, que o WGSL permite', () => {
+  it('understands a nested block comment, which WGSL allows', () => {
     const limpo = stripWgslComments('a /* um /* dois */ ainda */ b');
     expect(limpo).toContain('a');
     expect(limpo).toContain('b');
     expect(limpo).not.toContain('dois');
   });
 
-  it('nao confunde binding escrito dentro de comentario', () => {
+  it('is not fooled by a binding written inside a comment', () => {
     const info = reflectWgsl(`
       // @group(0) @binding(9) var<uniform> falso: Uniforms;
       struct Uniforms { time: f32 };
@@ -201,48 +201,48 @@ describe('reflexao de WGSL: limpeza da fonte', () => {
   });
 });
 
-describe('reflexao de WGSL: tipos e layout', () => {
-  it('separa genericos aninhados sem cortar no meio', () => {
+describe('WGSL reflection: types and layout', () => {
+  it('splits nested generics without cutting through the middle', () => {
     expect(splitTopLevel('vec4<f32>, 8')).toEqual(['vec4<f32>', '8']);
     expect(splitTopLevel('storage, read_write')).toEqual(['storage', 'read_write']);
   });
 
-  it('escalares tem tamanho e alinhamento de 4 bytes', () => {
+  it('scalars have a size and an alignment of 4 bytes', () => {
     expect(describeWgslType('f32')).toMatchObject({ size: 4, align: 4, components: 1 });
     expect(describeWgslType('u32')).toMatchObject({ size: 4, align: 4, scalar: 'u32' });
   });
 
-  it('vec3 ocupa 12 bytes mas alinha em 16, que e a pegadinha classica', () => {
+  it('vec3 takes 12 bytes but aligns to 16, which is the classic trap', () => {
     expect(describeWgslType('vec2<f32>')).toMatchObject({ size: 8, align: 8 });
     expect(describeWgslType('vec3<f32>')).toMatchObject({ size: 12, align: 16, components: 3 });
     expect(describeWgslType('vec4<f32>')).toMatchObject({ size: 16, align: 16 });
   });
 
-  it('aceita os apelidos curtos vec3f e mat4x4f', () => {
+  it('accepts the short aliases vec3f and mat4x4f', () => {
     expect(describeWgslType('vec3f')).toMatchObject({ size: 12, align: 16 });
     expect(describeWgslType('vec2u')).toMatchObject({ size: 8, align: 8, scalar: 'u32' });
     expect(describeWgslType('mat4x4f')).toMatchObject({ size: 64, align: 16 });
   });
 
-  it('matrizes tem passo por coluna', () => {
+  it('matrices have a per-column stride', () => {
     expect(describeWgslType('mat4x4<f32>')).toMatchObject({ size: 64, align: 16, stride: 16 });
-    // mat3x3 tem colunas de vec3, que ocupam 16 bytes cada por causa do alinhamento.
+    // mat3x3 has vec3 columns, and each of those takes 16 bytes because of the alignment.
     expect(describeWgslType('mat3x3<f32>')).toMatchObject({ size: 48, align: 16, stride: 16 });
     expect(describeWgslType('mat2x2<f32>')).toMatchObject({ size: 16, align: 8, stride: 8 });
   });
 
-  it('arrays em uniform tem passo multiplo de 16', () => {
+  it('arrays in uniform have a stride that is a multiple of 16', () => {
     expect(describeWgslType('array<f32, 4>')).toMatchObject({ stride: 16, size: 64, count: 4 });
     expect(describeWgslType('array<vec4<f32>, 3>')).toMatchObject({ stride: 16, size: 48 });
   });
 
-  it('tipo desconhecido nao lanca, so devolve kind unknown', () => {
+  it('an unknown type does not throw, it just returns kind unknown', () => {
     expect(describeWgslType('BichoEstranho')).toMatchObject({ kind: 'unknown' });
     expect(describeWgslType('')).toMatchObject({ kind: 'unknown' });
   });
 });
 
-describe('reflexao de WGSL: structs', () => {
+describe('WGSL reflection: structs', () => {
   const fonte = `
     struct Uniforms {
       time: f32,
@@ -253,7 +253,7 @@ describe('reflexao de WGSL: structs', () => {
     };
   `;
 
-  it('calcula o deslocamento de cada campo com o preenchimento certo', () => {
+  it('computes the offset of each field with the right padding', () => {
     const struct = reflectWgsl(fonte).structs.Uniforms;
     expect(struct.fields.map((f) => [f.name, f.offset])).toEqual([
       ['time', 0],
@@ -266,20 +266,20 @@ describe('reflexao de WGSL: structs', () => {
     expect(struct.align).toBe(16);
   });
 
-  it('aceita ponto e virgula como separador de membro', () => {
+  it('accepts a semicolon as a member separator', () => {
     const struct = reflectWgsl('struct U { a: f32; b: vec2<f32>; }').structs.U;
     expect(struct.fields.map((f) => f.name)).toEqual(['a', 'b']);
     expect(struct.fields[1].offset).toBe(8);
   });
 
-  it('ignora atributos antes do nome do membro', () => {
+  it('ignores attributes before the member name', () => {
     const struct = reflectWgsl(
       'struct Saida { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> }'
     ).structs.Saida;
     expect(struct.fields.map((f) => f.name)).toEqual(['pos', 'uv']);
   });
 
-  it('matrizes e arrays entram no calculo do tamanho', () => {
+  it('matrices and arrays go into the size calculation', () => {
     const struct = reflectWgsl(
       'struct M { model: mat4x4<f32>, normal: mat3x3<f32>, escala: f32 }'
     ).structs.M;
@@ -291,7 +291,7 @@ describe('reflexao de WGSL: structs', () => {
     expect(arr.size).toBe(80);
   });
 
-  it('struct que cita outro struct resolve nas passadas seguintes', () => {
+  it('a struct that cites another struct resolves on the following passes', () => {
     const info = reflectWgsl(`
       struct Externo { luz: Interno, extra: f32 };
       struct Interno { cor: vec3<f32>, forca: f32 };
@@ -302,7 +302,7 @@ describe('reflexao de WGSL: structs', () => {
   });
 });
 
-describe('reflexao de WGSL: bindings', () => {
+describe('WGSL reflection: bindings', () => {
   const fonte = `
     struct Uniforms { time: f32, tint: vec3<f32> };
     @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -311,7 +311,7 @@ describe('reflexao de WGSL: bindings', () => {
     @group(1) @binding(0) var<storage, read_write> dados: array<vec4<f32>>;
   `;
 
-  it('encontra todos os bindings e ordena por grupo e indice', () => {
+  it('finds every binding and orders them by group and index', () => {
     const info = reflectWgsl(fonte);
     expect(info.bindings.map((b) => `${b.group}:${b.binding}:${b.kind}`)).toEqual([
       '0:0:uniform',
@@ -321,33 +321,33 @@ describe('reflexao de WGSL: bindings', () => {
     ]);
   });
 
-  it('aceita @binding antes de @group', () => {
+  it('accepts @binding before @group', () => {
     const info = reflectWgsl(fonte);
     const amostra = info.bindings.find((b) => b.name === 'amostra');
     expect(amostra).toMatchObject({ group: 0, binding: 1, kind: 'sampler' });
   });
 
-  it('liga o binding de uniform ao struct declarado na fonte', () => {
+  it('links the uniform binding to the struct declared in the source', () => {
     const info = reflectWgsl(fonte);
     expect(info.uniform?.name).toBe('u');
     expect(info.uniform?.struct?.fields.map((f) => f.name)).toEqual(['time', 'tint']);
     expect(info.uniform?.struct?.size).toBe(32);
   });
 
-  it('descreve a textura com dimensao e tipo de amostragem', () => {
+  it('describes the texture with its dimension and sample type', () => {
     const info = reflectWgsl(fonte);
     const textura = info.bindings.find((b) => b.name === 'textura');
     expect(textura).toMatchObject({ viewDimension: '2d', sampleType: 'float', multisampled: false });
   });
 
-  it('le o acesso declarado no storage', () => {
+  it('reads the access declared on the storage', () => {
     const info = reflectWgsl(fonte);
     expect(info.bindings.find((b) => b.name === 'dados')?.access).toBe('read-write');
     const so = reflectWgsl('@group(0) @binding(0) var<storage, read> x: array<f32>;');
     expect(so.bindings[0].access).toBe('read');
   });
 
-  it('reconhece textura de profundidade e sampler de comparacao', () => {
+  it('recognises a depth texture and a comparison sampler', () => {
     const info = reflectWgsl(`
       @group(0) @binding(0) var sombra: texture_depth_2d;
       @group(0) @binding(1) var comparador: sampler_comparison;
@@ -357,8 +357,8 @@ describe('reflexao de WGSL: bindings', () => {
   });
 });
 
-describe('reflexao de WGSL: pontos de entrada', () => {
-  it('encontra vertex, fragment e compute', () => {
+describe('WGSL reflection: entry points', () => {
+  it('finds vertex, fragment and compute', () => {
     const info = reflectWgsl(`
       @vertex fn vs() -> @builtin(position) vec4<f32> { return vec4<f32>(0.0); }
       @fragment fn pintar() -> @location(0) vec4<f32> { return vec4<f32>(1.0); }
@@ -372,12 +372,12 @@ describe('reflexao de WGSL: pontos de entrada', () => {
     expect(findEntry(info, 'compute')?.workgroupSize).toEqual([8, 4, 1]);
   });
 
-  it('le workgroup_size escrito antes do @compute', () => {
+  it('reads a workgroup_size written before the @compute', () => {
     const info = reflectWgsl('@workgroup_size(16) @compute fn c() {}');
     expect(findEntry(info, 'compute')?.workgroupSize).toEqual([16, 1, 1]);
   });
 
-  it('fonte vazia ou invalida devolve reflexao vazia, sem lancar', () => {
+  it('an empty or invalid source returns an empty reflection, without throwing', () => {
     expect(reflectWgsl('')).toEqual({ structs: {}, bindings: [], entries: [] });
     expect(() => reflectWgsl('}{ isto nao e wgsl @@@')).not.toThrow();
     expect(reflectWgsl(undefined as unknown as string).bindings).toEqual([]);
@@ -385,15 +385,15 @@ describe('reflexao de WGSL: pontos de entrada', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Escrita dos uniforms
+// Writing the uniforms
 // ---------------------------------------------------------------------------
 
-describe('escrita dos uniforms no buffer', () => {
+describe('writing the uniforms into the buffer', () => {
   const struct = reflectWgsl(
     'struct U { time: f32, speed: f32, resolution: vec2<f32>, tint: vec3<f32>, frame: u32 }'
   ).structs.U;
 
-  it('escreve cada campo no deslocamento calculado', () => {
+  it('writes each field at the computed offset', () => {
     const buffer = packStruct(struct, {
       time: 1.5,
       speed: 2,
@@ -412,7 +412,7 @@ describe('escrita dos uniforms no buffer', () => {
     expect(buffer.byteLength).toBe(32);
   });
 
-  it('aceita cor em hexadecimal como vetor', () => {
+  it('accepts a hexadecimal colour as a vector', () => {
     const buffer = packStruct(struct, { tint: '#ff0080' });
     const view = new DataView(buffer);
     expect(view.getFloat32(16, true)).toBeCloseTo(1, 5);
@@ -420,14 +420,14 @@ describe('escrita dos uniforms no buffer', () => {
     expect(view.getFloat32(24, true)).toBeCloseTo(128 / 255, 5);
   });
 
-  it('um numero solto preenche o vetor inteiro', () => {
+  it('a single loose number fills the whole vector', () => {
     expect(flattenValue(2, 3)).toEqual([2, 2, 2]);
     expect(flattenValue({ x: 1, y: 2 }, 2)).toEqual([1, 2]);
     expect(flattenValue('#f00', 3)).toEqual([1, 0, 0]);
     expect(flattenValue(null, 3)).toEqual([]);
   });
 
-  it('campos ausentes ficam como estavam', () => {
+  it('missing fields stay as they were', () => {
     const buffer = packStruct(struct, { time: 9, speed: 3 });
     const escritos = writeStruct(buffer, struct, { time: 1 });
     expect(escritos).toEqual(['time']);
@@ -436,19 +436,19 @@ describe('escrita dos uniforms no buffer', () => {
     expect(view.getFloat32(4, true)).toBe(3);
   });
 
-  it('matriz escreve coluna a coluna, respeitando o preenchimento', () => {
+  it('a matrix writes column by column, respecting the padding', () => {
     const m = reflectWgsl('struct M { normal: mat3x3<f32> }').structs.M;
     const buffer = packStruct(m, { normal: [1, 2, 3, 4, 5, 6, 7, 8, 9] });
     const view = new DataView(buffer);
     expect(view.getFloat32(0, true)).toBe(1);
     expect(view.getFloat32(8, true)).toBe(3);
-    // Quarto float de cada coluna e preenchimento: a segunda coluna comeca em 16.
+    // The fourth float of each column is padding: the second column starts at 16.
     expect(view.getFloat32(12, true)).toBe(0);
     expect(view.getFloat32(16, true)).toBe(4);
     expect(view.getFloat32(32, true)).toBe(7);
   });
 
-  it('infere um layout a partir de valores JavaScript', () => {
+  it('infers a layout from JavaScript values', () => {
     const inferido = inferStruct({ time: 0, resolution: [0, 0], tint: '#fff', ignorado: {} });
     expect(inferido.fields.map((f) => [f.name, f.type.text, f.offset])).toEqual([
       ['time', 'f32', 0],
@@ -460,11 +460,11 @@ describe('escrita dos uniforms no buffer', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Origem do shader
+// Shader source
 // ---------------------------------------------------------------------------
 
-describe('origem do shader', () => {
-  it('classifica inline, seletor, url e vazio', () => {
+describe('shader source', () => {
+  it('classifies inline, selector, url and empty', () => {
     expect(classifyShaderSource('')).toBe('empty');
     expect(classifyShaderSource('   ')).toBe('empty');
     expect(classifyShaderSource('#meu-shader')).toBe('selector');
@@ -475,12 +475,12 @@ describe('origem do shader', () => {
     expect(classifyShaderSource('fn ruido(p: vec2<f32>) -> f32 { return 0.0; }')).toBe('inline');
   });
 
-  it('devolve o proprio texto quando o WGSL esta no atributo', async () => {
+  it('returns the text itself when the WGSL is in the attribute', async () => {
     const fonte = '@fragment fn f() -> @location(0) vec4<f32> { return vec4<f32>(1.0); }';
     await expect(resolveShaderSource(fonte)).resolves.toBe(fonte);
   });
 
-  it('le o conteudo de um <script> pelo seletor', async () => {
+  it('reads the content of a <script> through the selector', async () => {
     const script = document.createElement('script');
     script.type = 'x-shader/wgsl';
     script.id = 'shader-de-teste';
@@ -490,12 +490,12 @@ describe('origem do shader', () => {
     await expect(resolveShaderSource('#shader-de-teste')).resolves.toBe('@fragment fn f() {}');
   });
 
-  it('seletor que nao existe devolve vazio sem lancar', async () => {
+  it('a selector that does not exist returns empty without throwing', async () => {
     await expect(resolveShaderSource('#nao-existe')).resolves.toBe('');
     await expect(resolveShaderSource('#((invalido')).resolves.toBe('');
   });
 
-  it('busca a URL com o cliente HTTP da Voodoo', async () => {
+  it('fetches the URL with the Voodoo HTTP client', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response('@fragment fn f() {}', { headers: { 'content-type': 'text/plain' } })
     );
@@ -505,22 +505,22 @@ describe('origem do shader', () => {
     expect(fetchMock).toHaveBeenCalledWith('/shaders/ondas.wgsl', expect.objectContaining({ method: 'GET' }));
   });
 
-  it('falha de rede vira string vazia, nao excecao', async () => {
+  it('a network failure becomes an empty string, not an exception', async () => {
     const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('offline')) as unknown as typeof fetch;
 
     await expect(resolveShaderSource('/shaders/ausente.wgsl')).resolves.toBe('');
-    // O problema e reportado, mas nunca sobe como excecao para a pagina.
+    // The problem is reported, but it never rises as an exception to the page.
     expect(erro).toHaveBeenCalled();
   });
 });
 
 // ---------------------------------------------------------------------------
-// A directive v-shader sem WebGPU
+// The v-shader directive without WebGPU
 // ---------------------------------------------------------------------------
 
-describe('v-shader sem WebGPU', () => {
-  it('marca data-gpu="unsupported" e dispara o evento', () => {
+describe('v-shader without WebGPU', () => {
+  it('marks data-gpu="unsupported" and fires the event', () => {
     const eventos: CustomEvent[] = [];
     const ouvinte = (e: Event): void => {
       eventos.push(e as CustomEvent);
@@ -536,7 +536,7 @@ describe('v-shader sem WebGPU', () => {
     expect(eventos[0].detail.el).toBe(canvas);
   });
 
-  it('o conteudo de dentro do canvas passa a aparecer', () => {
+  it('the content inside the canvas starts showing', () => {
     const { root } = montar('<canvas v-shader="ondas.wgsl"><p>Sem GPU aqui</p></canvas>');
     const canvas = root.querySelector('canvas')!;
     const fallback = root.querySelector('[data-gpu-fallback]');
@@ -547,7 +547,7 @@ describe('v-shader sem WebGPU', () => {
     expect(canvas.style.display).toBe('none');
   });
 
-  it('o fallback continua sendo HTML da Voodoo', async () => {
+  it('the fallback is still Voodoo HTML', async () => {
     const { root, estado } = montar('<canvas v-shader="ondas.wgsl">{{ recado }}</canvas>', {
       recado: 'instale um navegador com WebGPU',
     });
@@ -559,7 +559,7 @@ describe('v-shader sem WebGPU', () => {
     expect(fallback.textContent).toBe('sem GPU por aqui');
   });
 
-  it('canvas sem conteudo de alternativa continua visivel', () => {
+  it('a canvas with no fallback content stays visible', () => {
     const { root } = montar('<canvas v-shader="ondas.wgsl"></canvas>');
     const canvas = root.querySelector('canvas')!;
     expect(root.querySelector('[data-gpu-fallback]')).toBeNull();
@@ -567,20 +567,20 @@ describe('v-shader sem WebGPU', () => {
     expect(canvas.getAttribute('data-gpu')).toBe('unsupported');
   });
 
-  it('nao agenda rAF nem abre observador', () => {
+  it('schedules no rAF and opens no observer', () => {
     const raf = vi.spyOn(globalThis, 'requestAnimationFrame');
     montar('<canvas v-shader="ondas.wgsl"><p>alternativa</p></canvas>');
     expect(raf).not.toHaveBeenCalled();
   });
 
-  it('nao busca a URL do shader quando nao ha GPU para rodar', () => {
+  it('does not fetch the shader URL when there is no GPU to run it on', () => {
     const fetchMock = vi.fn();
     globalThis.fetch = fetchMock as unknown as typeof fetch;
     montar('<canvas v-shader="ondas.wgsl"></canvas>');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('avisa e desiste quando a directive nao esta num canvas', () => {
+  it('warns and gives up when the directive is not on a canvas', () => {
     config.devtools = true;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { root } = montar('<div v-shader="ondas.wgsl"></div>');
@@ -592,11 +592,11 @@ describe('v-shader sem WebGPU', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Contrato de limpeza
+// Cleanup contract
 // ---------------------------------------------------------------------------
 
-describe('v-shader e o contrato de limpeza', () => {
-  it('destruir o elemento devolve o DOM ao estado original', () => {
+describe('v-shader and the cleanup contract', () => {
+  it('destroying the element returns the DOM to its original state', () => {
     const { root } = montar('<canvas v-shader="ondas.wgsl"><p>alternativa</p></canvas>');
     const canvas = root.querySelector('canvas')!;
 
@@ -610,7 +610,7 @@ describe('v-shader e o contrato de limpeza', () => {
     expect(canvas.querySelector('p')?.textContent).toBe('alternativa');
   });
 
-  it('destruir duas vezes nao lanca', () => {
+  it('destroying twice does not throw', () => {
     const { root } = montar('<canvas v-shader="ondas.wgsl"><p>alternativa</p></canvas>');
     expect(() => {
       destroy(root);
@@ -618,7 +618,7 @@ describe('v-shader e o contrato de limpeza', () => {
     }).not.toThrow();
   });
 
-  it('o conteudo revelado para de reagir ao estado depois da destruicao', async () => {
+  it('the revealed content stops reacting to the state after the destruction', async () => {
     const { root, estado } = montar('<canvas v-shader="a.wgsl">{{ recado }}</canvas>', {
       recado: 'antes',
     });
@@ -626,7 +626,7 @@ describe('v-shader e o contrato de limpeza', () => {
     expect(root.querySelector('[data-gpu-fallback]')!.textContent).toBe('antes');
 
     destroy(root);
-    // A limpeza devolve o texto para dentro do canvas, de onde ele saiu.
+    // The cleanup puts the text back inside the canvas, where it came from.
     expect(canvas.textContent).toBe('antes');
 
     (estado as Record<string, string>).recado = 'depois';
@@ -634,7 +634,7 @@ describe('v-shader e o contrato de limpeza', () => {
     expect(canvas.textContent).toBe('antes');
   });
 
-  it('destruir um canvas sem alternativa tambem limpa a marca', () => {
+  it('destroying a canvas with no fallback also clears the marker', () => {
     const { root } = montar('<canvas v-shader="ondas.wgsl"></canvas>');
     const canvas = root.querySelector('canvas')!;
     destroy(root);
@@ -643,13 +643,13 @@ describe('v-shader e o contrato de limpeza', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Caminho com GPU real
+// Path with a real GPU
 // ---------------------------------------------------------------------------
 
 const temGpu = supported();
-const motivo = 'sem adaptador WebGPU neste ambiente (jsdom nao tem navigator.gpu)';
+const motivo = 'no WebGPU adapter in this environment (jsdom has no navigator.gpu)';
 
-describe.skipIf(!temGpu)(`caminho com GPU real ${temGpu ? '' : `- pulado: ${motivo}`}`, () => {
+describe.skipIf(!temGpu)(`path with a real GPU ${temGpu ? '' : `- skipped: ${motivo}`}`, () => {
   const fonte = `
     struct Uniforms { time: f32, tint: vec3<f32> };
     @group(0) @binding(0) var<uniform> u: Uniforms;
@@ -660,7 +660,7 @@ describe.skipIf(!temGpu)(`caminho com GPU real ${temGpu ? '' : `- pulado: ${moti
     }
   `;
 
-  it('init abre o dispositivo e destroy solta tudo', async () => {
+  it('init opens the device and destroy releases everything', async () => {
     const contexto = await init();
     expect(contexto).not.toBeNull();
     if (!contexto) return;
@@ -674,7 +674,7 @@ describe.skipIf(!temGpu)(`caminho com GPU real ${temGpu ? '' : `- pulado: ${moti
     expect(contexto.destroyed).toBe(true);
   });
 
-  it('compila um efeito de tela cheia e desenha num alvo', async () => {
+  it('compiles a full-screen effect and draws into a target', async () => {
     const contexto = await init();
     if (!contexto) return;
 
@@ -692,7 +692,7 @@ describe.skipIf(!temGpu)(`caminho com GPU real ${temGpu ? '' : `- pulado: ${moti
     gpuDestroy(contexto);
   });
 
-  it('roda um shader de computacao', async () => {
+  it('runs a compute shader', async () => {
     const contexto = await init();
     if (!contexto) return;
 

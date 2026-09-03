@@ -4,7 +4,7 @@ import { Scope } from '../src/runtime/scope';
 import { walk, destroy } from '../src/runtime/walker';
 import { core } from '../src/core';
 
-/** Monta um trecho de HTML com um escopo proprio e devolve a raiz. */
+/** Mounts a piece of HTML with a scope of its own and returns the root. */
 function mount(html: string, data: Record<string, unknown> = {}): HTMLElement {
   const root = document.createElement('div');
   root.innerHTML = html;
@@ -13,7 +13,7 @@ function mount(html: string, data: Record<string, unknown> = {}): HTMLElement {
   return root;
 }
 
-/** Espera duas rodadas de microtask, o suficiente para o DOM refletir. */
+/** Waits two microtask rounds, enough for the DOM to catch up. */
 async function settle(): Promise<void> {
   await nextTick();
   await nextTick();
@@ -23,13 +23,13 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('interpolacao de texto', () => {
-  it('renderiza { variavel } em tempo real', async () => {
+describe('text interpolation', () => {
+  it('renders { variavel } in real time', async () => {
     const root = mount('<p>Ola, { nome }!</p>', { nome: 'Ana' });
     expect(root.textContent).toBe('Ola, Ana!');
   });
 
-  it('atualiza quando a variavel muda', async () => {
+  it('updates when the variable changes', async () => {
     const data = reactive({ nome: 'Ana' });
     const root = document.createElement('div');
     root.innerHTML = '<p>Ola, { nome }!</p>';
@@ -41,22 +41,22 @@ describe('interpolacao de texto', () => {
     expect(root.textContent).toBe('Ola, Bia!');
   });
 
-  it('aceita expressoes completas e varias por no', () => {
+  it('accepts full expressions, several per text node', () => {
     const root = mount('<p>{ a } + { b } = { a + b }</p>', { a: 2, b: 3 });
     expect(root.textContent).toBe('2 + 3 = 5');
   });
 
-  it('tambem aceita a forma com chaves duplas', () => {
+  it('also accepts the double-brace form', () => {
     const root = mount('<p>{{ nome }}</p>', { nome: 'Voodoo' });
     expect(root.textContent).toBe('Voodoo');
   });
 
-  it('nao interpola dentro de code e pre', () => {
+  it('does not interpolate inside code and pre', () => {
     const root = mount('<code>{ isto: fica }</code>', {});
     expect(root.textContent).toBe('{ isto: fica }');
   });
 
-  it('renderiza objetos e arrays de forma legivel', () => {
+  it('renders objects and arrays in a readable way', () => {
     const root = mount('<p>{ obj }</p><span>{ lista }</span>', {
       obj: { a: 1 },
       lista: [1, 2],
@@ -66,13 +66,13 @@ describe('interpolacao de texto', () => {
   });
 });
 
-describe('v-text e v-html', () => {
-  it('v-text escreve texto e escapa HTML', async () => {
+describe('v-text and v-html', () => {
+  it('v-text writes text and escapes HTML', async () => {
     const root = mount('<span v-text="valor"></span>', { valor: '<b>oi</b>' });
     expect(root.querySelector('span')!.innerHTML).toBe('&lt;b&gt;oi&lt;/b&gt;');
   });
 
-  it('v-html insere HTML e inicializa as directives internas', async () => {
+  it('v-html inserts HTML and initializes the directives inside it', async () => {
     const data = reactive({ conteudo: '<b v-text="nome"></b>', nome: 'Ana' });
     const root = document.createElement('div');
     root.innerHTML = '<div v-html="conteudo"></div>';
@@ -84,7 +84,7 @@ describe('v-text e v-html', () => {
 });
 
 describe('v-show', () => {
-  it('alterna display sem remover o elemento', async () => {
+  it('toggles display without removing the element', async () => {
     const data = reactive({ visivel: true });
     const root = document.createElement('div');
     root.innerHTML = '<p v-show="visivel">oi</p>';
@@ -105,8 +105,8 @@ describe('v-show', () => {
   });
 });
 
-describe('v-if, v-else-if e v-else', () => {
-  it('insere e remove o elemento do DOM', async () => {
+describe('v-if, v-else-if and v-else', () => {
+  it('inserts the element into the DOM and removes it', async () => {
     const data = reactive({ logado: false });
     const root = document.createElement('div');
     root.innerHTML = '<p v-if="logado">Bem-vindo</p>';
@@ -124,7 +124,7 @@ describe('v-if, v-else-if e v-else', () => {
     expect(root.querySelector('p')).toBeNull();
   });
 
-  it('escolhe o ramo certo da cadeia', async () => {
+  it('picks the right branch of the chain', async () => {
     const data = reactive({ nota: 10 });
     const root = document.createElement('div');
     root.innerHTML = `
@@ -144,7 +144,7 @@ describe('v-if, v-else-if e v-else', () => {
     expect(root.textContent!.trim()).toBe('ruim');
   });
 
-  it('funciona com template de varios filhos', async () => {
+  it('works with a template of several children', async () => {
     const data = reactive({ ok: true });
     const root = document.createElement('div');
     root.innerHTML = '<template v-if="ok"><i>a</i><i>b</i></template>';
@@ -157,7 +157,7 @@ describe('v-if, v-else-if e v-else', () => {
     expect(root.querySelectorAll('i').length).toBe(0);
   });
 
-  it('avalia as directives internas do ramo ativo', async () => {
+  it('evaluates the directives inside the active branch', async () => {
     const data = reactive({ ok: true, nome: 'Ana' });
     const root = document.createElement('div');
     root.innerHTML = '<p v-if="ok"><b v-text="nome"></b></p>';
@@ -172,13 +172,13 @@ describe('v-if, v-else-if e v-else', () => {
 });
 
 describe('v-for', () => {
-  it('renderiza a lista inicial', () => {
+  it('renders the initial list', () => {
     const root = mount('<ul><li v-for="n in lista" v-text="n"></li></ul>', { lista: [1, 2, 3] });
     expect(root.querySelectorAll('li').length).toBe(3);
     expect(root.textContent).toBe('123');
   });
 
-  it('adiciona e remove itens em tempo real', async () => {
+  it('adds and removes items in real time', async () => {
     const data = reactive({ lista: ['a', 'b'] });
     const root = document.createElement('div');
     root.innerHTML = '<ul><li v-for="item in lista" v-text="item"></li></ul>';
@@ -196,24 +196,24 @@ describe('v-for', () => {
     expect(root.textContent).toBe('bc');
   });
 
-  it('expoe o indice', () => {
+  it('exposes the index', () => {
     const root = mount('<li v-for="(item, i) in lista">{ i }:{ item }</li>', { lista: ['x', 'y'] });
     expect(root.textContent).toBe('0:x1:y');
   });
 
-  it('itera objetos com valor, chave e indice', () => {
+  it('iterates objects with value, key and index', () => {
     const root = mount('<li v-for="(valor, chave) in obj">{ chave }={ valor }</li>', {
       obj: { a: 1, b: 2 },
     });
     expect(root.textContent).toBe('a=1b=2');
   });
 
-  it('itera um numero', () => {
+  it('iterates a number', () => {
     const root = mount('<li v-for="n in 3" v-text="n"></li>', {});
     expect(root.textContent).toBe('123');
   });
 
-  it('reaproveita elementos com :key ao reordenar', async () => {
+  it('reuses elements with :key when reordering', async () => {
     const data = reactive({
       lista: [
         { id: 1, nome: 'um' },
@@ -231,11 +231,11 @@ describe('v-for', () => {
 
     const textos = Array.from(root.querySelectorAll('li')).map((li) => li.textContent);
     expect(textos).toEqual(['dois', 'um']);
-    // O elemento do item 1 continua sendo o mesmo no do DOM.
+    // The element for item 1 is still the same DOM node.
     expect(root.querySelectorAll('li')[1]).toBe(primeiro);
   });
 
-  it('atualiza o conteudo quando um item muda', async () => {
+  it('updates the content when an item changes', async () => {
     const data = reactive({ lista: [{ id: 1, nome: 'antigo' }] });
     const root = document.createElement('div');
     root.innerHTML = '<li v-for="item in lista" :key="item.id" v-text="item.nome"></li>';
@@ -247,7 +247,7 @@ describe('v-for', () => {
     expect(root.textContent).toBe('novo');
   });
 
-  it('funciona aninhado', () => {
+  it('works nested', () => {
     const root = mount(
       '<div v-for="grupo in grupos"><span v-for="item in grupo.itens" v-text="item"></span></div>',
       { grupos: [{ itens: [1, 2] }, { itens: [3] }] }
@@ -255,13 +255,13 @@ describe('v-for', () => {
     expect(root.textContent).toBe('123');
   });
 
-  it('aceita template com varios filhos', () => {
+  it('accepts a template with several children', () => {
     const root = mount('<template v-for="n in 2"><i>a</i><b>b</b></template>', {});
     expect(root.querySelectorAll('i').length).toBe(2);
     expect(root.querySelectorAll('b').length).toBe(2);
   });
 
-  it('combina v-for com v-if no filho', async () => {
+  it('combines v-for with v-if on the child', async () => {
     const data = reactive({ lista: [1, 2, 3, 4] });
     const root = document.createElement('div');
     root.innerHTML = '<div v-for="n in lista"><span v-if="n % 2 === 0" v-text="n"></span></div>';
@@ -272,7 +272,7 @@ describe('v-for', () => {
 });
 
 describe('v-bind', () => {
-  it('liga atributos comuns', async () => {
+  it('binds ordinary attributes', async () => {
     const data = reactive({ link: '/a', titulo: 'Ir' });
     const root = document.createElement('div');
     root.innerHTML = '<a :href="link" :title="titulo">x</a>';
@@ -287,7 +287,7 @@ describe('v-bind', () => {
     expect(a.getAttribute('href')).toBe('/b');
   });
 
-  it('trata atributos booleanos', async () => {
+  it('handles boolean attributes', async () => {
     const data = reactive({ carregando: true });
     const root = document.createElement('div');
     root.innerHTML = '<button :disabled="carregando">Salvar</button>';
@@ -302,7 +302,7 @@ describe('v-bind', () => {
     expect(button.hasAttribute('disabled')).toBe(false);
   });
 
-  it('liga classes por objeto e mantem as originais', async () => {
+  it('binds classes from an object and keeps the original ones', async () => {
     const data = reactive({ ativo: false });
     const root = document.createElement('div');
     root.innerHTML = '<div class="base" :class="{ ativo: ativo }"></div>';
@@ -318,7 +318,7 @@ describe('v-bind', () => {
     expect(div.classList.contains('ativo')).toBe(true);
   });
 
-  it('liga estilos por objeto', async () => {
+  it('binds styles from an object', async () => {
     const data = reactive({ cor: 'red' });
     const root = document.createElement('div');
     root.innerHTML = '<div :style="{ color: cor }"></div>';
@@ -333,7 +333,7 @@ describe('v-bind', () => {
     expect(div.style.color).toBe('blue');
   });
 
-  it('aplica varios atributos com v-bind sem argumento', () => {
+  it('applies several attributes with v-bind and no argument', () => {
     const root = mount('<input v-bind="atributos">', {
       atributos: { placeholder: 'Nome', maxlength: '10' },
     });
@@ -343,8 +343,8 @@ describe('v-bind', () => {
   });
 });
 
-describe('eventos', () => {
-  it('v-click executa expressao e atualiza a tela', async () => {
+describe('events', () => {
+  it('v-click runs the expression and updates the screen', async () => {
     const root = mount('<button v-click="count++">+</button><span v-text="count"></span>', {
       count: 0,
     });
@@ -353,14 +353,14 @@ describe('eventos', () => {
     expect(root.querySelector('span')!.textContent).toBe('1');
   });
 
-  it('v-click chama um metodo do escopo', async () => {
+  it('v-click calls a method from the scope', async () => {
     const spy = vi.fn();
     const root = mount('<button v-click="salvar">Salvar</button>', { salvar: spy });
     root.querySelector('button')!.click();
     expect(spy).toHaveBeenCalled();
   });
 
-  it('v-on:evento e @evento sao equivalentes', async () => {
+  it('v-on:evento and @evento are equivalent', async () => {
     const root = mount('<button @click="n++"></button><i v-on:click="n++"></i>', { n: 0 });
     root.querySelector('button')!.click();
     root.querySelector('i')!.click();
@@ -368,14 +368,14 @@ describe('eventos', () => {
     expect((root.querySelector('button') as HTMLElement).isConnected).toBe(true);
   });
 
-  it('modificador prevent chama preventDefault', () => {
+  it('the prevent modifier calls preventDefault', () => {
     const root = mount('<a href="#x" @click.prevent="n++">link</a>', { n: 0 });
     const event = new MouseEvent('click', { cancelable: true, bubbles: true });
     root.querySelector('a')!.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it('modificador once dispara apenas uma vez', async () => {
+  it('the once modifier fires only one time', async () => {
     const spy = vi.fn();
     const root = mount('<button @click.once="acao"></button>', { acao: spy });
     const button = root.querySelector('button')!;
@@ -384,7 +384,7 @@ describe('eventos', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('filtra por tecla', () => {
+  it('filters by key', () => {
     const spy = vi.fn();
     const root = mount('<input @keyup.enter="buscar">', { buscar: spy });
     const input = root.querySelector('input')!;
@@ -394,7 +394,7 @@ describe('eventos', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('expoe $event na expressao', () => {
+  it('exposes $event in the expression', () => {
     const spy = vi.fn();
     const root = mount('<button @click="registrar($event.type)"></button>', { registrar: spy });
     root.querySelector('button')!.click();
@@ -403,7 +403,7 @@ describe('eventos', () => {
 });
 
 describe('v-model', () => {
-  it('liga texto nos dois sentidos', async () => {
+  it('binds text in both directions', async () => {
     const data = reactive({ nome: 'Ana' });
     const root = document.createElement('div');
     root.innerHTML = '<input v-model="nome">';
@@ -422,7 +422,7 @@ describe('v-model', () => {
     expect(input.value).toBe('Cris');
   });
 
-  it('converte para numero com o modificador number', () => {
+  it('converts to a number with the number modifier', () => {
     const data = reactive({ idade: 0 });
     const root = document.createElement('div');
     root.innerHTML = '<input v-model.number="idade">';
@@ -435,7 +435,7 @@ describe('v-model', () => {
     expect(data.idade).toBe(42);
   });
 
-  it('remove espacos com o modificador trim', () => {
+  it('removes surrounding spaces with the trim modifier', () => {
     const data = reactive({ texto: '' });
     const root = document.createElement('div');
     root.innerHTML = '<input v-model.trim="texto">';
@@ -448,7 +448,7 @@ describe('v-model', () => {
     expect(data.texto).toBe('oi');
   });
 
-  it('funciona com checkbox booleano', () => {
+  it('works with a boolean checkbox', () => {
     const data = reactive({ aceito: false });
     const root = document.createElement('div');
     root.innerHTML = '<input type="checkbox" v-model="aceito">';
@@ -461,7 +461,7 @@ describe('v-model', () => {
     expect(data.aceito).toBe(true);
   });
 
-  it('funciona com checkbox em lista', () => {
+  it('works with checkboxes bound to a list', () => {
     const data = reactive({ tags: ['a'] });
     const root = document.createElement('div');
     root.innerHTML =
@@ -477,7 +477,7 @@ describe('v-model', () => {
     expect(data.tags).toEqual(['a', 'b']);
   });
 
-  it('funciona com select', async () => {
+  it('works with a select', async () => {
     const data = reactive({ uf: 'SP' });
     const root = document.createElement('div');
     root.innerHTML = '<select v-model="uf"><option>SP</option><option>RJ</option></select>';
@@ -492,7 +492,7 @@ describe('v-model', () => {
     expect(data.uf).toBe('RJ');
   });
 
-  it('funciona com textarea', () => {
+  it('works with a textarea', () => {
     const data = reactive({ bio: '' });
     const root = document.createElement('div');
     root.innerHTML = '<textarea v-model="bio"></textarea>';
@@ -506,8 +506,8 @@ describe('v-model', () => {
   });
 });
 
-describe('v-data e escopo', () => {
-  it('cria escopo isolado', async () => {
+describe('v-data and scope', () => {
+  it('creates an isolated scope', async () => {
     const root = mount(
       '<div v-data="{ count: 0 }"><button v-click="count++"></button><b v-text="count"></b></div>'
     );
@@ -516,7 +516,7 @@ describe('v-data e escopo', () => {
     expect(root.querySelector('b')!.textContent).toBe('1');
   });
 
-  it('escopos irmaos nao se misturam', async () => {
+  it('sibling scopes do not mix', async () => {
     const root = mount(`
       <div v-data="{ n: 0 }" id="a"><button v-click="n++"></button><b v-text="n"></b></div>
       <div v-data="{ n: 0 }" id="b"><b v-text="n"></b></div>`);
@@ -526,27 +526,27 @@ describe('v-data e escopo', () => {
     expect(root.querySelector('#b b')!.textContent).toBe('0');
   });
 
-  it('filho enxerga o escopo do pai', () => {
+  it('a child sees the parent scope', () => {
     const root = mount('<div v-data="{ titulo: \'Voodoo\' }"><span v-text="titulo"></span></div>');
     expect(root.querySelector('span')!.textContent).toBe('Voodoo');
   });
 
-  it('v-init executa na montagem', async () => {
+  it('v-init runs on mount', async () => {
     const spy = vi.fn();
     mount('<div v-data="{ n: 1 }" v-init="carregar"></div>', { carregar: spy });
     await settle();
     expect(spy).toHaveBeenCalled();
   });
 
-  it('v-ref guarda o elemento em $refs', async () => {
+  it('v-ref stores the element in $refs', async () => {
     const root = mount('<div v-data="{}"><input v-ref="busca"><button v-click="$refs.busca.focus()"></button></div>');
     root.querySelector('button')!.click();
     expect(document.activeElement).toBe(root.querySelector('input'));
   });
 });
 
-describe('componentes', () => {
-  it('registra e monta por v-component', async () => {
+describe('components', () => {
+  it('registers and mounts through v-component', async () => {
     core.component('contador', {
       state: () => ({ count: 5 }),
       methods: {
@@ -566,7 +566,7 @@ describe('componentes', () => {
     expect(root.querySelector('b')!.textContent).toBe('6');
   });
 
-  it('monta por tag propria e recebe props', async () => {
+  it('mounts through a tag of its own and receives props', async () => {
     core.component('cartao-usuario', {
       props: { nome: { type: 'string', default: 'sem nome' } },
       template: '<h3 v-text="nome"></h3>',
@@ -577,14 +577,14 @@ describe('componentes', () => {
     expect(root.querySelector('h3')!.textContent).toBe('Ana');
   });
 
-  it('aceita tag em PascalCase', async () => {
+  it('accepts a tag in PascalCase', async () => {
     core.component('caixa-simples', { template: '<p>caixa</p>' });
     const root = mount('<CaixaSimples></CaixaSimples>');
     await settle();
     expect(root.querySelector('p')!.textContent).toBe('caixa');
   });
 
-  it('renderiza o conteudo original dentro de slot', async () => {
+  it('renders the original content inside a slot', async () => {
     core.component('painel', {
       template: '<section><header>titulo</header><slot></slot></section>',
     });
@@ -593,7 +593,7 @@ describe('componentes', () => {
     expect(root.querySelector('section p')!.textContent).toBe('conteudo');
   });
 
-  it('computed e reativo', async () => {
+  it('computed is reactive', async () => {
     core.component('nome-completo', {
       state: () => ({ primeiro: 'Ana', ultimo: 'Souza' }),
       computed: {
@@ -609,7 +609,7 @@ describe('componentes', () => {
     expect(root.querySelector('b')!.textContent).toBe('Ana Souza');
   });
 
-  it('dispara o hook mounted', async () => {
+  it('fires the mounted hook', async () => {
     const spy = vi.fn();
     core.component('com-hook', { mounted: spy, template: '<i></i>' });
     mount('<com-hook></com-hook>');
@@ -617,7 +617,7 @@ describe('componentes', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  it('emit dispara evento capturado por v-on', async () => {
+  it('emit fires an event caught by v-on', async () => {
     core.component('editor', {
       methods: {
         salvar(this: { emit: (e: string, d: unknown) => void }) {
@@ -635,8 +635,8 @@ describe('componentes', () => {
   });
 });
 
-describe('limpeza', () => {
-  it('destroy para os efeitos do elemento', async () => {
+describe('cleanup', () => {
+  it('destroy stops the effects of the element', async () => {
     const data = reactive({ n: 0 });
     const root = document.createElement('div');
     root.innerHTML = '<span v-text="n"></span>';
@@ -652,7 +652,7 @@ describe('limpeza', () => {
     expect(span.textContent).toBe('0');
   });
 
-  it('remover itens de v-for limpa os efeitos', async () => {
+  it('removing items from v-for cleans up the effects', async () => {
     const data = reactive({ lista: [{ id: 1, nome: 'a' }] });
     const root = document.createElement('div');
     root.innerHTML = '<li v-for="item in lista" :key="item.id" v-text="item.nome"></li>';
@@ -666,8 +666,8 @@ describe('limpeza', () => {
   });
 });
 
-describe('directives customizadas', () => {
-  it('registra com ciclo de vida', async () => {
+describe('custom directives', () => {
+  it('registers one with a lifecycle', async () => {
     const montado = vi.fn();
     const atualizado = vi.fn();
     core.directive('destaque', {
@@ -693,7 +693,7 @@ describe('directives customizadas', () => {
     expect(atualizado).toHaveBeenCalledWith('red');
   });
 
-  it('aceita a forma curta em funcao', () => {
+  it('accepts the short form as a function', () => {
     core.directive('marcar', (el) => {
       el.setAttribute('data-marcado', 'sim');
     });
@@ -702,8 +702,8 @@ describe('directives customizadas', () => {
   });
 });
 
-describe('limpeza dos atributos', () => {
-  it('remove os atributos v-* do HTML depois de renderizar', async () => {
+describe('attribute cleanup', () => {
+  it('removes the v-* attributes from the HTML after rendering', async () => {
     const root = mount(
       '<div v-data="{ n: 0 }"><button v-click="n++" @mouseenter="n++">+</button><b v-text="n"></b></div>'
     );
@@ -715,7 +715,7 @@ describe('limpeza dos atributos', () => {
     expect(root.innerHTML).not.toContain('@mouseenter');
   });
 
-  it('remove os atalhos de dois pontos e mantem o atributo resultante', async () => {
+  it('removes the colon shorthands and keeps the resulting attribute', async () => {
     const root = mount('<a :href="link" :class="{ ativo: true }">x</a>', { link: '/destino' });
     await settle();
 
@@ -725,7 +725,7 @@ describe('limpeza dos atributos', () => {
     expect(a.classList.contains('ativo')).toBe(true);
   });
 
-  it('o comportamento continua funcionando sem os atributos', async () => {
+  it('the behaviour keeps working without the attributes', async () => {
     const root = mount('<div v-data="{ n: 0 }"><button v-click="n++"></button><b v-text="n"></b></div>');
     await settle();
 
@@ -734,7 +734,7 @@ describe('limpeza dos atributos', () => {
     expect(root.querySelector('b')!.textContent).toBe('1');
   });
 
-  it('config.cleanAttributes desliga a limpeza', async () => {
+  it('config.cleanAttributes switches the cleanup off', async () => {
     core.config.cleanAttributes = false;
     const root = mount('<b v-text="valor"></b>', { valor: 'oi' });
     await settle();
@@ -743,14 +743,14 @@ describe('limpeza dos atributos', () => {
   });
 });
 
-describe('variaveis magicas', () => {
-  it('$store acessa stores globais', async () => {
+describe('magic variables', () => {
+  it('$store reaches the global stores', async () => {
     core.store('carrinho', { total: 3 });
     const root = mount('<span v-text="$store.carrinho.total"></span>');
     expect(root.querySelector('span')!.textContent).toBe('3');
   });
 
-  it('$el aponta para o elemento', () => {
+  it('$el points at the element', () => {
     const root = mount('<div v-data="{}"><button v-click="$el.setAttribute(\'data-ok\', 1)"></button></div>');
     root.querySelector('button')!.click();
     expect(root.querySelector('button')!.getAttribute('data-ok')).toBe('1');

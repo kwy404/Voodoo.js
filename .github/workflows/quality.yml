@@ -1,10 +1,10 @@
 name: Quality
 
-# Separado do CI de proposito. O `ci.yml` responde "quebrou?" e precisa ser
-# rapido, rodar na matriz de versoes do Node e barrar merge. Este aqui responde
-# "esta bom?": roda uma vez, produz o relatorio com os achados de seguranca,
-# acessibilidade, empacotamento, compatibilidade de API e documentacao, e
-# publica o arquivo como artifact para leitura humana.
+# Kept separate from CI on purpose. `ci.yml` answers "is it broken?", so it has
+# to be fast, run across the Node version matrix and block a merge. This one
+# answers "is it any good?": it runs once, produces the report with the security,
+# accessibility, packaging, API compatibility and documentation findings, and
+# publishes the file as an artifact for a person to read.
 
 on:
   push:
@@ -21,46 +21,48 @@ concurrency:
 
 jobs:
   quality:
-    name: Relatorio de qualidade
+    name: Quality report
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixa o repositorio
+      - name: Check out the repository
         uses: actions/checkout@v4
         with:
-          # O check de compatibilidade de API compara com o snapshot commitado;
-          # o historico completo ajuda a investigar quando ele acusa quebra.
+          # The API compatibility check compares against the committed snapshot;
+          # the full history helps when it reports a break and someone has to
+          # work out which commit caused it.
           fetch-depth: 0
 
-      - name: Prepara o Node 20
+      - name: Set up Node 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Instala as dependencias
+      - name: Install dependencies
         run: npm ci
 
-      - name: Gera os bundles
-        # O relatorio inspeciona dist/: tamanho, sourcemaps, compatibilidade com
-        # CSP, superficie publica e conteudo do tarball. Sem build, metade dos
-        # checks so teria SKIP para contar.
+      - name: Build the bundles
+        # The report inspects dist/: size, sourcemaps, CSP compatibility, the
+        # public surface and the tarball contents. With no build, half the
+        # checks would have nothing but SKIP to report.
         run: npm run build
 
-      - name: Baixa o navegador dos testes de browser
-        # Sem este passo as 53 specs do Playwright nao falham por causa do
-        # codigo: falham todas com "Executable doesn't exist", porque o runner
-        # tem a dependencia instalada e nenhum navegador baixado. O relatorio
-        # entao mostra 53 FAIL e uma nota de 2.0 num check que passa inteiro na
-        # maquina de quem escreveu. `npm ci` instala o pacote, nao o Chromium.
+      - name: Install the browser the browser tests need
+        # Without this step the Playwright specs do not fail because of the
+        # code: they all fail with "Executable doesn't exist", because the
+        # runner has the package installed and no browser downloaded. The report
+        # then shows every spec failing and a 2.0 on a check that passes
+        # completely on the machine of whoever wrote it. `npm ci` installs the
+        # package, not Chromium.
         run: npx playwright install --with-deps chromium
 
-      - name: Roda o relatorio de qualidade
+      - name: Run the quality report
         run: npm run quality -- --ci --report
 
-      - name: Publica o QUALITY_REPORT.md
-        # Roda mesmo quando o passo anterior falha: e justamente no build
-        # vermelho que o relatorio tem mais a dizer.
+      - name: Publish QUALITY_REPORT.md
+        # Runs even when the previous step failed: a red build is exactly when
+        # the report has the most to say.
         if: always()
         uses: actions/upload-artifact@v4
         with:

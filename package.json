@@ -25,7 +25,12 @@
     "quality:ci": "node scripts/quality.mjs --ci --report",
     "quality:report": "node scripts/quality.mjs --report",
     "api:snapshot": "node scripts/api-snapshot.mjs --update",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "check:lang:docs": "node scripts/check-docs-language.mjs --check",
+    "check:lang:src": "node scripts/check-source-language.mjs --check",
+    "check:lang": "npm run check:lang:docs && npm run check:lang:src",
+    "check:version": "node scripts/stamp-version.mjs --check",
+    "check:frame": "node scripts/check-frame-height.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

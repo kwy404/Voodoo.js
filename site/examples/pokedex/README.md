@@ -1,61 +1,62 @@
 # Pokedex
 
-Vitrine da Voodoo.js consumindo uma API publica de verdade, a
-[PokeAPI](https://pokeapi.co/api/v2/). Mais de mil e trezentas especies, com
-busca, filtro por tipo, rolagem infinita, favoritos que sobrevivem ao
-recarregar e um grafico de radar com os atributos de cada Pokemon.
+A Voodoo.js showcase consuming a real public API, the
+[PokeAPI](https://pokeapi.co/api/v2/). More than one thousand three hundred
+species, with search, filter by type, infinite scroll, favourites that survive a
+reload and a radar chart of each Pokemon's stats.
 
-Abra pelo servidor local, nao pelo `file://`, porque a demo faz requisicoes:
+Open it through the local server, not through `file://`, because the demo makes
+requests:
 
 ```
 node scripts/serve.mjs 5180
 ```
 
-E acesse `http://localhost:5180/examples/pokedex/`.
+Then go to `http://localhost:5180/examples/pokedex/`.
 
-Esta demo carrega o bundle **completo** (`voodoo.full.min.js`), porque usa o
-modulo de graficos.
+This demo loads the **full** bundle (`voodoo.full.min.js`), because it uses the
+charts module.
 
-## O que a demo mostra
+## What the demo shows
 
-- Grade de cartoes com sprite, numero, nome e tipos coloridos, cada cartao
-  tingido pela cor do tipo principal.
-- Busca por nome ou numero com espera de 350 ms antes de refiltrar.
-- Filtro por tipo, alimentado por uma segunda chamada a API.
-- Rolagem infinita em lotes de 24, com botao de carregar mais como alternativa.
-- Modal de detalhe com medidas, habilidades, barras de atributo e um grafico de
-  radar que muda de cor conforme o tipo.
-- Favoritos guardados em um store global que persiste sozinho.
-- Estados de carregando, vazio e erro tratados, com esqueletos na primeira carga.
-- Tema claro e escuro.
+- A grid of cards with sprite, number, name and coloured types, each card tinted
+  with the colour of its primary type.
+- Search by name or number with a 350 ms wait before refiltering.
+- Filter by type, fed by a second call to the API.
+- Infinite scroll in batches of 24, with a load more button as an alternative.
+- Detail modal with measurements, abilities, stat bars and a radar chart that
+  changes colour according to the type.
+- Favourites kept in a global store that persists on its own.
+- Loading, empty and error states all handled, with skeletons on the first load.
+- Light and dark theme.
 
-## Recursos da Voodoo exercitados
+## Voodoo features exercised
 
-| Recurso | Onde aparece |
+| Feature | Where it shows up |
 | --- | --- |
-| `V.component` com `state`, `computed`, `watch` e `methods` | toda a logica da tela |
-| `v-for` com `:key` | grade, tipos, habilidades, barras e chips |
-| `v-if` e `v-show` | estados de erro, vazio, carregando e o modal |
-| `v-model` e `v-debounce` | campo de busca e seletor de ordenacao |
-| `v-resource` | lista de tipos, com `.data`, `.loading`, `.error` e `.reload()` |
-| `v-cache` | dez minutos de cache na chamada dos tipos |
-| `v-chart` | grafico de radar dos atributos, reativo |
-| `v-infinite-scroll` | rolagem infinita em lotes de 24 |
-| `v-motion="fadeUp"` | entrada dos cartoes |
-| `v-transition` | abertura e fechamento do modal |
-| `V.store(..., { persist: true })` | favoritos, lidos no HTML por `$store.pokedex` |
-| `V.http.get` com `cache`, `retry` e `timeout` | indice e detalhes |
-| `$theme`, `V.toast`, `V.throttle`, `V.sortBy`, `V.formatNumber` | apoio |
-| `@click.self`, `@keyup.esc.window`, `v-click.stop` | fechar o modal, favoritar |
+| `V.component` with `state`, `computed`, `watch` and `methods` | all the logic of the screen |
+| `v-for` with `:key` | grid, types, abilities, bars and chips |
+| `v-if` and `v-show` | error, empty and loading states, and the modal |
+| `v-model` and `v-debounce` | search field and sort selector |
+| `v-resource` | list of types, with `.data`, `.loading`, `.error` and `.reload()` |
+| `v-cache` | ten minutes of cache on the types call |
+| `v-chart` | reactive radar chart of the stats |
+| `v-infinite-scroll` | infinite scroll in batches of 24 |
+| `v-motion="fadeUp"` | entrance of the cards |
+| `v-transition` | opening and closing of the modal |
+| `V.store(..., { persist: true })` | favourites, read in the HTML through `$store.pokedex` |
+| `V.http.get` with `cache`, `retry` and `timeout` | index and details |
+| `$theme`, `V.toast`, `V.throttle`, `V.sortBy`, `V.formatNumber` | support |
+| `@click.self`, `@keyup.esc.window`, `v-click.stop` | closing the modal, favouriting |
 
-## Duas anotacoes de implementacao
+## Two implementation notes
 
-A grade usa `v-show`, e nao `v-if`. Um `v-for` que so e percorrido depois do
-`V.start()` para de reagir a mudancas no array, entao o container da lista
-precisa existir desde o inicio. O mesmo motivo explica por que os estados de
-erro e vazio, que nao tem lista viva dentro, continuam com `v-if`.
+The grid uses `v-show`, not `v-if`. A `v-for` that is only walked after
+`V.start()` stops reacting to changes in the array, so the list container has to
+exist from the start. The same reason explains why the error and empty states,
+which have no live list inside them, stay on `v-if`.
 
-O modal guarda um booleano proprio, `modalAberto`, em vez de depender de
-`selecionado` ser nulo. Assim o conteudo continua lendo o ultimo Pokemon
-enquanto a animacao de saida acontece, sem nenhuma expressao tentando ler
-propriedade de nulo.
+The modal keeps a boolean of its own, `modalAberto`, instead of relying on
+`selecionado` being null. That way the content goes on reading the last Pokemon
+while the exit animation plays, with no expression trying to read a property of
+null.

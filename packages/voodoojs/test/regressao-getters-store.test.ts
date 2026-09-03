@@ -1,15 +1,15 @@
 /**
- * Regressao: getters achatados em `V.store` e `V.data`, e `terminal` ignorado
- * por `V.directive`.
+ * Regression: getters flattened in `V.store` and `V.data`, and `terminal`
+ * ignored by `V.directive`.
  *
- * O store copiava a definicao com `{ ...definition }`, e `V.data` usava
- * `Object.assign`. As duas formas LEEM o getter na hora da copia e guardam o
- * resultado, entao `get total() { return this.itens.length }` virava um numero
- * fixo: o valor do momento da criacao, congelado para sempre. E o proprio
- * exemplo da documentacao do modulo usava essa forma.
+ * The store copied the definition with `{ ...definition }`, and `V.data` used
+ * `Object.assign`. Both forms READ the getter at copy time and keep the result,
+ * so `get total() { return this.itens.length }` became a fixed number: the
+ * value at the moment of creation, frozen forever. And the module's own
+ * documentation example used that very form.
  *
- * A correcao copia por descritor, o que preserva o getter. O proxy reativo o
- * executa a cada leitura e rastreia as dependencias de dentro dele.
+ * The fix copies by descriptor, which preserves the getter. The reactive proxy
+ * runs it on every read and tracks the dependencies inside it.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -32,8 +32,8 @@ afterEach(() => {
   directives.delete('teste-comum');
 });
 
-describe('getters no store', () => {
-  it('mantem o getter vivo em vez de congelar o valor', () => {
+describe('getters in the store', () => {
+  it('keeps the getter alive instead of freezing the value', () => {
     const carrinho = store('carrinho', {
       itens: [] as number[],
       get total() {
@@ -43,11 +43,11 @@ describe('getters no store', () => {
 
     expect(carrinho.total).toBe(0);
     carrinho.itens.push(1, 2, 3);
-    // Antes da correcao isto continuava 0 para sempre.
+    // Before the fix this stayed 0 forever.
     expect(carrinho.total).toBe(3);
   });
 
-  it('o getter e reativo: um efeito que le total reexecuta', async () => {
+  it('the getter is reactive: an effect that reads total runs again', async () => {
     const carrinho = store('carrinho', {
       itens: [] as number[],
       get total() {
@@ -64,7 +64,7 @@ describe('getters no store', () => {
     expect(vistos).toEqual([0, 1]);
   });
 
-  it('metodos continuam ligados ao proprio store', () => {
+  it('methods stay bound to the store itself', () => {
     const carrinho = store('carrinho', {
       itens: [] as number[],
       adicionar(n: number) {
@@ -80,7 +80,7 @@ describe('getters no store', () => {
     expect(carrinho.total).toBe(1);
   });
 
-  it('persistencia nao grava valor derivado nem escreve por cima do getter', async () => {
+  it('persistence saves no derived value and does not write over the getter', async () => {
     const salvo = store(
       'salvo',
       {
@@ -100,14 +100,14 @@ describe('getters no store', () => {
     expect(bruto).toBeTruthy();
     const gravado = JSON.parse(bruto!) as Record<string, unknown>;
 
-    // `total` e derivado: nao entra no que foi salvo.
+    // `total` is derived: it does not go into what was saved.
     expect(gravado).toHaveProperty('itens');
     expect(gravado).not.toHaveProperty('total');
   });
 });
 
-describe('getters em V.data', () => {
-  it('mantem o getter vivo no escopo raiz', () => {
+describe('getters in V.data', () => {
+  it('keeps the getter alive in the root scope', () => {
     core.data({
       itens: [1, 2] as number[],
       get quantos() {
@@ -121,22 +121,22 @@ describe('getters em V.data', () => {
   });
 });
 
-describe('V.directive e directives estruturais', () => {
-  it('repassa terminal, para um plugin poder assumir a subarvore', () => {
+describe('V.directive and structural directives', () => {
+  it('passes terminal along, so a plugin can take over the subtree', () => {
     core.directive('teste-estrutural', {
       terminal: true,
       mounted() {
-        // sem efeito: o que importa aqui e o registro
+        // no effect: what matters here is the registration
       },
     });
 
     expect(directives.get('teste-estrutural')?.terminal).toBe(true);
   });
 
-  it('sem terminal declarado, continua sendo uma directive comum', () => {
+  it('with no terminal declared, it stays an ordinary directive', () => {
     core.directive('teste-comum', {
       mounted() {
-        // idem
+        // same as above
       },
     });
 

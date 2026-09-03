@@ -7,6 +7,60 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+Nothing here changes the library. The version on npm is unaffected: this is the
+repository, the site and the documentation.
+
+### Fixed
+
+- **The documentation's live example cards stop growing.** Reported three times,
+  disclosed as unfixed in 0.7.0, and now understood. The frame measured
+  `Math.max(body.scrollHeight, documentElement.scrollHeight)`, and the second of
+  those is an echo: the frame is a grid item stretched by the code pane beside
+  it, so the inner document's root element fills whatever height the frame was
+  last given and reports it straight back. Each pass therefore read the previous
+  measurement, added the 8px margin, and wrote a frame 8px taller. Measured on
+  the events page: an unchanging counter whose content is 108px sat in a frame
+  that climbed from 144px to 192px over twelve clicks. It now measures the body
+  alone, which is content-driven and cannot echo, and sits at 116px however long
+  anyone clicks.
+
+  The previous attempt collapsed the frame to `0px` before measuring. That never
+  worked: the frame carries `min-height: 8rem` and is stretched by its grid row
+  regardless, so `offsetHeight` stayed at 192 throughout. The fix looked right
+  and changed nothing.
+
+  `npm run check:frame` pins it, and fails against the old code by climbing from
+  136px to 288px. The first version of that check passed against the old code,
+  because its mock let the collapse succeed; a check that cannot fail is worse
+  than no check, so the mock now models the echo the browser actually showed.
+
+### Changed
+
+- **English is the repository's language, and now the repository agrees.** The
+  rule was already written down, and 50 of 150 source files, 11 of 44
+  documentation pages, both issue templates, the pull request template and both
+  CI workflows had not followed it. `CONTRACT.md`, the document a new
+  contributor reads before writing a module, still instructed them to write
+  their comments in Portuguese.
+- `CONTRACT.md` rewritten. It listed 15 modules of the 58 that exist, and gave
+  the directive priorities with `MODEL` above `BIND`, which is backwards: `BIND`
+  is 45 and `MODEL` is 40, and the order is load-bearing, because a field that
+  receives its value before its `:min` and `:step` are applied gets silently
+  rounded by the browser.
+- The issue and pull request templates point at the published site rather than
+  at the markdown tree, and ask for the check that catches most of what has
+  gone wrong here: run a new regression test against the unfixed code and watch
+  it fail first.
+
+### Added
+
+- `npm run check:lang:docs` and `npm run check:lang:src`, which fail when
+  documentation or source comments are not in English. The `lang` attribute was
+  no use for this: it said `pt-BR` on eleven pages while being wrong in both
+  directions elsewhere, so both checks read the prose instead.
+- `npm run check:frame`, `npm run check:version` and `npm run check:links` now
+  run in CI, in a job separate from the test matrix.
+
 ## [0.7.0] - 2026-09-03
 
 A minor rather than a patch, because a documented keyboard shortcut changed.

@@ -1,189 +1,189 @@
-# Marca Voodoo.js
+# Voodoo.js brand
 
 > **JavaScript feels like magic.**
 
-Este diretório reúne todos os ativos visuais oficiais do Voodoo.js: mascote, logo, ilustrações e padrões. Tudo é SVG puro, escrito à mão, sem bibliotecas e sem dependências externas.
+This directory gathers every official Voodoo.js visual asset: mascot, logo, illustrations and patterns. Everything is plain SVG, written by hand, with no libraries and no external dependencies.
 
-Para ver todos os ativos lado a lado, abra `preview.html` no navegador.
+To see all the assets side by side, open `preview.html` in the browser.
 
 ---
 
-## Paleta oficial
+## Official palette
 
-Estes são os únicos valores de cor da marca. Não crie tons novos: se precisar de variação, use opacidade sobre uma destas cores.
+These are the only brand color values. Do not create new shades: if you need variation, use opacity over one of these colors.
 
-| Nome | Hex | Papel na marca |
+| Name | Hex | Role in the brand |
 | --- | --- | --- |
-| Roxo primário | `#6D3BF5` | Cor principal. Logo, links, botões primários, linhas de energia. |
-| Roxo claro | `#9B7BFF` | Apoio do roxo. Gradientes, brilhos, estados hover, detalhes. |
-| Magenta acento | `#FF3D8B` | Acento de destaque. Usar com parcimônia, só onde o olho deve parar. |
-| Âmbar vela | `#FFB35C` | A faísca da magia. Pontas de varinha, brilhos, avisos. |
-| Menta sucesso | `#2ED9A5` | Sucesso, confirmação, resposta recebida, nó reativo atualizado. |
-| Vermelho perigo | `#FF4D4D` | Erro destrutivo, alerta crítico. |
-| Tinta escura | `#14111F` | Fundo escuro, texto de maior contraste, furinhos dos botões. |
-| Tinta média | `#2A2440` | Contornos, costuras, superfícies escuras, texto secundário. |
-| Creme pergaminho | `#FBF7F2` | Fundo claro, tecido do mascote, texto sobre fundo escuro. |
-| Areia | `#EDE4D8` | Sombra do tecido, campos vazios, superfícies neutras. |
+| Primary purple | `#6D3BF5` | The main color. Logo, links, primary buttons, energy lines. |
+| Light purple | `#9B7BFF` | The purple's support. Gradients, glows, hover states, details. |
+| Accent magenta | `#FF3D8B` | Highlight accent. Use it sparingly, only where the eye should stop. |
+| Candle amber | `#FFB35C` | The spark of magic. Wand tips, glows, warnings. |
+| Success mint | `#2ED9A5` | Success, confirmation, response received, reactive node updated. |
+| Danger red | `#FF4D4D` | Destructive error, critical alert. |
+| Dark ink | `#14111F` | Dark background, highest contrast text, the little holes in the buttons. |
+| Mid ink | `#2A2440` | Outlines, stitching, dark surfaces, secondary text. |
+| Parchment cream | `#FBF7F2` | Light background, the mascot's fabric, text on a dark background. |
+| Sand | `#EDE4D8` | Fabric shadow, empty fields, neutral surfaces. |
 
-### Proporção sugerida
+### Suggested proportion
 
-Roxo domina, magenta e âmbar aparecem em doses pequenas. Uma boa mistura para uma tela de destaque: cerca de 60% de neutros (creme, areia, tintas), 30% de roxo e roxo claro, 10% dividido entre magenta e âmbar.
+Purple dominates, magenta and amber appear in small doses. A good mix for a hero screen: around 60% neutrals (cream, sand, inks), 30% purple and light purple, 10% split between magenta and amber.
 
 ---
 
-## Tipografia
+## Typography
 
-| Uso | Família | Pilha completa |
+| Use | Family | Full stack |
 | --- | --- | --- |
-| Display, títulos, wordmark | Space Grotesk | `'Space Grotesk', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif` |
-| Texto corrido, interface | Inter | `Inter, 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif` |
-| Código, diretivas, tags | JetBrains Mono | `'JetBrains Mono', 'Fira Code', ui-monospace, monospace` |
+| Display, headings, wordmark | Space Grotesk | `'Space Grotesk', Inter, system-ui, -apple-system, 'Segoe UI', sans-serif` |
+| Body text, interface | Inter | `Inter, 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif` |
+| Code, directives, tags | JetBrains Mono | `'JetBrains Mono', 'Fira Code', ui-monospace, monospace` |
 
-O wordmark usa Space Grotesk **Bold (700)** com `letter-spacing: -1.2` na escala de 44px. Nos SVGs o texto foi mantido como `<text>` com a pilha de fontes declarada, então há degradação elegante em qualquer máquina. Se precisar de fidelidade absoluta em impressão, converta o texto em curvas antes de enviar para a gráfica.
+The wordmark uses Space Grotesk **Bold (700)** with `letter-spacing: -1.2` at the 44px scale. In the SVGs the text was kept as `<text>` with the font stack declared, so it degrades gracefully on any machine. If you need absolute fidelity in print, convert the text to curves before sending it to the printer.
 
 ---
 
-## O mascote: Vudu
+## The mascot: Vudu
 
-Vudu é um bonequinho de pano, fofo e amigável, jamais assustador. Ele é o rosto do framework em documentação, estados de UI e material de divulgação.
+Vudu is a little rag doll, cute and friendly, never scary. He is the face of the framework in documentation, UI states and promotional material.
 
-**Anatomia fixa.** Estes traços não mudam entre as poses:
+**Fixed anatomy.** These traits do not change between poses:
 
-- Corpo de tecido cor de areia com gradiente de creme para areia.
-- Costura central em zigue-zague no tronco e na testa.
-- Olho esquerdo de botão roxo, olho direito de botão magenta, sempre com quatro furinhos e linha em X.
-- Sorriso bordado em pontilhado.
-- Remendo quadrado roxo no peito, levemente girado.
-- Tufo de cabelo de três linhas: roxo, magenta e roxo claro.
-- Alfinete mágico com cabeça de bola magenta e ponta âmbar brilhante.
+- A sand colored fabric body with a gradient from cream to sand.
+- A central zigzag seam down the torso and on the forehead.
+- A purple button for the left eye, a magenta button for the right eye, always with four little holes and thread in an X.
+- A smile embroidered as a dotted line.
+- A square purple patch on the chest, slightly rotated.
+- A tuft of hair made of three lines: purple, magenta and light purple.
+- A magic pin with a magenta ball head and a glowing amber tip.
 
-**As seis poses e quando usar cada uma:**
+**The six poses and when to use each one:**
 
-| Pose | Momento de uso |
+| Pose | When to use it |
 | --- | --- |
-| `vudu.svg` | Padrão. Apresentações, README, cabeçalho de página. |
-| `vudu-wave.svg` | Onboarding, primeira execução, boas-vindas na documentação. |
-| `vudu-happy.svg` | Sucesso, build concluído, instalação finalizada. |
-| `vudu-loading.svg` | Carregamento e espera. Traz animação CSS embutida. |
-| `vudu-error.svg` | Erro, falha de requisição, tela de exceção. |
-| `vudu-sleeping.svg` | Ociosidade, sessão expirada, servidor parado. |
+| `vudu.svg` | The default. Presentations, README, page header. |
+| `vudu-wave.svg` | Onboarding, first run, a welcome in the documentation. |
+| `vudu-happy.svg` | Success, build finished, install completed. |
+| `vudu-loading.svg` | Loading and waiting. Comes with CSS animation built in. |
+| `vudu-error.svg` | Error, failed request, exception screen. |
+| `vudu-sleeping.svg` | Idle, expired session, server stopped. |
 
 ---
 
-## Uso do logo
+## Using the logo
 
-### Versões
+### Versions
 
-- `voodoo-mark.svg`: só o símbolo. Use quando a marca já foi apresentada no contexto, ou em espaços muito pequenos.
-- `voodoo-logo.svg`: símbolo e wordmark, para fundos claros.
-- `voodoo-logo-dark.svg`: mesma construção, para fundos escuros.
-- `voodoo-lockup.svg`: logo com o slogan. Use em capas, apresentações e materiais de abertura.
-- `favicon.svg`: símbolo simplificado dentro de um quadrado escuro arredondado.
+- `voodoo-mark.svg`: the symbol on its own. Use it when the brand has already been introduced in the context, or in very small spaces.
+- `voodoo-logo.svg`: symbol and wordmark, for light backgrounds.
+- `voodoo-logo-dark.svg`: the same construction, for dark backgrounds.
+- `voodoo-lockup.svg`: the logo with the tagline. Use it on covers, presentations and opening material.
+- `favicon.svg`: a simplified symbol inside a rounded dark square.
 
-### Espaçamento mínimo
+### Minimum clear space
 
-Reserve ao redor do logo uma margem livre igual à **metade da altura do símbolo**. Nada entra nessa área: nem texto, nem imagem, nem borda de card.
+Reserve clear space around the logo equal to **half the height of the symbol**. Nothing enters that area: no text, no image, no card border.
 
 ```
         ↕ x
    ┌───────────────┐
- x │  V  Voodoo.js │ x        x = altura do símbolo ÷ 2
+ x │  V  Voodoo.js │ x        x = symbol height ÷ 2
    └───────────────┘
         ↕ x
 ```
 
-### Tamanhos mínimos
+### Minimum sizes
 
-| Ativo | Mínimo em tela | Mínimo impresso |
+| Asset | Minimum on screen | Minimum in print |
 | --- | --- | --- |
-| `voodoo-mark.svg` | 16 px de largura | 6 mm |
-| `favicon.svg` | 16 px | não se aplica |
-| `voodoo-logo.svg` e a versão escura | 120 px de largura | 30 mm |
-| `voodoo-lockup.svg` | 200 px de largura | 50 mm |
+| `voodoo-mark.svg` | 16 px wide | 6 mm |
+| `favicon.svg` | 16 px | not applicable |
+| `voodoo-logo.svg` and the dark version | 120 px wide | 30 mm |
+| `voodoo-lockup.svg` | 200 px wide | 50 mm |
 
-Abaixo desses tamanhos o wordmark fecha e a faísca some. Nesse caso troque pelo símbolo sozinho.
+Below those sizes the wordmark closes up and the spark disappears. In that case switch to the symbol on its own.
 
-### Fundos
+### Backgrounds
 
-Existem duas versões do logo horizontal, uma para cada tipo de fundo. Use sempre a que combina com o fundo:
+There are two versions of the horizontal logo, one for each kind of background. Always use the one that matches the background:
 
-| Fundo | Arquivo | Cor do wordmark |
+| Background | File | Wordmark color |
 | --- | --- | --- |
-| Claro: creme pergaminho, areia, branco | `voodoo-logo.svg` | `#14111F` com `.js` em `#6D3BF5` |
-| Escuro: tinta escura, tinta média | `voodoo-logo-dark.svg` | `#FBF7F2` com `.js` em `#9B7BFF` |
+| Light: parchment cream, sand, white | `voodoo-logo.svg` | `#14111F` with `.js` in `#6D3BF5` |
+| Dark: dark ink, mid ink | `voodoo-logo-dark.svg` | `#FBF7F2` with `.js` in `#9B7BFF` |
 
-Nunca use o arquivo claro sobre fundo escuro nem o contrário: o wordmark some. Sobre foto, coloque antes uma camada sólida ou um véu de tinta escura a 60% de opacidade.
+Never use the light file on a dark background, or the other way round: the wordmark disappears. Over a photo, put down a solid layer first, or a veil of dark ink at 60% opacity.
 
 ---
 
-## Tema claro e escuro
+## Light and dark theme
 
-O símbolo, o mascote e as cores de marca são iguais nos dois temas. O que muda são apenas os neutros: texto, contornos e superfícies escuras.
+The symbol, the mascot and the brand colors are the same in both themes. The only things that change are the neutrals: text, outlines and dark surfaces.
 
-Cada SVG carrega um bloco `<style>` interno com estas classes, e um `@media (prefers-color-scheme: dark)` que troca só os neutros:
+Each SVG carries an internal `<style>` block with these classes, and a `@media (prefers-color-scheme: dark)` that swaps only the neutrals:
 
-| Classe | O que controla | Claro | Escuro |
+| Class | What it controls | Light | Dark |
 | --- | --- | --- | --- |
-| `.vd-txt` | Texto neutro e marcadores de legenda | `#2A2440` | `#FBF7F2` |
-| `.vd-txt-forte` | Wordmark e texto de maior contraste | `#14111F` | `#FBF7F2` |
-| `.vd-haste` | Hastes finas desenhadas sobre o fundo | `#2A2440` | `#9B7BFF` |
-| `.vd-rim` | Contorno de resgate em massas escuras, como o caldeirão e o servidor | `transparent` | `#FBF7F2` |
-| `.vd-decor` | Opacidade das runas e do 404 de fundo | `0.13` | `0.26` |
+| `.vd-txt` | Neutral text and caption markers | `#2A2440` | `#FBF7F2` |
+| `.vd-txt-forte` | Wordmark and highest contrast text | `#14111F` | `#FBF7F2` |
+| `.vd-haste` | Thin stems drawn over the background | `#2A2440` | `#9B7BFF` |
+| `.vd-rim` | A rescue outline on dark masses, such as the cauldron and the server | `transparent` | `#FBF7F2` |
+| `.vd-decor` | Opacity of the runes and of the 404 in the background | `0.13` | `0.26` |
 
-Os valores originais continuam nos atributos de apresentação do SVG, então quem não interpreta CSS ainda vê o desenho correto no tema claro.
+The original values remain in the SVG presentation attributes, so anything that does not interpret CSS still sees the drawing correctly in the light theme.
 
-**Um detalhe importante.** Quando o SVG é carregado por `<img>`, o navegador resolve esse `@media` pela preferência do **sistema**, e não pelo tema da sua página. Se o seu site fixa o tema por conta própria, como a landing escura do Voodoo.js, você tem dois caminhos garantidos:
+**One important detail.** When the SVG is loaded through `<img>`, the browser resolves that `@media` from the **system** preference, and not from your page's theme. If your site fixes the theme on its own, like the dark Voodoo.js landing page, you have two reliable routes:
 
-1. Colar o SVG inline no HTML, assim ele passa a obedecer o CSS da página.
-2. Usar as duas versões separadas do logo e trocar por CSS, que é o que a `preview.html` faz no cabeçalho.
+1. Paste the SVG inline into the HTML, so it starts obeying the page's CSS.
+2. Use the two separate versions of the logo and swap them with CSS, which is what `preview.html` does in its header.
 
-O mascote não depende disso: o corpo é claro com contorno escuro, então ele se destaca em qualquer fundo.
-
----
-
-## O que NÃO fazer com a marca
-
-1. Não troque as cores do símbolo. A bola é sempre magenta e a ponta é sempre âmbar.
-2. Não aplique o logo claro sobre fundo claro, nem o escuro sobre fundo escuro.
-3. Não gire, incline, espelhe nem distorça o logo. Redimensione sempre de forma proporcional.
-4. Não recrie o wordmark em outra fonte, e não escreva "VoodooJS", "voodoo.js" ou "Voodoo JS". A grafia correta é **Voodoo.js**.
-5. Não adicione sombra, contorno, brilho externo ou qualquer efeito ao logo.
-6. Não coloque o logo dentro de caixas, círculos ou selos que não sejam o `favicon.svg`.
-7. Não use o mascote no lugar do logo em contextos formais, e não misture poses diferentes do Vudu na mesma tela.
-8. Não redesenhe o Vudu, não mude os olhos de botão de lado e não deixe o rosto assustador. Ele é um bichinho simpático.
-9. Não estique as ilustrações. Elas têm `viewBox` e devem escalar mantendo a proporção.
-10. Não use a paleta fora dos valores desta tabela.
+The mascot does not depend on this: the body is light with a dark outline, so he stands out on any background.
 
 ---
 
-## Tabela de arquivos
+## What NOT to do with the brand
 
-| Arquivo | Dimensão base | Finalidade |
+1. Do not change the symbol's colors. The ball is always magenta and the tip is always amber.
+2. Do not put the light logo on a light background, or the dark one on a dark background.
+3. Do not rotate, tilt, mirror or distort the logo. Always resize it proportionally.
+4. Do not recreate the wordmark in another font, and do not write "VoodooJS", "voodoo.js" or "Voodoo JS". The correct spelling is **Voodoo.js**.
+5. Do not add a shadow, an outline, an outer glow or any effect to the logo.
+6. Do not put the logo inside boxes, circles or badges other than `favicon.svg`.
+7. Do not use the mascot in place of the logo in formal contexts, and do not mix different Vudu poses on the same screen.
+8. Do not redraw Vudu, do not swap the button eyes around and do not make the face scary. He is a friendly little creature.
+9. Do not stretch the illustrations. They have a `viewBox` and must scale keeping their proportions.
+10. Do not use the palette outside the values in this table.
+
+---
+
+## File table
+
+| File | Base size | Purpose |
 | --- | --- | --- |
-| `mascot/vudu.svg` | 512 × 512 | Pose padrão do mascote, sorrindo e segurando a varinha. |
-| `mascot/vudu-happy.svg` | 512 × 512 | Comemoração, bracinhos para cima e faíscas. Estados de sucesso. |
-| `mascot/vudu-loading.svg` | 512 × 512 | Carregamento, varinha girando e três pontinhos. Animação CSS embutida, com respeito a `prefers-reduced-motion`. |
-| `mascot/vudu-error.svg` | 512 × 512 | Tristeza, costura solta e lágrima. Telas de erro. |
-| `mascot/vudu-sleeping.svg` | 512 × 512 | Sono, com "z z z" subindo. Ociosidade e sessão expirada. |
-| `mascot/vudu-wave.svg` | 512 × 512 | Aceno de boas-vindas. Onboarding e documentação. |
-| `logo/voodoo-mark.svg` | 64 × 64 | Símbolo isolado: alfinete mágico em V com faísca. Legível a 16 px. |
-| `logo/voodoo-logo.svg` | 340 × 88 | Logo horizontal para fundo claro. |
-| `logo/voodoo-logo-dark.svg` | 340 × 88 | Logo horizontal para fundo escuro. |
-| `logo/voodoo-lockup.svg` | 380 × 150 | Logo com o slogan, para capas e aberturas. |
-| `logo/favicon.svg` | 32 × 32 | Ícone de aba e atalho, símbolo simplificado sobre tinta escura. |
-| `illustrations/hero.svg` | 800 × 500 | Cena de destaque: Vudu conjurando um botão, um formulário e um card. |
-| `illustrations/reactivity.svg` | 800 × 460 | Como funciona a reatividade: só os nós dependentes do estado são redesenhados. |
-| `illustrations/http.svg` | 800 × 460 | Ciclo de requisição com `v-get` e `v-post`, com HTML voltando do servidor. |
-| `illustrations/directives.svg` | 800 × 460 | Uma tag sendo encantada, com `v-click`, `v-text` e `v-model` saindo dela. |
-| `illustrations/empty-state.svg` | 600 × 480 | Caldeirão vazio para estados sem conteúdo. |
-| `illustrations/404.svg` | 700 × 480 | Página não encontrada, com Vudu perdido e um mapa. |
-| `patterns/runes-bg.svg` | 480 × 480 | Padrão de runas repetível para fundo de seções de destaque. |
-| `README.md` | texto | Este guia de marca. |
-| `preview.html` | página | Galeria de todos os ativos. Abre no tema escuro, com botão para alternar para o claro. |
+| `mascot/vudu.svg` | 512 × 512 | The mascot's default pose, smiling and holding the wand. |
+| `mascot/vudu-happy.svg` | 512 × 512 | Celebration, little arms up and sparks. Success states. |
+| `mascot/vudu-loading.svg` | 512 × 512 | Loading, spinning wand and three dots. CSS animation built in, respecting `prefers-reduced-motion`. |
+| `mascot/vudu-error.svg` | 512 × 512 | Sadness, a loose seam and a tear. Error screens. |
+| `mascot/vudu-sleeping.svg` | 512 × 512 | Sleep, with "z z z" rising. Idle and expired session. |
+| `mascot/vudu-wave.svg` | 512 × 512 | A welcoming wave. Onboarding and documentation. |
+| `logo/voodoo-mark.svg` | 64 × 64 | The symbol on its own: a magic pin shaped like a V, with a spark. Legible at 16 px. |
+| `logo/voodoo-logo.svg` | 340 × 88 | Horizontal logo for a light background. |
+| `logo/voodoo-logo-dark.svg` | 340 × 88 | Horizontal logo for a dark background. |
+| `logo/voodoo-lockup.svg` | 380 × 150 | The logo with the tagline, for covers and openings. |
+| `logo/favicon.svg` | 32 × 32 | Tab and shortcut icon, a simplified symbol on dark ink. |
+| `illustrations/hero.svg` | 800 × 500 | The hero scene: Vudu conjuring a button, a form and a card. |
+| `illustrations/reactivity.svg` | 800 × 460 | How reactivity works: only the nodes that depend on the state are redrawn. |
+| `illustrations/http.svg` | 800 × 460 | The request cycle with `v-get` and `v-post`, with HTML coming back from the server. |
+| `illustrations/directives.svg` | 800 × 460 | A tag being enchanted, with `v-click`, `v-text` and `v-model` coming out of it. |
+| `illustrations/empty-state.svg` | 600 × 480 | An empty cauldron, for states with no content. |
+| `illustrations/404.svg` | 700 × 480 | Page not found, with Vudu lost and a map. |
+| `patterns/runes-bg.svg` | 480 × 480 | A repeatable rune pattern, for the background of highlight sections. |
+| `README.md` | text | This brand guide. |
+| `preview.html` | page | A gallery of every asset. Opens in the dark theme, with a button to switch to the light one. |
 
 ---
 
-## Como usar
+## How to use it
 
 Favicon:
 
@@ -191,13 +191,13 @@ Favicon:
 <link rel="icon" type="image/svg+xml" href="/brand/logo/favicon.svg">
 ```
 
-Mascote em uma página:
+The mascot on a page:
 
 ```html
-<img src="/brand/mascot/vudu-wave.svg" alt="Vudu acenando" width="180" height="180">
+<img src="/brand/mascot/vudu-wave.svg" alt="Vudu waving" width="180" height="180">
 ```
 
-Padrão de runas como fundo:
+The rune pattern as a background:
 
 ```css
 .hero {
@@ -208,7 +208,7 @@ Padrão de runas como fundo:
 }
 ```
 
-Tokens de cor em CSS:
+Color tokens in CSS:
 
 ```css
 :root {
@@ -227,10 +227,10 @@ Tokens de cor em CSS:
 
 ---
 
-## Notas técnicas
+## Technical notes
 
-- Todo SVG tem `viewBox`, `role="img"`, `<title>` e `<desc>` ligados por `aria-labelledby`, então funciona bem com leitor de tela.
-- Todo SVG tem o bloco de tema descrito na seção "Tema claro e escuro", com as cores de marca preservadas nos dois modos.
-- Os identificadores internos de gradiente e as classes de animação têm prefixo por arquivo, então é seguro colar vários SVGs inline na mesma página sem conflito de `id`.
-- Só `mascot/vudu-loading.svg` tem animação. Ela é CSS puro dentro do próprio arquivo e para sozinha quando o sistema pede menos movimento.
-- Os arquivos estão em UTF-8 com declaração XML explícita.
+- Every SVG has a `viewBox`, `role="img"`, a `<title>` and a `<desc>` tied together by `aria-labelledby`, so it works well with a screen reader.
+- Every SVG has the theme block described in the "Light and dark theme" section, with the brand colors preserved in both modes.
+- The internal gradient identifiers and the animation classes are prefixed per file, so it is safe to paste several SVGs inline on the same page without an `id` conflict.
+- Only `mascot/vudu-loading.svg` has animation. It is pure CSS inside the file itself, and it stops on its own when the system asks for less motion.
+- The files are UTF-8, with an explicit XML declaration.

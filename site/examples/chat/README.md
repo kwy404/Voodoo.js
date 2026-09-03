@@ -1,29 +1,29 @@
-# Chat em tempo real com Voodoo.js
+# Real-time chat with Voodoo.js
 
-Mensageiro simulado, com barra lateral de conversas, bolhas de mensagem,
-indicador de digitando e respostas automaticas. Roda so no navegador.
+A simulated messenger, with a sidebar of conversations, message bubbles, a
+typing indicator and automatic replies. It runs entirely in the browser.
 
-## Como abrir
+## How to open
 
-Abra `examples/chat/index.html`. A demo usa o bundle essencial
-`packages/voodoojs/dist/voodoo.min.js` com `data-manual`, entao o componente e
-registrado antes de `V.theme.init()` e `V.start()`.
+Open `examples/chat/index.html`. The demo uses the essential bundle
+`packages/voodoojs/dist/voodoo.min.js` with `data-manual`, so the component is
+registered before `V.theme.init()` and `V.start()`.
 
-## O que a demo mostra
+## What the demo shows
 
-- `v-for` nas conversas, nas mensagens e na grade de emojis, sempre com `:key`.
-- `v-show` nos contadores, no indicador de digitando e no seletor de emojis.
-- `v-transition` com as animacoes `fade` e `scale` que a lib ja injeta.
-- `V.nextTick` antes de ajustar o `scrollTop`, para rolar depois que a lista
-  ja foi atualizada no DOM.
-- `@keyup.enter` no campo de texto e `@outside` para fechar o seletor de emojis.
-- `v-model`, `v-click`, `v-ref` e `:class` no restante da tela.
-- Estados da mensagem que evoluem sozinhos: enviando, enviado e lido.
+- `v-for` on the conversations, on the messages and on the emoji grid, always with `:key`.
+- `v-show` on the counters, on the typing indicator and on the emoji picker.
+- `v-transition` with the `fade` and `scale` animations the library already injects.
+- `V.nextTick` before adjusting `scrollTop`, so the scrolling happens after the
+  list has already been updated in the DOM.
+- `@keyup.enter` on the text field and `@outside` to close the emoji picker.
+- `v-model`, `v-click`, `v-ref` and `:class` across the rest of the screen.
+- Message states that move along on their own: sending, sent and read.
 
-## Detalhes
+## Details
 
-Toda a logica fica em `V.component('chat-app', ...)`. O visual combina classes
-do design system (`v-avatar`, `v-badge`, `v-input`, `v-btn`) com CSS proprio
-escrito so nos tokens `--v-*`, entao os dois temas saem do mesmo codigo. Sao
-duas colunas no desktop, uma no celular, e as animacoes respeitam
+All the logic lives in `V.component('chat-app', ...)`. The look combines design
+system classes (`v-avatar`, `v-badge`, `v-input`, `v-btn`) with CSS of its own
+written only in the `--v-*` tokens, so both themes come out of the same code.
+Two columns on the desktop, one on the phone, and the animations respect
 `prefers-reduced-motion`.

@@ -1,19 +1,19 @@
 /**
- * Contrato de limpeza das directives.
+ * The cleanup contract for directives.
  *
- * Toda directive que registra alguma coisa no mundo externo precisa devolver o
- * que pegou quando o elemento sai de cena. Este arquivo descreve o contrato uma
- * vez, por categoria de recurso, e o verifica com directives de teste. Uma
- * directive nova pode ser conferida aqui: se ela nao passar no molde da sua
- * categoria, ela vaza.
+ * Every directive that registers something in the outside world has to hand
+ * back what it took when the element leaves the page. This file states the
+ * contract once, one category of resource at a time, and checks it with test
+ * directives. A new directive can be checked here: if it does not fit the mould
+ * of its category, it leaks.
  *
- * As seis categorias sao:
- *   1. listener      - `addEventListener` em qualquer alvo
- *   2. effect        - efeito reativo criado com `ctx.effect`
- *   3. watch         - observador de estado com handle de parada
+ * The six categories are:
+ *   1. listener      - `addEventListener` on any target
+ *   2. effect        - reactive effect created with `ctx.effect`
+ *   3. watch         - state observer with a stop handle
  *   4. observer      - MutationObserver, IntersectionObserver, ResizeObserver
  *   5. timer         - setTimeout, setInterval, requestAnimationFrame
- *   6. subscription  - assinatura de um barramento, store ou servico
+ *   6. subscription  - subscription to a bus, a store or a service
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -41,21 +41,21 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// O molde
+// The mould
 // ---------------------------------------------------------------------------
 
 interface Sonda {
-  /** Quantos recursos estao abertos neste momento. */
+  /** How many resources are open at this moment. */
   abertos: number;
-  /** Quantas vezes o recurso foi acionado. */
+  /** How many times the resource has fired. */
   acionamentos: number;
-  /** Provoca o recurso de fora, para ver se ele ainda responde. */
+  /** Pokes the resource from outside, to see whether it still answers. */
   provocar(): void;
 }
 
 /**
- * Molde de verificacao. Monta o HTML, confirma que o recurso esta aberto e
- * responde, destroi o elemento e cobra que nada tenha sobrado.
+ * The verification mould. Mounts the HTML, confirms the resource is open and
+ * answering, destroys the element and demands that nothing was left behind.
  */
 async function verificarContrato(html: string, sonda: Sonda, dados: Record<string, unknown> = {}) {
   const { root } = montar(html, dados);
@@ -85,8 +85,8 @@ async function verificarContrato(html: string, sonda: Sonda, dados: Record<strin
 // 1. Listener
 // ---------------------------------------------------------------------------
 
-describe('categoria listener', () => {
-  it('uma directive que escuta o document devolve o listener', async () => {
+describe('listener category', () => {
+  it('a directive that listens on the document hands the listener back', async () => {
     const sonda: Sonda = {
       abertos: 0,
       acionamentos: 0,
@@ -108,7 +108,7 @@ describe('categoria listener', () => {
     await verificarContrato('<div v-teste-listener></div>', sonda);
   });
 
-  it('@click nativo segue o mesmo contrato', () => {
+  it('the built-in @click follows the same contract', () => {
     let cliques = 0;
     const { root } = montar('<button @click="c()"></button>', {
       c: () => {
@@ -128,8 +128,8 @@ describe('categoria listener', () => {
 // 2. Effect
 // ---------------------------------------------------------------------------
 
-describe('categoria effect', () => {
-  it('um efeito criado por ctx.effect para junto com o elemento', async () => {
+describe('effect category', () => {
+  it('an effect created by ctx.effect stops along with the element', async () => {
     const estado = reactive({ n: 0 });
     const sonda: Sonda = {
       abertos: 0,
@@ -163,8 +163,8 @@ describe('categoria effect', () => {
 // 3. Watch
 // ---------------------------------------------------------------------------
 
-describe('categoria watch', () => {
-  it('o handle de parada precisa ser chamado na limpeza', async () => {
+describe('watch category', () => {
+  it('the stop handle has to be called during cleanup', async () => {
     const estado = reactive({ n: 0 });
     const sonda: Sonda = {
       abertos: 0,
@@ -191,7 +191,7 @@ describe('categoria watch', () => {
     await verificarContrato('<div v-teste-watch></div>', sonda);
   });
 
-  it('v-watch nativo para de observar depois de destroy', async () => {
+  it('the built-in v-watch stops observing after destroy', async () => {
     let disparos = 0;
     const { root, estado } = montar('<div v-watch:n="registrar()"></div>', {
       n: 0,
@@ -216,8 +216,8 @@ describe('categoria watch', () => {
 // 4. Observer
 // ---------------------------------------------------------------------------
 
-describe('categoria observer', () => {
-  it('um observador precisa ser desconectado na limpeza', async () => {
+describe('observer category', () => {
+  it('an observer has to be disconnected during cleanup', async () => {
     const sonda: Sonda = {
       abertos: 0,
       acionamentos: 0,
@@ -249,8 +249,8 @@ describe('categoria observer', () => {
 // 5. Timer
 // ---------------------------------------------------------------------------
 
-describe('categoria timer', () => {
-  it('setInterval precisa ser limpo na saida', async () => {
+describe('timer category', () => {
+  it('setInterval has to be cleared on the way out', async () => {
     let disparos = 0;
     let intervalo: ReturnType<typeof setInterval> | null = null;
 
@@ -276,7 +276,7 @@ describe('categoria timer', () => {
     expect(disparos).toBe(antes);
   });
 
-  it('um timeout agendado nao pode rodar depois da destruicao', async () => {
+  it('a scheduled timeout cannot run after the destruction', async () => {
     let rodou = false;
     defineDirective('teste-timeout', ({ cleanup }) => {
       const id = setTimeout(() => {
@@ -296,8 +296,8 @@ describe('categoria timer', () => {
 // 6. Subscription
 // ---------------------------------------------------------------------------
 
-describe('categoria subscription', () => {
-  it('a assinatura do barramento global precisa ser cancelada', async () => {
+describe('subscription category', () => {
+  it('the global bus subscription has to be cancelled', async () => {
     const sonda: Sonda = {
       abertos: 0,
       acionamentos: 0,
@@ -320,11 +320,11 @@ describe('categoria subscription', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Regras gerais que valem para qualquer categoria
+// General rules that hold for every category
 // ---------------------------------------------------------------------------
 
-describe('regras gerais da limpeza', () => {
-  it('a limpeza roda na ordem inversa do registro', () => {
+describe('general cleanup rules', () => {
+  it('cleanup runs in the reverse order of registration', () => {
     const ordem: number[] = [];
     defineDirective('teste-ordem', ({ cleanup }) => {
       cleanup(() => ordem.push(1));
@@ -337,7 +337,7 @@ describe('regras gerais da limpeza', () => {
     expect(ordem).toEqual([3, 2, 1]);
   });
 
-  it('uma limpeza que lanca erro nao impede as outras', () => {
+  it('a cleanup that throws does not stop the others', () => {
     let limpou = false;
     defineDirective('teste-erro-limpeza', ({ cleanup }) => {
       cleanup(() => {
@@ -353,7 +353,7 @@ describe('regras gerais da limpeza', () => {
     expect(limpou).toBe(true);
   });
 
-  it('destruir duas vezes nao chama a limpeza duas vezes', () => {
+  it('destroying twice does not call the cleanup twice', () => {
     let vezes = 0;
     defineDirective('teste-idempotente', ({ cleanup }) => {
       cleanup(() => {
@@ -367,7 +367,7 @@ describe('regras gerais da limpeza', () => {
     expect(vezes).toBe(1);
   });
 
-  it('destruir o pai limpa os filhos, de dentro para fora', () => {
+  it('destroying the parent cleans up the children, from the inside out', () => {
     const ordem: string[] = [];
     defineDirective('teste-pai', ({ cleanup }) => cleanup(() => ordem.push('pai')));
     defineDirective('teste-filho', ({ cleanup }) => cleanup(() => ordem.push('filho')));
@@ -377,9 +377,9 @@ describe('regras gerais da limpeza', () => {
     expect(ordem).toEqual(['filho', 'pai']);
   });
 
-  it('todas as directives internas registram algum ponto de limpeza', () => {
-    // O escopo de efeitos de cada directive ja e registrado pelo walker, entao
-    // este teste garante que o mecanismo continua ligado para todas elas.
+  it('every built-in directive registers some cleanup point', () => {
+    // The walker already registers each directive's effect scope, so this test
+    // makes sure the mechanism stays wired up for all of them.
     const { root } = montar('<div v-text="a" :title="a" @click="a"></div>', { a: 'x' });
     const div = root.querySelector('div')!;
     expect(core.getScope(div) ?? true).toBeTruthy();
@@ -387,7 +387,7 @@ describe('regras gerais da limpeza', () => {
     expect(div.textContent).toBe('x');
   });
 
-  it('as directives de teste ficaram registradas com o nome esperado', () => {
+  it('the test directives ended up registered under the expected name', () => {
     for (const nome of [
       'teste-listener',
       'teste-effect',

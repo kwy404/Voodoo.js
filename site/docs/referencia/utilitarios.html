@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Utilitários · Documentação da Voodoo.js</title>
-<meta name="description" content="A caixa de ferramentas do objeto V: identificadores, tempo, debounce e throttle, objetos e arrays, textos, formatadores de moeda, número e data, e a leitura do ambiente.">
+<title>Utilities · Voodoo.js documentation</title>
+<meta name="description" content="The toolbox on the V object: identifiers, time, debounce and throttle, objects and arrays, text, currency, number and date formatters, and reading the environment.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/utilitarios">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
@@ -14,145 +14,146 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Utilitários</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Utilities</h1>
 <p class="doc-resumo">
-  Funções que a própria biblioteca usa por dentro e publica em <code>V</code>. Todas existem
-  também como importação direta, em <code>voodoojs/utils</code>, para quem monta o projeto com um
-  bundler.
+  Functions the library itself uses internally and publishes on <code>V</code>. They all also
+  exist as a direct import, from <code>voodoojs/utils</code>, for anyone who builds the project
+  with a bundler.
 </p>
 
-<h2 id="identificadores">Identificadores e tempo</h2>
+<h2 id="identificadores">Identifiers and time</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Função</th><th>Devolve</th></tr></thead>
+<thead><tr><th>Function</th><th>Returns</th></tr></thead>
 <tbody>
-<tr><td><code>V.uuid()</code></td><td>UUID v4. Usa <code>crypto.randomUUID</code> quando disponível, com dois planos B</td></tr>
-<tr><td><code>V.uid(prefixo?)</code></td><td>Identificador curto, útil para ids de elementos</td></tr>
-<tr><td><code>V.sleep(ms)</code></td><td>Promessa que resolve depois do tempo</td></tr>
-<tr><td><code>V.parseDuration(valor, padrao?)</code></td><td>Milissegundos a partir de <code>300</code>, <code>'300ms'</code>, <code>'1.5s'</code>, <code>'2m'</code>, <code>'1h'</code></td></tr>
+<tr><td><code>V.uuid()</code></td><td>UUID v4. Uses <code>crypto.randomUUID</code> when available, with two fallbacks</td></tr>
+<tr><td><code>V.uid(prefix?)</code></td><td>Short identifier, useful for element ids</td></tr>
+<tr><td><code>V.sleep(ms)</code></td><td>Promise that resolves after the given time</td></tr>
+<tr><td><code>V.parseDuration(value, fallback?)</code></td><td>Milliseconds from <code>300</code>, <code>'300ms'</code>, <code>'1.5s'</code>, <code>'2m'</code>, <code>'1h'</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<pre data-lang="js"><code>V.uid('campo-');           // 'campo-k3f9a2'
+<pre data-lang="js"><code>V.uid('field-');           // 'field-k3f9a2'
 V.parseDuration('1.5s');   // 1500
 V.parseDuration(null, 99); // 99</code></pre>
 
 <p>
-  <code>parseDuration</code> aceita <code>null</code> porque a origem mais comum é um
-  <code>getAttribute</code> que pode não existir.
+  <code>parseDuration</code> accepts <code>null</code> because the most common source is a
+  <code>getAttribute</code> that may not exist.
 </p>
 
-<h2 id="ordem-superior">Funções de ordem superior</h2>
+<h2 id="ordem-superior">Higher-order functions</h2>
 
-<h3 id="debounce">debounce e throttle</h3>
+<h3 id="debounce">debounce and throttle</h3>
 
-<pre data-lang="js"><code>const buscar = V.debounce(carregarProdutos, 300);
-buscar('cane');
-buscar('caneca');   // só esta executa
-buscar.cancel();    // descarta a chamada pendente
-buscar.flush();     // executa agora, sem esperar
+<pre data-lang="js"><code>const search = V.debounce(loadProducts, 300);
+search('mu');
+search('mug');      // only this one runs
+search.cancel();    // drops the pending call
+search.flush();     // runs now, without waiting
 
-const salvarAgora = V.debounce(salvar, 1000, true);  // borda de entrada
+const saveNow = V.debounce(save, 1000, true);  // leading edge
 
-const acompanhar = V.throttle(medirRolagem, 100);
-window.addEventListener('scroll', acompanhar, { passive: true });</code></pre>
+const track = V.throttle(measureScroll, 100);
+window.addEventListener('scroll', track, { passive: true });</code></pre>
 
-<h3 id="once">once e memoize</h3>
+<h3 id="once">once and memoize</h3>
 
-<pre data-lang="js"><code>const iniciar = V.once(() =&gt; criarConexao());
-iniciar();
-iniciar();  // devolve a mesma conexão
+<pre data-lang="js"><code>const start = V.once(() =&gt; createConnection());
+start();
+start();  // returns the same connection
 
-const calcular = V.memoize((a, b) =&gt; operacaoCara(a, b));
-calcular.cache.clear();
-const porId = V.memoize(buscar, (id) =&gt; String(id));  // chave própria</code></pre>
+const compute = V.memoize((a, b) =&gt; expensiveOperation(a, b));
+compute.cache.clear();
+const byId = V.memoize(load, (id) =&gt; String(id));  // key of your own</code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Cuidado com o nome</span>
+  <span class="doc-aviso__rotulo">Careful with the name</span>
   <p>
-    <code>V.once</code> no objeto global é o barramento de eventos
-    (<code>V.once('evento', handler)</code>). O utilitário que executa uma função uma única vez
-    está no import direto: <code>import { once } from 'voodoojs/utils'</code>.
+    <code>V.once</code> on the global object is the event bus
+    (<code>V.once('event', handler)</code>). The utility that runs a function a single time is in
+    the direct import: <code>import { once } from 'voodoojs/utils'</code>.
   </p>
 </div>
 
-<h2 id="objetos">Objetos e arrays</h2>
+<h2 id="objetos">Objects and arrays</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Função</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Function</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>V.clone(valor)</code></td><td>Cópia profunda. Usa <code>structuredClone</code> quando existir; entende <code>Date</code>, <code>Map</code> e <code>Set</code></td></tr>
-<tr><td><code>V.merge(alvo, ...fontes)</code></td><td>Mescla em profundidade. Arrays são substituídos, não concatenados</td></tr>
-<tr><td><code>V.groupBy(lista, chaveOuFn)</code></td><td>Agrupa em um objeto</td></tr>
-<tr><td><code>V.unique(lista, chaveOuFn?)</code></td><td>Remove repetidos</td></tr>
-<tr><td><code>V.chunk(lista, tamanho)</code></td><td>Quebra em pedaços</td></tr>
-<tr><td><code>V.sortBy(lista, chaveOuFn, direcao?)</code></td><td>Ordena sem alterar o original</td></tr>
-<tr><td><code>V.get(objeto, caminho, padrao?)</code></td><td>Leitura de caminho aninhado, com segurança</td></tr>
-<tr><td><code>V.set(objeto, caminho, valor)</code></td><td>Escrita, criando os objetos do meio</td></tr>
-<tr><td><code>V.random(min, max)</code>, <code>V.sample(lista)</code></td><td>Inteiro no intervalo, e item qualquer</td></tr>
+<tr><td><code>V.clone(value)</code></td><td>Deep copy. Uses <code>structuredClone</code> when it exists; understands <code>Date</code>, <code>Map</code> and <code>Set</code></td></tr>
+<tr><td><code>V.merge(target, ...sources)</code></td><td>Deep merge. Arrays are replaced, not concatenated</td></tr>
+<tr><td><code>V.groupBy(list, keyOrFn)</code></td><td>Groups into an object</td></tr>
+<tr><td><code>V.unique(list, keyOrFn?)</code></td><td>Removes duplicates</td></tr>
+<tr><td><code>V.chunk(list, size)</code></td><td>Breaks into pieces</td></tr>
+<tr><td><code>V.sortBy(list, keyOrFn, direction?)</code></td><td>Sorts without changing the original</td></tr>
+<tr><td><code>V.get(object, path, fallback?)</code></td><td>Reads a nested path, safely</td></tr>
+<tr><td><code>V.set(object, path, value)</code></td><td>Writes, creating the objects in between</td></tr>
+<tr><td><code>V.random(min, max)</code>, <code>V.sample(list)</code></td><td>Integer in the range, and any item</td></tr>
 </tbody>
 </table>
 </div>
 
 <pre data-lang="js"><code>V.merge({ a: { b: 1 } }, { a: { c: 2 } });  // { a: { b: 1, c: 2 } }
-V.unique(pontos, (p) =&gt; p.x + ',' + p.y);
-V.sortBy(produtos, 'preco', 'desc');
-V.get(dados, 'lista.0.nome', 'sem nome');
-V.set(form, 'itens.0.qtd', 2);</code></pre>
+V.unique(points, (p) =&gt; p.x + ',' + p.y);
+V.sortBy(products, 'price', 'desc');
+V.get(data, 'list.0.name', 'no name');
+V.set(form, 'items.0.qty', 2);</code></pre>
 
 <p>
-  Dois detalhes que evitam surpresa: <code>merge</code> modifica o primeiro objeto — passe
-  <code>{}</code> na frente quando quiser preservar. E <code>sortBy</code> compara textos com
-  <code>localeCompare</code> e ordenação numérica, o que resolve <code>item 2</code> antes de
-  <code>item 10</code>; valores nulos vão para o fim.
+  Two details that avoid surprises: <code>merge</code> modifies the first object, pass
+  <code>{}</code> in front when you want to preserve it. And <code>sortBy</code> compares text with
+  <code>localeCompare</code> and numeric ordering, which puts <code>item 2</code> before
+  <code>item 10</code>; null values go to the end.
 </p>
 
-<h2 id="textos">Textos</h2>
+<h2 id="textos">Text</h2>
 
-<pre data-lang="js"><code>V.slugify('Ação e Reação');        // 'acao-e-reacao'
-V.slugify('Meu Post', '_');        // 'meu_post'
-V.truncate('Um texto bem longo', 10);       // 'Um text...'
-V.truncate('Um texto bem longo', 10, '…');  // 'Um texto…'
+<pre data-lang="js"><code>V.slugify('Crème Brûlée');         // 'creme-brulee'
+V.slugify('My Post', '_');         // 'my_post'
+V.truncate('A rather long text', 10);       // 'A rathe...'
+V.truncate('A rather long text', 10, '…');  // 'A rather…'
 V.capitalize('voodoo');            // 'Voodoo'
 V.titleCase('JAVASCRIPT feels');   // 'Javascript Feels'
-V.escapeHtml('&lt;b&gt;oi&lt;/b&gt;');         // '&amp;lt;b&amp;gt;oi&amp;lt;/b&amp;gt;'
-V.stripTags('&lt;b&gt;oi&lt;/b&gt;');          // 'oi'</code></pre>
+V.escapeHtml('&lt;b&gt;hi&lt;/b&gt;');         // '&amp;lt;b&amp;gt;hi&amp;lt;/b&amp;gt;'
+V.stripTags('&lt;b&gt;hi&lt;/b&gt;');          // 'hi'</code></pre>
 
 <div class="doc-aviso doc-aviso--perigo">
-  <span class="doc-aviso__rotulo">stripTags não é sanitizador</span>
+  <span class="doc-aviso__rotulo">stripTags is not a sanitizer</span>
   <p>
-    <code>escapeHtml</code> é o caminho seguro para montar HTML na mão.
-    <code>stripTags</code> remove tags de forma simples e <b>não</b> serve como defesa contra
-    conteúdo hostil. A página de <a href="seguranca.html">segurança</a> explica a diferença.
+    <code>escapeHtml</code> is the safe way to assemble HTML by hand.
+    <code>stripTags</code> removes tags in a simple way and does <b>not</b> work as a defence
+    against hostile content. The <a href="seguranca.html">security</a> page explains the
+    difference.
   </p>
 </div>
 
-<h2 id="formatadores">Formatadores</h2>
+<h2 id="formatadores">Formatters</h2>
 
-<p>Todos usam o locale e a moeda padrão, ajustáveis:</p>
+<p>They all use the default locale and currency, both adjustable:</p>
 
 <pre data-lang="js"><code>V.setFormatDefaults('pt-BR', 'BRL');</code></pre>
 
 <p>
-  O bootstrap já configura isso a partir de <code>V.config.locale</code> e
+  The bootstrap already sets this up from <code>V.config.locale</code> and
   <code>V.config.currency</code>.
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Chamada</th><th>Resultado</th></tr></thead>
+<thead><tr><th>Call</th><th>Result</th></tr></thead>
 <tbody>
 <tr><td><code>V.formatCurrency(1234.5)</code></td><td><code>R$ 1.234,50</code></td></tr>
 <tr><td><code>V.formatCurrency(99, { currency: 'USD', locale: 'en-US' })</code></td><td><code>$99.00</code></td></tr>
 <tr><td><code>V.formatNumber(1234.5678)</code></td><td><code>1.234,568</code></td></tr>
 <tr><td><code>V.formatNumber(0.75, { style: 'percent' })</code></td><td><code>75%</code></td></tr>
 <tr><td><code>V.formatDate(new Date())</code></td><td><code>29/08/2026</code></td></tr>
-<tr><td><code>V.formatDate(data, 'long')</code></td><td><code>29 de agosto de 2026</code></td></tr>
-<tr><td><code>V.formatDate(data, 'DD/MM/YYYY HH:mm:ss')</code></td><td>máscara textual</td></tr>
+<tr><td><code>V.formatDate(date, 'long')</code></td><td><code>29 de agosto de 2026</code></td></tr>
+<tr><td><code>V.formatDate(date, 'DD/MM/YYYY HH:mm:ss')</code></td><td>text mask</td></tr>
 <tr><td><code>V.relativeTime(Date.now() - 300000)</code></td><td><code>há 5 minutos</code></td></tr>
 <tr><td><code>V.formatFileSize(1536)</code></td><td><code>1.5 KB</code></td></tr>
 <tr><td><code>V.formatPercent(0.256, 1)</code></td><td><code>25,6%</code></td></tr>
@@ -161,56 +162,56 @@ V.stripTags('&lt;b&gt;oi&lt;/b&gt;');          // 'oi'</code></pre>
 </div>
 
 <p>
-  <code>formatDate</code> aceita <code>Date</code>, timestamp ou texto ISO, e devolve texto vazio
-  para uma data inválida. Os formatos nomeados são <code>long</code>, <code>full</code>,
-  <code>time</code> e <code>datetime</code>; a máscara textual entende <code>YYYY</code>,
-  <code>YY</code>, <code>MM</code>, <code>DD</code>, <code>HH</code>, <code>mm</code> e
-  <code>ss</code>; e um objeto é repassado ao <code>Intl.DateTimeFormat</code>.
+  <code>formatDate</code> accepts a <code>Date</code>, a timestamp or ISO text, and returns empty
+  text for an invalid date. The named formats are <code>long</code>, <code>full</code>,
+  <code>time</code> and <code>datetime</code>; the text mask understands <code>YYYY</code>,
+  <code>YY</code>, <code>MM</code>, <code>DD</code>, <code>HH</code>, <code>mm</code> and
+  <code>ss</code>; and an object is passed straight to <code>Intl.DateTimeFormat</code>.
 </p>
 
-<h2 id="ambiente">Ambiente</h2>
+<h2 id="ambiente">Environment</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>O que é</th></tr></thead>
+<thead><tr><th>Member</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>V.isBrowser</code></td><td>Existe DOM?</td></tr>
-<tr><td><code>V.device</code></td><td>Getters de toque, tamanho, movimento e tema</td></tr>
-<tr><td><code>V.screen</code></td><td>Objeto reativo com largura, altura e pontos de quebra</td></tr>
-<tr><td><code>V.network</code></td><td>Objeto reativo com o estado da conexão</td></tr>
-<tr><td><code>V.clipboard</code></td><td><code>copy</code> e <code>read</code></td></tr>
+<tr><td><code>V.isBrowser</code></td><td>Is there a DOM?</td></tr>
+<tr><td><code>V.device</code></td><td>Getters for touch, size, motion and theme</td></tr>
+<tr><td><code>V.screen</code></td><td>Reactive object with width, height and breakpoints</td></tr>
+<tr><td><code>V.network</code></td><td>Reactive object with the state of the connection</td></tr>
+<tr><td><code>V.clipboard</code></td><td><code>copy</code> and <code>read</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Dentro do HTML, os três últimos aparecem como <code>$screen</code>, <code>$network</code>,
-  <code>$device</code> e <code>$clipboard</code>. Como <code>screen</code> e
-  <code>network</code> são reativos, uma expressão que os lê se atualiza sozinha quando a janela
-  muda de tamanho ou a conexão cai.
+  Inside HTML, the last four appear as <code>$screen</code>, <code>$network</code>,
+  <code>$device</code> and <code>$clipboard</code>. Because <code>screen</code> and
+  <code>network</code> are reactive, an expression that reads them updates on its own when the
+  window changes size or the connection drops.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{}"&gt;
-  &lt;p&gt;Largura: { $screen.width }px&lt;/p&gt;
-  &lt;p&gt;É celular: { $screen.mobile }&lt;/p&gt;
+  &lt;p&gt;Width: { $screen.width }px&lt;/p&gt;
+  &lt;p&gt;Is mobile: { $screen.mobile }&lt;/p&gt;
   &lt;p&gt;Online: { $network.online }&lt;/p&gt;
-  &lt;p&gt;Toque: { $device.touch }&lt;/p&gt;
-  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copiar cupom&lt;/button&gt;
+  &lt;p&gt;Touch: { $device.touch }&lt;/p&gt;
+  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copy coupon&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="import">Importando direto</h2>
+<h2 id="import">Importing directly</h2>
 
 <pre data-lang="js"><code>import { debounce, formatCurrency, slugify, once } from 'voodoojs/utils';</code></pre>
 
 <p>
-  Esse ponto de entrada não carrega o runtime de DOM, então ele serve inclusive em Node — é a
-  forma de reaproveitar os formatadores no servidor sem arrastar a biblioteca inteira.
+  This entry point does not load the DOM runtime, so it works in Node as well, it is the way to
+  reuse the formatters on the server without dragging in the whole library.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=8aa47c23"></script>
+<script src="../assets/docs.js?v=e7076219"></script>
 </body>
 </html>

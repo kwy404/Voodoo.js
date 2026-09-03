@@ -3,7 +3,7 @@ import { http, request, HttpError } from '../src/http';
 import { config } from '../src/runtime/registry';
 import { clearWarnings } from '../src/runtime/avisos';
 
-/** Cria uma resposta falsa de fetch. */
+/** Builds a fake fetch response. */
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -28,15 +28,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('metodos basicos', () => {
-  it('get devolve os dados ja convertidos', async () => {
+describe('basic methods', () => {
+  it('get returns the data already converted', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ id: 1, nome: 'Ana' }));
     const data = await http.get<{ nome: string }>('/api/users/1');
     expect(data.nome).toBe('Ana');
     expect(fetchMock).toHaveBeenCalledWith('/api/users/1', expect.objectContaining({ method: 'GET' }));
   });
 
-  it('post envia JSON com o cabecalho correto', async () => {
+  it('post sends JSON with the right header', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
     await http.post('/api/users', { nome: 'Ana' });
 
@@ -46,27 +46,27 @@ describe('metodos basicos', () => {
     expect(options.headers['Content-Type']).toBe('application/json');
   });
 
-  it('reconhece resposta HTML como texto', async () => {
+  it('recognizes an HTML response as text', async () => {
     fetchMock.mockResolvedValue(textResponse('<p>oi</p>'));
     const data = await http.get<string>('/parcial.html');
     expect(data).toBe('<p>oi</p>');
   });
 
-  it('trata 204 sem corpo', async () => {
+  it('handles a 204 with no body', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
     const data = await http.delete('/api/users/1');
     expect(data).toBeNull();
   });
 });
 
-describe('parametros de query', () => {
-  it('monta a query string', async () => {
+describe('query parameters', () => {
+  it('assembles the query string', async () => {
     fetchMock.mockResolvedValue(jsonResponse([]));
     await http.get('/api/produtos', { params: { q: 'caneca', pagina: 2, vazio: null } });
     expect(fetchMock.mock.calls[0][0]).toBe('/api/produtos?q=caneca&pagina=2');
   });
 
-  it('preserva query ja existente na URL', async () => {
+  it('preserves a query already present in the URL', async () => {
     fetchMock.mockResolvedValue(jsonResponse([]));
     await http.get('/api/produtos?ordem=nome', { params: { pagina: 1 } });
     expect(fetchMock.mock.calls[0][0]).toBe('/api/produtos?ordem=nome&pagina=1');
@@ -74,14 +74,14 @@ describe('parametros de query', () => {
 });
 
 describe('baseURL', () => {
-  it('aplica a base em caminhos relativos', async () => {
+  it('applies the base to relative paths', async () => {
     http.setBaseURL('https://api.exemplo.com');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/users');
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.exemplo.com/users');
   });
 
-  it('nao mexe em URLs absolutas', async () => {
+  it('does not touch absolute URLs', async () => {
     http.setBaseURL('https://api.exemplo.com');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('https://outro.com/x');
@@ -89,9 +89,9 @@ describe('baseURL', () => {
   });
 });
 
-describe('erros', () => {
-  it('lanca HttpError em status 4xx', async () => {
-    // Cada chamada precisa de uma Response nova, porque o corpo so pode ser lido uma vez.
+describe('errors', () => {
+  it('throws HttpError on a 4xx status', async () => {
+    // Each call needs a fresh Response, because the body can only be read once.
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ message: 'Nao encontrado' }, 404)));
     await expect(http.get('/api/x')).rejects.toBeInstanceOf(HttpError);
 
@@ -105,19 +105,19 @@ describe('erros', () => {
     }
   });
 
-  it('nao repete tentativa em 4xx', async () => {
+  it('does not retry on a 4xx', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}, 422));
     await expect(request({ url: '/x', retry: 2 })).rejects.toBeInstanceOf(HttpError);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('repete tentativa em 5xx e depois desiste', async () => {
+  it('retries on a 5xx and then gives up', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
     await expect(request({ url: '/x', retry: 2, retryDelay: 1 })).rejects.toBeInstanceOf(HttpError);
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it('repete tentativa em falha de rede e aceita a segunda', async () => {
+  it('retries on a network failure and takes the second answer', async () => {
     fetchMock
       .mockRejectedValueOnce(new TypeError('falha de rede'))
       .mockResolvedValueOnce(jsonResponse({ ok: true }));
@@ -126,7 +126,7 @@ describe('erros', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('marca erro de rede quando nao ha resposta', async () => {
+  it('marks a network error when there is no response', async () => {
     fetchMock.mockRejectedValue(new TypeError('offline'));
     try {
       await http.get('/x');
@@ -136,7 +136,7 @@ describe('erros', () => {
   });
 });
 
-describe('retry so repete o que e seguro repetir', () => {
+describe('retry only repeats what is safe to repeat', () => {
   beforeEach(() => {
     config.devtools = false;
     clearWarnings();
@@ -146,7 +146,7 @@ describe('retry so repete o que e seguro repetir', () => {
     config.devtools = false;
   });
 
-  it('GET repete em 5xx', async () => {
+  it('GET retries on a 5xx', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
     await expect(
       request({ url: '/leitura', method: 'GET', retry: 2, retryDelay: 1 })
@@ -154,7 +154,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it('HEAD e OPTIONS tambem repetem', async () => {
+  it('HEAD and OPTIONS retry as well', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
     await expect(
       request({ url: '/h', method: 'HEAD', retry: 1, retryDelay: 1 })
@@ -165,7 +165,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
-  it('POST nao repete em falha de rede, mesmo com retry pedido', async () => {
+  it('POST does not retry on a network failure, even when retry was asked for', async () => {
     fetchMock.mockRejectedValue(new TypeError('falha de rede'));
     await expect(
       request({ url: '/pagamento', method: 'POST', body: { valor: 10 }, retry: 2, retryDelay: 1 })
@@ -173,7 +173,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('POST nao repete em 5xx', async () => {
+  it('POST does not retry on a 5xx', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 503)));
     await expect(
       request({ url: '/pagamento', method: 'POST', body: {}, retry: 2, retryDelay: 1 })
@@ -181,7 +181,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('PATCH, PUT e DELETE tambem exigem opt-in', async () => {
+  it('PATCH, PUT and DELETE also demand an opt-in', async () => {
     for (const method of ['PATCH', 'PUT', 'DELETE'] as const) {
       fetchMock.mockClear();
       fetchMock.mockRejectedValue(new TypeError('falha de rede'));
@@ -192,7 +192,7 @@ describe('retry so repete o que e seguro repetir', () => {
     }
   });
 
-  it('POST com retryUnsafe repete', async () => {
+  it('POST with retryUnsafe retries', async () => {
     fetchMock
       .mockRejectedValueOnce(new TypeError('falha de rede'))
       .mockResolvedValueOnce(jsonResponse({ ok: true }));
@@ -208,7 +208,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('POST com Idempotency-Key repete', async () => {
+  it('POST with an Idempotency-Key retries', async () => {
     fetchMock
       .mockRejectedValueOnce(new TypeError('falha de rede'))
       .mockResolvedValueOnce(jsonResponse({ ok: true }));
@@ -224,7 +224,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('Idempotency-Key vazio nao vale como opt-in', async () => {
+  it('an empty Idempotency-Key does not count as an opt-in', async () => {
     fetchMock.mockRejectedValue(new TypeError('falha de rede'));
     await expect(
       request({
@@ -238,7 +238,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('avisa em modo dev quando o retry e ignorado', async () => {
+  it('warns in dev mode when the retry is ignored', async () => {
     config.devtools = true;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new TypeError('falha de rede'));
@@ -251,7 +251,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(texto).toContain('Idempotency-Key');
   });
 
-  it('fora do modo dev nao imprime nada', async () => {
+  it('outside dev mode it prints nothing', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new TypeError('falha de rede'));
     await expect(
@@ -260,7 +260,7 @@ describe('retry so repete o que e seguro repetir', () => {
     expect(aviso).not.toHaveBeenCalled();
   });
 
-  it('nao avisa quando o retry nem foi pedido', async () => {
+  it('does not warn when the retry was never asked for', async () => {
     config.devtools = true;
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new TypeError('falha de rede'));
@@ -270,14 +270,14 @@ describe('retry so repete o que e seguro repetir', () => {
 });
 
 describe('cache', () => {
-  it('reaproveita a resposta dentro do prazo', async () => {
+  it('reuses the response while it is still in date', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ n: 1 }));
     await http.get('/api/cacheado', { cache: 5000 });
     await http.get('/api/cacheado', { cache: 5000 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('clearCache invalida as entradas', async () => {
+  it('clearCache invalidates the entries', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ n: 1 })));
     await http.get('/api/cacheado', { cache: 5000 });
     http.clearCache();
@@ -285,7 +285,7 @@ describe('cache', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('nao guarda cache de POST', async () => {
+  it('does not cache a POST', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({})));
     await http.post('/api/x', {}, { cache: 5000 });
     await http.post('/api/x', {}, { cache: 5000 });
@@ -293,8 +293,8 @@ describe('cache', () => {
   });
 });
 
-describe('interceptadores', () => {
-  it('interceptador de requisicao altera a configuracao', async () => {
+describe('interceptors', () => {
+  it('a request interceptor changes the configuration', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     const remove = http.interceptors.request.use((config) => ({
       ...config,
@@ -306,7 +306,7 @@ describe('interceptadores', () => {
     remove();
   });
 
-  it('interceptador de resposta transforma os dados', async () => {
+  it('a response interceptor transforms the data', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ valor: 1 }));
     const remove = http.interceptors.response.use((response) => ({
       ...response,
@@ -318,7 +318,7 @@ describe('interceptadores', () => {
     remove();
   });
 
-  it('interceptador de erro observa a falha', async () => {
+  it('an error interceptor observes the failure', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}, 500));
     const spy = vi.fn();
     const remove = http.interceptors.error.use(spy);
@@ -329,8 +329,8 @@ describe('interceptadores', () => {
   });
 });
 
-describe('cabecalhos', () => {
-  it('setToken adiciona Authorization', async () => {
+describe('headers', () => {
+  it('setToken adds Authorization', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     http.setToken('abc123');
     await http.get('/x');
@@ -338,13 +338,13 @@ describe('cabecalhos', () => {
     http.setToken(null);
   });
 
-  it('envia X-Requested-With por padrao', async () => {
+  it('sends X-Requested-With by default', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/x');
     expect(fetchMock.mock.calls[0][1].headers['X-Requested-With']).toBe('XMLHttpRequest');
   });
 
-  it('le o token CSRF da meta tag', async () => {
+  it('reads the CSRF token from the meta tag', async () => {
     const meta = document.createElement('meta');
     meta.name = 'csrf-token';
     meta.content = 'token-secreto';

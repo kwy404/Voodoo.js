@@ -22,17 +22,17 @@ import {
 } from '../src/i18n';
 
 /**
- * Cobertura do modulo de internacionalizacao, que nao tinha teste dedicado.
+ * Coverage for the internationalisation module, which had no dedicated test.
  *
- * O estado e um singleton do modulo, entao cada teste comeca por `preparar()`,
- * que apaga o armazenamento, devolve o idioma para `pt-BR` e recarrega apenas
- * as mensagens de que precisa. A chave de persistencia e restaurada com o nome
- * padrao sempre que um teste a desliga.
+ * The state is a singleton of the module, so every test starts with
+ * `preparar()`, which wipes the storage, puts the locale back to `pt-BR` and
+ * reloads only the messages it needs. The persistence key is restored with its
+ * default name whenever a test switches it off.
  */
 
 const CHAVE_PADRAO = 'voodoo:locale';
 
-/** Mensagens usadas na maioria dos testes. */
+/** Messages used by most of the tests. */
 function mensagensBase(): Record<string, Record<string, unknown>> {
   return {
     'pt-BR': {
@@ -53,7 +53,7 @@ function mensagensBase(): Record<string, Record<string, unknown>> {
   };
 }
 
-/** Reconfigura o modulo do zero, sem persistencia e sem deteccao. */
+/** Reconfigures the module from scratch, with no persistence and no detection. */
 function preparar(extra: Record<string, unknown> = {}): void {
   localStorage.clear();
   i18n({
@@ -90,83 +90,83 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Traducao
+// Translation
 // ---------------------------------------------------------------------------
 
-describe('traducao de mensagens', () => {
-  it('le chave aninhada e chave achatada', () => {
+describe('message translation', () => {
+  it('reads a nested key and a flattened key', () => {
     expect(t('comum.salvar')).toBe('Salvar');
     void setLocale('es');
     expect(t('comum.salvar')).toBe('Guardar');
   });
 
-  it('chave vazia devolve texto vazio', () => {
+  it('an empty key returns empty text', () => {
     expect(t('')).toBe('');
     expect(t(undefined as unknown as string)).toBe('');
   });
 
-  it('chave ausente degrada devolvendo a propria chave, sem lancar', () => {
+  it('a missing key degrades by returning the key itself, without throwing', () => {
     expect(() => t('nao.existe.em.lugar.nenhum')).not.toThrow();
     expect(t('nao.existe.em.lugar.nenhum')).toBe('nao.existe.em.lugar.nenhum');
-    // Caminho que existe pela metade tambem devolve a chave.
+    // A path that only half exists also returns the key.
     expect(t('comum.salvar.demais')).toBe('comum.salvar.demais');
-    // Chave que aponta para um galho, e nao para um texto.
+    // A key that points at a branch, and not at a text.
     expect(t('comum')).toBe('comum');
   });
 
-  it('idioma sem nenhuma mensagem carregada nao quebra', () => {
+  it('a locale with no messages loaded does not break', () => {
     void setLocale('ja');
     expect(t('comum.salvar')).toBe('Save');
     expect(t('so_ja')).toBe('so_ja');
   });
 
-  it('te responde se a chave existe, no idioma atual ou no informado', () => {
+  it('te answers whether the key exists, in the current locale or in the given one', () => {
     expect(te('comum.salvar')).toBe(true);
     expect(te('nao.existe')).toBe(false);
-    // `so_en` so existe no fallback, e isso ja conta como existir.
+    // `so_en` only exists in the fallback, and that already counts as existing.
     expect(te('so_en')).toBe(true);
     expect(te('so_pt', 'pt-BR')).toBe(true);
-    // Com `en` como alvo, o fallback tambem e `en`: nao ha segunda tentativa.
+    // With `en` as the target, the fallback is `en` too: there is no second attempt.
     expect(te('so_pt', 'en')).toBe(false);
     expect(te('nada', 'en')).toBe(false);
     expect(te('comum.salvar', 'pt-PT')).toBe(true);
   });
 });
 
-describe('fallback de idioma', () => {
-  it('cai no idioma de reserva quando a chave falta', () => {
+describe('locale fallback', () => {
+  it('falls back to the reserve locale when the key is missing', () => {
     preparar({ fallback: 'pt-BR' });
     void setLocale('en');
-    // `comum.dica` so existe em pt-BR.
+    // `comum.dica` only exists in pt-BR.
     expect(t('comum.dica')).toBe('Clique para salvar');
     expect(t('comum.salvar')).toBe('Save');
   });
 
-  it('idioma parecido e tentado antes do fallback', () => {
+  it('a similar locale is tried before the fallback', () => {
     void setLocale('pt-PT');
     expect(t('comum.salvar')).toBe('Guardar');
-    // `pt-PT` nao tem `ola`, mas o parente `pt-BR` tem.
+    // `pt-PT` has no `ola`, but its relative `pt-BR` does.
     expect(t('ola', { nome: 'Ana' })).toBe('Ola, Ana!');
   });
 
-  it('variante sem mensagens usa o idioma curto e os irmaos', () => {
+  it('a variant with no messages uses the short locale and its siblings', () => {
     void setLocale('pt-AO');
     expect(['Salvar', 'Guardar']).toContain(t('comum.salvar'));
   });
 
-  it('sem fallback util a chave volta como esta', () => {
+  it('with no useful fallback the key comes back as it is', () => {
     preparar({ fallback: '' });
     void setLocale('en');
     expect(t('so_pt')).toBe('so_pt');
   });
 
-  it('fallback igual ao idioma atual nao e consultado duas vezes', () => {
+  it('a fallback equal to the current locale is not consulted twice', () => {
     preparar({ fallback: 'pt-BR' });
     expect(t('nao.existe')).toBe('nao.existe');
     expect(te('nao.existe')).toBe(false);
   });
 
-  it('i18n.fallback acompanha a configuracao', () => {
+  it('i18n.fallback follows the configuration', () => {
     expect(i18n.fallback).toBe('en');
     preparar({ fallback: 'es' });
     expect(i18n.fallback).toBe('es');
@@ -174,75 +174,75 @@ describe('fallback de idioma', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Interpolacao
+// Interpolation
 // ---------------------------------------------------------------------------
 
-describe('interpolacao', () => {
-  it('troca os marcadores pelos valores', () => {
+describe('interpolation', () => {
+  it('swaps the placeholders for the values', () => {
     expect(t('ola', { nome: 'Ana' })).toBe('Ola, Ana!');
   });
 
-  it('marcador sem valor fica visivel em vez de sumir', () => {
+  it('a placeholder with no value stays visible instead of disappearing', () => {
     expect(t('ola')).toBe('Ola, {nome}!');
     expect(t('ola', { nome: null })).toBe('Ola, {nome}!');
     expect(t('ola', { nome: undefined })).toBe('Ola, {nome}!');
   });
 
-  it('valores que nao sao texto sao convertidos', () => {
+  it('values that are not text are converted', () => {
     addMessages('pt-BR', { misto: '{a} e {b}' });
     expect(t('misto', { a: 0, b: false })).toBe('0 e false');
   });
 
-  it('mensagem sem marcador algum passa direto', () => {
+  it('a message with no placeholder at all passes straight through', () => {
     expect(t('comum.salvar', { nome: 'Ana' })).toBe('Salvar');
   });
 
-  it('aceita espacos e pontos dentro do marcador', () => {
+  it('accepts spaces and dots inside the placeholder', () => {
     addMessages('pt-BR', { espacado: '[{ nome }] [{a.b}]' });
     expect(t('espacado', { nome: 'Ana', 'a.b': 'x' })).toBe('[Ana] [x]');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Pluralizacao
+// Pluralisation
 // ---------------------------------------------------------------------------
 
-describe('pluralizacao', () => {
-  it('tres formas reservam a primeira para o zero', () => {
+describe('pluralisation', () => {
+  it('three forms reserve the first one for zero', () => {
     expect(t('itens', 0)).toBe('nenhum item');
     expect(t('itens', 1)).toBe('1 item');
     expect(t('itens', 5)).toBe('5 itens');
   });
 
-  it('duas formas seguem a categoria do idioma', () => {
+  it('two forms follow the category of the locale', () => {
     expect(t('duas', 1)).toBe('1 arquivo');
     expect(t('duas', 3)).toBe('3 arquivos');
-    // Em portugues o zero e categoria `one`, ao contrario do ingles.
+    // In Portuguese zero is category `one`, unlike in English.
     expect(t('duas', 0)).toBe('0 arquivo');
     void setLocale('en');
     addMessages('en', { duas: '{n} file | {n} files' });
     expect(t('duas', 0)).toBe('0 files');
   });
 
-  it('o numero pode vir em n ou em count', () => {
+  it('the number can come in n or in count', () => {
     expect(t('itens', { n: 2 })).toBe('2 itens');
-    // `count` escolhe a forma, mas quem preenche `{n}` na mensagem e `n`.
+    // `count` picks the form, but what fills `{n}` in the message is `n`.
     expect(t('itens', { count: 2 })).toBe('{n} itens');
-    // Sem numero nenhum a contagem e zero.
+    // With no number at all the count is zero.
     expect(t('itens')).toBe('nenhum item');
   });
 
-  it('contagem ilegivel e tratada como zero', () => {
+  it('an unreadable count is treated as zero', () => {
     expect(t('itens', { n: 'muitos' })).toBe('nenhum item');
   });
 
-  it('forma unica com barra sobrando nao quebra', () => {
+  it('a single form with a leftover pipe does not break', () => {
     addMessages('pt-BR', { unica: 'so isso |' });
     expect(t('unica', 1)).toBe('so isso');
     expect(t('unica', 5)).toBe('');
   });
 
-  it('quatro ou mais formas usam a ordem oficial de categorias', () => {
+  it('four or more forms use the official order of categories', () => {
     addMessages('ar', { dias: 'zero | um | dois | poucos | muitos | outros' });
     void setLocale('ar');
     expect(t('dias', 0)).toBe('zero');
@@ -253,7 +253,7 @@ describe('pluralizacao', () => {
     expect(t('dias', 100)).toBe('outros');
   });
 
-  it('idioma invalido cai na regra simples de singular e plural', () => {
+  it('an invalid locale falls back to the simple singular and plural rule', () => {
     addMessages('nao-e-idioma-@', { p: 'um | varios' });
     void setLocale('nao-e-idioma-@');
     expect(t('p', 1)).toBe('um');
@@ -262,11 +262,11 @@ describe('pluralizacao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Troca de idioma
+// Switching locale
 // ---------------------------------------------------------------------------
 
-describe('troca de idioma em tempo de execucao', () => {
-  it('setLocale muda o idioma, o config e o lang do documento', async () => {
+describe('switching locale at runtime', () => {
+  it('setLocale changes the locale, the config and the document lang', async () => {
     await setLocale('en');
     expect(getLocale()).toBe('en');
     expect(i18n.locale).toBe('en');
@@ -275,7 +275,7 @@ describe('troca de idioma em tempo de execucao', () => {
     expect(t('comum.salvar')).toBe('Save');
   });
 
-  it('trocar para o mesmo idioma, para vazio ou para nulo nao faz nada', async () => {
+  it('switching to the same locale, to empty or to null does nothing', async () => {
     await setLocale('en');
     const antes = document.documentElement.lang;
 
@@ -286,24 +286,24 @@ describe('troca de idioma em tempo de execucao', () => {
     expect(document.documentElement.lang).toBe(antes);
   });
 
-  it('o idioma escolhido e guardado e volta na configuracao seguinte', async () => {
+  it('the chosen locale is stored and comes back on the next configuration', async () => {
     localStorage.clear();
     await setLocale('en');
     expect(localStorage.getItem(CHAVE_PADRAO)).toBe('en');
 
-    // Nova configuracao: o idioma salvo vence a opcao `locale`.
+    // New configuration: the saved locale beats the `locale` option.
     i18n({ detect: false, locale: 'pt-BR', messages: mensagensBase() } as never);
     expect(getLocale()).toBe('en');
   });
 
-  it('persist: false para de guardar', async () => {
+  it('persist: false stops storing', async () => {
     i18n({ persist: false, detect: false, locale: 'pt-BR' } as never);
     localStorage.clear();
     await setLocale('en');
     expect(localStorage.getItem(CHAVE_PADRAO)).toBeNull();
   });
 
-  it('persist com nome proprio usa a outra chave', async () => {
+  it('persist with a name of its own uses the other key', async () => {
     i18n({ persist: 'meu:idioma', detect: false, locale: 'pt-BR' } as never);
     localStorage.clear();
     await setLocale('en');
@@ -311,7 +311,7 @@ describe('troca de idioma em tempo de execucao', () => {
     expect(localStorage.getItem(CHAVE_PADRAO)).toBeNull();
   });
 
-  it('a leitura reativa de $locale acompanha a troca', async () => {
+  it('the reactive read of $locale follows the switch', async () => {
     const raiz = montar('<span>{ $locale }</span>');
     expect(raiz.textContent).toBe('pt-BR');
 
@@ -322,31 +322,31 @@ describe('troca de idioma em tempo de execucao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Mensagens
+// Messages
 // ---------------------------------------------------------------------------
 
-describe('registro de mensagens', () => {
-  it('addMessages mescla com o que ja existe', () => {
+describe('message registry', () => {
+  it('addMessages merges with what already exists', () => {
     addMessages('pt-BR', { comum: { cancelar: 'Cancelar' }, novo: 'Novo' });
     expect(t('comum.salvar')).toBe('Salvar');
     expect(t('comum.cancelar')).toBe('Cancelar');
     expect(t('novo')).toBe('Novo');
   });
 
-  it('addMessages cria o idioma quando ele nao existe e devolve o nome', () => {
+  it('addMessages creates the locale when it does not exist and returns the name', () => {
     expect(addMessages('it', { ola: 'Ciao' })).toBe('it');
     expect(availableLocales()).toContain('it');
     expect(i18n.locales).toContain('it');
   });
 
-  it('messagesOf devolve as mensagens do idioma pedido ou do atual', () => {
+  it('messagesOf returns the messages of the requested locale or of the current one', () => {
     expect((messagesOf() as Record<string, unknown>).so_pt).toBe('apenas em portugues');
     expect((messagesOf('en') as Record<string, unknown>).so_en).toBe('english only');
     expect(messagesOf('idioma-inexistente')).toEqual({});
   });
 });
 
-describe('carregamento sob demanda', () => {
+describe('on-demand loading', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -361,14 +361,14 @@ describe('carregamento sob demanda', () => {
     });
   }
 
-  it('objeto entra direto, sem tocar na rede', async () => {
+  it('an object goes straight in, without touching the network', async () => {
     await loadMessages('de', { ola: 'Hallo' });
     expect(fetchMock).not.toHaveBeenCalled();
     void setLocale('de');
     expect(t('ola')).toBe('Hallo');
   });
 
-  it('texto e tratado como URL de um JSON', async () => {
+  it('text is treated as the URL of a JSON file', async () => {
     fetchMock.mockResolvedValue(json({ ola: 'Bonjour' }));
     await loadMessages('fr', '/i18n/fr.json');
     expect(fetchMock.mock.calls[0][0]).toBe('/i18n/fr.json');
@@ -376,24 +376,24 @@ describe('carregamento sob demanda', () => {
     expect(t('ola')).toBe('Bonjour');
   });
 
-  it('duas chamadas para o mesmo idioma compartilham a mesma busca', async () => {
+  it('two calls for the same locale share the same fetch', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(json({ ola: 'Hej' })));
     const [a, b] = [loadMessages('sv', '/i18n/sv.json'), loadMessages('sv', '/i18n/sv.json')];
     await Promise.all([a, b]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    // Terminada a busca, uma nova chamada volta a consultar.
+    // Once the fetch is over, a new call goes and asks again.
     await loadMessages('sv', '/i18n/sv.json');
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('resposta que nao e objeto e ignorada em silencio', async () => {
+  it('a response that is not an object is silently ignored', async () => {
     fetchMock.mockResolvedValue(json('so um texto'));
     await loadMessages('nl', '/i18n/nl.json');
     expect(availableLocales()).not.toContain('nl');
   });
 
-  it('falha de rede vira erro tratado, e nao promessa recusada', async () => {
+  it('a network failure becomes a handled error, and not a rejected promise', async () => {
     const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     fetchMock.mockRejectedValue(new TypeError('offline'));
 
@@ -402,7 +402,7 @@ describe('carregamento sob demanda', () => {
     erro.mockRestore();
   });
 
-  it('loadPath busca o arquivo do idioma ao trocar para ele', async () => {
+  it('loadPath fetches the locale file when switching to it', async () => {
     fetchMock.mockResolvedValue(json({ ola: 'Cześć' }));
     i18n({ detect: false, persist: false, loadPath: '/idiomas/{locale}.json' } as never);
 
@@ -411,7 +411,7 @@ describe('carregamento sob demanda', () => {
     expect(t('ola')).toBe('Cześć');
   });
 
-  it('idioma que ja tem mensagens nao dispara busca nova', async () => {
+  it('a locale that already has messages does not trigger a new fetch', async () => {
     i18n({ detect: false, persist: false, loadPath: '/idiomas/{locale}.json' } as never);
     fetchMock.mockClear();
 
@@ -419,7 +419,7 @@ describe('carregamento sob demanda', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('a configuracao inicial tambem busca quando o idioma escolhido nao tem mensagens', async () => {
+  it('the initial configuration also fetches when the chosen locale has no messages', async () => {
     fetchMock.mockResolvedValue(json({ ola: 'Hei' }));
     i18n({
       detect: false,
@@ -434,59 +434,59 @@ describe('carregamento sob demanda', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Deteccao de idioma
+// Locale detection
 // ---------------------------------------------------------------------------
 
-describe('deteccao pelo navegador', () => {
+describe('detection through the browser', () => {
   function idiomas(lista: string[] | undefined, unico = 'en-US'): void {
     vi.spyOn(navigator, 'languages', 'get').mockReturnValue(lista as never);
     vi.spyOn(navigator, 'language', 'get').mockReturnValue(unico);
   }
 
-  it('escolhe o idioma exato quando ele existe', () => {
+  it('picks the exact locale when it exists', () => {
     idiomas(['pt-PT', 'en']);
     expect(detectLocale()).toBe('pt-PT');
   });
 
-  it('cai no parente quando so a variante curta bate', () => {
+  it('falls back to the relative when only the short variant matches', () => {
     idiomas(['pt-MZ', 'de']);
     expect(['pt-BR', 'pt-PT']).toContain(detectLocale());
   });
 
-  it('sem nenhuma coincidencia devolve null', () => {
+  it('with no match at all it returns null', () => {
     idiomas(['ja-JP', 'ko']);
     expect(detectLocale()).toBeNull();
   });
 
-  it('sem a lista usa navigator.language', () => {
+  it('without the list it uses navigator.language', () => {
     idiomas([], 'en');
     expect(detectLocale()).toBe('en');
     idiomas(undefined, 'EN');
     expect(detectLocale()).toBe('en');
   });
 
-  it('entrada vazia na lista e pulada', () => {
+  it('an empty entry in the list is skipped', () => {
     idiomas(['', 'en']);
     expect(detectLocale()).toBe('en');
   });
 
-  it('sem nenhum idioma carregado nao ha o que detectar', () => {
+  it('with no locale loaded there is nothing to detect', () => {
     idiomas(['en']);
     const mensagens = messagesOf('en');
     expect(mensagens).toBeTruthy();
-    // Um idioma que ninguem carregou nunca e escolhido.
+    // A locale nobody loaded is never chosen.
     idiomas(['xx-YY']);
     expect(detectLocale()).toBeNull();
   });
 
-  it('a deteccao entra na configuracao quando nada foi salvo', () => {
+  it('detection enters the configuration when nothing was saved', () => {
     idiomas(['en-US']);
     localStorage.clear();
     i18n({ persist: false, locale: 'pt-BR', messages: mensagensBase() } as never);
     expect(getLocale()).toBe('en');
   });
 
-  it('detect: false ignora o navegador', () => {
+  it('detect: false ignores the browser', () => {
     idiomas(['en-US']);
     localStorage.clear();
     i18n({ persist: false, detect: false, locale: 'pt-BR' } as never);
@@ -495,34 +495,34 @@ describe('deteccao pelo navegador', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Formatadores
+// Formatters
 // ---------------------------------------------------------------------------
 
-describe('formatadores locais', () => {
-  it('n formata numero no idioma atual', () => {
+describe('locale formatters', () => {
+  it('n formats a number in the current locale', () => {
     expect(n(1234.5)).toBe('1.234,5');
     void setLocale('en');
     expect(n(1234.5)).toBe('1,234.5');
   });
 
-  it('c formata moeda, com a moeda padrao ou a informada', () => {
+  it('c formats currency, with the default currency or the given one', () => {
     expect(c(10)).toContain('10,00');
     expect(c(10, 'USD')).toContain('10,00');
   });
 
-  it('d formata data com preset e com mascara', () => {
+  it('d formats a date with a preset and with a mask', () => {
     const data = new Date(2024, 2, 15);
     expect(d(data, 'short')).toContain('2024');
     expect(d(data, 'DD/MM/YYYY')).toBe('15/03/2024');
   });
 
-  it('rt devolve tempo relativo', () => {
+  it('rt returns relative time', () => {
     const agora = new Date(Date.now() - 60_000);
     expect(typeof rt(agora)).toBe('string');
     expect(rt(agora).length).toBeGreaterThan(0);
   });
 
-  it('a moeda padrao pode ser trocada na configuracao', () => {
+  it('the default currency can be changed in the configuration', () => {
     i18n({ persist: false, detect: false, currency: 'USD' } as never);
     expect(c(10)).toContain('10,00');
   });
@@ -533,7 +533,7 @@ describe('formatadores locais', () => {
 // ---------------------------------------------------------------------------
 
 describe('directive v-t', () => {
-  it('traduz o conteudo do elemento e reage a troca de idioma', async () => {
+  it('translates the element content and reacts to the locale switch', async () => {
     const raiz = montar('<button v-t="comum.salvar"></button>');
     const botao = raiz.querySelector('button') as HTMLElement;
     expect(botao.textContent).toBe('Salvar');
@@ -543,41 +543,41 @@ describe('directive v-t', () => {
     expect(botao.textContent).toBe('Save');
   });
 
-  it('com argumento traduz um atributo', async () => {
+  it('with an argument it translates an attribute', async () => {
     const raiz = montar('<abbr v-t:title="comum.dica">?</abbr>');
     expect((raiz.querySelector('abbr') as HTMLElement).getAttribute('title')).toBe(
       'Clique para salvar'
     );
   });
 
-  it('expressao no lugar da chave e avaliada no escopo', () => {
+  it('an expression in place of the key is evaluated in the scope', () => {
     const raiz = montar('<span v-t="\'comum.\' + qual"></span>', { qual: 'salvar' });
     expect(raiz.textContent).toBe('Salvar');
   });
 
-  it('expressao que nao devolve texto e usada como chave literal', () => {
+  it('an expression that does not return text is used as a literal key', () => {
     const raiz = montar('<span v-t="1 + 1"></span>');
     expect(raiz.textContent).toBe('1 + 1');
   });
 
-  it('v-t-params alimenta a interpolacao e a pluralizacao', async () => {
+  it('v-t-params feeds the interpolation and the pluralisation', async () => {
     const raiz = montar('<span v-t="itens" v-t-params="{ n: carrinho }"></span>', { carrinho: 3 });
     expect(raiz.textContent).toBe('3 itens');
   });
 
-  it('v-t-params que nao e objeto e ignorado', () => {
+  it('a v-t-params that is not an object is ignored', () => {
     const raiz = montar('<span v-t="itens" v-t-params="42"></span>');
     expect(raiz.textContent).toBe('nenhum item');
   });
 
-  it('expressao vazia nao mexe no elemento', () => {
+  it('an empty expression does not touch the element', () => {
     const raiz = montar('<span v-t="">original</span>');
     expect(raiz.textContent).toBe('original');
   });
 });
 
 describe('directive v-locale', () => {
-  it('o clique troca o idioma e marca o botao ativo', async () => {
+  it('the click switches the locale and marks the active button', async () => {
     const raiz = montar('<button v-locale="en">EN</button><button v-locale="pt-BR">PT</button>');
     const [ingles, portugues] = Array.from(raiz.querySelectorAll('button'));
 
@@ -591,7 +591,7 @@ describe('directive v-locale', () => {
     expect(portugues.classList.contains('v-locale-active')).toBe(false);
   });
 
-  it('aceita sublinhado no lugar do hifen', async () => {
+  it('accepts an underscore in place of the hyphen', async () => {
     const raiz = montar('<button v-locale="pt_PT"></button>');
     (raiz.querySelector('button') as HTMLElement).dispatchEvent(
       new MouseEvent('click', { bubbles: true })
@@ -600,7 +600,7 @@ describe('directive v-locale', () => {
     expect(getLocale()).toBe('pt-PT');
   });
 
-  it('o idioma tambem pode vir de uma expressao', async () => {
+  it('the locale can also come from an expression', async () => {
     const raiz = montar('<button v-locale="escolhido"></button>', { escolhido: 'en' });
     (raiz.querySelector('button') as HTMLElement).dispatchEvent(
       new MouseEvent('click', { bubbles: true })
@@ -609,7 +609,7 @@ describe('directive v-locale', () => {
     expect(getLocale()).toBe('en');
   });
 
-  it('expressao vazia nao troca nada', async () => {
+  it('an empty expression switches nothing', async () => {
     const raiz = montar('<button v-locale="  "></button>');
     (raiz.querySelector('button') as HTMLElement).dispatchEvent(
       new MouseEvent('click', { bubbles: true })
@@ -618,7 +618,7 @@ describe('directive v-locale', () => {
     expect(getLocale()).toBe('pt-BR');
   });
 
-  it('a limpeza remove o ouvinte de clique', async () => {
+  it('the cleanup removes the click listener', async () => {
     const raiz = montar('<button v-locale="en"></button>');
     const botao = raiz.querySelector('button') as HTMLElement;
     destroy(raiz);
@@ -629,8 +629,8 @@ describe('directive v-locale', () => {
   });
 });
 
-describe('variaveis magicas', () => {
-  it('$t, $n, $c, $d, $rt e $i18n estao disponiveis nas expressoes', () => {
+describe('magic variables', () => {
+  it('$t, $n, $c, $d, $rt and $i18n are available in expressions', () => {
     const raiz = montar(
       '<span>{ $t("comum.salvar") }</span>' +
         '<b>{ $n(1234.5) }</b>' +
@@ -647,13 +647,13 @@ describe('variaveis magicas', () => {
     expect(raiz.querySelector('em')?.textContent).toBe('pt-BR');
   });
 
-  it('a API tambem responde como metodos do proprio i18n', () => {
+  it('the API also answers as methods on i18n itself', () => {
     expect(i18n.t('comum.salvar')).toBe('Salvar');
     expect(i18n.te('comum.salvar')).toBe(true);
     expect(i18n.getLocale()).toBe('pt-BR');
     expect(i18n.messagesOf('en')).toBeTruthy();
     expect(typeof i18n.detectLocale).toBe('function');
-    // Chamar como funcao devolve a propria API, para encadear.
+    // Calling it as a function returns the API itself, so it can be chained.
     expect(i18n({ persist: CHAVE_PADRAO, detect: false } as never)).toBe(i18n);
   });
 });

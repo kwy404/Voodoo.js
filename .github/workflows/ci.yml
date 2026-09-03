@@ -23,31 +23,77 @@ jobs:
         node: [20, 22]
 
     steps:
-      - name: Baixa o repositorio
+      - name: Check out the repository
         uses: actions/checkout@v4
 
-      - name: Prepara o Node ${{ matrix.node }}
+      - name: Set up Node ${{ matrix.node }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: npm
 
-      - name: Instala as dependencias
+      - name: Install dependencies
         run: npm ci
 
-      - name: Confere os tipos
+      - name: Check types
         run: npm run typecheck
 
-      - name: Roda os testes
+      - name: Run the tests
         run: npm test
 
-      # Portao de cobertura. Os limites estao em `vitest.config.ts` e valem
-      # somente para o nucleo: parser, reatividade, runtime, DOM e HTTP.
-      - name: Confere a cobertura do nucleo
+      # Coverage gate. The thresholds live in `vitest.config.ts` and apply only
+      # to the core: parser, reactivity, runtime, DOM and HTTP.
+      - name: Check core coverage
         run: npm run coverage
 
-      - name: Gera os bundles
+      - name: Build the bundles
         run: npm run build
 
-      - name: Confere o tamanho dos bundles
+      - name: Check bundle size
         run: node scripts/size.mjs
+
+  consistency:
+    name: Consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Four gates, each one added after the drift it catches had already
+      # shipped at least once.
+
+      # The site announced 0.1.0 for five releases, and `V.version` reported
+      # 0.4.6 while the package was 0.6.2.
+      - name: Check the version is stamped everywhere
+        run: node scripts/stamp-version.mjs --check
+
+      # A relative href that resolves to nothing serves a 404 on a site with no
+      # build step to catch it.
+      - name: Check every internal link resolves
+        run: npm run check:links
+
+      # English is canonical. Both of these passed silently for a while: the
+      # documentation check because `lang="pt-BR"` was wrong in both directions,
+      # and the source check because its first word list used unaccented
+      # spellings that English shares.
+      - name: Check the documentation is in English
+        run: npm run check:lang:docs
+
+      - name: Check the source comments are in English
+        run: npm run check:lang:src
+
+      # The live example frames measured themselves and grew 8px on every
+      # click. Reported three times before it was understood, and the first
+      # regression test written for it passed against the broken code.
+      - name: Check the example frames do not grow
+        run: npm run check:frame

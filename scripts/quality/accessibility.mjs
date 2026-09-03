@@ -1,17 +1,18 @@
 /**
- * Accessibility: analise estatica dos componentes de interface.
+ * Accessibility: static analysis of the interface components.
  *
- * Nao existe axe-core aqui e nao vai existir: a regra do projeto e nao instalar
- * dependencia nova. O que da para fazer sem navegador, e que ja tem valor real,
- * e ler o codigo que constroi cada widget e conferir se ele emite o que o
- * WAI-ARIA Authoring Practices exige daquele padrao — roles, atributos de
- * estado, gerenciamento de foco, teclas e respeito a `prefers-reduced-motion`.
+ * There is no axe-core here and there will not be: the project rule is not to
+ * install a new dependency. What can be done without a browser, and already has
+ * real value, is to read the code that builds each widget and check whether it
+ * emits what the WAI-ARIA Authoring Practices require of that pattern: roles,
+ * state attributes, focus management, keys and respect for
+ * `prefers-reduced-motion`.
  *
- * O resultado e um relatorio por componente com o que TEM e o que FALTA. Cada
- * lacuna vira um WARN, nunca um FAIL: a ausencia de `aria-controls` num
- * accordion e divida tecnica, nao build quebrado. E um achado aqui e uma pista
- * para revisar o codigo, nao um veredito — a analise e textual e nao executa a
- * pagina, entao vale a leitura humana antes de mexer.
+ * The result is a per-component report with what it HAS and what it LACKS. Each
+ * gap becomes a WARN, never a FAIL: the absence of `aria-controls` on an
+ * accordion is technical debt, not a broken build. And a finding here is a lead
+ * for reviewing the code, not a verdict: the analysis is textual and does not
+ * run the page, so a human reading is worth it before touching anything.
  */
 
 import { existsSync } from 'node:fs';
@@ -27,10 +28,10 @@ const TOAST = join(SRC_DIR, 'ui', 'toast.ts');
 const COMPONENTS = join(SRC_DIR, 'ui', 'components.ts');
 
 /**
- * Componentes analisados e o que se espera de cada um.
+ * Components analysed and what is expected of each one.
  *
- * `section` recorta o trecho do arquivo pelo cabecalho de secao (`// v-tabs...`)
- * quando existe; sem `section`, o arquivo inteiro e a regiao.
+ * `section` slices the stretch of the file by the section header (`// v-tabs...`)
+ * when there is one; without `section`, the whole file is the region.
  */
 const COMPONENTS_SPEC = [
   {
@@ -86,7 +87,7 @@ const COMPONENTS_SPEC = [
   {
     name: 'popover',
     file: UI_DIRECTIVES,
-    section: /v-dropdown/, // mesma secao do arquivo
+    section: /v-dropdown/, // same section of the file
     apg: 'https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/',
     expect: {
       roles: [],
@@ -174,7 +175,7 @@ const COMPONENTS_SPEC = [
   },
 ];
 
-/** Recorta a secao do arquivo delimitada pelos cabecalhos `// ----` da Voodoo. */
+/** Slices the section of the file delimited by Voodoo's `// ----` headers. */
 function sliceSection(source, sectionRe) {
   const lines = source.split('\n');
   const banners = [];
@@ -201,17 +202,17 @@ function sliceSection(source, sectionRe) {
   };
 }
 
-/** Sinais de acessibilidade encontrados num trecho de codigo. */
+/** Accessibility signals found in a stretch of code. */
 function scanSignals(text) {
   const roles = new Set();
   const addLiterals = (segment) => {
     for (const lit of segment.matchAll(/['"]([\w-]+)['"]/g)) roles.add(lit[1]);
   };
-  // `setAttribute('role', ...)` — o valor costuma ser dinamico
-  // (`type === 'error' ? 'alert' : 'status'`), entao coleta todo literal do
-  // argumento em vez de exigir uma unica string.
+  // `setAttribute('role', ...)`: the value is usually dynamic
+  // (`type === 'error' ? 'alert' : 'status'`), so collect every literal in the
+  // argument instead of demanding a single string.
   for (const m of text.matchAll(/setAttribute\(\s*['"]role['"]\s*,([^\n]*)/g)) addLiterals(m[1]);
-  // `role?: 'dialog' | 'alertdialog'` e `role: cond ? 'a' : 'b'`
+  // `role?: 'dialog' | 'alertdialog'` and `role: cond ? 'a' : 'b'`
   for (const m of text.matchAll(/\brole\s*\??\s*:\s*([^;,\n}]*)/g)) addLiterals(m[1]);
   for (const m of text.matchAll(/\brole\s*=\s*["']([\w-]+)["']/g)) roles.add(m[1]);
   for (const m of text.matchAll(/\brole=\\?["']([\w-]+)/g)) roles.add(m[1]);

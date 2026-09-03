@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Perguntas frequentes · Documentação da Voodoo.js</title>
-<meta name="description" content="As perguntas que mais aparecem: escolha de arquivo, navegadores suportados, CSP, atributos que somem, uso do dia a dia, erros comuns e como contribuir.">
+<title>Frequently asked questions · Voodoo.js documentation</title>
+<meta name="description" content="The questions that come up most often: which file to pick, supported browsers, CSP, attributes that disappear, day-to-day use, common errors and how to contribute.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/perguntas-frequentes">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
@@ -14,229 +14,229 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Qualidade e migração</p>
-<h1>Perguntas frequentes</h1>
+<p class="doc-migalha">Quality and migration</p>
+<h1>Frequently asked questions</h1>
 <p class="doc-resumo">
-  As dúvidas que mais aparecem, com a resposta curta. Sintomas de erro têm página própria em
-  <a href="../guia/depurando.html">problemas comuns</a>.
+  The questions that come up most often, with the short answer. Error symptoms have a page of
+  their own in <a href="../guia/depurando.html">common problems</a>.
 </p>
 
-<h2 id="geral">Geral</h2>
+<h2 id="geral">General</h2>
 
-<h3 id="build">A Voodoo.js precisa de build?</h3>
+<h3 id="build">Does Voodoo.js need a build step?</h3>
 
 <p>
-  Não. Você baixa um arquivo, aponta uma tag <code>&lt;script&gt;</code> e escreve HTML. Não
-  existe compilador, bundler nem arquivo de configuração no caminho.
+  No. You download one file, point a <code>&lt;script&gt;</code> tag at it and write HTML. There is
+  no compiler, no bundler and no configuration file in the way.
 </p>
 
-<h3 id="qual-arquivo">Qual arquivo eu escolho?</h3>
+<h3 id="qual-arquivo">Which file do I pick?</h3>
 
 <p>
-  Comece pelo <code>voodoo.min.js</code>: ele traz reatividade, directives, componentes, HTTP,
-  formulários, validação, máscaras, interface, arrastar e soltar, notificações, diálogos, som e
-  armazenamento. Troque pelo <code>voodoo.full.min.js</code> no dia em que precisar de gráfico,
-  animação com mola, roteador, idiomas, inspetor ou os 29 componentes prontos. E
-  <code>voodoo.core.min.js</code> existe para páginas que só precisam de estado, renderização,
-  eventos e requisições.
+  Start with <code>voodoo.min.js</code>: it brings reactivity, directives, components, HTTP,
+  forms, validation, masks, interface, drag and drop, notifications, dialogs, sound and storage.
+  Switch to <code>voodoo.full.min.js</code> the day you need charts, spring animation, the router,
+  languages, the inspector or the 29 built-in components. And <code>voodoo.core.min.js</code>
+  exists for pages that only need state, rendering, events and requests.
 </p>
 
-<h3 id="chave-simples">Por que a interpolação usa chave simples?</h3>
+<h3 id="chave-simples">Why does interpolation use a single brace?</h3>
 
 <p>
-  Porque é o que a maioria das pessoas tenta escrever primeiro. <code>{ nome }</code> é a forma
-  padrão; <code>{{ nome }}</code> também funciona, para quem vem do Vue e para textos que precisam
-  de chaves literais em volta.
+  Because it is what most people try to write first. <code>{ name }</code> is the standard form;
+  <code>{{ name }}</code> also works, for people coming from Vue and for text that needs literal
+  braces around it.
 </p>
 
-<h3 id="atributos">Onde os meus atributos v-* foram parar?</h3>
+<h3 id="atributos">Where did my v-* attributes go?</h3>
 
 <p>
-  Eles são removidos do HTML depois de processados, de propósito, para deixar o DOM limpo no
-  inspetor. O comportamento continua funcionando porque os valores ficam guardados no runtime.
-  Para manter, <code>V.config.cleanAttributes = false</code>, ou
-  <code>data-keep-attributes</code> na tag do script.
+  They are removed from the HTML once they have been processed, on purpose, to keep the DOM clean
+  in the inspector. The behaviour keeps working because the values are held in the runtime. To
+  keep them, <code>V.config.cleanAttributes = false</code>, or
+  <code>data-keep-attributes</code> on the script tag.
 </p>
 
-<h3 id="css">Meu CSS parou de funcionar</h3>
+<h3 id="css">My CSS stopped working</h3>
 
 <p>
-  Provavelmente ele dependia de um seletor de atributo, como <code>[v-tab] { ... }</code>. Use
-  classes: as directives de interface já aplicam as suas —
+  It probably relied on an attribute selector, like <code>[v-tab] { ... }</code>. Use classes: the
+  interface directives already apply theirs ,
   <code>v-tab</code>, <code>v-active</code>, <code>v-drawer-panel</code>,
-  <code>v-dropzone</code> e assim por diante.
+  <code>v-dropzone</code> and so on.
 </p>
 
-<h3 id="csp">Funciona com Content Security Policy restritiva?</h3>
+<h3 id="csp">Does it work with a restrictive Content Security Policy?</h3>
 
 <p>
-  Sim, sem <code>unsafe-eval</code>. Só o <code>style-src</code> precisa de
-  <code>'unsafe-inline'</code>, por causa do CSS injetado, e isso pode ser dispensado com
-  <code>data-no-styles</code>. A página de <a href="seguranca.html">segurança</a> tem as políticas
-  prontas.
+  Yes, without <code>unsafe-eval</code>. Only <code>style-src</code> needs
+  <code>'unsafe-inline'</code>, because of the injected CSS, and that can be dropped with
+  <code>data-no-styles</code>. The <a href="seguranca.html">security</a> page has the ready-made
+  policies.
 </p>
 
-<h3 id="navegadores">Quais navegadores são suportados?</h3>
+<h3 id="navegadores">Which browsers are supported?</h3>
 
 <p>
-  Os builds têm alvo <code>es2018</code> e usam <code>Proxy</code>, <code>fetch</code>,
-  <code>IntersectionObserver</code>, <code>MutationObserver</code> e
-  <code>AbortController</code>. Na prática, qualquer navegador atualizado dos últimos anos. Não há
-  suporte a Internet Explorer, e nem haverá.
+  The builds target <code>es2018</code> and use <code>Proxy</code>, <code>fetch</code>,
+  <code>IntersectionObserver</code>, <code>MutationObserver</code> and
+  <code>AbortController</code>. In practice, any browser updated in the last few years. There is
+  no Internet Explorer support, and there will not be.
 </p>
 
-<h3 id="node">Funciona em Node?</h3>
+<h3 id="node">Does it work in Node?</h3>
 
 <p>
-  Os módulos puros sim: reatividade, HTTP, utilitários e o parser não tocam no DOM. O que depende
-  de DOM só roda no navegador. Não existe renderização no servidor.
+  The pure modules do: reactivity, HTTP, the utilities and the parser never touch the DOM. What
+  depends on the DOM only runs in the browser. There is no server-side rendering.
 </p>
 
-<h3 id="dependencias">A biblioteca tem dependências?</h3>
+<h3 id="dependencias">Does the library have dependencies?</h3>
 
 <p>
-  Nenhuma em tempo de execução. Em desenvolvimento existem <code>tsup</code>,
-  <code>typescript</code>, <code>vitest</code>, <code>jsdom</code> e <code>prettier</code>.
+  None at runtime. In development there are <code>tsup</code>,
+  <code>typescript</code>, <code>vitest</code>, <code>jsdom</code> and <code>prettier</code>.
 </p>
 
-<h2 id="dia-a-dia">Uso do dia a dia</h2>
+<h2 id="dia-a-dia">Day-to-day use</h2>
 
-<h3 id="ao-carregar">Como faço algo assim que a página carrega?</h3>
+<h3 id="ao-carregar">How do I do something as soon as the page loads?</h3>
 
-<pre data-lang="html"><code>&lt;div v-data="{ dados: null }" v-init="carregar()"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html"><code>&lt;div v-data="{ data: null }" v-init="load()"&gt;&lt;/div&gt;</code></pre>
 
-<p>Ou <code>V.ready(fn)</code> em JavaScript, ou o evento <code>voodoo:ready</code>.</p>
+<p>Or <code>V.ready(fn)</code> in JavaScript, or the <code>voodoo:ready</code> event.</p>
 
-<h3 id="elemento">Como acesso um elemento?</h3>
+<h3 id="elemento">How do I access an element?</h3>
 
-<pre data-lang="html"><code>&lt;input v-ref="busca"&gt;
-&lt;button @click="$refs.busca.focus()"&gt;Focar&lt;/button&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-ref="search"&gt;
+&lt;button @click="$refs.search.focus()"&gt;Focus&lt;/button&gt;</code></pre>
 
 <p>
-  Dentro de manipuladores, <code>$el</code> é o elemento que declarou a directive.
+  Inside handlers, <code>$el</code> is the element that declared the directive.
 </p>
 
-<h3 id="carregando">Como sei se uma requisição está em andamento?</h3>
+<h3 id="carregando">How do I know whether a request is in progress?</h3>
 
 <p>
-  Com <code>v-resource</code>, é <code>recurso.loading</code>. Em formulários, é
-  <code>$form.loading</code>. Nas directives de verbo, use <code>v-loading="#spinner"</code> e
+  With <code>v-resource</code>, it is <code>resource.loading</code>. In forms, it is
+  <code>$form.loading</code>. On the verb directives, use <code>v-loading="#spinner"</code> and
   <code>v-disable-loading</code>.
 </p>
 
-<h3 id="dom-novo">Elementos criados por JavaScript ganham directives?</h3>
+<h3 id="dom-novo">Do elements created by JavaScript get directives?</h3>
 
 <p>
-  Sim. Um <code>MutationObserver</code> inicializa o que aparece no DOM depois do carregamento. Se
-  você desligou com <code>data-no-observer</code>, chame <code>V.walk(elemento)</code> à mão.
+  Yes. A <code>MutationObserver</code> initialises whatever appears in the DOM after load. If you
+  turned that off with <code>data-no-observer</code>, call <code>V.walk(element)</code> by hand.
 </p>
 
-<h3 id="varias-linhas">Como escrevo uma função com várias linhas em um atributo?</h3>
+<h3 id="varias-linhas">How do I write a function with several lines inside an attribute?</h3>
 
 <p>
-  Não escreva. O parser aceita expressões, não blocos. Coloque a lógica em um método do
-  <code>v-data</code>, de um componente ou do escopo raiz, e chame pelo nome.
+  Do not. The parser accepts expressions, not blocks. Put the logic in a method on
+  <code>v-data</code>, on a component or on the root scope, and call it by name.
 </p>
 
-<h3 id="debounce">Como faço debounce com um tempo diferente do padrão?</h3>
+<h3 id="debounce">How do I debounce with a delay other than the default?</h3>
 
-<pre data-lang="html"><code>&lt;input v-model.debounce="busca" v-debounce="600"&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-model.debounce="search" v-debounce="600"&gt;</code></pre>
 
-<pre data-lang="js"><code>V.data({ buscar: V.debounce((t) =&gt; carregar(t), 600) });</code></pre>
+<pre data-lang="js"><code>V.data({ search: V.debounce((t) =&gt; load(t), 600) });</code></pre>
 
-<h3 id="mascara-limpa">Como mando o valor limpo da máscara para o servidor?</h3>
+<h3 id="mascara-limpa">How do I send the mask's clean value to the server?</h3>
 
 <pre data-lang="html"><code>&lt;input v-mask.unmask="cpf" v-model="form.cpf" v-cpf&gt;</code></pre>
 
-<p>A tela mostra <code>123.456.789-01</code> e o estado guarda <code>12345678901</code>.</p>
+<p>The screen shows <code>123.456.789-01</code> and the state holds <code>12345678901</code>.</p>
 
-<h3 id="erro-servidor">Como valido no servidor e mostro o erro no campo certo?</h3>
-
-<p>
-  Devolva 422 com <code>{ "errors": { "email": "Já cadastrado" } }</code>. O
-  <code>v-submit</code> distribui as mensagens para os campos pelo <code>name</code>, e as que não
-  têm campo correspondente aparecem em um resumo no topo.
-</p>
-
-<h3 id="sortable">O v-sortable reordena o meu array?</h3>
+<h3 id="erro-servidor">How do I validate on the server and show the error on the right field?</h3>
 
 <p>
-  Não. Ele move os elementos no DOM. Escute <code>voodoo:sorted</code> e reordene o array, ou
-  salve a ordem no servidor — sem isso, a próxima renderização volta à ordem antiga.
+  Return 422 with <code>{ "errors": { "email": "Already registered" } }</code>.
+  <code>v-submit</code> hands the messages out to the fields by <code>name</code>, and the ones
+  with no matching field show up in a summary at the top.
 </p>
 
-<h3 id="css-frameworks">Dá para usar junto com Bootstrap, Tailwind ou o meu CSS?</h3>
+<h3 id="sortable">Does v-sortable reorder my array?</h3>
 
 <p>
-  Sim. A Voodoo não impõe estilo. As directives de interface injetam apenas o mínimo, e você pode
-  desligar com <code>data-no-styles</code>. Para o Tailwind, aponte as cores do tema para as
-  variáveis <code>--v-*</code> e as duas coisas passam a andar juntas.
+  No. It moves the elements in the DOM. Listen for <code>voodoo:sorted</code> and reorder the
+  array, or save the order on the server, without that, the next render goes back to the old
+  order.
 </p>
 
-<h3 id="outras-libs">Dá para usar junto com jQuery, Alpine ou Vue?</h3>
+<h3 id="css-frameworks">Can I use it together with Bootstrap, Tailwind or my own CSS?</h3>
 
 <p>
-  Sim, todas usam o DOM padrão. Marque a região de outra biblioteca com <code>v-ignore</code> para
-  que a Voodoo não toque nela.
+  Yes. Voodoo does not impose a style. The interface directives inject only the minimum, and you
+  can turn that off with <code>data-no-styles</code>. For Tailwind, point the theme colours at the
+  <code>--v-*</code> variables and the two start moving together.
 </p>
 
-<h3 id="testes">Como faço testes?</h3>
+<h3 id="outras-libs">Can I use it together with jQuery, Alpine or Vue?</h3>
 
-<p>O núcleo funciona em jsdom. O padrão do projeto é montar um trecho, percorrer e conferir:</p>
+<p>
+  Yes, they all use the standard DOM. Mark the other library's region with <code>v-ignore</code>
+  so that Voodoo does not touch it.
+</p>
+
+<h3 id="testes">How do I write tests?</h3>
+
+<p>The core works in jsdom. The project's pattern is to mount a snippet, walk it and check:</p>
 
 <pre data-lang="js"><code>document.body.innerHTML = '&lt;div v-data="{ n: 0 }"&gt;&lt;b v-text="n"&gt;&lt;/b&gt;&lt;/div&gt;';
 V.start();
 await V.nextTick();
 expect(document.querySelector('b').textContent).toBe('0');</code></pre>
 
-<p><code>V.flushSync()</code> aplica tudo que está pendente sem esperar a microtask.</p>
+<p><code>V.flushSync()</code> applies everything pending without waiting for the microtask.</p>
 
-<h2 id="erros">Erros comuns</h2>
+<h2 id="erros">Common errors</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Sintoma</th><th>Causa mais provável</th></tr></thead>
+<thead><tr><th>Symptom</th><th>Most likely cause</th></tr></thead>
 <tbody>
-<tr><td>Nada acontece, o HTML aparece cru</td><td>O arquivo não carregou, ou <code>data-manual</code> sem <code>V.start()</code></td></tr>
-<tr><td>O conteúdo pisca antes de renderizar</td><td>Falta a regra de <code>[v-cloak]</code></td></tr>
-<tr><td><code>Maximum call stack</code></td><td>Um efeito escreve na mesma chave que lê</td></tr>
-<tr><td>O <code>v-for</code> perde o foco do campo</td><td>Falta <code>:key</code></td></tr>
-<tr><td>O componente não enxerga o <code>v-data</code> em volta</td><td>É o padrão. Use props, ou <code>inheritScope: true</code></td></tr>
-<tr><td>A confirmação aparece duas vezes</td><td><code>v-confirm</code> no mesmo elemento de um verbo HTTP</td></tr>
-<tr><td>A tradução some ao trocar de idioma</td><td><code>v-t-params</code> é lido só uma vez; use <code>$t</code></td></tr>
-<tr><td>O gráfico volta a ser de linha</td><td>Os atributos <code>v-chart-*</code> são lidos na montagem</td></tr>
+<tr><td>Nothing happens, the HTML shows up raw</td><td>The file did not load, or <code>data-manual</code> without <code>V.start()</code></td></tr>
+<tr><td>The content flashes before it renders</td><td>The <code>[v-cloak]</code> rule is missing</td></tr>
+<tr><td><code>Maximum call stack</code></td><td>An effect writes to the same key it reads</td></tr>
+<tr><td><code>v-for</code> loses focus on the field</td><td><code>:key</code> is missing</td></tr>
+<tr><td>The component cannot see the surrounding <code>v-data</code></td><td>That is the default. Use props, or <code>inheritScope: true</code></td></tr>
+<tr><td>The confirmation appears twice</td><td><code>v-confirm</code> on the same element as an HTTP verb</td></tr>
+<tr><td>The translation disappears when the language changes</td><td><code>v-t-params</code> is read only once; use <code>$t</code></td></tr>
+<tr><td>The chart goes back to being a line chart</td><td>The <code>v-chart-*</code> attributes are read at mount</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Cada um deles, com o contorno completo, está em
-  <a href="../guia/depurando.html">problemas comuns</a>.
+  Each of these, with the full workaround, is in
+  <a href="../guia/depurando.html">common problems</a>.
 </p>
 
-<h2 id="projeto">Projeto</h2>
+<h2 id="projeto">Project</h2>
 
-<h3 id="licenca">Qual é a licença?</h3>
+<h3 id="licenca">What is the license?</h3>
 
 <p>MIT.</p>
 
-<h3 id="bug">Como reporto um bug?</h3>
+<h3 id="bug">How do I report a bug?</h3>
 
 <p>
-  Abra uma issue com um exemplo mínimo que reproduza o problema, de preferência um HTML de uma
-  página só. Vulnerabilidades de segurança não vão em issue pública: veja
-  <a href="seguranca.html#reportando">como reportar</a>.
+  Open an issue with a minimal example that reproduces the problem, preferably a single-page HTML
+  file. Security vulnerabilities do not go in a public issue: see
+  <a href="seguranca.html#reportando">how to report one</a>.
 </p>
 
-<h3 id="recurso">Como peço um recurso novo?</h3>
+<h3 id="recurso">How do I ask for a new feature?</h3>
 
 <p>
-  Abra uma issue de proposta explicando o problema antes da solução. O que está fora do escopo
-  hoje está listado no roadmap, em
-  <a href="../guia/o-que-e.html#roadmap">o que é a Voodoo.js</a>.
+  Open a proposal issue explaining the problem before the solution. What is out of scope today is
+  listed in the roadmap, in
+  <a href="../guia/o-que-e.html#roadmap">what Voodoo.js is</a>.
 </p>
 
-<h3 id="contribuir">Como contribuo com código?</h3>
+<h3 id="contribuir">How do I contribute code?</h3>
 
 <pre data-lang="bash"><code>npm install
 npm test
@@ -245,13 +245,13 @@ npm run build
 npm run size</code></pre>
 
 <p>
-  O arquivo
-  <a href="https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> do
-  repositório tem o resto: padrão de commit, estrutura de pastas e o que a revisão espera.
+  The repository's
+  <a href="https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> file
+  has the rest: commit convention, folder structure and what review expects.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=8aa47c23"></script>
+<script src="../assets/docs.js?v=e7076219"></script>
 </body>
 </html>

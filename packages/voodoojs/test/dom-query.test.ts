@@ -1,25 +1,25 @@
 /**
- * Testes de `dom/query`, a colecao encadeavel.
+ * Tests for `dom/query`, the chainable collection.
  *
- * O foco esta nos ramos, nao nas linhas: cada `if`, cada `??`, cada ternario e
- * cada `catch` que o caminho feliz nunca visita. Por isso ha um bloco inteiro
- * so para colecao vazia (toda operacao precisa ser no-op segura), outro para
- * entradas malformadas e outro para elementos fora do documento.
+ * The focus is on branches, not lines: every `if`, every `??`, every ternary and
+ * every `catch` that the happy path never visits. That is why there is a whole
+ * block just for the empty collection (every operation has to be a safe no-op),
+ * another one for malformed inputs and another for elements outside the document.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fromHtml, query, ready, VoodooCollection } from '../src/dom/query';
 import { core } from '../src/core';
 
-/** Marca `core` como usado: importar registra as directives que `walk` precisa. */
+/** Marks `core` as used: importing it registers the directives that `walk` needs. */
 void core;
 
-/** Monta o corpo do documento e devolve o primeiro elemento pedido. */
+/** Mounts the document body and returns the first element requested. */
 function montar(html: string): void {
   document.body.innerHTML = html;
 }
 
-/** Elemento solto, nunca inserido no documento. */
+/** A loose element, never inserted into the document. */
 function solto(tag = 'div'): HTMLElement {
   return document.createElement(tag);
 }
@@ -29,11 +29,11 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Construcao
+// Construction
 // ---------------------------------------------------------------------------
 
-describe('construcao da colecao', () => {
-  it('aceita seletor CSS e expoe length, indice e iteracao', () => {
+describe('collection construction', () => {
+  it('accepts a CSS selector and exposes length, index and iteration', () => {
     montar('<ul id="l"><li class="i">a</li><li class="i">b</li></ul>');
     const itens = query('.i');
     expect(itens).toBeInstanceOf(VoodooCollection);
@@ -42,52 +42,52 @@ describe('construcao da colecao', () => {
     expect(itens[1].textContent).toBe('b');
     expect([...itens].map((el) => el.textContent)).toEqual(['a', 'b']);
     expect(itens.elements.length).toBe(2);
-    // `toArray` devolve copia: mexer nela nao mexe na colecao.
+    // `toArray` returns a copy: changing it does not change the collection.
     const copia = itens.toArray();
     copia.pop();
     expect(itens.length).toBe(2);
   });
 
-  it('aceita elemento, Document, DocumentFragment e no de texto', () => {
+  it('accepts an element, a Document, a DocumentFragment and a text node', () => {
     montar('<div id="a"></div>');
     const el = document.getElementById('a') as HTMLElement;
     expect(query(el).length).toBe(1);
-    // nodeType 9 devolve o documentElement.
+    // nodeType 9 returns the documentElement.
     expect(query(document).get(0)).toBe(document.documentElement);
     const frag = document.createDocumentFragment();
     frag.appendChild(solto('span'));
     frag.appendChild(solto('span'));
     expect(query(frag).length).toBe(2);
-    // No de texto nao e elemento: colecao vazia, sem erro.
+    // A text node is not an element: empty collection, no error.
     expect(query(document.createTextNode('oi')).length).toBe(0);
     expect(query(document.createComment('c')).length).toBe(0);
   });
 
-  it('aceita NodeList, array, array-like com buracos e outra colecao', () => {
+  it('accepts a NodeList, an array, an array-like with holes and another collection', () => {
     montar('<p class="p">1</p><p class="p">2</p>');
     expect(query(document.querySelectorAll('.p')).length).toBe(2);
     const lista = Array.from(document.querySelectorAll<HTMLElement>('.p'));
     expect(query(lista).length).toBe(2);
-    // Array-like com buraco e com no que nao e elemento.
+    // Array-like with a hole and with a node that is not an element.
     const bagunca = { length: 3, 0: lista[0], 1: null, 2: document.createTextNode('x') };
     expect(query(bagunca as unknown as ArrayLike<Node>).length).toBe(1);
-    // Repetidos entram uma vez so.
+    // Repeats go in only once.
     expect(query([lista[0], lista[0], lista[1]]).length).toBe(2);
     expect(query(query('.p')).length).toBe(2);
   });
 
-  it('aceita string de HTML e cria os elementos sem inserir no documento', () => {
+  it('accepts an HTML string and creates elements without inserting them in the document', () => {
     const criado = query('<li class="novo">a</li><li class="novo">b</li>');
     expect(criado.length).toBe(2);
     expect(criado[0].isConnected).toBe(false);
     expect(document.querySelectorAll('.novo').length).toBe(0);
-    // Espaco em volta e tolerado.
+    // Surrounding whitespace is tolerated.
     expect(query('  <b>x</b>  ').length).toBe(1);
-    // `<>` e curto demais para ser HTML e vira seletor invalido.
+    // `<>` is too short to be HTML and turns into an invalid selector.
     expect(query('<>').length).toBe(0);
   });
 
-  it('devolve colecao vazia para entradas nulas, vazias ou desconhecidas', () => {
+  it('returns an empty collection for null, empty or unknown inputs', () => {
     expect(query().length).toBe(0);
     expect(query(null).length).toBe(0);
     expect(query(undefined).length).toBe(0);
@@ -95,20 +95,20 @@ describe('construcao da colecao', () => {
     expect(query('   ').length).toBe(0);
     expect(query({} as unknown as Node).length).toBe(0);
     expect(query(123 as unknown as Node).length).toBe(0);
-    // Document sem documentElement (XML recem-criado) tambem devolve vazio.
+    // A Document with no documentElement (freshly created XML) also returns empty.
     const xml = document.implementation.createDocument(null, null);
     expect(xml.documentElement).toBeNull();
     expect(query(xml as unknown as Document).length).toBe(0);
   });
 
-  it('seletor invalido devolve colecao vazia em vez de lancar', () => {
+  it('an invalid selector returns an empty collection instead of throwing', () => {
     montar('<div class="a"></div>');
     expect(() => query(':::')).not.toThrow();
     expect(query(':::').length).toBe(0);
     expect(query('div:naoexiste(')).toHaveLength(0);
   });
 
-  it('respeita o contexto de busca', () => {
+  it('respects the search context', () => {
     montar('<div id="a"><i class="x">1</i></div><div id="b"><i class="x">2</i></div>');
     const b = document.getElementById('b') as HTMLElement;
     expect(query('.x').length).toBe(2);
@@ -117,23 +117,23 @@ describe('construcao da colecao', () => {
     expect(query('.x', b).length).toBe(1);
     expect(query('.x', query('#a')).length).toBe(1);
     expect(query('.x', query('#a'))[0].textContent).toBe('1');
-    // Contexto que nao resolve para nada cai de volta no documento inteiro.
+    // A context that resolves to nothing falls back to the whole document.
     expect(query('.x', document.createTextNode('nada')).length).toBe(2);
-    // Contexto funcao tambem significa documento inteiro.
+    // A function context also means the whole document.
     expect(query('.x', () => undefined).length).toBe(2);
-    // Contexto so vale para seletor: com elemento na entrada ele e ignorado.
+    // The context only applies to a selector: with an element as input it is ignored.
     expect(query(b, '#a').length).toBe(1);
   });
 
-  it('fromHtml cria elementos soltos e ignora texto puro', () => {
+  it('fromHtml creates loose elements and ignores plain text', () => {
     const c = fromHtml('<span>a</span><span>b</span>');
     expect(c.length).toBe(2);
-    // `template.content.children` so enxerga elementos.
+    // `template.content.children` only sees elements.
     expect(fromHtml('texto puro').length).toBe(0);
     expect(fromHtml('').length).toBe(0);
   });
 
-  it('query com funcao agenda o ready e devolve o documentElement', async () => {
+  it('query with a function schedules the ready and returns the documentElement', async () => {
     let chamou = 0;
     const c = query(() => {
       chamou += 1;
@@ -146,10 +146,10 @@ describe('construcao da colecao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Travessia
+// Traversal
 // ---------------------------------------------------------------------------
 
-describe('travessia', () => {
+describe('traversal', () => {
   beforeEach(() => {
     montar(`
       <div id="raiz" class="caixa">
@@ -162,28 +162,28 @@ describe('travessia', () => {
       </div>`);
   });
 
-  it('find desce a arvore, deduplica e engole seletor invalido', () => {
+  it('find walks down the tree, deduplicates and swallows an invalid selector', () => {
     expect(query('#raiz').find('.t').length).toBe(3);
-    // Dois pontos de partida que compartilham descendentes: sem repeticao.
+    // Two starting points that share descendants: no repetition.
     expect(query('.sec').find('.t').length).toBe(3);
     expect(query('#raiz, #s1').find('#p1').length).toBe(1);
     expect(() => query('#raiz').find(':::')).not.toThrow();
     expect(query('#raiz').find(':::').length).toBe(0);
   });
 
-  it('closest sobe ate o ancestral, incluindo o proprio elemento', () => {
+  it('closest walks up to the ancestor, including the element itself', () => {
     expect(query('#p1').closest('.sec').get(0)?.id).toBe('s1');
     expect(query('#p1').closest('.t').get(0)?.id).toBe('p1');
-    // Dois filhos da mesma secao dao um ancestral so.
+    // Two children of the same section give a single ancestor.
     expect(query('#p1, #p2').closest('.sec').length).toBe(1);
     expect(query('#p1').closest('.nao-existe').length).toBe(0);
   });
 
-  it('parent e parents com e sem filtro', () => {
+  it('parent and parents with and without a filter', () => {
     expect(query('#p1').parent().get(0)?.id).toBe('s1');
     expect(query('#p1').parent('.sec').length).toBe(1);
     expect(query('#p1').parent('.nao-e').length).toBe(0);
-    // O html nao tem pai elemento.
+    // The html has no element parent.
     expect(query(document.documentElement).parent().length).toBe(0);
 
     const todos = query('#p1').parents();
@@ -192,18 +192,18 @@ describe('travessia', () => {
     expect(query('#p1, #p3').parents('.caixa').length).toBe(1);
   });
 
-  it('children e siblings com e sem filtro', () => {
+  it('children and siblings with and without a filter', () => {
     expect(query('#s1').children().length).toBe(3);
     expect(query('#s1').children('.t').length).toBe(2);
     expect(query('#p1').children().length).toBe(0);
 
     expect(query('#p1').siblings().map((el) => el.id)).toEqual(['p2', 'sp']);
     expect(query('#p1').siblings('.t').map((el) => el.id)).toEqual(['p2']);
-    // Elemento sem pai nao tem irmao.
+    // An element with no parent has no siblings.
     expect(query(solto()).siblings().length).toBe(0);
   });
 
-  it('next e prev com e sem filtro', () => {
+  it('next and prev with and without a filter', () => {
     expect(query('#p1').next().get(0)?.id).toBe('p2');
     expect(query('#p1').next('.t').length).toBe(1);
     expect(query('#p1').next('span').length).toBe(0);
@@ -215,7 +215,7 @@ describe('travessia', () => {
     expect(query('#p1').prev().length).toBe(0);
   });
 
-  it('first, last e eq, inclusive com indice negativo e fora da faixa', () => {
+  it('first, last and eq, including with a negative and an out-of-range index', () => {
     const t = query('.t');
     expect(t.first().get(0)?.id).toBe('p1');
     expect(t.last().get(0)?.id).toBe('p3');
@@ -226,7 +226,7 @@ describe('travessia', () => {
     expect(t.eq(-9).length).toBe(0);
   });
 
-  it('filter, not, has e is aceitam seletor e funcao', () => {
+  it('filter, not, has and is accept a selector and a function', () => {
     const t = query('.t');
     expect(t.filter('#p2').length).toBe(1);
     expect(t.filter((el, i) => i > 0).length).toBe(2);
@@ -243,13 +243,13 @@ describe('travessia', () => {
     expect(t.is((el, i) => i === 99)).toBe(false);
   });
 
-  it('map, each com interrupcao, get, slice e add', () => {
+  it('map, each with an early exit, get, slice and add', () => {
     const t = query('.t');
     expect(t.map((el) => el.id)).toEqual(['p1', 'p2', 'p3']);
 
     const vistos: string[] = [];
     const retorno = t.each(function (el, i) {
-      // `this` e o elemento, igual ao jQuery.
+      // `this` is the element, just like jQuery.
       expect(this).toBe(el);
       vistos.push(`${i}:${el.id}`);
       if (i === 1) return false;
@@ -268,21 +268,21 @@ describe('travessia', () => {
     expect(t.slice().length).toBe(3);
 
     expect(t.add('#sp').length).toBe(4);
-    // Ja presente: nao duplica.
+    // Already present: no duplicate.
     expect(t.add('#p1').length).toBe(3);
     expect(t.add('<b>x</b>').length).toBe(4);
     expect(query('#p1').add('.t', '#s2').length).toBe(2);
-    // Funcao nao vira elemento nenhum: a colecao fica igual.
+    // A function becomes no element at all: the collection stays the same.
     expect(t.add(() => undefined).length).toBe(3);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Conteudo, atributos, dados e estilos
+// Content, attributes, data and styles
 // ---------------------------------------------------------------------------
 
-describe('texto e html', () => {
-  it('le do primeiro e escreve em todos', () => {
+describe('text and html', () => {
+  it('reads from the first and writes to all of them', () => {
     montar('<div class="c">a</div><div class="c">b</div>');
     const c = query('.c');
     expect(c.text()).toBe('a');
@@ -302,7 +302,7 @@ describe('texto e html', () => {
     expect(c.html()).toBe('');
   });
 
-  it('escrever texto ou html descarta o conteudo antigo', () => {
+  it('writing text or html discards the old content', () => {
     montar('<div id="d"><span id="antigo">a</span></div>');
     const antigo = document.getElementById('antigo') as HTMLElement;
     query('#d').html('<i>b</i>');
@@ -312,7 +312,7 @@ describe('texto e html', () => {
 });
 
 describe('val', () => {
-  it('le e escreve campos de texto', () => {
+  it('reads and writes text fields', () => {
     montar('<input id="a" value="ana"><input id="b" value="bia">');
     expect(query('#a').val()).toBe('ana');
     query('input').val('nova');
@@ -321,12 +321,12 @@ describe('val', () => {
     expect(query('#a').val()).toBe('');
     query('#a').val(12);
     expect(query('#a').val()).toBe('12');
-    // Elemento sem `value` devolve string vazia.
+    // An element with no `value` returns an empty string.
     montar('<div id="d"></div>');
     expect(query('#d').val()).toBe('');
   });
 
-  it('le e escreve checkbox e radio', () => {
+  it('reads and writes checkbox and radio', () => {
     montar(
       '<input type="checkbox" id="c1" value="sim" checked>' +
         '<input type="checkbox" id="c2" value="nao">' +
@@ -336,9 +336,9 @@ describe('val', () => {
     );
     expect(query('#c1').val()).toBe('sim');
     expect(query('#c2').val()).toBe('');
-    // Sem atributo `value` o navegador usa "on".
+    // With no `value` attribute the browser uses "on".
     expect(query('#c3').val()).toBe('on');
-    // Com `value` vazio o fallback `|| 'on'` entra em acao.
+    // With an empty `value` the `|| 'on'` fallback kicks in.
     (document.getElementById('c3') as HTMLInputElement).value = '';
     expect(query('#c3').val()).toBe('on');
 
@@ -357,7 +357,7 @@ describe('val', () => {
     expect((document.getElementById('r1') as HTMLInputElement).checked).toBe(false);
   });
 
-  it('le e escreve select simples e multiplo', () => {
+  it('reads and writes a single and a multiple select', () => {
     montar(
       '<select id="s"><option value="1">1</option><option value="2" selected>2</option></select>' +
         '<select id="m" multiple><option value="x">x</option><option value="y">y</option>' +
@@ -370,16 +370,16 @@ describe('val', () => {
     expect(query('#m').val()).toEqual([]);
     query('#m').val(['x', 'z']);
     expect(query('#m').val()).toEqual(['x', 'z']);
-    // Valor unico tambem funciona: vira lista de um item.
+    // A single value works too: it becomes a one-item list.
     query('#m').val('y');
     expect(query('#m').val()).toEqual(['y']);
   });
 });
 
-describe('attr, removeAttr e prop', () => {
+describe('attr, removeAttr and prop', () => {
   beforeEach(() => montar('<a id="a" href="#x" class="l">a</a><a id="b" class="l">b</a>'));
 
-  it('le do primeiro e escreve em todos', () => {
+  it('reads from the first and writes to all of them', () => {
     expect(query('.l').attr('id')).toBe('a');
     expect(query('.l').attr('nao-existe')).toBeUndefined();
 
@@ -387,17 +387,17 @@ describe('attr, removeAttr e prop', () => {
     expect(query('#b').attr('data-x')).toBe('1');
     query('.l').attr('data-n', 5);
     expect(query('#a').attr('data-n')).toBe('5');
-    // `true` vira atributo booleano vazio.
+    // `true` becomes an empty boolean attribute.
     query('.l').attr('hidden', true);
     expect(query('#a').attr('hidden')).toBe('');
-    // `null` e `false` removem.
+    // `null` and `false` remove it.
     query('#a').attr('hidden', null);
     expect(query('#a').attr('hidden')).toBeUndefined();
     query('#b').attr('hidden', false);
     expect(query('#b').attr('hidden')).toBeUndefined();
   });
 
-  it('aceita objeto com varios atributos de uma vez', () => {
+  it('accepts an object with several attributes at once', () => {
     query('.l').attr({ 'data-a': '1', 'data-b': true, 'data-c': 2, href: null });
     expect(query('#a').attr('data-a')).toBe('1');
     expect(query('#a').attr('data-b')).toBe('');
@@ -407,16 +407,16 @@ describe('attr, removeAttr e prop', () => {
     expect(query('#a').attr('data-a')).toBeUndefined();
   });
 
-  it('removeAttr aceita varios nomes separados por espaco', () => {
+  it('removeAttr accepts several names separated by spaces', () => {
     query('.l').attr({ 'data-a': '1', 'data-b': '2' });
     query('.l').removeAttr('data-a data-b');
     expect(query('#a').attr('data-a')).toBeUndefined();
     expect(query('#b').attr('data-b')).toBeUndefined();
-    // Nome vazio nao quebra.
+    // An empty name does not break it.
     expect(() => query('.l').removeAttr('   ')).not.toThrow();
   });
 
-  it('prop le e escreve propriedades reais do elemento', () => {
+  it('prop reads and writes real properties of the element', () => {
     expect(query('#a').prop('tagName')).toBe('A');
     query('.l').prop('tabIndex', 3);
     expect((document.getElementById('b') as HTMLElement).tabIndex).toBe(3);
@@ -435,7 +435,7 @@ describe('data', () => {
     )
   );
 
-  it('converte JSON, numero, booleano e null na leitura', () => {
+  it('converts JSON, number, boolean and null on read', () => {
     const d = query('#d');
     expect(d.data('conta')).toBe(42);
     expect(d.data('preco')).toBe(-3.5);
@@ -447,12 +447,12 @@ describe('data', () => {
     expect(d.data('config')).toEqual({ a: 1 });
     expect(d.data('lista')).toEqual([1, 2]);
     expect(d.data('txt')).toBe('oi');
-    // JSON quebrado volta como texto cru em vez de derrubar a leitura.
+    // Broken JSON comes back as raw text instead of bringing the read down.
     expect(d.data('quebrado')).toBe('{isso nao e json');
     expect(d.data('nao-existe')).toBeUndefined();
   });
 
-  it('aceita chave em kebab-case e devolve o mapa inteiro', () => {
+  it('accepts a kebab-case key and returns the whole map', () => {
     const d = query('#d');
     expect(d.data('minha-chave')).toBe('k');
     expect(d.data('minhaChave')).toBe('k');
@@ -462,14 +462,14 @@ describe('data', () => {
     expect(tudo.config).toEqual({ a: 1 });
   });
 
-  it('escreve chave a chave e por objeto', () => {
+  it('writes key by key and by object', () => {
     const d = query('#d');
     d.data('texto', 'cru');
     expect((document.getElementById('d') as HTMLElement).dataset.texto).toBe('cru');
     d.data('obj', { a: 1 });
     expect(d.data('obj')).toEqual({ a: 1 });
     d.data('vazio2', undefined);
-    // `undefined` e serializado como null, nao como a palavra "undefined".
+    // `undefined` is serialized as null, not as the word "undefined".
     expect((document.getElementById('d') as HTMLElement).dataset.vazio2).toBe('null');
     d.data({ 'outra-chave': 9, texto2: 'x', nada: null, ausente: undefined });
     expect(d.data('outra-chave')).toBe(9);
@@ -479,57 +479,57 @@ describe('data', () => {
   });
 });
 
-describe('css, medidas e rolagem', () => {
-  it('le estilo computado e cai no inline quando o elemento esta solto', () => {
+describe('css, measurements and scrolling', () => {
+  it('reads the computed style and falls back to inline when the element is loose', () => {
     montar('<div id="d"></div>');
     const d = document.getElementById('d') as HTMLElement;
     d.style.color = 'red';
     expect(query('#d').css('color')).toBe('rgb(255, 0, 0)');
-    // camelCase vira kebab.
+    // camelCase becomes kebab.
     d.style.backgroundColor = 'blue';
     expect(query('#d').css('backgroundColor')).toBe('rgb(0, 0, 255)');
 
     const fora = solto();
     fora.style.color = 'green';
-    // Sem estar no documento nao ha estilo computado: sobra o inline.
+    // Outside the document there is no computed style: only the inline one is left.
     expect(query(fora).css('color')).toBe('green');
     expect(query(fora).css('--nao-definido')).toBe('');
   });
 
-  it('escreve estilo com e sem unidade automatica', () => {
+  it('writes style with and without an automatic unit', () => {
     montar('<div class="c"></div><div class="c"></div>');
     const c = query('.c');
     c.css('width', 120);
     expect(c[0].style.width).toBe('120px');
     expect(c[1].style.width).toBe('120px');
-    // Propriedades sem unidade nao ganham px.
+    // Unitless properties do not get px.
     c.css('opacity', 0.5);
     expect(c[0].style.opacity).toBe('0.5');
     c.css('zIndex', 3);
     expect(c[0].style.zIndex).toBe('3');
     c.css('lineHeight', 2);
     expect(c[0].style.lineHeight).toBe('2');
-    // Variavel CSS tambem escapa do px.
+    // A CSS variable also escapes the px.
     c.css('--espaco', 4);
     expect(c[0].style.getPropertyValue('--espaco')).toBe('4');
-    // Texto passa direto.
+    // Text passes straight through.
     c.css('height', '3rem');
     expect(c[0].style.height).toBe('3rem');
-    // null e string vazia removem.
+    // null and an empty string remove it.
     c.css('width', null);
     expect(c[0].style.width).toBe('');
     c.css('height', '');
     expect(c[0].style.height).toBe('');
-    // Objeto aplica varias.
+    // An object applies several at once.
     c.css({ color: 'red', margin: 8, padding: null });
     expect(c[0].style.color).toBe('red');
     expect(c[0].style.margin).toBe('8px');
   });
 
-  it('width, height, offset, position e scrollTop', () => {
+  it('width, height, offset, position and scrollTop', () => {
     montar('<div id="d"></div>');
     const d = query('#d');
-    // jsdom nao faz layout: as medidas lidas sao zero, o que ja exercita o ramo.
+    // jsdom does no layout: the measurements read are zero, which already exercises the branch.
     expect(d.width()).toBe(0);
     expect(d.height()).toBe(0);
     expect(d.offset()).toEqual({ top: 0, left: 0 });
@@ -543,7 +543,7 @@ describe('css, medidas e rolagem', () => {
     expect(d.scrollTop()).toBe(0);
     d.scrollTop(30);
     expect(d[0].scrollTop).toBe(30);
-    // Valor invalido vira zero em vez de NaN.
+    // An invalid value becomes zero instead of NaN.
     d.scrollTop('abc' as unknown as number);
     expect(d[0].scrollTop).toBe(0);
   });
@@ -552,14 +552,14 @@ describe('css, medidas e rolagem', () => {
 describe('classes', () => {
   beforeEach(() => montar('<div class="c a"></div><div class="c"></div>'));
 
-  it('addClass, removeClass, toggleClass e hasClass', () => {
+  it('addClass, removeClass, toggleClass and hasClass', () => {
     const c = query('.c');
     c.addClass('x y');
     expect(c[0].classList.contains('x')).toBe(true);
     expect(c[1].classList.contains('y')).toBe(true);
     expect(c.hasClass('x y')).toBe(true);
     expect(c.hasClass('x z')).toBe(false);
-    // `a` so existe no primeiro: `some` basta.
+    // `a` only exists on the first one: `some` is enough.
     expect(c.hasClass('a')).toBe(true);
 
     c.removeClass('x');
@@ -569,7 +569,7 @@ describe('classes', () => {
     expect(c[0].classList.contains('t')).toBe(true);
     c.toggleClass('t');
     expect(c[0].classList.contains('t')).toBe(false);
-    // Forcado: liga mesmo em quem ja estava desligado e nao alterna de volta.
+    // Forced: it turns on even where it was already off and does not toggle back.
     c.toggleClass('f', true);
     c.toggleClass('f', true);
     expect(c[0].classList.contains('f')).toBe(true);
@@ -577,25 +577,25 @@ describe('classes', () => {
     expect(c[0].classList.contains('f')).toBe(false);
   });
 
-  it('nome vazio ou so espacos e no-op', () => {
+  it('an empty name, or one with only spaces, is a no-op', () => {
     const c = query('.c');
     const antes = c[0].className;
     expect(() => c.addClass('   ').removeClass('').toggleClass('  ')).not.toThrow();
     expect(c[0].className).toBe(antes);
     expect(c.hasClass('')).toBe(false);
     expect(c.hasClass('   ')).toBe(false);
-    // Guarda contra chamada sem tipagem vinda de JavaScript puro.
+    // Guards against an untyped call coming from plain JavaScript.
     expect(() => c.addClass(undefined as unknown as string)).not.toThrow();
     expect(c[0].className).toBe(antes);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Insercao e remocao
+// Insertion and removal
 // ---------------------------------------------------------------------------
 
-describe('insercao de conteudo', () => {
-  it('append e prepend aceitam html, texto, no, colecao, lista e nulo', () => {
+describe('content insertion', () => {
+  it('append and prepend accept html, text, a node, a collection, a list and null', () => {
     montar('<div id="d">meio</div>');
     const d = query('#d');
     d.append('<b>fim</b>');
@@ -614,7 +614,7 @@ describe('insercao de conteudo', () => {
     d.append([solto('s'), solto('s')]);
     expect(d.find('s').length).toBe(2);
 
-    // Entradas que nao viram no nenhum sao no-op.
+    // Inputs that become no node at all are a no-op.
     const antes = d[0].innerHTML;
     d.append(null);
     d.append(undefined);
@@ -624,7 +624,7 @@ describe('insercao de conteudo', () => {
     expect(d[0].innerHTML).toBe(antes);
   });
 
-  it('com varios destinos o ultimo fica com o original e os demais com copias', () => {
+  it('with several destinations the last one keeps the original and the rest get copies', () => {
     montar('<div class="box"></div><div class="box"></div>');
     const no = solto('span');
     no.id = 'unico';
@@ -634,7 +634,7 @@ describe('insercao de conteudo', () => {
     expect(caixas[1].querySelector('span')).toBe(no);
   });
 
-  it('before e after inserem ao lado, e ignoram elemento sem pai', () => {
+  it('before and after insert alongside, and ignore an element with no parent', () => {
     montar('<div id="p"><span id="alvo">x</span></div>');
     query('#alvo').before('<b id="antes">a</b>');
     query('#alvo').after('<b id="depois">d</b>');
@@ -646,7 +646,7 @@ describe('insercao de conteudo', () => {
     expect(orfao.parentNode).toBeNull();
   });
 
-  it('appendTo e prependTo movem para o destino, clonando quando ha varios', () => {
+  it('appendTo and prependTo move to the destination, cloning when there are several', () => {
     montar('<div class="alvo"></div><div class="alvo"></div><span id="mover">m</span>');
     const mover = document.getElementById('mover') as HTMLElement;
     query('#mover').appendTo('.alvo');
@@ -662,11 +662,11 @@ describe('insercao de conteudo', () => {
     expect(primeiro.children[1].textContent).toBe('2');
     expect(primeiro.children[2].textContent).toBe('fixo');
 
-    // Destino inexistente: nada acontece e nada quebra.
+    // Nonexistent destination: nothing happens and nothing breaks.
     expect(() => query('.mv').appendTo('.nao-existe')).not.toThrow();
   });
 
-  it('replaceWith troca o elemento e ignora quem nao tem pai', () => {
+  it('replaceWith swaps the element and ignores the ones with no parent', () => {
     montar('<div id="p"><span id="velho">v</span></div>');
     query('#velho').replaceWith('<b id="novo">n</b>');
     expect(document.getElementById('velho')).toBeNull();
@@ -676,29 +676,29 @@ describe('insercao de conteudo', () => {
     expect(() => query(orfao).replaceWith('<i></i>')).not.toThrow();
   });
 
-  it('wrap envolve cada elemento e desce ate o no mais interno', () => {
+  it('wrap wraps each element and descends to the innermost node', () => {
     montar('<div id="p"><span class="a">1</span><span class="a">2</span></div>');
     query('.a').wrap('<div class="capa"><em class="dentro"></em></div>');
     expect(document.querySelectorAll('.capa').length).toBe(2);
     expect(document.querySelectorAll('.capa .dentro .a').length).toBe(2);
-    // Wrapper que nao resolve para elemento nenhum e no-op.
+    // A wrapper that resolves to no element at all is a no-op.
     montar('<span id="s">x</span>');
     expect(() => query('#s').wrap('')).not.toThrow();
     expect((document.getElementById('s') as HTMLElement).parentElement).toBe(document.body);
   });
 
-  it('unwrap remove o pai, mas nunca o body nem um pai solto', () => {
+  it('unwrap removes the parent, but never the body nor a loose parent', () => {
     montar('<div id="avo"><div class="capa"><span id="filho">f</span></div></div>');
     query('#filho').unwrap();
     expect(document.querySelector('.capa')).toBeNull();
     expect((document.getElementById('filho') as HTMLElement).parentElement?.id).toBe('avo');
 
-    // Filho direto do body: o body nunca e removido.
+    // A direct child of the body: the body is never removed.
     montar('<span id="direto">d</span>');
     query('#direto').unwrap();
     expect(document.getElementById('direto')).not.toBeNull();
 
-    // Pai solto no ar nao tem avo para receber os filhos: no-op.
+    // A parent loose in the air has no grandparent to take in the children: no-op.
     const pai = solto();
     const filho = solto('span');
     pai.appendChild(filho);
@@ -706,13 +706,13 @@ describe('insercao de conteudo', () => {
     expect(filho.parentElement).toBe(pai);
   });
 
-  it('remove, empty e clone', () => {
+  it('remove, empty and clone', () => {
     montar('<div id="d"><span class="f">1</span><span class="f">2</span></div>');
     const c = query('.f').clone();
     expect(c.length).toBe(2);
     expect(c[0].isConnected).toBe(false);
     expect(c[0]).not.toBe(query('.f')[0]);
-    // Copia rasa perde os filhos.
+    // A shallow copy loses the children.
     expect(query('#d').clone(false)[0].children.length).toBe(0);
     expect(query('#d').clone()[0].children.length).toBe(2);
 
@@ -726,16 +726,16 @@ describe('insercao de conteudo', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Eventos
+// Events
 // ---------------------------------------------------------------------------
 
-describe('eventos', () => {
+describe('events', () => {
   beforeEach(() =>
     montar('<div id="pai"><button class="b" id="b1">1</button><button class="b" id="b2">2</button>' +
       '<span id="outro">o</span></div>')
   );
 
-  it('on escuta direto, com this no elemento e varios tipos de uma vez', () => {
+  it('on listens directly, with this on the element and several types at once', () => {
     const vistos: string[] = [];
     query('.b').on('click focus', function (ev) {
       vistos.push(`${ev.type}:${this.id}`);
@@ -745,27 +745,27 @@ describe('eventos', () => {
     expect(vistos).toEqual(['click:b1', 'focus:b2']);
   });
 
-  it('on com seletor delega e so dispara para descendentes que casam', () => {
+  it('on with a selector delegates and only fires for matching descendants', () => {
     const vistos: string[] = [];
     query('#pai').on('click', '.b', function () {
       vistos.push(this.id);
     });
     (document.getElementById('b1') as HTMLElement).click();
-    // Alvo que nao casa com o seletor nao dispara.
+    // A target that does not match the selector does not fire.
     (document.getElementById('outro') as HTMLElement).click();
     expect(vistos).toEqual(['b1']);
 
-    // Botao criado depois tambem e atendido: e o ponto da delegacao.
+    // A button created later is served too: that is the point of delegation.
     query('#pai').append('<button class="b" id="b3">3</button>');
     (document.getElementById('b3') as HTMLElement).click();
     expect(vistos).toEqual(['b1', 'b3']);
     query('#pai').off();
   });
 
-  it('delegacao ignora o casamento que esta fora do elemento escutado', () => {
+  it('delegation ignores a match that lies outside the listening element', () => {
     montar('<div id="fora" class="alvo"><div id="dentro"><b id="clique">c</b></div></div>');
     let chamou = 0;
-    // `.alvo` e ancestral de `#dentro`, entao `closest` acha mas nao esta dentro.
+    // `.alvo` is an ancestor of `#dentro`, so `closest` finds it but it is not inside.
     query('#dentro').on('click', '.alvo', () => {
       chamou += 1;
     });
@@ -774,14 +774,14 @@ describe('eventos', () => {
     query('#dentro').off();
   });
 
-  it('on ignora handler que nao e funcao', () => {
+  it('on ignores a handler that is not a function', () => {
     const c = query('.b');
     expect(c.on('click', undefined as unknown as () => void)).toBe(c);
     expect(c.on('click', '.b', undefined as unknown as () => void)).toBe(c);
     expect(c.once('click', undefined as unknown as () => void)).toBe(c);
   });
 
-  it('off remove tudo, por tipo, por seletor e por funcao', () => {
+  it('off removes everything, by type, by selector and by function', () => {
     let a = 0;
     let b = 0;
     const fnA = (): void => {
@@ -796,32 +796,32 @@ describe('eventos', () => {
     alvo.on('mouseover', fnA);
     alvo.on('click', '.b', fnA);
 
-    // Por funcao e sem seletor: `off` casa com qualquer seletor, entao saem
-    // tanto a escuta direta de fnA quanto a delegada com a mesma funcao.
+    // By function and with no selector: `off` matches any selector, so both the
+    // direct listener for fnA and the delegated one with the same function go.
     alvo.off('click', fnA);
     (document.getElementById('b1') as HTMLElement).click();
     expect(a).toBe(0);
     expect(b).toBe(1);
 
-    // Por tipo.
+    // By type.
     alvo.off('click');
     (document.getElementById('b1') as HTMLElement).click();
     expect(b).toBe(1);
 
-    // Ainda resta o mouseover.
+    // The mouseover is still there.
     (document.getElementById('pai') as HTMLElement).dispatchEvent(new Event('mouseover'));
     expect(a).toBe(1);
 
-    // Sem argumento remove todas.
+    // With no argument it removes them all.
     alvo.off();
     (document.getElementById('pai') as HTMLElement).dispatchEvent(new Event('mouseover'));
     expect(a).toBe(1);
 
-    // Elemento sem nada registrado: no-op.
+    // An element with nothing registered: no-op.
     expect(() => query('#outro').off('click')).not.toThrow();
   });
 
-  it('off por seletor so atinge as escutas delegadas daquele seletor', () => {
+  it('off by selector only hits the delegated listeners for that selector', () => {
     let direto = 0;
     let delegado = 0;
     const alvo = query('#pai');
@@ -838,7 +838,7 @@ describe('eventos', () => {
     alvo.off();
   });
 
-  it('once dispara uma vez, com e sem delegacao', () => {
+  it('once fires a single time, with and without delegation', () => {
     let n = 0;
     query('#pai').once('click', () => {
       n += 1;
@@ -857,20 +857,20 @@ describe('eventos', () => {
     query('#pai').off();
   });
 
-  it('trigger usa o metodo nativo quando existe e CustomEvent quando nao', () => {
+  it('trigger uses the native method when it exists and a CustomEvent when it does not', () => {
     let cliques = 0;
     let ultimo: Event | null = null;
     query('#b1').on('click', (ev) => {
       cliques += 1;
       ultimo = ev;
     });
-    // Sem detail vai pelo metodo nativo `el.click()`, que gera um MouseEvent.
+    // With no detail it goes through the native `el.click()` method, which makes a MouseEvent.
     query('#b1').trigger('click');
     expect(cliques).toBe(1);
     expect(ultimo).toBeInstanceOf(MouseEvent);
     expect(ultimo).not.toBeInstanceOf(CustomEvent);
 
-    // Com detail vira CustomEvent marcado como interno da Voodoo.
+    // With detail it becomes a CustomEvent marked as internal to Voodoo.
     query('#b1').trigger('click', { n: 7 });
     expect(cliques).toBe(2);
     expect(ultimo).toBeInstanceOf(CustomEvent);
@@ -887,12 +887,12 @@ describe('eventos', () => {
     query('#pai').off();
   });
 
-  it('emit sempre sobe pela arvore como CustomEvent', () => {
+  it('emit always bubbles up the tree as a CustomEvent', () => {
     const recebidos: unknown[] = [];
     query('#pai').on('aviso', (ev) => recebidos.push((ev as CustomEvent).detail));
     query('.b').emit('aviso', 1);
     expect(recebidos).toEqual([1, 1]);
-    // Sem detail tambem funciona, sem cair no metodo nativo.
+    // With no detail it works too, without falling into the native method.
     query('#b1').emit('aviso');
     expect(recebidos.length).toBe(3);
     query('#pai').off();
@@ -900,11 +900,11 @@ describe('eventos', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Visibilidade
+// Visibility
 // ---------------------------------------------------------------------------
 
-describe('show, hide e toggle', () => {
-  it('hide guarda o display inline e show devolve', () => {
+describe('show, hide and toggle', () => {
+  it('hide stores the inline display and show gives it back', () => {
     montar('<div id="d" style="display:flex">x</div>');
     const d = query('#d');
     d.hide();
@@ -913,7 +913,7 @@ describe('show, hide e toggle', () => {
     expect(d[0].style.display).toBe('flex');
   });
 
-  it('sem display inline, show apenas limpa a propriedade', () => {
+  it('with no inline display, show just clears the property', () => {
     montar('<div id="d">x</div>');
     const d = query('#d');
     d.hide();
@@ -922,21 +922,21 @@ describe('show, hide e toggle', () => {
     expect(d[0].style.display).toBe('');
   });
 
-  it('show forca display block quando o CSS esconde o elemento', () => {
-    // `script` nasce com `display:none` na folha padrao do documento.
+  it('show forces display block when the CSS hides the element', () => {
+    // `script` is born with `display:none` in the document default stylesheet.
     montar('<script id="s"></script>');
     const s = query('#s');
     s.show();
     expect(s[0].style.display).toBe('block');
   });
 
-  it('show remove o atributo hidden', () => {
+  it('show removes the hidden attribute', () => {
     montar('<div id="d" hidden>x</div>');
     query('#d').show();
     expect(query('#d').attr('hidden')).toBeUndefined();
   });
 
-  it('toggle alterna e o argumento forca o estado', () => {
+  it('toggle alternates and the argument forces the state', () => {
     montar('<div id="d">x</div>');
     const d = query('#d');
     d.toggle();
@@ -949,7 +949,7 @@ describe('show, hide e toggle', () => {
     expect(d[0].style.display).toBe('');
   });
 
-  it('toggle considera escondido o que tem atributo hidden ou display none do CSS', () => {
+  it('toggle counts as hidden whatever has the hidden attribute or display none from CSS', () => {
     montar('<div id="a" hidden>a</div><script id="b"></script>');
     query('#a').toggle();
     expect(query('#a').attr('hidden')).toBeUndefined();
@@ -957,10 +957,10 @@ describe('show, hide e toggle', () => {
     expect(query('#b')[0].style.display).toBe('block');
   });
 
-  it('elemento solto do documento e tratado como visivel', () => {
+  it('an element loose from the document is treated as visible', () => {
     const fora = solto();
     query(fora).toggle();
-    // Considerado visivel, entao alternar esconde.
+    // Considered visible, so toggling hides it.
     expect(fora.style.display).toBe('none');
     query(fora).show();
     expect(fora.style.display).toBe('');
@@ -968,10 +968,10 @@ describe('show, hide e toggle', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Animacoes da colecao
+// Collection animations
 // ---------------------------------------------------------------------------
 
-describe('animacoes da colecao', () => {
+describe('collection animations', () => {
   const rafOriginal = globalThis.requestAnimationFrame;
 
   beforeEach(() => {
@@ -985,7 +985,7 @@ describe('animacoes da colecao', () => {
     vi.useRealTimers();
   });
 
-  it('fadeIn e fadeOut atravessam a colecao inteira e nao deixam timer', async () => {
+  it('fadeIn and fadeOut go through the whole collection and leave no timer behind', async () => {
     montar('<div class="c" hidden>a</div><div class="c">b</div>');
     const c = query('.c');
     expect(c.fadeIn(10)).toBe(c);
@@ -999,7 +999,7 @@ describe('animacoes da colecao', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('slideUp, slideDown e slideToggle percorrem a colecao', async () => {
+  it('slideUp, slideDown and slideToggle walk through the collection', async () => {
     montar('<div class="c" hidden>a</div><script class="c"></script><div class="c">b</div>');
     const c = query('.c');
     expect(c.slideDown(10)).toBe(c);
@@ -1010,19 +1010,19 @@ describe('animacoes da colecao', () => {
     await vi.advanceTimersByTimeAsync(200);
     expect(c[0].style.display).toBe('none');
 
-    // Metade escondida, metade visivel: cobre os dois lados do slideToggle.
+    // Half hidden, half visible: covers both sides of slideToggle.
     montar('<div id="vis">a</div><div id="esc" style="display:none">b</div>');
     query('#vis, #esc').slideToggle(10);
     await vi.advanceTimersByTimeAsync(200);
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('animate so chama a Web Animations API onde ela existe', () => {
+  it('animate only calls the Web Animations API where it exists', () => {
     montar('<div class="c"></div><div class="c"></div>');
     const c = query('.c');
     const espia = vi.fn();
     (c[0] as unknown as Record<string, unknown>).animate = espia;
-    // jsdom nao implementa `animate`: o segundo elemento cai no `continue`.
+    // jsdom does not implement `animate`: the second element falls into the `continue`.
     expect((c[1] as unknown as Record<string, unknown>).animate).toBeUndefined();
     expect(() => c.animate([{ opacity: 0 }, { opacity: 1 }])).not.toThrow();
     expect(espia).toHaveBeenCalledTimes(1);
@@ -1030,17 +1030,17 @@ describe('animacoes da colecao', () => {
     expect(espia).toHaveBeenCalledTimes(2);
   });
 
-  it('scrollIntoView atinge apenas o primeiro elemento', () => {
+  it('scrollIntoView reaches only the first element', () => {
     montar('<div class="c"></div><div class="c"></div>');
     const espia = vi.fn();
-    // jsdom nao traz `scrollIntoView`; o metodo e emprestado so para o teste.
+    // jsdom does not ship `scrollIntoView`; the method is lent just for the test.
     (Element.prototype as unknown as Record<string, unknown>).scrollIntoView = espia;
     try {
       query('.c').scrollIntoView();
       expect(espia).toHaveBeenCalledTimes(1);
       query('.c').scrollIntoView({ block: 'end' });
       expect(espia).toHaveBeenLastCalledWith({ block: 'end' });
-      // Colecao vazia nao chama nada.
+      // An empty collection calls nothing.
       query('.nao-existe').scrollIntoView();
       expect(espia).toHaveBeenCalledTimes(2);
     } finally {
@@ -1050,7 +1050,7 @@ describe('animacoes da colecao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Formularios
+// Forms
 // ---------------------------------------------------------------------------
 
 describe('serialize', () => {
@@ -1076,7 +1076,7 @@ describe('serialize', () => {
     )
   );
 
-  it('monta a query string ignorando campos que nao contam', () => {
+  it('builds the query string ignoring the fields that do not count', () => {
     const s = query('#f').serialize();
     const pares = new URLSearchParams(s);
     expect(pares.get('nome')).toBe('ana');
@@ -1085,7 +1085,7 @@ describe('serialize', () => {
     expect(pares.get('s')).toBe('2');
     expect(pares.getAll('m')).toEqual(['x', 'y']);
     expect(pares.get('t')).toBe('texto');
-    // Sem nome, desligado, arquivo, submit, reset, button e checkbox solto.
+    // No name, disabled, file, submit, reset, button and an unchecked checkbox.
     expect(pares.has('desligado')).toBe(false);
     expect(pares.has('arquivo')).toBe(false);
     expect(pares.has('enviar')).toBe(false);
@@ -1094,17 +1094,17 @@ describe('serialize', () => {
     expect(pares.has('nao')).toBe(false);
   });
 
-  it('serializa tambem quando a colecao ja e o proprio campo', () => {
+  it('serializes also when the collection is already the field itself', () => {
     expect(query('input[name=nome]').serialize()).toBe('nome=ana');
   });
 
-  it('serialize de colecao vazia e string vazia', () => {
+  it('serialize of an empty collection is an empty string', () => {
     expect(query('.nao-existe').serialize()).toBe('');
   });
 });
 
 describe('serializeObject', () => {
-  it('converte tipos, agrupa repetidos e trata checkbox solto', () => {
+  it('converts types, groups repeats and handles an unchecked checkbox', () => {
     montar(
       `<form id="f">
         <input name="nome" value="ana">
@@ -1131,10 +1131,10 @@ describe('serializeObject', () => {
     expect(o.idade).toBe(30);
     expect(o.vazio).toBeNull();
     expect(o.nivel).toBe(7);
-    // Checkbox sem `value` vira booleano.
+    // A checkbox with no `value` becomes a boolean.
     expect(o.aceite).toBe(true);
     expect(o.marcado).toBe('sim');
-    // Checkbox desmarcado e registrado como false.
+    // An unchecked checkbox is recorded as false.
     expect(o.solto).toBe(false);
     expect(o.cor).toBe('azul');
     expect(o.unico).toBeNull();
@@ -1145,7 +1145,7 @@ describe('serializeObject', () => {
     expect(o.off).toBeUndefined();
   });
 
-  it('nomes terminados em [] e nomes repetidos viram lista', () => {
+  it('names ending in [] and repeated names become a list', () => {
     montar(
       `<form id="f">
         <input name="tags[]" value="a">
@@ -1162,46 +1162,46 @@ describe('serializeObject', () => {
     );
     const o = query('#f').serializeObject();
     expect(o['tags']).toEqual(['a', 'b']);
-    // O desmarcado nao entra na lista.
+    // The unchecked one does not go into the list.
     expect(o['opcoes']).toEqual(['1', '3']);
     expect(o['cor']).toEqual(['azul', 'verde', 'rosa']);
-    // O primeiro gravou `false`; o marcado seguinte substitui em vez de virar par.
+    // The first one wrote `false`; the checked one that follows replaces it instead of pairing up.
     expect(o['flag']).toBe('2');
   });
 
-  it('campo de arquivo com conteudo devolve o File ou a lista', () => {
+  it('a file field with content returns the File or the list', () => {
     montar('<form id="f"><input type="file" name="um"><input type="file" name="muitos" multiple></form>');
     const a = new File(['a'], 'a.txt');
     const b = new File(['b'], 'b.txt');
-    // jsdom deixa `files` sempre nulo; injetar a lista cobre o lado preenchido
-    // do `?.` e do `??` que a leitura usa.
+    // jsdom always leaves `files` null; injecting the list covers the filled side
+    // of the `?.` and of the `??` that the read uses.
     Object.defineProperty(document.querySelector('[name=um]'), 'files', { value: [a] });
     Object.defineProperty(document.querySelector('[name=muitos]'), 'files', { value: [a, b] });
     const o = query('#f').serializeObject();
     expect(o.um).toBe(a);
     expect(o.muitos).toEqual([a, b]);
 
-    // Lista existente porem vazia: o campo simples volta como null.
+    // A list that exists but is empty: the simple field comes back as null.
     montar('<form id="g"><input type="file" name="um"><input type="file" name="nulo" multiple></form>');
     Object.defineProperty(document.querySelector('[name=um]'), 'files', { value: [] });
-    // `files` nulo e o que aparece em webview antiga: precisa virar lista vazia.
+    // A null `files` is what shows up in an old webview: it has to become an empty list.
     Object.defineProperty(document.querySelector('[name=nulo]'), 'files', { value: null });
     const g = query('#g').serializeObject();
     expect(g.um).toBeNull();
     expect(g.nulo).toEqual([]);
   });
 
-  it('colecao vazia devolve objeto vazio', () => {
+  it('an empty collection returns an empty object', () => {
     expect(query('.nao-existe').serializeObject()).toEqual({});
   });
 });
 
-describe('focus, blur e select', () => {
-  it('focus atinge o primeiro, blur e select percorrem a colecao', () => {
+describe('focus, blur and select', () => {
+  it('focus reaches the first one, blur and select walk through the collection', () => {
     montar('<input id="a" value="texto"><input id="b" value="outro"><div id="d"></div>');
     query('#a, #b').focus();
     expect(document.activeElement?.id).toBe('a');
-    // `select` so existe em campo de texto; a div e ignorada sem erro.
+    // `select` only exists on a text field; the div is ignored without an error.
     expect(() => query('#a, #b, #d').select()).not.toThrow();
     query('#a, #b').blur();
     expect(document.activeElement?.id).not.toBe('a');
@@ -1209,24 +1209,24 @@ describe('focus, blur e select', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Integracao com o runtime
+// Integration with the runtime
 // ---------------------------------------------------------------------------
 
-describe('walk e destroy', () => {
-  it('walk inicializa as directives dos elementos da colecao', () => {
+describe('walk and destroy', () => {
+  it('walk initializes the directives of the elements in the collection', () => {
     montar('<div id="host"><span v-text="\'oi\'"></span></div>');
     query('#host').walk();
     expect(query('#host span').text()).toBe('oi');
   });
 
-  it('walk com force desmonta antes de reiniciar', () => {
+  it('walk with force unmounts before restarting', () => {
     montar('<div id="host"><span v-text="\'oi\'"></span></div>');
     query('#host').walk();
     expect(() => query('#host').walk(true)).not.toThrow();
     expect(query('#host span').text()).toBe('oi');
   });
 
-  it('destroy desmonta sem tirar o elemento do documento', () => {
+  it('destroy unmounts without taking the element out of the document', () => {
     montar('<div id="host"><span v-text="\'oi\'"></span></div>');
     query('#host').walk();
     expect(query('#host').destroy()).toBeInstanceOf(VoodooCollection);
@@ -1235,11 +1235,11 @@ describe('walk e destroy', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Colecao vazia: toda operacao precisa ser no-op segura
+// Empty collection: every operation has to be a safe no-op
 // ---------------------------------------------------------------------------
 
-describe('colecao vazia', () => {
-  it('encadear sobre resultado vazio nunca lanca e nunca produz elemento', () => {
+describe('empty collection', () => {
+  it('chaining over an empty result never throws and never produces an element', () => {
     montar('<div id="a"></div>');
     const vazia = query('.nao-existe');
     expect(vazia.length).toBe(0);
@@ -1264,7 +1264,7 @@ describe('colecao vazia', () => {
     expect(encadeada.length).toBe(0);
   });
 
-  it('leituras devolvem valores neutros', () => {
+  it('reads return neutral values', () => {
     const vazia = query('.nao-existe');
     expect(vazia.text()).toBe('');
     expect(vazia.html()).toBe('');
@@ -1288,7 +1288,7 @@ describe('colecao vazia', () => {
     expect([...vazia]).toEqual([]);
   });
 
-  it('escritas e efeitos colaterais sao no-op', () => {
+  it('writes and side effects are a no-op', () => {
     const vazia = query('.nao-existe');
     expect(() => {
       vazia
@@ -1340,17 +1340,17 @@ describe('colecao vazia', () => {
     expect(vazia.clone().length).toBe(0);
     expect(vazia.serialize()).toBe('');
     expect(vazia.serializeObject()).toEqual({});
-    // Nada foi parar no documento.
+    // Nothing ended up in the document.
     expect(document.body.querySelectorAll('i').length).toBe(0);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Elemento fora do documento
+// Element outside the document
 // ---------------------------------------------------------------------------
 
-describe('elemento desconectado do documento', () => {
-  it('aceita as mesmas operacoes de um elemento montado', () => {
+describe('element disconnected from the document', () => {
+  it('accepts the same operations as a mounted element', () => {
     const fora = solto();
     fora.className = 'solto';
     const c = query(fora);
@@ -1363,11 +1363,11 @@ describe('elemento desconectado do documento', () => {
     expect(c.parents().length).toBe(0);
     expect(c.closest('.solto').length).toBe(1);
     expect(c.width()).toBe(0);
-    // `remove` em quem ja esta fora nao quebra.
+    // `remove` on something already outside does not break.
     expect(() => c.remove()).not.toThrow();
   });
 
-  it('eventos funcionam mesmo sem estar no documento', () => {
+  it('events work even without being in the document', () => {
     const fora = solto('button');
     let n = 0;
     query(fora).on('click', () => {
@@ -1388,7 +1388,7 @@ describe('elemento desconectado do documento', () => {
 describe('ready', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('resolve sem funcao e executa a funcao passada', async () => {
+  it('resolves with no function and runs the function passed in', async () => {
     await expect(ready()).resolves.toBeUndefined();
     let n = 0;
     await ready(() => {
@@ -1397,7 +1397,7 @@ describe('ready', () => {
     expect(n).toBe(1);
   });
 
-  it('erro dentro do callback e reportado e nao derruba a promessa', async () => {
+  it('an error inside the callback is reported and does not bring the promise down', async () => {
     const espia = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await expect(
       ready(() => {
@@ -1408,7 +1408,7 @@ describe('ready', () => {
     espia.mockRestore();
   });
 
-  it('sem document resolve na hora e query devolve colecao vazia', async () => {
+  it('with no document it resolves right away and query returns an empty collection', async () => {
     vi.stubGlobal('document', undefined);
     try {
       await expect(ready()).resolves.toBeUndefined();
@@ -1416,7 +1416,7 @@ describe('ready', () => {
       expect(query('<b>x</b>').length).toBe(0);
       expect(query(() => undefined).length).toBe(0);
       expect(fromHtml('<b>x</b>').length).toBe(0);
-      // Sem document nao existe raiz padrao para o contexto cair de volta.
+      // With no document there is no default root for the context to fall back to.
       expect(query('.qualquer', () => undefined).length).toBe(0);
       expect(query('.qualquer', {} as unknown as Node).length).toBe(0);
     } finally {

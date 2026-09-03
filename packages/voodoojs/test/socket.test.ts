@@ -1,12 +1,13 @@
 /**
- * Camada de tempo real.
+ * Real-time layer.
  *
- * O jsdom tem uma classe `WebSocket`, mas ela abre socket de verdade: usar a
- * nativa aqui significaria teste dependendo de rede, e teste que depende de rede
- * nao e teste. Entao o modulo recebe um duplo controlavel por
- * `socket.defaults.WebSocket`, e cada caso decide na mao quando a conexao abre,
- * o que chega e quando ela cai. O caminho "ambiente sem WebSocket" e o unico que
- * mexe na global, e devolve o que pegou.
+ * jsdom has a `WebSocket` class, but it opens a real socket: using the native
+ * one here would mean a test depending on the network, and a test that depends
+ * on the network is not a test. So the module gets a controllable double
+ * through `socket.defaults.WebSocket`, and every case decides by hand when the
+ * connection opens, what arrives and when it drops. The "environment without
+ * WebSocket" path is the only one that touches the global, and it gives back
+ * what it took.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -24,18 +25,18 @@ import {
   resolveSocketURL,
   type WebSocketLike,
 } from '../src/socket';
-// Registra as directives nucleares (v-show, v-text, v-for) e as do socket.
+// Registers the core directives (v-show, v-text, v-for) and the socket ones.
 import '../src/core';
 import '../src/directives/socket';
 
 // ---------------------------------------------------------------------------
-// Duplo de WebSocket
+// WebSocket double
 // ---------------------------------------------------------------------------
 
-/** Imita a API do WebSocket sem tocar em rede nenhuma. */
+/** Imitates the WebSocket API without touching any network. */
 class FakeWebSocket implements WebSocketLike {
   static abertos: FakeWebSocket[] = [];
-  /** Ultimo socket construido, que e quase sempre o que o teste quer. */
+  /** The last socket constructed, which is almost always the one the test wants. */
   static get ultimo(): FakeWebSocket {
     return FakeWebSocket.abertos[FakeWebSocket.abertos.length - 1];
   }
@@ -69,26 +70,26 @@ class FakeWebSocket implements WebSocketLike {
     this.onclose?.({ code, reason });
   }
 
-  // --- controles do teste ---
+  // --- test controls ---
 
-  /** Faz o handshake abrir. */
+  /** Makes the handshake open. */
   abrir(): void {
     this.readyState = 1;
     this.onopen?.({});
   }
 
-  /** Entrega um quadro vindo do servidor. */
+  /** Delivers a frame coming from the server. */
   receber(data: unknown): void {
     this.onmessage?.({ data });
   }
 
-  /** Queda da conexao vinda de fora, sem `close()` do cliente. */
+  /** Connection drop coming from outside, with no `close()` from the client. */
   cair(code = 1006): void {
     this.readyState = 3;
     this.onclose?.({ code });
   }
 
-  /** Some sem avisar: `readyState` continua mentindo que esta aberto. */
+  /** Disappears without warning: `readyState` keeps lying that it is open. */
   sumir(): void {
     this.onmessage = null;
   }
@@ -107,7 +108,7 @@ async function assentar(n = 3): Promise<void> {
   for (let i = 0; i < n; i++) await nextTick();
 }
 
-/** Abre o socket nativo e devolve o duplo ja pronto. */
+/** Opens the native socket and returns the double ready to use. */
 function abrirNativo(url = 'wss://exemplo.com', opcoes = {}) {
   const s = createSocket(url, opcoes);
   const ws = FakeWebSocket.ultimo;
@@ -129,18 +130,18 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Conexao
+// Connection
 // ---------------------------------------------------------------------------
 
-describe('conexao', () => {
-  it('abre e fica conectado', () => {
+describe('connection', () => {
+  it('opens and stays connected', () => {
     const { s } = abrirNativo();
     expect(s.state).toBe('open');
     expect(s.connected).toBe(true);
     expect(s.url).toBe('wss://exemplo.com');
   });
 
-  it('estado e connected sao reativos', async () => {
+  it('state and connected are reactive', async () => {
     const { s, ws } = abrirNativo();
     const vistos: string[] = [];
     const parar = (await import('../src/reactivity')).effect(() => {
@@ -153,7 +154,7 @@ describe('conexao', () => {
     parar.stop?.();
   });
 
-  it('close explicito fecha e nao reconecta', () => {
+  it('an explicit close closes and does not reconnect', () => {
     vi.useFakeTimers();
     const { s } = abrirNativo();
     s.close();
@@ -163,7 +164,7 @@ describe('conexao', () => {
     expect(FakeWebSocket.abertos.length).toBe(quantos);
   });
 
-  it('resolve enderecos relativos contra a pagina', () => {
+  it('resolves relative addresses against the page', () => {
     expect(resolveSocketURL('/chat')).toBe('ws://localhost:3000/chat');
     expect(resolveSocketURL('https://x.com/y')).toBe('wss://x.com/y');
     expect(resolveSocketURL('wss://x.com')).toBe('wss://x.com');
@@ -171,11 +172,11 @@ describe('conexao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Mensagens
+// Messages
 // ---------------------------------------------------------------------------
 
-describe('mensagens', () => {
-  it('entrega o envelope { event, data } como evento nomeado', () => {
+describe('messages', () => {
+  it('delivers the { event, data } envelope as a named event', () => {
     const { s, ws } = abrirNativo();
     const recebidas: unknown[] = [];
     s.on('nova', (d) => recebidas.push(d));
@@ -184,7 +185,7 @@ describe('mensagens', () => {
     expect(recebidas).toEqual([{ texto: 'oi' }]);
   });
 
-  it('texto puro cai em message sem quebrar', () => {
+  it('plain text falls into message without breaking', () => {
     const { s, ws } = abrirNativo();
     const recebidas: unknown[] = [];
     s.on('message', (d) => recebidas.push(d));
@@ -194,13 +195,13 @@ describe('mensagens', () => {
     expect(recebidas).toEqual(['nao sou json', '{quebrado']);
   });
 
-  it('emit escreve o envelope no fio', () => {
+  it('emit writes the envelope onto the wire', () => {
     const { s, ws } = abrirNativo();
     s.emit('entrar', { sala: 'geral' });
     expect(JSON.parse(ws.enviados[0])).toEqual({ event: 'entrar', data: { sala: 'geral' } });
   });
 
-  it('interceptadores de entrada e saida seguem o formato do http', () => {
+  it('incoming and outgoing interceptors follow the http format', () => {
     const soltarSaida = socket.interceptors.outgoing.use((m) => ({
       ...m,
       data: { ...(m.data as object), assinado: true },
@@ -226,11 +227,11 @@ describe('mensagens', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Fila de envio
+// Send queue
 // ---------------------------------------------------------------------------
 
-describe('fila de envio', () => {
-  it('emit antes de abrir enfileira e despacha na abertura', () => {
+describe('send queue', () => {
+  it('an emit before opening queues up and is dispatched on open', () => {
     const s = createSocket('wss://exemplo.com');
     const ws = FakeWebSocket.ultimo;
 
@@ -244,7 +245,7 @@ describe('fila de envio', () => {
     expect(s.queued).toBe(0);
   });
 
-  it('a fila tem teto e descarta a mais antiga', () => {
+  it('the queue has a ceiling and drops the oldest one', () => {
     const s = createSocket('wss://exemplo.com', { queueLimit: 2 });
     const ws = FakeWebSocket.ultimo;
     s.emit('a', 1);
@@ -259,13 +260,13 @@ describe('fila de envio', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Reconexao
+// Reconnection
 // ---------------------------------------------------------------------------
 
-describe('reconexao', () => {
-  it('espera crescente entre tentativas, sempre dentro do teto', () => {
+describe('reconnection', () => {
+  it('a growing wait between attempts, always within the ceiling', () => {
     vi.useFakeTimers();
-    // Sem jitter a espera fica deterministica e da para medir de verdade.
+    // Without jitter the wait is deterministic and can really be measured.
     const s = createSocket('wss://exemplo.com', {
       reconnectDelay: 100,
       reconnectMaxDelay: 400,
@@ -283,12 +284,12 @@ describe('reconexao', () => {
     }
 
     expect(esperas).toEqual([100, 200, 400, 400]);
-    // Cada espera terminou abrindo um socket novo.
+    // Each wait ended by opening a new socket.
     expect(FakeWebSocket.abertos.length).toBe(5);
     s.close();
   });
 
-  it('o sorteio mantem a espera dentro da janela do jitter', () => {
+  it('the draw keeps the wait inside the jitter window', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', {
       reconnectDelay: 1000,
@@ -306,11 +307,11 @@ describe('reconexao', () => {
     s.close();
   });
 
-  it('para de reconectar depois de close()', () => {
+  it('stops reconnecting after close()', () => {
     vi.useFakeTimers();
     const { s } = abrirNativo('wss://exemplo.com', { reconnectDelay: 50, jitter: 0 });
     FakeWebSocket.ultimo.cair();
-    // Cai, agenda, e o close() chega antes da hora da tentativa.
+    // It drops, it schedules, and the close() arrives before the attempt is due.
     s.close();
     const quantos = FakeWebSocket.abertos.length;
     vi.advanceTimersByTime(10_000);
@@ -318,7 +319,7 @@ describe('reconexao', () => {
     expect(s.state).toBe('closed');
   });
 
-  it('desiste depois do numero maximo de tentativas', () => {
+  it('gives up after the maximum number of attempts', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', {
       reconnectDelay: 10,
@@ -331,13 +332,13 @@ describe('reconexao', () => {
       FakeWebSocket.ultimo.cair();
       vi.advanceTimersByTime(500);
     }
-    // 1 inicial + 2 tentativas, e nada depois disso.
+    // 1 initial + 2 attempts, and nothing after that.
     expect(FakeWebSocket.abertos.length).toBe(3);
     expect(s.state).toBe('closed');
     expect(s.error).toContain('gave up after');
   });
 
-  it('reconectar com sucesso zera o contador', () => {
+  it('reconnecting successfully resets the counter', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', { reconnectDelay: 10, jitter: 0, heartbeat: 0 });
     FakeWebSocket.ultimo.abrir();
@@ -355,7 +356,7 @@ describe('reconexao', () => {
 // ---------------------------------------------------------------------------
 
 describe('heartbeat', () => {
-  it('manda ping no intervalo configurado', () => {
+  it('sends a ping at the configured interval', () => {
     vi.useFakeTimers();
     const { s, ws } = abrirNativo('wss://exemplo.com', {
       heartbeat: 1000,
@@ -366,7 +367,7 @@ describe('heartbeat', () => {
     s.close();
   });
 
-  it('derruba a conexao morta mesmo com readyState dizendo que esta aberta', () => {
+  it('drops the dead connection even with readyState saying it is open', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', {
       heartbeat: 1000,
@@ -376,20 +377,20 @@ describe('heartbeat', () => {
     });
     const ws = FakeWebSocket.ultimo;
     ws.abrir();
-    // A rede caiu sem FIN: nada mais chega, mas o socket jura estar aberto.
+    // The network went down with no FIN: nothing else arrives, but the socket swears it is open.
     ws.sumir();
     expect(ws.readyState).toBe(1);
 
     vi.advanceTimersByTime(1600);
     expect(s.connected).toBe(false);
     expect(s.error).toContain('connection unresponsive');
-    // E a reconexao entra em cena sozinha.
+    // And the reconnection comes on stage by itself.
     vi.advanceTimersByTime(50);
     expect(FakeWebSocket.abertos.length).toBe(2);
     s.close();
   });
 
-  it('trafego conta como prova de vida e adia a queda', () => {
+  it('traffic counts as proof of life and postpones the drop', () => {
     vi.useFakeTimers();
     const { s, ws } = abrirNativo('wss://exemplo.com', {
       heartbeat: 1000,
@@ -403,7 +404,7 @@ describe('heartbeat', () => {
     s.close();
   });
 
-  it('o pong nao vira mensagem da aplicacao', () => {
+  it('the pong does not become an application message', () => {
     const { s, ws } = abrirNativo();
     const recebidas: unknown[] = [];
     s.on('message', (d) => recebidas.push(d));
@@ -414,11 +415,11 @@ describe('heartbeat', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Protocolo Socket.IO
+// Socket.IO protocol
 // ---------------------------------------------------------------------------
 
-describe('protocolo Socket.IO', () => {
-  it('le o pacote de abertura do Engine.IO', () => {
+describe('Socket.IO protocol', () => {
+  it('reads the Engine.IO open packet', () => {
     const p = decodeEngine('0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}');
     expect(p.kind).toBe('open');
     if (p.kind === 'open') {
@@ -427,7 +428,7 @@ describe('protocolo Socket.IO', () => {
     }
   });
 
-  it('classifica ping, pong, close e noop', () => {
+  it('classifies ping, pong, close and noop', () => {
     expect(decodeEngine('2').kind).toBe('ping');
     expect(decodeEngine('3').kind).toBe('pong');
     expect(decodeEngine('1').kind).toBe('close');
@@ -435,7 +436,7 @@ describe('protocolo Socket.IO', () => {
     expect(decodeEngine(new ArrayBuffer(2)).kind).toBe('unknown');
   });
 
-  it('separa tipo, namespace, ack e corpo', () => {
+  it('separates type, namespace, ack and body', () => {
     expect(decodeSocketIo('2["oi",1]')).toEqual({
       type: 2,
       namespace: '/',
@@ -462,26 +463,26 @@ describe('protocolo Socket.IO', () => {
     });
   });
 
-  it('monta pacotes de volta', () => {
+  it('assembles packets on the way back', () => {
     expect(encodeSocketIo({ type: 2, namespace: '/', data: ['oi', 1] })).toBe('42["oi",1]');
     expect(encodeSocketIo({ type: 3, namespace: '/', ack: 7, data: [true] })).toBe('437[true]');
     expect(encodeSocketIo({ type: 0, namespace: '/admin' })).toBe('40/admin,');
   });
 
-  it('monta a URL do endpoint', () => {
+  it('assembles the endpoint URL', () => {
     expect(engineURL('ws://localhost:3000')).toBe(
       'ws://localhost:3000/socket.io/?EIO=4&transport=websocket'
     );
     expect(engineURL('ws://x.com', 'rt')).toBe('ws://x.com/rt/?EIO=4&transport=websocket');
   });
 
-  it('faz o handshake completo e so entao conta como aberto', () => {
+  it('does the full handshake and only then counts as open', () => {
     const s = createSocket('/', { transport: 'socket.io' });
     const ws = FakeWebSocket.ultimo;
     expect(ws.url).toContain('/socket.io/?EIO=4&transport=websocket');
 
     ws.abrir();
-    // TCP aberto ainda nao e conexao Socket.IO.
+    // An open TCP is not a Socket.IO connection yet.
     expect(s.connected).toBe(false);
 
     ws.receber('0{"sid":"abc","pingInterval":25000,"pingTimeout":20000}');
@@ -493,7 +494,7 @@ describe('protocolo Socket.IO', () => {
     s.close();
   });
 
-  it('responde o ping do servidor com pong', () => {
+  it('answers the server ping with a pong', () => {
     const s = createSocket('/', { transport: 'socket.io' });
     const ws = FakeWebSocket.ultimo;
     ws.abrir();
@@ -506,7 +507,7 @@ describe('protocolo Socket.IO', () => {
     s.close();
   });
 
-  it('entrega eventos e resolve acks', () => {
+  it('delivers events and resolves acks', () => {
     const s = createSocket('/', { transport: 'socket.io' });
     const ws = FakeWebSocket.ultimo;
     ws.abrir();
@@ -529,7 +530,7 @@ describe('protocolo Socket.IO', () => {
     s.close();
   });
 
-  it('responde um evento que pede confirmacao', () => {
+  it('answers an event that asks for confirmation', () => {
     const s = createSocket('/', { transport: 'socket.io' });
     const ws = FakeWebSocket.ultimo;
     ws.abrir();
@@ -543,7 +544,7 @@ describe('protocolo Socket.IO', () => {
     s.close();
   });
 
-  it('derruba quando o servidor recusa a conexao', () => {
+  it('drops when the server refuses the connection', () => {
     vi.useFakeTimers();
     const s = createSocket('/', { transport: 'socket.io', reconnectDelay: 10, jitter: 0 });
     const ws = FakeWebSocket.ultimo;
@@ -557,11 +558,11 @@ describe('protocolo Socket.IO', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Salas
+// Rooms
 // ---------------------------------------------------------------------------
 
-describe('salas', () => {
-  it('join pede entrada e leave pede saida', () => {
+describe('rooms', () => {
+  it('join asks to enter and leave asks to exit', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
     expect(JSON.parse(ws.enviados[0])).toEqual({
@@ -578,7 +579,7 @@ describe('salas', () => {
     expect(s.rooms).toHaveLength(0);
   });
 
-  it('join e idempotente: mesma sala, mesmo objeto, um pedido so', () => {
+  it('join is idempotent: same room, same object, a single request', () => {
     const { s, ws } = abrirNativo();
     const a = s.join('geral');
     const b = s.join('geral');
@@ -586,7 +587,7 @@ describe('salas', () => {
     expect(ws.enviados).toHaveLength(1);
     expect(s.rooms).toHaveLength(1);
 
-    // E o ouvinte tambem nao duplica.
+    // And the listener does not duplicate either.
     const vistas: unknown[] = [];
     a.on('mensagem', (d) => vistas.push(d));
     b.on('mensagem', (d) => vistas.push(d));
@@ -596,7 +597,7 @@ describe('salas', () => {
     expect(vistas).toEqual([{ texto: 'x' }, { texto: 'x' }]);
   });
 
-  it('leave duas vezes nao quebra nem manda dois pedidos', () => {
+  it('leaving twice neither breaks nor sends two requests', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
     ws.enviados.length = 0;
@@ -605,7 +606,7 @@ describe('salas', () => {
     expect(ws.enviados).toHaveLength(1);
   });
 
-  it('envelope de sala no transporte nativo', () => {
+  it('room envelope on the native transport', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
     ws.enviados.length = 0;
@@ -625,7 +626,7 @@ describe('salas', () => {
     expect(sala.mensagens).toEqual([{ texto: 'volta' }]);
   });
 
-  it('mensagem de outra sala nao entra nesta', () => {
+  it('a message from another room does not enter this one', () => {
     const { s, ws } = abrirNativo();
     const geral = s.join('geral');
     const outra = s.join('outra');
@@ -637,7 +638,7 @@ describe('salas', () => {
     expect(vistas).toEqual(['outra']);
   });
 
-  it('rooms do Socket.IO usam o mesmo envelope sobre o protocolo', () => {
+  it('Socket.IO rooms use the same envelope over the protocol', () => {
     const s = createSocket('/', { transport: 'socket.io' });
     const ws = FakeWebSocket.ultimo;
     ws.abrir();
@@ -655,7 +656,7 @@ describe('salas', () => {
     s.close();
   });
 
-  it('reentra nas salas depois da reconexao', () => {
+  it('rejoins the rooms after the reconnection', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', {
       reconnectDelay: 10,
@@ -680,7 +681,7 @@ describe('salas', () => {
     s.close();
   });
 
-  it('uma sala abandonada nao volta na reconexao', () => {
+  it('an abandoned room does not come back on reconnection', () => {
     vi.useFakeTimers();
     const s = createSocket('wss://exemplo.com', { reconnectDelay: 10, jitter: 0, heartbeat: 0 });
     FakeWebSocket.ultimo.abrir();
@@ -694,7 +695,7 @@ describe('salas', () => {
     s.close();
   });
 
-  it('mensagem privada vai endereçada', () => {
+  it('a private message goes addressed', () => {
     const { s, ws } = abrirNativo();
     ws.enviados.length = 0;
     s.to('ana').emit('cochicho', { texto: 'oi' });
@@ -715,14 +716,14 @@ describe('salas', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Presenca
+// Presence
 // ---------------------------------------------------------------------------
 
-describe('presenca', () => {
-  it('a lista vem do servidor, e so dele', () => {
+describe('presence', () => {
+  it('the list comes from the server, and only from it', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
-    // Antes de o servidor falar, ninguem esta na sala. Nada de inventar.
+    // Before the server speaks, nobody is in the room. No making things up.
     expect(sala.membros).toEqual([]);
 
     ws.receber(
@@ -734,7 +735,7 @@ describe('presenca', () => {
     expect(sala.membros).toEqual(['ana', 'bia']);
   });
 
-  it('entrou e saiu atualizam a lista e disparam evento', () => {
+  it('joined and left update the list and fire an event', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
     const entradas: unknown[] = [];
@@ -756,7 +757,7 @@ describe('presenca', () => {
     expect(saidas).toEqual(['ana']);
   });
 
-  it('presenca nao entra na lista de mensagens da sala', () => {
+  it('presence does not enter the room message list', () => {
     const { s, ws } = abrirNativo();
     const sala = s.join('geral');
     ws.receber(
@@ -771,7 +772,7 @@ describe('presenca', () => {
 // ---------------------------------------------------------------------------
 
 describe('v-socket', () => {
-  it('publica $socket no escopo e reage a conexao', async () => {
+  it('publishes $socket in the scope and reacts to the connection', async () => {
     const { root, estado } = montar(
       '<div v-socket="wss://exemplo.com"><p v-show="$socket.connected">on</p></div>'
     );
@@ -785,7 +786,7 @@ describe('v-socket', () => {
     void estado;
   });
 
-  it('v-on-socket liga o evento a uma expressao com $event', async () => {
+  it('v-on-socket wires the event to an expression with $event', async () => {
     const { root, estado } = montar(
       '<div v-socket="wss://exemplo.com" v-on-socket:nova="itens.push($event)"></div>',
       { itens: [] }
@@ -797,7 +798,7 @@ describe('v-socket', () => {
     void root;
   });
 
-  it('v-room publica $room com mensagens e membros', async () => {
+  it('v-room publishes $room with messages and members', async () => {
     const { root } = montar(
       '<div v-socket="wss://exemplo.com" v-room="geral">' +
         '<span v-text="$room.members.length"></span>' +
@@ -818,18 +819,18 @@ describe('v-socket', () => {
     expect(root.querySelector('b')!.textContent).toBe('1');
   });
 
-  it('.manual nao conecta sozinho, e abrir() conecta', () => {
+  it('.manual does not connect on its own, and open() connects', () => {
     montar('<div v-socket.manual="wss://exemplo.com"></div>');
-    // Nenhum WebSocket foi sequer construido.
+    // Not a single WebSocket was even constructed.
     expect(FakeWebSocket.abertos).toHaveLength(0);
 
-    // O socket existe e esta registrado, so nao abriu.
+    // The socket exists and is registered, it just did not open.
     expect(socket.open).toHaveLength(1);
     socket.open[0].open();
     expect(FakeWebSocket.abertos).toHaveLength(1);
   });
 
-  it('.no-reconnect nao reconecta quando a conexao cai', () => {
+  it('.no-reconnect does not reconnect when the connection drops', () => {
     vi.useFakeTimers();
     montar('<div v-socket.no-reconnect="wss://exemplo.com"></div>');
     FakeWebSocket.ultimo.abrir();
@@ -838,7 +839,7 @@ describe('v-socket', () => {
     expect(FakeWebSocket.abertos).toHaveLength(1);
   });
 
-  it('v-socket-reconnect="false" tambem desliga, e e a forma valida em HTML', () => {
+  it('v-socket-reconnect="false" also switches it off, and it is the valid form in HTML', () => {
     vi.useFakeTimers();
     montar('<div v-socket="wss://exemplo.com" v-socket-reconnect="false"></div>');
     FakeWebSocket.ultimo.abrir();
@@ -847,7 +848,7 @@ describe('v-socket', () => {
     expect(FakeWebSocket.abertos).toHaveLength(1);
   });
 
-  it('sem WebSocket no ambiente marca unsupported e nao lanca', () => {
+  it('with no WebSocket in the environment it marks unsupported and does not throw', () => {
     const guardado = (globalThis as { WebSocket?: unknown }).WebSocket;
     socket.setWebSocket(null);
     delete (globalThis as { WebSocket?: unknown }).WebSocket;
@@ -869,11 +870,11 @@ describe('v-socket', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Limpeza
+// Cleanup
 // ---------------------------------------------------------------------------
 
-describe('limpeza', () => {
-  it('destruir o elemento fecha a conexao e nao deixa timer nem listener', () => {
+describe('cleanup', () => {
+  it('destroying the element closes the connection and leaves no timer or listener', () => {
     vi.useFakeTimers();
     const { root } = montar(
       '<div v-socket="wss://exemplo.com" v-room="geral" v-on-socket:nova="1"></div>'
@@ -886,19 +887,19 @@ describe('limpeza', () => {
     root.remove();
 
     expect(ws.fechado).toBe(true);
-    // Nenhum callback continua pendurado no socket antigo.
+    // No callback stays hanging on the old socket.
     expect(ws.onmessage).toBeNull();
     expect(ws.onclose).toBeNull();
     expect(ws.onopen).toBeNull();
     expect(ws.onerror).toBeNull();
 
-    // E nenhum timer sobrevive para reabrir a conexao depois.
+    // And no timer survives to reopen the connection later.
     const quantos = FakeWebSocket.abertos.length;
     vi.advanceTimersByTime(120_000);
     expect(FakeWebSocket.abertos.length).toBe(quantos);
   });
 
-  it('destruir o elemento tira o socket da lista de abertos', () => {
+  it('destroying the element takes the socket off the open list', () => {
     const { root } = montar('<div v-socket="wss://exemplo.com"></div>');
     FakeWebSocket.ultimo.abrir();
     expect(socket.open.length).toBeGreaterThan(0);
@@ -906,7 +907,7 @@ describe('limpeza', () => {
     expect(socket.open).toHaveLength(0);
   });
 
-  it('V.socket.close() derruba todas as conexoes', () => {
+  it('V.socket.close() drops every connection', () => {
     const a = createSocket('wss://a');
     const b = createSocket('wss://b');
     FakeWebSocket.abertos.forEach((w) => w.abrir());
@@ -917,7 +918,7 @@ describe('limpeza', () => {
     expect(socket.open).toHaveLength(0);
   });
 
-  it('close() esvazia a fila e desmonta as salas', () => {
+  it('close() empties the queue and tears the rooms down', () => {
     const { s } = abrirNativo();
     s.join('geral');
     s.close();

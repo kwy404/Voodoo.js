@@ -462,8 +462,13 @@ Subject line: imperative mood, lowercase, no trailing period, 72 characters or l
 
 ## 10. Documentation conventions
 
-- Source comments and `docs/*.md` are written in Brazilian Portuguese.
-- Root-level `*.md` and `docs/en/` are written in English.
+- Everything is written in English: source comments, root `*.md`, and the site
+  documentation under `site/docs/`. The source has been entirely English since
+  0.6.0.
+- Portuguese lives in exactly two places, both of them translations of an English
+  original rather than originals themselves: `README.pt-BR.md`, and the
+  Portuguese locale of the site. When the English changes, the translation is
+  stale until someone updates it, and a stale translation is a bug.
 - **No em dashes or en dashes** anywhere, in either language. Use a comma, a colon, or a
   full stop. This rule is enforced in review.
 - Every exported function carries JSDoc with at least one runnable example.

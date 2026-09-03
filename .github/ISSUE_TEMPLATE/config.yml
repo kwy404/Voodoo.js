@@ -1,23 +1,26 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentação
-    url: https://github.com/kwy404/Voodoo.js/tree/main/docs
-    about: Guias, referência da API e perguntas frequentes. Comece por aqui.
-  - name: Documentation (English)
-    url: https://github.com/kwy404/Voodoo.js/tree/main/docs/en
-    about: Getting started, reactivity, directives, components, HTTP, forms, security.
-  - name: Perguntas frequentes
-    url: https://github.com/kwy404/Voodoo.js/blob/main/docs/perguntas-frequentes.md
-    about: Respostas para as dúvidas mais comuns, incluindo erros de configuração.
-  - name: Navegadores suportados
+  - name: Documentation
+    url: https://kwy404.github.io/Voodoo.js/docs/
+    about: The guide and the API reference. Start here.
+  - name: Playground
+    url: https://kwy404.github.io/Voodoo.js/playground.html
+    about: Run and edit the library in the browser. The fastest way to build a reproduction.
+  - name: Examples
+    url: https://kwy404.github.io/Voodoo.js/examples/
+    about: Thirteen complete applications, each one a single page you can read end to end.
+  - name: Frequently asked questions
+    url: https://kwy404.github.io/Voodoo.js/docs/referencia/perguntas-frequentes.html
+    about: Answers to the common questions, including configuration mistakes.
+  - name: Supported browsers
     url: https://github.com/kwy404/Voodoo.js/blob/main/BROWSER_SUPPORT.md
-    about: Antes de reportar um problema de compatibilidade, confira a matriz de suporte.
+    about: Before reporting a compatibility problem, check the support matrix.
   - name: Roadmap
     url: https://github.com/kwy404/Voodoo.js/blob/main/ROADMAP.md
-    about: O que está planejado, o que está em investigação e o que está fora de escopo.
-  - name: Dúvidas e discussões
+    about: What is planned, what is under investigation and what is out of scope.
+  - name: Questions and discussion
     url: https://github.com/kwy404/Voodoo.js/discussions
-    about: Perguntas de uso, ideias em aberto e conversas com a comunidade.
-  - name: Vulnerabilidade de segurança
+    about: Usage questions, open ideas and conversations with other people using it.
+  - name: Security vulnerability
     url: https://github.com/kwy404/Voodoo.js/security/advisories/new
-    about: Reporte de forma privada. Não abra uma issue pública.
+    about: Report it privately. Do not open a public issue.

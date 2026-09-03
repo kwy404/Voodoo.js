@@ -1,48 +1,48 @@
-# Painel administrativo
+# Admin dashboard
 
-Painel de vendas completo, com metricas animadas, tres graficos ligados ao mesmo
-filtro de periodo e uma tabela com busca e ordenacao. Nao existe servidor: os
-420 pedidos sao gerados no proprio navegador por um sorteio com semente fixa,
-entao os numeros nascem sempre iguais e da para comparar um periodo com o outro.
+A complete sales dashboard, with animated metrics, three charts wired to the same
+period filter and a table with search and sorting. There is no server: the 420
+orders are generated in the browser itself by a draw with a fixed seed, so the
+numbers always come out the same and one period can be compared with another.
 
-Esta demo carrega o bundle **completo** (`voodoo.full.min.js`), porque usa o
-modulo de graficos.
+This demo loads the **full** bundle (`voodoo.full.min.js`), because it uses the
+charts module.
 
-## O que a demo mostra
+## What the demo shows
 
-- Quatro cartoes de metrica com numeros que sobem animados e comparacao com o
-  periodo anterior, em verde ou vermelho.
-- Grafico de area da receita ao longo do tempo, com curva suave.
-- Grafico de barras por categoria comparando o periodo atual com o anterior.
-- Grafico de rosca com a divisao por canal de venda.
-- Um unico seletor de periodo, de 7 dias a 6 meses, que recalcula metricas,
-  os tres graficos e a tabela ao mesmo tempo.
-- Tabela com ordenacao por qualquer coluna e busca com espera de 250 ms.
-- Estado vazio quando a busca nao encontra nada.
-- Tema claro e escuro, e layout que se reorganiza no celular.
+- Four metric cards with numbers that count up in an animation and a comparison
+  with the previous period, in green or red.
+- Area chart of revenue over time, with a smooth curve.
+- Bar chart by category comparing the current period with the previous one.
+- Doughnut chart with the split by sales channel.
+- A single period selector, from 7 days to 6 months, that recalculates the
+  metrics, the three charts and the table all at once.
+- Table with sorting by any column and search with a 250 ms wait.
+- Empty state when the search finds nothing.
+- Light and dark theme, and a layout that rearranges itself on the phone.
 
-## Recursos da Voodoo exercitados
+## Voodoo features exercised
 
-| Recurso | Onde aparece |
+| Feature | Where it shows up |
 | --- | --- |
-| `V.component` com `state`, `computed` e `methods` | toda a logica do painel |
-| `computed` encadeados | `pedidos` alimenta metricas, graficos e tabela |
-| `v-chart` | os tres graficos, reativos ao periodo |
-| `v-count` | numeros das metricas, com `v-count-format` ligado por `:` |
-| `v-for` com `:key` | metricas, colunas, linhas da tabela e botoes de periodo |
-| `v-show` e `v-if` | tabela e estado vazio |
-| `v-model` e `v-debounce` | campo de busca |
-| `v-theme-toggle` | botao de tema, sem uma linha de JavaScript |
-| `:class` e `:style` | cor da variacao, cor do status, cor de cada cartao |
-| `V.sortBy`, `V.unique`, `V.formatCurrency`, `V.formatDate` | apoio |
+| `V.component` with `state`, `computed` and `methods` | all the logic of the dashboard |
+| chained `computed` | `pedidos` feeds the metrics, the charts and the table |
+| `v-chart` | the three charts, reactive to the period |
+| `v-count` | the metric numbers, with `v-count-format` bound through `:` |
+| `v-for` with `:key` | metrics, columns, table rows and period buttons |
+| `v-show` and `v-if` | table and empty state |
+| `v-model` and `v-debounce` | search field |
+| `v-theme-toggle` | theme button, without a line of JavaScript |
+| `:class` and `:style` | colour of the change, colour of the status, colour of each card |
+| `V.sortBy`, `V.unique`, `V.formatCurrency`, `V.formatDate` | support |
 
-## Uma anotacao de implementacao
+## One implementation note
 
-O container da tabela usa `v-show`, e nao `v-if`. Um `v-for` que so e percorrido
-depois do `V.start()` para de reagir a mudancas no array, entao a tabela precisa
-existir no DOM desde o inicio. O estado vazio, que nao tem lista viva dentro,
-continua com `v-if`.
+The table container uses `v-show`, not `v-if`. A `v-for` that is only walked
+after `V.start()` stops reacting to changes in the array, so the table has to
+exist in the DOM from the start. The empty state, which has no live list inside
+it, stays on `v-if`.
 
-Vale notar tambem que nesta biblioteca de graficos `type: 'bar'` desenha as
-barras em pe e `type: 'column'` desenha deitadas, o contrario do que o nome
-sugere a primeira vista.
+Worth noting too that in this charts library `type: 'bar'` draws the bars
+standing up and `type: 'column'` draws them lying down, the opposite of what the
+name suggests at first sight.

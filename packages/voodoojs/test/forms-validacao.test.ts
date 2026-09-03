@@ -40,19 +40,19 @@ import {
 } from '../src/forms/mask';
 
 /**
- * Cobertura do modulo `forms`. Ele nao tinha nenhum teste dedicado, apesar de
- * somar quase 1.800 linhas entre validacao e mascaras.
+ * Coverage of the `forms` module. It had no dedicated test at all, despite
+ * adding up to almost 1,800 lines between validation and masks.
  *
- * As regras sao exercitadas direto pelo registro (`rules`) sempre que o alvo e
- * o ramo interno da regra, e por `validateField` quando o que importa e a
- * mensagem, a classe no HTML ou o evento disparado.
+ * The rules are exercised straight through the registry (`rules`) whenever the
+ * target is the branch inside the rule, and through `validateField` when what
+ * matters is the message, the class in the HTML or the event that is fired.
  */
 
 // ---------------------------------------------------------------------------
-// Ajudantes
+// Helpers
 // ---------------------------------------------------------------------------
 
-/** Cria um campo solto no documento a partir de HTML. */
+/** Creates a loose field in the document from HTML. */
 function campo(html: string): FormField {
   const caixa = document.createElement('div');
   caixa.innerHTML = html;
@@ -60,7 +60,7 @@ function campo(html: string): FormField {
   return caixa.firstElementChild as FormField;
 }
 
-/** Cria um formulario e devolve o elemento `form`. */
+/** Creates a form and returns the `form` element. */
 function formulario(html: string): HTMLFormElement {
   const caixa = document.createElement('div');
   caixa.innerHTML = `<form>${html}</form>`;
@@ -68,7 +68,7 @@ function formulario(html: string): HTMLFormElement {
   return caixa.firstElementChild as HTMLFormElement;
 }
 
-/** Roda uma regra do registro sem passar pela apresentacao dos erros. */
+/** Runs a rule from the registry without going through the error display. */
 function regra(
   nome: string,
   valor: string,
@@ -80,7 +80,7 @@ function regra(
   return definicao.fn(valor, param, el);
 }
 
-/** Monta HTML com o walker, para exercitar as directives. */
+/** Mounts HTML with the walker, to exercise the directives. */
 function montar(html: string, dados: Record<string, unknown> = {}): HTMLElement {
   const raiz = document.createElement('div');
   raiz.innerHTML = html;
@@ -89,7 +89,7 @@ function montar(html: string, dados: Record<string, unknown> = {}): HTMLElement 
   return raiz;
 }
 
-/** Escreve no input pelo caminho nativo, como o navegador faria ao digitar. */
+/** Writes to the input through the native path, as the browser would when typing. */
 function digitar(input: HTMLInputElement, texto: string, caret?: number): void {
   const nativo = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   nativo?.call(input, texto);
@@ -97,12 +97,12 @@ function digitar(input: HTMLInputElement, texto: string, caret?: number): void {
     const posicao = caret ?? texto.length;
     input.setSelectionRange(posicao, posicao);
   } catch {
-    // input sem suporte a selecao: irrelevante para a asercao.
+    // input with no selection support: irrelevant to the assertion.
   }
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-/** Le o valor cru do input, sem passar pelo getter que a mascara instalou. */
+/** Reads the raw value of the input, bypassing the getter the mask installed. */
 function valorCru(input: HTMLInputElement): string {
   const nativo = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.get;
   return String(nativo?.call(input) ?? '');
@@ -113,11 +113,11 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Regras de presenca e formato
+// Presence and format rules
 // ---------------------------------------------------------------------------
 
-describe('regras de presenca', () => {
-  it('required cobre texto, checkbox, radio e arquivo', async () => {
+describe('presence rules', () => {
+  it('required covers text, checkbox, radio and file', async () => {
     expect(await regra('required', '  ')).toBe(false);
     expect(await regra('required', ' a ')).toBe(true);
 
@@ -139,7 +139,7 @@ describe('regras de presenca', () => {
     expect(await regra('required', '1', undefined, arquivo)).toBe(true);
   });
 
-  it('accepted aceita marcacao e tambem as palavras usuais', async () => {
+  it('accepted takes a checked box and also the usual words', async () => {
     const caixa = campo('<input type="checkbox">') as HTMLInputElement;
     expect(await regra('accepted', '', undefined, caixa)).toBe(false);
     caixa.checked = true;
@@ -152,7 +152,7 @@ describe('regras de presenca', () => {
   });
 });
 
-describe('regras de formato', () => {
+describe('format rules', () => {
   it('email', async () => {
     for (const bom of ['a@b.co', 'ana.silva+tag@exemplo.com.br']) {
       expect(await regra('email', bom), bom).toBe(true);
@@ -162,54 +162,54 @@ describe('regras de formato', () => {
     }
   });
 
-  it('url aceita com e sem esquema e recusa host sem ponto', async () => {
+  it('url accepts with and without a scheme and rejects a host with no dot', async () => {
     expect(await regra('url', 'https://exemplo.com')).toBe(true);
     expect(await regra('url', 'exemplo.com/x')).toBe(true);
     expect(await regra('url', 'ftp://arquivos.exemplo.com')).toBe(true);
     expect(await regra('url', '')).toBe(false);
     expect(await regra('url', 'localhost')).toBe(false);
     expect(await regra('url', 'exemplo.com.')).toBe(false);
-    // Host vazio faz o construtor de URL lancar, e o catch responde false.
+    // An empty host makes the URL constructor throw, and the catch answers false.
     expect(await regra('url', 'https://')).toBe(false);
   });
 
-  it('number entende separador brasileiro e recusa vazio', async () => {
+  it('number understands the Brazilian separator and rejects empty', async () => {
     expect(await regra('number', '1.234,56')).toBe(true);
     expect(await regra('number', '-10')).toBe(true);
     expect(await regra('number', '   ')).toBe(false);
     expect(await regra('number', 'abc')).toBe(false);
   });
 
-  it('integer e decimal, com limite de casas', async () => {
+  it('integer and decimal, with a limit on the decimal places', async () => {
     expect(await regra('integer', ' -42 ')).toBe(true);
     expect(await regra('integer', '4.2')).toBe(false);
 
     expect(await regra('decimal', '4,25')).toBe(true);
     expect(await regra('decimal', '4.25', '2')).toBe(true);
     expect(await regra('decimal', '4.257', '2')).toBe(false);
-    // Sem parametro, ou com parametro que nao e numero, qualquer decimal serve.
+    // With no parameter, or one that is not a number, any decimal will do.
     expect(await regra('decimal', '4.257')).toBe(true);
     expect(await regra('decimal', '4.257', 'x')).toBe(true);
-    // Numero inteiro nao tem fracao, entao passa por qualquer limite.
+    // A whole number has no fraction, so it passes any limit.
     expect(await regra('decimal', '4', '1')).toBe(true);
     expect(await regra('decimal', 'abc')).toBe(false);
   });
 
-  it('alpha e alphanumeric ignoram espacos', async () => {
+  it('alpha and alphanumeric ignore spaces', async () => {
     expect(await regra('alpha', 'Ana Maria')).toBe(true);
     expect(await regra('alpha', 'Ana 1')).toBe(false);
     expect(await regra('alphanumeric', 'Ana 123')).toBe(true);
     expect(await regra('alphanumeric', 'Ana-123')).toBe(false);
   });
 
-  it('regex usa as flags do atributo e nao trava com padrao invalido', async () => {
+  it('regex uses the attribute flags and does not break on an invalid pattern', async () => {
     const semFlag = campo('<input>');
     expect(await regra('regex', 'ABC', '^abc$', semFlag)).toBe(false);
 
     const comFlag = campo('<input v-regex-flags="i">');
     expect(await regra('regex', 'ABC', '^abc$', comFlag)).toBe(true);
 
-    // Sem parametro a regra nao tem o que checar.
+    // With no parameter the rule has nothing to check.
     expect(await regra('regex', 'x')).toBe(true);
 
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -219,8 +219,8 @@ describe('regras de formato', () => {
   });
 });
 
-describe('regras de tamanho e faixa', () => {
-  it('minlength e maxlength, inclusive sem parametro', async () => {
+describe('length and range rules', () => {
+  it('minlength and maxlength, including with no parameter', async () => {
     expect(await regra('minlength', 'abc', '3')).toBe(true);
     expect(await regra('minlength', 'ab', '3')).toBe(false);
     expect(await regra('minlength', '')).toBe(true);
@@ -229,7 +229,7 @@ describe('regras de tamanho e faixa', () => {
     expect(await regra('maxlength', 'qualquer coisa')).toBe(true);
   });
 
-  it('min e max numericos', async () => {
+  it('numeric min and max', async () => {
     expect(await regra('min', '10', '5')).toBe(true);
     expect(await regra('min', '4', '5')).toBe(false);
     expect(await regra('min', '4')).toBe(true);
@@ -238,17 +238,17 @@ describe('regras de tamanho e faixa', () => {
     expect(await regra('max', '9')).toBe(true);
   });
 
-  it('min e max em campo de data comparam datas', async () => {
+  it('min and max on a date field compare dates', async () => {
     const data = campo('<input type="date">');
     expect(await regra('min', '2024-06-01', '01/01/2024', data)).toBe(true);
     expect(await regra('min', '2023-06-01', '01/01/2024', data)).toBe(false);
     expect(await regra('max', '2023-06-01', '01/01/2024', data)).toBe(true);
     expect(await regra('max', '2024-06-01', '01/01/2024', data)).toBe(false);
-    // Data ilegivel nao reprova: quem reclama disso e a regra `date`.
+    // An unreadable date does not fail: the one that complains is the `date` rule.
     expect(await regra('min', 'nada disso', '01/01/2024', data)).toBe(true);
   });
 
-  it('between exige os dois limites', async () => {
+  it('between requires both bounds', async () => {
     expect(await regra('between', '5', '1,10')).toBe(true);
     expect(await regra('between', '11', '1,10')).toBe(false);
     expect(await regra('between', '0', '1,10')).toBe(false);
@@ -257,7 +257,7 @@ describe('regras de tamanho e faixa', () => {
   });
 });
 
-describe('regras que comparam com outro campo', () => {
+describe('rules that compare against another field', () => {
   function par(): { a: HTMLInputElement; b: HTMLInputElement } {
     const form = formulario(
       '<input name="senha" value="segredo"><input name="confirma" value="segredo">'
@@ -268,7 +268,7 @@ describe('regras que comparam com outro campo', () => {
     };
   }
 
-  it('match, same e different pelo nome do campo', async () => {
+  it('match, same and different by the field name', async () => {
     const { b } = par();
     expect(await regra('match', 'segredo', 'senha', b)).toBe(true);
     expect(await regra('match', 'outro', 'senha', b)).toBe(false);
@@ -277,7 +277,7 @@ describe('regras que comparam com outro campo', () => {
     expect(await regra('different', 'outro', 'senha', b)).toBe(true);
   });
 
-  it('sem parametro ou sem campo alvo as regras nao reprovam', async () => {
+  it('with no parameter or no target field the rules do not fail', async () => {
     const { b } = par();
     expect(await regra('match', 'x', undefined, b)).toBe(true);
     expect(await regra('same', 'x', undefined, b)).toBe(true);
@@ -287,18 +287,18 @@ describe('regras que comparam com outro campo', () => {
     expect(await regra('different', 'x', 'nao-existe', b)).toBe(true);
   });
 
-  it('o campo alvo tambem pode vir por seletor ou por id', async () => {
+  it('the target field can also come by selector or by id', async () => {
     const form = formulario('<input id="origem" value="abc"><input name="copia">');
     const copia = form.querySelector('[name="copia"]') as HTMLInputElement;
     expect(await regra('match', 'abc', '#origem', copia)).toBe(true);
     expect(await regra('match', 'abc', 'origem', copia)).toBe(true);
-    // Seletor que nao acha nada devolve null e a regra libera.
+    // A selector that finds nothing returns null and the rule lets it through.
     expect(await regra('match', 'abc', '#fantasma', copia)).toBe(true);
   });
 });
 
-describe('regras de lista', () => {
-  it('in e notin comparam com a lista separada por virgula', async () => {
+describe('list rules', () => {
+  it('in and notin compare against the comma separated list', async () => {
     expect(await regra('in', ' azul ', 'azul,verde')).toBe(true);
     expect(await regra('in', 'roxo', 'azul,verde')).toBe(false);
     expect(await regra('notin', 'roxo', 'azul,verde')).toBe(true);
@@ -309,34 +309,34 @@ describe('regras de lista', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Datas
+// Dates
 // ---------------------------------------------------------------------------
 
-describe('datas', () => {
-  it('parseDateValue aceita dd/mm/aaaa, ISO e o que o motor souber ler', () => {
+describe('dates', () => {
+  it('parseDateValue accepts dd/mm/yyyy, ISO and whatever the engine can read', () => {
     expect(parseDateValue('  ')).toBeNull();
     expect(parseDateValue('15/03/2024')?.getDate()).toBe(15);
     expect(parseDateValue('2024-03-15')?.getMonth()).toBe(2);
     expect(parseDateValue('March 15, 2024')?.getFullYear()).toBe(2024);
     expect(parseDateValue('nao e data')).toBeNull();
-    // Dia que nao existe no mes precisa reprovar, e nao virar o mes seguinte.
+    // A day that does not exist in the month has to fail, not roll into the next month.
     expect(parseDateValue('31/02/2024')).toBeNull();
     expect(parseDateValue('2024-02-31')).toBeNull();
     expect(parseDateValue('32/01/2024')).toBeNull();
   });
 
-  it('a regra date usa o mesmo analisador', async () => {
+  it('the date rule uses the same parser', async () => {
     expect(await regra('date', '15/03/2024')).toBe(true);
     expect(await regra('date', '31/02/2024')).toBe(false);
   });
 
-  it('after e before aceitam data fixa, hoje e outro campo', async () => {
+  it('after and before accept a fixed date, today and another field', async () => {
     expect(await regra('after', '15/03/2024', '01/01/2024')).toBe(true);
     expect(await regra('after', '15/03/2023', '01/01/2024')).toBe(false);
     expect(await regra('before', '15/03/2023', '01/01/2024')).toBe(true);
     expect(await regra('before', '15/03/2024', '01/01/2024')).toBe(false);
 
-    // Sem limite ou sem valor legivel a regra libera.
+    // With no bound or no readable value the rule lets it through.
     expect(await regra('after', '15/03/2024')).toBe(true);
     expect(await regra('before', 'nada', '01/01/2024')).toBe(true);
 
@@ -348,7 +348,7 @@ describe('datas', () => {
     const fim = form.querySelector('[name="fim"]') as HTMLInputElement;
     expect(await regra('after', '15/03/2024', 'inicio', fim)).toBe(true);
     expect(await regra('after', '15/03/2023', 'inicio', fim)).toBe(false);
-    // Campo alvo vazio nao produz limite.
+    // An empty target field produces no bound.
     const vazio = formulario('<input name="inicio" value=""><input name="fim">');
     const fim2 = vazio.querySelector('[name="fim"]') as HTMLInputElement;
     expect(await regra('after', '15/03/2023', 'inicio', fim2)).toBe(true);
@@ -356,23 +356,23 @@ describe('datas', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Documentos brasileiros
+// Brazilian documents
 // ---------------------------------------------------------------------------
 
-describe('documentos brasileiros', () => {
-  it('CPF confere os digitos verificadores', () => {
+describe('Brazilian documents', () => {
+  it('CPF checks the verification digits', () => {
     expect(isValidCPF('529.982.247-25')).toBe(true);
     expect(isValidCPF('52998224725')).toBe(true);
     expect(isValidCPF('529.982.247-24')).toBe(false);
     expect(isValidCPF('529.982.247-15')).toBe(false);
     expect(isValidCPF('111.111.111-11')).toBe(false);
     expect(isValidCPF('123')).toBe(false);
-    // Casos em que o resto da divisao cai em 10 e o digito precisa virar zero.
+    // Cases where the remainder of the division lands on 10 and the digit has to become zero.
     expect(isValidCPF('11144477735')).toBe(true);
     expect(isValidCPF('40011122233')).toBe(false);
   });
 
-  it('CNPJ confere os digitos verificadores', () => {
+  it('CNPJ checks the verification digits', () => {
     expect(isValidCNPJ('11.222.333/0001-81')).toBe(true);
     expect(isValidCNPJ('11222333000181')).toBe(true);
     expect(isValidCNPJ('11.222.333/0001-82')).toBe(false);
@@ -381,14 +381,14 @@ describe('documentos brasileiros', () => {
     expect(isValidCNPJ('112223330001')).toBe(false);
   });
 
-  it('cartao de credito pelo algoritmo de Luhn', () => {
+  it('credit card by the Luhn algorithm', () => {
     expect(isValidLuhn('4539 1488 0343 6467')).toBe(true);
     expect(isValidLuhn('4539148803436468')).toBe(false);
     expect(isValidLuhn('411111111111')).toBe(false);
     expect(isValidLuhn('4111111111111111111111')).toBe(false);
   });
 
-  it('telefone brasileiro exige DDD valido', () => {
+  it('a Brazilian phone number requires a valid area code', () => {
     expect(isValidPhoneBR('(11) 98765-4321')).toBe(true);
     expect(isValidPhoneBR('(11) 3456-7890')).toBe(true);
     expect(isValidPhoneBR('(10) 98765-4321')).toBe(false);
@@ -397,7 +397,7 @@ describe('documentos brasileiros', () => {
     expect(isValidPhoneBR('123456')).toBe(false);
   });
 
-  it('as regras usam esses calculos, e cep conta os digitos', async () => {
+  it('the rules use those calculations, and cep counts the digits', async () => {
     expect(await regra('cpf', '529.982.247-25')).toBe(true);
     expect(await regra('cnpj', '11.222.333/0001-81')).toBe(true);
     expect(await regra('creditcard', '4539 1488 0343 6467')).toBe(true);
@@ -407,8 +407,8 @@ describe('documentos brasileiros', () => {
   });
 });
 
-describe('senha forte', () => {
-  it('devolve a mensagem com o minimo quando reprova', async () => {
+describe('strong password', () => {
+  it('returns the message carrying the minimum when it fails', async () => {
     expect(await regra('strongpassword', 'Abcdef1!')).toBe(true);
     expect(await regra('strongpassword', 'Abcdef1!ghi', '10')).toBe(true);
 
@@ -421,16 +421,16 @@ describe('senha forte', () => {
     const short = await regra('strongpassword', 'Ab1!', '12');
     expect(short).toContain('12 characters');
 
-    // Parametro invalido volta para o minimo padrao de oito.
+    // An invalid parameter falls back to the default minimum of eight.
     expect(await regra('strongpassword', 'Abc1!', 'x')).toContain('8 characters');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Regra assincrona
+// Asynchronous rule
 // ---------------------------------------------------------------------------
 
-describe('regra assincrona unique', () => {
+describe('asynchronous unique rule', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -447,20 +447,20 @@ describe('regra assincrona unique', () => {
     });
   }
 
-  it('sem URL ou sem valor nao consulta nada', async () => {
+  it('with no URL or no value it queries nothing', async () => {
     expect(await regra('unique', 'ana')).toBe(true);
     expect(await regra('unique', '  ', '/api/checa')).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('a URL tambem pode vir do atributo, com o valor e o campo na query', async () => {
+  it('the URL can also come from the attribute, with value and field in the query', async () => {
     fetchMock.mockResolvedValue(json({ available: true }));
     const el = campo('<input name="apelido" v-unique-url="/api/apelido">');
     expect(await regra('unique', 'ana', undefined, el)).toBe(true);
     expect(fetchMock.mock.calls[0][0]).toBe('/api/apelido?value=ana&field=apelido');
   });
 
-  it('available decide o resultado', async () => {
+  it('available decides the result', async () => {
     fetchMock.mockResolvedValueOnce(json({ available: true }));
     expect(await regra('unique', 'ana', '/api/x')).toBe(true);
 
@@ -468,7 +468,7 @@ describe('regra assincrona unique', () => {
     expect(await regra('unique', 'ana', '/api/x')).toBe(messages.unique);
   });
 
-  it('corpo sem available e tratado como registro existente', async () => {
+  it('a body with no available is treated as an existing record', async () => {
     fetchMock.mockResolvedValueOnce(json({ id: 7 }));
     expect(await regra('unique', 'ana', '/api/x')).toBe(messages.unique);
 
@@ -476,7 +476,7 @@ describe('regra assincrona unique', () => {
     expect(await regra('unique', 'ana', '/api/x')).toBe(true);
   });
 
-  it('404 libera, outros 4xx reprovam e 5xx nao trava o envio', async () => {
+  it('404 lets it through, other 4xx fail and 5xx does not block the submission', async () => {
     fetchMock.mockResolvedValueOnce(json({}, 404));
     expect(await regra('unique', 'ana', '/api/x')).toBe(true);
 
@@ -487,18 +487,18 @@ describe('regra assincrona unique', () => {
     expect(await regra('unique', 'ana', '/api/x')).toBe(true);
   });
 
-  it('falha de rede nunca impede o usuario de enviar', async () => {
+  it('a network failure never stops the user from submitting', async () => {
     fetchMock.mockRejectedValue(new TypeError('offline'));
     expect(await regra('unique', 'ana', '/api/x')).toBe(true);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Regra e mensagem proprias
+// Custom rule and message
 // ---------------------------------------------------------------------------
 
-describe('regra propria', () => {
-  it('validator registra a regra, a mensagem e a directive', async () => {
+describe('custom rule', () => {
+  it('validator registers the rule, the message and the directive', async () => {
     validator('par', (value) => Number(value) % 2 === 0, 'Informe um numero par.');
     expect(rules.has('par')).toBe(true);
     expect(messages.par).toBe('Informe um numero par.');
@@ -513,24 +513,24 @@ describe('regra propria', () => {
     expect((await validateField(el)).valid).toBe(true);
   });
 
-  it('a regra pode devolver a propria mensagem em vez de false', async () => {
+  it('a rule can return its own message instead of false', async () => {
     validator('faixa', (value) => (Number(value) > 10 ? true : 'Precisa passar de dez.'));
     const el = campo('<input name="n" v-faixa value="3">');
     expect((await validateField(el)).message).toBe('Precisa passar de dez.');
   });
 
-  it('v-error-message vence a mensagem da regra', async () => {
+  it('v-error-message beats the message of the rule', async () => {
     const el = campo('<input name="e" v-email v-error-message="Confira o e-mail." value="xxx">');
     expect((await validateField(el)).message).toBe('Confira o e-mail.');
   });
 
-  it('regra sem mensagem propria e sem entrada em messages cai em invalid', async () => {
+  it('a rule with no message and no entry in messages falls back to invalid', async () => {
     validator('semNome', () => false);
     const el = campo('<input name="s" v-semnome value="x">');
     expect((await validateField(el)).message).toBe(messages.invalid);
   });
 
-  it('regra que lanca nao impede o envio, so avisa', async () => {
+  it('a rule that throws does not block the submission, it only warns', async () => {
     validator('explode', () => {
       throw new Error('quebrei');
     });
@@ -542,24 +542,24 @@ describe('regra propria', () => {
     aviso.mockRestore();
   });
 
-  it('formatMessage troca param, field, value, min e max', () => {
+  it('formatMessage substitutes param, field, value, min and max', () => {
     expect(formatMessage('minimo {param}', { param: '3' })).toBe('minimo 3');
     expect(formatMessage('entre {min} e {max}', { param: '1, 10' })).toBe('entre 1 e 10');
-    // Com um valor so, min e max apontam para ele.
+    // With a single value, min and max both point at it.
     expect(formatMessage('entre {min} e {max}', { param: '5' })).toBe('entre 5 e 5');
     expect(formatMessage('{field}: {value}', { field: 'Nome', value: 'x' })).toBe('Nome: x');
     expect(formatMessage('{field}', {})).toBe('field');
-    // Chave desconhecida fica como esta.
+    // An unknown key stays as it is.
     expect(formatMessage('{fantasma}', {})).toBe('{fantasma}');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Coleta de regras do campo
+// Collecting the rules of a field
 // ---------------------------------------------------------------------------
 
-describe('coleta de regras do campo', () => {
-  it('le atributos nativos e da Voodoo, sem repetir', () => {
+describe('collecting the rules of a field', () => {
+  it('reads native and Voodoo attributes, without repeating', () => {
     const el = campo(
       '<input type="email" required minlength="3" maxlength="10" pattern="[a-z]+" v-email>'
     );
@@ -570,22 +570,22 @@ describe('coleta de regras do campo', () => {
     expect(nomes).toContain('maxlength');
     expect(nomes).toContain('regex');
     expect(nomes.filter((n) => n === 'email')).toHaveLength(1);
-    // `required` sempre e a primeira, para nao mostrar erro de formato em branco.
+    // `required` always comes first, so a blank field shows no format error.
     expect(nomes[0]).toBe('required');
   });
 
-  it('aceita apelidos, data-v- e modificadores', () => {
+  it('accepts aliases, data-v- and modifiers', () => {
     const el = campo('<input data-v-obrigatorio v-strong-password.forte="10" v-min-length="4">');
     const nomes = fieldRules(el).map((r) => r.name);
     expect(nomes).toEqual(expect.arrayContaining(['required', 'strongpassword', 'minlength']));
   });
 
-  it('valor false desliga a regra', () => {
+  it('a false value turns the rule off', () => {
     const el = campo('<input required v-required="false">');
     expect(fieldRules(el).map((r) => r.name)).not.toContain('required');
   });
 
-  it('type number e url puxam a regra correspondente, e min/max nativos entram', () => {
+  it('type number and url pull in the matching rule, and native min/max come along', () => {
     expect(fieldRules(campo('<input type="url">')).map((r) => r.name)).toContain('url');
     const numero = campo('<input type="number" min="1" max="9">');
     const nomes = fieldRules(numero).map((r) => r.name);
@@ -593,18 +593,18 @@ describe('coleta de regras do campo', () => {
     expect(fieldRules(campo('<input type="range">')).map((r) => r.name)).toContain('number');
   });
 
-  it('atributo que nao corresponde a regra alguma e ignorado', () => {
+  it('an attribute that matches no rule at all is ignored', () => {
     expect(fieldRules(campo('<input v-model="x" v-validate>'))).toHaveLength(0);
     expect(fieldRules(campo('<input>'))).toHaveLength(0);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Leitura do campo
+// Reading the field
 // ---------------------------------------------------------------------------
 
-describe('leitura do campo', () => {
-  it('fieldValue trata checkbox, radio, arquivo e texto', () => {
+describe('reading the field', () => {
+  it('fieldValue handles checkbox, radio, file and text', () => {
     const caixa = campo('<input type="checkbox" value="sim">') as HTMLInputElement;
     expect(fieldValue(caixa)).toBe('');
     caixa.checked = true;
@@ -626,13 +626,13 @@ describe('leitura do campo', () => {
     expect(fieldValue(campo('<select><option value="a" selected>A</option></select>'))).toBe('a');
   });
 
-  it('fieldKey usa name, depois id, depois a tag', () => {
+  it('fieldKey uses name, then id, then the tag', () => {
     expect(fieldKey(campo('<input name="a" id="b">'))).toBe('a');
     expect(fieldKey(campo('<input id="b">'))).toBe('b');
     expect(fieldKey(campo('<select></select>'))).toBe('field-select');
   });
 
-  it('fieldLabel procura v-label, label[for], label em volta e cai no name', () => {
+  it('fieldLabel looks for v-label, label[for], a wrapping label and falls back to name', () => {
     expect(fieldLabel(campo('<input v-label="Apelido">'))).toBe('Apelido');
 
     const comLabel = campo('<div><label for="cpf">CPF *</label><input id="cpf"></div>');
@@ -647,7 +647,7 @@ describe('leitura do campo', () => {
     expect(fieldLabel(campo('<input>'))).toBe('field');
   });
 
-  it('isFormField reconhece so os tres elementos de formulario', () => {
+  it('isFormField recognizes only the three form elements', () => {
     expect(isFormField(campo('<input>'))).toBe(true);
     expect(isFormField(campo('<select></select>'))).toBe(true);
     expect(isFormField(campo('<textarea></textarea>'))).toBe(true);
@@ -658,11 +658,11 @@ describe('leitura do campo', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Validacao de formulario inteiro
+// Validating a whole form
 // ---------------------------------------------------------------------------
 
-describe('validacao de formulario', () => {
-  it('collectFields ignora desabilitado, botao e campo sem regra', () => {
+describe('form validation', () => {
+  it('collectFields ignores disabled fields, buttons and fields with no rule', () => {
     const form = formulario(
       '<input name="a" v-required>' +
         '<input name="b">' +
@@ -674,13 +674,13 @@ describe('validacao de formulario', () => {
     expect(collectFields(form, false).map((f) => f.name)).toEqual(['a', 'b']);
   });
 
-  it('collectFields tambem funciona fora de um form', () => {
+  it('collectFields also works outside a form', () => {
     const caixa = campo('<div><input name="a" v-required><input name="b"></div>') as unknown as
       HTMLElement;
     expect(collectFields(caixa, false).map((f) => (f as HTMLInputElement).name)).toEqual(['a', 'b']);
   });
 
-  it('validateForm devolve os erros indexados pelo nome do campo', async () => {
+  it('validateForm returns the errors keyed by the field name', async () => {
     const form = formulario(
       '<input name="nome" v-required>' +
         '<input name="email" v-email value="xxx">' +
@@ -691,18 +691,18 @@ describe('validacao de formulario', () => {
     expect(Object.keys(resultado.errors)).toEqual(['nome', 'email']);
     expect(resultado.errors.email).toBe(messages.email);
 
-    // O HTML recebe as marcas de estado.
+    // The HTML gets the state markers.
     expect(form.querySelector('[name="nome"]')?.classList.contains('v-invalid')).toBe(true);
     expect(form.querySelector('[name="ok"]')?.classList.contains('v-valid')).toBe(true);
     expect(form.querySelectorAll('.v-field-error')).toHaveLength(2);
   });
 
-  it('formulario todo preenchido passa', async () => {
+  it('a fully filled form passes', async () => {
     const form = formulario('<input name="nome" v-required value="Ana">');
     expect(await validateForm(form)).toEqual({ valid: true, errors: {} });
   });
 
-  it('validate decide entre campo e formulario pelo elemento recebido', async () => {
+  it('validate decides between field and form by the element it receives', async () => {
     const form = formulario('<input name="nome" v-required>');
     expect(await validate(form)).toMatchObject({ valid: false, errors: expect.any(Object) });
     expect(await validate(form.querySelector('input') as FormField)).toMatchObject({
@@ -711,7 +711,7 @@ describe('validacao de formulario', () => {
     });
   });
 
-  it('campo sem regra e alvo que nem e campo passam direto', async () => {
+  it('a field with no rule and a target that is not a field pass straight through', async () => {
     expect(await validateField(campo('<input>'))).toEqual({ valid: true });
     expect(await validateField(campo('<div></div>') as unknown as FormField)).toEqual({
       valid: true,
@@ -719,7 +719,7 @@ describe('validacao de formulario', () => {
     expect(await validateField(campo('<input>'), { silent: true })).toEqual({ valid: true });
   });
 
-  it('modo silencioso nao mexe no HTML nem dispara evento', async () => {
+  it('silent mode does not touch the HTML and fires no event', async () => {
     const el = campo('<input name="e" v-email value="xxx">');
     const eventos: Event[] = [];
     el.addEventListener('voodoo:field-validated', (e) => eventos.push(e));
@@ -730,7 +730,7 @@ describe('validacao de formulario', () => {
     expect(eventos).toHaveLength(0);
   });
 
-  it('o evento voodoo:field-validated leva o resultado', async () => {
+  it('the voodoo:field-validated event carries the result', async () => {
     const el = campo('<input name="e" v-email value="xxx">');
     const detalhes: unknown[] = [];
     el.addEventListener('voodoo:field-validated', (e) =>
@@ -747,20 +747,20 @@ describe('validacao de formulario', () => {
     ]);
   });
 
-  it('campo vazio so roda required e accepted', async () => {
+  it('an empty field only runs required and accepted', async () => {
     const el = campo('<input name="e" v-email>');
-    // Vazio sem `required` nao reprova por formato.
+    // Empty without `required` does not fail on format.
     expect((await validateField(el)).valid).toBe(true);
     expect(el.classList.contains('v-valid')).toBe(false);
   });
 });
 
 // ---------------------------------------------------------------------------
-// Apresentacao dos erros
+// Displaying the errors
 // ---------------------------------------------------------------------------
 
-describe('apresentacao dos erros', () => {
-  it('a mensagem entra depois do campo e liga o aria-describedby', async () => {
+describe('displaying the errors', () => {
+  it('the message goes in after the field and wires up aria-describedby', async () => {
     const el = campo('<input id="e" name="e" v-email value="xxx" aria-describedby="ajuda">');
     await validateField(el);
 
@@ -771,7 +771,7 @@ describe('apresentacao dos erros', () => {
     expect(el.getAttribute('aria-invalid')).toBe('true');
     expect(el.getAttribute('aria-describedby')).toBe('ajuda e-error');
 
-    // Revalidar nao pode duplicar nem o span nem o id no aria.
+    // Revalidating must not duplicate the span or the id inside aria.
     await validateField(el);
     expect(el.parentElement?.querySelectorAll('.v-field-error')).toHaveLength(1);
     expect(el.getAttribute('aria-describedby')).toBe('ajuda e-error');
@@ -783,7 +783,7 @@ describe('apresentacao dos erros', () => {
     expect(el.hasAttribute('aria-invalid')).toBe(false);
   });
 
-  it('sem outro aria-describedby o atributo some por inteiro', async () => {
+  it('with no other aria-describedby the attribute disappears entirely', async () => {
     const el = campo('<input name="e" v-email value="xxx">');
     await validateField(el);
     expect(el.hasAttribute('aria-describedby')).toBe(true);
@@ -792,7 +792,7 @@ describe('apresentacao dos erros', () => {
     expect(el.hasAttribute('aria-describedby')).toBe(false);
   });
 
-  it('v-error-target manda a mensagem para outro lugar', async () => {
+  it('v-error-target sends the message somewhere else', async () => {
     const form = formulario(
       '<input name="e" v-email v-error-target=".erros" value="xxx"><div class="erros"></div>'
     );
@@ -801,7 +801,7 @@ describe('apresentacao dos erros', () => {
     expect(form.querySelector('input')?.nextElementSibling?.className).not.toBe('v-field-error');
   });
 
-  it('v-error-target inexistente avisa e volta para o lugar padrao', async () => {
+  it('a v-error-target that does not exist warns and falls back to the default place', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const el = campo('<input name="e" v-email v-error-target=".nao-existe" value="xxx">');
     await validateField(el);
@@ -810,7 +810,7 @@ describe('apresentacao dos erros', () => {
     aviso.mockRestore();
   });
 
-  it('normalizeErrors aceita mapa direto, listas e o envelope errors', () => {
+  it('normalizeErrors accepts a direct map, lists and the errors envelope', () => {
     expect(normalizeErrors({ email: 'ruim' })).toEqual({ email: 'ruim' });
     expect(normalizeErrors({ email: ['ruim', 'outro'] })).toEqual({ email: 'ruim' });
     expect(normalizeErrors({ errors: { email: 'ruim' }, message: 'ops' })).toEqual({
@@ -822,7 +822,7 @@ describe('apresentacao dos erros', () => {
     expect(normalizeErrors('texto')).toEqual({});
   });
 
-  it('showFormErrors coloca cada erro no campo e o resto no resumo', () => {
+  it('showFormErrors puts each error on its field and the rest in the summary', () => {
     const form = formulario(
       '<input name="email"><input name="user[nome]"><input id="apelido"><input name="tags[]">'
     );
@@ -845,7 +845,7 @@ describe('apresentacao dos erros', () => {
     expect(resumo?.querySelectorAll('li')).toHaveLength(2);
   });
 
-  it('resumo com uma mensagem so fica em texto puro e e reaproveitado', () => {
+  it('a summary with a single message stays plain text and is reused', () => {
     const form = formulario('<input name="a">');
     showFormSummary(form, ['unica']);
     expect(form.querySelector('.v-form-error')?.textContent).toBe('unica');
@@ -855,7 +855,7 @@ describe('apresentacao dos erros', () => {
     expect(form.querySelectorAll('.v-form-error li')).toHaveLength(2);
   });
 
-  it('clearErrors limpa mensagens, resumo e classes', async () => {
+  it('clearErrors clears messages, summary and classes', async () => {
     const form = formulario('<input name="e" v-email value="xxx"><input name="ok" value="a">');
     await validateForm(form);
     showFormSummary(form, ['geral']);
@@ -867,7 +867,7 @@ describe('apresentacao dos erros', () => {
     expect(form.querySelectorAll('.v-invalid, .v-valid')).toHaveLength(0);
   });
 
-  it('focusFirstError leva o foco ao primeiro campo com erro', async () => {
+  it('focusFirstError moves the focus to the first field with an error', async () => {
     const form = formulario('<input name="a" v-required><input name="b" v-required>');
     expect(focusFirstError(form)).toBe(false);
 
@@ -878,18 +878,18 @@ describe('apresentacao dos erros', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Serializacao
+// Serialization
 // ---------------------------------------------------------------------------
 
 describe('serializeForm', () => {
-  it('monta objeto simples, com trim e conversao de numero', () => {
+  it('builds a plain object, with trim and number conversion', () => {
     const form = formulario(
       '<input name="nome" value="  Ana  "><input type="number" name="idade" value="30">'
     );
     expect(serializeForm(form)).toEqual({ nome: 'Ana', idade: 30 });
   });
 
-  it('trim e numbers podem ser desligados', () => {
+  it('trim and numbers can be turned off', () => {
     const form = formulario(
       '<input name="nome" value="  Ana  "><input type="number" name="idade" value="30">'
     );
@@ -899,14 +899,14 @@ describe('serializeForm', () => {
     });
   });
 
-  it('numero vazio ou ilegivel continua texto', () => {
+  it('an empty or unreadable number stays text', () => {
     const form = formulario(
       '<input type="number" name="a" value=""><input type="range" name="b" value="5">'
     );
     expect(serializeForm(form)).toEqual({ a: '', b: 5 });
   });
 
-  it('nomes aninhados viram objeto, e colchete vazio vira lista', () => {
+  it('nested names become an object, and an empty bracket becomes a list', () => {
     const form = formulario(
       '<input name="user[endereco][rua]" value="Rua A">' +
         '<input name="user[endereco][numero]" value="10">' +
@@ -921,14 +921,14 @@ describe('serializeForm', () => {
     });
   });
 
-  it('checkbox sozinho vira booleano', () => {
+  it('a lone checkbox becomes a boolean', () => {
     const form = formulario(
       '<input type="checkbox" name="aceito" checked><input type="checkbox" name="news">'
     );
     expect(serializeForm(form)).toEqual({ aceito: true, news: false });
   });
 
-  it('varios checkbox com o mesmo nome viram lista com os marcados', () => {
+  it('several checkboxes with the same name become a list of the checked ones', () => {
     const form = formulario(
       '<input type="checkbox" name="cores" value="azul" checked>' +
         '<input type="checkbox" name="cores" value="verde">' +
@@ -938,14 +938,14 @@ describe('serializeForm', () => {
     expect(serializeForm(form)).toEqual({ cores: ['azul', 'roxo'], extras: ['a'] });
   });
 
-  it('checkbox marcado sem value entra como on', () => {
+  it('a checked checkbox with no value comes in as on', () => {
     const form = formulario(
       '<input type="checkbox" name="c[]" checked><input type="checkbox" name="c[]" checked>'
     );
     expect(serializeForm(form)).toEqual({ c: ['on', 'on'] });
   });
 
-  it('radio manda so o escolhido', () => {
+  it('radio sends only the chosen one', () => {
     const form = formulario(
       '<input type="radio" name="plano" value="basico">' +
         '<input type="radio" name="plano" value="pro" checked>'
@@ -953,7 +953,7 @@ describe('serializeForm', () => {
     expect(serializeForm(form)).toEqual({ plano: 'pro' });
   });
 
-  it('select multiplo vira lista', () => {
+  it('a multiple select becomes a list', () => {
     const form = formulario(
       '<select name="tags" multiple>' +
         '<option value="a" selected>A</option>' +
@@ -965,16 +965,16 @@ describe('serializeForm', () => {
     expect(serializeForm(form)).toEqual({ tags: ['a', 'c'], uf: 'SP' });
   });
 
-  it('campo sem name e campo desabilitado ficam de fora, salvo pedido explicito', () => {
+  it('a field with no name and a disabled field stay out, unless asked for explicitly', () => {
     const form = formulario(
       '<input value="anonimo"><input name="x" value="1" disabled><input name="y" value="2">'
     );
     expect(serializeForm(form)).toEqual({ y: '2' });
-    // `collectFields` ja retira os desabilitados, entao a opcao nao os traz de volta.
+    // `collectFields` already strips the disabled ones, so the option cannot bring them back.
     expect(serializeForm(form, { includeDisabled: true })).toEqual({ y: '2' });
   });
 
-  it('arquivo selecionado forca FormData', () => {
+  it('a selected file forces FormData', () => {
     const form = formulario('<input type="file" name="foto"><input name="nome" value="Ana">');
     const arquivo = form.querySelector('[name="foto"]') as HTMLInputElement;
     const conteudo = new File(['a'], 'a.txt', { type: 'text/plain' });
@@ -986,7 +986,7 @@ describe('serializeForm', () => {
     expect((dados as FormData).get('foto')).toBe(conteudo);
   });
 
-  it('arquivo multiplo vira lista dentro do FormData', () => {
+  it('multiple files become a list inside the FormData', () => {
     const form = formulario('<input type="file" name="fotos" multiple>');
     const arquivo = form.querySelector('input') as HTMLInputElement;
     const a = new File(['a'], 'a.txt');
@@ -997,12 +997,12 @@ describe('serializeForm', () => {
     expect(dados.getAll('fotos[]')).toEqual([a, b]);
   });
 
-  it('campo de arquivo vazio nao entra na saida', () => {
+  it('an empty file field does not enter the output', () => {
     const form = formulario('<input type="file" name="foto"><input name="nome" value="Ana">');
     expect(serializeForm(form)).toEqual({ nome: 'Ana' });
   });
 
-  it('formData: true converte booleano e lista mesmo sem arquivo', () => {
+  it('formData: true converts booleans and lists even with no file', () => {
     const form = formulario(
       '<input name="nome" value="Ana">' +
         '<input type="checkbox" name="aceito" checked>' +
@@ -1018,11 +1018,11 @@ describe('serializeForm', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Mascaras: formatacao
+// Masks: formatting
 // ---------------------------------------------------------------------------
 
 describe('applyMask', () => {
-  it('mascaras nomeadas do pais', () => {
+  it('the named masks for the country', () => {
     expect(applyMask('12345678901', 'cpf')).toBe('123.456.789-01');
     expect(applyMask('11222333000181', 'cnpj')).toBe('11.222.333/0001-81');
     expect(applyMask('01310100', 'cep')).toBe('01310-100');
@@ -1032,58 +1032,58 @@ describe('applyMask', () => {
     expect(applyMask('1234', 'cvv')).toBe('1234');
   });
 
-  it('cpfcnpj troca de padrao conforme o tamanho', () => {
+  it('cpfcnpj switches pattern according to the length', () => {
     expect(applyMask('12345678901', 'cpfcnpj')).toBe('123.456.789-01');
     expect(applyMask('11222333000181', 'cpfcnpj')).toBe('11.222.333/0001-81');
   });
 
-  it('phone troca entre fixo e celular', () => {
+  it('phone switches between landline and mobile', () => {
     expect(applyMask('1134567890', 'phone')).toBe('(11) 3456-7890');
     expect(applyMask('11987654321', 'phone')).toBe('(11) 98765-4321');
-    // Digito a mais e cortado antes de formatar.
+    // An extra digit is cut before formatting.
     expect(applyMask('119876543219', 'phone')).toBe('(11) 98765-4321');
   });
 
-  it('card cobre Amex, 16 e 19 digitos', () => {
+  it('card covers Amex, 16 and 19 digits', () => {
     expect(applyMask('4539148803436467', 'card')).toBe('4539 1488 0343 6467');
     expect(applyMask('378282246310005', 'card')).toBe('3782 822463 10005');
     expect(applyMask('4539148803436467123', 'card')).toBe('4539 1488 0343 6467 123');
   });
 
-  it('plate distingue placa antiga de Mercosul', () => {
+  it('plate tells the old plate apart from the Mercosur one', () => {
     expect(applyMask('ABC1234', 'plate')).toBe('ABC-1234');
     expect(applyMask('abc1d23', 'plate')).toBe('ABC1D23');
-    // Entrada curta ainda nao decide o formato.
+    // A short input does not decide the format yet.
     expect(applyMask('ABC', 'plate')).toBe('ABC');
   });
 
-  it('hex e ip', () => {
+  it('hex and ip', () => {
     expect(applyMask('ff8800', 'hex')).toBe('#FF8800');
     expect(applyMask('zzz', 'hex')).toBe('');
     expect(applyMask('192.168.0.1', 'ip')).toBe('192.168.0.1');
-    // Cada grupo e limitado a 255 e a tres digitos.
+    // Each group is capped at 255 and at three digits.
     expect(applyMask('999.168.0.1', 'ip')).toBe('255.168.0.1');
     expect(applyMask('1234.5.6.7', 'ip')).toBe('123.5.6.7');
     expect(applyMask('192.', 'ip')).toBe('192.');
     expect(applyMask('1.2.3.4.5', 'ip')).toBe('1.2.3.4');
   });
 
-  it('padrao literal com tokens 9, A, S e *', () => {
+  it('a literal pattern with the tokens 9, A, S and *', () => {
     expect(applyMask('1234', '99-99')).toBe('12-34');
     expect(applyMask('ab12', 'AA-99')).toBe('ab-12');
     expect(applyMask('a1b2', 'SSSS')).toBe('a1b2');
     expect(applyMask('a-b', '***')).toBe('a-b');
-    // Caractere que nao serve para a posicao e pulado.
+    // A character that does not fit the position is skipped.
     expect(applyMask('ab12cd', '99')).toBe('12');
   });
 
-  it('barra invertida escapa o proximo caractere do padrao', () => {
+  it('a backslash escapes the next character of the pattern', () => {
     expect(applyMask('123', '\\#999')).toBe('#123');
-    // Escape no fim do padrao encerra a formatacao.
+    // An escape at the end of the pattern ends the formatting.
     expect(applyMask('123', '999\\')).toBe('123');
   });
 
-  it('entrada parcial nao inventa separador sobrando', () => {
+  it('a partial input does not invent a leftover separator', () => {
     expect(applyMask('', 'cpf')).toBe('');
     expect(applyMask('123', 'cpf')).toBe('123');
     expect(applyMask('1234', 'cpf')).toBe('123.4');
@@ -1091,28 +1091,28 @@ describe('applyMask', () => {
     expect(applyMask('1234567890', 'cpf')).toBe('123.456.789-0');
   });
 
-  it('colar texto ja formatado nao duplica os separadores', () => {
+  it('pasting already formatted text does not duplicate the separators', () => {
     expect(applyMask('123.456.789-01', 'cpf')).toBe('123.456.789-01');
     expect(applyMask('(11) 98765-4321', 'phone')).toBe('(11) 98765-4321');
     expect(applyMask('15/03/2024', 'date')).toBe('15/03/2024');
     expect(applyMask('R$ 1.234,56', 'currency')).toBe('R$ 1.234,56');
   });
 
-  it('sem padrao devolve o texto, e nulo vira texto vazio', () => {
+  it('with no pattern it returns the text, and null becomes an empty string', () => {
     expect(applyMask('abc', '')).toBe('abc');
     expect(applyMask(null as unknown as string, 'cpf')).toBe('');
     expect(applyMask(undefined as unknown as string, '999')).toBe('');
   });
 
-  it('o atalho mask() e o mesmo que applyMask', () => {
+  it('the mask() shortcut is the same as applyMask', () => {
     expect(mask('12345678901', 'cpf')).toBe('123.456.789-01');
     expect(mask.apply('1234', '99-99')).toBe('12-34');
     expect(mask.presets).toBe(masks);
   });
 });
 
-describe('mascaras numericas', () => {
-  it('maskCurrency agrupa milhar e coloca o prefixo', () => {
+describe('numeric masks', () => {
+  it('maskCurrency groups the thousands and puts the prefix in', () => {
     expect(maskCurrency('123456')).toBe('R$ 1.234,56');
     expect(maskCurrency('5')).toBe('R$ 0,05');
     expect(maskCurrency('')).toBe('');
@@ -1121,18 +1121,18 @@ describe('mascaras numericas', () => {
     expect(maskCurrency('123456789')).toBe('R$ 1.234.567,89');
   });
 
-  it('maskCurrency aceita prefixo, sufixo, casas e separadores proprios', () => {
+  it('maskCurrency accepts a custom prefix, suffix, decimal places and separators', () => {
     expect(maskCurrency('123456', { prefix: '$ ', decimal: '.', thousands: ',' })).toBe(
       '$ 1,234.56'
     );
     expect(maskCurrency('1234', { decimals: 0 })).toBe('R$ 1.234');
     expect(maskCurrency('1234', { decimals: 3 })).toBe('R$ 1,234');
     expect(maskCurrency('1234', { prefix: '', suffix: ' EUR' })).toBe('12,34 EUR');
-    // Casas negativas ou fracionarias sao normalizadas.
+    // Negative or fractional decimal places are normalized.
     expect(maskCurrency('1234', { decimals: -2 })).toBe('R$ 1.234');
   });
 
-  it('maskPercent usa o mesmo motor com sufixo', () => {
+  it('maskPercent uses the same engine with a suffix', () => {
     expect(maskPercent('1234')).toBe('12,34%');
     expect(maskPercent('1234', 0)).toBe('1.234%');
     expect(mask.percent('50')).toBe('0,50%');
@@ -1141,14 +1141,14 @@ describe('mascaras numericas', () => {
 });
 
 describe('unmask', () => {
-  it('tira a formatacao comum', () => {
+  it('strips the common formatting', () => {
     expect(unmask('123.456.789-01')).toBe('12345678901');
     expect(unmask('(11) 98765-4321')).toBe('11987654321');
     expect(unmask('ABC-1234')).toBe('ABC1234');
     expect(unmask(null as unknown as string)).toBe('');
   });
 
-  it('mascaras numericas devolvem numero pronto para Number()', () => {
+  it('numeric masks return a number ready for Number()', () => {
     expect(unmask('R$ 1.234,56', 'currency')).toBe('1234.56');
     expect(unmask('12,34%', 'percent')).toBe('12.34');
     expect(unmask('R$ 0,05', 'currency')).toBe('0.05');
@@ -1157,32 +1157,32 @@ describe('unmask', () => {
     expect(Number(unmask('R$ 1.234,56', 'currency'))).toBe(1234.56);
   });
 
-  it('padrao que nao e numerico cai na limpeza comum', () => {
+  it('a pattern that is not numeric falls back to the common cleanup', () => {
     expect(unmask('123.456.789-01', 'cpf')).toBe('12345678901');
     expect(unmask('  ')).toBe('');
   });
 });
 
-describe('registrar mascara propria', () => {
-  it('aceita padrao de texto e tambem funcao', () => {
+describe('registering a custom mask', () => {
+  it('accepts a text pattern and also a function', () => {
     registerMask('  Processo  ', '9999999-99.9999.9.99.9999');
     expect(applyMask('00012345620248260100', 'processo')).toBe('0001234-56.2024.8.26.0100');
 
     mask.register('reverso', (valor) => valor.split('').reverse().join(''));
     expect(applyMask('abc', 'reverso')).toBe('cba');
 
-    // Registrar de novo com o mesmo nome substitui.
+    // Registering again under the same name replaces it.
     registerMask('reverso', '99');
     expect(applyMask('123', 'reverso')).toBe('12');
   });
 });
 
 // ---------------------------------------------------------------------------
-// Directives de mascara
+// Mask directives
 // ---------------------------------------------------------------------------
 
 describe('directive v-mask', () => {
-  it('formata o que foi digitado e mantem o cursor depois do ultimo digito', () => {
+  it('formats what was typed and keeps the cursor after the last digit', () => {
     const raiz = montar('<input v-mask="cpf">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1194,12 +1194,12 @@ describe('directive v-mask', () => {
     expect(valorCru(input)).toBe('123.456.7');
   });
 
-  it('valor que ja veio do servidor entra formatado na montagem', () => {
+  it('a value that already came from the server goes in formatted on mount', () => {
     const raiz = montar('<input v-mask="cpf" value="12345678901">');
     expect(valorCru(raiz.querySelector('input') as HTMLInputElement)).toBe('123.456.789-01');
   });
 
-  it('com .unmask a leitura devolve o valor limpo e a escrita passa pela mascara', () => {
+  it('with .unmask the read returns the clean value and the write goes through the mask', () => {
     const raiz = montar('<input v-mask.unmask="cpf">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1211,7 +1211,7 @@ describe('directive v-mask', () => {
     expect(valorCru(input)).toBe('');
   });
 
-  it('mascara de moeda mantem o cursor no fim e limpa para numero', () => {
+  it('the currency mask keeps the cursor at the end and cleans up to a number', () => {
     const raiz = montar('<input v-mask.raw="currency">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1221,12 +1221,12 @@ describe('directive v-mask', () => {
     expect(input.value).toBe('1234.56');
   });
 
-  it('apagar em cima de um separador remove o digito anterior', () => {
+  it('deleting on top of a separator removes the previous digit', () => {
     const raiz = montar('<input v-mask="cpf" value="123456">');
     const input = raiz.querySelector('input') as HTMLInputElement;
     expect(valorCru(input)).toBe('123.456');
 
-    // Cursor logo depois do ponto: o Backspace precisa comer o "3".
+    // Cursor right after the dot: Backspace has to eat the "3".
     input.setSelectionRange(4, 4);
     const evento = new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true });
     input.dispatchEvent(evento);
@@ -1235,7 +1235,7 @@ describe('directive v-mask', () => {
     expect(valorCru(input)).toBe('124.56');
   });
 
-  it('Backspace em cima de digito, com selecao ou no inicio segue o padrao', () => {
+  it('Backspace on a digit, with a selection or at the start follows the default', () => {
     const raiz = montar('<input v-mask="cpf" value="123456">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1255,7 +1255,7 @@ describe('directive v-mask', () => {
     expect(outraTecla.defaultPrevented).toBe(false);
   });
 
-  it('a limpeza devolve o value nativo ao elemento', () => {
+  it('the cleanup gives the native value back to the element', () => {
     const raiz = montar('<input v-mask="cpf" value="12345678901">');
     const input = raiz.querySelector('input') as HTMLInputElement;
     expect(Object.getOwnPropertyDescriptor(input, 'value')).toBeDefined();
@@ -1265,7 +1265,7 @@ describe('directive v-mask', () => {
     expect(input.value).toBe('123.456.789-01');
   });
 
-  it('avisa em elemento errado, em type incompativel e sem padrao', () => {
+  it('warns on the wrong element, on an incompatible type and with no pattern', () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     montar('<div v-mask="cpf"></div>');
@@ -1279,7 +1279,7 @@ describe('directive v-mask', () => {
     aviso.mockRestore();
   });
 
-  it('textarea tambem aceita mascara', () => {
+  it('textarea takes a mask too', () => {
     const raiz = montar('<textarea v-mask="99-99">1234</textarea>');
     const area = raiz.querySelector('textarea') as HTMLTextAreaElement;
     const nativo = Object.getOwnPropertyDescriptor(
@@ -1292,12 +1292,13 @@ describe('directive v-mask', () => {
 
 describe('directive v-mask-currency', () => {
   /**
-   * Regressao: o prefixo passava por `trim`, entao o espaco final do exemplo da
-   * propria documentacao (`v-mask-currency="R$ "`) era descartado e o campo
-   * mostrava `R$1.234,56`. O mesmo prefixo escrito em `v-mask-prefix` nunca
-   * perdeu o espaco, o que deixava as duas formas com resultados diferentes.
+   * Regression: the prefix went through `trim`, so the trailing space in the
+   * example from the documentation itself (`v-mask-currency="R$ "`) was thrown
+   * away and the field showed `R$1.234,56`. The same prefix written in
+   * `v-mask-prefix` never lost the space, which left the two forms with
+   * different results.
    */
-  it('usa o prefixo da expressao, com o espaco do fim, e as casas do atributo', () => {
+  it('uses the expression prefix, trailing space and all, and the attribute decimals', () => {
     const raiz = montar('<input v-mask-currency="US$ " v-mask-decimals="3">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1305,13 +1306,13 @@ describe('directive v-mask-currency', () => {
     expect(valorCru(input)).toBe('US$ 1.234,567');
   });
 
-  it('expressao so de espacos volta para o prefixo padrao', () => {
+  it('an expression made only of spaces falls back to the default prefix', () => {
     const raiz = montar('<input v-mask-currency="   " v-mask-decimals="">');
     digitar(raiz.querySelector('input') as HTMLInputElement, '1234');
     expect(valorCru(raiz.querySelector('input') as HTMLInputElement)).toBe('R$ 12,34');
   });
 
-  it('modificador .plain tira o prefixo e .dot inverte os separadores', () => {
+  it('the .plain modifier drops the prefix and .dot swaps the separators', () => {
     const semPrefixo = montar('<input v-mask-currency.plain>');
     digitar(semPrefixo.querySelector('input') as HTMLInputElement, '123456');
     expect(valorCru(semPrefixo.querySelector('input') as HTMLInputElement)).toBe('1.234,56');
@@ -1321,7 +1322,7 @@ describe('directive v-mask-currency', () => {
     expect(valorCru(ponto.querySelector('input') as HTMLInputElement)).toBe('1,234.56');
   });
 
-  it('o sufixo entra no fim e o cursor para antes dele', () => {
+  it('the suffix goes at the end and the cursor stops before it', () => {
     const raiz = montar('<input v-mask-currency.plain v-mask-suffix=" %">');
     const input = raiz.querySelector('input') as HTMLInputElement;
 
@@ -1330,7 +1331,7 @@ describe('directive v-mask-currency', () => {
     expect(input.selectionStart).toBe('12,34'.length);
   });
 
-  it('prefixo tambem pode vir de v-mask-prefix', () => {
+  it('the prefix can also come from v-mask-prefix', () => {
     const raiz = montar('<input v-mask-currency v-mask-prefix="EUR ">');
     digitar(raiz.querySelector('input') as HTMLInputElement, '1234');
     expect(valorCru(raiz.querySelector('input') as HTMLInputElement)).toBe('EUR 12,34');
@@ -1340,7 +1341,7 @@ describe('directive v-mask-currency', () => {
     expect(valorCru(zero.querySelector('input') as HTMLInputElement)).toBe('1.234');
   });
 
-  it('com .unmask a leitura devolve o numero, com e sem casas decimais', () => {
+  it('with .unmask the read returns the number, with and without decimal places', () => {
     const comCasas = montar('<input v-mask-currency.unmask>');
     const a = comCasas.querySelector('input') as HTMLInputElement;
     digitar(a, '123456');
@@ -1355,13 +1356,13 @@ describe('directive v-mask-currency', () => {
     expect(b.value).toBe('1234');
   });
 
-  it('casas invalidas voltam para duas', () => {
+  it('invalid decimal places fall back to two', () => {
     const raiz = montar('<input v-mask-currency.plain v-mask-decimals="abc">');
     digitar(raiz.querySelector('input') as HTMLInputElement, '1234');
     expect(valorCru(raiz.querySelector('input') as HTMLInputElement)).toBe('12,34');
   });
 
-  it('avisa quando o alvo nao serve', () => {
+  it('warns when the target will not do', () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     montar('<div v-mask-currency></div>');
     expect(String(aviso.mock.calls[0][0])).toContain('only works on input or textarea');

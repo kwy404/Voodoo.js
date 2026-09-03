@@ -2,70 +2,70 @@
 
 > JavaScript feels like magic.
 
-Design system oficial do **Voodoo.js**, escrito em CSS puro. Sem dependências,
-sem etapa de build, sem framework. São cinco arquivos de texto que qualquer
-navegador entende ao abrir.
+The official design system of **Voodoo.js**, written in plain CSS. No
+dependencies, no build step, no framework. It is five text files that any
+browser understands the moment you open them.
 
-Abra `index.html` para ver a vitrine completa com todos os componentes
-renderizados e o HTML de cada um.
-
----
-
-## Sumário
-
-1. [Filosofia](#filosofia)
-2. [Instalação](#instalação)
-3. [Estrutura dos arquivos](#estrutura-dos-arquivos)
-4. [Tokens principais](#tokens-principais)
-5. [Convenção de nomes](#convenção-de-nomes)
-6. [Como estender](#como-estender)
-7. [Tema claro e escuro](#tema-claro-e-escuro)
-8. [Checklist de acessibilidade](#checklist-de-acessibilidade)
+Open `index.html` to see the full showcase, with every component rendered and
+the HTML behind each one.
 
 ---
 
-## Filosofia
+## Contents
 
-O Voodoo.js Design System nasce de quatro decisões que valem para tudo que
-existe aqui dentro.
-
-**1. Token é a única fonte de verdade.**
-Nenhum componente escreve `#6D3BF5`, `16px` ou `200ms`. Todo valor vem de uma
-variável CSS declarada em `tokens.css`. Trocar a identidade visual do produto
-inteiro é editar um arquivo, não trezentos seletores.
-
-**2. A plataforma antes da biblioteca.**
-O accordion é `<details>`. O checkbox é `<input type="checkbox">`. As abas usam
-`role="tab"` com `aria-selected`. Isso significa teclado, leitor de tela,
-busca do navegador e impressão funcionando de graça, sem JavaScript obrigatório.
-
-**3. Estado que o CSS lê é o mesmo estado que o leitor de tela lê.**
-Quando existe um atributo ARIA capaz de descrever a situação, o seletor usa o
-atributo, não uma classe paralela. Um modal aberto é
-`.v-modal-root[aria-hidden="false"]`. Assim é impossível o visual dizer uma
-coisa e a tecnologia assistiva dizer outra.
-
-**4. Zero fricção para adotar.**
-Um `<link>` e a interface já está de pé, em tema claro e escuro, responsiva,
-com foco visível. Nada de instalar, compilar ou configurar.
+1. [Philosophy](#philosophy)
+2. [Installation](#installation)
+3. [File structure](#file-structure)
+4. [Main tokens](#main-tokens)
+5. [Naming convention](#naming-convention)
+6. [How to extend it](#how-to-extend-it)
+7. [Light and dark theme](#light-and-dark-theme)
+8. [Accessibility checklist](#accessibility-checklist)
 
 ---
 
-## Instalação
+## Philosophy
 
-### Opção A: um arquivo só
+The Voodoo.js Design System comes out of four decisions that hold for
+everything living inside it.
+
+**1. The token is the single source of truth.**
+No component writes `#6D3BF5`, `16px` or `200ms`. Every value comes from a CSS
+variable declared in `tokens.css`. Changing the visual identity of the entire
+product means editing one file, not three hundred selectors.
+
+**2. The platform before the library.**
+The accordion is `<details>`. The checkbox is `<input type="checkbox">`. The
+tabs use `role="tab"` with `aria-selected`. That means keyboard, screen reader,
+browser find and printing all working for free, with no JavaScript required.
+
+**3. The state CSS reads is the same state the screen reader reads.**
+When an ARIA attribute can describe the situation, the selector uses the
+attribute, not a parallel class. An open modal is
+`.v-modal-root[aria-hidden="false"]`. That way it is impossible for the visuals
+to say one thing and assistive technology to say another.
+
+**4. Zero friction to adopt.**
+One `<link>` and the interface is already standing, in light and dark theme,
+responsive, with visible focus. Nothing to install, compile or configure.
+
+---
+
+## Installation
+
+### Option A: a single file
 
 ```html
 <link rel="stylesheet" href="design-system/voodoo-ui.css">
 ```
 
-O `voodoo-ui.css` faz `@import` dos quatro arquivos na ordem correta. É o
-caminho mais curto, ideal para protótipos e páginas internas.
+`voodoo-ui.css` runs `@import` on the four files in the correct order. It is
+the shortest path, ideal for prototypes and internal pages.
 
-### Opção B: quatro arquivos (recomendado em produção)
+### Option B: four files (recommended in production)
 
-Cada `@import` gera uma requisição em série, então em produção prefira linkar
-os arquivos diretamente. A ordem é obrigatória.
+Each `@import` costs one request in series, so in production prefer linking the
+files directly. The order is mandatory.
 
 ```html
 <link rel="stylesheet" href="design-system/tokens.css">
@@ -74,19 +74,19 @@ os arquivos diretamente. A ordem é obrigatória.
 <link rel="stylesheet" href="design-system/utilities.css">
 ```
 
-Por que essa ordem:
+Why this order:
 
-| Ordem | Arquivo | Motivo |
+| Order | File | Reason |
 | :--- | :--- | :--- |
-| 1 | `tokens.css` | Define as variáveis que todo o resto consome. |
-| 2 | `reset.css` | Normaliza o navegador já usando os tokens. |
-| 3 | `components.css` | Desenha os componentes a partir dos tokens. |
-| 4 | `utilities.css` | Vem por último para conseguir vencer os componentes. |
+| 1 | `tokens.css` | Defines the variables everything else consumes. |
+| 2 | `reset.css` | Normalizes the browser already using the tokens. |
+| 3 | `components.css` | Draws the components out of the tokens. |
+| 4 | `utilities.css` | Comes last so it can beat the components. |
 
-### Fontes (opcional)
+### Fonts (optional)
 
-As fontes da marca são opcionais. Se você não carregar nenhuma, os fallbacks
-`system-ui` e `ui-monospace` assumem e a página continua correta.
+The brand fonts are optional. If you load none of them, the `system-ui` and
+`ui-monospace` fallbacks take over and the page stays correct.
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -94,11 +94,11 @@ As fontes da marca são opcionais. Se você não carregar nenhuma, os fallbacks
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
 ```
 
-### Script de tema (opcional, 8 linhas)
+### Theme script (optional, 8 lines)
 
-Coloque no `<head>`, antes do CSS, para evitar a piscada de cor no
-carregamento. Todo acesso ao `localStorage` fica em `try/catch` porque o
-navegador pode bloquear armazenamento em janela anônima.
+Put it in the `<head>`, before the CSS, to avoid the color flash on load. Every
+access to `localStorage` sits inside a `try/catch` because the browser may
+block storage in a private window.
 
 ```html
 <script>
@@ -115,144 +115,144 @@ navegador pode bloquear armazenamento em janela anônima.
 
 ---
 
-## Estrutura dos arquivos
+## File structure
 
 ```
 design-system/
-├── tokens.css       Design tokens: cores, tipografia, espaço, raio, sombra, tempo
-├── reset.css        Normalização moderna do navegador
-├── components.css   23 famílias de componentes prefixados com "v-"
-├── utilities.css    Utilitários de layout, espaçamento, tipografia e visibilidade
-├── voodoo-ui.css    Pacote único que importa os quatro acima
-├── index.html       Vitrine viva com exemplos e código de cada componente
-└── README.md        Este documento
+├── tokens.css       Design tokens: color, typography, space, radius, shadow, time
+├── reset.css        Modern browser normalization
+├── components.css   23 component families prefixed with "v-"
+├── utilities.css    Layout, spacing, typography and visibility utilities
+├── voodoo-ui.css    Single bundle that imports the four above
+├── index.html       Living showcase with examples and code for each component
+└── README.md        This document
 ```
 
 ---
 
-## Tokens principais
+## Main tokens
 
-### Cores semânticas
+### Semantic colors
 
-São as únicas cores que mudam com o tema, e as únicas que os componentes devem
-consumir. A paleta bruta (`--v-purple-500`, `--v-ink-900` e companhia) existe
-para alimentar estas, não para ser usada direto na interface.
+These are the only colors that change with the theme, and the only ones
+components should consume. The raw palette (`--v-purple-500`, `--v-ink-900` and
+company) exists to feed these, not to be used straight in the interface.
 
-| Token | Tema claro | Tema escuro | Uso |
+| Token | Light theme | Dark theme | Use |
 | :--- | :--- | :--- | :--- |
-| `--v-color-bg` | `#FBF7F2` creme | `#14111F` tinta escura | Fundo da página |
-| `--v-surface` | `#FFFFFF` | `#1C182B` | Cards, modais, campos |
-| `--v-surface-2` | `#F6F0E8` | `#2A2440` tinta média | Rodapés, cabeçalhos de tabela |
-| `--v-surface-3` | `#EDE4D8` areia | `#352E4F` | Trilhos de progresso e switch |
-| `--v-text` | `#14111F` | `#FBF7F2` | Texto principal |
-| `--v-text-muted` | `#555066` | `#B9B0C4` | Texto de apoio |
-| `--v-border` | `#E3D9CC` | `#372F52` | Bordas e divisórias |
-| `--v-primary` | `#6D3BF5` roxo | `#7B52F7` | Ação principal |
-| `--v-primary-hover` | `#5B2EDB` | `#8F6BFF` | Hover da ação principal |
-| `--v-primary-contrast` | `#FFFFFF` | `#FFFFFF` | Texto sobre a cor primária |
-| `--v-accent` | `#FF3D8B` magenta | `#FF3D8B` | Destaques e gradientes |
-| `--v-success` | `#0F7A57` | `#2ED9A5` menta | Confirmação |
-| `--v-warning` | `#A35A08` | `#FFB35C` âmbar | Atenção |
-| `--v-danger` | `#C42A2A` | `#FF4D4D` | Erro e destruição |
-| `--v-info` | `#5B2EDB` | `#9B7BFF` | Informação neutra |
+| `--v-color-bg` | `#FBF7F2` cream | `#14111F` dark ink | Page background |
+| `--v-surface` | `#FFFFFF` | `#1C182B` | Cards, modals, fields |
+| `--v-surface-2` | `#F6F0E8` | `#2A2440` mid ink | Footers, table headers |
+| `--v-surface-3` | `#EDE4D8` sand | `#352E4F` | Progress and switch tracks |
+| `--v-text` | `#14111F` | `#FBF7F2` | Main text |
+| `--v-text-muted` | `#555066` | `#B9B0C4` | Supporting text |
+| `--v-border` | `#E3D9CC` | `#372F52` | Borders and dividers |
+| `--v-primary` | `#6D3BF5` purple | `#7B52F7` | Primary action |
+| `--v-primary-hover` | `#5B2EDB` | `#8F6BFF` | Hover of the primary action |
+| `--v-primary-contrast` | `#FFFFFF` | `#FFFFFF` | Text on top of the primary color |
+| `--v-accent` | `#FF3D8B` magenta | `#FF3D8B` | Highlights and gradients |
+| `--v-success` | `#0F7A57` | `#2ED9A5` mint | Confirmation |
+| `--v-warning` | `#A35A08` | `#FFB35C` amber | Attention |
+| `--v-danger` | `#C42A2A` | `#FF4D4D` | Error and destruction |
+| `--v-info` | `#5B2EDB` | `#9B7BFF` | Neutral information |
 
-Cada cor de estado tem uma companheira `*-soft` para fundo de badge e alerta,
-por exemplo `--v-success-soft`.
+Every state color has a `*-soft` companion for badge and alert backgrounds,
+for example `--v-success-soft`.
 
-### Escalas brutas
+### Raw scales
 
-| Família | Passos | Referência da marca |
+| Family | Steps | Brand reference |
 | :--- | :--- | :--- |
-| `--v-purple-*` | 50 a 900 | 500 é `#6D3BF5`, 400 é `#9B7BFF` |
-| `--v-magenta-*` | 50 a 900 | 500 é `#FF3D8B` |
-| `--v-ink-*` | 50 a 900 | 50 é creme, 100 é areia, 800 é tinta média, 900 é tinta escura |
-| `--v-mint-*` | 100 a 900 | 500 é `#2ED9A5` |
-| `--v-amber-*` | 100 a 900 | 500 é `#FFB35C` |
-| `--v-red-*` | 100 a 900 | 500 é `#FF4D4D` |
+| `--v-purple-*` | 50 to 900 | 500 is `#6D3BF5`, 400 is `#9B7BFF` |
+| `--v-magenta-*` | 50 to 900 | 500 is `#FF3D8B` |
+| `--v-ink-*` | 50 to 900 | 50 is cream, 100 is sand, 800 is mid ink, 900 is dark ink |
+| `--v-mint-*` | 100 to 900 | 500 is `#2ED9A5` |
+| `--v-amber-*` | 100 to 900 | 500 is `#FFB35C` |
+| `--v-red-*` | 100 to 900 | 500 is `#FF4D4D` |
 
-### Tipografia
+### Typography
 
-| Token | Valor |
+| Token | Value |
 | :--- | :--- |
 | `--v-font-display` | `"Space Grotesk", "Inter", system-ui, sans-serif` |
 | `--v-font-sans` | `"Inter", system-ui, sans-serif` |
 | `--v-font-mono` | `"JetBrains Mono", ui-monospace, monospace` |
-| `--v-text-xs` a `--v-text-4xl` | 12, 14, 16, 18, 22, 28, 36 e 48 pixels |
-| `--v-weight-regular` a `--v-weight-bold` | 400, 500, 600, 700 |
-| `--v-leading-tight` a `--v-leading-relaxed` | 1.15, 1.3, 1.6, 1.8 |
+| `--v-text-xs` to `--v-text-4xl` | 12, 14, 16, 18, 22, 28, 36 and 48 pixels |
+| `--v-weight-regular` to `--v-weight-bold` | 400, 500, 600, 700 |
+| `--v-leading-tight` to `--v-leading-relaxed` | 1.15, 1.3, 1.6, 1.8 |
 | `--v-tracking-tight`, `--v-tracking-wide` | `-0.02em`, `0.08em` |
 
-### Espaçamento, raio, sombra e tempo
+### Spacing, radius, shadow and time
 
-| Categoria | Tokens | Valores |
+| Category | Tokens | Values |
 | :--- | :--- | :--- |
-| Espaço | `--v-space-1` a `--v-space-16` | Escala de 4px: 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64 |
-| Raio | `--v-radius-sm/md/lg/xl/full` | 6px, 10px, 16px, 24px, 999px |
-| Sombra | `--v-shadow-sm/md/lg/glow` | A `glow` é o brilho roxo da marca |
-| Camada | `--v-z-dropdown/sticky/backdrop/modal/toast/tooltip` | 1000, 1100, 1200, 1300, 1400, 1500 |
-| Duração | `--v-duration-fast/base/slow/slower` | 120ms, 200ms, 320ms, 600ms |
-| Curva | `--v-ease-out/in-out/spring` | A `spring` dá o pequeno salto do switch e do checkbox |
+| Space | `--v-space-1` to `--v-space-16` | 4px scale: 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64 |
+| Radius | `--v-radius-sm/md/lg/xl/full` | 6px, 10px, 16px, 24px, 999px |
+| Shadow | `--v-shadow-sm/md/lg/glow` | `glow` is the brand's purple glow |
+| Layer | `--v-z-dropdown/sticky/backdrop/modal/toast/tooltip` | 1000, 1100, 1200, 1300, 1400, 1500 |
+| Duration | `--v-duration-fast/base/slow/slower` | 120ms, 200ms, 320ms, 600ms |
+| Easing | `--v-ease-out/in-out/spring` | `spring` gives the switch and the checkbox their little hop |
 | Container | `--v-container-sm/md/lg/xl/full` | 640, 768, 1024, 1280, 1440 pixels |
 
 ---
 
-## Convenção de nomes
+## Naming convention
 
 ### Tokens
 
 ```
---v-<categoria>-<variação>
+--v-<category>-<variation>
 
---v-color-bg        cor semântica
---v-purple-500      paleta bruta, passo da escala
---v-space-6         escala de espaçamento
---v-radius-lg       raio
---v-z-modal         camada
+--v-color-bg        semantic color
+--v-purple-500      raw palette, step on the scale
+--v-space-6         spacing scale
+--v-radius-lg       radius
+--v-z-modal         layer
 ```
 
-O prefixo `v` de Voodoo garante que nada aqui colida com outro CSS presente na
-página.
+The `v` prefix, for Voodoo, guarantees nothing here collides with other CSS
+present on the page.
 
 ### Classes
 
-O padrão é BEM com prefixo, mais uma família separada de estados.
+The pattern is BEM with a prefix, plus a separate family for states.
 
 ```
-.v-bloco                bloco:        .v-card, .v-btn, .v-toast
-.v-bloco__elemento      elemento:     .v-card__header, .v-toast__progress
-.v-bloco--modificador   modificador:  .v-btn--primary, .v-badge--success
-.is-estado              estado:       .is-open, .is-loading, .is-active
+.v-block                block:        .v-card, .v-btn, .v-toast
+.v-block__element       element:      .v-card__header, .v-toast__progress
+.v-block--modifier      modifier:     .v-btn--primary, .v-badge--success
+.is-state               state:        .is-open, .is-loading, .is-active
 ```
 
-Regras práticas:
+Practical rules:
 
-- Modificador **nunca** vem sozinho. Sempre `class="v-btn v-btn--primary"`.
-- Estado sempre acompanha o bloco: `class="v-btn v-btn--primary is-loading"`.
-- Quando um atributo ARIA já descreve o estado, o CSS usa o atributo em vez de
-  uma classe: `[aria-selected="true"]`, `[aria-current="page"]`,
+- A modifier **never** comes alone. Always `class="v-btn v-btn--primary"`.
+- A state always travels with the block: `class="v-btn v-btn--primary is-loading"`.
+- When an ARIA attribute already describes the state, the CSS uses the
+  attribute instead of a class: `[aria-selected="true"]`, `[aria-current="page"]`,
   `[aria-invalid="true"]`, `[aria-hidden="false"]`, `[open]`, `:checked`,
   `:disabled`.
-- Utilitário resolve ajuste pontual: `v-mt-4`, `v-text-muted`, `v-truncate`.
-  Se você repete os mesmos cinco utilitários toda vez no mesmo arranjo, aquilo
-  virou componente e deve ir para `components.css`.
+- A utility settles a one-off adjustment: `v-mt-4`, `v-text-muted`, `v-truncate`.
+  If you repeat the same five utilities every time in the same arrangement,
+  that has become a component and it belongs in `components.css`.
 
 ---
 
-## Como estender
+## How to extend it
 
-### Criar um token novo
+### Create a new token
 
-Declare no `:root` puro, em um arquivo carregado **depois** de `tokens.css`.
-Se o token muda com o tema, ele precisa existir nos três lugares: `:root`, o
-bloco de preferência do sistema e o bloco `data-theme="dark"`.
+Declare it in the plain `:root`, in a file loaded **after** `tokens.css`. If
+the token changes with the theme, it has to exist in all three places: `:root`,
+the system preference block and the `data-theme="dark"` block.
 
 ```css
-/* meu-produto.css, carregado depois de tokens.css */
+/* meu-produto.css, loaded after tokens.css */
 
 :root {
   --v-brand-nebula: #7B2FF7;
-  --v-surface-elevated: #FFFFFF;   /* muda com o tema */
-  --v-space-20: 5rem;              /* continua na escala de 4px */
+  --v-surface-elevated: #FFFFFF;   /* changes with the theme */
+  --v-space-20: 5rem;              /* stays on the 4px scale */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -266,9 +266,9 @@ bloco de preferência do sistema e o bloco `data-theme="dark"`.
 }
 ```
 
-### Criar um componente novo
+### Create a new component
 
-Só consuma tokens, nunca valores fixos.
+Consume tokens only, never fixed values.
 
 ```css
 .v-painel {
@@ -287,10 +287,10 @@ Só consuma tokens, nunca valores fixos.
 .v-painel.is-collapsed { padding-block: var(--v-space-3); }
 ```
 
-### Trocar a marca inteira
+### Swap the whole brand
 
-Sobrescreva apenas as cores semânticas. Todos os componentes acompanham sem
-nenhuma outra alteração.
+Override the semantic colors alone. Every component follows along with no other
+change.
 
 ```css
 :root {
@@ -300,10 +300,10 @@ nenhuma outra alteração.
 }
 ```
 
-### Ajustar um componente pontualmente
+### Adjust one component here and there
 
-Prefira uma variante nova a editar `components.css`, que é o arquivo que você
-vai querer atualizar sem conflito no futuro.
+Prefer a new variant over editing `components.css`, which is the file you will
+want to update without conflicts in the future.
 
 ```css
 .v-btn--marca {
@@ -314,124 +314,125 @@ vai querer atualizar sem conflito no futuro.
 }
 ```
 
-Os botões expõem `--v-btn-bg`, `--v-btn-fg`, `--v-btn-border`,
-`--v-btn-bg-hover`, `--v-btn-height`, `--v-btn-padding` e `--v-btn-font` como
-pontos de extensão. Os alertas expõem `--v-alert-accent` e `--v-alert-bg`,
-e os toasts expõem `--v-toast-accent`.
+Buttons expose `--v-btn-bg`, `--v-btn-fg`, `--v-btn-border`,
+`--v-btn-bg-hover`, `--v-btn-height`, `--v-btn-padding` and `--v-btn-font` as
+extension points. Alerts expose `--v-alert-accent` and `--v-alert-bg`, and
+toasts expose `--v-toast-accent`.
 
 ---
 
-## Tema claro e escuro
+## Light and dark theme
 
-### Como funciona
+### How it works
 
-O tema claro vive no `:root` puro. **Nenhuma cor existe somente dentro de um
-bloco de tema**, então qualquer variável tem sempre um valor válido, mesmo em
-navegador antigo que ignore os blocos abaixo.
+The light theme lives in the plain `:root`. **No color exists only inside a
+theme block**, so every variable always has a valid value, even in an old
+browser that ignores the blocks below.
 
-O tema escuro é aplicado em dois lugares, e apenas as variáveis semânticas são
-redefinidas:
+The dark theme is applied in two places, and only the semantic variables are
+redefined:
 
 ```css
-/* 1. Automático: o sistema pede escuro e o usuário não forçou claro */
+/* 1. Automatic: the system asks for dark and the user did not force light */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { /* ... */ }
 }
 
-/* 2. Manual: o usuário escolheu escuro, o sistema não importa */
+/* 2. Manual: the user chose dark, the system does not matter */
 :root[data-theme="dark"] { /* ... */ }
 ```
 
-Essa dupla faz o alternador funcionar nos dois sentidos:
+This pair is what makes the toggle work in both directions:
 
-| `data-theme` no `<html>` | Sistema claro | Sistema escuro |
+| `data-theme` on `<html>` | Light system | Dark system |
 | :--- | :--- | :--- |
-| ausente | claro | escuro |
-| `"light"` | claro | claro |
-| `"dark"` | escuro | escuro |
+| absent | light | dark |
+| `"light"` | light | light |
+| `"dark"` | dark | dark |
 
-### Regras ao escrever CSS novo
+### Rules for writing new CSS
 
-1. Nunca use uma cor da paleta bruta direto em componente. Use a semântica.
-2. Toda cor nova precisa nascer no `:root` puro antes de aparecer em qualquer
-   bloco de tema.
-3. Se a cor muda com o tema, declare nos três lugares. Esquecer o bloco
-   `data-theme="dark"` quebra o alternador manual em máquinas com sistema claro.
-4. Não confie em `color-scheme` para pintar seu componente. Ele só ajusta
-   controles nativos e barras de rolagem.
-5. Teste o componente nos dois temas antes de dar merge. A vitrine tem um
-   alternador no topo justamente para isso.
+1. Never use a raw palette color straight in a component. Use the semantic one.
+2. Every new color has to be born in the plain `:root` before it shows up in
+   any theme block.
+3. If the color changes with the theme, declare it in all three places.
+   Forgetting the `data-theme="dark"` block breaks the manual toggle on
+   machines with a light system.
+4. Do not count on `color-scheme` to paint your component. It only adjusts
+   native controls and scrollbars.
+5. Test the component in both themes before merging. The showcase has a toggle
+   at the top for exactly that.
 
 ---
 
-## Checklist de acessibilidade
+## Accessibility checklist
 
-Rode esta lista antes de publicar qualquer tela construída com o design system.
+Run this list before publishing any screen built with the design system.
 
-### Estrutura
+### Structure
 
-- [ ] A página tem um `<h1>` e os títulos descem sem pular nível.
-- [ ] Existe um link "pular para o conteúdo" (`.v-skip-link`) como primeiro
-      elemento focável do `<body>`.
-- [ ] Regiões usam marcação semântica: `<header>`, `<nav>`, `<main>`,
+- [ ] The page has an `<h1>` and the headings step down without skipping a level.
+- [ ] There is a "skip to content" link (`.v-skip-link`) as the first focusable
+      element of the `<body>`.
+- [ ] Regions use semantic markup: `<header>`, `<nav>`, `<main>`,
       `<aside>`, `<footer>`.
-- [ ] Cada `<nav>` repetido tem `aria-label` próprio.
+- [ ] Each repeated `<nav>` has an `aria-label` of its own.
 
-### Teclado
+### Keyboard
 
-- [ ] Tudo que é clicável é alcançável por `Tab`, na ordem visual.
-- [ ] O foco é sempre visível. O anel de `:focus-visible` nunca foi removido
-      sem substituto.
-- [ ] Abas respondem às setas, `Home` e `End`.
-- [ ] Modal, drawer e dropdown fecham com `Esc`.
-- [ ] Ao abrir um diálogo, o foco entra nele. Ao fechar, volta para o botão que
-      o abriu.
+- [ ] Everything clickable is reachable with `Tab`, in visual order.
+- [ ] Focus is always visible. The `:focus-visible` ring was never removed
+      without a replacement.
+- [ ] Tabs respond to the arrow keys, `Home` and `End`.
+- [ ] Modal, drawer and dropdown close with `Esc`.
+- [ ] When a dialog opens, focus moves into it. When it closes, focus returns
+      to the button that opened it.
 
-### Formulários
+### Forms
 
-- [ ] Todo controle tem `<label>` associado por `for` ou envolvendo o campo.
-- [ ] Texto de apoio está ligado por `aria-describedby`.
-- [ ] Campo com erro tem `aria-invalid="true"` e `aria-describedby` apontando
-      para a mensagem `.v-field-error`.
-- [ ] O erro é escrito em texto, não apenas em cor de borda.
-- [ ] Campos obrigatórios têm `required` além do asterisco visual de
+- [ ] Every control has a `<label>` tied by `for` or wrapping the field.
+- [ ] Supporting text is connected through `aria-describedby`.
+- [ ] A field with an error has `aria-invalid="true"` and an `aria-describedby`
+      pointing at the `.v-field-error` message.
+- [ ] The error is written in text, not only in border color.
+- [ ] Required fields carry `required` on top of the visual asterisk from
       `.v-label--required`.
 
-### Conteúdo dinâmico
+### Dynamic content
 
-- [ ] A pilha de toasts é `role="region"` com `aria-live="polite"`.
-- [ ] Erros que interrompem usam `role="alert"`. Avisos usam `role="status"`.
-- [ ] Botão em carregamento tem `aria-busy="true"` e mantém o rótulo no DOM.
-- [ ] Esqueleto de carregamento é `aria-hidden="true"` e vem acompanhado de um
-      texto em `.v-sr-only`.
-- [ ] Barra de progresso tem `role="progressbar"` com `aria-valuenow`,
-      `aria-valuemin` e `aria-valuemax`, ou apenas `aria-label` quando é
-      indeterminada.
+- [ ] The toast stack is a `role="region"` with `aria-live="polite"`.
+- [ ] Errors that interrupt use `role="alert"`. Notices use `role="status"`.
+- [ ] A loading button has `aria-busy="true"` and keeps its label in the DOM.
+- [ ] The loading skeleton is `aria-hidden="true"` and comes with a piece of
+      text in `.v-sr-only`.
+- [ ] The progress bar has `role="progressbar"` with `aria-valuenow`,
+      `aria-valuemin` and `aria-valuemax`, or just `aria-label` when it is
+      indeterminate.
 
-### Cor e contraste
+### Color and contrast
 
-- [ ] Texto normal tem contraste mínimo de 4,5 para 1 contra o fundo, nos dois
-      temas. Todas as cores semânticas de texto do sistema atendem a esse piso
-      no estado de repouso.
-- [ ] Cor nunca é o único portador de informação. Badge de status também traz
-      o texto do status.
-- [ ] Ícones puramente decorativos levam `aria-hidden="true"`.
-- [ ] Botões que só têm ícone levam `aria-label`.
+- [ ] Normal text has a minimum contrast of 4.5 to 1 against the background, in
+      both themes. Every semantic text color in the system meets that floor in
+      the resting state.
+- [ ] Color is never the only carrier of information. A status badge carries
+      the status text too.
+- [ ] Purely decorative icons take `aria-hidden="true"`.
+- [ ] Icon-only buttons take an `aria-label`.
 
-### Movimento e responsividade
+### Motion and responsiveness
 
-- [ ] `prefers-reduced-motion` é respeitado. O reset já reduz animações e
-      transições para quase zero.
-- [ ] Nenhuma tela produz rolagem horizontal. Tabelas ficam em
-      `.v-table-wrap` e blocos de código em `.v-pre`, que rolam dentro de si.
-- [ ] O layout continua legível com zoom de 200 por cento.
-- [ ] Alvos de toque têm ao menos 40 pixels de altura. O botão médio tem 40 e
-      o grande tem 48.
+- [ ] `prefers-reduced-motion` is respected. The reset already cuts animations
+      and transitions down to nearly zero.
+- [ ] No screen produces horizontal scrolling. Tables sit in `.v-table-wrap`
+      and code blocks in `.v-pre`, which scroll inside themselves.
+- [ ] The layout stays readable at 200 percent zoom.
+- [ ] Touch targets are at least 40 pixels tall. The medium button is 40 and
+      the large one is 48.
 
 ---
 
-## Licença e créditos
+## License and credits
 
-Design system interno do Voodoo.js. Escrito em CSS puro, sem dependências de
-terceiros. As fontes Space Grotesk, Inter e JetBrains Mono são opcionais e
-distribuídas sob licenças próprias pelas suas respectivas famílias.
+Internal design system of Voodoo.js. Written in plain CSS, with no third party
+dependencies. The Space Grotesk, Inter and JetBrains Mono fonts are optional
+and distributed under their own licenses by their respective families.

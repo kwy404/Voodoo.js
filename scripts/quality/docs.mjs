@@ -1,16 +1,17 @@
 /**
- * Docs: links que levam a algum lugar e exemplos que compilam.
+ * Docs: links that lead somewhere and examples that compile.
  *
- * Duas partes:
+ * Two parts:
  *
- *   1. `scripts/check-links.mjs` sobre todo `.md` da raiz, de `docs/` e de
- *      `site/docs/`: o arquivo de destino existe e a ancora existe.
- *   2. Os blocos ```js e ```html do README passam pelo parser do esbuild. Um
- *      exemplo que nem sequer analisa e uma promessa quebrada logo na primeira
- *      coisa que a pessoa copia.
+ *   1. `scripts/check-links.mjs` over every `.md` in the root, in `docs/` and
+ *      in `site/docs/`: the target file exists and the anchor exists.
+ *   2. The ```js and ```html blocks in the README go through esbuild's parser.
+ *      An example that does not even parse is a broken promise on the very
+ *      first thing a person copies.
  *
- * Link quebrado e exemplo com erro de sintaxe sao FAIL. Nao ha meio termo: os
- * dois sao verificaveis, deterministicos e visiveis para quem chega no projeto.
+ * A broken link and an example with a syntax error are both FAIL. There is no
+ * middle ground: both are verifiable, deterministic and visible to whoever
+ * arrives at the project.
  */
 
 import { existsSync } from 'node:fs';
@@ -21,7 +22,7 @@ import { checkLinks } from '../check-links.mjs';
 
 export const meta = { label: 'Docs' };
 
-/** Blocos de codigo cercados, com a linguagem e a linha de inicio. */
+/** Fenced code blocks, with the language and the starting line. */
 function fencedBlocks(source) {
   const lines = source.split('\n');
   const out = [];
@@ -42,12 +43,12 @@ function fencedBlocks(source) {
   return out;
 }
 
-/** Conteudo de cada `<script>` de um bloco html. */
+/** Contents of each `<script>` in an html block. */
 function inlineScripts(html) {
   const out = [];
   for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const attrs = m[1] || '';
-    if (/\bsrc\s*=/.test(attrs)) continue; // script externo, nao ha corpo
+    if (/\bsrc\s*=/.test(attrs)) continue; // external script, there is no body
     if (/type\s*=\s*["'](?!module|text\/javascript|application\/javascript)/i.test(attrs)) continue;
     const offset = html.slice(0, m.index).split('\n').length - 1;
     out.push({ code: m[2], lineOffset: offset });

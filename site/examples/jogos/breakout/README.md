@@ -1,57 +1,60 @@
 # Breakout
 
-Um Breakout completo: cinco niveis desenhados a mao, tijolos de uma, duas e tres
-camadas, blocos indestrutiveis, cinco power-ups que caem, combo, vidas, pausa,
-recorde persistido e som sintetizado.
+A complete Breakout: five hand-drawn levels, bricks with one, two and three
+layers, indestructible blocks, five power-ups that fall, combo, lives, pause, a
+persisted high score and synthesized sound.
 
-Abra em `http://localhost:5173/examples/jogos/breakout/`.
+Open it at `http://localhost:5173/examples/jogos/breakout/`.
 
-## O que esta demo mostra da Voodoo.js
+## What this demo shows of Voodoo.js
 
-O ponto da demo e a divisao de trabalho entre HTML declarativo e canvas.
+The point of the demo is the division of labor between declarative HTML and
+canvas.
 
-**A interface inteira e Voodoo, escrita no proprio HTML.** Placar, recorde,
-nivel, vidas em coracoes, combo, a lista de power-ups ativos com o tempo
-restante, a tela inicial, a tela de pausa, o aviso entre niveis e a tela de fim
-de jogo. Nenhuma dessas coisas passa por `document.createElement`: sao
-`{ interpolacoes }`, `v-show`, `v-for`, `:class`, `:style` e `@click` lendo o
-estado do componente.
+**The whole interface is Voodoo, written in the HTML itself.** Score, high
+score, level, lives as hearts, combo, the list of active power-ups with the time
+left on each, the start screen, the pause screen, the notice between levels and
+the game over screen. None of that goes through `document.createElement`: they
+are `{ interpolations }`, `v-show`, `v-for`, `:class`, `:style` and `@click`
+reading the state of the component.
 
-**O canvas cuida apenas do que precisa de pixel.** O loop de
-`requestAnimationFrame` desenha tijolos, bola, raquete, capsulas e particulas.
-Ele nunca toca no DOM.
+**The canvas only handles what needs pixels.** The `requestAnimationFrame` loop
+draws bricks, ball, paddle, capsules and particles. It never touches the DOM.
 
-**A ponte entre os dois e uma regra so:** a fisica mora em `this.mundo`, um
-objeto comum criado no `mounted` e deixado de proposito fora do estado reativo.
-Sessenta vezes por segundo o loop mexe em dezenas de numeros ali dentro sem
-custo nenhum de reatividade. Quando algo que a interface exibe realmente muda
-(um tijolo quebrou, uma vida acabou, um power-up expirou), o loop escreve em uma
-propriedade do estado e o HTML se atualiza sozinho.
+**The bridge between the two is a single rule:** the physics lives in
+`this.mundo`, a plain object created in `mounted` and left outside the reactive
+state on purpose. Sixty times per second the loop moves dozens of numbers in
+there at no reactivity cost at all. When something the interface displays really
+does change (a brick broke, a life ran out, a power-up expired), the loop writes
+to a state property and the HTML updates itself.
 
-## Recursos usados
+## Features used
 
-| Recurso | Onde |
+| Feature | Where |
 | --- | --- |
-| `v-component` | o jogo inteiro e um componente registrado com `V.component` |
-| `v-show` | as quatro telas sobrepostas, sem tirar o canvas do DOM |
-| `v-for` | a faixa de power-ups ativos |
-| `v-ref` / `$refs` | acesso ao `<canvas>` a partir do `mounted` |
-| `@click`, `@pointerdown` | menus e os botoes grandes de toque |
-| `:class`, `:style` | tremor de tela e a cor de cada power-up |
-| `computed` | coracoes de vida e a descricao do canvas para leitor de tela |
-| `V.storage` | recorde que sobrevive ao recarregar |
-| `V.sound` | efeitos sintetizados, incluindo quatro definidos com `V.sound.define` |
-| `v-mute`, `v-theme-toggle` | silencio e tema claro/escuro, sem JavaScript proprio |
+| `v-component` | the whole game is a component registered with `V.component` |
+| `v-show` | the four overlaid screens, without taking the canvas out of the DOM |
+| `v-for` | the strip of active power-ups |
+| `v-ref` / `$refs` | access to the `<canvas>` from `mounted` |
+| `@click`, `@pointerdown` | the menus and the large touch buttons |
+| `:class`, `:style` | the screen shake and the color of each power-up |
+| `computed` | the life hearts and the canvas description for screen readers |
+| `V.storage` | a high score that survives a reload |
+| `V.sound` | synthesized effects, including four defined with `V.sound.define` |
+| `v-mute`, `v-theme-toggle` | mute and light/dark theme, with no JavaScript of your own |
 
-## Detalhes de comportamento
+## Behavior details
 
-- **Teclado e toque.** Setas ou `A`/`D` movem, `Espaco` lanca, `P` ou `Esc`
-  pausa, `R` reinicia. No celular, o dedo arrasta a raquete direto sobre o palco
-  e ha tres botoes grandes que so aparecem em ponteiro grosso.
-- **Sem vazamento.** O loop e cancelado no `beforeUnmount` e no `pagehide`, e
-  todos os ouvintes sao removidos junto. Se a aba sai de vista, o jogo pausa.
-- **Movimento reduzido.** `prefers-reduced-motion` desliga o tremor de tela e as
-  animacoes de interface. O jogo em si continua animando, senao nao existe jogo.
-- **Acessibilidade.** O canvas carrega um `aria-label` que descreve o estado da
-  partida, o placar e `aria-live`, e todos os controles sao botoes reais
-  alcancaveis por `Tab`.
+- **Keyboard and touch.** Arrows or `A`/`D` move, `Space` launches, `P` or `Esc`
+  pauses, `R` restarts. On a phone, the finger drags the paddle directly on the
+  stage, and there are three large buttons that only show up on a coarse
+  pointer.
+- **No leaks.** The loop is canceled on `beforeUnmount` and on `pagehide`, and
+  every listener is removed with it. If the tab goes out of sight, the game
+  pauses.
+- **Reduced motion.** `prefers-reduced-motion` turns off the screen shake and
+  the interface animations. The game itself keeps animating, otherwise there is
+  no game.
+- **Accessibility.** The canvas carries an `aria-label` that describes the state
+  of the match, the score is `aria-live`, and every control is a real button
+  reachable with `Tab`.

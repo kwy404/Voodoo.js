@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>O objeto V · Documentação da Voodoo.js</title>
-<meta name="description" content="Referência do objeto V por área: núcleo, reatividade, estado, componentes, expressões, DOM encadeável, HTTP, formulários, interface, armazenamento, ambiente e os módulos do build completo.">
+<title>The V object · Voodoo.js documentation</title>
+<meta name="description" content="Reference for the V object by area: core, reactivity, state, components, expressions, chainable DOM, HTTP, forms, interface, storage, environment and the modules in the full build.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/objeto-v">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
@@ -14,205 +14,205 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>O objeto V</h1>
+<p class="doc-migalha">Reference</p>
+<h1>The V object</h1>
 <p class="doc-resumo">
-  <code>V</code> é ao mesmo tempo uma função e um objeto. O que estiver marcado como
-  <b>completo</b> só existe no <code>voodoo.full.min.js</code>.
+  <code>V</code> is a function and an object at the same time. Anything marked
+  <b>full</b> only exists in <code>voodoo.full.min.js</code>.
 </p>
 
-<pre data-lang="js"><code>V('#lista .item').addClass('ativo');   // coleção encadeável
-V.toast.success('Pronto');             // serviços</code></pre>
+<pre data-lang="js"><code>V('#list .item').addClass('active');   // chainable collection
+V.toast.success('Done');               // services</code></pre>
 
-<p><code>window.Voodoo</code> é o mesmo objeto.</p>
+<p><code>window.Voodoo</code> is the same object.</p>
 
-<h2 id="nucleo">Núcleo</h2>
+<h2 id="nucleo">Core</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.version</code></td><td>Versão publicada</td></tr>
-<tr><td><code>V.createApp(opções)</code></td><td>Cria uma aplicação, no formato do Vue. Veja <a href="../guia/modo-aplicacao.html">os dois modos</a></td></tr>
-<tr><td><code>V.whenReady(fn)</code></td><td>Executa quando o documento tiver corpo e parar de mudar</td></tr>
-<tr><td><code>V.whenElement(seletor, fn)</code></td><td>Executa quando o elemento existir, mesmo que ele ainda não exista</td></tr>
-<tr><td><code>V.ready(fn?)</code></td><td>O mesmo, em forma de callback e de promessa</td></tr>
-<tr><td><code>V.config</code></td><td>Configuração global. Veja <a href="configuracao.html">configuração</a></td></tr>
-<tr><td><code>V.start(raiz?)</code></td><td>Percorre e inicializa. Chamado sozinho nos builds de navegador</td></tr>
-<tr><td><code>V.walk(no, escopo?)</code></td><td>Inicializa um trecho de DOM</td></tr>
-<tr><td><code>V.refresh(raiz?)</code></td><td>Reinicializa uma raiz</td></tr>
-<tr><td><code>V.destroy(no)</code></td><td>Desmonta, parando efeitos e removendo ouvintes</td></tr>
-<tr><td><code>V.stopObserving()</code></td><td>Desliga o <code>MutationObserver</code></td></tr>
-<tr><td><code>V.getScope(no)</code></td><td>Escopo associado ao nó, se houver</td></tr>
-<tr><td><code>V.findScope(no)</code></td><td>Escopo efetivo, subindo os ancestrais</td></tr>
-<tr><td><code>V.addCleanup(no, fn)</code></td><td>Registra limpeza para a remoção do nó</td></tr>
-<tr><td><code>V.parseAttribute(nome, valor)</code></td><td>Converte um atributo na descrição de uma directive</td></tr>
-<tr><td><code>V.onError(fn)</code></td><td>Define o tratamento de erros da aplicação inteira</td></tr>
+<tr><td><code>V.version</code></td><td>Published version</td></tr>
+<tr><td><code>V.createApp(options)</code></td><td>Creates an application, in Vue's format. See <a href="../guia/modo-aplicacao.html">the two modes</a></td></tr>
+<tr><td><code>V.whenReady(fn)</code></td><td>Runs when the document has a body and stops changing</td></tr>
+<tr><td><code>V.whenElement(selector, fn)</code></td><td>Runs when the element exists, even if it does not exist yet</td></tr>
+<tr><td><code>V.ready(fn?)</code></td><td>The same, in callback form and in promise form</td></tr>
+<tr><td><code>V.config</code></td><td>Global configuration. See <a href="configuracao.html">configuration</a></td></tr>
+<tr><td><code>V.start(root?)</code></td><td>Walks and initializes. Called on its own in the browser builds</td></tr>
+<tr><td><code>V.walk(node, scope?)</code></td><td>Initializes a piece of DOM</td></tr>
+<tr><td><code>V.refresh(root?)</code></td><td>Reinitializes a root</td></tr>
+<tr><td><code>V.destroy(node)</code></td><td>Unmounts, stopping effects and removing listeners</td></tr>
+<tr><td><code>V.stopObserving()</code></td><td>Turns the <code>MutationObserver</code> off</td></tr>
+<tr><td><code>V.getScope(node)</code></td><td>Scope attached to the node, if there is one</td></tr>
+<tr><td><code>V.findScope(node)</code></td><td>Effective scope, walking up the ancestors</td></tr>
+<tr><td><code>V.addCleanup(node, fn)</code></td><td>Registers cleanup for when the node is removed</td></tr>
+<tr><td><code>V.parseAttribute(name, value)</code></td><td>Turns an attribute into the description of a directive</td></tr>
+<tr><td><code>V.onError(fn)</code></td><td>Sets the error handling for the whole application</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="reatividade">Reatividade</h2>
+<h2 id="reatividade">Reactivity</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.reactive(objeto)</code></td><td>Objeto reativo em profundidade</td></tr>
-<tr><td><code>V.ref(valor)</code></td><td>Referência reativa, em <code>.value</code></td></tr>
-<tr><td><code>V.shallowRef(valor)</code></td><td>Referência sem profundidade</td></tr>
-<tr><td><code>V.computed(getter)</code></td><td>Valor derivado com cache. Aceita <code>{ get, set }</code></td></tr>
-<tr><td><code>V.effect(fn, opcoes?)</code></td><td>Efeito reativo</td></tr>
-<tr><td><code>V.watch(fonte, cb, opcoes?)</code></td><td>Observa e chama no que mudar</td></tr>
-<tr><td><code>V.watchEffect(fn)</code></td><td>Efeito com limpeza entre execuções</td></tr>
-<tr><td><code>V.nextTick(fn?)</code></td><td>Espera o DOM refletir</td></tr>
-<tr><td><code>V.flushSync()</code></td><td>Aplica tudo que estiver pendente, agora</td></tr>
-<tr><td><code>V.stop(runner)</code></td><td>Encerra um efeito</td></tr>
-<tr><td><code>V.effectScope(detached?)</code>, <code>V.EffectScope</code></td><td>Escopo de efeitos, e a classe</td></tr>
-<tr><td><code>V.toRaw(valor)</code></td><td>Objeto original por trás do proxy</td></tr>
-<tr><td><code>V.markRaw(valor)</code></td><td>Marca um objeto para nunca virar proxy</td></tr>
-<tr><td><code>V.unref(valor)</code></td><td><code>valor.value</code> quando é ref</td></tr>
+<tr><td><code>V.reactive(object)</code></td><td>Deeply reactive object</td></tr>
+<tr><td><code>V.ref(value)</code></td><td>Reactive reference, in <code>.value</code></td></tr>
+<tr><td><code>V.shallowRef(value)</code></td><td>Reference without depth</td></tr>
+<tr><td><code>V.computed(getter)</code></td><td>Derived value with a cache. Accepts <code>{ get, set }</code></td></tr>
+<tr><td><code>V.effect(fn, options?)</code></td><td>Reactive effect</td></tr>
+<tr><td><code>V.watch(source, cb, options?)</code></td><td>Watches, and calls on what changed</td></tr>
+<tr><td><code>V.watchEffect(fn)</code></td><td>Effect with cleanup between runs</td></tr>
+<tr><td><code>V.nextTick(fn?)</code></td><td>Waits for the DOM to catch up</td></tr>
+<tr><td><code>V.flushSync()</code></td><td>Applies everything pending, now</td></tr>
+<tr><td><code>V.stop(runner)</code></td><td>Ends an effect</td></tr>
+<tr><td><code>V.effectScope(detached?)</code>, <code>V.EffectScope</code></td><td>Effect scope, and the class</td></tr>
+<tr><td><code>V.toRaw(value)</code></td><td>The original object behind the proxy</td></tr>
+<tr><td><code>V.markRaw(value)</code></td><td>Marks an object so it never becomes a proxy</td></tr>
+<tr><td><code>V.unref(value)</code></td><td><code>value.value</code> when it is a ref</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="estado">Estado</h2>
+<h2 id="estado">State</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.data(valores)</code></td><td>Coloca valores no escopo raiz</td></tr>
-<tr><td><code>V.scope</code></td><td>O escopo raiz</td></tr>
-<tr><td><code>V.store(nome, definicao?, opcoes?)</code></td><td>Cria ou recupera um store</td></tr>
-<tr><td><code>V.stores</code></td><td>Objeto com todos os stores</td></tr>
-<tr><td><code>V.storeNames()</code></td><td>Lista os nomes</td></tr>
-<tr><td><code>V.removeStore(nome)</code></td><td>Remove e para a persistência</td></tr>
+<tr><td><code>V.data(values)</code></td><td>Puts values into the root scope</td></tr>
+<tr><td><code>V.scope</code></td><td>The root scope</td></tr>
+<tr><td><code>V.store(name, definition?, options?)</code></td><td>Creates or retrieves a store</td></tr>
+<tr><td><code>V.stores</code></td><td>Object holding every store</td></tr>
+<tr><td><code>V.storeNames()</code></td><td>Lists the names</td></tr>
+<tr><td><code>V.removeStore(name)</code></td><td>Removes it and stops the persistence</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="componentes">Componentes e directives</h2>
+<h2 id="componentes">Components and directives</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.component(nome, definicao)</code></td><td>Registra um componente</td></tr>
-<tr><td><code>V.components</code>, <code>V.instances</code></td><td><code>Map</code> das definições e <code>Set</code> das instâncias montadas</td></tr>
-<tr><td><code>V.directive(nome, definicao)</code></td><td>Registra uma directive com ciclo de vida</td></tr>
-<tr><td><code>V.directives</code></td><td><code>Map</code> com as directives registradas</td></tr>
-<tr><td><code>V.magic(nome, getter)</code>, <code>V.magics</code></td><td>Registra uma variável mágica, e o <code>Map</code> delas</td></tr>
-<tr><td><code>V.use(plugin, opcoes?)</code></td><td>Instala um plugin</td></tr>
-<tr><td><code>V.PRIORITY</code>, <code>V.Scope</code></td><td>Constantes de prioridade e a classe de escopo</td></tr>
+<tr><td><code>V.component(name, definition)</code></td><td>Registers a component</td></tr>
+<tr><td><code>V.components</code>, <code>V.instances</code></td><td><code>Map</code> of the definitions and <code>Set</code> of the mounted instances</td></tr>
+<tr><td><code>V.directive(name, definition)</code></td><td>Registers a directive with a lifecycle</td></tr>
+<tr><td><code>V.directives</code></td><td><code>Map</code> with the registered directives</td></tr>
+<tr><td><code>V.magic(name, getter)</code>, <code>V.magics</code></td><td>Registers a magic variable, and the <code>Map</code> of them</td></tr>
+<tr><td><code>V.use(plugin, options?)</code></td><td>Installs a plugin</td></tr>
+<tr><td><code>V.PRIORITY</code>, <code>V.Scope</code></td><td>Priority constants and the scope class</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="expressoes">Expressões</h2>
+<h2 id="expressoes">Expressions</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.parse(texto)</code></td><td>Analisa e devolve a árvore</td></tr>
-<tr><td><code>V.tokenize(texto)</code></td><td>Lista de tokens</td></tr>
-<tr><td><code>V.evaluate(no, escopo)</code></td><td>Avalia uma árvore</td></tr>
-<tr><td><code>V.evaluateIn(texto, escopo, contexto?)</code></td><td>Analisa e avalia, sem lançar</td></tr>
-<tr><td><code>V.stringify(valor)</code></td><td>Conversão usada na interpolação</td></tr>
-<tr><td><code>V.clearParseCache()</code></td><td>Limpa o cache de expressões</td></tr>
-<tr><td><code>V.globals</code></td><td>Lista de globais permitidos</td></tr>
-<tr><td><code>V.VoodooSyntaxError</code>, <code>V.VoodooRuntimeError</code></td><td>Classes de erro</td></tr>
+<tr><td><code>V.parse(text)</code></td><td>Parses and returns the tree</td></tr>
+<tr><td><code>V.tokenize(text)</code></td><td>List of tokens</td></tr>
+<tr><td><code>V.evaluate(node, scope)</code></td><td>Evaluates a tree</td></tr>
+<tr><td><code>V.evaluateIn(text, scope, context?)</code></td><td>Parses and evaluates, without throwing</td></tr>
+<tr><td><code>V.stringify(value)</code></td><td>The conversion used in interpolation</td></tr>
+<tr><td><code>V.clearParseCache()</code></td><td>Clears the expression cache</td></tr>
+<tr><td><code>V.globals</code></td><td>List of the allowed globals</td></tr>
+<tr><td><code>V.VoodooSyntaxError</code>, <code>V.VoodooRuntimeError</code></td><td>Error classes</td></tr>
 </tbody>
 </table>
 </div>
 
-<h3 id="o-que-a-expressao-aceita">O que a expressão aceita</h3>
+<h3 id="o-que-a-expressao-aceita">What the expression accepts</h3>
 
 <p>
-  As expressões passam por um lexer, um parser Pratt e um interpretador de árvore próprios. Não
-  existe <code>eval</code>, o que permite rodar sob Content Security Policy restritiva — e
-  explica os limites.
-</p>
-
-<p>
-  <b>Funciona:</b> leitura e escrita de variáveis, acesso por ponto e por colchete, chamada de
-  método, operadores aritméticos, de comparação e lógicos, ternário, encadeamento opcional
-  (<code>?.</code>), coalescência (<code>??</code>), literais de objeto e de array, template
-  string, funções de seta de uma expressão, e sequências separadas por ponto e vírgula.
+  Expressions go through a lexer, a Pratt parser and a tree interpreter of their own. There is no
+  <code>eval</code>, which is what allows running under a restrictive Content Security Policy, and
+  what explains the limits.
 </p>
 
 <p>
-  <b>Não funciona:</b> <code>function</code>, <code>new</code>, blocos com chaves,
-  <code>if</code> e laços, <code>await</code>, atribuição a globais.
+  <b>Works:</b> reading and writing variables, dot and bracket access, method calls, arithmetic,
+  comparison and logical operators, ternary, optional chaining (<code>?.</code>), coalescing
+  (<code>??</code>), object and array literals, template strings, single-expression arrow
+  functions, and sequences separated by semicolons.
 </p>
 
 <p>
-  Identificadores que não estão em nenhum escopo são procurados em uma lista fechada:
+  <b>Does not work:</b> <code>function</code>, <code>new</code>, blocks with braces,
+  <code>if</code> and loops, <code>await</code>, assignment to globals.
+</p>
+
+<p>
+  Identifiers that are in no scope are looked up in a closed list:
 </p>
 
 <pre data-lang="txt"><code>Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console</code></pre>
 
 <p>
-  Tudo fora dela devolve <code>undefined</code>, inclusive <code>window</code>,
-  <code>document</code>, <code>fetch</code>, <code>localStorage</code> e o próprio <code>V</code>.
-  Isso é proposital: um atributo vindo do banco de dados não consegue alcançar a API do navegador.
-  Para liberar o que é seu:
+  Everything outside it returns <code>undefined</code>, including <code>window</code>,
+  <code>document</code>, <code>fetch</code>, <code>localStorage</code> and <code>V</code> itself.
+  That is deliberate: an attribute coming out of the database cannot reach the browser API.
+  To let through what is yours:
 </p>
 
-<pre data-lang="js"><code>V.config.globals.formatarCPF = (v) =&gt; V.applyMask(v, 'cpf');
-V.config.globals.APP = { versao: '2.1', ambiente: 'producao' };</code></pre>
+<pre data-lang="js"><code>V.config.globals.formatCPF = (v) =&gt; V.applyMask(v, 'cpf');
+V.config.globals.APP = { version: '2.1', environment: 'production' };</code></pre>
 
-<h2 id="dom">DOM encadeável</h2>
+<h2 id="dom">Chainable DOM</h2>
 
-<p><code>V(seletor)</code> e <code>V.query(seletor, contexto?)</code> devolvem uma coleção.</p>
+<p><code>V(selector)</code> and <code>V.query(selector, context?)</code> return a collection.</p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Grupo</th><th>Métodos</th></tr></thead>
+<thead><tr><th>Group</th><th>Methods</th></tr></thead>
 <tbody>
-<tr><td>Percurso</td><td><code>find</code>, <code>closest</code>, <code>parent</code>, <code>parents</code>, <code>children</code>, <code>siblings</code>, <code>next</code>, <code>prev</code>, <code>first</code>, <code>last</code>, <code>eq</code>, <code>filter</code>, <code>not</code>, <code>has</code>, <code>is</code>, <code>add</code>, <code>slice</code>, <code>each</code>, <code>get</code>, <code>toArray</code></td></tr>
-<tr><td>Conteúdo</td><td><code>text</code>, <code>html</code>, <code>val</code>, <code>attr</code>, <code>removeAttr</code>, <code>prop</code>, <code>data</code></td></tr>
-<tr><td>Estilo</td><td><code>css</code>, <code>width</code>, <code>height</code>, <code>offset</code>, <code>position</code>, <code>scrollTop</code>, <code>addClass</code>, <code>removeClass</code>, <code>toggleClass</code>, <code>hasClass</code></td></tr>
-<tr><td>Estrutura</td><td><code>append</code>, <code>prepend</code>, <code>before</code>, <code>after</code>, <code>appendTo</code>, <code>prependTo</code>, <code>replaceWith</code>, <code>wrap</code>, <code>unwrap</code>, <code>remove</code>, <code>empty</code>, <code>clone</code></td></tr>
-<tr><td>Eventos</td><td><code>on</code>, <code>off</code>, <code>once</code>, <code>trigger</code>, <code>emit</code></td></tr>
-<tr><td>Visibilidade e animação</td><td><code>show</code>, <code>hide</code>, <code>toggle</code>, <code>fadeIn</code>, <code>fadeOut</code>, <code>slideUp</code>, <code>slideDown</code>, <code>slideToggle</code>, <code>animate</code>, <code>scrollIntoView</code></td></tr>
-<tr><td>Formulário</td><td><code>serialize</code>, <code>serializeObject</code>, <code>focus</code>, <code>blur</code>, <code>select</code></td></tr>
+<tr><td>Traversal</td><td><code>find</code>, <code>closest</code>, <code>parent</code>, <code>parents</code>, <code>children</code>, <code>siblings</code>, <code>next</code>, <code>prev</code>, <code>first</code>, <code>last</code>, <code>eq</code>, <code>filter</code>, <code>not</code>, <code>has</code>, <code>is</code>, <code>add</code>, <code>slice</code>, <code>each</code>, <code>get</code>, <code>toArray</code></td></tr>
+<tr><td>Content</td><td><code>text</code>, <code>html</code>, <code>val</code>, <code>attr</code>, <code>removeAttr</code>, <code>prop</code>, <code>data</code></td></tr>
+<tr><td>Style</td><td><code>css</code>, <code>width</code>, <code>height</code>, <code>offset</code>, <code>position</code>, <code>scrollTop</code>, <code>addClass</code>, <code>removeClass</code>, <code>toggleClass</code>, <code>hasClass</code></td></tr>
+<tr><td>Structure</td><td><code>append</code>, <code>prepend</code>, <code>before</code>, <code>after</code>, <code>appendTo</code>, <code>prependTo</code>, <code>replaceWith</code>, <code>wrap</code>, <code>unwrap</code>, <code>remove</code>, <code>empty</code>, <code>clone</code></td></tr>
+<tr><td>Events</td><td><code>on</code>, <code>off</code>, <code>once</code>, <code>trigger</code>, <code>emit</code></td></tr>
+<tr><td>Visibility and animation</td><td><code>show</code>, <code>hide</code>, <code>toggle</code>, <code>fadeIn</code>, <code>fadeOut</code>, <code>slideUp</code>, <code>slideDown</code>, <code>slideToggle</code>, <code>animate</code>, <code>scrollIntoView</code></td></tr>
+<tr><td>Form</td><td><code>serialize</code>, <code>serializeObject</code>, <code>focus</code>, <code>blur</code>, <code>select</code></td></tr>
 <tr><td>Runtime</td><td><code>walk</code>, <code>destroy</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Além deles: <code>V.query(entrada, contexto?)</code>, <code>V.ready(fn)</code>,
-  <code>V.fromHtml(html)</code> e <code>V.Collection</code>.
+  Beyond those: <code>V.query(input, context?)</code>, <code>V.ready(fn)</code>,
+  <code>V.fromHtml(html)</code> and <code>V.Collection</code>.
 </p>
 
 <h2 id="http">HTTP</h2>
 
 <p>
-  A superfície completa está na <a href="http.html">referência do cliente HTTP</a>. Em resumo:
+  The full surface is in the <a href="http.html">HTTP client reference</a>. In short:
   <code>V.http.get/post/put/patch/delete/head</code>, <code>V.http.request(config)</code>,
-  <code>V.http.upload</code>, <code>V.http.sse</code>, <code>V.http.stream</code>, os três
-  interceptadores, <code>setBaseURL</code>, <code>setHeader</code>, <code>setToken</code>,
-  <code>clearCache</code>, <code>flushOfflineQueue</code>, <code>defaults</code>, e a classe
-  <code>V.HttpError</code>.
+  <code>V.http.upload</code>, <code>V.http.sse</code>, <code>V.http.stream</code>, the three
+  interceptors, <code>setBaseURL</code>, <code>setHeader</code>, <code>setToken</code>,
+  <code>clearCache</code>, <code>flushOfflineQueue</code>, <code>defaults</code>, and the
+  <code>V.HttpError</code> class.
 </p>
 
-<h2 id="formularios">Formulários, validação e máscaras</h2>
+<h2 id="formularios">Forms, validation and masks</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.validate(alvo)</code>, <code>V.validateForm(form)</code></td><td>Valida um formulário ou um campo</td></tr>
-<tr><td><code>V.validator(nome, fn, mensagem?)</code></td><td>Registra uma regra</td></tr>
-<tr><td><code>V.messages</code></td><td>Mensagens padrão</td></tr>
-<tr><td><code>V.serializeForm(form, opcoes?)</code></td><td>Objeto ou <code>FormData</code></td></tr>
-<tr><td><code>V.showFormErrors(form, erros)</code>, <code>V.showFieldError</code>, <code>V.clearErrors</code></td><td>Erros vindos do servidor</td></tr>
-<tr><td><code>V.mask(valor, padrao)</code>, <code>V.applyMask</code>, <code>V.unmask</code></td><td>Aplica e remove máscara</td></tr>
-<tr><td><code>V.registerMask(nome, padraoOuFn)</code>, <code>V.masks</code></td><td>Registra uma máscara, e o <code>Map</code> delas</td></tr>
+<tr><td><code>V.validate(target)</code>, <code>V.validateForm(form)</code></td><td>Validates a form or a field</td></tr>
+<tr><td><code>V.validator(name, fn, message?)</code></td><td>Registers a rule</td></tr>
+<tr><td><code>V.messages</code></td><td>Default messages</td></tr>
+<tr><td><code>V.serializeForm(form, options?)</code></td><td>Object or <code>FormData</code></td></tr>
+<tr><td><code>V.showFormErrors(form, errors)</code>, <code>V.showFieldError</code>, <code>V.clearErrors</code></td><td>Errors coming from the server</td></tr>
+<tr><td><code>V.mask(value, pattern)</code>, <code>V.applyMask</code>, <code>V.unmask</code></td><td>Applies and removes a mask</td></tr>
+<tr><td><code>V.registerMask(name, patternOrFn)</code>, <code>V.masks</code></td><td>Registers a mask, and the <code>Map</code> of them</td></tr>
 </tbody>
 </table>
 </div>
@@ -221,68 +221,68 @@ V.config.globals.APP = { versao: '2.1', ambiente: 'producao' };</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.toast(mensagem, opcoes?)</code></td><td>Notificação, com <code>.success</code>, <code>.error</code>, <code>.warning</code>, <code>.info</code>, <code>.loading</code>, <code>.promise</code>, <code>.clear</code> e <code>.configure</code></td></tr>
-<tr><td><code>V.modal.open/close/toggle/closeAll/isOpen</code></td><td>Modais, mais <code>opened</code>, <code>count</code>, <code>configure</code> e <code>labels</code></td></tr>
-<tr><td><code>V.dialog(opcoes)</code></td><td>Diálogo genérico com botões</td></tr>
-<tr><td><code>V.alert</code>, <code>V.confirm</code>, <code>V.prompt</code></td><td>Os três diálogos prontos</td></tr>
-<tr><td><code>V.hotkey(combo, handler, opcoes?)</code></td><td>Atalho global de teclado</td></tr>
-<tr><td><code>V.palette(opcoes?)</code></td><td>Aplica a paleta, mais <code>use</code>, <code>reset</code>, <code>scale</code>, <code>contrastText</code>, <code>contrastRatio</code>, <code>luminance</code> e <code>convert</code></td></tr>
+<tr><td><code>V.toast(message, options?)</code></td><td>Notification, with <code>.success</code>, <code>.error</code>, <code>.warning</code>, <code>.info</code>, <code>.loading</code>, <code>.promise</code>, <code>.clear</code> and <code>.configure</code></td></tr>
+<tr><td><code>V.modal.open/close/toggle/closeAll/isOpen</code></td><td>Modals, plus <code>opened</code>, <code>count</code>, <code>configure</code> and <code>labels</code></td></tr>
+<tr><td><code>V.dialog(options)</code></td><td>Generic dialog with buttons</td></tr>
+<tr><td><code>V.alert</code>, <code>V.confirm</code>, <code>V.prompt</code></td><td>The three ready-made dialogs</td></tr>
+<tr><td><code>V.hotkey(combo, handler, options?)</code></td><td>Global keyboard shortcut</td></tr>
+<tr><td><code>V.palette(options?)</code></td><td>Applies the palette, plus <code>use</code>, <code>reset</code>, <code>scale</code>, <code>contrastText</code>, <code>contrastRatio</code>, <code>luminance</code> and <code>convert</code></td></tr>
 <tr><td><code>V.theme</code></td><td><code>current</code>, <code>resolved</code>, <code>set</code>, <code>toggle</code>, <code>apply</code>, <code>init</code></td></tr>
-<tr><td><code>V.injectStyle(id, css)</code>, <code>V.ensureTokens()</code></td><td>CSS injetado uma única vez, e as variáveis <code>--v-*</code></td></tr>
-<tr><td><code>V.enter</code>, <code>V.leave</code>, <code>V.fadeIn</code>, <code>V.fadeOut</code>, <code>V.slideDown</code>, <code>V.slideUp</code>, <code>V.viewTransition</code></td><td>Transições</td></tr>
+<tr><td><code>V.injectStyle(id, css)</code>, <code>V.ensureTokens()</code></td><td>CSS injected a single time, and the <code>--v-*</code> variables</td></tr>
+<tr><td><code>V.enter</code>, <code>V.leave</code>, <code>V.fadeIn</code>, <code>V.fadeOut</code>, <code>V.slideDown</code>, <code>V.slideUp</code>, <code>V.viewTransition</code></td><td>Transitions</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="armazenamento">Armazenamento, eventos e ambiente</h2>
+<h2 id="armazenamento">Storage, events and environment</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>Descrição</th></tr></thead>
+<thead><tr><th>Member</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td><code>V.storage</code>, <code>V.session</code></td><td><code>localStorage</code> e <code>sessionStorage</code>, com JSON automático</td></tr>
+<tr><td><code>V.storage</code>, <code>V.session</code></td><td><code>localStorage</code> and <code>sessionStorage</code>, with automatic JSON</td></tr>
 <tr><td><code>V.cookie</code></td><td><code>get</code>, <code>set</code>, <code>remove</code>, <code>has</code></td></tr>
-<tr><td><code>V.cache</code></td><td>Memória com expiração: <code>set</code>, <code>get</code>, <code>has</code>, <code>remove</code>, <code>clear</code>, <code>remember</code>, <code>size</code></td></tr>
+<tr><td><code>V.cache</code></td><td>Memory with expiration: <code>set</code>, <code>get</code>, <code>has</code>, <code>remove</code>, <code>clear</code>, <code>remember</code>, <code>size</code></td></tr>
 <tr><td><code>V.url</code></td><td>Query string: <code>get</code>, <code>all</code>, <code>set</code>, <code>remove</code>, <code>merge</code></td></tr>
-<tr><td><code>V.on</code>, <code>V.once</code>, <code>V.off</code>, <code>V.emit</code></td><td>Barramento de eventos global</td></tr>
-<tr><td><code>V.screen</code>, <code>V.network</code></td><td>Objetos reativos de tela e conexão</td></tr>
-<tr><td><code>V.clipboard</code>, <code>V.device</code>, <code>V.isBrowser</code></td><td>Área de transferência, aparelho e detecção de DOM</td></tr>
+<tr><td><code>V.on</code>, <code>V.once</code>, <code>V.off</code>, <code>V.emit</code></td><td>Global event bus</td></tr>
+<tr><td><code>V.screen</code>, <code>V.network</code></td><td>Reactive screen and connection objects</td></tr>
+<tr><td><code>V.clipboard</code>, <code>V.device</code>, <code>V.isBrowser</code></td><td>Clipboard, device and DOM detection</td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Dois "once" diferentes</span>
+  <span class="doc-aviso__rotulo">Two different "once"</span>
   <p>
-    <code>V.once</code> é o barramento de eventos. O utilitário <code>once</code>, que executa uma
-    função uma única vez, está no import direto:
+    <code>V.once</code> is the event bus. The <code>once</code> utility, which runs a function a
+    single time, is in the direct import:
     <code>import { once } from 'voodoojs/utils'</code>.
   </p>
 </div>
 
-<h2 id="completo">Módulos do build completo</h2>
+<h2 id="completo">Modules in the full build</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Área</th><th>Membros</th></tr></thead>
+<thead><tr><th>Area</th><th>Members</th></tr></thead>
 <tbody>
 <tr>
-  <td>Animação</td>
+  <td>Animation</td>
   <td><code>V.animate</code>, <code>V.spring</code>, <code>V.stagger</code>, <code>V.inView</code>, <code>V.scrollProgress</code>, <code>V.motion</code>, <code>V.easings</code></td>
 </tr>
 <tr>
-  <td>Gráficos</td>
+  <td>Charts</td>
   <td><code>V.renderChart</code>, <code>V.chart</code>, <code>V.charts</code>, <code>V.chartColors</code></td>
 </tr>
 <tr>
-  <td>Roteador</td>
-  <td><code>V.router</code> e seus métodos, <code>V.navigate</code>, <code>V.route</code>, <code>V.resolveRoute</code></td>
+  <td>Router</td>
+  <td><code>V.router</code> and its methods, <code>V.navigate</code>, <code>V.route</code>, <code>V.resolveRoute</code></td>
 </tr>
 <tr>
-  <td>Idiomas</td>
-  <td><code>V.i18n</code> e seus métodos, <code>V.t</code>, <code>V.setLocale</code>, <code>V.getLocale</code></td>
+  <td>Languages</td>
+  <td><code>V.i18n</code> and its methods, <code>V.t</code>, <code>V.setLocale</code>, <code>V.getLocale</code></td>
 </tr>
 <tr>
   <td>Devtools</td>
@@ -292,7 +292,7 @@ V.config.globals.APP = { versao: '2.1', ambiente: 'producao' };</code></pre>
 </table>
 </div>
 
-<h2 id="utilitarios">Utilitários</h2>
+<h2 id="utilitarios">Utilities</h2>
 
 <p>
   <code>uuid</code>, <code>uid</code>, <code>sleep</code>, <code>parseDuration</code>,
@@ -302,13 +302,13 @@ V.config.globals.APP = { versao: '2.1', ambiente: 'producao' };</code></pre>
   <code>sample</code>, <code>slugify</code>, <code>truncate</code>, <code>capitalize</code>,
   <code>titleCase</code>, <code>escapeHtml</code>, <code>stripTags</code>,
   <code>formatCurrency</code>, <code>formatNumber</code>, <code>formatDate</code>,
-  <code>relativeTime</code>, <code>formatFileSize</code>, <code>formatPercent</code> e
-  <code>setFormatDefaults</code> — com assinatura e exemplo na
-  <a href="utilitarios.html">referência de utilitários</a>.
+  <code>relativeTime</code>, <code>formatFileSize</code>, <code>formatPercent</code> and
+  <code>setFormatDefaults</code>, with signature and example in the
+  <a href="utilitarios.html">utilities reference</a>.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=8aa47c23"></script>
+<script src="../assets/docs.js?v=e7076219"></script>
 </body>
 </html>

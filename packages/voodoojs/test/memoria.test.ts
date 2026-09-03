@@ -1,7 +1,7 @@
 /**
- * Vazamento de memoria e o defeito que ninguem ve ate a pagina ficar lenta
- * depois de meia hora aberta. Estes testes exercitam os ciclos de montagem e
- * desmontagem em volume e cobram o retorno ao estado inicial.
+ * A memory leak is the defect nobody sees until the page turns sluggish after
+ * half an hour open. These tests exercise the mount and unmount cycles in bulk
+ * and demand a return to the starting state.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -39,8 +39,8 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('ciclo de vida de componentes em volume', () => {
-  it('montar e desmontar 500 componentes zera instances', async () => {
+describe('component lifecycle in bulk', () => {
+  it('mounting and unmounting 500 components leaves instances empty', async () => {
     core.component('folha-teste', {
       props: { n: { type: 'number', default: 0 } },
       state(props) {
@@ -64,7 +64,7 @@ describe('ciclo de vida de componentes em volume', () => {
     expect(instances.size).toBe(antes);
   });
 
-  it('desmontar chama beforeUnmount e unmounted uma vez por instancia', async () => {
+  it('unmounting calls beforeUnmount and unmounted once per instance', async () => {
     const chamadas: string[] = [];
     core.component('contador-hooks', {
       state: () => ({ n: 0 }),
@@ -88,8 +88,8 @@ describe('ciclo de vida de componentes em volume', () => {
   });
 });
 
-describe('v-if alternado nao acumula efeitos', () => {
-  it('500 alternancias mantem um unico bloco vivo', async () => {
+describe('toggling v-if does not pile up effects', () => {
+  it('500 toggles keep a single block alive', async () => {
     const { root, estado } = montar(
       '<div><span v-if="ligado" v-text="n"></span></div>',
       { ligado: true, n: 1 }
@@ -105,12 +105,12 @@ describe('v-if alternado nao acumula efeitos', () => {
     (estado as Record<string, unknown>).ligado = true;
     await settle();
 
-    // Um span renderizado, um comentario de ancora. Nada mais.
+    // One rendered span, one anchor comment. Nothing else.
     expect(container.querySelectorAll('span').length).toBe(1);
     expect(container.childNodes.length).toBeLessThanOrEqual(3);
   });
 
-  it('os efeitos do ramo saem junto com o ramo', async () => {
+  it('the effects of a branch leave along with the branch', async () => {
     let execucoes = 0;
     const { root, estado } = montar('<div><span v-if="ligado" v-text="conta()"></span></div>', {
       ligado: true,
@@ -127,13 +127,14 @@ describe('v-if alternado nao acumula efeitos', () => {
     (estado as Record<string, unknown>).ligado = false;
     await settle();
 
-    // Com o ramo fora de cena, mexer no estado nao pode reexecutar nada dele.
+    // With the branch off the page, touching the state cannot run anything of
+    // it again.
     (estado as Record<string, number>).n = 42;
     await settle();
     expect(execucoes).toBe(depoisDeMontar);
   });
 
-  it('o elemento removido nao guarda mais escopos de efeito', async () => {
+  it('the removed element no longer holds effect scopes', async () => {
     const { root, estado } = montar('<div><span v-if="v" v-text="n"></span></div>', {
       v: true,
       n: 1,
@@ -148,8 +149,8 @@ describe('v-if alternado nao acumula efeitos', () => {
   });
 });
 
-describe('v-for com troca de lista nao acumula nos', () => {
-  it('200 substituicoes do array mantem a contagem de itens', async () => {
+describe('v-for swapping lists does not pile up nodes', () => {
+  it('200 replacements of the array keep the item count', async () => {
     const { root, estado } = montar(
       '<ul><li v-for="item in itens" :key="item.id" v-text="item.nome"></li></ul>',
       { itens: [{ id: 1, nome: 'a' }] }
@@ -166,11 +167,11 @@ describe('v-for com troca de lista nao acumula nos', () => {
     await settle();
 
     expect(ul.querySelectorAll('li').length).toBe(3);
-    // Tres itens mais a ancora de comentario.
+    // Three items plus the comment anchor.
     expect(ul.childNodes.length).toBe(4);
   });
 
-  it('esvaziar a lista remove todos os nos', async () => {
+  it('emptying the list removes every node', async () => {
     const { root, estado } = montar('<ul><li v-for="n in ns" v-text="n"></li></ul>', {
       ns: [1, 2, 3, 4, 5],
     });
@@ -183,8 +184,8 @@ describe('v-for com troca de lista nao acumula nos', () => {
   });
 });
 
-describe('parar efeitos solta as dependencias', () => {
-  it('V.effect com stop() nao roda mais', async () => {
+describe('stopping effects releases the dependencies', () => {
+  it('V.effect with stop() runs no more', async () => {
     const estado = reactive({ n: 0 });
     let execucoes = 0;
     const runner = effect(() => {
@@ -203,7 +204,7 @@ describe('parar efeitos solta as dependencias', () => {
     expect(execucoes).toBe(2);
   });
 
-  it('V.watch devolve um handle que realmente para', async () => {
+  it('V.watch returns a handle that really stops', async () => {
     const estado = reactive({ n: 0 });
     let chamadas = 0;
     const parar = watch(
@@ -223,7 +224,7 @@ describe('parar efeitos solta as dependencias', () => {
     expect(chamadas).toBe(1);
   });
 
-  it('EffectScope.stop() derruba todos os efeitos de dentro', async () => {
+  it('EffectScope.stop() brings down every effect inside it', async () => {
     const estado = reactive({ a: 0, b: 0 });
     let ea = 0;
     let eb = 0;
@@ -260,7 +261,7 @@ describe('parar efeitos solta as dependencias', () => {
     expect(escopo.effects.length).toBe(0);
   });
 
-  it('escopo aninhado morre junto com o pai', async () => {
+  it('a nested scope dies along with the parent', async () => {
     const estado = reactive({ n: 0 });
     let execucoes = 0;
     const pai = effectScope(true);
@@ -285,8 +286,8 @@ describe('parar efeitos solta as dependencias', () => {
   });
 });
 
-describe('listeners saem com o elemento', () => {
-  it('@click deixa de responder depois de V.destroy()', () => {
+describe('listeners leave with the element', () => {
+  it('@click stops answering after V.destroy()', () => {
     let cliques = 0;
     const { root } = montar('<button @click="contar()">x</button>', {
       contar: () => {
@@ -303,7 +304,7 @@ describe('listeners saem com o elemento', () => {
     expect(cliques).toBe(1);
   });
 
-  it('@click.window remove o listener do window', () => {
+  it('@click.window removes the listener from the window', () => {
     let disparos = 0;
     const { root } = montar('<div @click.window="contar()"></div>', {
       contar: () => {
@@ -319,7 +320,7 @@ describe('listeners saem com o elemento', () => {
     expect(disparos).toBe(1);
   });
 
-  it('@click.outside remove o listener do document', () => {
+  it('@click.outside removes the listener from the document', () => {
     let fora = 0;
     const { root } = montar('<div id="alvo" @click.outside="contar()"></div>', {
       contar: () => {
@@ -337,7 +338,7 @@ describe('listeners saem com o elemento', () => {
     expect(fora).toBe(1);
   });
 
-  it('500 ciclos de montagem e destruicao nao acumulam disparos', () => {
+  it('500 mount and destroy cycles do not pile up firings', () => {
     let cliques = 0;
     const botoes: HTMLElement[] = [];
     for (let i = 0; i < 500; i++) {
@@ -355,7 +356,7 @@ describe('listeners saem com o elemento', () => {
   });
 });
 
-describe('store com persistencia', () => {
+describe('store with persistence', () => {
   const NOME = 'teste-memoria';
 
   afterEach(() => {
@@ -363,14 +364,14 @@ describe('store com persistencia', () => {
     localStorage.removeItem(`voodoo:store:${NOME}`);
   });
 
-  it('grava no localStorage enquanto existe', async () => {
+  it('writes to localStorage while it exists', async () => {
     const s = store(NOME, { n: 1 }, { persist: true });
     s.n = 2;
     await settle();
     expect(JSON.parse(localStorage.getItem(`voodoo:store:${NOME}`)!).n).toBe(2);
   });
 
-  it('removeStore para o watcher de persistencia', async () => {
+  it('removeStore stops the persistence watcher', async () => {
     const s = store(NOME, { n: 1 }, { persist: true });
     s.n = 2;
     await settle();
@@ -381,12 +382,12 @@ describe('store com persistencia', () => {
     const gravado = localStorage.getItem(`voodoo:store:${NOME}`);
     s.n = 999;
     await settle();
-    // O store saiu do registro: nada mais e escrito no armazenamento.
+    // The store left the registry: nothing more is written to storage.
     expect(localStorage.getItem(`voodoo:store:${NOME}`)).toBe(gravado);
   });
 });
 
-describe('HTTP cancelado nao deixa timer pendente', () => {
+describe('a cancelled HTTP call leaves no timer pending', () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -398,7 +399,7 @@ describe('HTTP cancelado nao deixa timer pendente', () => {
     vi.useRealTimers();
   });
 
-  it('abortar a requisicao limpa o timeout', async () => {
+  it('aborting the request clears the timeout', async () => {
     vi.useFakeTimers();
     globalThis.fetch = vi.fn(
       (_url: unknown, init?: RequestInit) =>
@@ -416,11 +417,11 @@ describe('HTTP cancelado nao deixa timer pendente', () => {
     const resultado = await pendente;
     expect(resultado).toBeInstanceOf(Error);
 
-    // Nenhum timer sobrou: avancar o relogio nao dispara mais nada.
+    // No timer was left over: moving the clock forward fires nothing else.
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('uma requisicao concluida tambem nao deixa timer', async () => {
+  it('a completed request leaves no timer either', async () => {
     vi.useFakeTimers();
     globalThis.fetch = vi.fn(async () =>
       new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } })
@@ -430,7 +431,7 @@ describe('HTTP cancelado nao deixa timer pendente', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('V.resource parado cancela a requisicao pendente', async () => {
+  it('a stopped V.resource cancels the pending request', async () => {
     let abortada = false;
     globalThis.fetch = vi.fn(
       (_url: unknown, init?: RequestInit) =>
@@ -451,8 +452,8 @@ describe('HTTP cancelado nao deixa timer pendente', () => {
   });
 });
 
-describe('interpolacao de texto solta o efeito ao ser destruida', () => {
-  it('o no de texto para de acompanhar o estado', async () => {
+describe('text interpolation releases the effect when destroyed', () => {
+  it('the text node stops following the state', async () => {
     const { root, estado } = montar('<p>{ n }</p>', { n: 1 });
     const p = root.querySelector('p')!;
     expect(p.textContent).toBe('1');
@@ -463,7 +464,7 @@ describe('interpolacao de texto solta o efeito ao ser destruida', () => {
     expect(p.textContent).toBe('1');
   });
 
-  it('mil ciclos de montagem e destruicao nao deixam efeito vivo', async () => {
+  it('a thousand mount and destroy cycles leave no effect alive', async () => {
     const estado = reactive({ n: 0 });
     const paragrafos: HTMLElement[] = [];
     for (let i = 0; i < 1000; i++) {
@@ -482,8 +483,8 @@ describe('interpolacao de texto solta o efeito ao ser destruida', () => {
   });
 });
 
-describe('ref e computed nao seguram efeitos parados', () => {
-  it('o dep de um ref perde o efeito quando ele para', async () => {
+describe('ref and computed do not hold on to stopped effects', () => {
+  it('the dep of a ref loses the effect when it stops', async () => {
     const contador = ref(0);
     let execucoes = 0;
     const runner = effect(() => {

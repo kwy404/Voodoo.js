@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Segurança · Documentação da Voodoo.js</title>
-<meta name="description" content="Por que não existe eval, como configurar a Content Security Policy, o que a biblioteca escapa sozinha, os cuidados com v-html, CSRF, armazenamento, uploads e os cabeçalhos recomendados.">
+<title>Security · Voodoo.js documentation</title>
+<meta name="description" content="Why there is no eval, how to configure the Content Security Policy, what the library escapes on its own, the care v-html needs, CSRF, storage, uploads and the recommended headers.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/seguranca">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
@@ -14,32 +14,32 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Qualidade e migração</p>
-<h1>Segurança</h1>
+<p class="doc-migalha">Quality and migration</p>
+<h1>Security</h1>
 <p class="doc-resumo">
-  O que a biblioteca protege sozinha, o que continua sendo responsabilidade sua, e por que a
-  ausência de <code>eval</code> muda o tamanho do estrago possível — sem virar uma sandbox.
+  What the library protects on its own, what stays your responsibility, and why the absence of
+  <code>eval</code> changes the size of the possible damage, without becoming a sandbox.
 </p>
 
-<h2 id="sem-eval">Por que não usa eval</h2>
+<h2 id="sem-eval">Why it does not use eval</h2>
 
 <p>
-  Muita biblioteca que interpreta expressões dentro de atributos usa
-  <code>new Function('with(scope){ ... }')</code>. É rápido de escrever e funciona bem, mas traz
-  duas consequências: a página precisa de <code>unsafe-eval</code> na Content Security Policy, e
-  qualquer texto que chegue a um atributo vira código executável com acesso a tudo.
+  Many libraries that interpret expressions inside attributes use
+  <code>new Function('with(scope){ ... }')</code>. It is quick to write and works well, but it
+  brings two consequences: the page needs <code>unsafe-eval</code> in the Content Security Policy,
+  and any text that reaches an attribute becomes executable code with access to everything.
 </p>
 
-<p>Aqui, toda expressão passa por três etapas escritas à mão dentro da biblioteca:</p>
+<p>Here, every expression goes through three stages written by hand inside the library:</p>
 
 <ol class="doc-passos">
-  <li>um <b>lexer</b>, que quebra o texto em tokens;</li>
-  <li>um <b>parser Pratt</b>, que monta a árvore sintática;</li>
-  <li>um <b>interpretador de árvore</b>, que avalia nó a nó, dentro do escopo.</li>
+  <li>a <b>lexer</b>, which breaks the text into tokens;</li>
+  <li>a <b>Pratt parser</b>, which builds the syntax tree;</li>
+  <li>a <b>tree interpreter</b>, which evaluates node by node, inside the scope.</li>
 </ol>
 
 <p>
-  Nenhum <code>eval</code>, nenhum <code>new Function</code>, nenhum <code>setTimeout</code> com
+  No <code>eval</code>, no <code>new Function</code>, no <code>setTimeout</code> with a
   string.
 </p>
 
@@ -48,9 +48,9 @@
 <pre data-lang="txt"><code>Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'</code></pre>
 
 <p>
-  O <code>'unsafe-inline'</code> em <code>style-src</code> existe porque o CSS dos componentes de
-  interface é injetado em tempo de execução. Para dispensá-lo, desligue a injeção e carregue o CSS
-  por conta própria:
+  The <code>'unsafe-inline'</code> in <code>style-src</code> is there because the CSS of the
+  interface components is injected at runtime. To do without it, turn the injection off and load
+  the CSS yourself:
 </p>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js?v=0.6.2" data-no-styles defer&gt;&lt;/script&gt;
@@ -58,49 +58,49 @@
 
 <pre data-lang="txt"><code>Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'</code></pre>
 
-<p><code>unsafe-eval</code> nunca é necessário, em nenhuma configuração.</p>
+<p><code>unsafe-eval</code> is never needed, in any configuration.</p>
 
-<h2 id="superficie">Superfície de acesso das expressões</h2>
+<h2 id="superficie">The access surface of expressions</h2>
 
 <p>
-  Um identificador é procurado no escopo. Quando não existe em nenhum, a busca cai em uma lista
-  fechada de globais:
+  An identifier is looked up in the scope. When it exists in none of them, the lookup falls back to
+  a closed list of globals:
 </p>
 
 <pre data-lang="txt"><code>Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console</code></pre>
 
 <p>
-  Tudo fora dela devolve <code>undefined</code> — <code>window</code>, <code>document</code>,
-  <code>fetch</code>, <code>eval</code>, <code>globalThis</code>, <code>localStorage</code>. Um
-  atributo com <code>v-text="document.cookie"</code> não lê nada.
+  Everything outside it returns <code>undefined</code>, <code>window</code>, <code>document</code>,
+  <code>fetch</code>, <code>eval</code>, <code>globalThis</code>, <code>localStorage</code>. An
+  attribute with <code>v-text="document.cookie"</code> reads nothing.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Isso não é uma sandbox</span>
+  <span class="doc-aviso__rotulo">This is not a sandbox</span>
   <p>
-    A lista fechada reduz bastante o estrago possível quando um atributo é montado a partir de
-    dados que você não controla, mas continua valendo a regra de sempre: nunca coloque conteúdo de
-    usuário dentro de um atributo <code>v-*</code> sem escapar. O acesso a serviços é explícito,
-    pelas variáveis mágicas — o que também significa que dá para auditar o que uma página consegue
-    fazer lendo os próprios atributos.
+    The closed list cuts down the possible damage considerably when an attribute is assembled from
+    data you do not control, but the usual rule still holds: never put user content inside a
+    <code>v-*</code> attribute without escaping it. Access to services is explicit, through the
+    magic variables, which also means you can audit what a page is able to do by reading its own
+    attributes.
   </p>
 </div>
 
-<h2 id="v-html">v-html e XSS</h2>
+<h2 id="v-html">v-html and XSS</h2>
 
 <p>
-  <code>v-html</code> insere HTML sem escapar. Ele existe porque conteúdo vindo de um editor de
-  texto rico precisa disso, e não há outro jeito honesto de resolver.
+  <code>v-html</code> inserts HTML without escaping it. It exists because content coming from a
+  rich text editor needs it, and there is no other honest way to solve that.
 </p>
 
-<pre data-lang="html"><code>&lt;!-- perigoso --&gt;
+<pre data-lang="html"><code>&lt;!-- dangerous --&gt;
 &lt;div v-html="comentario.texto"&gt;&lt;/div&gt;
 
-&lt;!-- seguro --&gt;
+&lt;!-- safe --&gt;
 &lt;div v-text="comentario.texto"&gt;&lt;/div&gt;</code></pre>
 
-<p>Quando o HTML é realmente necessário, sanitize antes:</p>
+<p>When the HTML really is necessary, sanitize it first:</p>
 
 <pre data-lang="js"><code>import DOMPurify from 'dompurify';
 V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
@@ -108,29 +108,29 @@ V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
 <pre data-lang="html"><code>&lt;div v-html="limpar(artigo.corpo)"&gt;&lt;/div&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--perigo">
-  <span class="doc-aviso__rotulo">O detalhe que agrava</span>
+  <span class="doc-aviso__rotulo">The detail that makes it worse</span>
   <p>
-    O HTML inserido por <code>v-html</code> <b>é percorrido pela Voodoo</b>, então ele pode trazer
-    directives: um conteúdo de usuário permite injetar <code>v-click</code>, <code>v-init</code> e
-    qualquer outro atributo. O mesmo vale para respostas HTML de <code>v-get</code>,
-    <code>v-post</code> e <code>v-target</code> — confie apenas no seu próprio servidor. A opção
-    <code>html</code> das notificações também insere sem escapar.
+    The HTML inserted by <code>v-html</code> <b>is walked by Voodoo</b>, so it can bring
+    directives along: user content makes it possible to inject <code>v-click</code>,
+    <code>v-init</code> and any other attribute. The same goes for HTML responses from
+    <code>v-get</code>, <code>v-post</code> and <code>v-target</code>, trust only your own server.
+    The <code>html</code> option of the notifications also inserts without escaping.
   </p>
 </div>
 
-<h2 id="escapa">O que a biblioteca escapa sozinha</h2>
+<h2 id="escapa">What the library escapes on its own</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Comportamento</th></tr></thead>
+<thead><tr><th>Situation</th><th>Behavior</th></tr></thead>
 <tbody>
-<tr><td><code>{ interpolacao }</code></td><td>Escrita como texto, nunca como HTML</td></tr>
-<tr><td><code>v-text</code></td><td>Escrita como texto</td></tr>
-<tr><td>Resposta JSON renderizada por <code>v-get</code></td><td>Todos os valores passam por <code>escapeHtml</code></td></tr>
-<tr><td>Mensagens de validação</td><td>Escritas como texto</td></tr>
-<tr><td>Conteúdo de toast, alert, confirm e prompt</td><td>Escrito como texto, salvo quando você usa <code>html</code></td></tr>
-<tr><td>Rótulos e valores dos gráficos</td><td>Escritos como texto do SVG</td></tr>
-<tr><td><code>V.escapeHtml(texto)</code></td><td>Disponível quando você monta HTML na mão</td></tr>
+<tr><td><code>{ interpolacao }</code></td><td>Written as text, never as HTML</td></tr>
+<tr><td><code>v-text</code></td><td>Written as text</td></tr>
+<tr><td>JSON response rendered by <code>v-get</code></td><td>Every value goes through <code>escapeHtml</code></td></tr>
+<tr><td>Validation messages</td><td>Written as text</td></tr>
+<tr><td>Content of toast, alert, confirm and prompt</td><td>Written as text, except when you use <code>html</code></td></tr>
+<tr><td>Chart labels and values</td><td>Written as SVG text</td></tr>
+<tr><td><code>V.escapeHtml(texto)</code></td><td>Available when you assemble HTML by hand</td></tr>
 </tbody>
 </table>
 </div>
@@ -140,57 +140,56 @@ V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
 <pre data-lang="html"><code>&lt;meta name="csrf-token" content="..."&gt;</code></pre>
 
 <p>
-  Requisições que escrevem — <code>POST</code>, <code>PUT</code>, <code>PATCH</code>,
-  <code>DELETE</code> — enviam automaticamente o token lido dessa meta tag, no cabeçalho
-  <code>X-CSRF-TOKEN</code>. Os dois nomes são configuráveis:
+  Requests that write, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>,
+  <code>DELETE</code>, automatically send the token read from that meta tag, in the
+  <code>X-CSRF-TOKEN</code> header. Both names are configurable:
 </p>
 
 <pre data-lang="js"><code>V.http.defaults.csrfMeta = 'meu-token';
 V.http.defaults.csrfHeader = 'X-Meu-Token';</code></pre>
 
 <p>
-  Toda requisição também leva <code>X-Requested-With: XMLHttpRequest</code>, o que ajuda o
-  servidor a distinguir chamadas AJAX. O padrão de <code>credentials</code> é
-  <code>same-origin</code>, então cookies não vazam para outra origem sem que você peça.
+  Every request also carries <code>X-Requested-With: XMLHttpRequest</code>, which helps the server
+  tell AJAX calls apart. The default for <code>credentials</code> is <code>same-origin</code>, so
+  cookies do not leak to another origin unless you ask for it.
 </p>
 
-<h2 id="armazenamento">Dados sensíveis no armazenamento</h2>
+<h2 id="armazenamento">Sensitive data in storage</h2>
 
 <p>
-  <code>V.storage</code>, <code>V.session</code> e <code>v-persist</code> gravam no armazenamento
-  do navegador, que é legível por qualquer script da mesma origem. Não guarde ali tokens de longa
-  duração, dados de cartão ou qualquer coisa que não possa ser lida por uma extensão instalada no
-  navegador do usuário.
+  <code>V.storage</code>, <code>V.session</code> and <code>v-persist</code> write to the browser's
+  storage, which is readable by any script from the same origin. Do not keep long-lived tokens,
+  card data, or anything that must not be readable by an extension installed in the user's browser
+  there.
 </p>
 
 <p>
-  Para tokens, prefira cookies com <code>HttpOnly</code> definidos pelo servidor. Quando isso não
-  for possível, use <code>V.session</code>, que morre com a aba, em vez de <code>V.storage</code>.
+  For tokens, prefer <code>HttpOnly</code> cookies set by the server. When that is not possible,
+  use <code>V.session</code>, which dies with the tab, instead of <code>V.storage</code>.
 </p>
 
 <pre data-lang="js"><code>V.cookie.set('preferencia', 'escuro', { secure: true, sameSite: 'Strict' });</code></pre>
 
 <p>
-  Lembre também que <code>v-sync</code> publica o estado do escopo em um
-  <code>BroadcastChannel</code>, visível para qualquer aba da mesma origem. Não sincronize dados
-  sensíveis.
+  Remember, too, that <code>v-sync</code> publishes the scope's state on a
+  <code>BroadcastChannel</code>, visible to any tab on the same origin. Do not sync sensitive data.
 </p>
 
 <h2 id="uploads">Uploads</h2>
 
 <p>
-  <code>v-upload</code> e <code>v-dropzone</code> enviam o que o usuário escolher. Todas as
-  validações que importam — tipo, tamanho, conteúdo real do arquivo — precisam acontecer no
-  servidor. Os atributos <code>accept</code> e <code>multiple</code> são conveniência de
-  interface, não segurança.
+  <code>v-upload</code> and <code>v-dropzone</code> send whatever the user picks. Every validation
+  that matters, type, size, the real content of the file, has to happen on the server. The
+  <code>accept</code> and <code>multiple</code> attributes are an interface convenience, not
+  security.
 </p>
 
-<h2 id="origem">De onde o arquivo é servido</h2>
+<h2 id="origem">Where the file is served from</h2>
 
 <p>
-  O caminho recomendado é baixar o arquivo e servi-lo do seu próprio domínio: é o que mantém a
-  política de segurança simples e evita depender de terceiros para a página funcionar. Se você
-  optar por um CDN, fixe a versão e considere integridade de sub-recurso:
+  The recommended path is to download the file and serve it from your own domain: that is what
+  keeps the security policy simple and avoids depending on a third party for the page to work. If
+  you go with a CDN, pin the version and consider subresource integrity:
 </p>
 
 <pre data-lang="html"><code>&lt;script src="https://exemplo.cdn/voodoo.min.js?v=0.6.2"
@@ -198,24 +197,24 @@ V.http.defaults.csrfHeader = 'X-Meu-Token';</code></pre>
         crossorigin="anonymous"
         defer&gt;&lt;/script&gt;</code></pre>
 
-<h2 id="cabecalhos">Cabeçalhos recomendados</h2>
+<h2 id="cabecalhos">Recommended headers</h2>
 
 <pre data-lang="txt"><code>Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), microphone=(), camera=()</code></pre>
 
-<h2 id="reportando">Reportando uma vulnerabilidade</h2>
+<h2 id="reportando">Reporting a vulnerability</h2>
 
 <p>
-  Não abra uma issue pública. Descreva o problema, com passos para reproduzir, em um contato
-  privado do projeto — o arquivo
-  <a href="https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> do
-  repositório diz como.
+  Do not open a public issue. Describe the problem, with steps to reproduce, through a private
+  contact of the project, the
+  <a href="https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> file
+  in the repository says how.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=8aa47c23"></script>
+<script src="../assets/docs.js?v=e7076219"></script>
 </body>
 </html>

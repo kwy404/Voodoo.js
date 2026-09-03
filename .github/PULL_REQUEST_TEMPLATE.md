@@ -1,81 +1,91 @@
-## O que muda
+## What changes
 
-Descreva a mudança em uma ou duas frases.
+Describe the change in a sentence or two.
 
-## Por quê
+## Why
 
-Qual problema isso resolve. Se existe uma issue, mencione: `Resolve #123`.
+What problem it solves. If there is an issue, reference it: `Closes #123`.
 
-## Tipo de mudança
+## Type of change
 
-- [ ] Correção de bug
-- [ ] Recurso novo
-- [ ] Mudança que quebra compatibilidade
-- [ ] Documentação
-- [ ] Refatoração interna, sem mudança de comportamento
-- [ ] Desempenho ou tamanho
-- [ ] Segurança
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation
+- [ ] Internal refactor, no behaviour change
+- [ ] Performance or size
+- [ ] Security
 
-## Escopo
+## Scope
 
-- **Módulos tocados:** (ex.: `runtime/walker`, `directives/ui`)
-- **Builds afetados:** mínimo, essencial, completo, ESM/CJS
-- **Superfície pública alterada:** nenhum símbolo novo, símbolo novo, símbolo renomeado,
-  símbolo removido
+- **Modules touched:** (e.g. `runtime/walker`, `directives/ui`)
+- **Builds affected:** core, essential, full, ESM/CJS
+- **Public surface changed:** no new symbol, new symbol, renamed symbol, removed symbol
 
-Se algum símbolo público mudou, confira a política de depreciação em
-[CONVENTIONS.md](../CONVENTIONS.md): o nome antigo continua como apelido, avisa em
-desenvolvimento com `avisarAlias`, e só some em uma versão major.
+If a public symbol changed, follow the deprecation policy in
+[CONVENTIONS.md](../CONVENTIONS.md): the old name stays as an alias, warns in
+development through `avisarAlias`, and disappears only in a major release.
 
-## Como testar
+## How to test
 
-Passos ou um HTML mínimo que demonstre a mudança funcionando.
+Steps, or a minimal HTML file that demonstrates the change working.
 
 ```html
 ```
 
-## Verificações
+## Checks
 
-- [ ] `npm test` passa
-- [ ] `npm run typecheck` passa
-- [ ] `npm run build` passa
-- [ ] `npm run size` passa
-- [ ] `npm run quality` não piorou
-- [ ] Acrescentei teste para o comportamento novo, ou um teste que falhava antes da correção
-- [ ] Atualizei a documentação em `docs/`
-- [ ] Atualizei `docs/en/`, quando a mudança atinge o núcleo
-- [ ] Acrescentei a linha correspondente no `CHANGELOG.md`
+- [ ] `npm test` passes
+- [ ] `npm run typecheck` passes
+- [ ] `npm run build` passes
+- [ ] `npm run size` passes
+- [ ] `npm run quality` did not get worse
+- [ ] `npm run check:links` passes
+- [ ] I added a test for the new behaviour, or a test that failed before the fix
 
-## Regras do repositório
+On that last one: run the new test against the *unfixed* code and watch it fail.
+A regression test that passes either way records confidence it never earned, and
+this repository has shipped three of them.
 
-- [ ] Comentários de código e `docs/` em português do Brasil; arquivos de raiz e `docs/en/`
-      em inglês
-- [ ] Nenhum travessão no texto, nem `—` nem `–`
-- [ ] Nenhum uso de `eval` ou `new Function`
-- [ ] Nenhuma dependência externa em tempo de execução
-- [ ] Nenhum número de tamanho, benchmark ou contagem de teste escrito na documentação
-- [ ] CSS injetado funciona nos temas claro e escuro e respeita `prefers-reduced-motion`
-- [ ] Componentes de interface cuidam de ARIA, foco e teclado
-- [ ] Commits seguem Conventional Commits
+- [ ] I updated the documentation under `site/docs/`
+- [ ] I added the matching line to `CHANGELOG.md`
 
-## Se acrescentou uma directive
+## Repository rules
 
-- [ ] Passa nos quatro critérios de "não transforme tudo em atributo" de
+- [ ] Code, comments and documentation in English
+- [ ] No em dash anywhere in the text, neither `—` nor `–`
+- [ ] No `eval` and no `new Function`
+- [ ] No runtime dependency
+- [ ] No size number, benchmark figure or test count written into prose that will
+      go stale
+- [ ] Injected CSS works in light and dark and respects `prefers-reduced-motion`
+- [ ] Interface components handle ARIA, focus and the keyboard
+- [ ] Commits follow Conventional Commits
+
+## If you added a directive
+
+- [ ] It passes the four "do not turn everything into an attribute" criteria in
       [CONVENTIONS.md](../CONVENTIONS.md)
-- [ ] Usa `ctx.effect` e `ctx.cleanup`, sem listener ou timer solto
-- [ ] Lê atributos com `readAttr` ou `attrOf`, nunca com `getAttribute` depois da montagem
-- [ ] Não usa seletor de atributo `[v-nome]`; usa `queryDirective` ou `closestDirective`
-- [ ] Está registrada no ponto de entrada do build certo
-- [ ] O nome não colide com nenhum dos que já existem
+- [ ] It uses `ctx.effect` and `ctx.cleanup`, with no loose listener or timer
+- [ ] It reads attributes through `readAttr` or `attrOf`, never `getAttribute`
+      after mounting
+- [ ] It does not use a `[v-name]` attribute selector; it uses `queryDirective`
+      or `closestDirective`
 
-## Impacto no tamanho
+Those last two are the same rule seen twice: installing a directive removes its
+attribute from the element, so the DOM no longer knows it was ever there.
 
-Cole a saída de `npm run size` quando a mudança mexer no que vai para os bundles.
+- [ ] It is registered in the entry point of the right build
+- [ ] The name collides with nothing that already exists
+
+## Size impact
+
+Paste the output of `npm run size` when the change affects what ships in a bundle.
 
 ```
 ```
 
-## Observações
+## Notes
 
-Qualquer coisa que ajude na revisão: decisões de projeto, alternativas descartadas, pontos
-que merecem atenção.
+Anything that helps the review: design decisions, alternatives you discarded,
+places worth a closer look.

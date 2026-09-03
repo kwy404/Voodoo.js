@@ -1,17 +1,17 @@
 /**
- * Bundle: o que o usuario final realmente baixa.
+ * Bundle: what the end user actually downloads.
  *
- * Sete verificacoes sobre `dist/` e sobre os metadados de publicacao:
+ * Seven checks over `dist/` and over the publishing metadata:
  *
- *   1. orcamento de tamanho, com o MESMO budget declarado em scripts/size.mjs
- *      (lido de la, nao copiado, para os dois nao divergirem em silencio);
- *   2. cada caminho de `exports`/`main`/`module`/`types`/`unpkg` existe em dist;
- *   3. todo `.js`/`.cjs` tem sourcemap parseavel e com `sourcesContent`;
- *   4. `npm pack --dry-run --json`: o que entra no tarball;
- *   5. `sideEffects`: cada glob declarado casa com algum arquivo real;
- *   6. duplicacao de codigo entre as saidas modulares que deveriam
- *      compartilhar chunks;
- *   7. o footer que publica `window.V` continua nos builds de CDN.
+ *   1. size budget, using the SAME budget declared in scripts/size.mjs
+ *      (read from there, not copied, so the two cannot diverge in silence);
+ *   2. every `exports`/`main`/`module`/`types`/`unpkg` path exists in dist;
+ *   3. every `.js`/`.cjs` has a parseable sourcemap, with `sourcesContent`;
+ *   4. `npm pack --dry-run --json`: what goes into the tarball;
+ *   5. `sideEffects`: each declared glob matches some real file;
+ *   6. code duplication between the modular outputs that should be
+ *      sharing chunks;
+ *   7. the footer that publishes `window.V` is still in the CDN builds.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -38,14 +38,14 @@ export const meta = { label: 'Bundle' };
 
 const SIZE_SCRIPT = join(ROOT, 'scripts', 'size.mjs');
 
-/** Le o orcamento declarado em scripts/size.mjs sem importar (nem editar) o arquivo. */
+/** Reads the budget declared in scripts/size.mjs without importing (or editing) the file. */
 function readBudget() {
   const source = read(SIZE_SCRIPT);
   if (!source) return { budget: null, source: null };
   const match = source.match(/const\s+BUDGET\s*=\s*(\{[\s\S]*?\});/);
   if (!match) return { budget: null, source: rel(SIZE_SCRIPT) };
   try {
-    // O literal so contem chaves em aspas e numeros; JSON depois de normalizar.
+    // The literal only contains quoted keys and numbers; JSON once normalized.
     const json = match[1]
       .replace(/'/g, '"')
       .replace(/,(\s*})/g, '$1')
@@ -57,7 +57,7 @@ function readBudget() {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Tamanho
+// 1. Size
 // ---------------------------------------------------------------------------
 
 function checkSizes(findings) {
@@ -134,7 +134,7 @@ function checkExports(pkg, findings) {
 
   for (const entry of declared) {
     if (entry.path.includes('*')) {
-      // Caminho com curinga: verifica so que o diretorio de destino existe.
+      // Wildcard path: only checks that the target directory exists.
       const dir = join(PKG_DIR, dirname(entry.path.replace(/\/\*.*$/, '/x')));
       const ok = existsSync(dir);
       checked.push({ ...entry, wildcard: true, exists: ok });
@@ -246,9 +246,9 @@ function checkSourcemaps(findings) {
       );
     }
 
-    // `mappings` vazio so e defeito quando ha fonte para mapear. Um barril de
-    // reexportacao (`export { x } from './chunk-Y.js'`) nao tem codigo proprio:
-    // o esbuild emite sources: [] e mappings: "" e esta certo.
+    // An empty `mappings` is only a defect when there is source to map. A
+    // re-export barrel (`export { x } from './chunk-Y.js'`) has no code of its
+    // own: esbuild emits sources: [] and mappings: "" and that is correct.
     const isBarrel = sources.length === 0;
     if (!map.mappings && !isBarrel) {
       findings.push(
@@ -270,8 +270,8 @@ function checkSourcemaps(findings) {
     });
   }
 
-  // Um aviso so: e um unico defeito do build repetido em N arquivos, nao N
-  // problemas independentes.
+  // A single warning: this is one build defect repeated across N files, not N
+  // independent problems.
   if (duplicatedUrl.length) {
     findings.push(
       warn(`${duplicatedUrl.length} bundles com o comentario sourceMappingURL duplicado`, {
@@ -292,9 +292,9 @@ function checkSourcemaps(findings) {
 // 4. npm pack
 // ---------------------------------------------------------------------------
 
-/** Arquivos que o tarball tem obrigatoriamente que conter. */
+/** Files the tarball is required to contain. */
 const MUST_SHIP = ['dist/index.js', 'dist/index.cjs', 'dist/index.d.ts', 'dist/voodoo.min.js'];
-/** Padroes que nunca deveriam ser publicados. */
+/** Patterns that should never be published. */
 const MUST_NOT_SHIP = [/^src\//, /^test\//, /^tsconfig/, /^tsup\.config/, /\.tsbuildinfo$/];
 
 function checkPack(pkg, findings) {
@@ -349,7 +349,7 @@ function checkPack(pkg, findings) {
     }
   }
 
-  // `files` promete arquivos que precisam existir de fato.
+  // `files` promises files that really do have to exist.
   for (const entry of pkg.files ?? []) {
     const target = join(PKG_DIR, entry);
     if (existsSync(target)) continue;
@@ -435,10 +435,10 @@ function checkSideEffects(pkg, findings) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Duplicacao entre saidas modulares
+// 6. Duplication between modular outputs
 // ---------------------------------------------------------------------------
 
-/** Janela minima, em linhas normalizadas, para um trecho contar como duplicado. */
+/** Minimum window, in normalized lines, for a stretch to count as duplicated. */
 const DUP_WINDOW = 20;
 
 function normalizeLines(source) {
@@ -449,13 +449,13 @@ function normalizeLines(source) {
 }
 
 /**
- * Procura blocos identicos entre arquivos que deveriam compartilhar chunks.
+ * Looks for identical blocks between files that should be sharing chunks.
  *
- * Os builds IIFE (voodoo.js, voodoo.core.js, voodoo.full.js) sao deliverables
- * independentes e repetir codigo entre eles e o esperado, entao ficam de fora.
- * O grupo que importa e o modular ESM: se o mesmo bloco aparece em index.js e
- * em reactivity.js, o tsup deixou de extrair um chunk e quem importa os dois
- * paga duas vezes.
+ * The IIFE builds (voodoo.js, voodoo.core.js, voodoo.full.js) are independent
+ * deliverables and repeating code between them is expected, so they are left
+ * out. The group that matters is the modular ESM one: if the same block shows
+ * up in index.js and in reactivity.js, tsup failed to extract a chunk and
+ * whoever imports both pays twice.
  */
 function checkDuplication(findings) {
   const groups = {
@@ -496,7 +496,7 @@ function checkDuplication(findings) {
       dups.push({ files: [...set].sort(), bytes: key.length, first: key.split('\n')[0].slice(0, 90) });
     }
 
-    // Agrupa por conjunto de arquivos, para nao listar mil janelas do mesmo bloco.
+    // Groups by set of files, so as not to list a thousand windows of the same block.
     const byPair = new Map();
     for (const d of dups) {
       const key = d.files.join(' + ');
@@ -535,7 +535,7 @@ function checkDuplication(findings) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. Publicacao do global nos builds de CDN
+// 7. Publishing the global in the CDN builds
 // ---------------------------------------------------------------------------
 
 const CDN_BUNDLES = [

@@ -863,7 +863,7 @@ export interface RouterApi {
  *
  * ```js
  * V.router({ routes: { '/': { component: 'home' } } })
- * V.router.push('/sobre')
+ * V.router.push('/about')
  * V.router.back()
  * ```
  */
@@ -1027,7 +1027,7 @@ function isExternalHref(href: string): boolean {
 function linkTarget(el: HTMLElement, expression: string, evaluate: <T>(e?: string) => T): string {
   const raw = expression.trim();
   if (raw) {
-    // A literal path like `/sobre` is not a valid expression, so it counts as text.
+    // A literal path like `/about` is not a valid expression, so it counts as text.
     if (raw.startsWith('/') || raw.startsWith('#')) return raw;
     const value = evaluate<unknown>(raw);
     if (typeof value === 'string' && value) return value;

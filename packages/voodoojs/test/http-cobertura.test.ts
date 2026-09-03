@@ -3,15 +3,17 @@ import { http, request, HttpError, clearCache, flushOfflineQueue } from '../src/
 import { createResource, pick, extractMessage } from '../src/http/resource';
 
 /**
- * Continuacao de `http.test.ts`. Aqui ficam os caminhos que o teste original
- * nao visita: interceptadores e sua remocao, expiracao de cache, fila offline,
- * upload, SSE, streaming, cada `responseType`, corpo malformado e cancelamento.
+ * Continuation of `http.test.ts`. This is where the paths the original test
+ * does not visit live: interceptors and their removal, cache expiry, the
+ * offline queue, upload, SSE, streaming, every `responseType`, a malformed
+ * body and cancellation.
  *
- * O foco e ramo, nao linha: cada `if`, `??` e `catch` que ninguem exercitava.
+ * The focus is branches, not lines: every `if`, `??` and `catch` that nobody
+ * was exercising.
  */
 
 // ---------------------------------------------------------------------------
-// Ajudantes
+// Helpers
 // ---------------------------------------------------------------------------
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -22,9 +24,9 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 /**
- * Resposta sintetica. `new Response` do ambiente nao entrega `blob`,
- * `arrayBuffer` e `formData` de forma confiavel no jsdom, entao os testes de
- * `responseType` usam um objeto com a mesma superficie que `parseResponse` toca.
+ * Synthetic response. The environment's `new Response` does not deliver `blob`,
+ * `arrayBuffer` and `formData` reliably under jsdom, so the `responseType`
+ * tests use an object with the same surface that `parseResponse` touches.
  */
 function respostaFalsa(overrides: Partial<Record<string, unknown>> = {}): Response {
   return {
@@ -41,7 +43,7 @@ function respostaFalsa(overrides: Partial<Record<string, unknown>> = {}): Respon
   } as unknown as Response;
 }
 
-/** Resposta em streaming que entrega os pedacos informados, um por leitura. */
+/** Streaming response that delivers the given chunks, one per read. */
 function respostaStream(pedacos: string[]): Response {
   const codificador = new TextEncoder();
   let i = 0;
@@ -78,11 +80,11 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Montagem de URL
+// URL assembly
 // ---------------------------------------------------------------------------
 
-describe('montagem de URL com params', () => {
-  it('descarta nulo, indefinido e texto vazio, mas mantem zero e false', async () => {
+describe('URL assembly with params', () => {
+  it('drops null, undefined and empty text, but keeps zero and false', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/busca', {
       params: {
@@ -97,20 +99,20 @@ describe('montagem de URL com params', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/busca?q=x&zero=0&marcado=false');
   });
 
-  it('sem nenhum par util nao acrescenta o ponto de interrogacao', async () => {
+  it('with no useful pair it does not append the question mark', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/limpo', { params: { a: null, b: '' } });
     expect(fetchMock.mock.calls[0][0]).toBe('/limpo');
   });
 
-  it('baseURL com barra final nao gera barra dupla', async () => {
+  it('a baseURL with a trailing slash does not produce a double slash', async () => {
     http.setBaseURL('https://api.exemplo.com/');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('users');
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.exemplo.com/users');
   });
 
-  it('URL iniciada por // e tratada como absoluta', async () => {
+  it('a URL starting with // is treated as absolute', async () => {
     http.setBaseURL('https://api.exemplo.com');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('//cdn.exemplo.com/logo.png');
@@ -119,11 +121,11 @@ describe('montagem de URL com params', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Corpo da requisicao
+// Request body
 // ---------------------------------------------------------------------------
 
-describe('preparacao do corpo', () => {
-  it('FormData vai como esta, sem Content-Type manual', async () => {
+describe('body preparation', () => {
+  it('FormData goes as it is, with no manual Content-Type', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     const form = new FormData();
     form.append('nome', 'Ana');
@@ -133,7 +135,7 @@ describe('preparacao do corpo', () => {
     expect(options.headers['Content-Type']).toBeUndefined();
   });
 
-  it('URLSearchParams e texto tambem passam intactos', async () => {
+  it('URLSearchParams and text also pass through untouched', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     const params = new URLSearchParams({ a: '1' });
     await http.post('/a', params);
@@ -144,7 +146,7 @@ describe('preparacao do corpo', () => {
     expect(fetchMock.mock.calls[1][1].body).toBe('texto puro');
   });
 
-  it('Blob e ArrayBuffer passam intactos', async () => {
+  it('Blob and ArrayBuffer pass through untouched', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     const blob = new Blob(['abc']);
     await http.post('/blob', blob);
@@ -156,13 +158,13 @@ describe('preparacao do corpo', () => {
     expect(fetchMock.mock.calls[1][1].body).toBe(buffer);
   });
 
-  it('Content-Type declarado por quem chama e respeitado', async () => {
+  it('a Content-Type declared by the caller is respected', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.post('/x', { a: 1 }, { headers: { 'Content-Type': 'application/ld+json' } });
     expect(fetchMock.mock.calls[0][1].headers['Content-Type']).toBe('application/ld+json');
   });
 
-  it('GET e HEAD nunca levam corpo', async () => {
+  it('GET and HEAD never carry a body', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await request({ url: '/x', method: 'GET', body: { a: 1 } });
     expect(fetchMock.mock.calls[0][1].body).toBeUndefined();
@@ -173,7 +175,7 @@ describe('preparacao do corpo', () => {
     expect(fetchMock.mock.calls[1][1].method).toBe('HEAD');
   });
 
-  it('put e patch chegam com o verbo certo', async () => {
+  it('put and patch arrive with the right verb', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ ok: 1 }));
     await http.put('/p', { a: 1 });
     expect(fetchMock.mock.calls[0][1].method).toBe('PUT');
@@ -185,11 +187,11 @@ describe('preparacao do corpo', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Leitura da resposta
+// Reading the response
 // ---------------------------------------------------------------------------
 
 describe('responseType', () => {
-  it('cada variante chama o leitor correspondente', async () => {
+  it('each variant calls the matching reader', async () => {
     for (const [tipo, esperado] of [
       ['json', { tipo: 'json' }],
       ['text', 'texto'],
@@ -203,33 +205,33 @@ describe('responseType', () => {
     }
   });
 
-  it('auto reconhece sufixo +json', async () => {
+  it('auto recognises the +json suffix', async () => {
     fetchMock.mockResolvedValue(
       new Response('{"a":1}', { headers: { 'content-type': 'application/vnd.api+json' } })
     );
     expect(await http.get('/x')).toEqual({ a: 1 });
   });
 
-  it('auto com corpo JSON vazio devolve null em vez de estourar', async () => {
+  it('auto with an empty JSON body returns null instead of blowing up', async () => {
     fetchMock.mockResolvedValue(
       new Response('', { headers: { 'content-type': 'application/json' } })
     );
     expect(await http.get('/vazio')).toBeNull();
   });
 
-  it('JSON malformado vira erro de rede, nao resposta silenciosa', async () => {
+  it('malformed JSON becomes a network error, not a silent response', async () => {
     fetchMock.mockResolvedValue(
       new Response('{quebrado', { headers: { 'content-type': 'application/json' } })
     );
     await expect(http.get('/quebrado')).rejects.toBeInstanceOf(HttpError);
   });
 
-  it('resposta sem content-type cai para texto', async () => {
+  it('a response with no content-type falls back to text', async () => {
     fetchMock.mockResolvedValue(new Response('so texto'));
     expect(await http.get('/x')).toBe('so texto');
   });
 
-  it('205 tambem devolve null', async () => {
+  it('205 also returns null', async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 205 }));
     const resposta = await request({ url: '/x', method: 'DELETE' });
     expect(resposta.data).toBeNull();
@@ -238,16 +240,16 @@ describe('responseType', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Cabecalhos
+// Headers
 // ---------------------------------------------------------------------------
 
-describe('cabecalhos padrao', () => {
+describe('default headers', () => {
   afterEach(() => {
     http.setHeader('X-Tenant', null);
     http.setToken(null);
   });
 
-  it('setHeader define e remove', async () => {
+  it('setHeader sets and removes', async () => {
     http.setHeader('X-Tenant', 'acme');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/x');
@@ -259,7 +261,7 @@ describe('cabecalhos padrao', () => {
     expect(fetchMock.mock.calls[1][1].headers['X-Tenant']).toBeUndefined();
   });
 
-  it('setToken aceita outro esquema e remove com null', async () => {
+  it('setToken accepts another scheme and removes with null', async () => {
     http.setToken('abc', 'Token');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/x');
@@ -271,14 +273,14 @@ describe('cabecalhos padrao', () => {
     expect(fetchMock.mock.calls[1][1].headers.Authorization).toBeUndefined();
   });
 
-  it('X-Requested-With declarado por quem chama nao e sobrescrito', async () => {
+  it('an X-Requested-With declared by the caller is not overwritten', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/x', { headers: { 'X-Requested-With': 'proprio' } });
     expect(fetchMock.mock.calls[0][1].headers['X-Requested-With']).toBe('proprio');
   });
 });
 
-describe('token CSRF', () => {
+describe('CSRF token', () => {
   let meta: HTMLMetaElement;
 
   beforeEach(() => {
@@ -290,7 +292,7 @@ describe('token CSRF', () => {
 
   afterEach(() => meta.remove());
 
-  it('nao vai em GET nem em HEAD', async () => {
+  it('does not go on GET or on HEAD', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.get('/x');
     expect(fetchMock.mock.calls[0][1].headers['X-CSRF-TOKEN']).toBeUndefined();
@@ -300,13 +302,13 @@ describe('token CSRF', () => {
     expect(fetchMock.mock.calls[1][1].headers['X-CSRF-TOKEN']).toBeUndefined();
   });
 
-  it('valor declarado por quem chama vence o da meta', async () => {
+  it('a value declared by the caller beats the one on the meta tag', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.post('/x', {}, { headers: { 'X-CSRF-TOKEN': 'manual' } });
     expect(fetchMock.mock.calls[0][1].headers['X-CSRF-TOKEN']).toBe('manual');
   });
 
-  it('meta sem atributo content nao adiciona o cabecalho', async () => {
+  it('a meta with no content attribute does not add the header', async () => {
     meta.removeAttribute('content');
     fetchMock.mockResolvedValue(jsonResponse({}));
     await http.post('/x', {});
@@ -318,8 +320,8 @@ describe('token CSRF', () => {
 // Cache
 // ---------------------------------------------------------------------------
 
-describe('cache com expiracao', () => {
-  it('depois do prazo a requisicao e refeita', async () => {
+describe('cache with expiry', () => {
+  it('after the deadline the request is made again', async () => {
     const agora = vi.spyOn(Date, 'now');
     agora.mockReturnValue(1_000);
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ n: 1 })));
@@ -329,20 +331,20 @@ describe('cache com expiracao', () => {
     await http.get('/expira', { cache: 100 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    // Exatamente no limite a entrada ja vale como vencida.
+    // Exactly at the limit the entry already counts as expired.
     agora.mockReturnValue(1_100);
     await http.get('/expira', { cache: 100 });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('a chave inclui os params, entao query diferente nao reaproveita', async () => {
+  it('the key includes the params, so a different query does not reuse it', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({})));
     await http.get('/itens', { cache: 5_000, params: { p: 1 } });
     await http.get('/itens', { cache: 5_000, params: { p: 2 } });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('clearCache com texto apaga so o que contem o trecho', async () => {
+  it('clearCache with text erases only what contains the fragment', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({})));
     await http.get('/api/users', { cache: 5_000 });
     await http.get('/api/posts', { cache: 5_000 });
@@ -354,7 +356,7 @@ describe('cache com expiracao', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it('clearCache com regex apaga todo o grupo que casar', async () => {
+  it('clearCache with a regex erases the whole group that matches', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({})));
     await http.get('/api/v1/a', { cache: 5_000 });
     await http.get('/api/v2/b', { cache: 5_000 });
@@ -368,7 +370,7 @@ describe('cache com expiracao', () => {
     expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
-  it('resposta de erro nao entra no cache', async () => {
+  it('an error response does not enter the cache', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 404)));
     await expect(http.get('/faltando', { cache: 5_000 })).rejects.toBeInstanceOf(HttpError);
     await expect(http.get('/faltando', { cache: 5_000 })).rejects.toBeInstanceOf(HttpError);
@@ -377,11 +379,11 @@ describe('cache com expiracao', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Interceptadores
+// Interceptors
 // ---------------------------------------------------------------------------
 
-describe('interceptadores', () => {
-  it('interceptador de requisicao pode ser assincrono e roda em cadeia', async () => {
+describe('interceptors', () => {
+  it('a request interceptor can be async and runs in a chain', async () => {
     fetchMock.mockResolvedValue(jsonResponse({}));
     const soltarA = http.interceptors.request.use(async (config) => ({
       ...config,
@@ -401,13 +403,13 @@ describe('interceptadores', () => {
     soltarB();
   });
 
-  it('remover o interceptador de requisicao para de aplicar', async () => {
+  it('removing the request interceptor stops it being applied', async () => {
     const soltar = http.interceptors.request.use((config) => ({
       ...config,
       headers: { ...config.headers, 'X-Ida': '1' },
     }));
     soltar();
-    // Remover duas vezes nao pode explodir nem tirar outro da lista.
+    // Removing it twice must neither blow up nor take another one off the list.
     soltar();
 
     fetchMock.mockResolvedValue(jsonResponse({}));
@@ -415,7 +417,7 @@ describe('interceptadores', () => {
     expect(fetchMock.mock.calls[0][1].headers['X-Ida']).toBeUndefined();
   });
 
-  it('remover o interceptador de resposta para de transformar', async () => {
+  it('removing the response interceptor stops it transforming', async () => {
     const soltar = http.interceptors.response.use((resposta) => ({
       ...resposta,
       data: { trocado: true },
@@ -428,7 +430,7 @@ describe('interceptadores', () => {
     expect(await http.get('/x')).toEqual({ original: true });
   });
 
-  it('remover o interceptador de erro para de observar', async () => {
+  it('removing the error interceptor stops it observing', async () => {
     const espiao = vi.fn();
     const soltar = http.interceptors.error.use(espiao);
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
@@ -442,7 +444,7 @@ describe('interceptadores', () => {
     expect(espiao).toHaveBeenCalledTimes(1);
   });
 
-  it('o interceptador de erro tambem ve falha de rede, sem resposta', async () => {
+  it('the error interceptor also sees a network failure, with no response', async () => {
     const vistos: HttpError[] = [];
     const soltar = http.interceptors.error.use((err) => {
       vistos.push(err);
@@ -456,7 +458,7 @@ describe('interceptadores', () => {
     soltar();
   });
 
-  it('o interceptador de resposta so roda no caminho de sucesso', async () => {
+  it('the response interceptor only runs on the success path', async () => {
     const espiao = vi.fn((resposta) => resposta);
     const soltar = http.interceptors.response.use(espiao);
     fetchMock.mockResolvedValue(jsonResponse({}, 500));
@@ -468,11 +470,11 @@ describe('interceptadores', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Timeout e cancelamento
+// Timeout and cancellation
 // ---------------------------------------------------------------------------
 
-describe('timeout e cancelamento', () => {
-  /** fetch que so termina quando o sinal for abortado, como o de verdade. */
+describe('timeout and cancellation', () => {
+  /** A fetch that only finishes when the signal is aborted, like the real one. */
   function fetchPendente(): void {
     fetchMock.mockImplementation(
       (_url: string, init: RequestInit) =>
@@ -490,7 +492,7 @@ describe('timeout e cancelamento', () => {
     );
   }
 
-  it('estourar o tempo produz mensagem de tempo esgotado', async () => {
+  it('running out of time produces a timed-out message', async () => {
     fetchPendente();
     try {
       await request({ url: '/lento', timeout: 10, retry: 0 });
@@ -502,13 +504,13 @@ describe('timeout e cancelamento', () => {
     }
   });
 
-  it('timeout zero desliga o relogio', async () => {
+  it('a zero timeout switches the clock off', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
     const resposta = await request({ url: '/x', timeout: 0 });
     expect(resposta.data).toEqual({ ok: true });
   });
 
-  it('sinal externo ja abortado nem chega a tentar de novo', async () => {
+  it('an external signal already aborted does not even get to try again', async () => {
     fetchPendente();
     const controle = new AbortController();
     controle.abort();
@@ -516,11 +518,11 @@ describe('timeout e cancelamento', () => {
     await expect(
       request({ url: '/x', signal: controle.signal, retry: 3, retryDelay: 1 })
     ).rejects.toBeInstanceOf(HttpError);
-    // Um unico fetch: o aborto externo interrompe o laco de tentativas.
+    // A single fetch: the external abort interrupts the retry loop.
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('abortar no meio da requisicao interrompe na hora', async () => {
+  it('aborting mid-request interrupts straight away', async () => {
     fetchPendente();
     const controle = new AbortController();
     const promessa = request({ url: '/x', signal: controle.signal, retry: 2, retryDelay: 1 });
@@ -530,7 +532,7 @@ describe('timeout e cancelamento', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('requisicao concluida solta o ouvinte do sinal externo', async () => {
+  it('a finished request releases the listener on the external signal', async () => {
     const controle = new AbortController();
     const soltar = vi.spyOn(controle.signal, 'removeEventListener');
     fetchMock.mockResolvedValue(jsonResponse({}));
@@ -541,10 +543,10 @@ describe('timeout e cancelamento', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Fila offline
+// Offline queue
 // ---------------------------------------------------------------------------
 
-describe('fila offline', () => {
+describe('offline queue', () => {
   const CHAVE = 'voodoo:offline-queue';
   let online: ReturnType<typeof vi.spyOn>;
 
@@ -556,7 +558,7 @@ describe('fila offline', () => {
     online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
   });
 
-  it('offline guarda a requisicao e devolve resposta sintetica', async () => {
+  it('offline stores the request and returns a synthetic response', async () => {
     ficarOffline();
     const resposta = await request({
       url: '/api/notas',
@@ -576,7 +578,7 @@ describe('fila offline', () => {
     expect(fila[0].method).toBe('POST');
   });
 
-  it('GET offline nao entra na fila, vai direto para a rede', async () => {
+  it('an offline GET does not enter the queue, it goes straight to the network', async () => {
     ficarOffline();
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
     await http.get('/api/notas', { offlineQueue: true });
@@ -584,13 +586,13 @@ describe('fila offline', () => {
     expect(localStorage.getItem(CHAVE)).toBeNull();
   });
 
-  it('online normal ignora a fila', async () => {
+  it('normal online ignores the queue', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
     await http.post('/api/notas', { a: 1 }, { offlineQueue: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('escoar a fila reenvia tudo em ordem e a esvazia', async () => {
+  it('flushing the queue resends everything in order and empties it', async () => {
     ficarOffline();
     await request({ url: '/a', method: 'POST', body: { i: 1 }, offlineQueue: true });
     await request({ url: '/b', method: 'PUT', body: { i: 2 }, offlineQueue: true });
@@ -603,23 +605,23 @@ describe('fila offline', () => {
     expect(JSON.parse(localStorage.getItem(CHAVE) ?? '[]')).toEqual([]);
   });
 
-  it('fila vazia escoa zero sem tocar na rede', async () => {
+  it('an empty queue flushes zero without touching the network', async () => {
     expect(await flushOfflineQueue()).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('conteudo corrompido no armazenamento nao derruba o escoamento', async () => {
+  it('corrupted content in storage does not bring the flush down', async () => {
     localStorage.setItem(CHAVE, '{isso nao e json');
     expect(await flushOfflineQueue()).toBe(0);
   });
 
   /**
-   * Regressao: antes, a falha no primeiro item devolvia apenas ele para a fila
-   * e os itens seguintes, que nem chegaram a ser tentados, sumiam para sempre.
-   * Como o escoamento comeca gravando uma fila vazia, tudo que estava depois do
-   * item que falhou era perdido de forma silenciosa.
+   * Regression: before, a failure on the first item put only that item back in
+   * the queue, and the items after it, which were never even attempted,
+   * disappeared for good. Because the flush starts by writing an empty queue,
+   * everything that came after the item that failed was silently lost.
    */
-  it('falha no meio devolve o item que falhou e tambem os que faltavam', async () => {
+  it('a failure in the middle puts back the item that failed and the ones still pending', async () => {
     ficarOffline();
     await request({ url: '/a', method: 'POST', body: { i: 1 }, offlineQueue: true });
     await request({ url: '/b', method: 'POST', body: { i: 2 }, offlineQueue: true });
@@ -637,7 +639,7 @@ describe('fila offline', () => {
     expect(restante.map((item) => item.url)).toEqual(['/b', '/c']);
   });
 
-  it('armazenamento bloqueado na escrita nao propaga excecao', async () => {
+  it('storage blocked on write does not propagate an exception', async () => {
     ficarOffline();
     const gravar = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('QuotaExceededError');
@@ -732,7 +734,7 @@ describe('upload', () => {
 
   afterEach(() => meta.remove());
 
-  it('envia o FormData, o CSRF e nunca o Content-Type', async () => {
+  it('sends the FormData, the CSRF and never the Content-Type', async () => {
     http.setBaseURL('https://api.exemplo.com');
     const dados = new FormData();
     const promessa = http.upload('/arquivos', dados, {
@@ -752,7 +754,7 @@ describe('upload', () => {
     expect(await promessa).toEqual({ id: 1 });
   });
 
-  it('informa o progresso somente quando o tamanho e conhecido', async () => {
+  it('reports progress only when the size is known', async () => {
     const progresso = vi.fn();
     const promessa = http.upload('/arquivos', new FormData(), {
       method: 'PUT',
@@ -773,7 +775,7 @@ describe('upload', () => {
     await promessa;
   });
 
-  it('resposta sem JSON fica como texto, e JSON quebrado tambem', async () => {
+  it('a response with no JSON stays as text, and broken JSON too', async () => {
     const primeiro = http.upload('/a', new FormData());
     const xhrA = XHRFalso.ultimo!;
     xhrA.respostaCabecalhos = { 'content-type': 'text/plain' };
@@ -788,7 +790,7 @@ describe('upload', () => {
     expect(await segundo).toBe('{quebrado');
   });
 
-  it('status fora da faixa de sucesso vira HttpError', async () => {
+  it('a status outside the success range becomes an HttpError', async () => {
     const promessa = http.upload('/a', new FormData());
     const xhr = XHRFalso.ultimo!;
     xhr.status = 413;
@@ -797,13 +799,13 @@ describe('upload', () => {
     await expect(promessa).rejects.toThrow('Upload failed with status 413');
   });
 
-  it('falha de rede vira HttpError', async () => {
+  it('a network failure becomes an HttpError', async () => {
     const promessa = http.upload('/a', new FormData());
     XHRFalso.ultimo!.emitir('error');
     await expect(promessa).rejects.toThrow('Network failure during upload');
   });
 
-  it('o sinal cancela o envio', async () => {
+  it('the signal cancels the send', async () => {
     const controle = new AbortController();
     const promessa = http.upload('/a', new FormData(), { signal: controle.signal });
     controle.abort();
@@ -845,7 +847,7 @@ describe('sse', () => {
       EventSourceFalso as unknown as typeof EventSource;
   });
 
-  it('abre na URL com baseURL aplicada e converte o JSON', () => {
+  it('opens on the URL with the baseURL applied and converts the JSON', () => {
     http.setBaseURL('https://api.exemplo.com');
     const mensagens: unknown[] = [];
     const fonte = http.sse('/eventos', { message: (dados) => mensagens.push(dados) });
@@ -857,14 +859,14 @@ describe('sse', () => {
     expect(mensagens).toEqual([{ tick: 1 }]);
   });
 
-  it('texto que nao e JSON chega puro', () => {
+  it('text that is not JSON arrives raw', () => {
     const mensagens: unknown[] = [];
     const fonte = http.sse('/eventos', { message: (dados) => mensagens.push(dados) });
     (fonte as unknown as EventSourceFalso).emitir('message', { data: 'ping' });
     expect(mensagens).toEqual(['ping']);
   });
 
-  it('sem handlers nada quebra, e o de erro so e ligado quando existe', () => {
+  it('with no handlers nothing breaks, and the error one is only wired when it exists', () => {
     const semErro = http.sse('/a') as unknown as EventSourceFalso;
     expect(() => semErro.emitir('message', { data: 'x' })).not.toThrow();
     expect(semErro.contar('error')).toBe(0);
@@ -882,7 +884,7 @@ describe('sse', () => {
 // ---------------------------------------------------------------------------
 
 describe('stream NDJSON', () => {
-  it('junta a linha partida entre dois chunks', async () => {
+  it('joins the line split across two chunks', async () => {
     const linhas: string[] = [];
     fetchMock.mockResolvedValue(respostaStream(['{"a":1}\n{"b":', '2}\n{"c":3}']));
 
@@ -890,7 +892,7 @@ describe('stream NDJSON', () => {
     expect(linhas).toEqual(['{"a":1}', '{"b":2}', '{"c":3}']);
   });
 
-  it('linhas em branco sao descartadas e a sobra final e entregue', async () => {
+  it('blank lines are discarded and the final leftover is delivered', async () => {
     const linhas: string[] = [];
     fetchMock.mockResolvedValue(respostaStream(['um\n\n   \ndois\n', 'tres']));
 
@@ -898,7 +900,7 @@ describe('stream NDJSON', () => {
     expect(linhas).toEqual(['um', 'dois', 'tres']);
   });
 
-  it('sobra final so de espaco nao vira linha', async () => {
+  it('a final leftover of only whitespace does not become a line', async () => {
     const linhas: string[] = [];
     fetchMock.mockResolvedValue(respostaStream(['um\n   ']));
 
@@ -906,7 +908,7 @@ describe('stream NDJSON', () => {
     expect(linhas).toEqual(['um']);
   });
 
-  it('resposta sem corpo termina sem chamar o callback', async () => {
+  it('a response with no body finishes without calling the callback', async () => {
     const aoLer = vi.fn();
     fetchMock.mockResolvedValue({ body: null } as unknown as Response);
 
@@ -914,7 +916,7 @@ describe('stream NDJSON', () => {
     expect(aoLer).not.toHaveBeenCalled();
   });
 
-  it('repassa params, headers e o sinal', async () => {
+  it('passes params, headers and the signal on', async () => {
     fetchMock.mockResolvedValue(respostaStream([]));
     const controle = new AbortController();
 
@@ -932,18 +934,18 @@ describe('stream NDJSON', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Recurso reativo
+// Reactive resource
 // ---------------------------------------------------------------------------
 
-describe('recurso reativo', () => {
-  it('pick anda pelo caminho e devolve undefined em no faltando', () => {
+describe('reactive resource', () => {
+  it('pick walks the path and returns undefined on a missing node', () => {
     expect(pick({ a: { b: 1 } }, 'a.b')).toBe(1);
     expect(pick({ a: 1 }, null)).toEqual({ a: 1 });
     expect(pick({ a: null }, 'a.b')).toBeUndefined();
     expect(pick(null, 'a')).toBeUndefined();
   });
 
-  it('extractMessage procura as chaves usuais do corpo de erro', () => {
+  it('extractMessage looks for the usual keys of an error body', () => {
     const comErro = (data: unknown): HttpError =>
       new HttpError('x', { data } as never, undefined, undefined);
 
@@ -955,7 +957,7 @@ describe('recurso reativo', () => {
     expect(extractMessage(new HttpError('x'))).toBeNull();
   });
 
-  it('carrega sozinho, recorta por jsonPath e avisa o sucesso', async () => {
+  it('loads on its own, slices by jsonPath and announces the success', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ dados: { itens: [1, 2] } }));
     const aoAcertar = vi.fn();
     const recurso = createResource('/api/itens', { jsonPath: 'dados.itens', onSuccess: aoAcertar });
@@ -967,7 +969,7 @@ describe('recurso reativo', () => {
     expect(aoAcertar).toHaveBeenCalledWith([1, 2]);
   });
 
-  it('manual nao dispara nada ate o reload', async () => {
+  it('manual fires nothing until the reload', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ a: 1 }));
     const recurso = createResource('/api/x', { manual: true });
     expect(fetchMock).not.toHaveBeenCalled();
@@ -976,7 +978,7 @@ describe('recurso reativo', () => {
     expect(recurso.data).toEqual({ a: 1 });
   });
 
-  it('URL vazia adia a requisicao', async () => {
+  it('an empty URL postpones the request', async () => {
     let alvo = '';
     const recurso = createResource(() => alvo, { manual: true });
     await recurso.reload();
@@ -988,7 +990,7 @@ describe('recurso reativo', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('params em funcao sao reavaliados a cada chamada', async () => {
+  it('params given as a function are re-evaluated on every call', async () => {
     let pagina = 1;
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse([])));
     const recurso = createResource('/api/itens', {
@@ -1006,7 +1008,7 @@ describe('recurso reativo', () => {
     expect(fetchMock.mock.calls[1][0]).toBe('/api/itens?pagina=2');
   });
 
-  it('erro da API vira mensagem legivel no estado', async () => {
+  it('an API error becomes a readable message in the state', async () => {
     fetchMock.mockImplementation(() =>
       Promise.resolve(jsonResponse({ message: 'Sem permissao' }, 403))
     );
@@ -1020,21 +1022,21 @@ describe('recurso reativo', () => {
     expect(aoErrar).toHaveBeenCalledWith(expect.any(HttpError), 'Sem permissao');
   });
 
-  it('erro sem corpo util cai na mensagem do proprio HttpError', async () => {
+  it('an error with no useful body falls back to the HttpError message itself', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({}, 500)));
     const recurso = createResource('/api/x', { manual: true });
     await recurso.reload();
     expect(recurso.error?.message).toBe('Request failed with status 500');
   });
 
-  it('set troca os dados sem ir a rede', async () => {
+  it('set swaps the data without going to the network', async () => {
     const recurso = createResource<{ n: number }>('/api/x', { manual: true });
     recurso.set({ n: 9 });
     expect(recurso.data).toEqual({ n: 9 });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('stop cancela o que estava em andamento e desliga o carregando', async () => {
+  it('stop cancels what was in flight and switches the loading flag off', async () => {
     fetchMock.mockImplementation(
       (_url: string, init: RequestInit) =>
         new Promise((_resolve, reject) => {
@@ -1054,7 +1056,7 @@ describe('recurso reativo', () => {
     expect(recurso.error).toBeNull();
   });
 
-  it('um reload cancela o anterior, e a resposta atrasada nao sobrescreve', async () => {
+  it('a reload cancels the previous one, and the late response does not overwrite', async () => {
     let resolverPrimeiro: ((r: Response) => void) | null = null;
     fetchMock
       .mockImplementationOnce(
@@ -1077,7 +1079,7 @@ describe('recurso reativo', () => {
     expect(recurso.data).toEqual({ ordem: 'segunda' });
   });
 
-  it('poll repete enquanto a aba esta visivel e para no stop', async () => {
+  it('poll repeats while the tab is visible and stops on stop', async () => {
     vi.useFakeTimers();
     try {
       fetchMock.mockImplementation(() => Promise.resolve(jsonResponse({ n: 1 })));

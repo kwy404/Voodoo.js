@@ -1,21 +1,21 @@
 /**
- * Regressao: fuga do interpretador por reflexao (SEC-01).
+ * Regression: escaping the interpreter through reflection (SEC-01).
  *
- * O bloqueio de chaves (`__proto__`, `constructor`, `prototype`) cobre o acesso
- * direto, como `x.constructor`. Mas os metodos reflexivos do `Object` nativo
- * recebem o alvo como ARGUMENTO, e argumento nao passa por aquele bloqueio.
- * A cadeia abaixo recuperava `Function` e executava codigo arbitrario, ou seja,
- * `eval` pela porta dos fundos, com alcance a `window`, `document` e `fetch`:
+ * Blocking keys (`__proto__`, `constructor`, `prototype`) covers direct access,
+ * such as `x.constructor`. But the reflective methods of the native `Object`
+ * take the target as an ARGUMENT, and an argument does not go through that
+ * block. The chain below recovered `Function` and ran arbitrary code, that is,
+ * `eval` through the back door, with reach into `window`, `document` and
+ * `fetch`:
  *
  * ```js
  * Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object), 'constructor')
  *   .value('return this')()
  * ```
  *
- * A correcao inverte o padrao em vez de aumentar a lista de proibicoes: o
- * `Object` liberado dentro das expressoes passou a ser um subconjunto seguro.
- * Uma expressao pode chamar funcionalidades; ela nao recebe ferramentas para
- * inspecionar o runtime de JavaScript.
+ * The fix inverts the pattern instead of growing the list of prohibitions: the
+ * `Object` exposed inside expressions is now a safe subset. An expression may
+ * call features; it is not handed tools to inspect the JavaScript runtime.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -23,7 +23,7 @@ import { parse } from '../src/parser/parser';
 import { allowedGlobals, evaluate } from '../src/parser/interpreter';
 import { Scope } from '../src/runtime/scope';
 
-/** Avalia uma expressao, devolvendo o erro em vez de deixar escapar. */
+/** Evaluates an expression, returning the error instead of letting it escape. */
 function tentar(fonte: string): { ok: boolean; valor?: unknown; erro?: string } {
   try {
     return { ok: true, valor: evaluate(parse(fonte), new Scope({ alvo: {}, lista: [1, 2] })) };
@@ -32,16 +32,17 @@ function tentar(fonte: string): { ok: boolean; valor?: unknown; erro?: string } 
   }
 }
 
-describe('SEC-01: reflexao nao pode devolver Function', () => {
-  it('a cadeia completa nao executa codigo', () => {
+describe('SEC-01: reflection cannot return Function', () => {
+  it('the full chain does not run code', () => {
     const r = tentar(
       "Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object), 'constructor').value('return 1+1')"
     );
-    // Nao importa se falha por erro ou por undefined; o que nao pode e virar funcao.
+    // It does not matter whether it fails with an error or with undefined; what
+    // it cannot do is turn into a function.
     expect(typeof r.valor).not.toBe('function');
   });
 
-  it('nenhuma ferramenta de reflexao esta alcancavel', () => {
+  it('no reflection tool is reachable', () => {
     const ferramentas = [
       'getPrototypeOf',
       'setPrototypeOf',
@@ -59,12 +60,12 @@ describe('SEC-01: reflexao nao pode devolver Function', () => {
     }
   });
 
-  it('o Object liberado nao e o Object nativo', () => {
+  it('the exposed Object is not the native Object', () => {
     expect(allowedGlobals.Object).not.toBe(Object);
     expect(Object.isFrozen(allowedGlobals.Object)).toBe(true);
   });
 
-  it('Function e globalThis continuam inalcancaveis por qualquer caminho', () => {
+  it('Function and globalThis stay out of reach by any route', () => {
     const tentativas = [
       'Function',
       'globalThis',
@@ -89,9 +90,9 @@ describe('SEC-01: reflexao nao pode devolver Function', () => {
     }
   });
 
-  it('callback de metodo nativo nao entrega o runtime', () => {
-    // `this` nao existe dentro de uma arrow do interpretador, entao nem um
-    // callback passado para um metodo nativo alcanca o contexto de fora.
+  it('a native method callback does not hand over the runtime', () => {
+    // `this` does not exist inside an arrow function of the interpreter, so not
+    // even a callback passed to a native method reaches the outside context.
     const r = tentar('lista.map(x => x * 2)');
     expect(r.valor).toEqual([2, 4]);
 
@@ -99,13 +100,13 @@ describe('SEC-01: reflexao nao pode devolver Function', () => {
     expect(typeof comThis.valor).not.toBe('function');
   });
 
-  it('reviver de JSON.parse nao vaza o objeto dono', () => {
+  it('the JSON.parse reviver does not leak the owning object', () => {
     const r = tentar('JSON.parse(\'{"a":1}\', (k, v) => v)');
     expect(r.valor).toEqual({ a: 1 });
   });
 });
 
-describe('o subconjunto seguro continua util', () => {
+describe('the safe subset is still useful', () => {
   const casos: Array<[string, unknown]> = [
     ["Object.keys({ a: 1, b: 2 })", ['a', 'b']],
     ['Object.values({ a: 1, b: 2 })', [1, 2]],
@@ -117,7 +118,7 @@ describe('o subconjunto seguro continua util', () => {
   ];
 
   for (const [fonte, esperado] of casos) {
-    it(`${fonte} continua funcionando`, () => {
+    it(`${fonte} still works`, () => {
       expect(tentar(fonte).valor).toEqual(esperado);
     });
   }

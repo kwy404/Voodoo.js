@@ -1,6 +1,6 @@
 /**
- * `:atributo` liga qualquer atributo de qualquer tag ao estado. Estes testes
- * cobrem os casos que as pessoas mais escrevem no dia a dia.
+ * `:atributo` binds any attribute of any tag to the state. These tests cover
+ * the cases people write most often day to day.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -26,8 +26,8 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-describe(':atributo em qualquer tag', () => {
-  it('placeholder de input muda com o estado', async () => {
+describe(':atributo on any tag', () => {
+  it('the placeholder of an input changes with the state', async () => {
     const { root, estado } = montar('<input :placeholder="dica">', { dica: 'Escreva o nome' });
     const input = root.querySelector('input')!;
     expect(input.getAttribute('placeholder')).toBe('Escreva o nome');
@@ -37,7 +37,7 @@ describe(':atributo em qualquer tag', () => {
     expect(input.getAttribute('placeholder')).toBe('Agora o e-mail');
   });
 
-  it('aceita expressao completa, nao so uma variavel', async () => {
+  it('accepts a full expression, not just a variable', async () => {
     const { root, estado } = montar(
       '<input :placeholder="\'Buscar entre \' + total + \' itens\'">',
       { total: 12 }
@@ -49,7 +49,7 @@ describe(':atributo em qualquer tag', () => {
     expect(root.querySelector('input')!.getAttribute('placeholder')).toBe('Buscar entre 40 itens');
   });
 
-  it('funciona com atributos de acessibilidade e de dados', async () => {
+  it('works with accessibility attributes and data attributes', async () => {
     const { root, estado } = montar(
       '<div :aria-label="rotulo" :data-estado="situacao" :title="dica"></div>',
       { rotulo: 'Menu', situacao: 'aberto', dica: 'Clique para fechar' }
@@ -64,7 +64,7 @@ describe(':atributo em qualquer tag', () => {
     expect(div.getAttribute('data-estado')).toBe('fechado');
   });
 
-  it('liga atributos de midia e de link', async () => {
+  it('binds media attributes and link attributes', async () => {
     const { root, estado } = montar(
       '<a :href="url" :target="alvo"><img :src="foto" :alt="descricao" :width="largura"></a>',
       { url: '/produto/1', alvo: '_blank', foto: '/a.jpg', descricao: 'Foto', largura: 200 }
@@ -78,7 +78,7 @@ describe(':atributo em qualquer tag', () => {
     expect(root.querySelector('img')!.getAttribute('src')).toBe('/b.jpg');
   });
 
-  it('atributo booleano some quando o valor e falso', async () => {
+  it('a boolean attribute disappears when the value is false', async () => {
     const { root, estado } = montar(
       '<button :disabled="carregando"></button><input :readonly="travado"><details :open="aberto"></details>',
       { carregando: true, travado: true, aberto: true }
@@ -95,7 +95,7 @@ describe(':atributo em qualquer tag', () => {
     expect(root.querySelector('details')!.hasAttribute('open')).toBe(false);
   });
 
-  it('funciona em tags proprias e em elementos svg', async () => {
+  it('works on custom tags and on svg elements', async () => {
     const { root, estado } = montar(
       '<minha-tag :dado="valor"></minha-tag><svg><circle :r="raio" :fill="cor"></circle></svg>',
       { valor: 'x', raio: 10, cor: 'red' }
@@ -108,7 +108,7 @@ describe(':atributo em qualquer tag', () => {
     expect(root.querySelector('circle')!.getAttribute('r')).toBe('25');
   });
 
-  it('v-bind sem argumento aplica um objeto inteiro', async () => {
+  it('v-bind with no argument applies a whole object', async () => {
     const { root } = montar('<input v-bind="atributos">', {
       atributos: { placeholder: 'Nome', maxlength: '10', 'aria-label': 'Campo de nome' },
     });
@@ -118,7 +118,7 @@ describe(':atributo em qualquer tag', () => {
     expect(input.getAttribute('aria-label')).toBe('Campo de nome');
   });
 
-  it('dentro de v-for cada item tem o seu valor', async () => {
+  it('inside a v-for each item has its own value', async () => {
     const { root } = montar(
       '<input v-for="c in campos" :key="c.id" :placeholder="c.dica" :name="c.nome">',
       {
@@ -134,7 +134,7 @@ describe(':atributo em qualquer tag', () => {
     expect(inputs[1].getAttribute('name')).toBe('email');
   });
 
-  it('o ponto na frente escreve na propriedade em vez do atributo', async () => {
+  it('a leading dot writes to the property instead of the attribute', async () => {
     const { root } = montar('<input .value="texto">', { texto: 'direto na propriedade' });
     expect((root.querySelector('input') as HTMLInputElement).value).toBe('direto na propriedade');
   });

@@ -53,9 +53,9 @@ The full picture, with the upgrade path and module boundaries, is in
 
 ## Repository Rules
 
-- Brazilian Portuguese in code comments and documentation in `docs/`.
-- English in root files (`ARCHITECTURE.md`, `CONVENTIONS.md`, `SECURITY.md`,
-  `BROWSER_SUPPORT.md`, `QUALITY.md`, `ROADMAP.md`, `README.pt-BR.md`) and in `docs/en/`.
+- English everywhere: code comments, root files, and the site documentation under
+  `site/docs/`. `README.pt-BR.md` and the site's Portuguese locale are
+  translations of the English, not originals.
 - **Never use dashes.** Not `—` nor `–`. Use commas, colons, or periods instead.
 - Strict TypeScript, no implicit `any`, with JSDoc on exported functions.
 - Zero external runtime dependencies.
@@ -151,8 +151,8 @@ declarative problem.
 8. **If the directive comes from an optional module**, import the module at the
    right entry point (`core.ts`, `essential.ts`, or `index.ts`), so it enters the right build.
 
-9. **Document it** in `docs/directives.md` and, if it's part of the core, in
-   `docs/en/directives.md`.
+9. **Document it** in `site/docs/referencia/directives.html`, which is the page
+   the published site serves.
 
 10. **Test it.**
 
@@ -220,9 +220,9 @@ Time-saving tips:
 3. `npm run build` passes;
 4. `npm run size` passes;
 5. `npm run quality` did not regress;
-6. documentation in `docs/` has been updated, and `docs/en/` as well when the change touches the
-   core;
-7. `CHANGELOG.md` has the line for your change.
+6. `npm run check:links` passes;
+7. documentation under `site/docs/` has been updated;
+8. `CHANGELOG.md` has the line for your change.
 
 ## Release Process
 

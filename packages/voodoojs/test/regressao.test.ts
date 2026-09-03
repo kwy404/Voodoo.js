@@ -1,7 +1,7 @@
 /**
- * Testes de regressao: cada caso aqui nasceu de um defeito encontrado rodando
- * a biblioteca em navegador de verdade. O comentario de cada bloco explica o
- * sintoma original, para que a correcao nao seja desfeita sem querer.
+ * Regression tests: each case here was born from a defect found while running
+ * the library in a real browser. The comment on each block explains the
+ * original symptom, so that the fix is not undone by accident.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -26,36 +26,36 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('interpolacao dentro de blocos de codigo', () => {
-  // Sintoma: a landing mostrava exemplos de codigo e a biblioteca tentava
-  // avaliar `{ n: 0 }` como expressao, enchendo o console de erro de sintaxe.
-  it('nao interpola dentro de pre', () => {
+describe('interpolation inside code blocks', () => {
+  // Symptom: the landing page showed code examples and the library tried to
+  // evaluate `{ n: 0 }` as an expression, filling the console with syntax errors.
+  it('does not interpolate inside pre', () => {
     const root = mount('<pre>&lt;div v-data="{ n: 0 }"&gt;</pre>');
     expect(root.textContent).toContain('{ n: 0 }');
   });
 
-  it('nao interpola dentro de code', () => {
+  it('does not interpolate inside code', () => {
     const root = mount('<code>{ nome: "Vudu" }</code>');
     expect(root.textContent).toBe('{ nome: "Vudu" }');
   });
 
-  it('nao interpola quando o codigo tem destaque de sintaxe', () => {
-    // Com realce, o texto fica dentro de um span, e o pai direto deixa de ser
-    // o pre. A checagem precisa subir pelos ancestrais.
+  it('does not interpolate when the code has syntax highlighting', () => {
+    // With highlighting, the text sits inside a span, and the direct parent is
+    // no longer the pre. The check has to climb through the ancestors.
     const root = mount('<pre><code><span class="tok">{ a: 1, b: 2 }</span></code></pre>');
     expect(root.textContent).toBe('{ a: 1, b: 2 }');
   });
 
-  it('continua interpolando fora de blocos de codigo', () => {
+  it('still interpolates outside code blocks', () => {
     const root = mount('<p>Valor: { n }</p>', { n: 7 });
     expect(root.textContent).toBe('Valor: 7');
   });
 });
 
-describe('escopo dos atributos na tag de um componente', () => {
-  // Sintoma: `@salvo="ultimo = $event"` gravava dentro do componente em vez do
-  // estado de quem escreveu a tag, entao o pai nunca via o valor.
-  it('avalia no escopo de quem escreveu a tag', async () => {
+describe('scope of the attributes on a component tag', () => {
+  // Symptom: `@salvo="ultimo = $event"` wrote inside the component instead of
+  // into the state of whoever wrote the tag, so the parent never saw the value.
+  it('evaluates in the scope of whoever wrote the tag', async () => {
     core.component('emissor-teste', {
       methods: {
         disparar(this: { emit: (e: string, d: unknown) => void }) {
@@ -79,7 +79,7 @@ describe('escopo dos atributos na tag de um componente', () => {
     expect(root.querySelector('b')!.textContent).toBe('valor-esperado');
   });
 
-  it('$event traz a carga do emit e $rawEvent traz o evento cru', async () => {
+  it('$event carries the emit payload and $rawEvent carries the raw event', async () => {
     core.component('emissor-carga', {
       methods: {
         disparar(this: { emit: (e: string, d: unknown) => void }) {
@@ -104,11 +104,11 @@ describe('escopo dos atributos na tag de um componente', () => {
   });
 });
 
-describe('registro de componente depois do carregamento', () => {
-  // Sintoma: com a biblioteca carregada por CDN com defer, o script da
-  // aplicacao registra componentes depois da primeira varredura, e as tags
-  // ficavam paradas na tela sem nunca montar.
-  it('monta as tags que ja estavam na pagina', async () => {
+describe('component registered after the page has loaded', () => {
+  // Symptom: with the library loaded from a CDN with defer, the application
+  // script registers components after the first walk, and the tags sat still
+  // on the screen without ever mounting.
+  it('mounts the tags that were already on the page', async () => {
     const root = mount('<div v-data="{}"><tardio-teste titulo="Oi"></tardio-teste></div>');
     await settle();
     expect(root.querySelector('h4')).toBeNull();
@@ -122,7 +122,7 @@ describe('registro de componente depois do carregamento', () => {
     expect(root.querySelector('h4')!.textContent).toBe('Oi');
   });
 
-  it('mantem os listeners declarados na tag apos a montagem tardia', async () => {
+  it('keeps the listeners declared on the tag after the late mount', async () => {
     const root = mount(
       '<div v-data="{ resultado: \'\' }">' +
         '<tardio-evento @avisou="resultado = $event"></tardio-evento>' +
@@ -147,10 +147,10 @@ describe('registro de componente depois do carregamento', () => {
   });
 });
 
-describe('store criado depois da renderizacao', () => {
-  // Sintoma: a tela lia `$store.carrinho` antes do store existir e nunca
-  // atualizava quando ele era criado.
-  it('atualiza quem ja lia a variavel magica', async () => {
+describe('store created after rendering', () => {
+  // Symptom: the screen read `$store.carrinho` before the store existed and it
+  // never updated when the store was created.
+  it('updates whoever was already reading the magic variable', async () => {
     const root = mount('<span v-text="$store.tardio ? $store.tardio.total : 0"></span>');
     expect(root.querySelector('span')!.textContent).toBe('0');
 
@@ -161,10 +161,10 @@ describe('store criado depois da renderizacao', () => {
   });
 });
 
-describe('limpeza dos atributos', () => {
-  // Sintoma: apos a limpeza do HTML, seletores como `[v-tab]` deixavam de
-  // casar e as directives de interface paravam de se encontrar.
-  it('o indice do runtime encontra elementos ja limpos', async () => {
+describe('attribute cleanup', () => {
+  // Symptom: after the HTML was cleaned up, selectors such as `[v-tab]` stopped
+  // matching and the interface directives stopped finding each other.
+  it('the runtime index finds elements that have already been cleaned', async () => {
     const root = mount('<div><b v-text="a"></b><b v-text="b"></b></div>', { a: 1, b: 2 });
     await settle();
 
@@ -172,7 +172,7 @@ describe('limpeza dos atributos', () => {
     expect(queryDirective(root, 'text').length).toBe(2);
   });
 
-  it('o valor original continua legivel pelo cache', async () => {
+  it('the original value is still readable through the cache', async () => {
     const root = mount('<div v-data="{ n: 1 }"><b v-text="n"></b></div>');
     await settle();
 
@@ -182,11 +182,11 @@ describe('limpeza dos atributos', () => {
   });
 });
 
-describe('remocao interna nao desmonta o efeito', () => {
-  // Sintoma: quando um v-for era criado depois que o observador ja estava
-  // ativo, a remocao do elemento modelo era lida como saida de tela e o
-  // efeito da lista era parado logo apos ser criado.
-  it('v-for continua reagindo quando montado dentro de v-if', async () => {
+describe('an internal removal does not tear down the effect', () => {
+  // Symptom: when a v-for was created after the observer was already active,
+  // the removal of the template element was read as leaving the screen and the
+  // list effect was stopped right after being created.
+  it('v-for keeps reacting when mounted inside a v-if', async () => {
     const dados = reactive({ mostrar: false, itens: ['a'] });
     const root = document.createElement('div');
     root.innerHTML = '<div v-if="mostrar"><span v-for="i in itens" v-text="i"></span></div>';
@@ -207,8 +207,8 @@ describe('remocao interna nao desmonta o efeito', () => {
   });
 });
 
-describe('desmontagem', () => {
-  it('destroy limpa o indice de directives', async () => {
+describe('teardown', () => {
+  it('destroy clears the directive index', async () => {
     const root = mount('<b v-text="x"></b>', { x: 1 });
     await settle();
     expect(queryDirective(document.body, 'text').length).toBeGreaterThan(0);
@@ -219,12 +219,13 @@ describe('desmontagem', () => {
   });
 });
 
-describe('v-for dentro de ramos condicionais', () => {
-  // Sintoma: a lista dentro de um v-else renderizava uma vez e depois parava.
-  // Causa: a caminhada do elemento pai ja tinha o ramo na lista de filhos e
-  // entrava nele depois que o v-if o havia retirado do documento, o que
-  // inicializava o v-for dentro do proprio modelo e o corrompia.
-  it('a lista continua reagindo depois de alternar o ramo', async () => {
+describe('v-for inside conditional branches', () => {
+  // Symptom: the list inside a v-else rendered once and then stopped.
+  // Cause: the walk of the parent element already had the branch in its list of
+  // children and stepped into it after the v-if had taken it out of the
+  // document, which initialized the v-for inside the template itself and
+  // corrupted it.
+  it('the list keeps reacting after the branch is toggled', async () => {
     const dados = reactive({ vazio: false, itens: ['a'] });
     const root = document.createElement('div');
     root.innerHTML =
@@ -251,7 +252,7 @@ describe('v-for dentro de ramos condicionais', () => {
     expect(root.querySelectorAll('li').length).toBe(3);
   });
 
-  it('funciona no meio de uma cadeia com v-else-if', async () => {
+  it('works in the middle of a chain with v-else-if', async () => {
     const dados = reactive({ modo: 'lista', itens: ['x', 'y'] });
     const root = document.createElement('div');
     root.innerHTML =
@@ -272,7 +273,7 @@ describe('v-for dentro de ramos condicionais', () => {
     expect(root.querySelectorAll('li').length).toBe(3);
   });
 
-  it('o modelo guardado nao e alterado pela renderizacao', async () => {
+  it('the stored template is not altered by the rendering', async () => {
     const root = document.createElement('div');
     root.innerHTML = '<p v-if="off">a</p><ul v-else><li v-for="i in itens" v-text="i"></li></ul>';
     const original = root.querySelector('ul')!;

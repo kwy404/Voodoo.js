@@ -1,10 +1,11 @@
 /**
- * Utilitarios compartilhados pelos checks de qualidade.
+ * Utilities shared by the quality checks.
  *
- * Nada aqui inventa resultado: toda funcao devolve o que realmente encontrou no
- * disco ou o que o processo filho realmente imprimiu. Quando uma ferramenta nao
- * existe no ambiente, quem chama recebe `null` ou uma flag e decide reportar
- * SKIP. Isso e proposital: um SKIP honesto vale mais que um PASS inventado.
+ * Nothing here invents a result: every function returns what it actually found
+ * on disk, or what the child process actually printed. When a tool does not
+ * exist in the environment, the caller receives `null` or a flag and decides to
+ * report SKIP. That is deliberate: an honest SKIP is worth more than a
+ * made-up PASS.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -22,7 +23,7 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 
-/** Raiz do monorepo, deduzida a partir da localizacao deste arquivo. */
+/** Monorepo root, deduced from the location of this file. */
 export const ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 export const PKG_DIR = join(ROOT, 'packages', 'voodoojs');
 export const SRC_DIR = join(PKG_DIR, 'src');
@@ -31,7 +32,7 @@ export const DIST_DIR = join(PKG_DIR, 'dist');
 
 export const STATUS = { PASS: 'PASS', WARN: 'WARN', FAIL: 'FAIL', SKIP: 'SKIP' };
 
-/** Pior status entre os informados. FAIL > WARN > SKIP > PASS. */
+/** The worst status among the ones given. FAIL > WARN > SKIP > PASS. */
 export function worstStatus(list) {
   if (list.includes(STATUS.FAIL)) return STATUS.FAIL;
   if (list.includes(STATUS.WARN)) return STATUS.WARN;
@@ -40,26 +41,26 @@ export function worstStatus(list) {
 }
 
 // ---------------------------------------------------------------------------
-// Processos
+// Processes
 // ---------------------------------------------------------------------------
 
 const IS_WIN = process.platform === 'win32';
 
 /**
- * Roda um comando e devolve o que ele imprimiu. Nunca lanca: erros viram
- * `code != 0` mais o texto em `stderr`, para o check decidir o que reportar.
+ * Runs a command and returns what it printed. Never throws: errors become
+ * `code != 0` plus the text in `stderr`, so the check decides what to report.
  */
 export function run(cmd, args = [], opts = {}) {
-  // No Windows os binarios de npm sao `.cmd`, entao precisamos de shell. Com
-  // shell ligado os argumentos com espaco precisam de aspas na mao (o caminho
-  // do repositorio pode muito bem morar em "C:\Users\Fulano De Tal\...").
-  // Caminho absoluto de executavel dispensa shell: o spawn acha o arquivo
-  // sozinho e evitamos a concatenacao de argumentos que o shell faria.
+  // On Windows the npm binaries are `.cmd`, so we need a shell. With the shell
+  // turned on, arguments containing spaces need to be quoted by hand (the
+  // repository path may well live in "C:\Users\Fulano De Tal\...").
+  // An absolute executable path does without the shell: spawn finds the file on
+  // its own and we avoid the argument concatenation the shell would do.
   const isAbsoluteExe = /^[A-Za-z]:[\\/].*\.exe$/i.test(cmd) || cmd.startsWith('/');
   const shell = IS_WIN && !isAbsoluteExe;
   const quote = (a) => (/[\s"^&|<>()]/.test(a) && !a.startsWith('"') ? `"${a}"` : a);
-  // O executavel tambem precisa de aspas: `process.execPath` no Windows e
-  // "C:\Program Files\nodejs\node.exe", e sem aspas o cmd tenta rodar
+  // The executable needs quotes too: `process.execPath` on Windows is
+  // "C:\Program Files\nodejs\node.exe", and without quotes cmd tries to run
   // "C:\Program".
   const finalCmd = shell ? quote(cmd) : cmd;
   const finalArgs = shell ? args.map(quote) : args;
@@ -85,27 +86,27 @@ export function run(cmd, args = [], opts = {}) {
   };
 }
 
-/** Roda um script Node com o mesmo executavel que esta rodando o orquestrador. */
+/** Runs a Node script with the same executable that is running the orchestrator. */
 export function runNode(args, opts = {}) {
   return run(process.execPath, args, opts);
 }
 
-/** Caminho do binario local de uma dependencia, ou `null` se ela nao existe. */
+/** Path to a dependency's local binary, or `null` if it does not exist. */
 export function localBin(relPath) {
   const p = join(ROOT, 'node_modules', ...relPath.split('/'));
   return existsSync(p) ? p : null;
 }
 
-/** `true` se o pacote esta instalado em node_modules da raiz. */
+/** `true` if the package is installed in the root node_modules. */
 export function hasPackage(name) {
   return existsSync(join(ROOT, 'node_modules', ...name.split('/'), 'package.json'));
 }
 
 // ---------------------------------------------------------------------------
-// Arquivos
+// Files
 // ---------------------------------------------------------------------------
 
-/** Lista recursiva de arquivos, ignorando `node_modules`, `.git` e `dist`. */
+/** Recursive list of files, ignoring `node_modules`, `.git` and `dist`. */
 export function walkFiles(dir, { filter, skipDirs = ['node_modules', '.git'] } = {}) {
   const out = [];
   if (!existsSync(dir)) return out;
@@ -149,19 +150,19 @@ export function readJson(file) {
   }
 }
 
-/** Caminho relativo a raiz, sempre com barras normais, para o relatorio. */
+/** Path relative to the root, always with forward slashes, for the report. */
 export function rel(file) {
   return relative(ROOT, file).split(sep).join('/');
 }
 
-/** Numero da linha (1-based) de um indice dentro do texto. */
+/** Line number (1-based) of an index inside the text. */
 export function lineOf(text, index) {
   let line = 1;
   for (let i = 0; i < index && i < text.length; i++) if (text[i] === '\n') line++;
   return line;
 }
 
-/** Diretorio temporario da execucao. Removido no fim pelo orquestrador. */
+/** Temporary directory for the run. Removed at the end by the orchestrator. */
 export function makeScratch() {
   const dir = join(tmpdir(), `voodoo-quality-${process.pid}-${Date.now()}`);
   mkdirSync(dir, { recursive: true });
@@ -172,7 +173,7 @@ export function cleanScratch(dir) {
   try {
     rmSync(dir, { recursive: true, force: true });
   } catch {
-    /* melhor deixar lixo no temp do que derrubar o relatorio */
+    /* better to leave junk in temp than to bring the report down */
   }
 }
 
@@ -184,7 +185,7 @@ export function writeTemp(dir, name, content) {
 }
 
 // ---------------------------------------------------------------------------
-// Tamanhos
+// Sizes
 // ---------------------------------------------------------------------------
 
 export function sizesOf(buffer) {
@@ -201,14 +202,14 @@ export function kb(bytes) {
 }
 
 // ---------------------------------------------------------------------------
-// Comentarios de codigo
+// Code comments
 // ---------------------------------------------------------------------------
 
 /**
- * Substitui comentarios e literais de string por espacos, preservando offsets.
+ * Replaces comments and string literals with spaces, preserving offsets.
  *
- * Serve para os gates de seguranca e de codigo morto nao acusarem uma
- * ocorrencia que so aparece dentro de um comentario ou de uma mensagem de erro.
+ * This keeps the security and dead code gates from flagging an occurrence that
+ * only appears inside a comment or inside an error message.
  */
 export function stripCommentsAndStrings(source) {
   const out = source.split('');
@@ -254,12 +255,12 @@ export function stripCommentsAndStrings(source) {
 }
 
 // ---------------------------------------------------------------------------
-// Achados
+// Findings
 // ---------------------------------------------------------------------------
 
 /**
- * Um achado. `level` diz o peso; `file`/`line` apontam onde; `expected`/`actual`
- * existem para o orquestrador conseguir imprimir "esperado X, obtido Y".
+ * A finding. `level` states the weight; `file`/`line` point to where;
+ * `expected`/`actual` exist so the orchestrator can print "expected X, got Y".
  */
 export function finding(level, message, extra = {}) {
   return { level, message, ...extra };
@@ -269,7 +270,7 @@ export const fail = (message, extra) => finding('fail', message, extra);
 export const warn = (message, extra) => finding('warn', message, extra);
 export const note = (message, extra) => finding('note', message, extra);
 
-/** Status derivado de uma lista de achados. */
+/** Status derived from a list of findings. */
 export function statusFromFindings(findings, { emptyStatus = STATUS.PASS } = {}) {
   if (findings.some((f) => f.level === 'fail')) return STATUS.FAIL;
   if (findings.some((f) => f.level === 'warn')) return STATUS.WARN;

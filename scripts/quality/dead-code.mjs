@@ -1,19 +1,20 @@
 /**
- * Dead Code: exports que ninguem importa.
+ * Dead Code: exports nobody imports.
  *
- * Monta o grafo de importacoes de `src/**` e procura nomes exportados que nao
- * aparecem em nenhuma clausula `import { ... }` nem `export { ... } from`, e
- * que tambem nao saem por um dos pontos de entrada publicos.
+ * Builds the import graph of `src/**` and looks for exported names that do not
+ * appear in any `import { ... }` clause nor `export { ... } from`, and that
+ * also do not leave through one of the public entry points.
  *
- * Duas ressalvas honestas sobre o metodo, ambas registradas no resultado:
+ * Two honest caveats about the method, both recorded in the result:
  *
- *   - a analise e por nome, nao por resolucao de modulo. Um nome exportado em
- *     dois arquivos e importado de um deles conta como usado nos dois;
- *   - um export consumido so pela suite de testes aparece separado, porque e
- *     um caso diferente: nao e codigo morto, e API sem consumidor de producao.
+ *   - the analysis is by name, not by module resolution. A name exported in
+ *     two files and imported from one of them counts as used in both;
+ *   - an export consumed only by the test suite is listed separately, because
+ *     it is a different case: it is not dead code, it is API without a
+ *     production consumer.
  *
- * Por isso o resultado e WARN, e nunca FAIL: e uma lista para revisar, nao um
- * veredito. Confirme na mao antes de apagar qualquer coisa.
+ * That is why the result is WARN, and never FAIL: it is a list to review, not a
+ * verdict. Confirm by hand before deleting anything.
  */
 
 import { basename } from 'node:path';
@@ -22,7 +23,7 @@ import { SRC_DIR, STATUS, TEST_DIR, lineOf, read, rel, stripCommentsAndStrings, 
 
 export const meta = { label: 'Dead Code' };
 
-/** Arquivos cujos exports sao a API publica por definicao. */
+/** Files whose exports are the public API by definition. */
 const ENTRYPOINTS = new Set([
   'index.ts',
   'core.ts',
@@ -34,7 +35,7 @@ const ENTRYPOINTS = new Set([
   'bootstrap.ts',
 ]);
 
-/** Nomes exportados por um arquivo, com a linha da declaracao. */
+/** Names exported by a file, with the line of the declaration. */
 function exportsOf(source) {
   const clean = stripCommentsAndStrings(source);
   const found = new Map();
@@ -48,7 +49,7 @@ function exportsOf(source) {
     /\bexport\s+(?:declare\s+)?(?:default\s+)?(?:async\s+)?(const|let|var|function\*?|class|interface|type|enum|abstract\s+class)\s+([A-Za-z_$][\w$]*)/g;
   for (const m of clean.matchAll(decl)) add(m[2], m.index, m[1].trim());
 
-  // `export const { a, b } = ...` e `export const [a, b] = ...`
+  // `export const { a, b } = ...` and `export const [a, b] = ...`
   for (const m of clean.matchAll(/\bexport\s+(?:const|let|var)\s*[{[]([^}\]]+)[}\]]/g)) {
     for (const part of m[1].split(',')) {
       const name = part.split(':').pop().trim().replace(/^\.\.\./, '');
@@ -56,7 +57,7 @@ function exportsOf(source) {
     }
   }
 
-  // `export { a, b as c }` sem `from`: reexporta binding local.
+  // `export { a, b as c }` without `from`: re-exports a local binding.
   for (const m of clean.matchAll(/\bexport\s*\{([^}]*)\}(?!\s*from)/g)) {
     for (const part of m[1].split(',')) {
       const name = part.trim().split(/\s+as\s+/).pop()?.trim();
@@ -68,7 +69,7 @@ function exportsOf(source) {
   return [...found.values()];
 }
 
-/** Tudo que um arquivo consome de outros modulos. */
+/** Everything a file consumes from other modules. */
 function consumptionOf(source) {
   const clean = stripCommentsAndStrings(source);
   const names = new Set();
@@ -95,7 +96,7 @@ function consumptionOf(source) {
   return { names, namespaceImport, starReexport };
 }
 
-/** Modulos alcancados por `export *` ou `import * as`, cujos exports sao publicos. */
+/** Modules reached by `export *` or `import * as`, whose exports are public. */
 function wildcardTargets(source) {
   const clean = stripCommentsAndStrings(source);
   const out = new Set();
@@ -127,7 +128,7 @@ export async function run() {
     for (const name of names) testConsumed.add(name);
   }
 
-  /** Um modulo alcancado por `export *` tem toda a superficie publicada. */
+  /** A module reached by `export *` has its whole surface published. */
   const isWildcardPublished = (file) => {
     const relPath = rel(file);
     for (const target of wildcardModules) {
@@ -161,19 +162,21 @@ export async function run() {
         continue;
       }
 
-      // Ninguem importa. Falta saber se o proprio modulo usa: se usa, o
-      // problema e o `export` sobrando, e nao o codigo. Dizer "peso morto no
-      // bundle" para uma funcao viva seria mandar remover algo em uso.
+      // Nobody imports it. What is left to find out is whether the module
+      // itself uses it: if it does, the problem is the leftover `export`, not
+      // the code. Saying "dead weight in the bundle" about a live function
+      // would be telling someone to remove something that is in use.
       const uses = (clean.match(new RegExp(`\\b${entry.name}\\b`, 'g')) ?? []).length;
       if (uses > 1) internalOnly.push({ ...entry, file: relPath, localUses: uses - 1 });
       else dead.push({ ...entry, file: relPath });
     }
   }
 
-  // Tipo exportado e sem consumidor nao ocupa byte no bundle: e um contrato
-  // que ninguem usa, nao codigo morto. Sao dois problemas diferentes e listar
-  // os dois no mesmo balde de 100+ avisos so faz a lista virar ruido, entao os
-  // tipos ficam agrupados num aviso so e detalhados na evidencia.
+  // An exported type with no consumer takes up no byte in the bundle: it is a
+  // contract nobody uses, not dead code. These are two different problems, and
+  // listing both in the same bucket of 100+ warnings only turns the list into
+  // noise, so the types are grouped into a single warning and detailed in the
+  // evidence.
   const TYPE_KINDS = new Set(['interface', 'type', 'enum']);
   const isType = (e) => TYPE_KINDS.has(e.kind);
 

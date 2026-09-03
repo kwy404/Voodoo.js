@@ -34,6 +34,6 @@ four columns are written out by hand in the HTML rather than generated with
 
 The page carries the same three-state theme as the rest of the site: the system
 preference decides unless the visitor picks one, and an explicit choice wins in
-both directions. The library's own widgets — the confirm dialog, the toasts, the
-drag ghost — are painted from `--v-*` variables, which the stylesheet maps onto
-the page palette so the two can never disagree.
+both directions. The library's own widgets are painted from `--v-*` variables:
+the confirm dialog, the toasts, the drag ghost. The stylesheet maps those
+variables onto the page palette, so the two can never disagree.

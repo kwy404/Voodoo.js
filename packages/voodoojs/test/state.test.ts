@@ -22,7 +22,7 @@ async function settle(times = 3): Promise<void> {
   for (let i = 0; i < times; i++) await nextTick();
 }
 
-/** Espera o debounce interno das directives de estado. */
+/** Waits out the internal debounce of the state directives. */
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 describe('v-persist', () => {
-  it('salva o estado no localStorage', async () => {
+  it('saves the state to localStorage', async () => {
     mount('<div v-data="{ tema: \'claro\' }" v-persist="teste"></div>');
 
     await settle();
@@ -43,14 +43,14 @@ describe('v-persist', () => {
     expect(salvo).toEqual({ tema: 'claro' });
   });
 
-  it('o atributo sai do HTML depois de processado', async () => {
+  it('the attribute leaves the HTML once it has been processed', async () => {
     const { root } = mount('<div v-data="{ tema: \'claro\' }" v-persist="saida"></div>');
     await settle();
     expect(root.innerHTML).not.toContain('v-persist');
     expect(root.innerHTML).not.toContain('v-data');
   });
 
-  it('restaura o valor salvo na proxima montagem', async () => {
+  it('restores the saved value on the next mount', async () => {
     storage.set('voodoo:persist:preferencias', { idioma: 'en' });
 
     mount('<div v-data="{ idioma: \'pt\' }" v-persist="preferencias"><b v-text="idioma"></b></div>');
@@ -59,7 +59,7 @@ describe('v-persist', () => {
     expect(document.querySelector('b')!.textContent).toBe('en');
   });
 
-  it('nao restaura chaves que o estado atual nao declara', async () => {
+  it('does not restore keys that the current state does not declare', async () => {
     storage.set('voodoo:persist:parcial', { removida: 1, mantida: 2 });
 
     mount('<div v-data="{ mantida: 0 }" v-persist="parcial"><b v-text="mantida"></b></div>');
@@ -68,7 +68,7 @@ describe('v-persist', () => {
     expect(document.querySelector('b')!.textContent).toBe('2');
   });
 
-  it('guarda alteracoes feitas depois da montagem', async () => {
+  it('saves changes made after the mount', async () => {
     mount(
       '<div v-data="{ contador: 0 }" v-persist="contagem"><button v-click="contador++"></button></div>'
     );
@@ -83,7 +83,7 @@ describe('v-persist', () => {
 });
 
 describe('v-history', () => {
-  it('desfaz e refaz uma alteracao', async () => {
+  it('undoes and redoes a change', async () => {
     mount(`
       <div v-data="{ texto: 'inicio' }" v-history>
         <button id="mudar" v-click="texto = 'alterado'"></button>
@@ -97,7 +97,7 @@ describe('v-history', () => {
     await settle();
     expect(document.querySelector('b')!.textContent).toBe('alterado');
 
-    // Espera o debounce que grava o instantaneo.
+    // Wait out the debounce that records the snapshot.
     await wait(400);
 
     (document.querySelector('#voltar') as HTMLElement).click();
@@ -109,7 +109,7 @@ describe('v-history', () => {
     expect(document.querySelector('b')!.textContent).toBe('alterado');
   });
 
-  it('expoe $history com canUndo e canRedo', async () => {
+  it('exposes $history with canUndo and canRedo', async () => {
     mount(`
       <div v-data="{ n: 0 }" v-history>
         <button id="soma" v-click="n++"></button>
@@ -127,7 +127,7 @@ describe('v-history', () => {
     expect(document.querySelector('#pode')!.textContent).toBe('true');
   });
 
-  it('desfazer e escrever de novo descarta o futuro', async () => {
+  it('undoing and then writing again discards the future', async () => {
     mount(`
       <div v-data="{ n: 0 }" v-history>
         <button id="soma" v-click="n++"></button>
@@ -154,13 +154,13 @@ describe('v-history', () => {
     await wait(400);
     await settle();
 
-    // O ramo descartado nao volta: continuam 3 instantaneos.
+    // The discarded branch does not come back: there are still 3 snapshots.
     expect(Number(document.querySelector('#tamanho')!.textContent)).toBe(3);
   });
 });
 
 describe('v-storage', () => {
-  it('guarda e restaura o valor de um campo', async () => {
+  it('saves and restores the value of a field', async () => {
     const primeira = mount('<input v-storage="rascunho">');
     const input = primeira.root.querySelector('input')!;
     input.value = 'texto salvo';
@@ -174,8 +174,8 @@ describe('v-storage', () => {
   });
 });
 
-describe('limpeza das directives de estado', () => {
-  it('para de gravar depois de destruir o elemento', async () => {
+describe('cleanup of the state directives', () => {
+  it('stops writing once the element is destroyed', async () => {
     const { root, data } = mount('<div v-data="{ n: 0 }" v-persist="limpeza"></div>');
     await settle();
     await wait(200);
@@ -192,10 +192,10 @@ describe('limpeza das directives de estado', () => {
   });
 });
 
-describe('v-sync entre abas', () => {
-  it('nao quebra quando BroadcastChannel nao existe', () => {
+describe('v-sync across tabs', () => {
+  it('does not break when BroadcastChannel does not exist', () => {
     const original = globalThis.BroadcastChannel;
-    // @ts-expect-error remocao proposital para simular navegador antigo
+    // @ts-expect-error deliberate removal, to simulate an old browser
     delete globalThis.BroadcastChannel;
 
     const aviso = vi.spyOn(console, 'error').mockImplementation(() => undefined);

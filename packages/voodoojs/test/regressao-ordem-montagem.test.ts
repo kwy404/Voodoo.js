@@ -1,18 +1,18 @@
 /**
- * Regressao: componente registrado depois do HTML, com ancestral ainda por
- * processar.
+ * Regression: a component registered after the HTML, with an ancestor still to
+ * be processed.
  *
- * O caso real que revelou o problema: o script do CDN carrega com `defer`, o
- * script da aplicacao registra os componentes em `DOMContentLoaded`, e a
- * caminhada da Voodoo acontece depois disso. Nesse intervalo,
- * `defineComponent` chamava `mountPending`, que montava a tag usando
- * `findScope(el.parentNode)`. Como o `v-data` do pai ainda nao tinha sido
- * processado, o escopo encontrado era a raiz, e os atributos escritos na tag
- * do componente ficavam ligados ao escopo errado para sempre: o elemento saia
- * marcado como pronto, e a caminhada seguinte passava direto por ele.
+ * The real case that exposed the problem: the CDN script loads with `defer`,
+ * the application script registers the components on `DOMContentLoaded`, and
+ * the Voodoo walk happens after that. In that window, `defineComponent` called
+ * `mountPending`, which mounted the tag using `findScope(el.parentNode)`.
+ * Because the parent's `v-data` had not been processed yet, the scope found
+ * was the root, and the attributes written on the component tag stayed bound
+ * to the wrong scope forever: the element came out marked as ready, and the
+ * following walk went straight past it.
  *
- * Sintoma visivel: `@evento="alvo = $event"` na tag do componente nunca
- * escrevia no `v-data` do pai.
+ * Visible symptom: `@evento="alvo = $event"` on the component tag never wrote
+ * into the parent's `v-data`.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -35,10 +35,10 @@ afterEach(() => {
   components.delete('placar-cedo');
 });
 
-describe('ordem de montagem de componente registrado tarde', () => {
-  it('liga os atributos da tag ao escopo do pai, e nao a raiz', async () => {
-    // O HTML chega antes do componente existir, exatamente como numa pagina
-    // servida pelo servidor.
+describe('mount order of a component registered late', () => {
+  it('binds the tag attributes to the parent scope, and not to the root', async () => {
+    // The HTML arrives before the component exists, exactly as on a page
+    // served by the server.
     document.body.innerHTML = `
       <div v-data="{ ultimo: 'nada' }">
         <placar-tardio :inicio="10" @mudou="ultimo = $event"></placar-tardio>
@@ -46,7 +46,7 @@ describe('ordem de montagem de componente registrado tarde', () => {
       </div>
     `;
 
-    // Registrar agora dispara `mountPending` com o pai ainda por processar.
+    // Registering now fires `mountPending` with the parent still unprocessed.
     defineComponent('placar-tardio', {
       props: { inicio: { type: 'number', default: 0 } },
       state(props) {
@@ -61,7 +61,7 @@ describe('ordem de montagem de componente registrado tarde', () => {
       template: `<span id="valor">{ valor }</span>`,
     });
 
-    // A caminhada principal so acontece depois, como na pagina real.
+    // The main walk only happens afterwards, as on the real page.
     walk(document.body, rootScope);
     await nextTick();
 
@@ -74,14 +74,14 @@ describe('ordem de montagem de componente registrado tarde', () => {
     instancia.somar();
     await nextTick();
 
-    // O evento precisa ter escrito no `v-data` do pai.
+    // The event must have written into the parent's `v-data`.
     expect(document.querySelector('#saida')!.textContent).toBe('11');
 
-    // E nao pode ter vazado para o escopo raiz.
+    // And it must not have leaked into the root scope.
     expect('ultimo' in rootScope.data).toBe(false);
   });
 
-  it('a prop reativa da tag tambem enxerga o escopo do pai', async () => {
+  it('the reactive prop on the tag also sees the parent scope', async () => {
     document.body.innerHTML = `
       <div v-data="{ base: 5 }">
         <placar-tardio :inicio="base"></placar-tardio>
@@ -99,14 +99,14 @@ describe('ordem de montagem de componente registrado tarde', () => {
     walk(document.body, rootScope);
     await nextTick();
 
-    // Se a prop tivesse sido avaliada na raiz, `base` seria undefined e o
-    // padrao 0 entraria no lugar.
+    // If the prop had been evaluated at the root, `base` would be undefined
+    // and the default 0 would take its place.
     expect(document.querySelector('#valor')!.textContent).toBe('5');
   });
 
-  it('continua montando quando o pai ja foi processado', async () => {
-    // O outro lado da moeda: registrar depois de a pagina inteira ter sido
-    // percorrida precisa continuar montando na hora.
+  it('still mounts when the parent has already been processed', async () => {
+    // The other side of the coin: registering after the whole page has been
+    // walked has to keep mounting straight away.
     document.body.innerHTML = `
       <div v-data="{ ultimo: 'nada' }">
         <placar-cedo @mudou="ultimo = $event"></placar-cedo>
@@ -142,7 +142,7 @@ describe('ordem de montagem de componente registrado tarde', () => {
   });
 });
 
-/** Recupera a instancia montada sobre um elemento. */
+/** Retrieves the instance mounted on an element. */
 function getInstancia(el: Element): any {
   return getScope(el)?.component;
 }

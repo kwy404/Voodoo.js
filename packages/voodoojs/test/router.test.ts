@@ -3,8 +3,8 @@ import { nextTick, reactive } from '../src/reactivity';
 import { Scope } from '../src/runtime/scope';
 import { walk, destroy } from '../src/runtime/walker';
 import { defineComponent } from '../src/runtime/component';
-// O `core` injeta o montador de componentes no walker: sem ele `v-component`
-// nao renderiza, e `v-router-view` monta uma casca vazia.
+// The `core` injects the component mounter into the walker: without it
+// `v-component` does not render, and `v-router-view` mounts an empty shell.
 import '../src/core';
 import {
   addRoute,
@@ -21,19 +21,19 @@ import {
 } from '../src/router';
 
 /**
- * Cobertura do roteador, que nao tinha nenhum teste dedicado.
+ * Coverage of the router, which had no dedicated test at all.
  *
- * O estado do modulo e global de proposito (existe um roteador por pagina),
- * entao cada teste reconfigura tudo do zero com `configurar()` e devolve a URL
- * ao final. O `popstate` e disparado a mao, porque o jsdom nao propaga a
- * travessia real do historico de forma sincrona.
+ * The module state is global on purpose (there is one router per page), so
+ * every test reconfigures everything from scratch with `configurar()` and puts
+ * the URL back at the end. `popstate` is dispatched by hand, because jsdom does
+ * not propagate the real history traversal synchronously.
  */
 
 // ---------------------------------------------------------------------------
-// Ajudantes
+// Helpers
 // ---------------------------------------------------------------------------
 
-/** Deixa as microtarefas, o pos-flush e o requestAnimationFrame terminarem. */
+/** Lets the microtasks, the post-flush and the requestAnimationFrame finish. */
 async function assentar(): Promise<void> {
   await nextTick();
   await nextTick();
@@ -54,14 +54,14 @@ interface OpcoesTeste {
   scrollBehavior?: (to: unknown, from: unknown, saved: number | null) => number | false | void;
 }
 
-/** Configura o roteador a partir de uma URL e espera a rota inicial entrar. */
+/** Configures the router from a URL and waits for the initial route to land. */
 async function configurar(opcoes: OpcoesTeste): Promise<void> {
   window.history.replaceState(null, '', opcoes.url ?? '/');
   router(opcoes as never);
   await assentar();
 }
 
-/** Dispara o popstate como o navegador faria ao voltar para uma URL. */
+/** Fires popstate the way the browser would when going back to a URL. */
 async function voltarPara(url: string, state: Record<string, unknown> | null = null): Promise<void> {
   window.history.replaceState(state, '', url);
   window.dispatchEvent(new PopStateEvent('popstate', { state }));
@@ -69,9 +69,10 @@ async function voltarPara(url: string, state: Record<string, unknown> | null = n
 }
 
 /**
- * Raizes montadas no teste. Limpar `document.body` nao basta: os efeitos das
- * directives continuam vivos e reagindo a `route`, e um `v-router-view` de um
- * teste anterior voltaria a buscar HTML no teste seguinte.
+ * Roots mounted in the test. Clearing `document.body` is not enough: the effects
+ * of the directives stay alive and keep reacting to `route`, and a
+ * `v-router-view` from an earlier test would go and fetch HTML again in the
+ * next one.
  */
 const montadas: HTMLElement[] = [];
 
@@ -94,7 +95,8 @@ beforeEach(() => {
   rolarPara = vi.fn((_x: number, y: number) => {
     posicao = y;
   });
-  // O jsdom nao implementa rolagem: sem o duble cada navegacao imprimiria erro.
+  // jsdom implements no scrolling: without the double every navigation would
+  // print an error.
   window.scrollTo = rolarPara as unknown as typeof window.scrollTo;
   vi.spyOn(window, 'scrollY', 'get').mockImplementation(() => posicao);
 });
@@ -107,10 +109,10 @@ afterEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Casamento de rota
+// Route matching
 // ---------------------------------------------------------------------------
 
-describe('casamento de rota', () => {
+describe('route matching', () => {
   beforeEach(async () => {
     await configurar({
       routes: {
@@ -125,7 +127,7 @@ describe('casamento de rota', () => {
     });
   });
 
-  it('extrai params do padrao', () => {
+  it('extracts params from the pattern', () => {
     const destino = resolve('/usuarios/42');
     expect(destino.matched).toBe('/usuarios/:id');
     expect(destino.params).toEqual({ id: '42' });
@@ -133,31 +135,31 @@ describe('casamento de rota', () => {
     expect(destino.meta).toEqual({ privado: true });
   });
 
-  it('estatico vence parametro, mesmo declarado depois', () => {
+  it('a static segment beats a parameter, even when declared after it', () => {
     expect(resolve('/usuarios/novo').matched).toBe('/usuarios/novo');
     expect(resolve('/usuarios/outra').matched).toBe('/usuarios/:id');
   });
 
-  it('parametro opcional casa com e sem o segmento', () => {
+  it('an optional parameter matches with and without the segment', () => {
     expect(resolve('/posts').matched).toBe('/posts/:slug?');
     expect(resolve('/posts').params).toEqual({});
     expect(resolve('/posts/ola-mundo').params).toEqual({ slug: 'ola-mundo' });
   });
 
-  it('curinga captura o resto do caminho', () => {
+  it('the wildcard captures the rest of the path', () => {
     const destino = resolve('/arquivos/fotos/2024/a.png');
     expect(destino.matched).toBe('/arquivos/*');
     expect(destino.params['*']).toBe('fotos/2024/a.png');
     expect(resolve('/arquivos').params['*']).toBe('');
   });
 
-  it('nada que case cai no curinga solitario', () => {
+  it('whatever matches nothing falls into the lone wildcard', () => {
     const destino = resolve('/pagina/que/nao/existe');
     expect(destino.matched).toBe('*');
     expect(destino.name).toBe('404');
   });
 
-  it('sem curinga nenhum, o destino fica sem rota casada', async () => {
+  it('with no wildcard at all, the target ends up with no matched route', async () => {
     await configurar({ routes: { '/': { component: 'home' } } });
     const destino = resolve('/nada');
     expect(destino.matched).toBeNull();
@@ -165,7 +167,7 @@ describe('casamento de rota', () => {
     expect(destino.meta).toEqual({});
   });
 
-  it('separa query e hash e remonta o fullPath', () => {
+  it('splits query and hash apart and rebuilds the fullPath', () => {
     const destino = resolve('/usuarios/7?aba=dados&ordem=nome#topo');
     expect(destino.path).toBe('/usuarios/7');
     expect(destino.query).toEqual({ aba: 'dados', ordem: 'nome' });
@@ -173,22 +175,22 @@ describe('casamento de rota', () => {
     expect(destino.fullPath).toBe('/usuarios/7?aba=dados&ordem=nome#topo');
   });
 
-  it('normaliza barras sobrando e caminho sem barra inicial', () => {
+  it('normalizes leftover slashes and a path with no leading slash', () => {
     expect(resolve('usuarios//7/').path).toBe('/usuarios/7');
     expect(resolve('').path).toBe('/');
     expect(resolve('/').path).toBe('/');
   });
 
-  it('params vem decodificados, e sequencia invalida fica como esta', () => {
+  it('params come decoded, and an invalid sequence stays as it is', () => {
     expect(resolve('/usuarios/ana%20maria').params.id).toBe('ana maria');
     expect(resolve('/usuarios/100%').params.id).toBe('100%');
   });
 
-  it('caminho mais longo que o padrao nao casa', () => {
+  it('a path longer than the pattern does not match', () => {
     expect(resolve('/usuarios/7/extra').matched).toBe('*');
   });
 
-  it('routePatterns lista do mais especifico para o menos', () => {
+  it('routePatterns lists from the most specific to the least', () => {
     const padroes = routePatterns();
     expect(padroes[padroes.length - 1]).toBe('*');
     expect(padroes.indexOf('/usuarios/novo')).toBeLessThan(padroes.indexOf('/usuarios/:id'));
@@ -196,15 +198,15 @@ describe('casamento de rota', () => {
 });
 
 // ---------------------------------------------------------------------------
-// addRoute e removeRoute
+// addRoute and removeRoute
 // ---------------------------------------------------------------------------
 
-describe('addRoute e removeRoute', () => {
+describe('addRoute and removeRoute', () => {
   beforeEach(async () => {
     await configurar({ routes: { '/': { component: 'home' } } });
   });
 
-  it('addRoute registra e substitui pelo mesmo padrao', () => {
+  it('addRoute registers and replaces under the same pattern', () => {
     addRoute('/sobre', { component: 'sobre', name: 'a' });
     expect(resolve('/sobre').name).toBe('a');
 
@@ -213,17 +215,17 @@ describe('addRoute e removeRoute', () => {
     expect(routePatterns().filter((p) => p === '/sobre')).toHaveLength(1);
   });
 
-  it('removeRoute tira o padrao, aceitando forma nao normalizada', () => {
+  it('removeRoute drops the pattern, accepting a non normalized form', () => {
     addRoute('/sobre', { component: 'sobre' });
     removeRoute('sobre//');
     expect(resolve('/sobre').matched).toBeNull();
 
-    // Remover o que nao existe nao muda nada.
+    // Removing what does not exist changes nothing.
     removeRoute('/nunca-existiu');
     expect(routePatterns()).toEqual(['/']);
   });
 
-  it('o curinga tambem pode ser registrado e removido', () => {
+  it('the wildcard can be registered and removed too', () => {
     addRoute('*', { component: 'nf' });
     expect(resolve('/qualquer').matched).toBe('*');
     removeRoute('*');
@@ -232,10 +234,10 @@ describe('addRoute e removeRoute', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Navegacao no modo history
+// Navigation in history mode
 // ---------------------------------------------------------------------------
 
-describe('navegacao no modo history', () => {
+describe('navigation in history mode', () => {
   beforeEach(async () => {
     await configurar({
       routes: {
@@ -247,13 +249,13 @@ describe('navegacao no modo history', () => {
     });
   });
 
-  it('a rota inicial e aplicada e o titulo segue o modelo', () => {
+  it('the initial route is applied and the title follows the template', () => {
     expect(route.path).toBe('/');
     expect(route.matched).toBe('/');
     expect(document.title).toBe('Inicio | Voodoo');
   });
 
-  it('push muda a URL, a rota e empilha no historico', async () => {
+  it('push changes the URL and the route, and pushes onto the history', async () => {
     expect(await router.push('/usuarios/7?aba=dados')).toBe(true);
     expect(route.path).toBe('/usuarios/7');
     expect(route.params).toEqual({ id: '7' });
@@ -263,7 +265,7 @@ describe('navegacao no modo history', () => {
     expect(document.title).toBe('Usuario | Voodoo');
   });
 
-  it('replace troca a entrada em vez de empilhar', async () => {
+  it('replace swaps the entry instead of pushing', async () => {
     const substituir = vi.spyOn(window.history, 'replaceState');
     const empilhar = vi.spyOn(window.history, 'pushState');
 
@@ -272,7 +274,7 @@ describe('navegacao no modo history', () => {
     expect(empilhar).not.toHaveBeenCalled();
   });
 
-  it('navegar para a rota atual nao faz nada, salvo com force', async () => {
+  it('navigating to the current route does nothing, unless force is given', async () => {
     const empilhar = vi.spyOn(window.history, 'pushState');
     expect(await router.push('/')).toBe(true);
     expect(empilhar).not.toHaveBeenCalled();
@@ -281,13 +283,13 @@ describe('navegacao no modo history', () => {
     expect(empilhar).toHaveBeenCalledTimes(1);
   });
 
-  it('o estado extra vai junto na entrada do historico', async () => {
+  it('the extra state travels along in the history entry', async () => {
     await router.push('/usuarios', { state: { origem: 'menu' } });
     expect(window.history.state.origem).toBe('menu');
     expect(window.history.state.__voodooRoute).toBeTruthy();
   });
 
-  it('titleTemplate sem %s usa o titulo puro', async () => {
+  it('a titleTemplate with no %s uses the plain title', async () => {
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x', title: 'Pagina X' } },
       titleTemplate: 'fixo',
@@ -296,7 +298,7 @@ describe('navegacao no modo history', () => {
     expect(document.title).toBe('Pagina X');
   });
 
-  it('back, forward e go apenas repassam para o historico', () => {
+  it('back, forward and go only hand off to the history', () => {
     const voltar = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
     const avancar = vi.spyOn(window.history, 'forward').mockImplementation(() => undefined);
     const ir = vi.spyOn(window.history, 'go').mockImplementation(() => undefined);
@@ -311,19 +313,19 @@ describe('navegacao no modo history', () => {
   });
 
   /**
-   * Regressao: a API era montada com `Object.assign`, que le cada getter uma
-   * unica vez e copia o valor. Com isso `V.router.ready` nascia `false` no
-   * carregamento do modulo e continuava `false` para sempre, mesmo depois de
+   * Regression: the API was built with `Object.assign`, which reads each getter
+   * exactly once and copies the value. That made `V.router.ready` come up
+   * `false` at module load and stay `false` forever, even after
    * `V.router({...})`.
    */
-  it('router.ready fica verdadeiro depois da configuracao', () => {
+  it('router.ready turns true after the configuration', () => {
     expect(router.ready).toBe(true);
     expect(router.current).toBe(route);
   });
 });
 
-describe('base no modo history', () => {
-  it('o prefixo entra na URL e sai do caminho da rota', async () => {
+describe('base in history mode', () => {
+  it('the prefix goes into the URL and comes back out of the route path', async () => {
     await configurar({
       url: '/app/usuarios',
       base: '/app',
@@ -334,12 +336,12 @@ describe('base no modo history', () => {
     expect(window.location.pathname).toBe('/app/usuarios');
 
     await router.push('/');
-    // A raiz da aplicacao vira `/app/`, e `stripBase` a le de volta como `/`.
+    // The application root becomes `/app/`, and `stripBase` reads it back as `/`.
     expect(window.location.pathname).toBe('/app/');
     expect(route.path).toBe('/');
   });
 
-  it('URL fora do prefixo continua como esta', async () => {
+  it('a URL outside the prefix stays as it is', async () => {
     await configurar({
       url: '/outro/lugar',
       base: '/app',
@@ -350,10 +352,10 @@ describe('base no modo history', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Modo hash
+// Hash mode
 // ---------------------------------------------------------------------------
 
-describe('modo hash', () => {
+describe('hash mode', () => {
   beforeEach(async () => {
     await configurar({
       url: '/pagina.html#/usuarios/9?aba=x',
@@ -366,25 +368,25 @@ describe('modo hash', () => {
     });
   });
 
-  it('le a rota depois do # na entrada', () => {
+  it('reads the route after the # on entry', () => {
     expect(route.path).toBe('/usuarios/9');
     expect(route.params).toEqual({ id: '9' });
     expect(route.query).toEqual({ aba: 'x' });
   });
 
-  it('sem nada depois do # a rota e a raiz', async () => {
+  it('with nothing after the # the route is the root', async () => {
     await configurar({ url: '/pagina.html', mode: 'hash', routes: { '/': { component: 'h' } } });
     expect(route.path).toBe('/');
   });
 
-  it('navegar escreve o destino depois do #, preservando o caminho do arquivo', async () => {
+  it('navigating writes the target after the #, preserving the file path', async () => {
     await router.push('/sobre');
     expect(window.location.hash).toBe('#/sobre');
     expect(window.location.pathname).toBe('/pagina.html');
     expect(route.path).toBe('/sobre');
   });
 
-  it('hashchange e tratado como navegacao', async () => {
+  it('hashchange is handled as a navigation', async () => {
     window.history.replaceState(null, '', '/pagina.html#/sobre');
     window.dispatchEvent(new HashChangeEvent('hashchange'));
     await assentar();
@@ -397,7 +399,7 @@ describe('modo hash', () => {
 // ---------------------------------------------------------------------------
 
 describe('guards', () => {
-  it('beforeEach sincrono recebe destino e origem', async () => {
+  it('a synchronous beforeEach receives target and origin', async () => {
     const visto: Array<[string, string]> = [];
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
@@ -411,7 +413,7 @@ describe('guards', () => {
     expect(visto[visto.length - 1]).toEqual(['/x', '/']);
   });
 
-  it('beforeEach assincrono e aguardado', async () => {
+  it('an asynchronous beforeEach is awaited', async () => {
     const ordem: string[] = [];
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
@@ -428,7 +430,7 @@ describe('guards', () => {
     expect(route.path).toBe('/x');
   });
 
-  it('guard que devolve false cancela a navegacao e nao mexe na URL', async () => {
+  it('a guard that returns false cancels the navigation and leaves the URL alone', async () => {
     let liberar = true;
     await configurar({
       routes: { '/': { component: 'h' }, '/privado': { component: 'p' } },
@@ -441,7 +443,7 @@ describe('guards', () => {
     expect(window.location.pathname).toBe('/');
   });
 
-  it('guard que devolve string redireciona', async () => {
+  it('a guard that returns a string redirects', async () => {
     await configurar({
       routes: {
         '/': { component: 'h' },
@@ -456,7 +458,7 @@ describe('guards', () => {
     expect(window.location.pathname).toBe('/login');
   });
 
-  it('beforeEnter da rota roda antes do global e pode cancelar', async () => {
+  it('the beforeEnter of the route runs before the global one and can cancel', async () => {
     const ordem: string[] = [];
     await configurar({
       routes: {
@@ -480,7 +482,7 @@ describe('guards', () => {
     expect(ordem).toEqual(['rota']);
   });
 
-  it('beforeEnter tambem pode redirecionar', async () => {
+  it('beforeEnter can redirect too', async () => {
     await configurar({
       routes: {
         '/': { component: 'h' },
@@ -492,7 +494,7 @@ describe('guards', () => {
     expect(route.path).toBe('/novo');
   });
 
-  it('beforeEnter assincrono que libera deixa passar', async () => {
+  it('an asynchronous beforeEnter that allows it lets the navigation through', async () => {
     await configurar({
       routes: {
         '/': { component: 'h' },
@@ -508,7 +510,7 @@ describe('guards', () => {
     expect(route.path).toBe('/x');
   });
 
-  it('guard que cancela a rota inicial deixa a rota como estava', async () => {
+  it('a guard that cancels the initial route leaves the route as it was', async () => {
     await configurar({ routes: { '/': { component: 'h' } } });
     const antes = route.path;
 
@@ -521,7 +523,7 @@ describe('guards', () => {
     expect(route.matched).not.toBe('/bloqueado');
   });
 
-  it('afterEach roda depois da navegacao concluida', async () => {
+  it('afterEach runs after the navigation is complete', async () => {
     const chamadas: Array<[string, string]> = [];
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
@@ -535,8 +537,8 @@ describe('guards', () => {
   });
 });
 
-describe('redirect declarado na rota', () => {
-  it('leva para o destino sem passar pela rota de origem', async () => {
+describe('redirect declared on the route', () => {
+  it('takes you to the target without going through the origin route', async () => {
     await configurar({
       routes: {
         '/': { component: 'h' },
@@ -551,7 +553,7 @@ describe('redirect declarado na rota', () => {
     expect(window.location.pathname).toBe('/novo');
   });
 
-  it('redirect tambem vale na rota inicial', async () => {
+  it('redirect holds on the initial route too', async () => {
     await configurar({
       url: '/antigo',
       routes: { '/antigo': { redirect: '/novo' }, '/novo': { component: 'n' } },
@@ -559,7 +561,7 @@ describe('redirect declarado na rota', () => {
     expect(route.path).toBe('/novo');
   });
 
-  it('ciclo de redirecionamento para e avisa em vez de travar', async () => {
+  it('a redirect cycle stops and warns instead of hanging', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await configurar({
       routes: {
@@ -573,7 +575,7 @@ describe('redirect declarado na rota', () => {
     expect(String(aviso.mock.calls.at(-1)?.[0])).toContain('too many redirects');
   });
 
-  it('ciclo na rota inicial tambem e interrompido', async () => {
+  it('a cycle on the initial route is broken too', async () => {
     const aviso = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await configurar({
       url: '/a',
@@ -584,11 +586,11 @@ describe('redirect declarado na rota', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Voltar e avancar
+// Back and forward
 // ---------------------------------------------------------------------------
 
 describe('popstate', () => {
-  it('voltar aplica a rota da URL anterior', async () => {
+  it('going back applies the route of the previous URL', async () => {
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
     });
@@ -599,7 +601,7 @@ describe('popstate', () => {
     expect(route.path).toBe('/');
   });
 
-  it('popstate para a mesma rota nao faz nada', async () => {
+  it('a popstate to the same route does nothing', async () => {
     const chamadas: string[] = [];
     await configurar({
       routes: { '/': { component: 'h' } },
@@ -611,7 +613,7 @@ describe('popstate', () => {
     expect(chamadas).toEqual([]);
   });
 
-  it('guard que recusa devolve a URL anterior sem criar entrada nova', async () => {
+  it('a guard that refuses puts the previous URL back without creating a new entry', async () => {
     let liberar = true;
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
@@ -625,7 +627,7 @@ describe('popstate', () => {
     expect(window.location.pathname).toBe('/x');
   });
 
-  it('guard que redireciona no popstate navega para o destino', async () => {
+  it('a guard that redirects on popstate navigates to the target', async () => {
     await configurar({
       routes: {
         '/': { component: 'h' },
@@ -642,11 +644,11 @@ describe('popstate', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Rolagem
+// Scrolling
 // ---------------------------------------------------------------------------
 
-describe('rolagem', () => {
-  it('rota nova volta ao topo', async () => {
+describe('scrolling', () => {
+  it('a new route goes back to the top', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     posicao = 400;
 
@@ -655,7 +657,7 @@ describe('rolagem', () => {
     expect(rolarPara).toHaveBeenCalledWith(0, 0);
   });
 
-  it('scroll: false desliga a rolagem daquela navegacao', async () => {
+  it('scroll: false turns the scrolling off for that navigation', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     posicao = 400;
 
@@ -664,7 +666,7 @@ describe('rolagem', () => {
     expect(rolarPara).not.toHaveBeenCalled();
   });
 
-  it('a posicao e guardada e restaurada ao voltar', async () => {
+  it('the position is stored and restored on the way back', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     const chaveInicial = window.history.state.__voodooRoute as string;
 
@@ -678,7 +680,7 @@ describe('rolagem', () => {
     expect(rolarPara).toHaveBeenCalledWith(0, 250);
   });
 
-  it('voltar para uma entrada sem posicao guardada vai ao topo', async () => {
+  it('going back to an entry with no stored position goes to the top', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     await router.push('/x');
     await assentar();
@@ -689,7 +691,7 @@ describe('rolagem', () => {
     expect(rolarPara).toHaveBeenCalledWith(0, 0);
   });
 
-  it('scrollBehavior proprio recebe a posicao guardada e decide o destino', async () => {
+  it('a custom scrollBehavior receives the stored position and decides the target', async () => {
     const visto: Array<number | null> = [];
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
@@ -705,7 +707,7 @@ describe('rolagem', () => {
     expect(rolarPara).toHaveBeenCalledWith(0, 120);
   });
 
-  it('scrollBehavior que devolve false assume a rolagem', async () => {
+  it('a scrollBehavior that returns false takes the scrolling over', async () => {
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
       scrollBehavior: () => false,
@@ -717,7 +719,7 @@ describe('rolagem', () => {
     expect(rolarPara).not.toHaveBeenCalled();
   });
 
-  it('scrollBehavior sem retorno cai no comportamento padrao', async () => {
+  it('a scrollBehavior with no return falls back to the default behavior', async () => {
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
       scrollBehavior: () => undefined,
@@ -729,7 +731,7 @@ describe('rolagem', () => {
     expect(rolarPara).toHaveBeenCalledWith(0, 0);
   });
 
-  it('hash com ancora rola ate o elemento, por id ou por name', async () => {
+  it('a hash with an anchor scrolls to the element, by id or by name', async () => {
     document.body.innerHTML =
       '<div id="secao"></div><a name="rodape"></a><div id="com espaco"></div>';
     const porId = document.getElementById('secao') as HTMLElement;
@@ -748,17 +750,17 @@ describe('rolagem', () => {
     expect(porName.scrollIntoView).toHaveBeenCalled();
   });
 
-  it('hash sem ancora correspondente volta ao topo', async () => {
+  it('a hash with no matching anchor goes back to the top', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     posicao = 300;
 
-    // O texto tem caractere que quebraria o seletor, entao nem e consultado.
+    // The text has a character that would break the selector, so it is never queried.
     await router.push('/x#nao existe');
     await assentar();
     expect(rolarPara).toHaveBeenCalledWith(0, 0);
   });
 
-  it('a rota inicial com hash tambem rola ate a ancora', async () => {
+  it('the initial route with a hash also scrolls to the anchor', async () => {
     document.body.innerHTML = '<div id="inicio"></div>';
     const alvo = document.getElementById('inicio') as HTMLElement;
     alvo.scrollIntoView = vi.fn();
@@ -768,7 +770,7 @@ describe('rolagem', () => {
     expect(alvo.scrollIntoView).toHaveBeenCalled();
   });
 
-  it('nao rola quando a pagina ja esta na posicao pedida', async () => {
+  it('does not scroll when the page is already at the requested position', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     posicao = 0;
 
@@ -794,7 +796,7 @@ describe('v-router-view', () => {
     return new Response(texto, { status: 200, headers: { 'content-type': 'text/html' } });
   }
 
-  it('monta o componente da rota casada', async () => {
+  it('mounts the component of the matched route', async () => {
     defineComponent('pagina-x', { template: '<p>conteudo x</p>' });
     await configurar({
       routes: { '/': { component: 'home' }, '/x': { component: 'pagina-x' } },
@@ -809,7 +811,7 @@ describe('v-router-view', () => {
     expect(main.textContent).toContain('conteudo x');
   });
 
-  it('carrega o HTML remoto da rota com view e reaproveita o cache', async () => {
+  it('loads the remote HTML of a route with view and reuses the cache', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(html('<p>remoto</p>')));
     await configurar({
       routes: { '/': { component: 'h' }, '/parcial': { view: '/parciais/a.html' } },
@@ -835,7 +837,7 @@ describe('v-router-view', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it('falha ao carregar a view nao derruba a tela', async () => {
+  it('a failure to load the view does not bring the screen down', async () => {
     const erro = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     fetchMock.mockImplementation(() => Promise.reject(new TypeError('offline')));
     await configurar({
@@ -852,7 +854,7 @@ describe('v-router-view', () => {
     erro.mockRestore();
   });
 
-  it('sem rota casada volta o conteudo original', async () => {
+  it('with no matched route the original content comes back', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     const raiz = montar('<main v-router-view>carregando...</main>');
 
@@ -861,7 +863,7 @@ describe('v-router-view', () => {
     expect((raiz.querySelector('main') as HTMLElement).textContent).toBe('carregando...');
   });
 
-  it('a limpeza esvazia a area da rota', async () => {
+  it('the cleanup empties the route area', async () => {
     defineComponent('pagina-y', { template: '<p>y</p>' });
     await configurar({ routes: { '/': { component: 'h' }, '/y': { component: 'pagina-y' } } });
 
@@ -875,7 +877,7 @@ describe('v-router-view', () => {
     expect(main.textContent).toBe('');
   });
 
-  it('o modificador no-transition tambem monta', async () => {
+  it('the no-transition modifier mounts too', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(html('<p>sem transicao</p>')));
     await configurar({
       transition: false,
@@ -905,11 +907,12 @@ describe('v-link', () => {
   });
 
   /**
-   * Clica no link e devolve `true` quando a directive impediu o padrao.
+   * Clicks the link and returns `true` when the directive prevented the default.
    *
-   * O ouvinte espiao entra depois do da directive, no mesmo alvo, entao ele ve
-   * a decisao ja tomada e so entao impede o evento. Sem isso o jsdom tentaria
-   * navegar de verdade nos casos em que o comportamento nativo e o esperado.
+   * The spy listener goes in after the one from the directive, on the same
+   * target, so it sees the decision already taken and only then prevents the
+   * event. Without that jsdom would try to navigate for real in the cases where
+   * the native behavior is the one expected.
    */
   function clicar(el: Element, init: MouseEventInit = {}): boolean {
     let impedido = false;
@@ -923,7 +926,7 @@ describe('v-link', () => {
     return impedido;
   }
 
-  it('o clique navega e o href nativo e impedido', async () => {
+  it('the click navigates and the native href is prevented', async () => {
     const raiz = montar('<a v-link href="/usuarios">Usuarios</a>');
     const impedido = clicar(raiz.querySelector('a') as Element);
     await assentar();
@@ -932,7 +935,7 @@ describe('v-link', () => {
     expect(route.path).toBe('/usuarios');
   });
 
-  it('a expressao vence o href, tanto literal quanto avaliada', async () => {
+  it('the expression beats the href, both literal and evaluated', async () => {
     const raiz = montar('<a v-link="\'/usuarios/\' + id" href="/errado"></a>', { id: 5 });
     clicar(raiz.querySelector('a') as Element);
     await assentar();
@@ -944,7 +947,7 @@ describe('v-link', () => {
     expect(route.path).toBe('/usuarios');
   });
 
-  it('as classes de ativo acompanham a rota', async () => {
+  it('the active classes follow the route', async () => {
     const raiz = montar(
       '<a v-link href="/usuarios">L</a><a v-link href="/">Home</a>' +
         '<a v-link href="/usuarios/7">D</a>'
@@ -958,12 +961,12 @@ describe('v-link', () => {
     expect(lista.classList.contains('v-link-exact-active')).toBe(false);
     expect(detalhe.classList.contains('v-link-exact-active')).toBe(true);
     expect(detalhe.getAttribute('aria-current')).toBe('page');
-    // A raiz so fica ativa nela mesma.
+    // The root is only active on itself.
     expect(home.classList.contains('v-link-active')).toBe(false);
     expect(lista.hasAttribute('aria-current')).toBe(false);
   });
 
-  it('as classes de ativo podem ser trocadas na configuracao', async () => {
+  it('the active classes can be swapped in the configuration', async () => {
     await configurar({
       routes: { '/': { component: 'h' }, '/x': { component: 'x' } },
       linkActiveClass: 'ativo',
@@ -978,7 +981,7 @@ describe('v-link', () => {
     expect(a.classList.contains('ativo-exato')).toBe(true);
   });
 
-  it('clique com tecla modificadora ou botao secundario segue o padrao do navegador', async () => {
+  it('a click with a modifier key or secondary button follows the browser default', async () => {
     const raiz = montar('<a v-link href="/usuarios"></a>');
     const a = raiz.querySelector('a') as Element;
 
@@ -995,7 +998,7 @@ describe('v-link', () => {
     expect(route.path).toBe('/');
   });
 
-  it('target, download, rel external, dominio externo e href vazio ficam nativos', async () => {
+  it('target, download, rel external, an external domain and empty href stay native', async () => {
     const raiz = montar(
       '<a v-link href="/a" target="_blank"></a>' +
         '<a v-link href="/b" download></a>' +
@@ -1013,14 +1016,14 @@ describe('v-link', () => {
     expect(route.path).toBe('/');
   });
 
-  it('target="_self" continua sendo navegacao interna', async () => {
+  it('target="_self" is still internal navigation', async () => {
     const raiz = montar('<a v-link href="/usuarios" target="_self"></a>');
     expect(clicar(raiz.querySelector('a') as Element)).toBe(true);
     await assentar();
     expect(route.path).toBe('/usuarios');
   });
 
-  it('clique ja impedido por outro tratador nao navega', async () => {
+  it('a click already prevented by another handler does not navigate', async () => {
     const raiz = montar('<a v-link href="/usuarios"></a>');
     const a = raiz.querySelector('a') as Element;
     a.addEventListener('click', (e) => e.preventDefault(), { capture: true });
@@ -1030,7 +1033,7 @@ describe('v-link', () => {
     expect(route.path).toBe('/');
   });
 
-  it('o modificador replace usa replaceState', async () => {
+  it('the replace modifier uses replaceState', async () => {
     const substituir = vi.spyOn(window.history, 'replaceState');
     const empilhar = vi.spyOn(window.history, 'pushState');
     const raiz = montar('<a v-link.replace href="/usuarios"></a>');
@@ -1041,7 +1044,7 @@ describe('v-link', () => {
     expect(empilhar).not.toHaveBeenCalled();
   });
 
-  it('no modo hash o href com # vira caminho de rota', async () => {
+  it('in hash mode an href with # becomes a route path', async () => {
     await configurar({
       url: '/p.html#/',
       mode: 'hash',
@@ -1054,13 +1057,13 @@ describe('v-link', () => {
     await assentar();
     expect(route.path).toBe('/sobre');
 
-    // `#` sozinho vira a raiz.
+    // `#` on its own becomes the root.
     clicar(soHash);
     await assentar();
     expect(route.path).toBe('/');
   });
 
-  it('a limpeza remove o ouvinte de clique', async () => {
+  it('the cleanup removes the click listener', async () => {
     const raiz = montar('<a v-link href="/usuarios"></a>');
     const a = raiz.querySelector('a') as Element;
     destroy(raiz);
@@ -1086,7 +1089,7 @@ describe('v-route-active', () => {
     });
   });
 
-  it('aplica a classe padrao quando a rota esta dentro do caminho', async () => {
+  it('applies the default class when the route is inside the path', async () => {
     const raiz = montar('<li v-route-active="/usuarios"></li>');
     const li = raiz.querySelector('li') as HTMLElement;
     expect(li.classList.contains('active')).toBe(false);
@@ -1096,7 +1099,7 @@ describe('v-route-active', () => {
     expect(li.classList.contains('active')).toBe(true);
   });
 
-  it('o argumento troca a classe e o modificador exact restringe', async () => {
+  it('the argument swaps the class and the exact modifier narrows it', async () => {
     const raiz = montar('<li v-route-active:destaque.exact="/usuarios"></li>');
     const li = raiz.querySelector('li') as HTMLElement;
 
@@ -1109,7 +1112,7 @@ describe('v-route-active', () => {
     expect(li.classList.contains('destaque')).toBe(true);
   });
 
-  it('o destino tambem pode vir de uma expressao, e vazio nunca ativa', async () => {
+  it('the target can also come from an expression, and empty never activates', async () => {
     const raiz = montar('<li v-route-active="alvo"></li><li v-route-active=""></li>', {
       alvo: '/usuarios',
     });
@@ -1123,11 +1126,11 @@ describe('v-route-active', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Ciclo de vida dos ouvintes
+// Listener lifecycle
 // ---------------------------------------------------------------------------
 
-describe('ouvintes do historico', () => {
-  it('stop desliga o tratamento de popstate', async () => {
+describe('history listeners', () => {
+  it('stop turns the popstate handling off', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     await router.push('/x');
 
@@ -1135,11 +1138,11 @@ describe('ouvintes do historico', () => {
     await voltarPara('/');
     expect(route.path).toBe('/x');
 
-    // Parar duas vezes nao pode explodir.
+    // Stopping twice must not blow up.
     expect(() => router.stop()).not.toThrow();
   });
 
-  it('navigate religa os ouvintes quando o roteador estava parado', async () => {
+  it('navigate wires the listeners back up when the router was stopped', async () => {
     await configurar({ routes: { '/': { component: 'h' }, '/x': { component: 'x' } } });
     router.stop();
 

@@ -1,51 +1,51 @@
-# Loja
+# Store
 
-Catalogo, filtros, carrinho lateral e finalizacao em quatro etapas. Tudo roda no
-navegador, sem servidor. O carrinho fica em um store global da Voodoo, e por isso
-aparece direto no HTML por `$store.carrinho`, inclusive no contador do topo, que
-esta fora do escopo de qualquer componente de carrinho.
+Catalogue, filters, side cart and a four step checkout. Everything runs in the
+browser, with no server. The cart lives in a global Voodoo store, and that is why
+it shows up straight in the HTML through `$store.carrinho`, including in the
+counter at the top, which sits outside the scope of any cart component.
 
-## O que a demo mostra
+## What the demo shows
 
-- Catalogo em grade com 12 produtos, etiqueta de desconto, nota em estrelas e
-  preco cheio riscado quando ha promocao.
-- Filtro por categoria, faixa de preco por controle deslizante, ordenacao e
-  busca com espera de 250 ms.
-- Gaveta lateral do carrinho com quantidade por item, remover, subtotal,
-  desconto, frete e total, todos formatados em reais.
-- Cupom de desconto, com tres codigos validos: `VOODOO10`, `MAGIA20` e `VUDU5`.
-- Frete gratis acima de R$ 399,00, recalculado junto com o cupom.
-- Contador de itens no botao do carrinho.
-- Carrinho persistido: recarregue a pagina e ele continua la.
-- Finalizacao em quatro etapas, com identificacao, entrega, pagamento e
-  confirmacao, cada etapa validada antes de deixar avancar.
-- Tema claro e escuro.
+- Catalogue in a grid with 12 products, discount badge, star rating and the full
+  price struck through when there is a promotion.
+- Filter by category, price range on a slider, sorting and search with a 250 ms
+  wait.
+- Side drawer for the cart with quantity per item, remove, subtotal, discount,
+  shipping and total, all formatted in reais.
+- Discount coupon, with three valid codes: `VOODOO10`, `MAGIA20` and `VUDU5`.
+- Free shipping above R$ 399,00, recalculated together with the coupon.
+- Item counter on the cart button.
+- Persisted cart: reload the page and it is still there.
+- Four step checkout, with identification, delivery, payment and confirmation,
+  each step validated before it lets you move on.
+- Light and dark theme.
 
-## Recursos da Voodoo exercitados
+## Voodoo features exercised
 
-| Recurso | Onde aparece |
+| Feature | Where it shows up |
 | --- | --- |
-| `V.store(..., { persist: true })` | carrinho inteiro, com metodos e totais |
-| `$store` no HTML | contador do topo, itens, subtotal, desconto, frete e total |
-| `V.component` com `state`, `computed` e `methods` | catalogo, filtros e etapas |
-| `v-for` com `:key` | produtos, itens do carrinho, categorias e passos |
-| `v-show` e `v-transition` | gaveta, fundo escuro e cada etapa |
-| `v-model` e `v-model.number` | busca, categoria, ordenacao e faixa de preco |
-| `v-mask` | telefone, CEP, cartao, validade e codigo de seguranca |
-| `v-validate` e regras por atributo | `v-required`, `v-email`, `v-phone`, `v-cep`, `v-creditcard` |
-| `V.validateForm` | valida a etapa atual antes de avancar |
-| `v-theme-toggle` | botao de tema, sem JavaScript proprio |
-| `V.toast` | produto adicionado, cupom aplicado ou invalido, pagamento |
-| `@keyup.enter`, `@keyup.esc.window` | aplicar cupom, fechar a gaveta |
-| `V.formatCurrency`, `V.sortBy`, `V.sleep`, `V.random` | apoio |
+| `V.store(..., { persist: true })` | the whole cart, with methods and totals |
+| `$store` in the HTML | counter at the top, items, subtotal, discount, shipping and total |
+| `V.component` with `state`, `computed` and `methods` | catalogue, filters and steps |
+| `v-for` with `:key` | products, cart items, categories and steps |
+| `v-show` and `v-transition` | drawer, dark backdrop and each step |
+| `v-model` and `v-model.number` | search, category, sorting and price range |
+| `v-mask` | phone, postcode, card, expiry date and security code |
+| `v-validate` and rules by attribute | `v-required`, `v-email`, `v-phone`, `v-cep`, `v-creditcard` |
+| `V.validateForm` | validates the current step before moving on |
+| `v-theme-toggle` | theme button, with no JavaScript of its own |
+| `V.toast` | product added, coupon applied or invalid, payment |
+| `@keyup.enter`, `@keyup.esc.window` | applying the coupon, closing the drawer |
+| `V.formatCurrency`, `V.sortBy`, `V.sleep`, `V.random` | support |
 
-## Duas anotacoes de implementacao
+## Two implementation notes
 
-Os totais sao gravados no proprio store por um metodo `recalcular`, em vez de
-ficarem em getters. A definicao de store passa por uma copia rasa, o que
-congelaria um getter no valor inicial, entao guardar o resultado calculado e o
-caminho seguro e deixa o HTML bem mais simples de ler.
+The totals are written into the store itself by a `recalcular` method, instead of
+living in getters. The store definition goes through a shallow copy, which would
+freeze a getter at its initial value, so keeping the computed result is the safe
+route and makes the HTML far simpler to read.
 
-Cada etapa da finalizacao e um `<form>` separado com `v-validate`. Assim
-`V.validateForm` valida somente os campos daquela etapa, e as mensagens de erro
-aparecem abaixo de cada campo sem nenhum codigo de apresentacao na demo.
+Each checkout step is a separate `<form>` with `v-validate`. That way
+`V.validateForm` validates only the fields of that step, and the error messages
+appear below each field with no presentation code in the demo.

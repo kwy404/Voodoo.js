@@ -1,49 +1,49 @@
-# Shaders 3D
+# 3D shaders
 
-Quatro cenas de raymarching em WebGL2 puro, com um painel de controles reativo
-ao lado. Sem Three.js, sem CDN, sem nenhuma dependencia externa: a Voodoo tem
-zero dependencias de runtime e os exemplos respeitam isso.
+Four raymarching scenes in plain WebGL2, with a reactive control panel next to
+them. No Three.js, no CDN, no external dependency at all: Voodoo has zero
+runtime dependencies and the examples respect that.
 
-Abra em `http://localhost:5173/examples/shaders/`.
+Open it at `http://localhost:5173/examples/shaders/`.
 
-## As cenas
+## The scenes
 
-| Cena | O que e |
+| Scene | What it is |
 | --- | --- |
-| **Mandelbulb** | O fractal 3D classico, marchado por distancia. A potencia respira com o tempo e muda a topologia inteira do solido. |
-| **Tunel infinito** | Coordenadas polares viram profundidade. O ruido e amostrado sobre um circulo do plano, e nao sobre o angulo cru, para o duto nao ganhar uma costura visivel. |
-| **Metaballs** | Esferas fundidas por uniao suave, com sombra macia por marcha secundaria, reflexo do ceu e Fresnel. O piso tem uma grade discreta para dar escala. |
-| **Oceano** | Campo de altura somando seis ondas. A superficie e encontrada por posicao falsa, a normal achata com a distancia para nao serrilhar no horizonte, e o sol deixa um caminho na agua. |
+| **Mandelbulb** | The classic 3D fractal, marched by distance. The power breathes with time and changes the whole topology of the solid. |
+| **Infinite tunnel** | Polar coordinates become depth. The noise is sampled over a circle in the plane, and not over the raw angle, so the duct does not get a visible seam. |
+| **Metaballs** | Spheres fused by a smooth union, with a soft shadow from a secondary march, a sky reflection and Fresnel. The floor has a discreet grid to give a sense of scale. |
+| **Ocean** | A height field summing six waves. The surface is found by false position, the normal flattens with distance so it does not alias at the horizon, and the sun leaves a trail on the water. |
 
-Todas compartilham o mesmo cabecalho de uniforms: `resolucao`, `tempo`, `camera`
-e cinco parametros genericos `p1..p5`, que cada cena interpreta do seu jeito.
-E isso que permite o painel ser generico.
+All of them share the same uniform header: `resolucao`, `tempo`, `camera` and
+five generic parameters `p1..p5`, which each scene interprets in its own way.
+That is what lets the panel be generic.
 
-## O que esta demo mostra da Voodoo.js
+## What this demo shows of Voodoo.js
 
-**O painel inteiro nasce de um `v-for`.** Cada cena declara a sua propria lista
-de controles, com rotulo, minimo, maximo e passo. O HTML percorre essa lista e
-monta os sliders. Adicionar um controle novo e acrescentar um objeto ao array:
-nao existe nenhum codigo de interface para escrever.
+**The entire panel is born from a `v-for`.** Each scene declares its own list of
+controls, with a label, a minimum, a maximum and a step. The HTML walks that
+list and builds the sliders. Adding a new control means adding an object to the
+array: there is no interface code to write.
 
-**Os sliders usam `v-model`.** O valor que a pessoa arrasta e gravado direto no
-mesmo objeto que o loop de render le para enviar como uniform. Nao existe
-nenhuma linha de "pegue o valor do input e atualize o uniform".
+**The sliders use `v-model`.** The value the person drags is written straight
+into the same object that the render loop reads to send as a uniform. There is
+not a single line of "take the value from the input and update the uniform".
 
-**Trocar de cena troca a lista, e a interface se remonta sozinha.** As abas, o
-destaque da aba ativa, a legenda sobre a cena e o painel de controles vem todos
-do computed `cena`.
+**Switching scenes switches the list, and the interface rebuilds itself.** The
+tabs, the highlight on the active tab, the caption about the scene and the
+control panel all come from the computed `cena`.
 
-**Recursos nativos de WebGL ficam fora do estado reativo.** O contexto, os
-programas e o VAO moram em `this.gpu`, um objeto comum criado no `mounted`.
-Objetos nativos do driver nao devem ser embrulhados em proxy nem observados.
+**Native WebGL resources stay outside the reactive state.** The context, the
+programs and the VAO live in `this.gpu`, a plain object created in `mounted`.
+Native driver objects should not be wrapped in a proxy or observed.
 
-## Uma directive propria em oito linhas
+## A directive of your own, in eight lines
 
-Um `<input type="range">` nasce com `min 0`, `max 100` e `step 1`. Como o
-`v-model` roda com prioridade 40 e o `v-bind` com 30, um `:min` comum chegaria
-tarde: o navegador arredondaria `0.12` para `0` antes de a faixa certa ser
-escrita. A demo resolve isso com uma directive propria:
+An `<input type="range">` is born with `min 0`, `max 100` and `step 1`. Since
+`v-model` runs at priority 40 and `v-bind` at 30, a plain `:min` would arrive
+too late: the browser would round `0.12` down to `0` before the right range was
+written. The demo solves that with a directive of its own:
 
 ```js
 V.directive('faixa', {
@@ -56,23 +56,24 @@ V.directive('faixa', {
 });
 ```
 
-E um exemplo pequeno de como a Voodoo deixa a ordem de execucao das directives
-nas maos de quem usa.
+It is a small example of how Voodoo leaves the execution order of the directives
+in the hands of whoever is using it.
 
-## Fallback obrigatorio
+## A mandatory fallback
 
-Sem WebGL2 nao ha o que desenhar, entao a demo mostra uma mensagem explicando o
-que aconteceu, em vez de deixar um retangulo preto. Se o contexto existir mas o
-driver recusar um shader, a demo mostra o relatorio do compilador na tela.
+Without WebGL2 there is nothing to draw, so the demo shows a message explaining
+what happened instead of leaving a black rectangle behind. If the context does
+exist but the driver refuses a shader, the demo puts the compiler report on the
+screen.
 
-## Comportamento
+## Behavior
 
-- Arraste sobre a cena para girar a camera; as setas do teclado fazem o mesmo, e
-  `Espaco` pausa.
-- O slider de resolucao e o controle honesto de desempenho: em raymarching o
-  custo e por pixel.
-- Sair da aba pausa o tempo, para nao queimar GPU de graca.
-- O loop e cancelado e os programas e o VAO sao liberados no `beforeUnmount` e
-  no `pagehide`.
-- `prefers-reduced-motion` desliga as transicoes de interface; as cenas
-  continuam animando, mas a pausa fica a um clique.
+- Drag over the scene to turn the camera; the arrow keys do the same, and
+  `Space` pauses.
+- The resolution slider is the honest performance control: in raymarching the
+  cost is per pixel.
+- Leaving the tab pauses time, so it does not burn GPU for nothing.
+- The loop is canceled and the programs and the VAO are released on
+  `beforeUnmount` and on `pagehide`.
+- `prefers-reduced-motion` turns off the interface transitions; the scenes keep
+  animating, but pause is one click away.

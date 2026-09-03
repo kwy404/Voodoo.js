@@ -1,10 +1,10 @@
 /**
- * Performance: compara a ultima medicao com a baseline gravada.
+ * Performance: compares the latest measurement with the recorded baseline.
  *
- * Este check nao mede nada por conta propria. Quem mede e `benchmarks/`. Se
- * ainda nao existe medicao, o resultado e SKIP com a instrucao — jamais um
- * numero inventado. Um relatorio de desempenho com dado fabricado e pior que
- * relatorio nenhum, porque alguem vai tomar decisao em cima dele.
+ * This check measures nothing on its own. `benchmarks/` is what measures. If
+ * there is no measurement yet, the result is SKIP with the instructions, never
+ * an invented number. A performance report with fabricated data is worse than
+ * no report at all, because someone is going to make a decision based on it.
  */
 
 import { existsSync } from 'node:fs';
@@ -18,16 +18,16 @@ const BENCH_DIR = join(ROOT, 'benchmarks');
 const LATEST = join(BENCH_DIR, 'results', 'latest.json');
 const BASELINE = join(BENCH_DIR, 'results', 'baseline.json');
 
-/** Piora aceitavel antes de virar aviso e antes de virar falha. */
+/** Acceptable degradation before it becomes a warning, and before it becomes a failure. */
 const BUDGET = { warnPercent: 10, failPercent: 25 };
 
 /**
- * Extrai `{ nome: medicao }` de um json de benchmark.
+ * Extracts `{ name: measurement }` from a benchmark json.
  *
- * Entende o schema de `benchmarks/results/*.json` deste repositorio
- * (`{ results: [{ id, unit, stats: { median }, stable }] }`) e tambem os
- * formatos mais comuns de outras ferramentas, para o check nao quebrar se a
- * suite de benchmark for trocada.
+ * It understands this repository's `benchmarks/results/*.json` schema
+ * (`{ results: [{ id, unit, stats: { median }, stable }] }`) and also the most
+ * common formats from other tools, so that the check does not break if the
+ * benchmark suite is swapped out.
  */
 function normalize(data) {
   if (!data || typeof data !== 'object') return null;
@@ -44,8 +44,8 @@ function normalize(data) {
     const out = {};
     for (const row of rows) {
       const name = row.id ?? row.name ?? row.title;
-      // A mediana resiste melhor a outlier que a media; e o que a propria
-      // suite usa para julgar estabilidade.
+      // The median resists outliers better than the mean; it is what the suite
+      // itself uses to judge stability.
       const value =
         row.stats?.median ??
         row.stats?.mean ??
@@ -66,8 +66,8 @@ function normalize(data) {
         value,
         higherIsBetter,
         unit: row.unit ?? null,
-        // A propria suite marca o que nao e confiavel para portao de
-        // regressao. Ignorar esse aviso seria transformar ruido em falha.
+        // The suite itself marks what is not reliable enough to gate a
+        // regression on. Ignoring that flag would turn noise into a failure.
         stable: row.stable !== false,
         status: row.status ?? 'ok',
         notes: row.notes ?? null,
@@ -166,7 +166,7 @@ export async function run() {
 
     const higherIsBetter = current.higherIsBetter || before.higherIsBetter;
     const raw = ((current.value - before.value) / before.value) * 100;
-    // Normaliza para "quanto piorou": positivo sempre significa regressao.
+    // Normalized to "how much worse": positive always means a regression.
     const regression = higherIsBetter ? -raw : raw;
 
     comparisons.push({
@@ -181,8 +181,8 @@ export async function run() {
       gated: current.stable,
     });
 
-    // A suite de benchmark marca as medicoes cuja dispersao e alta demais para
-    // servir de portao. Reprovar em cima delas seria falhar por ruido.
+    // The benchmark suite marks the measurements whose spread is too high to
+    // serve as a gate. Failing on those would be failing on noise.
     if (!current.stable) {
       if (regression >= BUDGET.warnPercent) {
         findings.push(

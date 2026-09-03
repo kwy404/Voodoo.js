@@ -1,64 +1,75 @@
 ---
-name: Propor um recurso
-about: Sugira uma ideia para a biblioteca
+name: Propose a feature
+about: Suggest an idea for the library
 title: ''
 labels: enhancement
 assignees: ''
 ---
 
-## O problema
+## The problem
 
-Qual dificuldade você encontrou? Descreva a situação real, antes de qualquer solução.
+What did you run into? Describe the actual situation, before any solution.
 
-## A proposta
+## The proposal
 
-O que você gostaria que existisse. Se envolve HTML, mostre como ficaria:
+What you would like to exist. If it involves HTML, show how it would read:
 
 ```html
-<div v-minha-ideia="algo"></div>
+<div v-my-idea="something"></div>
 ```
 
-Se envolve JavaScript, mostre a chamada:
+If it involves JavaScript, show the call:
 
 ```js
-V.minhaIdeia({ opcao: true });
+V.myIdea({ option: true });
 ```
 
-## Como você resolve hoje
+## What you do today
 
-Qual é a solução que você usa no lugar, e por que ela não é suficiente.
+The workaround you use instead, and why it is not enough.
 
-## Alternativas consideradas
+## Alternatives considered
 
-Outras formas de resolver o mesmo problema, e por que a proposta acima parece melhor.
+Other ways to solve the same problem, and why the proposal above looks better.
 
-## Se a proposta for uma directive
+## If the proposal is a directive
 
-A regra do projeto é "não transforme tudo em atributo". Uma directive só existe quando
-resolve um problema declarativo real. Confira os quatro critérios de
+The project's rule is "do not turn everything into an attribute". A directive
+earns its place only when it solves a genuinely declarative problem. Check it
+against the four criteria in
 [CONVENTIONS.md](https://github.com/kwy404/Voodoo.js/blob/main/CONVENTIONS.md):
 
-- [ ] Liga comportamento a um elemento. Se não precisa de elemento, é uma função `V.*`
-- [ ] Substitui código repetitivo, não uma única linha de JavaScript
-- [ ] O HTML fica mais legível que o JavaScript equivalente
-- [ ] Não é apenas um valor de configuração de outra directive
+- [ ] It binds behaviour to an element. If it needs no element, it is a `V.*` function
+- [ ] It replaces repetitive code, not a single line of JavaScript
+- [ ] The HTML reads better than the equivalent JavaScript
+- [ ] It is not just a configuration value belonging to another directive
 
-## Encaixe no projeto
+## Fit
 
-- [ ] Funciona sem passo de build
-- [ ] Não precisa de `eval` nem de `new Function`
-- [ ] Não traz dependência externa em tempo de execução
-- [ ] Cabe no build essencial, ou faz mais sentido no build completo
-- [ ] Não está na lista de "fora de escopo" do
+- [ ] Works with no build step
+- [ ] Needs neither `eval` nor `new Function`
+- [ ] Brings no runtime dependency
+- [ ] Fits the essential build, or belongs in the full build
+- [ ] Is not on the "out of scope" list in
       [ROADMAP.md](https://github.com/kwy404/Voodoo.js/blob/main/ROADMAP.md)
-- [ ] Já verifiquei que não está listado como planejado no roadmap
+- [ ] Is not already listed as planned in the roadmap
 
-## Impacto
+## Impact
 
-- **Build afetado:** mínimo, essencial ou completo
-- **Quebra compatibilidade:** sim ou não. Se sim, explique o quê
-- **Nome proposto:** e por que ele não colide com nada que já existe
+- **Build affected:** core, essential or full
+- **Breaks compatibility:** yes or no. If yes, explain what
+- **Proposed name:** and why it collides with nothing that already exists
 
-## Contexto extra
+Size is a real constraint here, not a formality. The full build is already
+129 KB gzipped, which the README says out loud is the largest in its comparison
+table. A feature that grows the core build is paid for by everyone who installs
+the library, including the people who will never call it.
 
-Links, imagens, referências de como outras bibliotecas resolvem, o que ajudar.
+## Extra context
+
+Links, images, how other libraries solve it, whatever helps.
+
+---
+
+Issues in Portuguese are welcome. English simply reaches more people who can
+help.

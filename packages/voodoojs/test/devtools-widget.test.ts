@@ -1,8 +1,8 @@
 /**
- * Widget flutuante das devtools.
+ * The floating devtools widget.
  *
- * Cobre o que o desenvolvedor encosta: aparecer, abrir o inspetor, arrastar,
- * esconder, e nao deixar nada para tras ao ser removido.
+ * Covers what the developer actually touches: showing up, opening the
+ * inspector, dragging, hiding, and leaving nothing behind when removed.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,7 +27,7 @@ function botao(): HTMLButtonElement {
   return el;
 }
 
-/** jsdom nao implementa captura de ponteiro; o widget chama com `?.`. */
+/** jsdom does not implement pointer capture; the widget calls it with `?.`. */
 function pointer(tipo: string, x = 0, y = 0): PointerEvent {
   const evento = new MouseEvent(tipo, {
     bubbles: true,
@@ -52,25 +52,25 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('widget das devtools', () => {
-  it('aparece na pagina quando montado', () => {
+describe('the devtools widget', () => {
+  it('appears on the page when mounted', () => {
     expect(widget()).toBeNull();
     mountDevtoolsWidget();
     expect(widget()).not.toBeNull();
     expect(isDevtoolsWidgetMounted()).toBe(true);
   });
 
-  it('montar duas vezes nao duplica o widget', () => {
+  it('mounting twice does not duplicate the widget', () => {
     mountDevtoolsWidget();
     mountDevtoolsWidget();
     expect(document.querySelectorAll(SELETOR)).toHaveLength(1);
   });
 
-  it('abre e fecha o inspetor com um clique', () => {
+  it('opens and closes the inspector with one click', () => {
     mountDevtoolsWidget();
     const alvo = botao();
 
-    // Descer e subir no mesmo ponto conta como clique, nao como arrasto.
+    // Pressing down and lifting at the same point counts as a click, not a drag.
     alvo.dispatchEvent(pointer('pointerdown', 10, 10));
     alvo.dispatchEvent(pointer('pointerup', 10, 10));
 
@@ -84,7 +84,7 @@ describe('widget das devtools', () => {
     expect(alvo.getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('e acessivel pelo teclado', () => {
+  it('is reachable from the keyboard', () => {
     mountDevtoolsWidget();
     const alvo = botao();
 
@@ -98,7 +98,7 @@ describe('widget das devtools', () => {
     expect(isXrayEnabled()).toBe(false);
   });
 
-  it('arrastar move o widget e nao abre o inspetor', () => {
+  it('dragging moves the widget and does not open the inspector', () => {
     mountDevtoolsWidget();
     const alvo = botao();
 
@@ -106,12 +106,12 @@ describe('widget das devtools', () => {
     alvo.dispatchEvent(pointer('pointermove', 200, 150));
     alvo.dispatchEvent(pointer('pointerup', 200, 150));
 
-    // Passou do limiar: foi arrasto, entao o painel continua fechado.
+    // Past the threshold: it was a drag, so the panel stays closed.
     expect(isXrayEnabled()).toBe(false);
     expect(widget()!.style.left).not.toBe('');
   });
 
-  it('lembra a posicao entre montagens', () => {
+  it('remembers the position between mounts', () => {
     mountDevtoolsWidget();
     const alvo = botao();
     alvo.dispatchEvent(pointer('pointerdown', 10, 10));
@@ -125,23 +125,23 @@ describe('widget das devtools', () => {
     expect(widget()!.style.top).not.toBe('');
   });
 
-  it('o botao de esconder some com o widget e respeita a aba', () => {
+  it('the hide button makes the widget disappear and respects the tab', () => {
     mountDevtoolsWidget();
     const fechar = document.querySelector<HTMLButtonElement>(`${SELETOR} .v-devtools-close`)!;
     fechar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(widget()).toBeNull();
 
-    // Escondido nesta aba: montar de novo por conta propria nao traz de volta.
+    // Hidden in this tab: mounting again on its own does not bring it back.
     mountDevtoolsWidget();
     expect(widget()).toBeNull();
 
-    // Mas o pedido explicito vence.
+    // But an explicit request wins.
     devtoolsWidget(true);
     expect(widget()).not.toBeNull();
   });
 
-  it('acende o pulso quando o barramento reporta atividade', () => {
+  it('lights the pulse when the bus reports activity', () => {
     vi.useFakeTimers();
     mountDevtoolsWidget();
     const pulso = document.querySelector<HTMLElement>(`${SELETOR} .v-devtools-pulse`)!;
@@ -155,7 +155,7 @@ describe('widget das devtools', () => {
     vi.useRealTimers();
   });
 
-  it('desmontar remove o widget e cancela as assinaturas do barramento', () => {
+  it('unmounting removes the widget and cancels the bus subscriptions', () => {
     const antes = devtoolsBus.count('network');
     mountDevtoolsWidget();
     expect(devtoolsBus.count('network')).toBeGreaterThan(antes);
@@ -167,13 +167,13 @@ describe('widget das devtools', () => {
     expect(devtoolsBus.count('network')).toBe(antes);
   });
 
-  it('desmontar duas vezes nao quebra', () => {
+  it('unmounting twice does not break', () => {
     mountDevtoolsWidget();
     unmountDevtoolsWidget();
     expect(() => unmountDevtoolsWidget()).not.toThrow();
   });
 
-  it('devtoolsWidget() alterna e informa o estado', () => {
+  it('devtoolsWidget() toggles and reports the state', () => {
     expect(devtoolsWidget(true)).toBe(true);
     expect(devtoolsWidget()).toBe(false);
     expect(devtoolsWidget()).toBe(true);

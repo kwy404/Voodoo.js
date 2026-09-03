@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Directives por categoria · Documentação da Voodoo.js</title>
-<meta name="description" content="Referência das directives: como um atributo é lido, a ordem de execução em um mesmo elemento, e as tabelas por categoria — estado, atributos, eventos, formulário, requisição, interface e o resto.">
+<title>Directives by category · Voodoo.js documentation</title>
+<meta name="description" content="Reference for the directives: how an attribute is read, the execution order on a single element, and the tables by category, state, attributes, events, forms, requests, interface and the rest.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/directives">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
@@ -14,193 +14,192 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Directives por categoria</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Directives by category</h1>
 <p class="doc-resumo">
-  São 257 atributos registrados. Esta página traz os principais, agrupados por assunto. A lista
-  completa e exata do que está registrado sai com <code>V.directives</code> no console do
-  navegador — ela reflete o build que você carregou, e não a documentação.
+  There are 257 registered attributes. This page covers the main ones, grouped by subject. The
+  complete and exact list of what is registered comes out of <code>V.directives</code> in the
+  browser console, it reflects the build you loaded, not the documentation.
 </p>
 
-<h2 id="anatomia">Como um atributo é lido</h2>
+<h2 id="anatomia">How an attribute is read</h2>
 
-<pre data-lang="txt"><code>v-on:click.prevent.once="salvar()"
-│  │  │     │              └── expressão
-│  │  │     └── modificadores, separados por ponto
-│  │  └── argumento, depois dos dois pontos
-│  └── nome da directive
-└── prefixo</code></pre>
+<pre data-lang="txt"><code>v-on:click.prevent.once="save()"
+│  │  │     │              └── expression
+│  │  │     └── modifiers, separated by dots
+│  │  └── argument, after the colon
+│  └── directive name
+└── prefix</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Escrita</th><th>Equivale a</th></tr></thead>
+<thead><tr><th>What you write</th><th>Same as</th></tr></thead>
 <tbody>
 <tr><td><code>@click="..."</code></td><td><code>v-on:click="..."</code></td></tr>
 <tr><td><code>:href="..."</code></td><td><code>v-bind:href="..."</code></td></tr>
 <tr><td><code>.value="..."</code></td><td><code>v-bind:value.prop="..."</code></td></tr>
-<tr><td><code>data-v-nome</code></td><td><code>v-nome</code>, sempre aceito</td></tr>
+<tr><td><code>data-v-name</code></td><td><code>v-name</code>, always accepted</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Modificadores são sempre nomes soltos, porque um <code>=</code> dentro do nome do atributo não
-  sobrevive ao parser de HTML. Quando uma directive precisa de um número, ela oferece um atributo
-  próprio — <code>v-debounce</code>, <code>v-autosave-delay</code>,
-  <code>v-mask-decimals</code> — ou aceita o valor como modificador direto, como em
-  <code>@hold.2s</code>.
+  Modifiers are always bare names, because an <code>=</code> inside the attribute name does not
+  survive the HTML parser. When a directive needs a number, it offers an attribute of its own ,
+  <code>v-debounce</code>, <code>v-autosave-delay</code>, <code>v-mask-decimals</code>, or takes
+  the value as a modifier directly, as in <code>@hold.2s</code>.
 </p>
 
-<h2 id="ordem">Ordem de execução</h2>
+<h2 id="ordem">Execution order</h2>
 
 <p>
-  Em um mesmo elemento a ordem é fixa, e não depende de como você escreveu os atributos:
+  On a single element the order is fixed, and does not depend on how you wrote the attributes:
 </p>
 
 <ol class="doc-passos">
-  <li><code>v-ignore</code> e <code>v-pre</code> cancelam tudo naquela subárvore.</li>
-  <li>Directives terminais — <code>v-for</code>, <code>v-if</code>, <code>v-else-if</code>, <code>v-else</code> — assumem o controle.</li>
-  <li><code>v-data</code> e <code>v-component</code> criam o escopo usado pelo resto.</li>
+  <li><code>v-ignore</code> and <code>v-pre</code> cancel everything in that subtree.</li>
+  <li>Terminal directives, <code>v-for</code>, <code>v-if</code>, <code>v-else-if</code>, <code>v-else</code>, take control.</li>
+  <li><code>v-data</code> and <code>v-component</code> create the scope used by the rest.</li>
   <li>
-    As demais rodam por prioridade decrescente: <code>v-ref</code>, <code>v-mask</code>,
-    <code>v-model</code>, <code>v-bind</code>, o resto, <code>v-init</code>, e por fim as classes
-    de transição.
+    The others run in decreasing priority: <code>v-ref</code>, <code>v-mask</code>,
+    <code>v-model</code>, <code>v-bind</code>, everything else, <code>v-init</code>, and finally
+    the transition classes.
   </li>
-  <li>Os filhos são percorridos com o escopo resultante.</li>
+  <li>The children are walked with the resulting scope.</li>
 </ol>
 
-<h2 id="estado">Estado e renderização</h2>
+<h2 id="estado">State and rendering</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-data="{ ... }"</code></td><td>Cria um escopo reativo</td></tr>
-<tr><td><code>{ expressao }</code></td><td>Interpola texto. <code>{{ }}</code> também funciona</td></tr>
-<tr><td><code>v-text="valor"</code></td><td>Escreve texto, escapando HTML</td></tr>
-<tr><td><code>v-html="conteudo"</code></td><td>Insere HTML e inicializa as directives dentro</td></tr>
-<tr><td><code>v-show="cond"</code></td><td>Alterna <code>display</code> sem tirar do DOM</td></tr>
-<tr><td><code>v-if</code>, <code>v-else-if</code>, <code>v-else</code></td><td>Insere e remove do DOM</td></tr>
-<tr><td><code>v-for="item in lista"</code></td><td>Repete, com diferença por chave via <code>:key</code></td></tr>
-<tr><td><code>v-once="valor"</code></td><td>Renderiza uma vez e não observa mais</td></tr>
-<tr><td><code>v-teleport="body"</code></td><td>Move o elemento para outro lugar do documento</td></tr>
-<tr><td><code>v-cloak</code></td><td>Esconde até a Voodoo assumir</td></tr>
-<tr><td><code>v-ignore</code>, <code>v-pre</code></td><td>Desliga a Voodoo naquela subárvore</td></tr>
-<tr><td><code>v-component="nome"</code></td><td>Monta um componente registrado sobre o elemento</td></tr>
+<tr><td><code>v-data="{ ... }"</code></td><td>Creates a reactive scope</td></tr>
+<tr><td><code>{ expression }</code></td><td>Interpolates text. <code>{{ }}</code> works too</td></tr>
+<tr><td><code>v-text="value"</code></td><td>Writes text, escaping HTML</td></tr>
+<tr><td><code>v-html="content"</code></td><td>Inserts HTML and initializes the directives inside it</td></tr>
+<tr><td><code>v-show="cond"</code></td><td>Toggles <code>display</code> without taking the element out of the DOM</td></tr>
+<tr><td><code>v-if</code>, <code>v-else-if</code>, <code>v-else</code></td><td>Inserts into and removes from the DOM</td></tr>
+<tr><td><code>v-for="item in list"</code></td><td>Repeats, diffing by key via <code>:key</code></td></tr>
+<tr><td><code>v-once="value"</code></td><td>Renders once and watches no further</td></tr>
+<tr><td><code>v-teleport="body"</code></td><td>Moves the element somewhere else in the document</td></tr>
+<tr><td><code>v-cloak</code></td><td>Hides the element until Voodoo takes over</td></tr>
+<tr><td><code>v-ignore</code>, <code>v-pre</code></td><td>Turns Voodoo off in that subtree</td></tr>
+<tr><td><code>v-component="name"</code></td><td>Mounts a registered component onto the element</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="atributos">Atributos, classes e estilos</h2>
+<h2 id="atributos">Attributes, classes and styles</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>Exemplo</th></tr></thead>
+<thead><tr><th>Directive</th><th>Example</th></tr></thead>
 <tbody>
-<tr><td><code>v-bind:attr</code> ou <code>:attr</code></td><td><code>:href="url"</code>, <code>:disabled="carregando"</code></td></tr>
-<tr><td><code>:class</code></td><td><code>:class="{ ativo: selecionado, erro: temErro }"</code></td></tr>
-<tr><td><code>:style</code></td><td><code>:style="{ color: cor, width: largura + 'px' }"</code></td></tr>
-<tr><td><code>v-bind="objeto"</code></td><td>Aplica vários atributos de uma vez</td></tr>
-<tr><td><code>.prop</code></td><td><code>.value="texto"</code> escreve na propriedade, não no atributo</td></tr>
+<tr><td><code>v-bind:attr</code> or <code>:attr</code></td><td><code>:href="url"</code>, <code>:disabled="loading"</code></td></tr>
+<tr><td><code>:class</code></td><td><code>:class="{ active: selected, error: hasError }"</code></td></tr>
+<tr><td><code>:style</code></td><td><code>:style="{ color: color, width: width + 'px' }"</code></td></tr>
+<tr><td><code>v-bind="object"</code></td><td>Applies several attributes at once</td></tr>
+<tr><td><code>.prop</code></td><td><code>.value="text"</code> writes to the property, not to the attribute</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="eventos">Eventos</h2>
+<h2 id="eventos">Events</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>Exemplo</th></tr></thead>
+<thead><tr><th>Directive</th><th>Example</th></tr></thead>
 <tbody>
-<tr><td><code>@evento</code> ou <code>v-on:evento</code></td><td><code>@click</code>, <code>@input</code>, <code>@keyup</code></td></tr>
-<tr><td><code>v-click</code>, <code>v-input</code>, <code>v-keyup</code></td><td>Atalhos diretos, um por linha</td></tr>
-<tr><td><code>@hover</code>, <code>@tap</code>, <code>@press</code></td><td>Apelidos amigáveis</td></tr>
-<tr><td><code>@hold.2s</code></td><td>Segurar pressionado por um tempo</td></tr>
-<tr><td><code>@outside</code></td><td>Clique fora do elemento</td></tr>
-<tr><td><code>@visible</code></td><td>Entrou na área visível</td></tr>
-<tr><td><code>@swipeleft</code>, <code>@swiperight</code></td><td>Gestos de arrastar</td></tr>
-<tr><td><code>v-hotkey="ctrl+k"</code></td><td>Atalho global de teclado</td></tr>
+<tr><td><code>@event</code> or <code>v-on:event</code></td><td><code>@click</code>, <code>@input</code>, <code>@keyup</code></td></tr>
+<tr><td><code>v-click</code>, <code>v-input</code>, <code>v-keyup</code></td><td>Direct shorthands, one per line</td></tr>
+<tr><td><code>@hover</code>, <code>@tap</code>, <code>@press</code></td><td>Friendly aliases</td></tr>
+<tr><td><code>@hold.2s</code></td><td>Held down for a length of time</td></tr>
+<tr><td><code>@outside</code></td><td>Click outside the element</td></tr>
+<tr><td><code>@visible</code></td><td>Entered the visible area</td></tr>
+<tr><td><code>@swipeleft</code>, <code>@swiperight</code></td><td>Swipe gestures</td></tr>
+<tr><td><code>v-hotkey="ctrl+k"</code></td><td>Global keyboard shortcut</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Modificadores: <code>.prevent</code>, <code>.stop</code>, <code>.once</code>,
+  Modifiers: <code>.prevent</code>, <code>.stop</code>, <code>.once</code>,
   <code>.self</code>, <code>.capture</code>, <code>.passive</code>, <code>.window</code>,
-  <code>.document</code>, <code>.outside</code>, <code>.debounce</code>, <code>.throttle</code>, e
-  filtros de tecla como <code>.enter</code>, <code>.esc</code>, <code>.ctrl</code> e
+  <code>.document</code>, <code>.outside</code>, <code>.debounce</code>, <code>.throttle</code>,
+  and key filters such as <code>.enter</code>, <code>.esc</code>, <code>.ctrl</code> and
   <code>.shift</code>.
 </p>
 
-<h2 id="formulario">Formulário e validação</h2>
+<h2 id="formulario">Forms and validation</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-model</code></td><td>Ligação de dois sentidos, com <code>.number</code>, <code>.trim</code>, <code>.lazy</code>, <code>.debounce</code> e <code>.single</code></td></tr>
-<tr><td><code>v-submit="/api/x"</code></td><td>Envia o formulário por AJAX</td></tr>
-<tr><td><code>v-method="PUT"</code></td><td>Verbo HTTP do envio</td></tr>
-<tr><td><code>v-validate</code></td><td>Liga a validação automática dos campos</td></tr>
-<tr><td><code>v-required</code>, <code>v-email</code>, <code>v-cpf</code>, ...</td><td>Regras de campo</td></tr>
-<tr><td><code>v-validate-&lt;regra&gt;</code></td><td>Qualquer regra registrada, inclusive as suas</td></tr>
-<tr><td><code>v-error-message</code>, <code>v-error-target</code></td><td>Mensagem e onde mostrar</td></tr>
-<tr><td><code>v-mask="cpf"</code></td><td>Máscara de digitação, com <code>.unmask</code></td></tr>
-<tr><td><code>v-mask-currency</code></td><td>Moeda, digitando da direita para a esquerda</td></tr>
-<tr><td><code>v-upload</code>, <code>v-dropzone</code></td><td>Envio de arquivo com barra de progresso</td></tr>
-<tr><td><code>v-autosave</code></td><td>Salva o rascunho sozinho</td></tr>
-<tr><td><code>v-guard</code></td><td>Avisa antes de sair com alterações não salvas</td></tr>
-<tr><td><code>v-reset-success</code>, <code>v-redirect</code></td><td>O que fazer depois do sucesso</td></tr>
+<tr><td><code>v-model</code></td><td>Two-way binding, with <code>.number</code>, <code>.trim</code>, <code>.lazy</code>, <code>.debounce</code> and <code>.single</code></td></tr>
+<tr><td><code>v-submit="/api/x"</code></td><td>Submits the form over AJAX</td></tr>
+<tr><td><code>v-method="PUT"</code></td><td>HTTP verb of the submission</td></tr>
+<tr><td><code>v-validate</code></td><td>Turns on automatic field validation</td></tr>
+<tr><td><code>v-required</code>, <code>v-email</code>, <code>v-cpf</code>, ...</td><td>Field rules</td></tr>
+<tr><td><code>v-validate-&lt;rule&gt;</code></td><td>Any registered rule, including your own</td></tr>
+<tr><td><code>v-error-message</code>, <code>v-error-target</code></td><td>The message and where to show it</td></tr>
+<tr><td><code>v-mask="cpf"</code></td><td>Typing mask, with <code>.unmask</code></td></tr>
+<tr><td><code>v-mask-currency</code></td><td>Currency, typed from right to left</td></tr>
+<tr><td><code>v-upload</code>, <code>v-dropzone</code></td><td>File upload with a progress bar</td></tr>
+<tr><td><code>v-autosave</code></td><td>Saves the draft on its own</td></tr>
+<tr><td><code>v-guard</code></td><td>Warns before leaving with unsaved changes</td></tr>
+<tr><td><code>v-reset-success</code>, <code>v-redirect</code></td><td>What to do after success</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="requisicoes">Requisições</h2>
+<h2 id="requisicoes">Requests</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-get</code>, <code>v-post</code>, <code>v-put</code>, <code>v-patch</code>, <code>v-delete</code></td><td>Dispara a requisição</td></tr>
-<tr><td><code>v-target</code>, <code>v-swap</code></td><td>Onde e como colocar o resultado</td></tr>
-<tr><td><code>v-trigger</code>, <code>v-poll</code></td><td>Quando disparar</td></tr>
-<tr><td><code>v-body</code>, <code>v-params</code>, <code>v-headers</code></td><td>O que enviar</td></tr>
-<tr><td><code>v-as</code>, <code>v-json-path</code>, <code>v-template</code></td><td>Como tratar a resposta</td></tr>
-<tr><td><code>v-loading</code>, <code>v-loading-class</code>, <code>v-disable-loading</code></td><td>Estado de carregamento</td></tr>
+<tr><td><code>v-get</code>, <code>v-post</code>, <code>v-put</code>, <code>v-patch</code>, <code>v-delete</code></td><td>Fires the request</td></tr>
+<tr><td><code>v-target</code>, <code>v-swap</code></td><td>Where and how to put the result</td></tr>
+<tr><td><code>v-trigger</code>, <code>v-poll</code></td><td>When to fire</td></tr>
+<tr><td><code>v-body</code>, <code>v-params</code>, <code>v-headers</code></td><td>What to send</td></tr>
+<tr><td><code>v-as</code>, <code>v-json-path</code>, <code>v-template</code></td><td>How to handle the response</td></tr>
+<tr><td><code>v-loading</code>, <code>v-loading-class</code>, <code>v-disable-loading</code></td><td>Loading state</td></tr>
 <tr><td><code>v-on-success</code>, <code>v-on-error</code>, <code>v-on-complete</code></td><td>Callbacks</td></tr>
-<tr><td><code>v-confirm</code>, <code>v-toast-success</code>, <code>v-toast-error</code></td><td>Pergunta e aviso</td></tr>
-<tr><td><code>v-cache</code>, <code>v-retry</code>, <code>v-timeout</code>, <code>v-offline-queue</code></td><td>Rede</td></tr>
-<tr><td><code>v-resource="nome: /url"</code></td><td>Dados, carregando e erro em um objeto</td></tr>
-<tr><td><code>v-search</code>, <code>v-param</code>, <code>v-min-length</code>, <code>v-debounce</code></td><td>Busca enquanto digita</td></tr>
-<tr><td><code>v-load</code>, <code>v-load-visible</code></td><td>Carrega um pedaço de HTML</td></tr>
+<tr><td><code>v-confirm</code>, <code>v-toast-success</code>, <code>v-toast-error</code></td><td>The question and the notice</td></tr>
+<tr><td><code>v-cache</code>, <code>v-retry</code>, <code>v-timeout</code>, <code>v-offline-queue</code></td><td>Network</td></tr>
+<tr><td><code>v-resource="name: /url"</code></td><td>Data, loading and error in one object</td></tr>
+<tr><td><code>v-search</code>, <code>v-param</code>, <code>v-min-length</code>, <code>v-debounce</code></td><td>Search as you type</td></tr>
+<tr><td><code>v-load</code>, <code>v-load-visible</code></td><td>Loads a piece of HTML</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="ciclo">Ciclo de vida e referências</h2>
+<h2 id="ciclo">Lifecycle and references</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-init="carregar()"</code></td><td>Executa depois que o DOM da rodada foi aplicado</td></tr>
-<tr><td><code>v-ref="campoBusca"</code></td><td>Guarda o elemento em <code>$refs</code></td></tr>
-<tr><td><code>v-effect="..."</code></td><td>Executa a expressão sempre que as dependências mudarem</td></tr>
-<tr><td><code>v-watch="acao"</code></td><td>Reage à mudança do <code>v-model</code> do mesmo elemento</td></tr>
+<tr><td><code>v-init="load()"</code></td><td>Runs after the DOM for that round has been applied</td></tr>
+<tr><td><code>v-ref="searchField"</code></td><td>Stores the element in <code>$refs</code></td></tr>
+<tr><td><code>v-effect="..."</code></td><td>Runs the expression whenever the dependencies change</td></tr>
+<tr><td><code>v-watch="action"</code></td><td>Reacts to the change of the <code>v-model</code> on the same element</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="estado-especial">Estado especial</h2>
+<h2 id="estado-especial">Special state</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-persist="chave"</code></td><td>O estado sobrevive ao recarregar</td></tr>
-<tr><td><code>v-sync="canal"</code></td><td>O estado acompanha as outras abas, ao vivo</td></tr>
-<tr><td><code>v-history</code></td><td>Desfazer e refazer, com <code>v-undo</code> e <code>v-redo</code></td></tr>
-<tr><td><code>v-storage="chave"</code></td><td>Liga um campo direto ao armazenamento local</td></tr>
+<tr><td><code>v-persist="key"</code></td><td>The state survives a reload</td></tr>
+<tr><td><code>v-sync="channel"</code></td><td>The state follows the other tabs, live</td></tr>
+<tr><td><code>v-history</code></td><td>Undo and redo, with <code>v-undo</code> and <code>v-redo</code></td></tr>
+<tr><td><code>v-storage="key"</code></td><td>Binds a field straight to local storage</td></tr>
 </tbody>
 </table>
 </div>
@@ -221,57 +220,57 @@
 </p>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Um detalhe de implementação que resolve um problema real</span>
+  <span class="doc-aviso__rotulo">An implementation detail that solves a real problem</span>
   <p>
-    A gaveta lateral leva o painel para o corpo do documento enquanto está aberta, então ela
-    funciona mesmo quando o <code>v-drawer</code> mora dentro de um contêiner com
-    <code>filter</code>, <code>transform</code> ou <code>backdrop-filter</code> — propriedades que
-    quebrariam o posicionamento fixo. O menu suspenso faz o mesmo com <code>overflow: hidden</code>.
+    The side drawer moves the panel to the body of the document while it is open, so it works even
+    when the <code>v-drawer</code> lives inside a container with <code>filter</code>,
+    <code>transform</code> or <code>backdrop-filter</code>, properties that would break fixed
+    positioning. The dropdown menu does the same with <code>overflow: hidden</code>.
   </p>
 </div>
 
-<h2 id="som">Som</h2>
+<h2 id="som">Sound</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Directive</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Directive</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>v-sound="click"</code></td><td>Toca um efeito no clique</td></tr>
-<tr><td><code>v-sound:mouseenter="hover"</code></td><td>Escolhe outro evento como gatilho</td></tr>
-<tr><td><code>v-mute</code></td><td>Botão que liga e desliga o som, com <code>aria-pressed</code></td></tr>
+<tr><td><code>v-sound="click"</code></td><td>Plays an effect on click</td></tr>
+<tr><td><code>v-sound:mouseenter="hover"</code></td><td>Picks another event as the trigger</td></tr>
+<tr><td><code>v-mute</code></td><td>A button that turns the sound on and off, with <code>aria-pressed</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="build-completo">Só no build completo</h2>
+<h2 id="build-completo">Only in the full build</h2>
 
 <p>
-  Animação, gráficos, rotas e idiomas vivem apenas no <code>voodoo.full.min.js</code>:
+  Animation, charts, routes and languages live only in <code>voodoo.full.min.js</code>:
   <code>v-motion</code>, <code>v-motion-scroll</code>, <code>v-motion-hover</code>,
   <code>v-motion-tap</code>, <code>v-motion-stagger</code>, <code>v-parallax</code>,
   <code>v-flip</code>, <code>v-count</code>, <code>v-typewriter</code>, <code>v-chart</code>,
   <code>v-router-view</code>, <code>v-link</code>, <code>v-route-active</code>,
-  <code>v-t</code>, <code>v-t-params</code> e <code>v-locale</code>.
+  <code>v-t</code>, <code>v-t-params</code> and <code>v-locale</code>.
 </p>
 
-<h2 id="somem">Os atributos somem do HTML</h2>
+<h2 id="somem">The attributes disappear from the HTML</h2>
 
-<pre data-lang="html"><code>&lt;!-- você escreve --&gt;
-&lt;button v-click="salvar()" :disabled="carregando"&gt;Salvar&lt;/button&gt;
+<pre data-lang="html"><code>&lt;!-- you write --&gt;
+&lt;button v-click="save()" :disabled="loading"&gt;Save&lt;/button&gt;
 
-&lt;!-- o inspetor mostra --&gt;
-&lt;button disabled&gt;Salvar&lt;/button&gt;</code></pre>
+&lt;!-- the inspector shows --&gt;
+&lt;button disabled&gt;Save&lt;/button&gt;</code></pre>
 
 <p>
-  Os valores continuam guardados no runtime, então o comportamento não muda. Duas consequências:
-  nunca escreva CSS apoiado em seletores como <code>[v-tab]</code>, e
-  <code>el.getAttribute('v-alguma-coisa')</code> devolve <code>null</code> depois da montagem.
-  Para desligar, use <code>V.config.cleanAttributes = false</code>, ou o atributo
-  <code>data-keep-attributes</code> na tag <code>&lt;script&gt;</code>.
+  The values stay stored in the runtime, so the behavior does not change. Two consequences: never
+  write CSS that leans on selectors like <code>[v-tab]</code>, and
+  <code>el.getAttribute('v-something')</code> returns <code>null</code> after mounting.
+  To turn it off, use <code>V.config.cleanAttributes = false</code>, or the
+  <code>data-keep-attributes</code> attribute on the <code>&lt;script&gt;</code> tag.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=8aa47c23"></script>
+<script src="../assets/docs.js?v=e7076219"></script>
 </body>
 </html>

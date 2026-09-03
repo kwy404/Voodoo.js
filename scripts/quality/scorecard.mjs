@@ -1,18 +1,19 @@
 /**
- * Notas de 0 a 10 por dimensao, derivadas da evidencia coletada.
+ * Scores from 0 to 10 per dimension, derived from the evidence collected.
  *
- * A regra que rege este arquivo: teste passando nao vale 10. Passar e o piso,
- * nao o teto. Uma nota alta exige evidencia de que a dimensao foi realmente
- * exercitada — cobertura medida, navegador real, medicao de desempenho — e
- * cada desconto abaixo cita o dado que o motivou. Nenhuma nota e digitada na
- * mao: todas saem dos `details` que os checks devolveram nesta execucao.
+ * The rule that governs this file: a passing test is not worth a 10. Passing is
+ * the floor, not the ceiling. A high score requires evidence that the dimension
+ * was really exercised, with measured coverage, a real browser, a performance
+ * measurement, and every deduction below cites the data that motivated it. No
+ * score is typed in by hand: all of them come out of the `details` the checks
+ * returned in this run.
  */
 
 import { STATUS } from './lib.mjs';
 
 const clamp = (n) => Math.max(0, Math.min(10, Math.round(n * 10) / 10));
 
-/** Ajuda a montar a nota descontando de um teto, sempre com o porque. */
+/** Helps build the score by deducting from a ceiling, always with the reason why. */
 function build(start) {
   const reasons = [];
   let score = start;
@@ -180,8 +181,9 @@ const SCORERS = {
 
   performance(r) {
     if (r.status === STATUS.SKIP) {
-      // Ha dois SKIPs diferentes e eles nao valem a mesma nota: nao ter
-      // medicao nenhuma e pior que ter medicao sem linha de base.
+      // There are two different SKIPs and they are not worth the same score:
+      // having no measurement at all is worse than having a measurement with
+      // no baseline.
       const measured = r.details?.measurements ?? 0;
       if (measured)
         return build(3)
@@ -261,13 +263,13 @@ const SCORERS = {
   },
 };
 
-/** Nota padrao quando nao ha regra especifica para o check. */
+/** Default score when there is no specific rule for the check. */
 function fallback(r) {
   const base = { PASS: 8, WARN: 5, SKIP: 2, FAIL: 1 }[r.status] ?? 5;
   return build(base).because(`derivado do status ${r.status}, sem regra especifica`).done();
 }
 
-/** Calcula a nota de cada dimensao e a media geral. */
+/** Computes the score of each dimension and the overall average. */
 export function scoreAll(results, ctx) {
   const rows = [];
   for (const entry of results) {

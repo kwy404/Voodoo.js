@@ -1,9 +1,9 @@
 /**
- * Interpolacao de texto.
+ * Text interpolation.
  *
- * A chave simples convive com texto escrito por gente, entao ela nao pode
- * engolir qualquer coisa entre `{` e `}`. O criterio e analisar: o que o parser
- * aceita vira expressao, o resto continua sendo texto.
+ * The single brace lives alongside text written by people, so it cannot swallow
+ * whatever happens to sit between `{` and `}`. The criterion is to parse: what
+ * the parser accepts becomes an expression, the rest stays text.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -29,18 +29,18 @@ beforeEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('interpolacao de chave simples', () => {
-  it('escreve o valor no meio do texto', () => {
+describe('single-brace interpolation', () => {
+  it('writes the value in the middle of the text', () => {
     const { root } = montar('<p>Ola, { nome }!</p>', { nome: 'Ana' });
     expect(root.querySelector('p')!.textContent).toBe('Ola, Ana!');
   });
 
-  it('aceita objeto dentro da expressao', () => {
+  it('accepts an object inside the expression', () => {
     const { root } = montar('<p>{ JSON.stringify({ n: total, ok: true }) }</p>', { total: 3 });
     expect(root.querySelector('p')!.textContent).toBe('{"n":3,"ok":true}');
   });
 
-  it('aceita a expressao quebrada em varias linhas', () => {
+  it('accepts an expression broken across several lines', () => {
     const { root } = montar(
       `<p>Total: R$ {
          (precos.reduce((s, p) => s + p, 0) * (1 - desconto / 100)).toFixed(2)
@@ -50,24 +50,24 @@ describe('interpolacao de chave simples', () => {
     expect(root.querySelector('p')!.textContent!.trim()).toBe('Total: R$ 90.00');
   });
 
-  it('deixa intacto o texto entre chaves que nao e expressao', () => {
+  it('leaves untouched the text between braces that is not an expression', () => {
     const { root } = montar('<p>Escreva assim: { um texto qualquer } e pronto</p>');
     expect(root.querySelector('p')!.textContent).toBe(
       'Escreva assim: { um texto qualquer } e pronto'
     );
   });
 
-  it('deixa intacto um trecho de CSS colado no texto', () => {
+  it('leaves untouched a snippet of CSS pasted into the text', () => {
     const { root } = montar('<p>.botao { color: red; background: blue }</p>');
     expect(root.querySelector('p')!.textContent).toBe('.botao { color: red; background: blue }');
   });
 
-  it('deixa intacta uma chave sem fechamento', () => {
+  it('leaves untouched a brace that is never closed', () => {
     const { root } = montar('<p>abre { e nunca fecha</p>');
     expect(root.querySelector('p')!.textContent).toBe('abre { e nunca fecha');
   });
 
-  it('varias expressoes no mesmo no de texto', async () => {
+  it('several expressions in the same text node', async () => {
     const { root, estado } = montar('<p>{ a } + { b } = { a + b }</p>', { a: 1, b: 2 });
     expect(root.querySelector('p')!.textContent).toBe('1 + 2 = 3');
 
@@ -76,12 +76,12 @@ describe('interpolacao de chave simples', () => {
     expect(root.querySelector('p')!.textContent).toBe('1 + 5 = 6');
   });
 
-  it('a forma dupla continua funcionando', () => {
+  it('the double form keeps working', () => {
     const { root } = montar('<p>{{ nome }}</p>', { nome: 'Bia' });
     expect(root.querySelector('p')!.textContent).toBe('Bia');
   });
 
-  it('nao interpola dentro de pre, code, script, style e textarea', () => {
+  it('does not interpolate inside pre, code, script, style and textarea', () => {
     const { root } = montar(
       '<pre>{ nome }</pre><code>{ nome }</code><textarea>{ nome }</textarea>',
       { nome: 'Ana' }
@@ -91,12 +91,12 @@ describe('interpolacao de chave simples', () => {
     expect(root.querySelector('textarea')!.textContent).toBe('{ nome }');
   });
 
-  it('v-ignore protege a subarvore inteira', () => {
+  it('v-ignore protects the whole subtree', () => {
     const { root } = montar('<div v-ignore><p>{ nome }</p></div>', { nome: 'Ana' });
     expect(root.querySelector('p')!.textContent).toBe('{ nome }');
   });
 
-  it('expressao gigante fica como texto, para nao engolir o paragrafo', () => {
+  it('a huge expression stays as text, so it does not swallow the paragraph', () => {
     const enorme = 'a'.repeat(600);
     const { root } = montar(`<p>{ ${enorme} }</p>`);
     expect(root.querySelector('p')!.textContent).toContain('{ aaa');

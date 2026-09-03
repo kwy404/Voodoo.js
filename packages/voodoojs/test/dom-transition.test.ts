@@ -1,12 +1,12 @@
 /**
- * Testes de `dom/transition`.
+ * Tests for `dom/transition`.
  *
- * Tudo aqui roda com timers falsos. `enter` e `leave` dependem de dois
- * `requestAnimationFrame` encadeados antes de agendar o `setTimeout` final, e o
- * vitest tambem finge o rAF, entao `advanceTimersByTimeAsync` percorre a
- * sequencia inteira de forma deterministica. Isso permite duas coisas que com
- * timer real seriam flaky: afirmar o estado intermediario das classes e cobrar
- * `vi.getTimerCount() === 0` no fim, que e o teste de vazamento.
+ * Everything here runs with fake timers. `enter` and `leave` depend on two
+ * chained `requestAnimationFrame` calls before scheduling the final
+ * `setTimeout`, and the rAF is faked as well, so `advanceTimersByTimeAsync`
+ * walks the whole sequence deterministically. That allows two things that with
+ * a real timer would be flaky: asserting the intermediate state of the classes
+ * and demanding `vi.getTimerCount() === 0` at the end, which is the leak test.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,14 +20,14 @@ import {
   viewTransition,
 } from '../src/dom/transition';
 
-/** Cria um elemento ligado ao documento. */
+/** Creates an element attached to the document. */
 function elemento(tag = 'div'): HTMLElement {
   const el = document.createElement(tag);
   document.body.appendChild(el);
   return el;
 }
 
-/** Finge `prefers-reduced-motion: reduce` ligado. */
+/** Fakes `prefers-reduced-motion: reduce` being on. */
 function ligarReducedMotion(): void {
   vi.stubGlobal('matchMedia', (q: string) => ({
     matches: q.includes('prefers-reduced-motion'),
@@ -37,17 +37,17 @@ function ligarReducedMotion(): void {
   }));
 }
 
-/** Milissegundos suficientes para vencer os dois quadros do `nextFrame`. */
+/** Milliseconds enough to get past the two frames of `nextFrame`. */
 const DOIS_QUADROS = 5;
 
 const rafOriginal = globalThis.requestAnimationFrame;
 
 beforeEach(() => {
   document.body.innerHTML = '';
-  // Nao deixamos o vitest fingir o `requestAnimationFrame`: o rAF do jsdom
-  // depende do relogio interno dele e a combinacao com o relogio falso e
-  // instavel entre testes. Aqui um quadro vira um `setTimeout(0)` do relogio
-  // falso, o que torna a sequencia de `nextFrame` totalmente deterministica.
+  // We do not let vitest fake the `requestAnimationFrame`: the jsdom rAF
+  // depends on its own internal clock and the combination with the fake clock
+  // is unstable across tests. Here a frame becomes a `setTimeout(0)` on the
+  // fake clock, which makes the `nextFrame` sequence fully deterministic.
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
   globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) =>
     setTimeout(() => cb(0), 0) as unknown as number) as typeof requestAnimationFrame;
@@ -59,21 +59,21 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Avanca o relogio falso ate a transicao terminar e espera a promessa. */
+/** Advances the fake clock until the transition ends and awaits the promise. */
 async function correr(p: Promise<void>, ms = 2000): Promise<void> {
   await vi.advanceTimersByTimeAsync(ms);
   await p;
 }
 
 describe('enter', () => {
-  it('aplica from + active, troca para to no quadro seguinte e limpa no fim', async () => {
+  it('applies from + active, switches to the to class on the next frame and cleans up at the end', async () => {
     const el = elemento();
     let terminou = false;
     void enter(el, { duration: 100 }).then(() => {
       terminou = true;
     });
 
-    // Estado sincrono: ainda no quadro zero.
+    // Synchronous state: still on frame zero.
     expect(el.classList.contains('v-fade-enter-from')).toBe(true);
     expect(el.classList.contains('v-fade-enter-active')).toBe(true);
     expect(el.classList.contains('v-fade-enter-to')).toBe(false);
@@ -90,7 +90,7 @@ describe('enter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('injeta o CSS embutido uma unica vez', async () => {
+  it('injects the built-in CSS exactly once', async () => {
     await correr(enter(elemento(), { duration: 0 }));
     await correr(leave(elemento(), { duration: 0 }));
     const blocos = document.head.querySelectorAll('style[data-voodoo="transitions"]');
@@ -99,7 +99,7 @@ describe('enter', () => {
     expect(blocos[0].textContent).toContain('prefers-reduced-motion');
   });
 
-  it('usa o nome informado para montar as classes', async () => {
+  it('uses the given name to build the classes', async () => {
     const el = elemento();
     const p = enter(el, { name: 'v-slide-up', duration: 0 });
     expect(el.classList.contains('v-slide-up-enter-from')).toBe(true);
@@ -110,7 +110,7 @@ describe('enter', () => {
     expect(el.className).toBe('');
   });
 
-  it('classes personalizadas vencem o nome e aceitam varias por campo', async () => {
+  it('custom classes beat the name and accept several per field', async () => {
     const el = elemento();
     const p = enter(el, {
       name: 'ignorado',
@@ -130,7 +130,7 @@ describe('enter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('duration 0 termina no mesmo quadro, sem agendar timer', async () => {
+  it('duration 0 finishes on the same frame, without scheduling a timer', async () => {
     const el = elemento();
     let terminou = false;
     void enter(el, { duration: 0 }).then(() => {
@@ -141,9 +141,9 @@ describe('enter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('sem duration explicita, le a duracao do CSS computado', async () => {
+  it('with no explicit duration, it reads the duration from the computed CSS', async () => {
     const el = elemento();
-    // 300ms de transicao: nao pode terminar aos ~250ms e tem que terminar depois.
+    // 300ms of transition: it must not end at ~250ms and it has to end after that.
     el.style.transitionDuration = '300ms';
     let terminou = false;
     void enter(el).then(() => {
@@ -157,7 +157,7 @@ describe('enter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('duracao em segundos e com varias entradas usa o maior valor', async () => {
+  it('a duration in seconds and with several entries uses the largest value', async () => {
     const el = elemento();
     el.style.setProperty('transition-duration', '0.05s, 0.4s');
     let terminou = false;
@@ -170,7 +170,7 @@ describe('enter', () => {
     expect(terminou).toBe(true);
   });
 
-  it('soma o delay a duracao da transicao', async () => {
+  it('adds the delay to the duration of the transition', async () => {
     const el = elemento();
     el.style.transitionDuration = '100ms';
     el.style.transitionDelay = '300ms';
@@ -184,7 +184,7 @@ describe('enter', () => {
     expect(terminou).toBe(true);
   });
 
-  it('considera a animacao quando ela dura mais que a transicao', async () => {
+  it('takes the animation into account when it lasts longer than the transition', async () => {
     const el = elemento();
     el.style.transitionDuration = '10ms';
     el.style.animationDuration = '0.4s';
@@ -198,7 +198,7 @@ describe('enter', () => {
     expect(terminou).toBe(true);
   });
 
-  it('com reduced motion resolve na hora e nao toca nas classes', async () => {
+  it('with reduced motion it resolves right away and does not touch the classes', async () => {
     ligarReducedMotion();
     const el = elemento();
     el.className = 'original';
@@ -207,7 +207,7 @@ describe('enter', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('nao registra nenhum listener no elemento', async () => {
+  it('does not register any listener on the element', async () => {
     const el = elemento();
     const espia = vi.spyOn(el, 'addEventListener');
     const p = enter(el, { duration: 10 });
@@ -219,7 +219,7 @@ describe('enter', () => {
 });
 
 describe('leave', () => {
-  it('aplica from + active, troca para to e limpa no fim', async () => {
+  it('applies from + active, switches to the to class and cleans up at the end', async () => {
     const el = elemento();
     let terminou = false;
     void leave(el, { duration: 100 }).then(() => {
@@ -240,7 +240,7 @@ describe('leave', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('usa o nome informado e as classes personalizadas', async () => {
+  it('uses the given name and the custom classes', async () => {
     const el = elemento();
     const p1 = leave(el, { name: 'v-blur', duration: 0 });
     expect(el.classList.contains('v-blur-leave-from')).toBe(true);
@@ -257,7 +257,7 @@ describe('leave', () => {
     expect(outro.className).toBe('');
   });
 
-  it('sem duration explicita, le a duracao do CSS computado', async () => {
+  it('with no explicit duration, it reads the duration from the computed CSS', async () => {
     const el = elemento();
     el.style.transitionDuration = '300ms';
     let terminou = false;
@@ -271,7 +271,7 @@ describe('leave', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('duration 0 encerra sem timer pendente', async () => {
+  it('duration 0 ends with no pending timer', async () => {
     const el = elemento();
     let terminou = false;
     void leave(el, { duration: 0 }).then(() => {
@@ -282,7 +282,7 @@ describe('leave', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('com reduced motion resolve na hora e nao toca nas classes', async () => {
+  it('with reduced motion it resolves right away and does not touch the classes', async () => {
     ligarReducedMotion();
     const el = elemento();
     el.className = 'original';
@@ -292,8 +292,8 @@ describe('leave', () => {
   });
 });
 
-describe('fadeIn e fadeOut', () => {
-  it('fadeIn sai de opacity 0, vai a 1 e devolve o elemento limpo', async () => {
+describe('fadeIn and fadeOut', () => {
+  it('fadeIn starts at opacity 0, goes to 1 and gives the element back clean', async () => {
     const el = elemento();
     let terminou = false;
     void fadeIn(el, 100).then(() => {
@@ -313,7 +313,7 @@ describe('fadeIn e fadeOut', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('fadeIn usa a duracao padrao quando nenhuma e informada', async () => {
+  it('fadeIn uses the default duration when none is given', async () => {
     const el = elemento();
     let terminou = false;
     void fadeIn(el).then(() => {
@@ -326,9 +326,9 @@ describe('fadeIn e fadeOut', () => {
     expect(terminou).toBe(true);
   });
 
-  it('fadeIn tira o display none herdado do CSS', async () => {
-    // `script` tem `display:none` na folha padrao do documento, entao o ramo
-    // que forca o display a voltar precisa rodar.
+  it('fadeIn removes the display none inherited from the CSS', async () => {
+    // `script` has `display:none` in the default stylesheet of the document, so
+    // the branch that forces the display back has to run.
     const el = elemento('script');
     const p = fadeIn(el, 0);
     expect(el.style.display).toBe('');
@@ -337,7 +337,7 @@ describe('fadeIn e fadeOut', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('fadeOut termina com display none e sem estilos residuais', async () => {
+  it('fadeOut ends with display none and with no leftover styles', async () => {
     const el = elemento();
     let terminou = false;
     void fadeOut(el, 50).then(() => {
@@ -356,8 +356,8 @@ describe('fadeIn e fadeOut', () => {
   });
 });
 
-describe('slideDown e slideUp', () => {
-  it('slideDown zera altura e padding, depois devolve o elemento sem estilos de animacao', async () => {
+describe('slideDown and slideUp', () => {
+  it('slideDown zeroes height and padding, then gives the element back without animation styles', async () => {
     const el = elemento();
     el.style.paddingTop = '8px';
     el.style.paddingBottom = '8px';
@@ -371,11 +371,11 @@ describe('slideDown e slideUp', () => {
     expect(el.style.transition).toContain('height 100ms');
 
     await vi.advanceTimersByTimeAsync(DOIS_QUADROS);
-    // No quadro seguinte o padding zerado sai e a altura vai para o alvo. A
-    // volta e por `removeProperty`, entao o valor vem da folha de estilo: um
-    // padding que estava inline no elemento nao e restaurado. E o preco de nao
-    // guardar o estado anterior, e vale registrar para ninguem "consertar" sem
-    // querer.
+    // On the next frame the zeroed padding goes away and the height moves to
+    // the target. The way back is through `removeProperty`, so the value comes
+    // from the stylesheet: a padding that was inline on the element is not
+    // restored. That is the price of not storing the previous state, and it is
+    // worth recording so that nobody "fixes" it by accident.
     expect(el.style.paddingTop).toBe('');
     expect(el.style.height).toBe('0px');
     expect(terminou).toBe(false);
@@ -388,7 +388,7 @@ describe('slideDown e slideUp', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('slideDown reexibe elemento escondido pelo CSS', async () => {
+  it('slideDown shows again an element hidden by the CSS', async () => {
     const el = elemento('script');
     const p = slideDown(el, 0);
     expect(el.style.display).toBe('block');
@@ -397,7 +397,7 @@ describe('slideDown e slideUp', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('slideDown com duracao padrao', async () => {
+  it('slideDown with the default duration', async () => {
     const el = elemento();
     let terminou = false;
     void slideDown(el).then(() => {
@@ -410,7 +410,7 @@ describe('slideDown e slideUp', () => {
     expect(terminou).toBe(true);
   });
 
-  it('slideUp fecha a altura e esconde o elemento no fim', async () => {
+  it('slideUp closes the height and hides the element at the end', async () => {
     const el = elemento();
     el.style.paddingTop = '8px';
     let terminou = false;
@@ -435,7 +435,7 @@ describe('slideDown e slideUp', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('slideUp com duracao padrao', async () => {
+  it('slideUp with the default duration', async () => {
     const el = elemento();
     let terminou = false;
     void slideUp(el).then(() => {
@@ -450,15 +450,15 @@ describe('slideDown e slideUp', () => {
 });
 
 describe('viewTransition', () => {
-  it('sem a API do navegador executa a mudanca direto', () => {
-    // jsdom nao implementa `startViewTransition`: este e o caminho alternativo.
+  it('with no browser API it runs the change directly', () => {
+    // jsdom does not implement `startViewTransition`: this is the fallback path.
     expect((document as unknown as Record<string, unknown>).startViewTransition).toBeUndefined();
     let rodou = 0;
     expect(() => viewTransition(() => { rodou += 1; })).not.toThrow();
     expect(rodou).toBe(1);
   });
 
-  it('com a API disponivel delega para o navegador', () => {
+  it('with the API available it delegates to the browser', () => {
     const api = vi.fn((cb: () => void) => cb());
     (document as unknown as Record<string, unknown>).startViewTransition = api;
     try {
@@ -471,7 +471,7 @@ describe('viewTransition', () => {
     }
   });
 
-  it('com reduced motion ignora a API e executa a mudanca direto', () => {
+  it('with reduced motion it ignores the API and runs the change directly', () => {
     ligarReducedMotion();
     const api = vi.fn();
     (document as unknown as Record<string, unknown>).startViewTransition = api;

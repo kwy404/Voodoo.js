@@ -733,16 +733,27 @@
   /**
    * Sizes the frame to its content.
    *
-   * The measurement has to happen with the frame collapsed. `scrollHeight` is
-   * read from inside a frame that already carries the previous measurement, so
-   * the body reports at least the height it was given: adding 8 to that made
-   * every measurement 8px taller than the last, and the card crept upward on
-   * each click, each keystroke and each resize observation. Interacting with an
-   * example grew it without limit.
+   * Measure the body, never `documentElement`. That distinction is the whole
+   * bug: the frame is a grid item stretched by the code pane beside it, so the
+   * root element of the inner document fills whatever height the frame was
+   * last given, and `documentElement.scrollHeight` reports that height straight
+   * back. Taking `Math.max` of the two therefore read the previous
+   * measurement, added 8, and wrote a frame 8px taller than before. Every
+   * click, keystroke and resize observation ran it again, so an example that
+   * had not changed at all crept upward the whole time someone used it.
    *
-   * Setting the height to 0 first forces the body to collapse onto its own
-   * content, so what comes back is the content's height rather than an echo of
-   * the frame's. The two writes land in one layout pass, so nothing flickers.
+   * Measured on the events page: a counter whose content is 108px sat in a
+   * frame rendered at 192px, and `documentElement.scrollHeight` said 192 while
+   * `body.scrollHeight` said 108. The body is content-driven because the
+   * stylesheet this file injects gives it `margin:0;padding:16px` and no
+   * height, so it cannot echo the frame. That is what makes it the right thing
+   * to measure, and it is why nothing here may add a height rule to the body.
+   *
+   * An earlier fix collapsed the frame to `0px` before measuring. It never
+   * worked: `.doc-exemplo__palco iframe` carries `min-height: 8rem`, and a
+   * stretched grid item ignores a height smaller than its row in any case. The
+   * frame stayed at its full rendered height throughout, so the collapse
+   * measured exactly what it was trying to avoid while looking like a fix.
    */
   function ajustarAltura(quadro) {
     try {
@@ -750,9 +761,7 @@
       if (!doc || !doc.body) return;
 
       var anterior = quadro.style.height;
-      quadro.style.height = '0px';
-      var altura = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight || 0);
-      var proxima = Math.max(altura + 8, 96) + 'px';
+      var proxima = Math.max(doc.body.scrollHeight + 8, 96) + 'px';
 
       // Avoid writing an identical value: a no-op write still invalidates
       // layout, and the ResizeObserver watching the body would see it.

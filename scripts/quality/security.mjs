@@ -1,17 +1,17 @@
 /**
- * Security: gates automaticos sobre a promessa de seguranca da Voodoo.
+ * Security: automatic gates over Voodoo's security promise.
  *
- * A Voodoo avalia expressoes com um interpretador de AST proprio justamente
- * para nao precisar de `eval` nem de `new Function`. Isso e o que permite rodar
- * sob uma CSP sem `unsafe-eval`. Esse tipo de promessa apodrece em silencio:
- * basta um atalho num PR apressado. Os gates abaixo existem para que a promessa
- * quebre um build, e nao a confianca de quem instalou o pacote.
+ * Voodoo evaluates expressions with its own AST interpreter precisely so that
+ * it needs neither `eval` nor `new Function`. That is what allows it to run
+ * under a CSP without `unsafe-eval`. This kind of promise rots in silence: one
+ * shortcut in a rushed PR is enough. The gates below exist so that breaking the
+ * promise breaks a build, and not the trust of whoever installed the package.
  *
- * Quatro sub-checks:
- *   a) padroes proibidos em `src/**`, com allowlist explicita e revisada;
- *   b) `allowedGlobals` do interpretador nao pode expor o ambiente;
- *   c) compatibilidade com CSP: `dist/**` nao pode conter `eval`/`Function`;
- *   d) `npm audit --omit=dev` (SKIP quando nao ha rede).
+ * Four sub-checks:
+ *   a) prohibited patterns in `src/**`, with an explicit, reviewed allowlist;
+ *   b) the interpreter's `allowedGlobals` must not expose the environment;
+ *   c) CSP compatibility: `dist/**` must not contain `eval`/`Function`;
+ *   d) `npm audit --omit=dev` (SKIP when there is no network).
  */
 
 import { existsSync } from 'node:fs';
@@ -36,13 +36,13 @@ import {
 export const meta = { label: 'Security' };
 
 // ---------------------------------------------------------------------------
-// (a) Padroes proibidos
+// (a) Prohibited patterns
 // ---------------------------------------------------------------------------
 
 /**
- * Proibicoes duras. Nenhuma delas tem excecao valida neste projeto: a
- * existencia do interpretador de AST e exatamente o motivo pelo qual nenhuma
- * delas deveria aparecer.
+ * Hard prohibitions. None of them has a valid exception in this project: the
+ * existence of the AST interpreter is exactly the reason why none of them
+ * should ever show up.
  */
 const HARD_PATTERNS = [
   {
@@ -67,15 +67,15 @@ const HARD_PATTERNS = [
   },
 ];
 
-/** `.innerHTML =` e `.innerHTML +=`, revisado caso a caso. */
+/** `.innerHTML =` and `.innerHTML +=`, reviewed case by case. */
 const INNERHTML_RE = /\.innerHTML\s*\+?=(?!=)/g;
 
 /**
- * Excecoes revisadas de `innerHTML`.
+ * Reviewed `innerHTML` exceptions.
  *
- * A chave e o par (arquivo, expressao do lado direito ja normalizada). Se o
- * codigo mudar, a entrada deixa de casar e o gate volta a acusar — que e o
- * comportamento desejado: mudou, revisa de novo.
+ * The key is the pair (file, already normalized right-hand side expression). If
+ * the code changes, the entry stops matching and the gate flags it again, which
+ * is the desired behaviour: it changed, so review it again.
  */
 const INNERHTML_ALLOWLIST = [
   {
@@ -158,7 +158,7 @@ const INNERHTML_ALLOWLIST = [
   },
 ];
 
-/** Extrai a expressao a direita de um `=`, ate o fim do comando. */
+/** Extracts the expression to the right of an `=`, up to the end of the statement. */
 function rhsAt(source, eqIndex) {
   let i = eqIndex;
   let depth = 0;
@@ -195,7 +195,7 @@ function rhsAt(source, eqIndex) {
   return out.trim().replace(/\s+/g, ' ');
 }
 
-/** `true` se o lado direito e feito so de literais (nenhum identificador). */
+/** `true` if the right-hand side is made only of literals (no identifier). */
 function isLiteralOnly(rhs) {
   const semStrings = stripCommentsAndStrings(rhs);
   return !/[A-Za-z_$]/.test(semStrings);
@@ -237,7 +237,7 @@ function checkSourcePatterns() {
       const rhs = rhsAt(raw, eqIndex);
       const line = lineOf(raw, m.index);
 
-      if (isLiteralOnly(rhs)) continue; // literal constante, sem dado externo
+      if (isLiteralOnly(rhs)) continue; // constant literal, no external data
 
       const allowed = INNERHTML_ALLOWLIST.find((e) => e.file === relPath && e.rhs === rhs);
       if (allowed) {
@@ -264,7 +264,7 @@ function checkSourcePatterns() {
 // (b) allowedGlobals
 // ---------------------------------------------------------------------------
 
-/** Nomes que dariam ao autor de uma expressao acesso ao ambiente do host. */
+/** Names that would give the author of an expression access to the host environment. */
 const FORBIDDEN_GLOBALS = [
   'window',
   'globalThis',
@@ -344,7 +344,7 @@ function checkAllowedGlobals() {
 }
 
 // ---------------------------------------------------------------------------
-// (c) Compatibilidade com CSP
+// (c) CSP compatibility
 // ---------------------------------------------------------------------------
 
 const CSP_PATTERNS = [

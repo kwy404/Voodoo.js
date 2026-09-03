@@ -1,9 +1,10 @@
 /**
- * Testes do modulo de som.
+ * Tests for the sound module.
  *
- * O jsdom nao implementa a Web Audio API, entao o contexto e substituido por um
- * dublê que registra o que teria sido tocado. Isso permite verificar as
- * frequencias, as duracoes e o envelope sem depender de audio de verdade.
+ * jsdom does not implement the Web Audio API, so the context is replaced by a
+ * stand-in that records what would have been played. That makes it possible to
+ * check the frequencies, the durations and the envelope without depending on
+ * real audio.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -23,7 +24,7 @@ interface Toque {
 
 let tocados: Toque[] = [];
 
-/** Contexto de audio de mentira, suficiente para o modulo funcionar. */
+/** A make-believe audio context, enough for the module to work. */
 function instalarAudioFalso(): void {
   tocados = [];
 
@@ -35,7 +36,7 @@ function instalarAudioFalso(): void {
         this.valor = v;
       },
       exponentialRampToValueAtTime() {
-        // O deslize nao muda o que precisamos verificar.
+        // The ramp does not change what we need to check.
       },
     };
     private inicio = 0;
@@ -63,14 +64,14 @@ function instalarAudioFalso(): void {
     gain = {
       dono: this as GanhoFalso,
       setValueAtTime() {
-        // valor inicial, sem interesse para o teste
+        // starting value, of no interest to the test
       },
       exponentialRampToValueAtTime(valor: number) {
         if (valor > this.dono.pico) this.dono.pico = valor;
       },
     };
     connect(): void {
-      // destino final, nada a fazer
+      // final destination, nothing to do
     }
   }
 
@@ -101,19 +102,19 @@ beforeEach(() => {
   sound.volume(0.5);
 });
 
-describe('efeitos prontos', () => {
-  it('a biblioteca traz os efeitos de interface esperados', () => {
+describe('ready-made effects', () => {
+  it('the library ships the expected interface effects', () => {
     for (const nome of ['click', 'pop', 'success', 'error', 'notify', 'open', 'close']) {
       expect(sound.names).toContain(nome);
     }
   });
 
-  it('tocar um efeito gera uma camada por som declarado', () => {
+  it('playing an effect produces one layer per declared sound', () => {
     sound.play('success');
     expect(tocados.length).toBe(efeitos.success.camadas.length);
   });
 
-  it('o efeito de sucesso sobe de tom, e o de erro desce', () => {
+  it('the success effect rises in pitch, and the error one falls', () => {
     sound.play('success');
     const subida = tocados.map((t) => t.frequencia);
     expect(subida[1]).toBeGreaterThan(subida[0]);
@@ -124,50 +125,50 @@ describe('efeitos prontos', () => {
     expect(descida[1]).toBeLessThan(descida[0]);
   });
 
-  it('camadas com atraso comecam depois', () => {
+  it('layers with a delay start later', () => {
     sound.play('complete');
     expect(tocados[1].inicio).toBeGreaterThan(tocados[0].inicio);
     expect(tocados[2].inicio).toBeGreaterThan(tocados[1].inicio);
   });
 });
 
-describe('notas e frequencias', () => {
-  it('converte nome de nota em hertz', () => {
+describe('notes and frequencies', () => {
+  it('converts a note name into hertz', () => {
     expect(getFrequencyForNote('la')).toBeCloseTo(440, 1);
     expect(getFrequencyForNote('do')).toBeCloseTo(261.63, 1);
     expect(getFrequencyForNote('a')).toBeCloseTo(440, 1);
   });
 
-  it('a oitava dobra a frequencia', () => {
+  it('the octave doubles the frequency', () => {
     expect(getFrequencyForNote('la5')).toBeCloseTo(880, 1);
     expect(getFrequencyForNote('la3')).toBeCloseTo(220, 1);
   });
 
-  it('nome desconhecido devolve nulo', () => {
+  it('an unknown name returns null', () => {
     expect(getFrequencyForNote('xyz')).toBeNull();
   });
 
-  it('tone toca a frequencia pedida', () => {
+  it('tone plays the requested frequency', () => {
     sound.tone(660, 100);
     expect(tocados[0].frequencia).toBe(660);
-    // O oscilador para 20 ms depois do fim do envelope, margem que evita o
-    // estalo de quando o volume corta de uma vez.
+    // The oscillator stops 20 ms after the end of the envelope, a margin that
+    // avoids the click you get when the volume is cut all at once.
     expect(tocados[0].fim - tocados[0].inicio).toBeCloseTo(0.12, 2);
   });
 
-  it('note aceita o nome da nota', () => {
+  it('note accepts the note name', () => {
     sound.note('sol');
     expect(tocados[0].frequencia).toBeCloseTo(392, 1);
   });
 
-  it('play com nome de nota funciona sem efeito registrado', () => {
+  it('play with a note name works with no effect registered', () => {
     sound.play('mi');
     expect(tocados[0].frequencia).toBeCloseTo(329.63, 1);
   });
 });
 
-describe('volume e silencio', () => {
-  it('o volume geral entra no calculo do pico', () => {
+describe('volume and silence', () => {
+  it('the overall volume goes into the peak calculation', () => {
     sound.volume(1);
     sound.tone(440, 50, { volume: 1 });
     const alto = tocados[0].volume;
@@ -180,7 +181,7 @@ describe('volume e silencio', () => {
     expect(baixo).toBeLessThan(alto);
   });
 
-  it('silenciado nao toca nada', () => {
+  it('muted plays nothing', () => {
     sound.mute();
     sound.play('click');
     sound.tone(440, 50);
@@ -188,21 +189,21 @@ describe('volume e silencio', () => {
     expect(tocados.length).toBe(0);
   });
 
-  it('toggle alterna e devolve o estado novo', () => {
+  it('toggle flips and returns the new state', () => {
     expect(sound.muted).toBe(false);
     expect(sound.toggle()).toBe(true);
     expect(sound.muted).toBe(true);
     expect(sound.toggle()).toBe(false);
   });
 
-  it('a preferencia de volume fica guardada', () => {
+  it('the volume preference is kept', () => {
     sound.volume(0.7);
     expect(localStorage.getItem('voodoo:sound:volume')).toContain('0.7');
   });
 });
 
-describe('efeitos proprios', () => {
-  it('define registra um efeito novo e play encontra', () => {
+describe('effects of your own', () => {
+  it('define registers a new effect and play finds it', () => {
     sound.define('meuAviso', {
       volume: 0.5,
       camadas: [{ frequencia: 700, duracao: 0.1 }],
@@ -223,7 +224,7 @@ describe('directive v-sound', () => {
     return root;
   }
 
-  it('toca ao clicar, que e o evento padrao', () => {
+  it('plays on click, which is the default event', () => {
     const root = montar('<button v-sound="click">ok</button>');
     expect(tocados.length).toBe(0);
 
@@ -231,7 +232,7 @@ describe('directive v-sound', () => {
     expect(tocados.length).toBeGreaterThan(0);
   });
 
-  it('o argumento escolhe outro evento', () => {
+  it('the argument picks another event', () => {
     const root = montar('<input v-sound:input="type">');
     const campo = root.querySelector('input')!;
 
@@ -242,13 +243,13 @@ describe('directive v-sound', () => {
     expect(tocados.length).toBe(1);
   });
 
-  it('aceita nome de nota', () => {
+  it('accepts a note name', () => {
     const root = montar('<button v-sound="la">nota</button>');
     root.querySelector('button')!.click();
     expect(tocados[0].frequencia).toBeCloseTo(440, 1);
   });
 
-  it('para de tocar depois que o elemento sai', async () => {
+  it('stops playing once the element leaves', async () => {
     const root = montar('<button v-sound="click">ok</button>');
     const botao = root.querySelector('button')!;
 
@@ -261,7 +262,7 @@ describe('directive v-sound', () => {
 });
 
 describe('directive v-mute', () => {
-  it('alterna o silencio e reflete no proprio botao', () => {
+  it('toggles the mute and shows it on the button itself', () => {
     const root = document.createElement('div');
     root.innerHTML = '<button v-mute>Som</button>';
     document.body.appendChild(root);
@@ -281,8 +282,8 @@ describe('directive v-mute', () => {
   });
 });
 
-describe('ambiente sem suporte', () => {
-  it('nao lanca quando a Web Audio API nao existe', () => {
+describe('environment without support', () => {
+  it('does not throw when the Web Audio API does not exist', () => {
     delete (window as unknown as { AudioContext?: unknown }).AudioContext;
     const aviso = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 

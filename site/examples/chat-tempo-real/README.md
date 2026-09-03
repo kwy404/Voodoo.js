@@ -1,45 +1,48 @@
-# Chat em tempo real
+# Real-time chat
 
-Chat funcionando de verdade: WebSocket dos dois lados, sala pública, mensagem privada, presença ao
-vivo e reconexão automática com reentrada na sala.
+A chat that really works: WebSocket on both sides, a public room, private messages, live presence
+and automatic reconnection that rejoins the room.
 
-Diferente da demo em `examples/chat/`, que simula as respostas, esta conversa com um servidor real
-— escrito em `scripts/chat-servidor.mjs`, sem nenhuma dependência: o handshake e o enquadramento do
-RFC 6455 estão ali, à mão, em cerca de 80 linhas.
+Unlike the demo in `examples/chat/`, which fakes the replies, this one talks to a real server,
+written in `scripts/chat-servidor.mjs` with no dependencies at all: the RFC 6455 handshake and
+framing are right there, by hand, in about 80 lines.
 
-## Como rodar
+## How to run
 
 ```bash
-# na raiz do projeto, com o dist já construído
+# at the project root, with dist already built
 npm run build --workspace=voodoojs
 node scripts/chat-servidor.mjs
 ```
 
-Abra <http://localhost:5174/examples/chat-tempo-real/> em **duas abas**. Para escolher o nome,
-acrescente `?nome=ana`.
+Open <http://localhost:5174/examples/chat-tempo-real/> in **two tabs**. To choose the name, add
+`?nome=ana`.
 
-## O que dá para experimentar
+## What you can try
 
-- **Sala pública.** Escreva numa aba e veja aparecer na outra.
-- **Mensagem privada.** Clique em `privado` ao lado de alguém na lista e mande. Só vocês dois veem,
-  e a mensagem chega com a borda destacada.
-- **Presença.** Feche uma aba e veja a lista encolher na outra.
-- **Reconexão.** Derrube o servidor com `Ctrl+C`. O status vira "reconectando..." e a espera entre
-  as tentativas cresce. Suba o servidor de novo: a conexão volta sozinha, **a sala é refeita** e a
-  presença se reconstrói. É esse último passo que quase toda implementação esquece.
-- **Autorização de sala.** Tente entrar numa sala privada de outra pessoa pelo console:
-  `V.socket.open[0].join('dm:bia+caio')`. O servidor recusa, porque é ele quem decide.
+- **Public room.** Type in one tab and watch it show up in the other.
+- **Private message.** Click `privado` next to someone in the list and send. Only the two of you
+  see it, and the message arrives with a highlighted border.
+- **Presence.** Close one tab and watch the list shrink in the other.
+- **Reconnection.** Kill the server with `Ctrl+C`. The status turns into "reconectando..." and the
+  wait between attempts grows. Start the server again: the connection comes back on its own, **the
+  room is rejoined** and presence rebuilds itself. That last step is the one almost every
+  implementation forgets.
+- **Room authorization.** Try to enter someone else's private room from the console:
+  `V.socket.open[0].join('dm:bia+caio')`. The server refuses, because the server is the one that
+  decides.
 
-## O ponto importante
+## The point that matters
 
-Privacidade é responsabilidade do servidor. A etiqueta `privada` de uma sala e o destinatário de
-uma mensagem são **pedidos** que o cliente faz. Quem recusa a entrada e quem escolhe para quem cada
-mensagem sai é o `podeEntrar()` e o roteamento em `scripts/chat-servidor.mjs`.
+Privacy is the server's responsibility. A room's `privada` flag and a message's recipient are
+**requests** the client makes. What refuses entry and what chooses where each message goes is
+`podeEntrar()` and the routing in `scripts/chat-servidor.mjs`.
 
-Um "privado" que dependesse só desta página seria falso: quem abre o console entra na sala que
-quiser e escuta o evento que quiser. Está tudo explicado em [`docs/websocket.md`](../../docs/websocket.md).
+A "private" that depended on this page alone would be a lie: anyone who opens the console joins
+whatever room they want and listens to whatever event they want. It is all explained in
+[`docs/websocket.md`](../../docs/websocket.md).
 
-## Como a página está montada
+## How the page is put together
 
 ```html
 <div v-socket="ws://localhost:5174/chat" v-room="geral" v-on-socket:voce="eu = $event">
@@ -50,6 +53,6 @@ quiser e escuta o evento que quiser. Está tudo explicado em [`docs/websocket.md
 </div>
 ```
 
-A camada de tempo real tem entrada própria (`dist/socket.js`) e não vem nos bundles de CDN, então
-esta demo carrega a Voodoo em ESM: assim os dois lados compartilham os mesmos chunks e, com eles, o
-mesmo registro de directives.
+The real-time layer has an entry point of its own (`dist/socket.js`) and does not ship in the CDN
+bundles, so this demo loads Voodoo as ESM: that way both sides share the same chunks and, with
+them, the same directive registry.
