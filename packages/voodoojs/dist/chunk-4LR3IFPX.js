@@ -942,5 +942,5 @@ Object.defineProperty(factory, "open", {
 var socket = factory;
 
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, devtoolsBus, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported };
-//# sourceMappingURL=chunk-OOIUSRUN.js.map
-//# sourceMappingURL=chunk-OOIUSRUN.js.map
+//# sourceMappingURL=chunk-4LR3IFPX.js.map
+//# sourceMappingURL=chunk-4LR3IFPX.js.map

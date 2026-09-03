@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tema e paleta · Documentação da Voodoo.js</title>
-<meta name="description" content="Tema claro e escuro sem piscar, e a paleta que gera a escala inteira em OKLCH a partir de poucas cores base, com contraste conferido pela regra da WCAG.">
+<title>Theme and palette · Voodoo.js documentation</title>
+<meta name="description" content="A light and dark theme with no flash, and the palette that generates the whole scale in OKLCH from a handful of base colours, with contrast checked by the WCAG formula.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/tema-e-paleta">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,56 +14,56 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Tema e paleta</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Theme and palette</h1>
 <p class="doc-resumo">
-  Dois sistemas complementares: o <b>tema</b>, que alterna entre claro e escuro, e a
-  <b>paleta</b>, que gera todas as cores da interface a partir de poucas cores base. Os dois vivem
-  em variáveis CSS, então o seu próprio CSS anda junto sem esforço.
+  Two complementary systems: the <b>theme</b>, which switches between light and dark, and the
+  <b>palette</b>, which generates every colour of the interface from a handful of base colours.
+  Both live in CSS variables, so your own CSS comes along without any effort.
 </p>
 
-<h2 id="tema">Tema claro e escuro</h2>
+<h2 id="tema">Light and dark theme</h2>
 
-<p>O tema é aplicado no elemento raiz, com o atributo <code>data-theme</code>:</p>
+<p>The theme is applied on the root element, with the <code>data-theme</code> attribute:</p>
 
 <pre data-lang="html"><code>&lt;html data-theme="dark"&gt;</code></pre>
 
 <p>
-  Quando o usuário nunca escolheu, o atributo não existe e vale a preferência do sistema, lida por
-  <code>prefers-color-scheme</code>.
+  When the user has never chosen, the attribute is absent and the system preference holds, read
+  through <code>prefers-color-scheme</code>.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-theme-toggle&gt;Alternar tema&lt;/button&gt;
-  &lt;p v-show="$theme.resolved === 'dark'"&gt;Você está no tema escuro.&lt;/p&gt;
-  &lt;p v-show="$theme.resolved === 'light'"&gt;Você está no tema claro.&lt;/p&gt;
+  &lt;button v-theme-toggle&gt;Switch the theme&lt;/button&gt;
+  &lt;p v-show="$theme.resolved === 'dark'"&gt;You are on the dark theme.&lt;/p&gt;
+  &lt;p v-show="$theme.resolved === 'light'"&gt;You are on the light theme.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O botão recebe <code>aria-pressed</code>, um <code>aria-label</code> descritivo e
-  <code>data-v-theme</code> com o tema em uso.
+  The button receives <code>aria-pressed</code>, a descriptive <code>aria-label</code> and
+  <code>data-v-theme</code> with the theme in use.
 </p>
 
-<pre data-lang="js"><code>V.theme.current;    // 'light', 'dark' ou 'system'
-V.theme.resolved;   // 'light' ou 'dark', já resolvendo 'system'
+<pre data-lang="js"><code>V.theme.current;    // 'light', 'dark' or 'system'
+V.theme.resolved;   // 'light' or 'dark', with 'system' already resolved
 V.theme.set('dark');
 V.theme.set('system');
-V.theme.toggle();   // devolve o tema aplicado</code></pre>
+V.theme.toggle();   // returns the theme it applied</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Sem piscar</span>
+  <span class="doc-aviso__rotulo">No flash</span>
   <p>
-    A escolha fica no <code>localStorage</code>, na chave <code>voodoo:theme</code>, e é aplicada
-    pelos builds de navegador antes do primeiro render. É por isso que a página não abre branca
-    para quem escolheu o tema escuro.
+    The choice lives in <code>localStorage</code>, under the key <code>voodoo:theme</code>, and the
+    browser builds apply it before the first render. That is why the page does not open white for
+    someone who chose the dark theme.
   </p>
 </div>
 
-<h2 id="css">Escrevendo CSS que segue o tema</h2>
+<h2 id="css">Writing CSS that follows the theme</h2>
 
-<pre data-lang="css"><code>.minha-caixa {
+<pre data-lang="css"><code>.my-box {
   background: var(--v-surface);
   color: var(--v-text);
   border: 1px solid var(--v-border);
@@ -72,21 +72,22 @@ V.theme.toggle();   // devolve o tema aplicado</code></pre>
 }</code></pre>
 
 <p>
-  Como as variáveis já mudam com o tema, você não precisa escrever duas versões da mesma regra.
+  Because the variables already change with the theme, you do not have to write two versions of the
+  same rule.
 </p>
 
-<h2 id="paleta">A paleta</h2>
+<h2 id="paleta">The palette</h2>
 
 <p>
-  <code>V.palette()</code> gera, a partir de poucas cores base, a escala completa de tons de 50 a
-  900, a versão de tema escuro e a cor de texto com melhor contraste sobre cada cor, tudo escrito
-  como variáveis CSS no <code>:root</code>.
+  <code>V.palette()</code> generates, from a handful of base colours, the full scale of shades from
+  50 to 900, the dark-theme version, and the text colour with the best contrast over each colour,
+  all written as CSS variables on <code>:root</code>.
 </p>
 
 <p>
-  O cálculo acontece em OKLCH, um espaço perceptualmente uniforme: degraus com a mesma diferença
-  de luminância parecem igualmente distantes para o olho, o que não acontece em HSL. A cor de
-  texto usa o cálculo real de luminância relativa da WCAG, então o resultado é sempre legível.
+  The maths happens in OKLCH, a perceptually uniform space: steps with the same difference in
+  lightness look equally far apart to the eye, which is not the case in HSL. The text colour uses
+  the real WCAG relative-luminance formula, so the result is always readable.
 </p>
 
 <pre data-lang="js"><code>V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' });
@@ -94,15 +95,15 @@ V.palette({ preset: 'oceano' });</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>preset</code></td><td>Ponto de partida. As cores informadas sobrescrevem</td></tr>
-<tr><td><code>primary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>danger</code>, <code>info</code></td><td>Cores base</td></tr>
-<tr><td><code>neutral</code></td><td>Cor que tinge fundos, textos e bordas. Padrão: a matiz da primária</td></tr>
-<tr><td><code>radius</code></td><td>Raio das bordas, como <code>12px</code> ou <code>0.75rem</code></td></tr>
-<tr><td><code>font</code></td><td>Família principal. A página continua responsável por carregar a fonte</td></tr>
-<tr><td><code>monoFont</code></td><td>Família monoespaçada, usada por <code>VCodeBlock</code></td></tr>
-<tr><td><code>persist</code></td><td>Salva a escolha no <code>localStorage</code>. Padrão <code>true</code></td></tr>
+<tr><td><code>preset</code></td><td>The starting point. The colours you pass override it</td></tr>
+<tr><td><code>primary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>danger</code>, <code>info</code></td><td>Base colours</td></tr>
+<tr><td><code>neutral</code></td><td>The colour that tints backgrounds, text and borders. Default: the hue of the primary</td></tr>
+<tr><td><code>radius</code></td><td>Border radius, such as <code>12px</code> or <code>0.75rem</code></td></tr>
+<tr><td><code>font</code></td><td>The main family. The page is still responsible for loading the font</td></tr>
+<tr><td><code>monoFont</code></td><td>The monospaced family, used by <code>VCodeBlock</code></td></tr>
+<tr><td><code>persist</code></td><td>Saves the choice in <code>localStorage</code>. Default <code>true</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -111,7 +112,7 @@ V.palette({ preset: 'oceano' });</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Nome</th><th>Primária</th><th>Realce</th></tr></thead>
+<thead><tr><th>Name</th><th>Primary</th><th>Accent</th></tr></thead>
 <tbody>
 <tr><td><code>violeta</code></td><td><code>#6D3BF5</code></td><td><code>#FF3D8B</code></td></tr>
 <tr><td><code>oceano</code></td><td><code>#0E7BC4</code></td><td><code>#0FB5C9</code></td></tr>
@@ -122,87 +123,88 @@ V.palette({ preset: 'oceano' });</code></pre>
 </table>
 </div>
 
-<p>Todos têm contraste verificado nos dois temas.</p>
+<p>All of them have their contrast verified in both themes.</p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.data({ trocarPaleta: (nome) =&gt; V.palette.use(nome) });
+    V.data({ usePalette: (name) =&gt; V.palette.use(name) });
   &lt;/script&gt;
 
   &lt;div v-data="{ presets: ['violeta', 'oceano', 'floresta', 'poente', 'grafite'] }"&gt;
     &lt;div class="linha"&gt;
-      &lt;button v-for="p in presets" @click="trocarPaleta(p)"&gt;{ p }&lt;/button&gt;
+      &lt;button v-for="p in presets" @click="usePalette(p)"&gt;{ p }&lt;/button&gt;
     &lt;/div&gt;
-    &lt;VButton variant="primary"&gt;Botão primário&lt;/VButton&gt;
-    &lt;VBadge tone="success"&gt;Sucesso&lt;/VBadge&gt;
-    &lt;VAlert tone="info" title="Aviso"&gt;A paleta inteira muda de uma vez.&lt;/VAlert&gt;
+    &lt;VButton variant="primary"&gt;A primary button&lt;/VButton&gt;
+    &lt;VBadge tone="success"&gt;Success&lt;/VBadge&gt;
+    &lt;VAlert tone="info" title="Notice"&gt;The whole palette changes at once.&lt;/VAlert&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<pre data-lang="js"><code>V.palette.use('floresta');   // troca só o preset, mantendo raio e fonte
+<pre data-lang="js"><code>V.palette.use('floresta');   // changes only the preset, keeping radius and font
 V.palette.names;             // ['violeta', 'oceano', 'floresta', 'poente', 'grafite']
-V.palette.reset();           // volta ao padrão e apaga a escolha salva
-V.palette.current;           // paleta em uso, com todas as escalas</code></pre>
+V.palette.reset();           // goes back to the default and erases the saved choice
+V.palette.current;           // the palette in use, with all its scales</code></pre>
 
-<h2 id="tokens">Tokens CSS</h2>
+<h2 id="tokens">CSS tokens</h2>
 
 <p>
-  Estes existem sempre, com valor padrão embutido, mesmo sem chamar <code>V.palette()</code>:
+  These always exist, with a built-in default value, even without calling
+  <code>V.palette()</code>:
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Token</th><th>Para que serve</th></tr></thead>
+<thead><tr><th>Token</th><th>What it is for</th></tr></thead>
 <tbody>
-<tr><td><code>--v-primary</code>, <code>--v-primary-hover</code>, <code>--v-primary-contrast</code></td><td>Cor principal</td></tr>
-<tr><td><code>--v-accent</code></td><td>Cor de realce</td></tr>
-<tr><td><code>--v-success</code>, <code>--v-warning</code>, <code>--v-danger</code>, <code>--v-info</code></td><td>Estados</td></tr>
-<tr><td><code>--v-surface</code>, <code>--v-surface-2</code></td><td>Fundos</td></tr>
-<tr><td><code>--v-text</code>, <code>--v-text-muted</code></td><td>Textos</td></tr>
-<tr><td><code>--v-border</code></td><td>Bordas</td></tr>
-<tr><td><code>--v-radius</code>, <code>--v-radius-sm</code></td><td>Raios</td></tr>
-<tr><td><code>--v-shadow</code></td><td>Sombra</td></tr>
-<tr><td><code>--v-ease</code></td><td>Curva das transições</td></tr>
-<tr><td><code>--v-z-modal</code>, <code>--v-z-drawer</code>, <code>--v-z-dropdown</code>, <code>--v-z-toast</code>, <code>--v-z-tooltip</code></td><td>Camadas</td></tr>
+<tr><td><code>--v-primary</code>, <code>--v-primary-hover</code>, <code>--v-primary-contrast</code></td><td>The main colour</td></tr>
+<tr><td><code>--v-accent</code></td><td>The accent colour</td></tr>
+<tr><td><code>--v-success</code>, <code>--v-warning</code>, <code>--v-danger</code>, <code>--v-info</code></td><td>States</td></tr>
+<tr><td><code>--v-surface</code>, <code>--v-surface-2</code></td><td>Backgrounds</td></tr>
+<tr><td><code>--v-text</code>, <code>--v-text-muted</code></td><td>Text</td></tr>
+<tr><td><code>--v-border</code></td><td>Borders</td></tr>
+<tr><td><code>--v-radius</code>, <code>--v-radius-sm</code></td><td>Radii</td></tr>
+<tr><td><code>--v-shadow</code></td><td>Shadow</td></tr>
+<tr><td><code>--v-ease</code></td><td>The transition curve</td></tr>
+<tr><td><code>--v-z-modal</code>, <code>--v-z-drawer</code>, <code>--v-z-dropdown</code>, <code>--v-z-toast</code>, <code>--v-z-tooltip</code></td><td>Layers</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Depois de <code>V.palette()</code>, o conjunto cresce com fundos intermediários, sombras menor e
-  maior, raios maiores, anel de foco, famílias tipográficas e as escalas de 50 a 900 de cada cor
-  base. A lista completa está na
-  <a href="../referencia/configuracao.html#tokens">referência de configuração</a>.
+  After <code>V.palette()</code>, the set grows with intermediate backgrounds, a smaller and a
+  larger shadow, larger radii, the focus ring, the type families and the 50-to-900 scales of every
+  base colour. The full list is in the
+  <a href="../referencia/configuracao.html#tokens">configuration reference</a>.
 </p>
 
-<h2 id="derivadas">Cores derivadas, e conferir contraste</h2>
+<h2 id="derivadas">Derived colours, and checking contrast</h2>
 
-<pre data-lang="js"><code>V.palette.scale('#6D3BF5')['700'];           // tom escuro da escala
-V.palette.scale('#6D3BF5', true);            // escala do tema escuro
-V.palette.contrastText('#6D3BF5');           // '#fff' ou '#000', o que ler melhor
-V.palette.contrastRatio('#6D3BF5', '#fff');  // razão WCAG, de 1 a 21
-V.palette.luminance('#6D3BF5');              // luminância relativa</code></pre>
+<pre data-lang="js"><code>V.palette.scale('#6D3BF5')['700'];           // a dark shade of the scale
+V.palette.scale('#6D3BF5', true);            // the dark-theme scale
+V.palette.contrastText('#6D3BF5');           // '#fff' or '#000', whichever reads better
+V.palette.contrastRatio('#6D3BF5', '#fff');  // the WCAG ratio, from 1 to 21
+V.palette.luminance('#6D3BF5');              // relative luminance</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Use durante o desenvolvimento</span>
+  <span class="doc-aviso__rotulo">Use it while developing</span>
   <p>
-    <code>contrastRatio</code> devolve a razão real: 4.5 é o mínimo da WCAG AA para texto normal e
-    3 para texto grande. É mais rápido conferir uma cor no console do que descobrir o problema
-    depois, em um teste de acessibilidade.
+    <code>contrastRatio</code> gives you the real ratio: 4.5 is the WCAG AA minimum for normal text
+    and 3 for large text. Checking a colour in the console is faster than finding the problem later,
+    in an accessibility audit.
   </p>
 </div>
 
-<h2 id="desligando">Desligando o CSS injetado</h2>
+<h2 id="desligando">Turning off the injected CSS</h2>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-no-styles defer&gt;&lt;/script&gt;</code></pre>
 
 <p>
-  Nenhum estilo é injetado. Os componentes continuam funcionando, mas sem aparência, e você fica
-  responsável por escrever as regras das classes <code>v-*</code>. Se você usa Tailwind, o caminho
-  mais confortável costuma ser o contrário: manter o CSS injetado e apontar as cores do Tailwind
-  para as variáveis <code>--v-*</code>, de forma que os dois sistemas andem juntos.
+  No style is injected. The components go on working, but with no appearance, and writing the rules
+  for the <code>v-*</code> classes is up to you. If you use Tailwind, the more comfortable road is
+  usually the opposite: keep the injected CSS and point Tailwind's colours at the
+  <code>--v-*</code> variables, so that the two systems move together.
 </p>
 
 </article>

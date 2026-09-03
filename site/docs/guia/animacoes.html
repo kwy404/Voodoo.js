@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Animações · Documentação da Voodoo.js</title>
-<meta name="description" content="O motor de animação com tween e mola de verdade: v-motion, os presets, as propriedades animáveis, animação na rolagem, onda entre irmãos, hover e tap, e prefers-reduced-motion.">
+<title>Animations · Voodoo.js documentation</title>
+<meta name="description" content="The animation engine with real tweens and real springs: v-motion, the presets, the animatable properties, animating on scroll, staggering siblings, hover and tap, and prefers-reduced-motion.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/animacoes">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,32 +14,32 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Animações</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Animations</h1>
 <p class="doc-resumo">
-  Um motor de animação próprio, escrito em vanilla, com um único laço de
-  <code>requestAnimationFrame</code> compartilhado por todas as animações ativas. Dois modos de
-  progresso: tween, com duração fixa e curva, e mola, com integração numérica real de rigidez,
-  atrito e massa.
+  An animation engine of its own, written in vanilla JavaScript, with a single
+  <code>requestAnimationFrame</code> loop shared by every active animation. Two ways of advancing:
+  a tween, with a fixed duration and a curve, and a spring, with real numerical integration of
+  stiffness, damping and mass.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
+  <span class="doc-aviso__rotulo">voodoo.full.min.js only</span>
   <p>
-    O módulo de animação existe apenas no build completo. Nos outros dois arquivos as directives
-    <code>v-motion*</code> não são reconhecidas e o elemento fica como está.
+    The animation module exists only in the full build. In the other two files the
+    <code>v-motion*</code> directives are not recognized and the element stays as it is.
   </p>
 </div>
 
 <h2 id="v-motion">v-motion</h2>
 
-<p>Anima o elemento assim que ele é inicializado.</p>
+<p>Animates the element as soon as it is initialized.</p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;p v-motion="fadeUp"&gt;Aparece subindo&lt;/p&gt;
-  &lt;p v-motion="{ opacity: [0, 1], x: [-40, 0], duration: 700 }"&gt;Com valores próprios&lt;/p&gt;
-  &lt;p v-motion="{ scale: [0.6, 1], spring: { stiffness: 300, damping: 12 } }"&gt;Com mola&lt;/p&gt;
+  &lt;p v-motion="fadeUp"&gt;Appears while rising&lt;/p&gt;
+  &lt;p v-motion="{ opacity: [0, 1], x: [-40, 0], duration: 700 }"&gt;With values of your own&lt;/p&gt;
+  &lt;p v-motion="{ scale: [0.6, 1], spring: { stiffness: 300, damping: 12 } }"&gt;With a spring&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
@@ -47,17 +47,17 @@
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Nome</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Name</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>fadeIn</code></td><td>Só opacidade</td></tr>
-<tr><td><code>fadeUp</code></td><td>Sobe alguns pixels enquanto aparece. O mais usado em listas</td></tr>
-<tr><td><code>fadeDown</code></td><td>Desce enquanto aparece</td></tr>
-<tr><td><code>scaleIn</code></td><td>Cresce de dentro para fora, com um leve exagero no fim</td></tr>
-<tr><td><code>slideLeft</code></td><td>Entra deslizando da direita</td></tr>
-<tr><td><code>slideRight</code></td><td>Entra deslizando da esquerda</td></tr>
-<tr><td><code>pop</code></td><td>Estoura no lugar, com mola bem viva</td></tr>
-<tr><td><code>blurIn</code></td><td>Sai do desfoque até ficar nítido</td></tr>
-<tr><td><code>flip</code></td><td>Gira no eixo horizontal, como uma carta virando</td></tr>
+<tr><td><code>fadeIn</code></td><td>Opacity only</td></tr>
+<tr><td><code>fadeUp</code></td><td>Rises a few pixels while appearing. The most used one in lists</td></tr>
+<tr><td><code>fadeDown</code></td><td>Descends while appearing</td></tr>
+<tr><td><code>scaleIn</code></td><td>Grows from the inside out, with a slight overshoot at the end</td></tr>
+<tr><td><code>slideLeft</code></td><td>Slides in from the right</td></tr>
+<tr><td><code>slideRight</code></td><td>Slides in from the left</td></tr>
+<tr><td><code>pop</code></td><td>Bursts in place, with a very lively spring</td></tr>
+<tr><td><code>blurIn</code></td><td>Comes out of a blur until it is sharp</td></tr>
+<tr><td><code>flip</code></td><td>Turns on the horizontal axis, like a card flipping over</td></tr>
 </tbody>
 </table>
 </div>
@@ -65,159 +65,159 @@
 <pre data-lang="js"><code>V.animate('.card', V.motion.fadeUp);
 V.motion.pop;  // { opacity: [0,1], scale: [0.6,1], spring: { stiffness: 420, damping: 18 } }</code></pre>
 
-<h2 id="propriedades">Propriedades animáveis</h2>
+<h2 id="propriedades">Animatable properties</h2>
 
 <p>
-  Qualquer propriedade CSS numérica funciona. Além delas existem atalhos que alimentam um único
-  <code>transform</code> por elemento, então várias animações convivem sem sobrescrever umas às
-  outras:
+  Any numeric CSS property works. On top of those there are shorthands that feed a single
+  <code>transform</code> per element, so several animations live together without overwriting each
+  other:
 </p>
 
 <pre data-lang="txt"><code>x  y  z  scale  scaleX  scaleY  rotate  rotateX  rotateY  skewX  skewY</code></pre>
 
-<p>E atalhos de filtro:</p>
+<p>And filter shorthands:</p>
 
 <pre data-lang="txt"><code>blur  brightness  contrast  grayscale  saturate</code></pre>
 
 <p>
-  Cores são interpoladas de verdade, entendendo <code>#fff</code>, <code>#112233aa</code>,
-  <code>rgb()</code>, <code>rgba()</code>, <code>hsl()</code>, <code>hsla()</code> e
-  <code>transparent</code>. Um valor único usa o estado atual como ponto de partida; um par
-  <code>[de, para]</code> define os dois extremos.
+  Colours are really interpolated, understanding <code>#fff</code>, <code>#112233aa</code>,
+  <code>rgb()</code>, <code>rgba()</code>, <code>hsl()</code>, <code>hsla()</code> and
+  <code>transparent</code>. A single value uses the current state as its starting point; a pair
+  <code>[from, to]</code> sets both ends.
 </p>
 
-<h2 id="opcoes">Opções</h2>
+<h2 id="opcoes">Options</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>duration</code></td><td>400</td><td>Duração em milissegundos. Ignorada com mola</td></tr>
-<tr><td><code>delay</code></td><td>0</td><td>Espera antes de começar</td></tr>
-<tr><td><code>easing</code></td><td><code>easeOut</code></td><td>Nome de um easing ou função própria</td></tr>
-<tr><td><code>spring</code></td><td></td><td><code>true</code> para os padrões, ou <code>{ stiffness, damping, mass, velocity }</code></td></tr>
-<tr><td><code>repeat</code></td><td>0</td><td>Repetições extras. <code>2</code> executa três vezes</td></tr>
-<tr><td><code>repeatType</code></td><td><code>loop</code></td><td><code>loop</code>, <code>reverse</code> ou <code>mirror</code></td></tr>
-<tr><td><code>force</code></td><td><code>false</code></td><td>Ignora <code>prefers-reduced-motion</code>. Reserve para animações essenciais</td></tr>
-<tr><td><code>onUpdate</code></td><td></td><td>Recebe o progresso a cada quadro</td></tr>
-<tr><td><code>onComplete</code></td><td></td><td>Chamado no fim</td></tr>
+<tr><td><code>duration</code></td><td>400</td><td>Duration in milliseconds. Ignored with a spring</td></tr>
+<tr><td><code>delay</code></td><td>0</td><td>Waits before starting</td></tr>
+<tr><td><code>easing</code></td><td><code>easeOut</code></td><td>The name of an easing or a function of your own</td></tr>
+<tr><td><code>spring</code></td><td></td><td><code>true</code> for the defaults, or <code>{ stiffness, damping, mass, velocity }</code></td></tr>
+<tr><td><code>repeat</code></td><td>0</td><td>Extra repetitions. <code>2</code> runs it three times</td></tr>
+<tr><td><code>repeatType</code></td><td><code>loop</code></td><td><code>loop</code>, <code>reverse</code> or <code>mirror</code></td></tr>
+<tr><td><code>force</code></td><td><code>false</code></td><td>Ignores <code>prefers-reduced-motion</code>. Save it for essential animations</td></tr>
+<tr><td><code>onUpdate</code></td><td></td><td>Receives the progress on every frame</td></tr>
+<tr><td><code>onComplete</code></td><td></td><td>Called at the end</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Curvas prontas: <code>linear</code>, <code>easeIn</code>, <code>easeOut</code>,
+  Ready-made curves: <code>linear</code>, <code>easeIn</code>, <code>easeOut</code>,
   <code>easeInOut</code>, <code>easeOutBack</code>, <code>easeOutExpo</code>,
-  <code>anticipate</code> e <code>bounce</code>. Todas estão em <code>V.easings</code>.
+  <code>anticipate</code> and <code>bounce</code>. They all live in <code>V.easings</code>.
 </p>
 
-<h2 id="rolagem">Animar na rolagem</h2>
+<h2 id="rolagem">Animating on scroll</h2>
 
-<pre data-lang="html"><code>&lt;section v-motion-scroll="fadeUp"&gt;Anima ao aparecer&lt;/section&gt;
-&lt;section v-motion-scroll.repeat="fadeIn"&gt;Anima toda vez que aparece&lt;/section&gt;
-&lt;section v-motion-scroll="scaleIn" v-motion-scroll-amount="0.5"&gt;Metade visível&lt;/section&gt;
-&lt;section v-motion-scroll="fadeUp" v-motion-scroll-margin="-100px"&gt;Com margem&lt;/section&gt;</code></pre>
+<pre data-lang="html"><code>&lt;section v-motion-scroll="fadeUp"&gt;Animates when it appears&lt;/section&gt;
+&lt;section v-motion-scroll.repeat="fadeIn"&gt;Animates every time it appears&lt;/section&gt;
+&lt;section v-motion-scroll="scaleIn" v-motion-scroll-amount="0.5"&gt;Half of it visible&lt;/section&gt;
+&lt;section v-motion-scroll="fadeUp" v-motion-scroll-margin="-100px"&gt;With a margin&lt;/section&gt;</code></pre>
 
 <p>
-  O estado inicial é aplicado na montagem, então o elemento já nasce escondido e não pisca antes
-  de a rolagem chegar nele.
+  The initial state is applied on mount, so the element is born hidden and does not flash before
+  the scroll reaches it.
 </p>
 
-<h2 id="onda">Onda entre irmãos</h2>
+<h2 id="onda">Staggering siblings</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;ul v-motion-stagger="90"&gt;
-  &lt;li v-motion="fadeUp"&gt;Um&lt;/li&gt;
-  &lt;li v-motion="fadeUp"&gt;Dois&lt;/li&gt;
-  &lt;li v-motion="fadeUp"&gt;Três&lt;/li&gt;
-  &lt;li v-motion="fadeUp"&gt;Quatro&lt;/li&gt;
+  &lt;li v-motion="fadeUp"&gt;One&lt;/li&gt;
+  &lt;li v-motion="fadeUp"&gt;Two&lt;/li&gt;
+  &lt;li v-motion="fadeUp"&gt;Three&lt;/li&gt;
+  &lt;li v-motion="fadeUp"&gt;Four&lt;/li&gt;
 &lt;/ul&gt;</code></pre>
 </div>
 
 <p>
-  O valor é o intervalo em milissegundos entre um filho e o seguinte.
-  <code>v-motion-stagger-from</code> muda o ponto de partida da onda, aceitando
-  <code>center</code> e <code>last</code> além do começo.
+  The value is the interval in milliseconds between one child and the next.
+  <code>v-motion-stagger-from</code> changes where the wave starts, accepting <code>center</code>
+  and <code>last</code> besides the beginning.
 </p>
 
-<h2 id="interacao">Hover e tap</h2>
+<h2 id="interacao">Hover and tap</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div class="linha"&gt;
-  &lt;button v-motion-hover="{ scale: 1.08 }"&gt;Passe o mouse&lt;/button&gt;
-  &lt;button v-motion-tap="{ scale: 0.94 }"&gt;Clique e segure&lt;/button&gt;
+  &lt;button v-motion-hover="{ scale: 1.08 }"&gt;Hover over me&lt;/button&gt;
+  &lt;button v-motion-tap="{ scale: 0.94 }"&gt;Click and hold&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os dois voltam sozinhos ao estado original quando o mouse sai ou o clique termina. Como eles
-  escrevem no mesmo <code>transform</code> compartilhado, podem conviver no mesmo elemento.
+  Both go back to the original state on their own when the mouse leaves or the click ends. Because
+  they write into the same shared <code>transform</code>, they can live on the same element.
 </p>
 
-<h2 id="contadores">Números e texto</h2>
+<h2 id="contadores">Numbers and text</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;h3 v-count="128400" v-count-duration="1400" v-count-prefix="R$ "&gt;&lt;/h3&gt;
+  &lt;h3 v-count="128400" v-count-duration="1400" v-count-prefix="$ "&gt;&lt;/h3&gt;
   &lt;p v-typewriter="JavaScript feels like magic." v-typewriter-speed="45"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-count</code> anima de zero até o número indicado, e <code>v-typewriter</code> escreve o
-  texto letra por letra. Os dois respeitam <code>prefers-reduced-motion</code>, e nesse caso
-  mostram o resultado final de imediato.
+  <code>v-count</code> animates from zero to the number given, and <code>v-typewriter</code> writes
+  the text letter by letter. Both respect <code>prefers-reduced-motion</code>, and in that case
+  show the final result straight away.
 </p>
 
-<h2 id="javascript">Por JavaScript</h2>
+<h2 id="javascript">From JavaScript</h2>
 
-<pre data-lang="js"><code>const controle = V.animate('#caixa', { x: [0, 200], rotate: [0, 180] }, { duration: 600 });
-await controle.finished;
-controle.stop();
+<pre data-lang="js"><code>const control = V.animate('#box', { x: [0, 200], rotate: [0, 180] }, { duration: 600 });
+await control.finished;
+control.stop();
 
 V.stagger('.card', V.motion.fadeUp, { delay: 70, from: 'center', start: 200 });
 
-V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) =&gt; { barra.style.width = v + 'px' } });
+V.spring(0, 320, { stiffness: 210, damping: 22, onUpdate: (v) =&gt; { bar.style.width = v + 'px' } });
 
-const parar = V.inView(secao, (entry) =&gt; secao.classList.add('ativa'), { amount: 0.5 });
-V.scrollProgress(artigo, (p) =&gt; { barra.style.transform = 'scaleX(' + p + ')' });</code></pre>
-
-<p>
-  O alvo de <code>V.animate</code> pode ser um elemento, uma lista, um <code>NodeList</code> ou um
-  seletor CSS. <code>V.spring</code> integra uma mola entre dois números e entrega o valor a cada
-  quadro sem tocar no DOM, o que serve para rolagem suave, contadores e qualquer outro valor
-  numérico.
-</p>
-
-<h2 id="outras">v-flip e v-parallax</h2>
+const stop = V.inView(section, (entry) =&gt; section.classList.add('active'), { amount: 0.5 });
+V.scrollProgress(article, (p) =&gt; { bar.style.transform = 'scaleX(' + p + ')' });</code></pre>
 
 <p>
-  <code>v-flip</code> guarda a posição do elemento e, quando ela muda entre atualizações, anima do
-  lugar antigo para o novo — a técnica FLIP. É o que faz uma lista reordenada deslizar em vez de
-  saltar. Combine com <code>:key</code>, para que os elementos sejam reaproveitados em vez de
-  recriados.
+  The target of <code>V.animate</code> can be an element, a list, a <code>NodeList</code> or a CSS
+  selector. <code>V.spring</code> integrates a spring between two numbers and hands you the value
+  on every frame without touching the DOM, which suits smooth scrolling, counters and any other
+  numeric value.
 </p>
 
-<pre data-lang="html"><code>&lt;li v-for="item in itensOrdenados" :key="item.id" v-flip&gt;{ item.nome }&lt;/li&gt;
+<h2 id="outras">v-flip and v-parallax</h2>
+
+<p>
+  <code>v-flip</code> records the element's position and, when it changes between updates, animates
+  from the old place to the new one — the FLIP technique. It is what makes a reordered list slide
+  instead of jump. Combine it with <code>:key</code>, so that the elements are reused instead of
+  recreated.
+</p>
+
+<pre data-lang="html"><code>&lt;li v-for="item in sortedItems" :key="item.id" v-flip&gt;{ item.name }&lt;/li&gt;
 &lt;li v-flip="{ duration: 300, easing: 'easeInOut' }"&gt;...&lt;/li&gt;
 
-&lt;img v-parallax="0.3" src="/fundo.jpg" alt=""&gt;
-&lt;img v-parallax="-0.2" src="/frente.png" alt=""&gt;</code></pre>
+&lt;img v-parallax="0.3" src="/background.jpg" alt=""&gt;
+&lt;img v-parallax="-0.2" src="/foreground.png" alt=""&gt;</code></pre>
 
 <p>
-  <code>v-parallax</code> desloca o elemento conforme a rolagem; valores negativos invertem o
-  sentido. Com <code>prefers-reduced-motion</code>, ele não faz nada.
+  <code>v-parallax</code> shifts the element as the page scrolls; negative values reverse the
+  direction. With <code>prefers-reduced-motion</code>, it does nothing.
 </p>
 
-<h2 id="acessibilidade">Movimento reduzido</h2>
+<h2 id="acessibilidade">Reduced motion</h2>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Respeitado por padrão</span>
+  <span class="doc-aviso__rotulo">Respected by default</span>
   <p>
-    Tudo aqui respeita <code>prefers-reduced-motion: reduce</code>: nesse caso o estado final é
-    aplicado na hora, sem quadros intermediários. O resultado é o mesmo, sem o movimento. Só use
-    <code>force</code> quando a animação carrega significado que o estado final sozinho não
-    transmite.
+    Everything here respects <code>prefers-reduced-motion: reduce</code>: in that case the final
+    state is applied at once, with no frames in between. The result is the same, without the
+    movement. Only use <code>force</code> when the animation carries meaning that the final state
+    alone does not convey.
   </p>
 </div>
 

@@ -3,8 +3,8 @@ export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clip
 export { gpu, reflectWgsl } from './chunk-JZIYRIY6.js';
 import { http } from './chunk-PQZEVFVZ.js';
 export { HttpError, http, request } from './chunk-PQZEVFVZ.js';
-import { devtoolsBus } from './chunk-OOIUSRUN.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-OOIUSRUN.js';
+import { devtoolsBus } from './chunk-4LR3IFPX.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-4LR3IFPX.js';
 import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-PHMBDPWH.js';
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-PHMBDPWH.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-NNU6WOOU.js';
@@ -4925,7 +4925,7 @@ register("v-stat", {
 register("v-empty-state", {
   props: {
     icon: { type: "string", default: "inbox" },
-    title: { type: "string", default: "Nada por aqui" },
+    title: { type: "string", default: "Nothing here yet" },
     description: TEXT
   },
   template: `
@@ -4996,7 +4996,7 @@ register("v-steps", {
     steps: { type: "any", default: "" },
     current: { type: "number", default: 0 },
     vertical: BOOL,
-    ariaLabel: { type: "string", default: "Etapas" }
+    ariaLabel: { type: "string", default: "Steps" }
   },
   computed: {
     ...flags("vertical"),
@@ -5190,8 +5190,8 @@ register("v-code-block", {
     code: TEXT,
     language: TEXT,
     filename: TEXT,
-    copyLabel: { type: "string", default: "Copiar" },
-    copiedLabel: { type: "string", default: "Copiado" },
+    copyLabel: { type: "string", default: "Copy" },
+    copiedLabel: { type: "string", default: "Copied" },
     wrap: BOOL
   },
   state() {

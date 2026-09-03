@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Idiomas · Documentação da Voodoo.js</title>
-<meta name="description" content="Internacionalização reativa: configurar mensagens, v-t, interpolação, pluralização pelo CLDR, troca de idioma sem recarregar e os formatadores $n, $c, $d e $rt.">
+<title>Languages · Voodoo.js documentation</title>
+<meta name="description" content="Reactive internationalization: configuring messages, v-t, interpolation, CLDR pluralization, switching language without a reload, and the $n, $c, $d and $rt formatters.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/idiomas">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,197 +14,199 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Idiomas</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Languages</h1>
 <p class="doc-resumo">
-  Internacionalização reativa. Trocar o idioma não recarrega a página: todo texto que passou por
-  <code>t()</code> e todo formatador de número, moeda ou data se atualiza sozinho, porque tudo lê
-  o mesmo estado reativo.
+  Reactive internationalization. Switching language does not reload the page: every piece of text
+  that went through <code>t()</code> and every number, currency or date formatter updates itself,
+  because they all read the same reactive state.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
-  <p>O módulo de idiomas existe apenas no build completo.</p>
+  <span class="doc-aviso__rotulo">voodoo.full.min.js only</span>
+  <p>The languages module exists only in the full build.</p>
 </div>
 
-<h2 id="configurando">Configurando</h2>
+<h2 id="configurando">Configuring</h2>
 
 <pre data-lang="js"><code>V.i18n({
-  locale: 'pt-BR',
+  locale: 'en',
   fallback: 'en',
   messages: {
-    'pt-BR': {
-      comum: { salvar: 'Salvar', cancelar: 'Cancelar' },
-      ola: 'Olá, {nome}!',
-      itens: 'nenhum item | {n} item | {n} itens'
-    },
     en: {
-      comum: { salvar: 'Save', cancelar: 'Cancel' },
-      ola: 'Hello, {nome}!',
-      itens: 'no items | {n} item | {n} items'
+      common: { save: 'Save', cancel: 'Cancel' },
+      hello: 'Hello, {name}!',
+      items: 'no items | {n} item | {n} items'
+    },
+    'pt-BR': {
+      common: { save: 'Salvar', cancel: 'Cancelar' },
+      hello: 'Olá, {name}!',
+      items: 'nenhum item | {n} item | {n} itens'
     }
   }
 });</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>locale</code></td><td><code>V.config.locale</code></td><td>Idioma inicial</td></tr>
-<tr><td><code>fallback</code></td><td><code>en</code></td><td>Idioma usado quando a chave não existe</td></tr>
-<tr><td><code>messages</code></td><td></td><td>Mensagens por idioma</td></tr>
-<tr><td><code>currency</code></td><td><code>V.config.currency</code></td><td>Moeda padrão de <code>c()</code></td></tr>
-<tr><td><code>persist</code></td><td><code>true</code></td><td>Guarda o idioma escolhido no <code>localStorage</code></td></tr>
-<tr><td><code>detect</code></td><td><code>true</code></td><td>Detecta o idioma do navegador quando nada foi salvo</td></tr>
-<tr><td><code>loadPath</code></td><td></td><td>Modelo de URL para carregamento sob demanda, com <code>{locale}</code></td></tr>
+<tr><td><code>locale</code></td><td><code>V.config.locale</code></td><td>The starting language</td></tr>
+<tr><td><code>fallback</code></td><td><code>en</code></td><td>The language used when the key does not exist</td></tr>
+<tr><td><code>messages</code></td><td></td><td>Messages per language</td></tr>
+<tr><td><code>currency</code></td><td><code>V.config.currency</code></td><td>Default currency for <code>c()</code></td></tr>
+<tr><td><code>persist</code></td><td><code>true</code></td><td>Keeps the chosen language in <code>localStorage</code></td></tr>
+<tr><td><code>detect</code></td><td><code>true</code></td><td>Detects the browser language when nothing was saved</td></tr>
+<tr><td><code>loadPath</code></td><td></td><td>A URL template for loading on demand, with <code>{locale}</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  A ordem de escolha é: o idioma salvo, o detectado no navegador, o declarado na opção, e por fim
-  o fallback. O escolhido também vai para <code>document.documentElement.lang</code>, o que mantém
-  leitores de tela e a hifenização do navegador coerentes.
+  The order of preference is: the saved language, the one detected in the browser, the one declared
+  in the option, and finally the fallback. The chosen one also goes to
+  <code>document.documentElement.lang</code>, which keeps screen readers and the browser's
+  hyphenation coherent.
 </p>
 
-<h2 id="ao-vivo">Funcionando</h2>
+<h2 id="ao-vivo">Working</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
     V.i18n({
-      locale: 'pt-BR',
+      locale: 'en',
       persist: false,
       detect: false,
       messages: {
-        'pt-BR': {
-          titulo: 'Carrinho',
-          ola: 'Olá, {nome}!',
-          itens: 'nenhum item | {n} item | {n} itens',
-          comum: { salvar: 'Salvar' }
-        },
         en: {
-          titulo: 'Cart',
-          ola: 'Hello, {nome}!',
-          itens: 'no items | {n} item | {n} items',
-          comum: { salvar: 'Save' }
+          title: 'Cart',
+          hello: 'Hello, {name}!',
+          items: 'no items | {n} item | {n} items',
+          common: { save: 'Save' }
+        },
+        'pt-BR': {
+          title: 'Carrinho',
+          hello: 'Olá, {name}!',
+          items: 'nenhum item | {n} item | {n} itens',
+          common: { save: 'Salvar' }
         }
       }
     });
   &lt;/script&gt;
 
-  &lt;div v-data="{ quantos: 0 }"&gt;
+  &lt;div v-data="{ howMany: 0 }"&gt;
     &lt;div class="linha"&gt;
-      &lt;button v-locale="pt-BR"&gt;Português&lt;/button&gt;
       &lt;button v-locale="en"&gt;English&lt;/button&gt;
-      &lt;button @click="quantos++"&gt;+1&lt;/button&gt;
+      &lt;button v-locale="pt-BR"&gt;Português&lt;/button&gt;
+      &lt;button @click="howMany++"&gt;+1&lt;/button&gt;
     &lt;/div&gt;
 
-    &lt;h4 v-t="titulo"&gt;&lt;/h4&gt;
-    &lt;p v-text="$t('ola', { nome: 'Ana' })"&gt;&lt;/p&gt;
-    &lt;p&gt;{ $t('itens', quantos) }&lt;/p&gt;
+    &lt;h4 v-t="title"&gt;&lt;/h4&gt;
+    &lt;p v-text="$t('hello', { name: 'Ann' })"&gt;&lt;/p&gt;
+    &lt;p&gt;{ $t('items', howMany) }&lt;/p&gt;
     &lt;p&gt;{ $c(1234.5) } · { $d('2026-08-29') }&lt;/p&gt;
     &lt;p v-text="$n(0.75, { style: 'percent' })"&gt;&lt;/p&gt;
-    &lt;button v-t="comum.salvar"&gt;&lt;/button&gt;
+    &lt;button v-t="common.save"&gt;&lt;/button&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Troque o idioma e repare que os números e a data mudam junto com o texto: eles saem dos mesmos
-  <code>Intl</code> configurados pelo idioma ativo.
+  Switch the language and notice that the numbers and the date change along with the text: they
+  come out of the same <code>Intl</code> objects configured by the active language.
 </p>
 
-<h2 id="mensagens">Mensagens</h2>
+<h2 id="mensagens">Messages</h2>
 
-<p>A árvore aceita aninhamento em qualquer nível, e a chave é lida por ponto:</p>
+<p>The tree takes nesting at any depth, and the key is read with dots:</p>
 
-<pre data-lang="js"><code>{ comum: { botoes: { salvar: 'Salvar' } } }   // t('comum.botoes.salvar')
-{ 'comum.botoes.salvar': 'Salvar' }           // o mapa achatado também funciona</code></pre>
+<pre data-lang="js"><code>{ common: { buttons: { save: 'Save' } } }   // t('common.buttons.save')
+{ 'common.buttons.save': 'Save' }           // the flattened map works too</code></pre>
 
 <p>
-  Quando a chave não existe em lugar nenhum, <code>t()</code> devolve a própria chave. Isso é
-  melhor do que texto vazio na tela, e facilita achar o que falta.
+  When the key exists nowhere, <code>t()</code> returns the key itself. That beats empty text on
+  screen, and it makes what is missing easy to find.
 </p>
 
 <h2 id="v-t">v-t</h2>
 
-<pre data-lang="html"><code>&lt;button v-t="comum.salvar"&gt;&lt;/button&gt;
-&lt;abbr v-t:title="comum.dica"&gt;?&lt;/abbr&gt;
-&lt;span v-t="'menu.' + secao"&gt;&lt;/span&gt;</code></pre>
+<pre data-lang="html"><code>&lt;button v-t="common.save"&gt;&lt;/button&gt;
+&lt;abbr v-t:title="common.hint"&gt;?&lt;/abbr&gt;
+&lt;span v-t="'menu.' + section"&gt;&lt;/span&gt;</code></pre>
 
 <p>
-  Sem argumento, traduz o conteúdo do elemento. Com argumento, escreve no atributo indicado — o
-  que resolve <code>title</code>, <code>placeholder</code> e <code>aria-label</code>.
+  With no argument, it translates the element's content. With an argument, it writes into the named
+  attribute — which settles <code>title</code>, <code>placeholder</code> and
+  <code>aria-label</code>.
 </p>
 
-<h2 id="interpolacao">Interpolação</h2>
+<h2 id="interpolacao">Interpolation</h2>
 
-<pre data-lang="html"><code>&lt;span&gt;{ $t('ola', { nome: usuario.nome }) }&lt;/span&gt;
-&lt;span v-t="ola" v-t-params="{ nome: usuario.nome }"&gt;&lt;/span&gt;</code></pre>
+<pre data-lang="html"><code>&lt;span&gt;{ $t('hello', { name: user.name }) }&lt;/span&gt;
+&lt;span v-t="hello" v-t-params="{ name: user.name }"&gt;&lt;/span&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Detalhe conhecido</span>
+  <span class="doc-aviso__rotulo">A known detail</span>
   <p>
-    <code>v-t-params</code> é lido apenas na primeira renderização. Se o texto precisa acompanhar
-    a troca de idioma ou a mudança dos valores, use a interpolação com <code>$t</code>, que é
-    totalmente reativa.
+    <code>v-t-params</code> is read only on the first render. If the text has to follow a language
+    switch or a change in the values, use interpolation with <code>$t</code>, which is fully
+    reactive.
   </p>
 </div>
 
-<h2 id="plural">Pluralização</h2>
+<h2 id="plural">Pluralization</h2>
 
-<p>As formas são separadas por barra vertical:</p>
+<p>The forms are separated by a vertical bar:</p>
 
 <pre data-lang="js"><code>{
-  itens: 'nenhum item | {n} item | {n} itens',
-  mensagens: '{n} mensagem | {n} mensagens'
+  items: 'no items | {n} item | {n} items',
+  messages: '{n} message | {n} messages'
 }</code></pre>
 
-<pre data-lang="html"><code>&lt;span&gt;{ $t('itens', { n: carrinho.length }) }&lt;/span&gt;
-&lt;span&gt;{ $t('itens', carrinho.length) }&lt;/span&gt;     &lt;!-- atalho do mesmo caso --&gt;</code></pre>
+<pre data-lang="html"><code>&lt;span&gt;{ $t('items', { n: cart.length }) }&lt;/span&gt;
+&lt;span&gt;{ $t('items', cart.length) }&lt;/span&gt;     &lt;!-- shorthand for the same case --&gt;</code></pre>
 
 <ul>
-  <li><b>Duas formas</b> seguem direto a categoria de <code>Intl.PluralRules</code> do idioma.</li>
-  <li><b>Três formas</b> reservam a primeira para o zero, que é o costume em português e em inglês.</li>
+  <li><b>Two forms</b> follow the language's <code>Intl.PluralRules</code> category directly.</li>
+  <li><b>Three forms</b> reserve the first for zero, which is the custom in English and in Portuguese.</li>
   <li>
-    <b>Quatro ou mais</b> usam a ordem oficial das categorias do CLDR, o que cobre idiomas com
-    dual e paucal.
+    <b>Four or more</b> use the official order of the CLDR categories, which covers languages with
+    dual and paucal.
   </li>
 </ul>
 
-<p>A contagem é lida de <code>n</code> ou de <code>count</code>.</p>
+<p>The count is read from <code>n</code> or from <code>count</code>.</p>
 
-<h2 id="trocando">Trocando o idioma</h2>
+<h2 id="trocando">Switching language</h2>
 
-<pre data-lang="html"><code>&lt;button v-locale="pt-BR"&gt;Português&lt;/button&gt;
-&lt;button v-locale="en"&gt;English&lt;/button&gt;
-&lt;button v-locale="idiomaEscolhido"&gt;Trocar&lt;/button&gt;</code></pre>
+<pre data-lang="html"><code>&lt;button v-locale="en"&gt;English&lt;/button&gt;
+&lt;button v-locale="pt-BR"&gt;Português&lt;/button&gt;
+&lt;button v-locale="chosenLanguage"&gt;Switch&lt;/button&gt;</code></pre>
 
 <p>
-  O botão ativo recebe a classe <code>v-locale-active</code>. Por JavaScript, o mesmo é
-  <code>V.locale('en')</code>, e <code>$locale</code> devolve o idioma em uso dentro de qualquer
-  expressão.
+  The active button gets the class <code>v-locale-active</code>. From JavaScript, the same thing is
+  <code>V.locale('en')</code>, and <code>$locale</code> returns the language in use inside any
+  expression.
 </p>
 
-<h2 id="formatadores">Formatadores</h2>
+<h2 id="formatadores">Formatters</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>Formata</th><th>Exemplo</th></tr></thead>
+<thead><tr><th>Magic variable</th><th>Formats</th><th>Example</th></tr></thead>
 <tbody>
-<tr><td><code>$n</code></td><td>Número</td><td><code>{ $n(1234.5) }</code> → 1.234,5</td></tr>
-<tr><td><code>$c</code></td><td>Moeda</td><td><code>{ $c(1234.5) }</code> → R$ 1.234,50</td></tr>
-<tr><td><code>$d</code></td><td>Data</td><td><code>{ $d(pedido.criadoEm) }</code> → 29/08/2026</td></tr>
-<tr><td><code>$rt</code></td><td>Tempo relativo</td><td><code>{ $rt(pedido.criadoEm) }</code> → há 5 minutos</td></tr>
+<tr><td><code>$n</code></td><td>A number</td><td><code>{ $n(1234.5) }</code> → 1,234.5</td></tr>
+<tr><td><code>$c</code></td><td>Currency</td><td><code>{ $c(1234.5) }</code> → $1,234.50</td></tr>
+<tr><td><code>$d</code></td><td>A date</td><td><code>{ $d(order.createdAt) }</code> → 8/29/2026</td></tr>
+<tr><td><code>$rt</code></td><td>Relative time</td><td><code>{ $rt(order.createdAt) }</code> → 5 minutes ago</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Todos aceitam opções: <code>$n(0.75, { style: 'percent' })</code>,
-  <code>$c(99, 'USD')</code>, <code>$d(data, 'long')</code>. Como leem o idioma ativo, eles se
-  atualizam sozinhos na troca.
+  All of them take options: <code>$n(0.75, { style: 'percent' })</code>,
+  <code>$c(99, 'USD')</code>, <code>$d(date, 'long')</code>. Because they read the active language,
+  they update themselves when it changes.
 </p>
 
 </article>

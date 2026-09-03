@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Directives próprias e plugins · Documentação da Voodoo.js</title>
-<meta name="description" content="Registrar directives com ciclo de vida ou na forma curta, o objeto binding, variáveis mágicas próprias, defineDirective com controle fino, e empacotar tudo em um plugin com V.use.">
+<title>Your own directives and plugins · Voodoo.js documentation</title>
+<meta name="description" content="Registering directives with a lifecycle or in the short form, the binding object, magic variables of your own, defineDirective for fine control, and packing it all into a plugin with V.use.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/directives-e-plugins">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,39 +14,39 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Estendendo e depurando</p>
-<h1>Directives próprias e plugins</h1>
+<p class="doc-migalha">Extending and debugging</p>
+<h1>Your own directives and plugins</h1>
 <p class="doc-resumo">
-  Tudo que a Voodoo.js faz por dentro está disponível para você: registrar directives, criar
-  variáveis mágicas, acrescentar componentes, estender o objeto <code>V</code> e empacotar tudo
-  isso em um plugin.
+  Everything Voodoo.js does internally is available to you: registering directives, creating magic
+  variables, adding components, extending the <code>V</code> object and packing all of that into a
+  plugin.
 </p>
 
-<h2 id="forma-curta">A forma curta</h2>
+<h2 id="forma-curta">The short form</h2>
 
 <p>
-  Uma função só, que vale para <code>mounted</code> e <code>updated</code> ao mesmo tempo. É o
-  suficiente para a maioria dos casos.
+  A single function, which stands for <code>mounted</code> and <code>updated</code> at once. It is
+  enough for most cases.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.directive('tamanho', (el, binding) =&gt; {
+    V.directive('size', (el, binding) =&gt; {
       el.style.fontSize = binding.value + 'px';
     });
   &lt;/script&gt;
 
   &lt;div v-data="{ n: 18 }"&gt;
     &lt;input type="range" min="12" max="48" v-model.number="n"&gt;
-    &lt;p v-tamanho="n"&gt;Este texto obedece a uma directive que você escreveu.&lt;/p&gt;
+    &lt;p v-size="n"&gt;This text obeys a directive you wrote yourself.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="ciclo-de-vida">A forma com ciclo de vida</h2>
+<h2 id="ciclo-de-vida">The form with a lifecycle</h2>
 
-<pre data-lang="js"><code>V.directive('destaque', {
+<pre data-lang="js"><code>V.directive('highlight', {
   created(el, binding) {},
   beforeMount(el, binding) {},
   mounted(el, binding) { el.style.background = binding.value; },
@@ -59,39 +59,40 @@
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo de <code>binding</code></th><th>O que é</th></tr></thead>
+<thead><tr><th>Field of <code>binding</code></th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>el</code></td><td>O elemento</td></tr>
-<tr><td><code>value</code></td><td>O valor já avaliado</td></tr>
-<tr><td><code>oldValue</code></td><td>O valor anterior, em <code>updated</code></td></tr>
-<tr><td><code>arg</code></td><td>O argumento depois dos dois pontos</td></tr>
-<tr><td><code>modifiers</code></td><td>Os modificadores depois dos pontos</td></tr>
-<tr><td><code>expression</code></td><td>O texto original</td></tr>
-<tr><td><code>scope</code></td><td>O escopo ativo</td></tr>
-<tr><td><code>instance</code></td><td>A instância de componente mais próxima, ou <code>null</code></td></tr>
+<tr><td><code>el</code></td><td>The element</td></tr>
+<tr><td><code>value</code></td><td>The value, already evaluated</td></tr>
+<tr><td><code>oldValue</code></td><td>The previous value, in <code>updated</code></td></tr>
+<tr><td><code>arg</code></td><td>The argument after the colon</td></tr>
+<tr><td><code>modifiers</code></td><td>The modifiers after the dots</td></tr>
+<tr><td><code>expression</code></td><td>The original text</td></tr>
+<tr><td><code>scope</code></td><td>The active scope</td></tr>
+<tr><td><code>instance</code></td><td>The nearest component instance, or <code>null</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  <code>priority</code> define a ordem: maior roda primeiro. <code>raw: true</code> entrega a
-  expressão como texto, sem avaliar, o que serve para directives que recebem seletores ou nomes.
+  <code>priority</code> sets the order: higher runs first. <code>raw: true</code> hands you the
+  expression as text, without evaluating it, which suits directives that receive selectors or
+  names.
 </p>
 
-<h2 id="integracao">Integrando uma biblioteca de fora</h2>
+<h2 id="integracao">Integrating an outside library</h2>
 
 <p>
-  É aqui que a directive própria mais paga: envolver um componente externo uma vez e usá-lo como
-  atributo em qualquer lugar.
+  This is where a directive of your own pays off most: wrap an external component once and use it
+  as an attribute anywhere.
 </p>
 
 <pre data-lang="js"><code>V.directive('datepicker', {
   mounted(el, binding) {
-    const picker = new AlgumaBibliotecaDeData(el, {
-      formato: binding.arg || 'dd/mm/yyyy',
-      inicial: binding.value,
-      onChange: (valor) =&gt; {
-        el.value = valor;
+    const picker = new SomeDateLibrary(el, {
+      format: binding.arg || 'dd/mm/yyyy',
+      initial: binding.value,
+      onChange: (value) =&gt; {
+        el.value = value;
         el.dispatchEvent(new Event('input', { bubbles: true }));
       }
     });
@@ -101,36 +102,37 @@
   unmounted(el) { el.__picker.destroy(); }
 });</code></pre>
 
-<pre data-lang="html"><code>&lt;input v-datepicker:dd-mm-yyyy="form.nascimento" v-model="form.nascimento"&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-datepicker:dd-mm-yyyy="form.birthday" v-model="form.birthday"&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">O detalhe que faz funcionar</span>
+  <span class="doc-aviso__rotulo">The detail that makes it work</span>
   <p>
-    O <code>dispatchEvent</code> de um <code>input</code> é como uma integração externa avisa o
-    <code>v-model</code>. Sem ele, a biblioteca escreve no campo e o estado não fica sabendo.
+    The <code>dispatchEvent</code> of an <code>input</code> is how an outside integration tells
+    <code>v-model</code>. Without it, the library writes into the field and the state never finds
+    out.
   </p>
 </div>
 
-<h2 id="define-directive">Controle fino, com defineDirective</h2>
+<h2 id="define-directive">Fine control, with defineDirective</h2>
 
 <p>
-  Para casos que precisam de efeitos próprios, limpeza explícita ou controle da subárvore:
+  For cases that need effects of their own, explicit cleanup or control over the subtree:
 </p>
 
 <pre data-lang="js"><code>import { defineDirective, PRIORITY } from 'voodoojs';
 
 defineDirective(
-  'contador-regressivo',
+  'countdown',
   ({ el, evaluate, effect, cleanup }) =&gt; {
     let timer = null;
 
     effect(() =&gt; {
-      const alvo = new Date(evaluate());
+      const target = new Date(evaluate());
       clearInterval(timer);
       timer = setInterval(() =&gt; {
-        const restante = Math.max(0, alvo - Date.now());
-        el.textContent = Math.floor(restante / 1000) + 's';
-        if (restante === 0) clearInterval(timer);
+        const left = Math.max(0, target - Date.now());
+        el.textContent = Math.floor(left / 1000) + 's';
+        if (left === 0) clearInterval(timer);
       }, 1000);
     });
 
@@ -141,119 +143,120 @@ defineDirective(
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Contexto</th><th>O que é</th></tr></thead>
+<thead><tr><th>Context</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>el</code></td><td>O elemento que declarou o atributo</td></tr>
-<tr><td><code>scope</code></td><td>O escopo ativo</td></tr>
-<tr><td><code>expression</code></td><td>O texto do atributo</td></tr>
-<tr><td><code>arg</code>, <code>modifiers</code></td><td>Argumento e modificadores</td></tr>
-<tr><td><code>raw</code></td><td>O nome completo do atributo, útil em mensagens de erro</td></tr>
-<tr><td><code>evaluate(expr?)</code></td><td>Avalia a expressão. Nunca lança</td></tr>
-<tr><td><code>effect(fn)</code></td><td>Cria um efeito reativo já ligado à limpeza do elemento</td></tr>
-<tr><td><code>cleanup(fn)</code></td><td>Roda quando o elemento sai do DOM</td></tr>
-<tr><td><code>walk(no, escopo)</code></td><td>Inicializa HTML criado pela directive</td></tr>
+<tr><td><code>el</code></td><td>The element that declared the attribute</td></tr>
+<tr><td><code>scope</code></td><td>The active scope</td></tr>
+<tr><td><code>expression</code></td><td>The text of the attribute</td></tr>
+<tr><td><code>arg</code>, <code>modifiers</code></td><td>Argument and modifiers</td></tr>
+<tr><td><code>raw</code></td><td>The full attribute name, handy in error messages</td></tr>
+<tr><td><code>evaluate(expr?)</code></td><td>Evaluates the expression. Never throws</td></tr>
+<tr><td><code>effect(fn)</code></td><td>Creates a reactive effect already tied to the element's cleanup</td></tr>
+<tr><td><code>cleanup(fn)</code></td><td>Runs when the element leaves the DOM</td></tr>
+<tr><td><code>walk(node, scope)</code></td><td>Initializes HTML created by the directive</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  As opções de registro são <code>priority</code> e <code>terminal</code>, que impede o walker de
-  descer nos filhos — é o que <code>v-for</code> e <code>v-if</code> usam. As prioridades estão em
-  <code>V.PRIORITY</code>: <code>IGNORE</code> (100), <code>FOR</code> (90), <code>IF</code> (80),
-  <code>DATA</code> (70), <code>COMPONENT</code> (65), <code>REF</code> (60), <code>MODEL</code>
-  (40), <code>BIND</code> (30), <code>DEFAULT</code> (0), <code>INIT</code> (-10) e
-  <code>TRANSITION</code> (-20).
+  The registration options are <code>priority</code> and <code>terminal</code>, which stops the
+  walker from descending into the children — it is what <code>v-for</code> and <code>v-if</code>
+  use. The priorities live in <code>V.PRIORITY</code>: <code>IGNORE</code> (100),
+  <code>FOR</code> (90), <code>IF</code> (80), <code>DATA</code> (70), <code>COMPONENT</code> (65),
+  <code>REF</code> (60), <code>MODEL</code> (40), <code>BIND</code> (30), <code>DEFAULT</code> (0),
+  <code>INIT</code> (-10) and <code>TRANSITION</code> (-20).
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Nomes já ocupados</span>
+  <span class="doc-aviso__rotulo">Names that are already taken</span>
   <p>
-    O nome registrado não inclui o prefixo: <code>V.directive('toggle', ...)</code> responde a
-    <code>v-toggle</code> — e sobrescreve a directive interna de mesmo nome. Antes de escolher um
-    nome, confira <code>V.directives</code>, que é o <code>Map</code> com tudo que já está
-    registrado. Um prefixo próprio, como <code>v-acme-toggle</code>, evita a colisão de vez.
+    The registered name does not include the prefix: <code>V.directive('toggle', ...)</code>
+    answers to <code>v-toggle</code> — and overwrites the internal directive of the same name.
+    Before picking a name, check <code>V.directives</code>, the <code>Map</code> holding everything
+    already registered. A prefix of your own, such as <code>v-acme-toggle</code>, avoids the
+    collision for good.
   </p>
 </div>
 
-<h2 id="magias">Variáveis mágicas próprias</h2>
+<h2 id="magias">Magic variables of your own</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.magic('$usuario', () =&gt; ({ nome: 'Ana', plano: 'Pro' }));
-    V.magic('$altura', (scope) =&gt; scope.el.offsetHeight);
+    V.magic('$user', () =&gt; ({ name: 'Ann', plan: 'Pro' }));
+    V.magic('$height', (scope) =&gt; scope.el.offsetHeight);
   &lt;/script&gt;
 
   &lt;div v-data="{}"&gt;
-    &lt;p&gt;Olá, { $usuario.nome } — plano { $usuario.plano }.&lt;/p&gt;
-    &lt;p&gt;A altura deste escopo é { $altura } pixels.&lt;/p&gt;
+    &lt;p&gt;Hello, { $user.name } — { $user.plan } plan.&lt;/p&gt;
+    &lt;p&gt;The height of this scope is { $height } pixels.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O getter recebe o escopo ativo, então a magia pode depender de onde foi usada. O cifrão é
-  acrescentado automaticamente quando você não escreve. Magias são somente leitura, com exceção
-  das que expõem um método <code>set</code> próprio.
+  The getter receives the active scope, so a magic variable can depend on where it was used. The
+  dollar sign is added for you when you leave it out. Magic variables are read-only, except for the
+  ones that expose a <code>set</code> method of their own.
 </p>
 
-<h2 id="plugins">Empacotando em um plugin</h2>
+<h2 id="plugins">Packing it into a plugin</h2>
 
-<pre data-lang="js"><code>const meuPlugin = {
+<pre data-lang="js"><code>const myPlugin = {
   name: 'analytics',
-  install(V, opcoes) {
-    V.rastrear = (evento, dados) =&gt; enviar(opcoes.chave, evento, dados);
+  install(V, options) {
+    V.track = (event, data) =&gt; send(options.key, event, data);
 
     V.directive('track', (el, binding) =&gt; {
-      el.addEventListener('click', () =&gt; V.rastrear(binding.value));
+      el.addEventListener('click', () =&gt; V.track(binding.value));
     });
 
-    V.magic('$rastrear', () =&gt; V.rastrear);
+    V.magic('$track', () =&gt; V.track);
   }
 };
 
-V.use(meuPlugin, { chave: 'abc123' });</code></pre>
+V.use(myPlugin, { key: 'abc123' });</code></pre>
 
-<p>A forma curta em função também funciona:</p>
+<p>The short function form works too:</p>
 
-<pre data-lang="js"><code>V.use((V, opcoes) =&gt; {
-  V.config.globals.APP = opcoes;
-}, { versao: '2.0' });</code></pre>
+<pre data-lang="js"><code>V.use((V, options) =&gt; {
+  V.config.globals.APP = options;
+}, { version: '2.0' });</code></pre>
 
 <p>
-  O mesmo plugin instalado duas vezes é ignorado na segunda. Dentro do <code>install</code> cabe
-  qualquer coisa: componentes, regras de validação com <code>V.validator</code>, máscaras com
-  <code>V.registerMask</code>, ou métodos novos no próprio <code>V</code>.
+  The same plugin installed twice is ignored the second time. Anything fits inside
+  <code>install</code>: components, validation rules with <code>V.validator</code>, masks with
+  <code>V.registerMask</code>, or new methods on <code>V</code> itself.
 </p>
 
-<pre data-lang="js"><code>const brasilPlus = {
+<pre data-lang="js"><code>const brazilPlus = {
   install(V) {
-    V.validator('titulo-eleitor', (valor) =&gt; V.unmask(valor).length === 12, 'Título inválido.');
-    V.registerMask('titulo', '9999 9999 9999');
+    V.validator('voter-id', (value) =&gt; V.unmask(value).length === 12, 'Invalid voter ID.');
+    V.registerMask('voterId', '9999 9999 9999');
   }
 };
 
-V.use(brasilPlus);</code></pre>
+V.use(brazilPlus);</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Para usar no HTML, libere como global</span>
+  <span class="doc-aviso__rotulo">To use it in the HTML, expose it as a global</span>
   <p>
-    O que você acrescenta em <code>V</code> não fica visível dentro das expressões, que enxergam
-    só os escopos, as magias e uma lista fechada de globais. Publique o que precisar em
-    <code>V.config.globals</code>, ou crie uma magia com <code>V.magic</code>.
+    What you add to <code>V</code> is not visible inside expressions, which only see the scopes,
+    the magic variables and a closed list of globals. Publish what you need on
+    <code>V.config.globals</code>, or create a magic variable with <code>V.magic</code>.
   </p>
 </div>
 
-<h2 id="quando">Directive, componente ou magia?</h2>
+<h2 id="quando">A directive, a component or a magic variable?</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>O que você quer acrescentar</th><th>Use</th></tr></thead>
+<thead><tr><th>What you want to add</th><th>Use</th></tr></thead>
 <tbody>
-<tr><td>Um comportamento aplicado a elementos que já existem</td><td>Directive</td></tr>
-<tr><td>Uma estrutura de HTML reaproveitada</td><td><a href="componentes.html">Componente</a></td></tr>
-<tr><td>Um valor ou função disponível em qualquer expressão</td><td>Magia, ou <code>V.config.globals</code></td></tr>
-<tr><td>Um conjunto das três coisas, distribuído para outros projetos</td><td>Plugin</td></tr>
+<tr><td>A behaviour applied to elements that already exist</td><td>A directive</td></tr>
+<tr><td>A reused structure of HTML</td><td>A <a href="componentes.html">component</a></td></tr>
+<tr><td>A value or function available in any expression</td><td>A magic variable, or <code>V.config.globals</code></td></tr>
+<tr><td>A set of all three, shipped to other projects</td><td>A plugin</td></tr>
 </tbody>
 </table>
 </div>

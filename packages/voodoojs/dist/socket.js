@@ -1,5 +1,5 @@
-import { socketSupported, createSocket, socket } from './chunk-OOIUSRUN.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-OOIUSRUN.js';
+import { socketSupported, createSocket, socket } from './chunk-4LR3IFPX.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-4LR3IFPX.js';
 import { evaluateIn, readAttr } from './chunk-PHMBDPWH.js';
 import { reactive } from './chunk-NNU6WOOU.js';
 import { warnAlias } from './chunk-A2UOVQBP.js';

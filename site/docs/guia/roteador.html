@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Roteador · Documentação da Voodoo.js</title>
-<meta name="description" content="Roteador de página única sem dependências: modos history e hash, padrões com parâmetros, guards, $route reativo, v-router-view e v-link.">
+<title>Router · Voodoo.js documentation</title>
+<meta name="description" content="A single-page router with no dependencies: history and hash modes, patterns with parameters, guards, a reactive $route, v-router-view and v-link.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/roteador">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,192 +14,194 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Roteador</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Router</h1>
 <p class="doc-resumo">
-  Roteador de aplicação de página única, sem nenhuma dependência externa. Dois modos:
-  <code>history</code>, que usa a History API e URLs limpas, e <code>hash</code>, que guarda a
-  rota depois do <code>#</code> e funciona até abrindo o arquivo direto do disco.
+  A single-page application router, with no external dependency at all. Two modes:
+  <code>history</code>, which uses the History API and clean URLs, and <code>hash</code>, which
+  keeps the route after the <code>#</code> and works even when you open the file straight off
+  disk.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
-  <p>O módulo de rotas existe apenas no build completo.</p>
+  <span class="doc-aviso__rotulo">voodoo.full.min.js only</span>
+  <p>The routing module exists only in the full build.</p>
 </div>
 
-<h2 id="configurando">Configurando</h2>
+<h2 id="configurando">Configuring</h2>
 
 <pre data-lang="js"><code>V.router({
   mode: 'history',
   base: '/',
   routes: {
-    '/': { component: 'home', title: 'Início' },
-    '/usuarios': { component: 'usuarios', title: 'Usuários' },
-    '/usuarios/:id': { component: 'usuario-detalhe' },
-    '/posts/:slug?': { view: '/parciais/post.html' },
-    '/admin': { component: 'admin', meta: { requerLogin: true } },
-    '/antigo': { redirect: '/novo' },
-    '*': { component: 'nao-encontrado', title: 'Página não encontrada' }
+    '/': { component: 'home', title: 'Home' },
+    '/users': { component: 'users', title: 'Users' },
+    '/users/:id': { component: 'user-detail' },
+    '/posts/:slug?': { view: '/partials/post.html' },
+    '/admin': { component: 'admin', meta: { requiresLogin: true } },
+    '/old': { redirect: '/new' },
+    '*': { component: 'not-found', title: 'Page not found' }
   },
   beforeEach(to, from) {
-    if (to.meta.requerLogin &amp;&amp; !estaLogado()) return '/login';
+    if (to.meta.requiresLogin &amp;&amp; !isSignedIn()) return '/login';
     return true;
   },
   afterEach(to) {
-    console.log('chegou em', to.path);
+    console.log('arrived at', to.path);
   }
 });</code></pre>
 
 <pre data-lang="html"><code>&lt;nav&gt;
-  &lt;a v-link href="/"&gt;Início&lt;/a&gt;
-  &lt;a v-link href="/usuarios"&gt;Usuários&lt;/a&gt;
+  &lt;a v-link href="/"&gt;Home&lt;/a&gt;
+  &lt;a v-link href="/users"&gt;Users&lt;/a&gt;
 &lt;/nav&gt;
 
-&lt;main v-router-view&gt;Carregando...&lt;/main&gt;</code></pre>
+&lt;main v-router-view&gt;Loading...&lt;/main&gt;</code></pre>
 
-<p>E funcionando, em modo <code>hash</code>, que é o que roda dentro deste quadro:</p>
+<p>And working, in <code>hash</code> mode, which is what runs inside this frame:</p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.component('pagina-inicio', { template: '&lt;p&gt;Você está no início.&lt;/p&gt;' });
-    V.component('pagina-sobre', { template: '&lt;p&gt;Uma página sobre o projeto.&lt;/p&gt;' });
-    V.component('pagina-item', {
-      template: '&lt;p&gt;Item número { $route.params.id }.&lt;/p&gt;'
+    V.component('page-home', { template: '&lt;p&gt;You are at the home page.&lt;/p&gt;' });
+    V.component('page-about', { template: '&lt;p&gt;A page about the project.&lt;/p&gt;' });
+    V.component('page-item', {
+      template: '&lt;p&gt;Item number { $route.params.id }.&lt;/p&gt;'
     });
 
     V.router({
       mode: 'hash',
       routes: {
-        '/': { component: 'pagina-inicio', title: 'Início' },
-        '/sobre': { component: 'pagina-sobre' },
-        '/itens/:id': { component: 'pagina-item' }
+        '/': { component: 'page-home', title: 'Home' },
+        '/about': { component: 'page-about' },
+        '/items/:id': { component: 'page-item' }
       }
     });
   &lt;/script&gt;
 
   &lt;nav class="linha"&gt;
-    &lt;a v-link href="#/"&gt;Início&lt;/a&gt;
-    &lt;a v-link href="#/sobre"&gt;Sobre&lt;/a&gt;
-    &lt;a v-link href="#/itens/42"&gt;Item 42&lt;/a&gt;
+    &lt;a v-link href="#/"&gt;Home&lt;/a&gt;
+    &lt;a v-link href="#/about"&gt;About&lt;/a&gt;
+    &lt;a v-link href="#/items/42"&gt;Item 42&lt;/a&gt;
   &lt;/nav&gt;
 
-  &lt;main v-router-view&gt;Carregando...&lt;/main&gt;
-  &lt;small&gt;Rota atual: { $route.path }&lt;/small&gt;
+  &lt;main v-router-view&gt;Loading...&lt;/main&gt;
+  &lt;small&gt;Current route: { $route.path }&lt;/small&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="opcoes">Opções</h2>
+<h2 id="opcoes">Options</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>mode</code></td><td><code>history</code></td><td><code>history</code> ou <code>hash</code></td></tr>
-<tr><td><code>base</code></td><td><code>/</code></td><td>Prefixo comum das rotas no modo <code>history</code></td></tr>
-<tr><td><code>routes</code></td><td></td><td>Mapa de padrão para definição</td></tr>
-<tr><td><code>beforeEach</code></td><td></td><td>Guard global antes de cada navegação</td></tr>
-<tr><td><code>afterEach</code></td><td></td><td>Hook global depois de cada navegação</td></tr>
-<tr><td><code>linkActiveClass</code></td><td><code>v-link-active</code></td><td>Classe do <code>v-link</code> quando a rota começa com o destino</td></tr>
-<tr><td><code>linkExactActiveClass</code></td><td><code>v-link-exact-active</code></td><td>Classe quando a rota é exatamente o destino</td></tr>
-<tr><td><code>transition</code></td><td><code>true</code></td><td>Usa a View Transitions API na troca de tela</td></tr>
-<tr><td><code>titleTemplate</code></td><td><code>%s</code></td><td>Modelo do título, com <code>%s</code> no lugar do título da rota</td></tr>
-<tr><td><code>scrollBehavior</code></td><td></td><td>Controle fino da rolagem depois de navegar</td></tr>
+<tr><td><code>mode</code></td><td><code>history</code></td><td><code>history</code> or <code>hash</code></td></tr>
+<tr><td><code>base</code></td><td><code>/</code></td><td>The common prefix of the routes in <code>history</code> mode</td></tr>
+<tr><td><code>routes</code></td><td></td><td>A map of pattern to definition</td></tr>
+<tr><td><code>beforeEach</code></td><td></td><td>A global guard before each navigation</td></tr>
+<tr><td><code>afterEach</code></td><td></td><td>A global hook after each navigation</td></tr>
+<tr><td><code>linkActiveClass</code></td><td><code>v-link-active</code></td><td>Class on a <code>v-link</code> when the route starts with its destination</td></tr>
+<tr><td><code>linkExactActiveClass</code></td><td><code>v-link-exact-active</code></td><td>Class when the route is exactly the destination</td></tr>
+<tr><td><code>transition</code></td><td><code>true</code></td><td>Uses the View Transitions API when the screen changes</td></tr>
+<tr><td><code>titleTemplate</code></td><td><code>%s</code></td><td>The title template, with <code>%s</code> standing in for the route title</td></tr>
+<tr><td><code>scrollBehavior</code></td><td></td><td>Fine control of the scroll after navigating</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="rota">Definição de rota</h2>
+<h2 id="rota">The route definition</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Field</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>component</code></td><td>Nome de um componente registrado, montado dentro do <code>v-router-view</code></td></tr>
-<tr><td><code>view</code></td><td>URL de um HTML remoto, carregado e inserido no lugar</td></tr>
-<tr><td><code>title</code></td><td>Aplicado em <code>document.title</code> ao entrar</td></tr>
-<tr><td><code>name</code></td><td>Nome da rota, disponível em <code>$route.name</code></td></tr>
-<tr><td><code>meta</code></td><td>Dados livres, disponíveis em <code>$route.meta</code></td></tr>
-<tr><td><code>redirect</code></td><td>Redireciona assim que a rota casa</td></tr>
-<tr><td><code>beforeEnter</code></td><td>Guard exclusivo desta rota, executado antes do global</td></tr>
+<tr><td><code>component</code></td><td>The name of a registered component, mounted inside the <code>v-router-view</code></td></tr>
+<tr><td><code>view</code></td><td>The URL of remote HTML, fetched and inserted in its place</td></tr>
+<tr><td><code>title</code></td><td>Applied to <code>document.title</code> on entering</td></tr>
+<tr><td><code>name</code></td><td>The route name, available in <code>$route.name</code></td></tr>
+<tr><td><code>meta</code></td><td>Free-form data, available in <code>$route.meta</code></td></tr>
+<tr><td><code>redirect</code></td><td>Redirects as soon as the route matches</td></tr>
+<tr><td><code>beforeEnter</code></td><td>A guard exclusive to this route, run before the global one</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="padroes">Padrões e especificidade</h2>
+<h2 id="padroes">Patterns and specificity</h2>
 
-<pre data-lang="txt"><code>/usuarios          segmento fixo
-/usuarios/:id      parâmetro obrigatório
-/posts/:slug?      parâmetro opcional
-*                  curinga, entra quando nada mais casa</code></pre>
+<pre data-lang="txt"><code>/users          a fixed segment
+/users/:id      a required parameter
+/posts/:slug?   an optional parameter
+*               a wildcard, taken when nothing else matches</code></pre>
 
 <p>
-  A rota mais específica sempre vence: <code>/usuarios/novo</code> ganha de
-  <code>/usuarios/:id</code>, e <code>*</code> só entra por último. Você não precisa se preocupar
-  com a ordem em que declarou.
+  The most specific route always wins: <code>/users/new</code> beats <code>/users/:id</code>, and
+  <code>*</code> only comes in last. You do not have to worry about the order you declared them
+  in.
 </p>
 
 <h2 id="route">$route</h2>
 
 <p>
-  O estado da rota atual é reativo: qualquer expressão que leia <code>$route</code> se atualiza
-  sozinha.
+  The state of the current route is reactive: any expression that reads <code>$route</code> updates
+  itself.
 </p>
 
-<pre data-lang="html"><code>&lt;h1&gt;Usuário { $route.params.id }&lt;/h1&gt;
-&lt;p v-show="$route.query.novo"&gt;Cadastro recém-criado&lt;/p&gt;
+<pre data-lang="html"><code>&lt;h1&gt;User { $route.params.id }&lt;/h1&gt;
+&lt;p v-show="$route.query.new"&gt;Freshly created account&lt;/p&gt;
 &lt;small&gt;{ $route.path } · { $route.name }&lt;/small&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo</th><th>O que é</th></tr></thead>
+<thead><tr><th>Field</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>path</code></td><td>Caminho sem query e sem hash</td></tr>
-<tr><td><code>fullPath</code></td><td>Caminho completo</td></tr>
-<tr><td><code>params</code></td><td>Parâmetros do padrão, como <code>{ id: '42' }</code></td></tr>
-<tr><td><code>query</code></td><td>Query string convertida em objeto</td></tr>
-<tr><td><code>hash</code></td><td>Âncora, sem o <code>#</code></td></tr>
-<tr><td><code>name</code></td><td>Nome declarado na rota</td></tr>
-<tr><td><code>meta</code></td><td>Metadados da rota</td></tr>
-<tr><td><code>matched</code></td><td>O padrão que casou, ou <code>null</code></td></tr>
+<tr><td><code>path</code></td><td>The path without the query and without the hash</td></tr>
+<tr><td><code>fullPath</code></td><td>The complete path</td></tr>
+<tr><td><code>params</code></td><td>The pattern parameters, such as <code>{ id: '42' }</code></td></tr>
+<tr><td><code>query</code></td><td>The query string turned into an object</td></tr>
+<tr><td><code>hash</code></td><td>The anchor, without the <code>#</code></td></tr>
+<tr><td><code>name</code></td><td>The name declared on the route</td></tr>
+<tr><td><code>meta</code></td><td>The route metadata</td></tr>
+<tr><td><code>matched</code></td><td>The pattern that matched, or <code>null</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<p>Por JavaScript, o mesmo objeto está em <code>V.route</code>.</p>
+<p>From JavaScript, the same object is in <code>V.route</code>.</p>
 
 <h2 id="router-view">v-router-view</h2>
 
-<pre data-lang="html"><code>&lt;main v-router-view&gt;Carregando...&lt;/main&gt;
+<pre data-lang="html"><code>&lt;main v-router-view&gt;Loading...&lt;/main&gt;
 &lt;main v-router-view.no-transition&gt;&lt;/main&gt;</code></pre>
 
 <p>
-  Rota com <code>component</code> monta o componente registrado. Rota com <code>view</code> busca
-  o HTML remoto e o insere já com as directives ligadas, guardando o resultado em cache. O
-  conteúdo original do elemento volta quando nenhuma rota casa — por isso ele serve como estado de
-  carregamento. A troca usa a View Transitions API quando o navegador oferece.
+  A route with <code>component</code> mounts the registered component. A route with
+  <code>view</code> fetches the remote HTML and inserts it with the directives already bound,
+  keeping the result in cache. The element's original content comes back when no route matches —
+  which is why it doubles as a loading state. The change uses the View Transitions API when the
+  browser offers it.
 </p>
 
 <h2 id="link">v-link</h2>
 
-<pre data-lang="html"><code>&lt;a v-link href="/usuarios"&gt;Usuários&lt;/a&gt;
-&lt;a v-link="'/usuarios/' + user.id"&gt;Detalhe&lt;/a&gt;
-&lt;a v-link.replace href="/login"&gt;Entrar&lt;/a&gt;
-&lt;a v-link.no-scroll href="/lista"&gt;Sem rolar ao topo&lt;/a&gt;</code></pre>
+<pre data-lang="html"><code>&lt;a v-link href="/users"&gt;Users&lt;/a&gt;
+&lt;a v-link="'/users/' + user.id"&gt;Detail&lt;/a&gt;
+&lt;a v-link.replace href="/login"&gt;Sign in&lt;/a&gt;
+&lt;a v-link.no-scroll href="/list"&gt;No scrolling to the top&lt;/a&gt;</code></pre>
 
 <p>
-  Continuam com o comportamento nativo do navegador os cliques com <kbd>Ctrl</kbd>,
-  <kbd>Command</kbd>, <kbd>Shift</kbd> ou <kbd>Alt</kbd>, os cliques que não sejam com o botão
-  principal, e os links com <code>target</code>, com <code>download</code> ou para outro domínio.
-  Abrir em uma aba nova continua funcionando como a pessoa espera.
+  Clicks with <kbd>Ctrl</kbd>, <kbd>Command</kbd>, <kbd>Shift</kbd> or <kbd>Alt</kbd>, clicks with
+  anything but the main button, and links with <code>target</code>, with <code>download</code> or
+  to another domain all keep the browser's native behaviour. Opening in a new tab keeps working the
+  way the person expects.
 </p>
 
 <div class="doc-aviso doc-aviso--roadmap">
-  <span class="doc-aviso__rotulo">Ainda não existe</span>
+  <span class="doc-aviso__rotulo">Does not exist yet</span>
   <p>
-    Rotas aninhadas: o <code>v-router-view</code> renderiza uma única saída, sem hierarquia de
-    views. E não há classes de transição próprias por rota além do que a View Transitions API
-    oferece.
+    Nested routes: <code>v-router-view</code> renders a single outlet, with no hierarchy of views.
+    And there are no per-route transition classes of its own beyond what the View Transitions API
+    offers.
   </p>
 </div>
 

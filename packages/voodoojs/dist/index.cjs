@@ -17780,7 +17780,7 @@ register("v-stat", {
 register("v-empty-state", {
   props: {
     icon: { type: "string", default: "inbox" },
-    title: { type: "string", default: "Nada por aqui" },
+    title: { type: "string", default: "Nothing here yet" },
     description: TEXT
   },
   template: `
@@ -17851,7 +17851,7 @@ register("v-steps", {
     steps: { type: "any", default: "" },
     current: { type: "number", default: 0 },
     vertical: BOOL,
-    ariaLabel: { type: "string", default: "Etapas" }
+    ariaLabel: { type: "string", default: "Steps" }
   },
   computed: {
     ...flags("vertical"),
@@ -18045,8 +18045,8 @@ register("v-code-block", {
     code: TEXT,
     language: TEXT,
     filename: TEXT,
-    copyLabel: { type: "string", default: "Copiar" },
-    copiedLabel: { type: "string", default: "Copiado" },
+    copyLabel: { type: "string", default: "Copy" },
+    copiedLabel: { type: "string", default: "Copied" },
     wrap: BOOL
   },
   state() {

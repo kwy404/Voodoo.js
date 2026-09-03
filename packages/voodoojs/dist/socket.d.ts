@@ -41,7 +41,7 @@ declare const ENGINE: {
     readonly UPGRADE: "5";
     readonly NOOP: "6";
 };
-/** Tipos de pacote do Socket.IO v5 (protocolo do servidor v4). */
+/** Socket.IO v5 packet types (v4 server protocol). */
 declare const SIO: {
     readonly CONNECT: 0;
     readonly DISCONNECT: 1;

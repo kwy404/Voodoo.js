@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Som · Documentação da Voodoo.js</title>
-<meta name="description" content="Retorno sonoro sintetizado na hora com a Web Audio API: v-sound, os quinze efeitos prontos, v-mute, notas e melodias, e os três cuidados que o módulo já toma sozinho.">
+<title>Sound · Voodoo.js documentation</title>
+<meta name="description" content="Audio feedback synthesized on the spot with the Web Audio API: v-sound, the fifteen ready-made effects, v-mute, notes and melodies, and the three courtesies the module already takes care of.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/som">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,15 +14,15 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Som</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Sound</h1>
 <p class="doc-resumo">
-  A pessoa clica no botão e não sabe se aconteceu alguma coisa. Um toque curto resolve isso melhor
-  do que qualquer animação. Aqui os efeitos são sintetizados na hora, com a Web Audio API: não
-  existe arquivo para baixar, não existe pasta de sons, e o módulo inteiro custa cerca de 2 KB.
+  Someone clicks a button and cannot tell whether anything happened. A short blip settles that
+  better than any animation. Here the effects are synthesized on the spot, with the Web Audio API:
+  there is no file to download, there is no sounds folder, and the whole module costs about 2 KB.
 </p>
 
-<h2 id="no-html">No HTML</h2>
+<h2 id="no-html">In the HTML</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div class="linha"&gt;
@@ -30,93 +30,93 @@
   &lt;button v-sound="success"&gt;success&lt;/button&gt;
   &lt;button v-sound="error"&gt;error&lt;/button&gt;
   &lt;button v-sound="coin"&gt;coin&lt;/button&gt;
-  &lt;button v-mute&gt;Silenciar&lt;/button&gt;
+  &lt;button v-mute&gt;Mute&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Sem argumento, <code>v-sound</code> toca no clique. Com argumento, você escolhe o evento:
+  With no argument, <code>v-sound</code> plays on click. With an argument, you choose the event:
 </p>
 
-<pre data-lang="html"><code>&lt;button v-sound="success" v-post="/api/pedidos"&gt;Finalizar&lt;/button&gt;
-&lt;a v-sound:mouseenter="hover" href="/precos"&gt;Preços&lt;/a&gt;
+<pre data-lang="html"><code>&lt;button v-sound="success" v-post="/api/orders"&gt;Check out&lt;/button&gt;
+&lt;a v-sound:mouseenter="hover" href="/pricing"&gt;Pricing&lt;/a&gt;
 &lt;input v-sound:input="type"&gt;</code></pre>
 
 <p>
-  E <code>v-mute</code> dá ao visitante o botão de silenciar, que é a primeira coisa que ele vai
-  procurar.
+  And <code>v-mute</code> gives the visitor the mute button, which is the first thing they will
+  look for.
 </p>
 
-<h2 id="efeitos">Os quinze efeitos</h2>
+<h2 id="efeitos">The fifteen effects</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Grupo</th><th>Efeitos</th></tr></thead>
+<thead><tr><th>Group</th><th>Effects</th></tr></thead>
 <tbody>
-<tr><td>Toque de interface</td><td><code>click</code>, <code>pop</code>, <code>hover</code>, <code>type</code></td></tr>
-<tr><td>Resultado</td><td><code>success</code>, <code>complete</code>, <code>error</code>, <code>warning</code>, <code>deny</code></td></tr>
-<tr><td>Aviso</td><td><code>notify</code></td></tr>
-<tr><td>Transição</td><td><code>open</code>, <code>close</code>, <code>drop</code></td></tr>
-<tr><td>Recompensa</td><td><code>coin</code>, <code>levelup</code></td></tr>
+<tr><td>Interface blip</td><td><code>click</code>, <code>pop</code>, <code>hover</code>, <code>type</code></td></tr>
+<tr><td>Outcome</td><td><code>success</code>, <code>complete</code>, <code>error</code>, <code>warning</code>, <code>deny</code></td></tr>
+<tr><td>Notice</td><td><code>notify</code></td></tr>
+<tr><td>Transition</td><td><code>open</code>, <code>close</code>, <code>drop</code></td></tr>
+<tr><td>Reward</td><td><code>coin</code>, <code>levelup</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="javascript">Por JavaScript, e por <code>$sound</code></h2>
+<h2 id="javascript">From JavaScript, and through <code>$sound</code></h2>
 
 <pre data-lang="js"><code>V.sound.play('success');
-V.sound.play('/audio/ding.mp3');    // também aceita um arquivo
-V.sound.note('la', 300);            // nota musical, com oitava opcional: 'la5'
-V.sound.melody(['do', 'mi', 'sol'], 140);
-V.sound.tone(440, 200);             // frequência em hertz
+V.sound.play('/audio/ding.mp3');    // it takes a file too
+V.sound.note('a', 300);             // a musical note, with an optional octave: 'a5'
+V.sound.melody(['c', 'e', 'g'], 140);
+V.sound.tone(440, 200);             // frequency in hertz
 V.sound.volume(0.4);
 V.sound.mute();
 V.sound.toggle();</code></pre>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div class="linha"&gt;
-  &lt;button @click="$sound.play('levelup')"&gt;Subir de nível&lt;/button&gt;
-  &lt;button @click="$sound.melody(['do', 'mi', 'sol'], 140)"&gt;Melodia&lt;/button&gt;
-  &lt;button @click="$sound.note('la', 300)"&gt;Nota lá&lt;/button&gt;
-  &lt;button @click="$sound.toggle()"&gt;Ligar e desligar&lt;/button&gt;
+  &lt;button @click="$sound.play('levelup')"&gt;Level up&lt;/button&gt;
+  &lt;button @click="$sound.melody(['c', 'e', 'g'], 140)"&gt;Melody&lt;/button&gt;
+  &lt;button @click="$sound.note('a', 300)"&gt;The note A&lt;/button&gt;
+  &lt;button @click="$sound.toggle()"&gt;On and off&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="cuidados">Três cuidados que o módulo já toma</h2>
+<h2 id="cuidados">Three courtesies the module already takes care of</h2>
 
 <ul>
   <li>
-    <b>O contexto de áudio só nasce no primeiro gesto da pessoa.</b> Navegador nenhum permite
-    antes, e a Voodoo não tenta. Um som disparado no carregamento simplesmente não toca.
+    <b>The audio context is only born on the person's first gesture.</b> No browser allows it
+    earlier, and Voodoo does not try. A sound fired on load simply does not play.
   </li>
   <li>
-    <b>Quem liga a preferência de menos movimento no sistema recebe um volume mais baixo.</b>
+    <b>Anyone who turns on the reduced-motion preference in their system gets a lower volume.</b>
   </li>
   <li>
-    <b>A escolha de volume e de silêncio fica guardada entre as visitas</b>, então ninguém precisa
-    silenciar a mesma página duas vezes.
+    <b>The choice of volume and of silence is kept between visits</b>, so nobody has to mute the
+    same page twice.
   </li>
 </ul>
 
-<h2 id="criando">Definindo um efeito próprio</h2>
+<h2 id="criando">Defining an effect of your own</h2>
 
-<pre data-lang="js"><code>V.sound.define('meuAviso', {
+<pre data-lang="js"><code>V.sound.define('myAlert', {
   volume: 0.5,
   camadas: [{ frequencia: 700, duracao: 0.1 }]
 });</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Som de interface serve para confirmar</span>
+  <span class="doc-aviso__rotulo">Interface sound is there to confirm</span>
   <p>
-    Não para chamar atenção. Um <code>click</code> de 40 milissegundos passa despercebido e ainda
-    assim faz a interface parecer sólida; um som longo em cada ação cansa na terceira vez. Na
-    dúvida, use menos — e lembre que a pessoa pode estar em um escritório, em uma aula ou com
-    alguém dormindo do lado.
+    Not to grab attention. A 40-millisecond <code>click</code> goes unnoticed and still makes the
+    interface feel solid; a long sound on every action wears thin by the third time. When in doubt,
+    use less — and remember that the person may be in an office, in a class, or with someone
+    asleep next to them.
   </p>
 </div>
 
 <p>
-  O módulo de som vem no <code>voodoo.min.js</code> e no <code>voodoo.full.min.js</code>.
+  The sound module ships in <code>voodoo.min.js</code> and in <code>voodoo.full.min.js</code>.
 </p>
 
 </article>
