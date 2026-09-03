@@ -332,22 +332,73 @@
         padding-right: 12px;
       }
 
-      textarea {
+      /* The editor is a transparent textarea sitting exactly on top of a coloured
+         <pre>. Both use identical metrics, so the caret and selection land on the
+         glyphs the reader sees. This is how you get highlighting without pulling
+         in an editor library, and without eval, which the CSP forbids. */
+      .stack {
+        position: relative;
         flex: 1;
         min-width: 0;
-        border: 0;
-        outline: none;
-        resize: none;
+        overflow: hidden;
+      }
+
+      .stack pre,
+      .stack textarea {
+        margin: 0;
         padding: 12px 14px 12px 0;
-        background: transparent;
-        color: var(--chrome-ink);
         font-family: var(--mono);
         font-size: 12.5px;
         line-height: 1.55;
         tab-size: 2;
         white-space: pre;
+        word-wrap: normal;
+        border: 0;
+      }
+
+      .stack pre {
+        position: absolute;
+        inset: 0;
         overflow: auto;
+        color: var(--chrome-ink);
+        pointer-events: none;
+      }
+
+      .stack textarea {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        outline: none;
+        background: transparent;
+        color: transparent;
         caret-color: var(--accent);
+        overflow: auto;
+      }
+
+      .stack textarea::selection {
+        background: rgba(91, 46, 229, 0.42);
+      }
+
+      .tk-tag {
+        color: var(--c-tag);
+      }
+      .tk-attr {
+        color: var(--c-attr);
+      }
+      .tk-str {
+        color: var(--c-str);
+      }
+      .tk-com {
+        color: var(--c-com);
+        font-style: italic;
+      }
+      .tk-punct {
+        color: var(--chrome-faint);
+      }
+      .tk-interp {
+        color: var(--c-key);
       }
 
       textarea::selection {
@@ -535,14 +586,17 @@
 
         <div class="code-area">
           <div class="gutter" id="gutter" aria-hidden="true"></div>
-          <textarea
-            id="code"
-            spellcheck="false"
-            autocapitalize="off"
-            autocomplete="off"
-            autocorrect="off"
-            aria-label="HTML editor"
-          ></textarea>
+          <div class="stack">
+            <pre id="highlight" aria-hidden="true"><code></code></pre>
+            <textarea
+              id="code"
+              spellcheck="false"
+              autocapitalize="off"
+              autocomplete="off"
+              autocorrect="off"
+              aria-label="HTML editor"
+            ></textarea>
+          </div>
         </div>
       </div>
 
@@ -572,260 +626,6 @@
     </div>
 
     <script src="assets/playground-examples.js"></script>
-    <script>
-      /**
-       * The playground: an editor on the left, the result on the right.
-       *
-       * The preview is a sandboxed iframe that loads the same public CDN build
-       * the documentation hands out, so what runs here is what runs in your page.
-       * There is no compiler in this loop: the code you type is the code that
-       * executes, which is the property the whole framework is built around.
-       */
-      (function () {
-        'use strict';
-
-        var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.full.min.js';
-        var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
-
-        var code = document.getElementById('code');
-        var gutter = document.getElementById('gutter');
-        var frame = document.getElementById('frame');
-        var fileList = document.getElementById('file-list');
-        var filetab = document.getElementById('filetab');
-        var descEl = document.getElementById('example-desc');
-        var statusExample = document.getElementById('status-example');
-        var statusLines = document.getElementById('status-lines');
-
-        var current = examples[0];
-        var timer = null;
-
-        var GROUP_LABEL = {
-          basics: 'Basics',
-          forms: 'Forms',
-          events: 'Events',
-          components: 'Components',
-          http: 'HTTP',
-          ui: 'Interface',
-          visual: 'Visual',
-          state: 'State',
-          advanced: 'Advanced',
-        };
-
-        /** Builds the explorer, grouped the way the examples declare. */
-        function buildList() {
-          var seen = {};
-          var html = '';
-          examples.forEach(function (ex) {
-            if (!seen[ex.group]) {
-              seen[ex.group] = true;
-              html += '<div class="group">' + (GROUP_LABEL[ex.group] || ex.group) + '</div>';
-            }
-            html +=
-              '<button type="button" data-id="' +
-              ex.id +
-              '" aria-current="false">' +
-              ex.title +
-              '</button>';
-          });
-          fileList.innerHTML = html;
-        }
-
-        /** Line numbers, redrawn only when the count actually changes. */
-        var lastCount = -1;
-        function drawGutter() {
-          var n = code.value.split('\n').length;
-          statusLines.textContent = n + (n === 1 ? ' line' : ' lines');
-          if (n === lastCount) return;
-          lastCount = n;
-          var out = '';
-          for (var i = 1; i <= n; i++) out += '<span>' + i + '</span>';
-          gutter.innerHTML = out;
-        }
-
-        /** Rebuilds the iframe document from scratch, so state never leaks between runs. */
-        function run() {
-          var doc =
-            '<!doctype html><html><head><meta charset="utf-8">' +
-            '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-            '<style>' +
-            'body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
-            'margin:0;padding:18px;color:#16141c;background:#fff;line-height:1.6}' +
-            '*{box-sizing:border-box}' +
-            'button{font:inherit;padding:7px 12px;border:1px solid #e7e4ec;border-radius:7px;' +
-            'background:#fff;cursor:pointer;margin:2px 4px 2px 0}' +
-            'button:hover{border-color:#5b2ee5;color:#5b2ee5}' +
-            'input,select,textarea{font:inherit;padding:7px 9px;border:1px solid #e7e4ec;' +
-            'border-radius:7px;margin:2px 0}' +
-            'h1,h2,h3{margin:0 0 8px;line-height:1.2}' +
-            'ul,ol{padding-left:20px}' +
-            '</style></head><body>' +
-            code.value +
-            '<scr' +
-            'ipt src="' +
-            CDN +
-            '" defer></scr' +
-            'ipt></body></html>';
-          frame.srcdoc = doc;
-        }
-
-        /** Debounced, so typing does not rebuild the document on every keystroke. */
-        function scheduleRun() {
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(run, 420);
-        }
-
-        function markDirty(dirty) {
-          filetab.className = dirty ? 'filetab dirty' : 'filetab';
-        }
-
-        function load(ex, keepHash) {
-          current = ex;
-          code.value = ex.code.join('\n');
-          descEl.textContent = ex.desc;
-          statusExample.textContent = ex.id;
-          markDirty(false);
-          drawGutter();
-          run();
-
-          var buttons = fileList.querySelectorAll('button');
-          for (var i = 0; i < buttons.length; i++) {
-            buttons[i].setAttribute(
-              'aria-current',
-              buttons[i].getAttribute('data-id') === ex.id ? 'true' : 'false'
-            );
-          }
-          if (!keepHash) history.replaceState(null, '', '#' + ex.id);
-        }
-
-        /** Shared links carry the code itself, so they survive an example being renamed. */
-        function encode(text) {
-          return btoa(unescape(encodeURIComponent(text)));
-        }
-        function decode(text) {
-          return decodeURIComponent(escape(atob(text)));
-        }
-
-        function openFromHash() {
-          var hash = location.hash.slice(1);
-          if (!hash) return false;
-          if (hash.indexOf('code=') === 0) {
-            try {
-              code.value = decode(hash.slice(5));
-              descEl.textContent = 'Shared code';
-              statusExample.textContent = 'shared';
-              markDirty(true);
-              drawGutter();
-              run();
-              return true;
-            } catch (err) {
-              /* fall through to the example list */
-            }
-          }
-          for (var i = 0; i < examples.length; i++) {
-            if (examples[i].id === hash) {
-              load(examples[i], true);
-              return true;
-            }
-          }
-          return false;
-        }
-
-        // ------------------------------------------------------------ wiring
-
-        fileList.addEventListener('click', function (event) {
-          var btn = event.target.closest('button[data-id]');
-          if (!btn) return;
-          for (var i = 0; i < examples.length; i++) {
-            if (examples[i].id === btn.getAttribute('data-id')) {
-              load(examples[i]);
-              document.body.classList.remove('show-files');
-              break;
-            }
-          }
-        });
-
-        code.addEventListener('input', function () {
-          markDirty(true);
-          drawGutter();
-          scheduleRun();
-        });
-
-        // Tab inserts two spaces instead of leaving the editor, which is the one
-        // keyboard behaviour people expect from a code box and never get.
-        code.addEventListener('keydown', function (event) {
-          if (event.key === 'Tab') {
-            event.preventDefault();
-            var start = code.selectionStart;
-            var end = code.selectionEnd;
-            code.value = code.value.slice(0, start) + '  ' + code.value.slice(end);
-            code.selectionStart = code.selectionEnd = start + 2;
-            drawGutter();
-            scheduleRun();
-            return;
-          }
-          if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-            event.preventDefault();
-            run();
-          }
-        });
-
-        // The gutter has to follow the textarea, or the numbers drift on scroll.
-        code.addEventListener('scroll', function () {
-          gutter.scrollTop = code.scrollTop;
-        });
-
-        document.getElementById('btn-run').addEventListener('click', run);
-
-        document.getElementById('btn-reset').addEventListener('click', function () {
-          if (current) load(current);
-        });
-
-        document.getElementById('btn-share').addEventListener('click', function (event) {
-          var url = location.origin + location.pathname + '#code=' + encode(code.value);
-          var btn = event.currentTarget;
-          navigator.clipboard.writeText(url).then(
-            function () {
-              btn.textContent = 'Copied';
-              setTimeout(function () {
-                btn.textContent = 'Share';
-              }, 1400);
-            },
-            function () {
-              btn.textContent = 'Press Ctrl+C';
-              setTimeout(function () {
-                btn.textContent = 'Share';
-              }, 1800);
-            }
-          );
-        });
-
-        document.querySelector('.widths').addEventListener('click', function (event) {
-          var btn = event.target.closest('button[data-w]');
-          if (!btn) return;
-          var all = this.querySelectorAll('button');
-          for (var i = 0; i < all.length; i++) all[i].setAttribute('aria-pressed', 'false');
-          btn.setAttribute('aria-pressed', 'true');
-          frame.style.maxWidth = btn.getAttribute('data-w');
-        });
-
-        document.getElementById('btn-files').addEventListener('click', function () {
-          document.body.classList.toggle('show-files');
-        });
-
-        document.getElementById('btn-view').addEventListener('click', function (event) {
-          document.body.classList.toggle('show-preview');
-          event.currentTarget.textContent = document.body.classList.contains('show-preview')
-            ? 'Code'
-            : 'Preview';
-        });
-
-        window.addEventListener('hashchange', openFromHash);
-
-        // ------------------------------------------------------------- start
-
-        buildList();
-        if (!openFromHash() && examples.length) load(examples[0]);
-      })();
-    </script>
+    <script src="assets/playground-app.js"></script>
   </body>
 </html>
