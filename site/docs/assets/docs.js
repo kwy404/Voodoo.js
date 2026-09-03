@@ -723,12 +723,33 @@
     });
   }
 
+  /**
+   * Sizes the frame to its content.
+   *
+   * The measurement has to happen with the frame collapsed. `scrollHeight` is
+   * read from inside a frame that already carries the previous measurement, so
+   * the body reports at least the height it was given: adding 8 to that made
+   * every measurement 8px taller than the last, and the card crept upward on
+   * each click, each keystroke and each resize observation. Interacting with an
+   * example grew it without limit.
+   *
+   * Setting the height to 0 first forces the body to collapse onto its own
+   * content, so what comes back is the content's height rather than an echo of
+   * the frame's. The two writes land in one layout pass, so nothing flickers.
+   */
   function ajustarAltura(quadro) {
     try {
       var doc = quadro.contentDocument;
       if (!doc || !doc.body) return;
+
+      var anterior = quadro.style.height;
+      quadro.style.height = '0px';
       var altura = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight || 0);
-      quadro.style.height = Math.max(altura + 8, 96) + 'px';
+      var proxima = Math.max(altura + 8, 96) + 'px';
+
+      // Avoid writing an identical value: a no-op write still invalidates
+      // layout, and the ResizeObserver watching the body would see it.
+      quadro.style.height = proxima === anterior ? anterior : proxima;
     } catch (erro) {
       quadro.style.height = '220px';
     }
