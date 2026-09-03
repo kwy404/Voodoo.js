@@ -10,7 +10,7 @@
    -------------------------------------------------------------------------- */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* Marca */
   --roxo: #6d3bf5;
@@ -22,26 +22,8 @@
   --creme: #fbf7f2;
 
   /* Tema escuro, o padrão */
-  --fundo: #0f0d18;
-  --fundo-2: #14111f;
-  --fundo-3: #1c1830;
-  --superficie: #191527;
-  --superficie-2: #221d38;
-  --borda: #2c2643;
-  --borda-forte: #3d3560;
-  --texto: #ece9f5;
-  --texto-2: #b3acc9;
-  --texto-3: #837c9c;
-  --acento: var(--roxo-claro);
-  --acento-forte: #b39bff;
-  --acento-fundo: rgba(109, 59, 245, 0.18);
-  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
-  --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --realce-selecao: rgba(155, 123, 255, 0.32);
 
   /* Realce de sintaxe */
-  --cod-fundo: #100d1c;
-  --cod-texto: #ddd8ee;
   --cod-comentario: #6f6890;
   --cod-tag: #9b7bff;
   --cod-atributo: #2ed9a5;
@@ -66,10 +48,6 @@
     "Noto Sans", Arial, sans-serif;
   --fonte-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", "Cascadia Mono",
     Menlo, Consolas, "Liberation Mono", monospace;
-}
-
-:root[data-tema="claro"] {
-  color-scheme: light;
 
   --fundo: var(--creme);
   --fundo-2: #ffffff;
@@ -87,9 +65,57 @@
   --sombra: 0 1px 2px rgba(30, 20, 60, 0.06), 0 8px 24px rgba(30, 20, 60, 0.08);
   --sombra-suave: 0 1px 3px rgba(30, 20, 60, 0.08);
   --realce-selecao: rgba(109, 59, 245, 0.18);
-
   --cod-fundo: #17132a;
   --cod-texto: #e7e3f5;
+}
+
+/* Dark is now an override rather than the default. Every documentation page
+   used to hardcode data-tema="escuro" in its markup, which overruled both the
+   system preference and the reader's own saved choice. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --fundo: #0f0d18;
+    --fundo-2: #14111f;
+    --fundo-3: #1c1830;
+    --superficie: #191527;
+    --superficie-2: #221d38;
+    --borda: #2c2643;
+    --borda-forte: #3d3560;
+    --texto: #ece9f5;
+    --texto-2: #b3acc9;
+    --texto-3: #837c9c;
+    --acento: var(--roxo-claro);
+    --acento-forte: #b39bff;
+    --acento-fundo: rgba(109, 59, 245, 0.18);
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --realce-selecao: rgba(155, 123, 255, 0.32);
+    --cod-fundo: #100d1c;
+    --cod-texto: #ddd8ee;
+  }
+}
+
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+  --fundo: #0f0d18;
+  --fundo-2: #14111f;
+  --fundo-3: #1c1830;
+  --superficie: #191527;
+  --superficie-2: #221d38;
+  --borda: #2c2643;
+  --borda-forte: #3d3560;
+  --texto: #ece9f5;
+  --texto-2: #b3acc9;
+  --texto-3: #837c9c;
+  --acento: var(--roxo-claro);
+  --acento-forte: #b39bff;
+  --acento-fundo: rgba(109, 59, 245, 0.18);
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --sombra-suave: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --realce-selecao: rgba(155, 123, 255, 0.32);
+  --cod-fundo: #100d1c;
+  --cod-texto: #ddd8ee;
 }
 
 /* --------------------------------------------------------------------------

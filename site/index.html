@@ -57,7 +57,14 @@
         color-scheme: light;
       }
 
-      [data-theme='dark'] {
+      /* Three states, the same shape the library's own V.palette() writes, so the
+         page and the built-in UI can never disagree: the system preference wins
+         unless the visitor picked a theme, and an explicit choice wins over the
+         system in both directions. Before this the page was light no matter what
+         while the palette followed the OS, which is why the Ctrl+K panel came up
+         dark on a white page. */
+      @media (prefers-color-scheme: dark) {
+        html:root:not([data-theme='light']) {
         --ink: #f2f0f6;
         --ink-soft: #b3adc2;
         --ink-faint: #837d93;
@@ -68,6 +75,23 @@
         --accent: #a688ff;
         --accent-soft: #221c3a;
         --accent-ink: #16141c;
+        --v-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
+        color-scheme: dark;
+        }
+      }
+
+      html:root[data-theme='dark'] {
+        --ink: #f2f0f6;
+        --ink-soft: #b3adc2;
+        --ink-faint: #837d93;
+        --bg: #131118;
+        --bg-soft: #191722;
+        --bg-code: #1d1a26;
+        --line: #2b2735;
+        --accent: #a688ff;
+        --accent-soft: #221c3a;
+        --accent-ink: #16141c;
+        --v-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
         color-scheme: dark;
       }
 
@@ -130,6 +154,34 @@
         max-width: var(--wide);
         margin: 0 auto;
         padding: 0 24px;
+      }
+
+
+      /* The library styles its built-in UI (command palette, dialogs, toasts)
+         with its own --v-* tokens. Point them at this page's palette so the
+         Ctrl+K panel belongs to the site rather than to the default theme. */
+      /* html:root outranks the plain :root the library injects later in <head>,
+         which otherwise wins on source order and repaints the panel dark. */
+      html:root {
+        /* !important is the right tool here and not laziness: V.palette() writes
+           :root:not([data-theme="light"]), which outranks any plain selector we
+           can write, and it generates its own surface from the primary hue. We
+           want the library's UI to take this page's surfaces, not its own. */
+        --v-surface: var(--bg) !important;
+        --v-surface-2: var(--bg-soft) !important;
+        --v-border: var(--line) !important;
+        --v-text: var(--ink) !important;
+        --v-text-muted: var(--ink-faint) !important;
+        --v-primary: var(--accent) !important;
+        --v-radius: 11px;
+        --v-radius-sm: 8px;
+        --v-font-sans: var(--font);
+        --v-shadow: 0 12px 34px rgba(22, 20, 28, 0.14);
+      }
+
+      /* The palette lands on top of a sticky header, so it needs to outrank it. */
+      .v-command {
+        z-index: 200;
       }
 
       /* ---------------------------------------------------------------- nav */
@@ -845,11 +897,11 @@
           </a>
 
           <nav aria-label="Main">
-            <a href="#start" v-t="nav.start" v-command-item="Get started" v-t:v-command-item="cmd.start">Get started</a>
-            <a href="#why" v-t="nav.why" v-command-item="Why Voodoo.js" v-t:v-command-item="cmd.why">Why</a>
-            <a href="#compare" v-t="nav.compare" v-command-item="Benchmarks and comparison" v-t:v-command-item="cmd.compare">Comparison</a>
-            <a href="docs/" v-t="nav.docs" v-command-item="Documentation" v-t:v-command-item="cmd.docs">Docs</a>
-            <a href="../examples/" v-t="nav.examples" v-command-item="Examples" v-t:v-command-item="cmd.examples">Examples</a>
+            <a href="#start" v-t="nav.start" v-command-item="" v-t:v-command-item="">Get started</a>
+            <a href="#why" v-t="nav.why" v-command-item="" v-t:v-command-item="">Why</a>
+            <a href="#compare" v-t="nav.compare" v-command-item="" v-t:v-command-item="">Comparison</a>
+            <a href="docs/" v-t="nav.docs" v-command-item="" v-t:v-command-item="">Docs</a>
+            <a href="examples/" v-t="nav.examples" v-command-item="" v-t:v-command-item="">Examples</a>
           </nav>
 
           <div class="top-end">
@@ -870,7 +922,7 @@
             </select>
 
             <button class="icon-btn" v-theme-toggle v-t:aria-label="nav.theme" aria-label="Toggle dark mode"
-              v-command-item="Toggle dark mode" v-t:v-command-item="cmd.theme">
+              v-command-item="" v-t:v-command-item="">
               <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
@@ -899,7 +951,7 @@
             <a href="#why" @click="menu = false" v-t="nav.why">Why</a>
             <a href="#compare" @click="menu = false" v-t="nav.compare">Comparison</a>
             <a href="docs/" @click="menu = false" v-t="nav.docs">Docs</a>
-            <a href="../examples/" @click="menu = false" v-t="nav.examples">Examples</a>
+            <a href="examples/" @click="menu = false" v-t="nav.examples">Examples</a>
             <a href="https://github.com/kwy404/Voodoo.js" @click="menu = false">GitHub</a>
           </div>
         </div>
@@ -920,7 +972,7 @@
 
               <div class="cta">
                 <a class="btn btn-main" href="#start" v-t="hero.ctaStart">Get started</a>
-                <a class="btn" href="../examples/" v-t="hero.ctaExamples">See examples</a>
+                <a class="btn" href="examples/" v-t="hero.ctaExamples">See examples</a>
                 <a class="btn" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
               </div>
 
@@ -1045,16 +1097,16 @@
             </p>
 
             <div class="tabs" role="tablist" aria-label="Implementations">
-              <button class="tab" role="tab" :aria-selected="via === 'voodoo'" @click="via = 'voodoo'">
+              <button class="tab" role="tab" :aria-selected="via === 'voodoo' ? 'true' : 'false'" @click="via = 'voodoo'">
                 Voodoo.js
               </button>
-              <button class="tab" role="tab" :aria-selected="via === 'vanilla'" @click="via = 'vanilla'">
+              <button class="tab" role="tab" :aria-selected="via === 'vanilla' ? 'true' : 'false'" @click="via = 'vanilla'">
                 Vanilla JS
               </button>
-              <button class="tab" role="tab" :aria-selected="via === 'jquery'" @click="via = 'jquery'">
+              <button class="tab" role="tab" :aria-selected="via === 'jquery' ? 'true' : 'false'" @click="via = 'jquery'">
                 jQuery
               </button>
-              <button class="tab" role="tab" :aria-selected="via === 'vue'" @click="via = 'vue'">
+              <button class="tab" role="tab" :aria-selected="via === 'vue' ? 'true' : 'false'" @click="via = 'vue'">
                 Vue
               </button>
             </div>
@@ -1265,7 +1317,7 @@
 
             <div class="cta" style="margin-top: 28px">
               <a class="btn btn-main" href="docs/" v-t="start.docs">Read the docs</a>
-              <a class="btn" href="../examples/" v-t="start.examples">Browse 13 examples</a>
+              <a class="btn" href="examples/" v-t="start.examples">Browse 13 examples</a>
               <a class="btn" href="https://www.npmjs.com/package/voodoojs" v-t="start.npmLink">View on npm</a>
             </div>
           </div>
@@ -1315,10 +1367,10 @@
       <footer>
         <div class="wrap foot-in">
           <span v-t="foot.mit">MIT licensed</span>
-          <a href="https://github.com/kwy404/Voodoo.js" v-command-item="GitHub repository" v-t:v-command-item="cmd.github">GitHub</a>
-          <a href="https://www.npmjs.com/package/voodoojs" v-command-item="View on npm" v-t:v-command-item="cmd.npm">npm</a>
+          <a href="https://github.com/kwy404/Voodoo.js" v-command-item="" v-t:v-command-item="">GitHub</a>
+          <a href="https://www.npmjs.com/package/voodoojs" v-command-item="" v-t:v-command-item="">npm</a>
           <a href="docs/" v-t="nav.docs">Docs</a>
-          <a href="../examples/" v-t="nav.examples">Examples</a>
+          <a href="examples/" v-t="nav.examples">Examples</a>
           <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 0.5.0</span>
         </div>
       </footer>

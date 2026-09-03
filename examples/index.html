@@ -1,498 +1,573 @@
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Demos da Voodoo.js</title>
-<link rel="icon" href="../brand/logo/favicon.svg">
-<link rel="stylesheet" href="../design-system/voodoo-ui.css">
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.min.js" data-manual defer></script>
-<style>
-  body {
-    background:
-      radial-gradient(1200px 620px at 12% -10%, color-mix(in srgb, var(--v-primary) 22%, transparent), transparent 62%),
-      radial-gradient(1000px 520px at 92% 2%, color-mix(in srgb, var(--v-accent) 18%, transparent), transparent 60%),
-      var(--v-color-bg);
-    min-height: 100vh;
-  }
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  .ix-shell { max-width: 1180px; margin: 0 auto; padding: var(--v-space-8) var(--v-space-4) var(--v-space-16); }
+    <title>Examples — Voodoo.js</title>
+    <meta
+      name="description"
+      content="Thirteen working applications built with Voodoo.js: a Kanban board, a store, a real-time chat, two games, a 3D world and more. Every one is a single HTML file with no build step."
+    />
 
-  /* ---------- topo ---------- */
-  .ix-topo { display: flex; align-items: flex-start; gap: var(--v-space-4); margin-bottom: var(--v-space-10); }
-  .ix-logo { width: 46px; height: 46px; flex: none; }
-  .ix-titulo {
-    font-family: var(--v-font-display); font-size: var(--v-text-4xl); line-height: 1;
-    letter-spacing: var(--v-tracking-tight); margin: 0 0 8px;
-  }
-  .ix-titulo span {
-    background: linear-gradient(100deg, var(--v-primary), var(--v-accent));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .ix-lema { color: var(--v-text-muted); font-size: var(--v-text-lg); margin: 0; max-width: 58ch; }
+    <style>
+      /* Same tokens as the landing page. Kept inline so an example folder can be
+         copied out of the repository and still look like itself. */
+      :root {
+        --ink: #16141c;
+        --ink-soft: #57526a;
+        --ink-faint: #8b8598;
+        --bg: #ffffff;
+        --bg-soft: #faf9fb;
+        --line: #e7e4ec;
+        --accent: #5b2ee5;
+        --accent-soft: #f1ecfe;
+        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+          sans-serif;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        color-scheme: light;
+      }
 
-  .ix-aviso {
-    display: flex; align-items: flex-start; gap: 10px;
-    border: 1px solid var(--v-border); border-left: 3px solid var(--v-primary);
-    border-radius: var(--v-radius-md); background: var(--v-surface);
-    padding: var(--v-space-4); margin-bottom: var(--v-space-8);
-    font-size: var(--v-text-sm); color: var(--v-text-muted);
-  }
-  .ix-aviso code { font-size: 12.5px; }
+      [data-theme='dark'] {
+        --ink: #f2f0f6;
+        --ink-soft: #b3adc2;
+        --ink-faint: #837d93;
+        --bg: #131118;
+        --bg-soft: #191722;
+        --line: #2b2735;
+        --accent: #a688ff;
+        --accent-soft: #221c3a;
+        color-scheme: dark;
+      }
 
-  /* ---------- grade de demos ---------- */
-  .ix-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--v-space-5); }
+      * {
+        box-sizing: border-box;
+      }
 
-  .ix-cartao {
-    display: flex; flex-direction: column; position: relative; overflow: hidden;
-    border: 1px solid var(--v-border); border-radius: var(--v-radius-lg);
-    background: var(--v-surface); text-decoration: none; color: inherit;
-    box-shadow: var(--v-shadow-sm);
-    transition: transform var(--v-duration-base) var(--v-ease-out), box-shadow var(--v-duration-base), border-color var(--v-duration-base);
-  }
-  .ix-cartao:hover { transform: translateY(-4px); box-shadow: var(--v-shadow-lg); border-color: var(--ix-cor, var(--v-primary)); }
-  .ix-cartao:focus-visible { outline: var(--v-focus-width) solid var(--v-focus-ring); outline-offset: var(--v-focus-offset); }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
 
-  .ix-capa {
-    position: relative; height: 108px; display: flex; align-items: center; gap: 12px;
-    padding: 0 var(--v-space-5); overflow: hidden;
-    background: linear-gradient(120deg, color-mix(in srgb, var(--ix-cor) 28%, var(--v-surface)), var(--v-surface));
-    border-bottom: 1px solid var(--v-border);
-  }
-  .ix-capa::after {
-    content: ""; position: absolute; inset: auto -30px -60px auto;
-    width: 170px; height: 130px; border-radius: 50%;
-    background: var(--ix-cor); opacity: .22; filter: blur(20px);
-  }
-  .ix-simbolo {
-    position: relative; width: 50px; height: 50px; flex: none; border-radius: var(--v-radius-md);
-    display: grid; place-items: center; font-size: 24px;
-    background: color-mix(in srgb, var(--ix-cor) 22%, var(--v-surface));
-    color: var(--ix-cor); border: 1px solid color-mix(in srgb, var(--ix-cor) 40%, transparent);
-  }
-  .ix-capa-nome { position: relative; font-family: var(--v-font-display); font-size: var(--v-text-xl); }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
 
-  .ix-corpo { padding: var(--v-space-5); display: flex; flex-direction: column; gap: var(--v-space-3); flex: 1; }
-  .ix-frase { color: var(--v-text-muted); font-size: var(--v-text-sm); line-height: var(--v-leading-normal); margin: 0; }
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        font-weight: 640;
+      }
 
-  .ix-directives { display: flex; flex-wrap: wrap; gap: 5px; }
-  .ix-directive {
-    font-family: var(--v-font-mono); font-size: 11.5px;
-    border: 1px solid var(--v-border); border-radius: var(--v-radius-sm);
-    padding: 2px 7px; color: var(--v-text-muted); background: var(--v-surface-2);
-  }
+      p {
+        margin: 0;
+      }
 
-  .ix-rodape-cartao {
-    display: flex; align-items: center; gap: 8px; margin-top: auto;
-    padding-top: var(--v-space-3); border-top: 1px dashed var(--v-border);
-    font-size: var(--v-text-sm); font-weight: var(--v-weight-semibold); color: var(--ix-cor);
-  }
-  .ix-pacote {
-    margin-left: auto; font: var(--v-weight-medium) 11px/1.6 var(--v-font-mono);
-    color: var(--v-text-subtle); border: 1px solid var(--v-border);
-    border-radius: var(--v-radius-full); padding: 1px 9px;
-  }
+      a {
+        color: inherit;
+      }
 
-  .ix-rodape { margin-top: var(--v-space-12); color: var(--v-text-subtle); font-size: var(--v-text-sm); text-align: center; }
+      .wrap {
+        width: 100%;
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
 
-  @media (max-width: 640px) {
-    .ix-titulo { font-size: var(--v-text-3xl); }
-    .ix-topo { flex-direction: column; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .ix-cartao { transition: none; }
-  }
-</style>
-</head>
-<body>
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+      }
 
-<div class="ix-shell">
+      .top-in {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        height: 60px;
+      }
 
-  <header class="ix-topo">
-    <img class="ix-logo" src="../brand/logo/voodoo-mark.svg" alt="" aria-hidden="true">
-    <div>
-      <h1 class="ix-titulo">Demos da <span>Voodoo.js</span></h1>
-      <p class="ix-lema">
-        Treze aplicacoes completas, escritas quase inteiras no proprio HTML.
-        Cada uma existe para provar um pedaco diferente da biblioteca, e todas
-        funcionam de verdade, sem framework por baixo e sem passo de compilacao.
-      </p>
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 680;
+        font-size: 16.5px;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .brand svg {
+        width: 24px;
+        height: 24px;
+        flex: none;
+      }
+
+      .top nav {
+        display: flex;
+        gap: 4px;
+        margin-left: 6px;
+      }
+
+      .top nav a {
+        padding: 6px 10px;
+        border-radius: 7px;
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        text-decoration: none;
+      }
+
+      .top nav a:hover,
+      .top nav a[aria-current='page'] {
+        color: var(--ink);
+        background: var(--bg-soft);
+      }
+
+      .top-end {
+        margin-left: auto;
+      }
+
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--ink-soft);
+        cursor: pointer;
+      }
+
+      .icon-btn:hover {
+        color: var(--ink);
+        border-color: var(--ink-faint);
+      }
+
+      header.page {
+        padding: 62px 0 40px;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 46px);
+        letter-spacing: -0.035em;
+        font-weight: 700;
+      }
+
+      .lead {
+        margin-top: 16px;
+        font-size: 18px;
+        color: var(--ink-soft);
+        max-width: 38em;
+      }
+
+      .note {
+        margin-top: 22px;
+        padding: 13px 16px;
+        border: 1px solid var(--line);
+        border-left: 2px solid var(--accent);
+        border-radius: 0 9px 9px 0;
+        background: var(--bg-soft);
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        max-width: 62em;
+      }
+
+      .note code {
+        font-family: var(--mono);
+        font-size: 13px;
+      }
+
+      section {
+        padding: 34px 0 10px;
+      }
+
+      .sec-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        border-top: 1px solid var(--line);
+        padding-top: 30px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .sec-head span {
+        font-size: 14px;
+        color: var(--ink-faint);
+      }
+
+      .grid {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        padding: 18px;
+        text-decoration: none;
+        background: var(--bg);
+      }
+
+      .card:hover {
+        border-color: var(--accent);
+      }
+
+      .card:hover h3 {
+        color: var(--accent);
+      }
+
+      .card h3 {
+        font-size: 16.5px;
+      }
+
+      .card p {
+        margin-top: 7px;
+        font-size: 14.5px;
+        color: var(--ink-soft);
+        flex: 1;
+      }
+
+      .tags {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: var(--bg-soft);
+        border: 1px solid var(--line);
+        color: var(--ink-faint);
+        white-space: nowrap;
+      }
+
+      .tag.build {
+        background: var(--accent-soft);
+        border-color: transparent;
+        color: var(--accent);
+      }
+
+      footer {
+        margin-top: 54px;
+        border-top: 1px solid var(--line);
+        padding: 30px 0;
+        font-size: 14px;
+        color: var(--ink-soft);
+      }
+
+      .foot-in {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+
+      .skip:focus {
+        left: 12px;
+        top: 12px;
+        z-index: 60;
+        background: var(--bg);
+        padding: 9px 14px;
+        border: 1px solid var(--accent);
+        border-radius: 8px;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      @media (max-width: 700px) {
+        .top nav {
+          display: none;
+        }
+        header.page {
+          padding: 40px 0 28px;
+        }
+        .wrap {
+          padding: 0 18px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <div class="top">
+      <div class="wrap top-in">
+        <a class="brand" href="../">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
+          </svg>
+          Voodoo.js
+        </a>
+
+        <nav aria-label="Main">
+          <a href="../">Home</a>
+          <a href="../docs/">Docs</a>
+          <a href="./" aria-current="page">Examples</a>
+        </nav>
+
+        <div class="top-end">
+          <button class="icon-btn" v-theme-toggle aria-label="Toggle dark mode">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="v-push"></div>
-    <button class="v-btn v-btn--ghost v-btn--icon" v-theme-toggle aria-label="Alternar entre tema claro e escuro">
-      <span aria-hidden="true">◐</span>
-    </button>
-  </header>
 
-  <p class="ix-aviso">
-    <span aria-hidden="true">▸</span>
-    <span>
-      Abra pelo servidor local, e nao por <code class="v-code">file://</code>, porque
-      algumas demos fazem requisicoes. Rode <code class="v-code">node scripts/serve.mjs 5180</code>
-      na raiz do projeto e acesse <code class="v-code">http://localhost:5180/examples/</code>.
-      Antes disso, gere os bundles com <code class="v-code">npm run build</code>.
-    </span>
-  </p>
+    <main id="main">
+      <div class="wrap">
+        <header class="page">
+          <h1>Thirteen things built with it</h1>
+          <p class="lead">
+            Not snippets. Each one is a working application: open the folder, open the HTML file,
+            and it runs. There is no build step behind any of them, and nothing to install.
+          </p>
+          <p class="note">
+            Every example loads the library from the same public CDN tag the documentation gives
+            you: <code>cdn.jsdelivr.net/npm/voodoojs@0.5</code>. That means the source you read is
+            the source that runs, and you can copy a file out of here into your own project without
+            changing a line.
+          </p>
+        </header>
 
-  <main class="ix-grade">
+        <section>
+          <div class="sec-head">
+            <h2>Applications</h2>
+            <span>state, lists, forms, HTTP</span>
+          </div>
 
-    <a class="ix-cartao" href="chat-tempo-real/" style="--ix-cor: #FF3D8B">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◉</span>
-        <span class="ix-capa-nome">Chat em tempo real</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          WebSocket de verdade com salas publicas e mensagem privada, presenca
-          ao vivo e reconexao que volta para as salas sozinha. O servidor de
-          teste vem junto, escrito a mao e sem nenhuma dependencia.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-socket</span>
-          <span class="ix-directive">v-room</span>
-          <span class="ix-directive">v-on-socket</span>
-          <span class="ix-directive">$socket</span>
-          <span class="ix-directive">$room</span>
-          <span class="ix-directive">v-for</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">&rarr;</span>
-          <span class="ix-pacote">socket</span>
-        </div>
-      </div>
-    </a>
+          <div class="grid">
+            <a class="card" href="todo/">
+              <h3>To-do list</h3>
+              <p>
+                The smallest complete application here. Add, complete, filter and persist, with the
+                list surviving a reload.
+              </p>
+              <div class="tags">
+                <span class="tag">v-for</span><span class="tag">v-model</span
+                ><span class="tag">storage</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="mundo-aberto/" style="--ix-cor: #2ED9A5">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◈</span>
-        <span class="ix-capa-nome">Mundo aberto</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Uma cidade inteira gerada por codigo em WebGL2 puro, sem nenhuma
-          biblioteca de terceiros: predios, arvores e postes a partir de uma
-          seed fixa, ciclo de dia e noite, sombras, nevoa, minimapa e
-          velocimetro. Toda a interface por cima dela e Voodoo declarativo.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-component</span>
-          <span class="ix-directive">v-model.number</span>
-          <span class="ix-directive">v-show</span>
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">V.store</span>
-          <span class="ix-directive">V.storage</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">&rarr;</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="crud/">
+              <h3>User CRUD</h3>
+              <p>
+                Create, read, update and delete against a REST endpoint, with validation and a
+                loading state on every request.
+              </p>
+              <div class="tags">
+                <span class="tag">v-resource</span><span class="tag">forms</span
+                ><span class="tag">validation</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="pokedex/" style="--ix-cor: #FF6D3E">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◉</span>
-        <span class="ix-capa-nome">Pokedex</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Consome a PokeAPI de verdade: mais de mil e trezentas especies com busca,
-          filtro por tipo, rolagem infinita, favoritos que persistem e um grafico de
-          radar dos atributos dentro do modal de detalhe.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-resource</span>
-          <span class="ix-directive">v-chart</span>
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-motion</span>
-          <span class="ix-directive">v-transition</span>
-          <span class="ix-directive">v-debounce</span>
-          <span class="ix-directive">$store</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="kanban/">
+              <h3>Kanban board</h3>
+              <p>
+                Drag cards between columns. The order is reactive state, so nothing is stored in the
+                DOM and a reload restores the board.
+              </p>
+              <div class="tags">
+                <span class="tag">drag and drop</span><span class="tag">stores</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="dashboard/" style="--ix-cor: #6D3BF5">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">▤</span>
-        <span class="ix-capa-nome">Painel</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Painel administrativo com metricas animadas, grafico de area, de barras e
-          de rosca. Um unico seletor de periodo recalcula os quatro cartoes, os tres
-          graficos e a tabela ao mesmo tempo.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-chart</span>
-          <span class="ix-directive">v-count</span>
-          <span class="ix-directive">v-theme-toggle</span>
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-model</span>
-          <span class="ix-directive">computed</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="ecommerce/">
+              <h3>Store</h3>
+              <p>
+                Catalogue, filters, a cart that follows you between pages, and totals derived from
+                state rather than recalculated by hand.
+              </p>
+              <div class="tags">
+                <span class="tag">computed</span><span class="tag">stores</span
+                ><span class="tag">masks</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="todo/" style="--ix-cor: #2ED9A5">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">✓</span>
-        <span class="ix-capa-nome">Tarefas</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          A lista de tarefas classica, levada a serio: edicao em linha com duplo
-          clique, filtros, contador de pendentes, reordenacao por arrastar,
-          animacao de entrada e saida e persistencia local.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-model</span>
-          <span class="ix-directive">v-sortable</span>
-          <span class="ix-directive">v-dblclick</span>
-          <span class="ix-directive">v-show</span>
-          <span class="ix-directive">$store</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="dashboard/">
+              <h3>Admin dashboard</h3>
+              <p>
+                Charts, tables, filters and a date range, laid out with the bundled UI components
+                rather than a CSS framework.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">charts</span
+                ><span class="tag">UI kit</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="crud/" style="--ix-cor: #9B7BFF">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">☰</span>
-        <span class="ix-capa-nome">CRUD</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Cadastro de usuarios com formulario validado de verdade: CPF e telefone
-          com mascara e validacao, confirmacao de senha, mensagens por campo,
-          confirmacao antes de excluir e busca com espera.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-validate</span>
-          <span class="ix-directive">v-mask</span>
-          <span class="ix-directive">v-cpf</span>
-          <span class="ix-directive">v-match</span>
-          <span class="ix-directive">V.toast</span>
-          <span class="ix-directive">V.confirm</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="pokedex/">
+              <h3>Pokédex</h3>
+              <p>
+                A real public API, paginated, searchable and cached, with skeleton states while
+                requests are in flight.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">HTTP</span
+                ><span class="tag">router</span>
+              </div>
+            </a>
+          </div>
+        </section>
 
-    <a class="ix-cartao" href="ecommerce/" style="--ix-cor: #FF3D8B">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">▣</span>
-        <span class="ix-capa-nome">Loja</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Catalogo com filtros e ordenacao, carrinho lateral com cupom, frete e
-          totais em reais, contador no botao e finalizacao em quatro etapas. O
-          carrinho vive em um store global lido direto do HTML.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">$store</span>
-          <span class="ix-directive">v-mask</span>
-          <span class="ix-directive">v-validate</span>
-          <span class="ix-directive">v-transition</span>
-          <span class="ix-directive">v-show</span>
-          <span class="ix-directive">v-model.number</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+        <section>
+          <div class="sec-head">
+            <h2>Real time</h2>
+            <span>WebSocket and Socket.IO</span>
+          </div>
 
-    <a class="ix-cartao" href="devtools/" style="--ix-cor: #6D3BF5">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◎</span>
-        <span class="ix-capa-nome">DevTools</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Um atributo na tag script e o inspetor aparece na pagina. Widget
-          flutuante que abre o painel com estado, componentes, stores, eventos,
-          rede e desempenho, e faz cada elemento piscar quando um efeito
-          escreve nele.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">devtools</span>
-          <span class="ix-directive">V.devtoolsWidget</span>
-          <span class="ix-directive">V.xray</span>
-          <span class="ix-directive">$store</span>
-          <span class="ix-directive">v-component</span>
-          <span class="ix-directive">$http</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
-      </div>
-    </a>
+          <div class="grid">
+            <a class="card" href="chat/">
+              <h3>Chat</h3>
+              <p>
+                Rooms, presence and message history, written as attributes. Runs against a mock
+                transport so it works with no server.
+              </p>
+              <div class="tags">
+                <span class="tag">v-socket</span><span class="tag">v-room</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="kanban/" style="--ix-cor: #FFB35C">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">▥</span>
-        <span class="ix-capa-nome">Kanban</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Quadro com quatro colunas e cartoes que se movem entre elas arrastando,
-          com mouse, toque ou teclado. Criacao e edicao em modal, etiquetas
-          coloridas, contador por coluna e persistencia local.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-sortable</span>
-          <span class="ix-directive">v-dnd-group</span>
-          <span class="ix-directive">voodoo:sorted</span>
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-model</span>
-          <span class="ix-directive">v-if</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="chat-tempo-real/">
+              <h3>Chat, with a real server</h3>
+              <p>
+                The same interface pointed at an actual WebSocket server, including reconnection
+                with backoff and a queue for messages sent while offline.
+              </p>
+              <div class="tags">
+                <span class="tag">WebSocket</span><span class="tag">needs a server</span>
+              </div>
+            </a>
+          </div>
+        </section>
 
-    <a class="ix-cartao" href="chat/" style="--ix-cor: #4A90DA">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◔</span>
-        <span class="ix-capa-nome">Chat</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Conversas em tempo real simuladas: bolhas de mensagem, indicador de
-          digitando, respostas automaticas com atraso, estados de enviado e lido,
-          rolagem automatica e seletor de emojis.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-transition</span>
-          <span class="ix-directive">nextTick</span>
-          <span class="ix-directive">@keyup.enter</span>
-          <span class="ix-directive">@outside</span>
-          <span class="ix-directive">v-show</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">essencial</span>
-        </div>
-      </div>
-    </a>
+        <section>
+          <div class="sec-head">
+            <h2>Graphics and games</h2>
+            <span>canvas, WebGL, game loops</span>
+          </div>
 
-    <a class="ix-cartao" href="jogos/breakout/" style="--ix-cor: #9B7BFF">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">▚</span>
-        <span class="ix-capa-nome">Breakout</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Um Breakout completo em cinco niveis, com power-ups, combo, vidas,
-          pausa e recorde. O placar, os menus e a faixa de power-ups sao HTML
-          declarativo; so o tabuleiro e canvas.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-component</span>
-          <span class="ix-directive">v-show</span>
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-ref</span>
-          <span class="ix-directive">V.storage</span>
-          <span class="ix-directive">V.sound</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
-      </div>
-    </a>
+          <div class="grid">
+            <a class="card" href="jogos/tetris/">
+              <h3>Tetris</h3>
+              <p>
+                A full game loop, keyboard input, collision and scoring, with the board held in
+                reactive state and drawn from it.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">keyboard</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="jogos/tetris/" style="--ix-cor: #38bdf8">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">▦</span>
-        <span class="ix-capa-nome">Tetris</span>
-      </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Saco de sete pecas, peca fantasma, guardar peca, wall kick e nivel que
-          acelera. As pecas da fila nao sao canvas: sao grades de span geradas
-          por v-for aninhado.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">:style</span>
-          <span class="ix-directive">v-show</span>
-          <span class="ix-directive">computed</span>
-          <span class="ix-directive">V.storage</span>
-          <span class="ix-directive">V.sound</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
-      </div>
-    </a>
+            <a class="card" href="jogos/breakout/">
+              <h3>Breakout</h3>
+              <p>
+                Physics on a requestAnimationFrame loop, with the paddle bound to both pointer and
+                keyboard.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">canvas</span>
+              </div>
+            </a>
 
-    <a class="ix-cartao" href="shaders/" style="--ix-cor: #FF2D95">
-      <div class="ix-capa">
-        <span class="ix-simbolo" aria-hidden="true">◈</span>
-        <span class="ix-capa-nome">Shaders 3D</span>
+            <a class="card" href="shaders/">
+              <h3>Shaders</h3>
+              <p>
+                GLSL fragment shaders driven by reactive uniforms: move a slider and the value
+                reaches the GPU without a redraw call of your own.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">WebGL</span>
+              </div>
+            </a>
+
+            <a class="card" href="mundo-aberto/">
+              <h3>3D open world</h3>
+              <p>
+                A drivable car, terrain, buildings and trees, with the heads-up display written as
+                ordinary attributes over the canvas.
+              </p>
+              <div class="tags">
+                <span class="tag">WebGL</span><span class="tag">glTF</span>
+              </div>
+            </a>
+          </div>
+        </section>
+
+        <section>
+          <div class="sec-head">
+            <h2>Tooling</h2>
+            <span>what ships with the library</span>
+          </div>
+
+          <div class="grid">
+            <a class="card" href="devtools/">
+              <h3>DevTools inspector</h3>
+              <p>
+                Add <code>devtools</code> to the script tag and press Ctrl+Shift+X to inspect
+                scopes, directives and effects on a live page.
+              </p>
+              <div class="tags">
+                <span class="tag build">full build</span><span class="tag">Ctrl+Shift+X</span>
+              </div>
+            </a>
+          </div>
+        </section>
       </div>
-      <div class="ix-corpo">
-        <p class="ix-frase">
-          Quatro cenas de raymarching em WebGL2 puro, sem Three.js e sem nenhuma
-          dependencia. O painel de uniforms nasce de um v-for, e cada slider e um
-          v-model ligado direto a GPU.
-        </p>
-        <div class="ix-directives">
-          <span class="ix-directive">v-for</span>
-          <span class="ix-directive">v-model</span>
-          <span class="ix-directive">V.directive</span>
-          <span class="ix-directive">V.PRIORITY</span>
-          <span class="ix-directive">computed</span>
-          <span class="ix-directive">v-ref</span>
-        </div>
-        <div class="ix-rodape-cartao">
-          Abrir a demo <span aria-hidden="true">→</span>
-          <span class="ix-pacote">completo</span>
-        </div>
+    </main>
+
+    <footer>
+      <div class="wrap foot-in">
+        <span>MIT licensed</span>
+        <a href="../">Home</a>
+        <a href="../docs/">Docs</a>
+        <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+        <a href="https://www.npmjs.com/package/voodoojs">npm</a>
+        <span style="margin-left: auto">Built with Voodoo.js 0.5.0</span>
       </div>
-    </a>
+    </footer>
 
-  </main>
-
-  <p class="ix-rodape">
-    Voodoo.js, JavaScript feels like magic. Cada demo tem um
-    <code class="v-code">README.md</code> ao lado explicando o que ela exercita.
-  </p>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  // A pagina abre no escuro por padrao, mas respeita a escolha ja salva pelo
-  // usuario em qualquer uma das demos.
-  if (!V.storage.has('voodoo:theme')) V.theme.set('dark');
-  V.theme.init();
-  V.start();
-});
-</script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.min.js" defer></script>
+  </body>
 </html>
