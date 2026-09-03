@@ -7732,6 +7732,32 @@ function buildUrl(location2) {
   const base = settings2.base === "/" ? "" : settings2.base.replace(/\/$/, "");
   return `${base}${suffix}` || "/";
 }
+var historyRefused = false;
+var writingHash = false;
+function writeUrl(state2, url2, replace) {
+  if (!historyRefused) {
+    try {
+      if (replace) window.history.replaceState(state2, "", url2);
+      else window.history.pushState(state2, "", url2);
+      return;
+    } catch (error) {
+      if (!(error instanceof Error) || error.name !== "SecurityError") throw error;
+      historyRefused = true;
+    }
+  }
+  if (settings2.mode !== "hash") return;
+  const hash = url2.slice(url2.indexOf("#"));
+  if (window.location.hash === hash) return;
+  writingHash = true;
+  try {
+    if (replace) window.location.replace(url2);
+    else window.location.hash = hash;
+  } finally {
+    setTimeout(() => {
+      writingHash = false;
+    }, 0);
+  }
+}
 function compileRoute(pattern, record) {
   const clean = pattern === "*" ? "*" : normalizePath(pattern);
   const raw = clean === "*" ? ["*"] : clean.split("/").filter(Boolean);
@@ -7918,8 +7944,7 @@ async function navigate(target2, options = {}) {
   const key = uid("rota");
   const historyState = { ...options.state ?? {}, [HISTORY_KEY]: key };
   const url2 = buildUrl(destination);
-  if (options.replace) window.history.replaceState(historyState, "", url2);
-  else window.history.pushState(historyState, "", url2);
+  writeUrl(historyState, url2, options.replace === true);
   currentKey = key;
   applyLocation(destination);
   if (options.scroll !== false) scheduleScroll(destination, from, null);
@@ -7932,17 +7957,14 @@ async function navigate(target2, options = {}) {
   return true;
 }
 async function onHistoryChange(event) {
+  if (writingHash) return;
   const { path, query: query2, hash } = readLocation();
   const destination = locationFor(path, query2, hash);
   const from = snapshot();
   if (destination.fullPath === from.fullPath) return;
   const verdict = await runGuards(destination, from);
   if (verdict === false) {
-    window.history.replaceState(
-      { [HISTORY_KEY]: currentKey },
-      "",
-      buildUrl(from)
-    );
+    writeUrl({ [HISTORY_KEY]: currentKey }, buildUrl(from), true);
     devtoolsBus.emit("navigation", {
       from: from.fullPath,
       to: destination.fullPath,
@@ -7985,6 +8007,8 @@ function stopRouter() {
   window.removeEventListener("popstate", historyListener);
   window.removeEventListener("hashchange", historyListener);
   window.removeEventListener("beforeunload", saveScroll);
+  historyRefused = false;
+  writingHash = false;
 }
 async function enterInitialRoute() {
   if (typeof window === "undefined") return;
@@ -8005,7 +8029,7 @@ async function enterInitialRoute() {
     break;
   }
   currentKey = uid("rota");
-  window.history.replaceState({ [HISTORY_KEY]: currentKey }, "", buildUrl(destination));
+  writeUrl({ [HISTORY_KEY]: currentKey }, buildUrl(destination), true);
   applyLocation(destination);
   if (destination.hash) scheduleScroll(destination, from, null);
   settings2.afterEach?.(snapshot(), from);

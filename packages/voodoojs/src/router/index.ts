@@ -304,6 +304,64 @@ function buildUrl(location: RouteLocation): string {
   return `${base}${suffix}` || '/';
 }
 
+/**
+ * True once this document has refused a History API call.
+ *
+ * Checked rather than re-tried because the refusal is a property of the
+ * document, not of the call: once it throws it will throw every time, and
+ * catching in a loop would be a lot of exceptions for one answer.
+ */
+let historyRefused = false;
+
+/** Set while we write the hash ourselves, so our own hashchange is ignored. */
+let writingHash = false;
+
+/**
+ * Writes the URL for a navigation, and keeps going when it cannot.
+ *
+ * `history.pushState` is not available everywhere it appears to be. A document
+ * with an opaque origin — `about:srcdoc`, or a sandboxed iframe without
+ * `allow-same-origin` — throws `SecurityError` for any URL at all, including
+ * one that only changes the hash. The documentation's own live examples run in
+ * exactly that kind of frame, which is where this was reported: the router
+ * threw on the first navigation and the example never changed page.
+ *
+ * Navigation itself does not need the History API. In hash mode the hash is
+ * written directly, which an opaque document does allow. In history mode there
+ * is no way to change the address, so the route still resolves and renders and
+ * only the address bar stays behind — a worse URL, not a broken page.
+ */
+function writeUrl(state: Record<string, unknown>, url: string, replace: boolean): void {
+  if (!historyRefused) {
+    try {
+      if (replace) window.history.replaceState(state, '', url);
+      else window.history.pushState(state, '', url);
+      return;
+    } catch (error) {
+      // Anything other than the browser refusing is a real bug, not a fallback.
+      if (!(error instanceof Error) || error.name !== 'SecurityError') throw error;
+      historyRefused = true;
+    }
+  }
+
+  if (settings.mode !== 'hash') return;
+
+  const hash = url.slice(url.indexOf('#'));
+  if (window.location.hash === hash) return;
+
+  writingHash = true;
+  try {
+    if (replace) window.location.replace(url);
+    else window.location.hash = hash;
+  } finally {
+    // Cleared on the next task: assigning the hash fires hashchange
+    // asynchronously, and it has to still be set when that arrives.
+    setTimeout(() => {
+      writingHash = false;
+    }, 0);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Route compilation and matching
 // ---------------------------------------------------------------------------
@@ -588,8 +646,7 @@ export async function navigate(target: string, options: NavigateOptions = {}): P
   const key = uid('rota');
   const historyState = { ...(options.state ?? {}), [HISTORY_KEY]: key };
   const url = buildUrl(destination);
-  if (options.replace) window.history.replaceState(historyState, '', url);
-  else window.history.pushState(historyState, '', url);
+  writeUrl(historyState, url, options.replace === true);
   currentKey = key;
 
   applyLocation(destination);
@@ -606,6 +663,10 @@ export async function navigate(target: string, options: NavigateOptions = {}): P
 
 /** Handles `popstate` and `hashchange`, i.e., the back and forward buttons. */
 async function onHistoryChange(event: PopStateEvent | HashChangeEvent): Promise<void> {
+  // Our own hash write fires this. Navigating on it would run the whole
+  // transition twice, guards included.
+  if (writingHash) return;
+
   const { path, query, hash } = readLocation();
   const destination = locationFor(path, query, hash);
   const from = snapshot();
@@ -614,11 +675,7 @@ async function onHistoryChange(event: PopStateEvent | HashChangeEvent): Promise<
   const verdict = await runGuards(destination, from);
   if (verdict === false) {
     // Guard refused: returns the previous URL without creating a new entry.
-    window.history.replaceState(
-      { [HISTORY_KEY]: currentKey },
-      '',
-      buildUrl(from)
-    );
+    writeUrl({ [HISTORY_KEY]: currentKey }, buildUrl(from), true);
     devtoolsBus.emit('navigation', {
       from: from.fullPath,
       to: destination.fullPath,
@@ -670,6 +727,13 @@ export function stopRouter(): void {
   window.removeEventListener('popstate', historyListener);
   window.removeEventListener('hashchange', historyListener);
   window.removeEventListener('beforeunload', saveScroll);
+
+  // Whether this document allows the History API is remembered so it is asked
+  // once rather than on every navigation. Stopping the router means starting
+  // over, so the answer is forgotten with it — otherwise a router restarted in
+  // a document that does allow it would keep using the fallback forever.
+  historyRefused = false;
+  writingHash = false;
 }
 
 /** Applies the route from the current URL, executing guards for the initial entry. */
@@ -694,7 +758,7 @@ async function enterInitialRoute(): Promise<void> {
   }
 
   currentKey = uid('rota');
-  window.history.replaceState({ [HISTORY_KEY]: currentKey }, '', buildUrl(destination));
+  writeUrl({ [HISTORY_KEY]: currentKey }, buildUrl(destination), true);
   applyLocation(destination);
   if (destination.hash) scheduleScroll(destination, from, null);
   settings.afterEach?.(snapshot(), from);

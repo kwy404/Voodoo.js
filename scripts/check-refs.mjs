@@ -29,7 +29,13 @@ function check(file) {
   const html = readFileSync(file, 'utf8');
   // Only relative references that climb: those are the ones a folder move
   // breaks. Absolute URLs and same-directory names are someone else's problem.
-  for (const match of html.matchAll(/(?:href|src)="((?:\.\.\/)+[^"#?]*)"/g)) {
+  //
+  // The `(?:[?#][^"]*)?` matters. Without it the pattern demanded a quote
+  // straight after the path, so the moment stamp-version.mjs appended `?v=`
+  // to every asset this checker stopped seeing them — the count fell from 180
+  // to 94 and reported zero broken, which is the worst way for a check to
+  // fail: quietly, while still saying yes.
+  for (const match of html.matchAll(/(?:href|src)="((?:\.\.\/)+[^"#?]*)(?:[?#][^"]*)?"/g)) {
     const target = resolve(dirname(file), match[1]);
     if (existsSync(target)) ok++;
     else broken.push({ file: file.replace(/\\/g, '/'), ref: match[1] });

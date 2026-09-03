@@ -29,3 +29,6 @@ verifica-temp.mjs
 # npm auth tokens. A .npmrc holding an _authToken must never be committed.
 .npmrc
 !.npmrc.example
+
+# Editor and assistant workspace, never part of the project.
+.claude/
