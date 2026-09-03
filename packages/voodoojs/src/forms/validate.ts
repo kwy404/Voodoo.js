@@ -73,38 +73,53 @@ export interface SerializeOptions {
  * Default messages. Can be changed at runtime, one at a time or in bulk,
  * for example `Object.assign(V.messages, { required: 'Campo obrigatorio' })`.
  */
+/**
+ * Default validation messages, in English.
+ *
+ * They were Portuguese until 0.5.1, which made them the one part of the library
+ * that spoke a language the rest of it does not. `cpf`, `cnpj` and `cep` keep
+ * their names because those are Brazilian document formats and the rule names
+ * are API, but their text is English like everything else.
+ *
+ * Nothing here is fixed. Assign to this object to change any of them, or reach
+ * for the i18n module and translate `validation.<rule>` to have them follow the
+ * page's language:
+ *
+ *   V.forms.messages.required = 'Preencha este campo.';
+ */
 export const messages: Record<string, string> = {
-  required: 'Preencha este campo.',
-  email: 'Informe um e-mail valido.',
-  url: 'Informe uma URL valida.',
-  number: 'Informe um numero valido.',
-  integer: 'Informe um numero inteiro.',
-  decimal: 'Informe um numero decimal valido.',
-  alpha: 'Use apenas letras.',
-  alphanumeric: 'Use apenas letras e numeros.',
-  minlength: 'Use no minimo {param} caracteres.',
-  maxlength: 'Use no maximo {param} caracteres.',
-  min: 'O valor minimo e {param}.',
-  max: 'O valor maximo e {param}.',
-  between: 'Informe um valor entre {min} e {max}.',
-  match: 'Os campos nao conferem.',
-  regex: 'O formato informado nao e valido.',
-  date: 'Informe uma data valida.',
-  after: 'A data precisa ser posterior a {param}.',
-  before: 'A data precisa ser anterior a {param}.',
-  accepted: 'E preciso marcar esta opcao para continuar.',
-  same: 'Os valores precisam ser iguais.',
-  different: 'Os valores precisam ser diferentes.',
-  in: 'Escolha uma das opcoes permitidas.',
-  notin: 'Este valor nao e permitido.',
-  phone: 'Informe um telefone valido com DDD.',
-  cpf: 'CPF invalido.',
-  cnpj: 'CNPJ invalido.',
-  cep: 'CEP invalido.',
-  creditcard: 'Numero de cartao invalido.',
-  strongpassword: 'Use {param} caracteres ou mais, com maiuscula, minuscula, numero e simbolo.',
-  unique: 'Este valor ja esta em uso.',
-  invalid: 'Valor invalido.',
+  required: 'Please fill in this field.',
+  email: 'Enter a valid email address.',
+  url: 'Enter a valid URL.',
+  number: 'Enter a valid number.',
+  integer: 'Enter a whole number.',
+  decimal: 'Enter a valid decimal number.',
+  alpha: 'Use letters only.',
+  alphanumeric: 'Use letters and numbers only.',
+  minlength: 'Use at least {param} characters.',
+  maxlength: 'Use at most {param} characters.',
+  min: 'The smallest allowed value is {param}.',
+  max: 'The largest allowed value is {param}.',
+  between: 'Enter a value between {min} and {max}.',
+  match: 'The fields do not match.',
+  regex: 'That format is not valid.',
+  date: 'Enter a valid date.',
+  after: 'The date has to be later than {param}.',
+  before: 'The date has to be earlier than {param}.',
+  accepted: 'You have to tick this to continue.',
+  same: 'The values have to be the same.',
+  different: 'The values have to be different.',
+  in: 'Choose one of the allowed options.',
+  notin: 'That value is not allowed.',
+  phone: 'Enter a valid phone number, including the area code.',
+  cpf: 'Invalid CPF.',
+  cnpj: 'Invalid CNPJ.',
+  cep: 'Invalid postcode.',
+  creditcard: 'Invalid card number.',
+  strongpassword:
+    'Use {param} characters or more, with an upper case letter, a lower case letter, a number and a symbol.',
+  unique: 'That value is already taken.',
+  invalid: 'Invalid value.',
 };
 
 /** Replaces `{param}`, `{field}`, `{value}`, `{min}` and `{max}` in the message. */
@@ -137,7 +152,7 @@ export const rules = new Map<string, RuleDefinition>();
  * Registers a validation rule and creates the `v-validate-<name>` directive.
  *
  * ```js
- * V.validator('par', (value) => Number(value) % 2 === 0, 'Informe um numero par.')
+ * V.validator('even', (value) => Number(value) % 2 === 0, 'Enter an even number.')
  * ```
  */
 export function validator(name: string, fn: ValidatorFn, defaultMessage?: string): void {

@@ -20,7 +20,11 @@ Sem passo de build obrigatório · Sem dependências em tempo de execução · S
 
 *JavaScript feels like magic.*
 
-[Instalação](#instalação) · [Início rápido](#início-rápido) · [Documentação](#documentação) · [Exemplos](#exemplos) · [English](README.md)
+**[Site](https://kwy404.github.io/Voodoo.js/) · [Playground](https://kwy404.github.io/Voodoo.js/playground.html) · [Componentes](https://kwy404.github.io/Voodoo.js/components.html) · [Exemplos](https://kwy404.github.io/Voodoo.js/examples/) · [Documentação](https://kwy404.github.io/Voodoo.js/docs/)**
+
+Tudo acima roda no navegador, e foi feito com a própria Voodoo.js.
+
+[Instalação](#instalação) · [Início rápido](#início-rápido) · [Benchmarks](#desempenho) · [Contribuir](#contribuindo) · [English](README.md)
 
 </div>
 

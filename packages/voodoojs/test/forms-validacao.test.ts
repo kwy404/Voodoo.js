@@ -412,14 +412,17 @@ describe('senha forte', () => {
     expect(await regra('strongpassword', 'Abcdef1!')).toBe(true);
     expect(await regra('strongpassword', 'Abcdef1!ghi', '10')).toBe(true);
 
-    const fraca = await regra('strongpassword', 'abc');
-    expect(fraca).toContain('8 caracteres');
+    // The message carries the minimum it enforced, so the reader is told what
+    // to do rather than only that they failed. The default messages moved to
+    // English in 0.5.1; the number is what this asserts, not the wording.
+    const weak = await regra('strongpassword', 'abc');
+    expect(weak).toContain('8 characters');
 
-    const curta = await regra('strongpassword', 'Ab1!', '12');
-    expect(curta).toContain('12 caracteres');
+    const short = await regra('strongpassword', 'Ab1!', '12');
+    expect(short).toContain('12 characters');
 
     // Parametro invalido volta para o minimo padrao de oito.
-    expect(await regra('strongpassword', 'Abc1!', 'x')).toContain('8 caracteres');
+    expect(await regra('strongpassword', 'Abc1!', 'x')).toContain('8 characters');
   });
 });
 

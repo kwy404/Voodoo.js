@@ -281,7 +281,7 @@ function normalize(options: ChartOptions, type: ChartType): ChartDataset {
   const labels: string[] = fromOptions ? options.labels!.map((label) => String(label)) : [];
   const series: ChartSeries[] = [];
   const raw = options.data;
-  const singleName = options.name ?? 'Valor';
+  const singleName = options.name ?? 'Value';
 
   if (typeof raw === 'number') {
     series.push({ name: singleName, values: [raw], xs: null, color: palette[0] });
