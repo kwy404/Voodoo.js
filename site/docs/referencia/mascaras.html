@@ -1,89 +1,90 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Máscaras · Documentação da Voodoo.js</title>
-<meta name="description" content="Referência das máscaras: as prontas, os tokens do padrão de caracteres, os atributos de moeda, o objeto V.mask e o registro de máscaras próprias.">
+<title>Masks · Voodoo.js documentation</title>
+<meta name="description" content="Mask reference: the ready-made ones, the tokens of the character pattern, the currency attributes, the V.mask object and how to register masks of your own.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/mascaras">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Máscaras</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Masks</h1>
 <p class="doc-resumo">
-  As máscaras prontas, os tokens do padrão de caracteres e a API por JavaScript. O guia de
-  <a href="../guia/mascaras.html">máscaras</a> explica o comportamento do cursor e os cuidados.
+  The ready-made masks, the tokens of the character pattern and the JavaScript API. The
+  <a href="../guia/mascaras.html">masks</a> guide explains how the caret behaves and what to watch
+  out for.
 </p>
 
-<h2 id="prontas">Máscaras prontas</h2>
+<h2 id="prontas">Ready-made masks</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Nome</th><th>Formato</th><th>Exemplo</th></tr></thead>
+<thead><tr><th>Name</th><th>Format</th><th>Example</th></tr></thead>
 <tbody>
 <tr><td><code>cpf</code></td><td><code>999.999.999-99</code></td><td>123.456.789-01</td></tr>
 <tr><td><code>cnpj</code></td><td><code>99.999.999/9999-99</code></td><td>12.345.678/0001-90</td></tr>
-<tr><td><code>cpfcnpj</code></td><td>Troca sozinha conforme o tamanho</td><td>123.456.789-01</td></tr>
+<tr><td><code>cpfcnpj</code></td><td>Switches on its own according to the length</td><td>123.456.789-01</td></tr>
 <tr><td><code>cep</code></td><td><code>99999-999</code></td><td>01001-000</td></tr>
-<tr><td><code>phone</code></td><td><code>(99) 9999-9999</code> ou <code>(99) 99999-9999</code></td><td>(11) 98765-4321</td></tr>
+<tr><td><code>phone</code></td><td><code>(99) 9999-9999</code> or <code>(99) 99999-9999</code></td><td>(11) 98765-4321</td></tr>
 <tr><td><code>date</code></td><td><code>99/99/9999</code></td><td>29/08/2026</td></tr>
 <tr><td><code>time</code></td><td><code>99:99</code></td><td>14:30</td></tr>
 <tr><td><code>datetime</code></td><td><code>99/99/9999 99:99</code></td><td>29/08/2026 14:30</td></tr>
-<tr><td><code>currency</code></td><td>Moeda, da direita para a esquerda</td><td>R$ 1.234,56</td></tr>
-<tr><td><code>percent</code></td><td>Porcentagem, mesmo estilo</td><td>12,50%</td></tr>
-<tr><td><code>card</code></td><td>Cartão, com formato próprio para American Express</td><td>4111 1111 1111 1111</td></tr>
-<tr><td><code>cvv</code></td><td>Até quatro dígitos</td><td>123</td></tr>
-<tr><td><code>plate</code></td><td>Placa antiga ou Mercosul, escolhida pelo conteúdo</td><td>ABC-1234</td></tr>
-<tr><td><code>hex</code></td><td>Cor em hexadecimal</td><td>#6D3BF5</td></tr>
-<tr><td><code>ip</code></td><td>IPv4, com cada grupo limitado a 255</td><td>192.168.0.1</td></tr>
+<tr><td><code>currency</code></td><td>Currency, filled from right to left</td><td>R$ 1.234,56</td></tr>
+<tr><td><code>percent</code></td><td>Percentage, in the same style</td><td>12,50%</td></tr>
+<tr><td><code>card</code></td><td>Card number, with a format of its own for American Express</td><td>4111 1111 1111 1111</td></tr>
+<tr><td><code>cvv</code></td><td>Up to four digits</td><td>123</td></tr>
+<tr><td><code>plate</code></td><td>Old or Mercosur plate, picked from the content</td><td>ABC-1234</td></tr>
+<tr><td><code>hex</code></td><td>A colour in hexadecimal</td><td>#6D3BF5</td></tr>
+<tr><td><code>ip</code></td><td>IPv4, with every group capped at 255</td><td>192.168.0.1</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="tokens">Tokens do padrão</h2>
+<h2 id="tokens">Pattern tokens</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Token</th><th>Aceita</th></tr></thead>
+<thead><tr><th>Token</th><th>Accepts</th></tr></thead>
 <tbody>
-<tr><td><code>9</code></td><td>Dígito</td></tr>
-<tr><td><code>A</code></td><td>Letra, com acento</td></tr>
-<tr><td><code>S</code></td><td>Letra ou dígito</td></tr>
-<tr><td><code>*</code></td><td>Qualquer caractere</td></tr>
-<tr><td><code>\</code></td><td>Escapa o próximo caractere, tornando literal</td></tr>
+<tr><td><code>9</code></td><td>A digit</td></tr>
+<tr><td><code>A</code></td><td>A letter, accents included</td></tr>
+<tr><td><code>S</code></td><td>A letter or a digit</td></tr>
+<tr><td><code>*</code></td><td>Any character</td></tr>
+<tr><td><code>\</code></td><td>Escapes the next character, making it literal</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Qualquer outro caractere entra como separador fixo, e só aparece quando ainda existe conteúdo
-  depois dele.
+  Any other character goes in as a fixed separator, and only shows up while there is still content
+  after it.
 </p>
 
-<h2 id="modificadores">Modificadores e atributos</h2>
+<h2 id="modificadores">Modifiers and attributes</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Escrita</th><th>Efeito</th></tr></thead>
+<thead><tr><th>Written as</th><th>Effect</th></tr></thead>
 <tbody>
-<tr><td><code>v-mask.unmask</code>, <code>v-mask.raw</code></td><td>O estado recebe o valor limpo; a tela continua formatada</td></tr>
-<tr><td><code>v-mask-currency</code></td><td>Moeda, digitando da direita para a esquerda</td></tr>
-<tr><td><code>v-mask-currency="US$ "</code>, <code>v-mask-prefix</code></td><td>Prefixo</td></tr>
-<tr><td><code>v-mask-suffix</code></td><td>Sufixo</td></tr>
-<tr><td><code>v-mask-decimals</code></td><td>Casas decimais. Padrão 2</td></tr>
-<tr><td><code>v-mask-currency.dot</code></td><td>Separadores no padrão americano</td></tr>
-<tr><td><code>v-mask-currency.plain</code></td><td>Sem prefixo</td></tr>
+<tr><td><code>v-mask.unmask</code>, <code>v-mask.raw</code></td><td>The state receives the clean value; the screen stays formatted</td></tr>
+<tr><td><code>v-mask-currency</code></td><td>Currency, typed from right to left</td></tr>
+<tr><td><code>v-mask-currency="US$ "</code>, <code>v-mask-prefix</code></td><td>Prefix</td></tr>
+<tr><td><code>v-mask-suffix</code></td><td>Suffix</td></tr>
+<tr><td><code>v-mask-decimals</code></td><td>Decimal places. Defaults to 2</td></tr>
+<tr><td><code>v-mask-currency.dot</code></td><td>Separators in the American style</td></tr>
+<tr><td><code>v-mask-currency.plain</code></td><td>No prefix</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="api">O objeto V.mask</h2>
+<h2 id="api">The V.mask object</h2>
 
 <pre data-lang="js"><code>V.mask('12345678901', 'cpf');        // '123.456.789-01'
 V.applyMask('1234', '99-99');        // '12-34'
@@ -96,42 +97,42 @@ V.mask.percent('1250');              // '12,50%'</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>O que é</th></tr></thead>
+<thead><tr><th>Member</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>V.mask(valor, padrao)</code></td><td>Aplica a máscara</td></tr>
-<tr><td><code>V.mask.apply</code></td><td>O mesmo que <code>V.applyMask</code></td></tr>
-<tr><td><code>V.mask.unmask</code></td><td>Remove a formatação</td></tr>
-<tr><td><code>V.mask.register</code></td><td>Registra uma máscara nomeada</td></tr>
-<tr><td><code>V.mask.currency</code>, <code>V.mask.percent</code></td><td>Formata como moeda e porcentagem</td></tr>
-<tr><td><code>V.mask.presets</code></td><td>O <code>Map</code> com todas as máscaras registradas</td></tr>
+<tr><td><code>V.mask(value, pattern)</code></td><td>Applies the mask</td></tr>
+<tr><td><code>V.mask.apply</code></td><td>The same as <code>V.applyMask</code></td></tr>
+<tr><td><code>V.mask.unmask</code></td><td>Strips the formatting</td></tr>
+<tr><td><code>V.mask.register</code></td><td>Registers a named mask</td></tr>
+<tr><td><code>V.mask.currency</code>, <code>V.mask.percent</code></td><td>Formats as currency and as a percentage</td></tr>
+<tr><td><code>V.mask.presets</code></td><td>The <code>Map</code> holding every registered mask</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="registrando">Registrando máscaras</h2>
+<h2 id="registrando">Registering masks</h2>
 
-<pre data-lang="js"><code>V.registerMask('processo', '9999999-99.9999.9.99.9999');
+<pre data-lang="js"><code>V.registerMask('lawsuit', '9999999-99.9999.9.99.9999');
 V.registerMask('renavam', '99999999999');
 
-V.registerMask('inscricao', (valor) =&gt; {
-  const digitos = valor.replace(/\D/g, '');
-  return digitos.length &lt;= 9
-    ? V.applyMask(digitos, '999.999.999')
-    : V.applyMask(digitos, '999.999.999.999');
+V.registerMask('taxId', (value) =&gt; {
+  const digits = value.replace(/\D/g, '');
+  return digits.length &lt;= 9
+    ? V.applyMask(digits, '999.999.999')
+    : V.applyMask(digits, '999.999.999.999');
 });</code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só em campo textual</span>
+  <span class="doc-aviso__rotulo">Text fields only</span>
   <p>
-    <code>v-mask</code> precisa de <code>&lt;input&gt;</code> ou <code>&lt;textarea&gt;</code> com
-    tipo textual. <code>number</code>, <code>range</code>, <code>date</code> e <code>color</code>
-    não aceitam máscara, porque o navegador já controla o valor. Use <code>type="text"</code> com
+    <code>v-mask</code> needs an <code>&lt;input&gt;</code> or a <code>&lt;textarea&gt;</code> of a
+    textual type. <code>number</code>, <code>range</code>, <code>date</code> and <code>color</code>
+    take no mask, because the browser already controls the value. Use <code>type="text"</code> with
     <code>inputmode</code>.
   </p>
 </div>
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>

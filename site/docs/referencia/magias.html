@@ -1,160 +1,160 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Variáveis mágicas · Documentação da Voodoo.js</title>
-<meta name="description" content="As 40 variáveis mágicas disponíveis em qualquer expressão: contexto, estado e serviços, ambiente, fluxo, as do build completo e as locais que só existem em certos lugares.">
+<title>Magic variables · Voodoo.js documentation</title>
+<meta name="description" content="The 40 magic variables available in any expression: context, state and services, environment, flow, the ones that only ship in the full build, and the local ones that exist in certain places only.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/magias">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Variáveis mágicas</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Magic variables</h1>
 <p class="doc-resumo">
-  São 40, disponíveis em qualquer expressão sem declarar nada. Elas existem porque
-  <code>window</code>, <code>document</code> e o próprio <code>V</code> não estão liberados dentro
-  das expressões: é por aqui que uma expressão alcança o DOM e os serviços.
+  There are 40 of them, available in any expression without declaring anything. They exist because
+  <code>window</code>, <code>document</code> and <code>V</code> itself are not allowed inside
+  expressions: this is how an expression reaches the DOM and the services.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{}"&gt;
-  &lt;button @click="$toast.success('Salvo!')"&gt;Avisar&lt;/button&gt;
-  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copiar cupom&lt;/button&gt;
-  &lt;button @click="$refs.busca.focus()"&gt;Focar&lt;/button&gt;
-  &lt;input v-ref="busca" placeholder="Vou receber o foco"&gt;
-  &lt;p&gt;Largura da tela: { $screen.width }px · Online: { $network.online }&lt;/p&gt;
+  &lt;button @click="$toast.success('Saved!')"&gt;Notify&lt;/button&gt;
+  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copy the coupon&lt;/button&gt;
+  &lt;button @click="$refs.search.focus()"&gt;Focus&lt;/button&gt;
+  &lt;input v-ref="search" placeholder="I am the one getting the focus"&gt;
+  &lt;p&gt;Screen width: { $screen.width }px · Online: { $network.online }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="contexto">Contexto</h2>
+<h2 id="contexto">Context</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>O que é</th></tr></thead>
+<thead><tr><th>Magic</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>$el</code></td><td>Elemento que criou o escopo</td></tr>
-<tr><td><code>$refs</code></td><td>Elementos marcados com <code>v-ref</code>, mesclando os escopos ancestrais</td></tr>
-<tr><td><code>$data</code></td><td>Dados do escopo atual</td></tr>
-<tr><td><code>$root</code></td><td>Dados do escopo raiz</td></tr>
-<tr><td><code>$parent</code></td><td>Dados do escopo pai</td></tr>
-<tr><td><code>$self</code></td><td>Instância do componente mais próximo, ou os dados do escopo</td></tr>
+<tr><td><code>$el</code></td><td>The element that created the scope</td></tr>
+<tr><td><code>$refs</code></td><td>Elements marked with <code>v-ref</code>, merging the ancestor scopes</td></tr>
+<tr><td><code>$data</code></td><td>Data of the current scope</td></tr>
+<tr><td><code>$root</code></td><td>Data of the root scope</td></tr>
+<tr><td><code>$parent</code></td><td>Data of the parent scope</td></tr>
+<tr><td><code>$self</code></td><td>Instance of the nearest component, or the scope data</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="servicos">Estado e serviços</h2>
+<h2 id="servicos">State and services</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>O que é</th></tr></thead>
+<thead><tr><th>Magic</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>$store</code></td><td>Todos os stores globais</td></tr>
-<tr><td><code>$http</code></td><td>Cliente HTTP</td></tr>
-<tr><td><code>$toast</code></td><td>Notificações</td></tr>
-<tr><td><code>$modal</code>, <code>$dialog</code>, <code>$alert</code>, <code>$confirm</code>, <code>$prompt</code></td><td>Diálogos</td></tr>
-<tr><td><code>$storage</code>, <code>$session</code>, <code>$cookie</code>, <code>$cache</code>, <code>$url</code></td><td>Armazenamento</td></tr>
-<tr><td><code>$clipboard</code></td><td>Copiar e ler a área de transferência</td></tr>
-<tr><td><code>$theme</code></td><td>Tema claro e escuro</td></tr>
-<tr><td><code>$sound</code></td><td>Efeitos sonoros</td></tr>
-<tr><td><code>$form</code></td><td>Estado do formulário mais próximo</td></tr>
-<tr><td><code>$history</code></td><td>Controlador de desfazer e refazer, quando há <code>v-history</code> acima</td></tr>
+<tr><td><code>$store</code></td><td>Every global store</td></tr>
+<tr><td><code>$http</code></td><td>HTTP client</td></tr>
+<tr><td><code>$toast</code></td><td>Notifications</td></tr>
+<tr><td><code>$modal</code>, <code>$dialog</code>, <code>$alert</code>, <code>$confirm</code>, <code>$prompt</code></td><td>Dialogs</td></tr>
+<tr><td><code>$storage</code>, <code>$session</code>, <code>$cookie</code>, <code>$cache</code>, <code>$url</code></td><td>Storage</td></tr>
+<tr><td><code>$clipboard</code></td><td>Copying to and reading from the clipboard</td></tr>
+<tr><td><code>$theme</code></td><td>Light and dark theme</td></tr>
+<tr><td><code>$sound</code></td><td>Sound effects</td></tr>
+<tr><td><code>$form</code></td><td>State of the nearest form</td></tr>
+<tr><td><code>$history</code></td><td>Undo and redo controller, when there is a <code>v-history</code> above</td></tr>
 </tbody>
 </table>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Nem toda leitura é reativa</span>
+  <span class="doc-aviso__rotulo">Not every read is reactive</span>
   <p>
     <code>$store</code>, <code>$theme</code>, <code>$screen</code>, <code>$network</code>,
-    <code>$route</code> e <code>$form</code> leem estado reativo, e a tela acompanha.
-    <code>$storage</code>, <code>$session</code>, <code>$cookie</code>, <code>$cache</code> e
-    <code>$url</code> leem no momento em que a expressão roda: guarde o resultado em uma variável
-    do escopo quando a tela precisar reagir.
+    <code>$route</code> and <code>$form</code> read reactive state, and the screen follows along.
+    <code>$storage</code>, <code>$session</code>, <code>$cookie</code>, <code>$cache</code> and
+    <code>$url</code> read at the moment the expression runs: keep the result in a scope variable
+    when the screen has to react to it.
   </p>
 </div>
 
-<h2 id="ambiente">Ambiente</h2>
+<h2 id="ambiente">Environment</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>O que é</th></tr></thead>
+<thead><tr><th>Magic</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>$screen</code></td><td>Largura, altura e pontos de quebra, reativo</td></tr>
-<tr><td><code>$network</code></td><td>Estado da conexão, reativo</td></tr>
-<tr><td><code>$device</code></td><td>Toque, tamanho, movimento e tema</td></tr>
+<tr><td><code>$screen</code></td><td>Width, height and breakpoints, reactive</td></tr>
+<tr><td><code>$network</code></td><td>State of the connection, reactive</td></tr>
+<tr><td><code>$device</code></td><td>Touch, size, motion and theme</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="fluxo">Fluxo</h2>
+<h2 id="fluxo">Flow</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>O que é</th></tr></thead>
+<thead><tr><th>Magic</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>$nextTick</code></td><td>Espera o DOM refletir</td></tr>
-<tr><td><code>$watch(expressao, cb)</code></td><td>Observa uma expressão</td></tr>
-<tr><td><code>$dispatch(nome, detalhe?)</code></td><td>Dispara um <code>CustomEvent</code> que sobe pela árvore</td></tr>
-<tr><td><code>$log(...)</code></td><td>Escreve no console com prefixo <code>[Voodoo]</code></td></tr>
+<tr><td><code>$nextTick</code></td><td>Waits for the DOM to catch up</td></tr>
+<tr><td><code>$watch(expression, cb)</code></td><td>Watches an expression</td></tr>
+<tr><td><code>$dispatch(name, detail?)</code></td><td>Fires a <code>CustomEvent</code> that travels up the tree</td></tr>
+<tr><td><code>$log(...)</code></td><td>Writes to the console with a <code>[Voodoo]</code> prefix</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="completo">Somente no build completo</h2>
+<h2 id="completo">In the full build only</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Magia</th><th>O que é</th></tr></thead>
+<thead><tr><th>Magic</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>$route</code></td><td>Rota atual</td></tr>
-<tr><td><code>$router</code></td><td>Controle de navegação</td></tr>
-<tr><td><code>$t</code></td><td>Traduz</td></tr>
-<tr><td><code>$locale</code></td><td>Idioma ativo</td></tr>
-<tr><td><code>$i18n</code></td><td>Módulo de idiomas</td></tr>
-<tr><td><code>$n</code>, <code>$c</code>, <code>$d</code>, <code>$rt</code></td><td>Número, moeda, data e tempo relativo</td></tr>
+<tr><td><code>$route</code></td><td>The current route</td></tr>
+<tr><td><code>$router</code></td><td>Navigation control</td></tr>
+<tr><td><code>$t</code></td><td>Translates</td></tr>
+<tr><td><code>$locale</code></td><td>The active language</td></tr>
+<tr><td><code>$i18n</code></td><td>The languages module</td></tr>
+<tr><td><code>$n</code>, <code>$c</code>, <code>$d</code>, <code>$rt</code></td><td>Number, currency, date and relative time</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="locais">Locais</h2>
+<h2 id="locais">Local ones</h2>
 
-<p>Existem apenas dentro de certas expressões:</p>
+<p>These exist only inside certain expressions:</p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Variável</th><th>Onde</th></tr></thead>
+<thead><tr><th>Variable</th><th>Where</th></tr></thead>
 <tbody>
-<tr><td><code>$event</code></td><td>Manipuladores de evento</td></tr>
-<tr><td><code>$detail</code></td><td>Manipuladores de evento, com o <code>detail</code> do <code>CustomEvent</code></td></tr>
-<tr><td><code>$value</code>, <code>$old</code></td><td><code>v-watch</code> combinado com <code>v-model</code></td></tr>
-<tr><td><code>$data</code>, <code>$response</code></td><td><code>v-on-success</code> e <code>v-on-error</code> de formulários</td></tr>
+<tr><td><code>$event</code></td><td>Event handlers</td></tr>
+<tr><td><code>$detail</code></td><td>Event handlers, carrying the <code>detail</code> of the <code>CustomEvent</code></td></tr>
+<tr><td><code>$value</code>, <code>$old</code></td><td><code>v-watch</code> combined with <code>v-model</code></td></tr>
+<tr><td><code>$data</code>, <code>$response</code></td><td><code>v-on-success</code> and <code>v-on-error</code> on forms</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="proprias">Criando as suas</h2>
+<h2 id="proprias">Writing your own</h2>
 
-<pre data-lang="js"><code>V.magic('$usuario', () =&gt; usuarioLogado);
-V.magic('$formatar', () =&gt; (valor) =&gt; V.formatCurrency(valor));
-V.magic('$altura', (scope) =&gt; scope.el.offsetHeight);</code></pre>
+<pre data-lang="js"><code>V.magic('$user', () =&gt; loggedUser);
+V.magic('$format', () =&gt; (value) =&gt; V.formatCurrency(value));
+V.magic('$height', (scope) =&gt; scope.el.offsetHeight);</code></pre>
 
 <p>
-  O getter recebe o escopo ativo, então a magia pode depender de onde foi usada. O cifrão é
-  acrescentado automaticamente quando você não escreve, e magias são somente leitura, salvo as que
-  expõem um método <code>set</code> próprio. <code>V.magics</code> é o <code>Map</code> com todas
-  as registradas. A página de
-  <a href="../guia/directives-e-plugins.html#magias">directives e plugins</a> tem o exemplo
-  completo.
+  The getter receives the active scope, so a magic can depend on where it was used. The dollar sign
+  is added for you when you leave it out, and magics are read-only, except for the ones that expose
+  a <code>set</code> method of their own. <code>V.magics</code> is the <code>Map</code> holding
+  every registered one. The
+  <a href="../guia/directives-e-plugins.html#magias">custom directives and plugins</a> page has the
+  full example.
 </p>
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>

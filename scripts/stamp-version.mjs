@@ -62,7 +62,13 @@ const EDITS = [
     what: 'asset cache key',
     // Local scripts and stylesheets only: a version query on a CDN URL would
     // defeat its own caching for no gain.
-    find: /(src|href)="(assets\/[\w.-]+\.(?:js|css))(?:\?v=[\d.]+)?"/g,
+    //
+    // The `(?:\.\.\/)*` matters more than it looks. Without it this matched
+    // `assets/docs.js` and missed `../assets/docs.js`, so exactly one page — the
+    // documentation index — got a cache key and the other 43 kept asking for the
+    // unversioned URL and kept being served the stale copy. The bug it was
+    // written to fix survived in every page except the one I happened to check.
+    find: /(src|href)="((?:\.\.\/)*assets\/[\w.-]+\.(?:js|css))(?:\?v=[\d.]+)?"/g,
     to: (m, attr, path) => `${attr}="${path}?v=${version}"`,
   },
 ];

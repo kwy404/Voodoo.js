@@ -1,158 +1,157 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tipos de gráfico · Documentação da Voodoo.js</title>
-<meta name="description" content="Referência dos gráficos: os onze tipos e o formato de dados de cada um, todas as opções, os atributos v-chart-*, as cores padrão e a API por JavaScript.">
+<title>Chart types · Voodoo.js documentation</title>
+<meta name="description" content="Chart reference: the eleven types and the data shape each one takes, every option, the v-chart-* attributes, the default colours and the JavaScript API.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/graficos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Tipos de gráfico</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Chart types</h1>
 <p class="doc-resumo">
-  Os onze tipos, o formato de dados que cada um espera e todas as opções. O guia de
-  <a href="../guia/graficos.html">gráficos</a> mostra o módulo funcionando. Tudo aqui existe
-  apenas no <code>voodoo.full.min.js</code>.
+  The eleven types, the data shape each one expects and every option. The
+  <a href="../guia/graficos.html">charts</a> guide shows the module at work. Everything here exists
+  only in <code>voodoo.full.min.js</code>.
 </p>
 
-<h2 id="tipos">Os tipos, e o dado que cada um espera</h2>
+<h2 id="tipos">The types, and the data each one expects</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Tipo</th><th>Para que serve</th><th>Formato esperado</th></tr></thead>
+<thead><tr><th>Type</th><th>What it is for</th><th>Expected shape</th></tr></thead>
 <tbody>
-<tr><td><code>line</code></td><td>Evolução ao longo do tempo. Padrão</td><td>Números, ou séries nomeadas</td></tr>
-<tr><td><code>area</code></td><td>Igual à linha, com a área preenchida</td><td>Números, ou séries nomeadas</td></tr>
-<tr><td><code>bar</code></td><td>Barras verticais</td><td>Números, pontos nomeados ou séries</td></tr>
-<tr><td><code>column</code></td><td>Barras horizontais</td><td>Números, pontos nomeados ou séries</td></tr>
-<tr><td><code>stacked</code></td><td>Barras empilhadas, para composição</td><td>Séries nomeadas</td></tr>
-<tr><td><code>pie</code></td><td>Pizza, para participação</td><td>Pontos nomeados</td></tr>
-<tr><td><code>donut</code></td><td>Rosca, com espaço no meio</td><td>Pontos nomeados</td></tr>
-<tr><td><code>sparkline</code></td><td>Tendência miúda, sem eixos</td><td>Números</td></tr>
-<tr><td><code>radar</code></td><td>Comparação de várias dimensões</td><td>Números com <code>labels</code>, ou séries</td></tr>
-<tr><td><code>scatter</code></td><td>Dispersão</td><td>Pontos <code>{ x, y }</code></td></tr>
-<tr><td><code>progress</code></td><td>Progresso circular</td><td>Um número só</td></tr>
+<tr><td><code>line</code></td><td>Change over time. The default</td><td>Numbers, or named series</td></tr>
+<tr><td><code>area</code></td><td>The same as the line, with the area filled in</td><td>Numbers, or named series</td></tr>
+<tr><td><code>bar</code></td><td>Vertical bars</td><td>Numbers, named points or series</td></tr>
+<tr><td><code>column</code></td><td>Horizontal bars</td><td>Numbers, named points or series</td></tr>
+<tr><td><code>stacked</code></td><td>Stacked bars, for composition</td><td>Named series</td></tr>
+<tr><td><code>pie</code></td><td>A pie, for share</td><td>Named points</td></tr>
+<tr><td><code>donut</code></td><td>A doughnut, with room in the middle</td><td>Named points</td></tr>
+<tr><td><code>sparkline</code></td><td>A tiny trend, with no axes</td><td>Numbers</td></tr>
+<tr><td><code>radar</code></td><td>Comparison across several dimensions</td><td>Numbers with <code>labels</code>, or series</td></tr>
+<tr><td><code>scatter</code></td><td>A scatter plot</td><td><code>{ x, y }</code> points</td></tr>
+<tr><td><code>progress</code></td><td>Circular progress</td><td>A single number</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="formatos">Formatos de dados</h2>
+<h2 id="formatos">Data shapes</h2>
 
-<pre data-lang="js"><code>// números soltos, com rótulos separados
-{ type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Fev', 'Mar'] }
+<pre data-lang="js"><code>// loose numbers, with the labels separate
+{ type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Feb', 'Mar'] }
 
-// pontos nomeados
+// named points
 { type: 'pie', data: [
-  { label: 'Orgânico', value: 48 },
-  { label: 'Pago', value: 32 }
+  { label: 'Organic', value: 48 },
+  { label: 'Paid', value: 32 }
 ] }
 
-// séries nomeadas
-{ type: 'line', labels: ['Jan', 'Fev', 'Mar'], data: [
+// named series
+{ type: 'line', labels: ['Jan', 'Feb', 'Mar'], data: [
   { name: '2025', data: [10, 14, 12] },
   { name: '2026', data: [16, 18, 25], color: '#FF3D8B' }
 ] }
 
-// dispersão
+// a scatter plot
 { type: 'scatter', data: [{ x: 1, y: 4 }, { x: 2, y: 7 }] }
 
-// progresso
+// progress
 { type: 'progress', data: 68, max: 100 }</code></pre>
 
-<h2 id="opcoes">Opções</h2>
+<h2 id="opcoes">Options</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>type</code></td><td><code>line</code></td><td>Tipo do gráfico</td></tr>
-<tr><td><code>data</code></td><td></td><td>Dados, em qualquer formato aceito</td></tr>
-<tr><td><code>labels</code></td><td></td><td>Rótulos do eixo de categorias</td></tr>
-<tr><td><code>name</code></td><td></td><td>Nome da série única, usado na legenda e no tooltip</td></tr>
-<tr><td><code>colors</code></td><td>paleta da marca</td><td>Cores das séries</td></tr>
-<tr><td><code>height</code></td><td>260, ou 56 em <code>sparkline</code></td><td>Altura em pixels</td></tr>
-<tr><td><code>width</code></td><td></td><td>Largura usada quando o container ainda não tem medida</td></tr>
-<tr><td><code>showGrid</code></td><td><code>true</code></td><td>Linhas de grade e rótulos do eixo de valores</td></tr>
-<tr><td><code>showLegend</code></td><td>automático</td><td>Legenda clicável</td></tr>
-<tr><td><code>showValues</code></td><td><code>false</code></td><td>Escreve o valor de cada ponto, barra ou fatia</td></tr>
-<tr><td><code>animate</code></td><td><code>true</code></td><td>Anima o desenho na entrada</td></tr>
-<tr><td><code>smooth</code></td><td><code>false</code></td><td>Curvas suaves em linhas e áreas</td></tr>
-<tr><td><code>max</code>, <code>min</code></td><td>automático</td><td>Teto e piso da escala</td></tr>
-<tr><td><code>format</code></td><td><code>number</code></td><td><code>number</code>, <code>currency</code> ou <code>percent</code></td></tr>
-<tr><td><code>tooltip</code></td><td><code>true</code></td><td>Tooltip ao passar o mouse</td></tr>
+<tr><td><code>type</code></td><td><code>line</code></td><td>The chart type</td></tr>
+<tr><td><code>data</code></td><td></td><td>The data, in any accepted shape</td></tr>
+<tr><td><code>labels</code></td><td></td><td>Labels of the category axis</td></tr>
+<tr><td><code>name</code></td><td></td><td>Name of the single series, used in the legend and the tooltip</td></tr>
+<tr><td><code>colors</code></td><td>the brand palette</td><td>Colours of the series</td></tr>
+<tr><td><code>height</code></td><td>260, or 56 for <code>sparkline</code></td><td>Height in pixels</td></tr>
+<tr><td><code>width</code></td><td></td><td>The width used while the container has no measurement yet</td></tr>
+<tr><td><code>showGrid</code></td><td><code>true</code></td><td>Grid lines and labels of the value axis</td></tr>
+<tr><td><code>showLegend</code></td><td>automatic</td><td>A clickable legend</td></tr>
+<tr><td><code>showValues</code></td><td><code>false</code></td><td>Writes the value of each point, bar or slice</td></tr>
+<tr><td><code>animate</code></td><td><code>true</code></td><td>Animates the drawing on the way in</td></tr>
+<tr><td><code>smooth</code></td><td><code>false</code></td><td>Smooth curves on lines and areas</td></tr>
+<tr><td><code>max</code>, <code>min</code></td><td>automatic</td><td>Ceiling and floor of the scale</td></tr>
+<tr><td><code>format</code></td><td><code>number</code></td><td><code>number</code>, <code>currency</code> or <code>percent</code></td></tr>
+<tr><td><code>tooltip</code></td><td><code>true</code></td><td>A tooltip on hover</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="atributos">Atributos v-chart-*</h2>
+<h2 id="atributos">The v-chart-* attributes</h2>
 
 <p>
   <code>v-chart-type</code>, <code>v-chart-height</code>, <code>v-chart-format</code>,
   <code>v-chart-colors</code>, <code>v-chart-max</code>, <code>v-chart-min</code>,
   <code>v-chart-smooth</code>, <code>v-chart-grid</code>, <code>v-chart-legend</code>,
-  <code>v-chart-values</code>, <code>v-chart-tooltip</code> e <code>v-chart-animate</code>. Os
-  booleanos aceitam o atributo vazio, <code>true</code>, <code>1</code>, <code>false</code> e
-  <code>0</code>.
+  <code>v-chart-values</code>, <code>v-chart-tooltip</code> and <code>v-chart-animate</code>. The
+  boolean ones accept the empty attribute, <code>true</code>, <code>1</code>, <code>false</code>
+  and <code>0</code>.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Eles são lidos só na montagem</span>
+  <span class="doc-aviso__rotulo">They are read on mount only</span>
   <p>
-    Com dados reativos, declare tudo no objeto —
-    <code>v-chart="{ type: 'bar', data: vendas }"</code> —, senão o tipo volta ao padrão na
-    primeira atualização.
+    With reactive data, declare everything in the object —
+    <code>v-chart="{ type: 'bar', data: sales }"</code> — otherwise the type falls back to the
+    default on the first update.
   </p>
 </div>
 
-<h2 id="cores">Cores</h2>
+<h2 id="cores">Colours</h2>
 
 <pre data-lang="txt"><code>#6D3BF5  #FF3D8B  #2ED9A5  #FFB35C  #9B7BFF  #FF4D4D  #14111F  #3BB6F5</code></pre>
 
 <p>
-  A paleta padrão está em <code>V.chartColors</code> e em <code>V.charts.colors</code>. As cores
-  de grade, texto e fundo vêm das variáveis <code>--v-*</code>, então o gráfico acompanha o tema e
-  a paleta configurada.
+  The default palette lives in <code>V.chartColors</code> and in <code>V.charts.colors</code>. The
+  grid, text and background colours come from the <code>--v-*</code> variables, so the chart
+  follows the theme and the configured palette.
 </p>
 
-<h2 id="javascript">Por JavaScript</h2>
+<h2 id="javascript">From JavaScript</h2>
 
-<pre data-lang="js"><code>const grafico = V.renderChart(el, { type: 'area', data: [12, 19, 8], smooth: true });
-grafico.update({ data: novosDados });
-grafico.options;
-grafico.destroy();</code></pre>
+<pre data-lang="js"><code>const chart = V.renderChart(el, { type: 'area', data: [12, 19, 8], smooth: true });
+chart.update({ data: newData });
+chart.options;
+chart.destroy();</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Membro</th><th>O que é</th></tr></thead>
+<thead><tr><th>Member</th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>V.renderChart(el, opcoes)</code></td><td>Desenha e devolve o controle</td></tr>
-<tr><td><code>V.chart</code></td><td>Apelido de <code>V.renderChart</code></td></tr>
-<tr><td><code>V.charts.render</code></td><td>O mesmo</td></tr>
-<tr><td><code>V.charts.format</code></td><td>Formata um valor no padrão do gráfico</td></tr>
-<tr><td><code>V.charts.colors</code>, <code>V.chartColors</code></td><td>A paleta padrão</td></tr>
+<tr><td><code>V.renderChart(el, options)</code></td><td>Draws it and hands back the control</td></tr>
+<tr><td><code>V.chart</code></td><td>An alias for <code>V.renderChart</code></td></tr>
+<tr><td><code>V.charts.render</code></td><td>The same</td></tr>
+<tr><td><code>V.charts.format</code></td><td>Formats a value the way the chart does</td></tr>
+<tr><td><code>V.charts.colors</code>, <code>V.chartColors</code></td><td>The default palette</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="acessibilidade">Acessibilidade</h2>
+<h2 id="acessibilidade">Accessibility</h2>
 
 <p>
-  Cada gráfico recebe <code>role="img"</code> e um <code>aria-label</code> escrito a partir dos
-  dados, com o tipo, a quantidade de séries, mínimo, máximo e média. Cada forma tem um
-  <code>&lt;title&gt;</code> próprio, lido no foco, e a animação de entrada respeita
-  <code>prefers-reduced-motion</code>. Para conjuntos importantes, ofereça também os números em
-  uma tabela.
+  Every chart gets <code>role="img"</code> and an <code>aria-label</code> written from the data,
+  carrying the type, the number of series, the minimum, the maximum and the average. Every shape
+  has a <code>&lt;title&gt;</code> of its own, read out on focus, and the entry animation respects
+  <code>prefers-reduced-motion</code>. For sets that matter, offer the numbers in a table as well.
 </p>
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>

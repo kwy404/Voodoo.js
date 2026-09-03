@@ -1,43 +1,44 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Configuração · Documentação da Voodoo.js</title>
-<meta name="description" content="Todas as opções de V.config com o valor padrão, os atributos aceitos na tag script, os eventos do ciclo de vida e a lista completa dos tokens CSS.">
+<title>Configuration · Voodoo.js documentation</title>
+<meta name="description" content="Every V.config option with its default value, the attributes the script tag accepts, the lifecycle events and the complete list of CSS tokens.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/configuracao">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Referência</p>
-<h1>Configuração</h1>
+<p class="doc-migalha">Reference</p>
+<h1>Configuration</h1>
 <p class="doc-resumo">
-  Tudo pode ser ajustado por atributo na tag do script ou por <code>V.config</code> antes do
-  primeiro render. Nada disso é obrigatório: a biblioteca funciona sem configuração nenhuma.
+  Everything can be adjusted through an attribute on the script tag, or through
+  <code>V.config</code> before the first render. None of it is required: the library works with no
+  configuration at all.
 </p>
 
 <h2 id="v-config">V.config</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Opção</th><th>Padrão</th><th>O que faz</th></tr></thead>
+<thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
 <tbody>
-<tr><td><code>prefix</code></td><td><code>'v-'</code></td><td>Prefixo dos atributos</td></tr>
-<tr><td><code>autoStart</code></td><td><code>true</code></td><td>Inicia a biblioteca quando o script carrega</td></tr>
-<tr><td><code>autoDiscover</code></td><td><code>true</code></td><td>Observa o DOM e inicializa elementos criados depois</td></tr>
-<tr><td><code>root</code></td><td><code>null</code></td><td>Raiz observada. Sem valor, usa <code>document.body</code></td></tr>
-<tr><td><code>devtools</code></td><td><code>false</code></td><td>Avisos detalhados no console e comentários âncora nomeados</td></tr>
-<tr><td><code>baseURL</code></td><td><code>''</code></td><td>URL base das requisições declarativas</td></tr>
-<tr><td><code>globals</code></td><td><code>{}</code></td><td>Valores extras liberados dentro das expressões</td></tr>
-<tr><td><code>locale</code></td><td>idioma do navegador</td><td>Locale dos formatadores</td></tr>
-<tr><td><code>currency</code></td><td><code>'BRL'</code></td><td>Moeda padrão dos formatadores</td></tr>
-<tr><td><code>injectStyles</code></td><td><code>true</code></td><td>Injeta o CSS dos componentes de interface</td></tr>
-<tr><td><code>cleanAttributes</code></td><td><code>true</code></td><td>Retira os atributos <code>v-*</code> do HTML depois de processados</td></tr>
+<tr><td><code>prefix</code></td><td><code>'v-'</code></td><td>The attribute prefix</td></tr>
+<tr><td><code>autoStart</code></td><td><code>true</code></td><td>Starts the library when the script loads</td></tr>
+<tr><td><code>autoDiscover</code></td><td><code>true</code></td><td>Watches the DOM and initializes elements created later</td></tr>
+<tr><td><code>root</code></td><td><code>null</code></td><td>The root being watched. With no value, it uses <code>document.body</code></td></tr>
+<tr><td><code>devtools</code></td><td><code>false</code></td><td>Detailed console warnings and named anchor comments</td></tr>
+<tr><td><code>baseURL</code></td><td><code>''</code></td><td>Base URL for the declarative requests</td></tr>
+<tr><td><code>globals</code></td><td><code>{}</code></td><td>Extra values allowed inside expressions</td></tr>
+<tr><td><code>locale</code></td><td>the browser language</td><td>Locale used by the formatters</td></tr>
+<tr><td><code>currency</code></td><td><code>'BRL'</code></td><td>Default currency of the formatters</td></tr>
+<tr><td><code>injectStyles</code></td><td><code>true</code></td><td>Injects the CSS of the interface components</td></tr>
+<tr><td><code>cleanAttributes</code></td><td><code>true</code></td><td>Strips the <code>v-*</code> attributes from the HTML once processed</td></tr>
 </tbody>
 </table>
 </div>
@@ -45,110 +46,113 @@
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-manual defer&gt;&lt;/script&gt;
 &lt;script defer&gt;
   V.config.prefix = 'data-v-';
-  V.config.locale = 'pt-BR';
-  V.config.currency = 'BRL';
-  V.config.globals.formatarSlug = (texto) =&gt; texto.toLowerCase();
-  V.http.setBaseURL('https://api.exemplo.com');
+  V.config.locale = 'en-US';
+  V.config.currency = 'USD';
+  V.config.globals.formatSlug = (text) =&gt; text.toLowerCase();
+  V.http.setBaseURL('https://api.example.com');
   V.start();
 &lt;/script&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Quando o ajuste precisa vir antes</span>
+  <span class="doc-aviso__rotulo">When the setting has to come first</span>
   <p>
     <code>prefix</code>, <code>autoDiscover</code>, <code>root</code>,
-    <code>cleanAttributes</code> e <code>injectStyles</code> mudam o comportamento da varredura.
-    Ajuste-os antes de <code>V.start()</code> — depois, o que já foi processado não volta atrás.
-    Os globais de <code>V.config.globals</code> entram em vigor quando <code>V.start()</code> roda.
+    <code>cleanAttributes</code> and <code>injectStyles</code> change how the scan behaves. Set
+    them before <code>V.start()</code> — afterwards, what has already been processed does not go
+    back. The globals in <code>V.config.globals</code> take effect when <code>V.start()</code>
+    runs.
   </p>
 </div>
 
-<h2 id="tag">Atributos da tag script</h2>
+<h2 id="tag">Script tag attributes</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Atributo</th><th>Efeito</th></tr></thead>
+<thead><tr><th>Attribute</th><th>Effect</th></tr></thead>
 <tbody>
-<tr><td><code>data-manual</code></td><td>Não inicia sozinha. Você chama <code>V.start()</code> quando quiser</td></tr>
-<tr><td><code>data-defer-init</code></td><td>O mesmo que <code>data-manual</code></td></tr>
-<tr><td><code>data-prefix</code></td><td>Troca o prefixo dos atributos, por exemplo <code>data-v-</code></td></tr>
-<tr><td><code>data-base-url</code></td><td>URL base das requisições de <code>V.http</code> e das directives HTTP</td></tr>
-<tr><td><code>data-locale</code></td><td>Idioma usado por formatadores de data, número e moeda</td></tr>
-<tr><td><code>data-devtools</code></td><td>Liga avisos detalhados no console</td></tr>
-<tr><td><code>data-no-styles</code></td><td>Não injeta o CSS dos componentes de interface</td></tr>
-<tr><td><code>data-no-observer</code></td><td>Desliga o <code>MutationObserver</code> que inicializa HTML criado depois</td></tr>
-<tr><td><code>data-keep-attributes</code></td><td>Mantém os atributos <code>v-*</code> no HTML depois de processados</td></tr>
+<tr><td><code>data-manual</code></td><td>Does not start on its own. You call <code>V.start()</code> whenever you want</td></tr>
+<tr><td><code>data-defer-init</code></td><td>The same as <code>data-manual</code></td></tr>
+<tr><td><code>data-prefix</code></td><td>Changes the attribute prefix, for instance to <code>data-v-</code></td></tr>
+<tr><td><code>data-base-url</code></td><td>Base URL for <code>V.http</code> requests and for the HTTP directives</td></tr>
+<tr><td><code>data-locale</code></td><td>The language used by the date, number and currency formatters</td></tr>
+<tr><td><code>data-devtools</code></td><td>Turns on detailed console warnings</td></tr>
+<tr><td><code>data-no-styles</code></td><td>Does not inject the CSS of the interface components</td></tr>
+<tr><td><code>data-no-observer</code></td><td>Turns off the <code>MutationObserver</code> that initializes HTML created later</td></tr>
+<tr><td><code>data-keep-attributes</code></td><td>Keeps the <code>v-*</code> attributes in the HTML once processed</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="eventos">Eventos do ciclo de vida</h2>
+<h2 id="eventos">Lifecycle events</h2>
 
 <pre data-lang="js"><code>document.addEventListener('voodoo:ready', (e) =&gt; {
-  console.log('Voodoo', V.version, 'iniciada em', e.detail.root);
+  console.log('Voodoo', V.version, 'started on', e.detail.root);
 });
 
 document.addEventListener('voodoo:theme', (e) =&gt; console.log(e.detail.resolved));
 document.addEventListener('voodoo:palette', (e) =&gt; console.log(e.detail.colors));</code></pre>
 
-<h2 id="tokens">Tokens CSS</h2>
+<h2 id="tokens">CSS tokens</h2>
 
 <p>
-  Estes existem sempre, com valor padrão embutido, mesmo sem chamar <code>V.palette()</code>:
+  These always exist, with a built-in default value, even without calling
+  <code>V.palette()</code>:
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Token</th><th>Para que serve</th></tr></thead>
+<thead><tr><th>Token</th><th>What it is for</th></tr></thead>
 <tbody>
-<tr><td><code>--v-primary</code>, <code>--v-primary-hover</code>, <code>--v-primary-contrast</code></td><td>Cor principal</td></tr>
-<tr><td><code>--v-accent</code></td><td>Cor de realce</td></tr>
-<tr><td><code>--v-success</code>, <code>--v-warning</code>, <code>--v-danger</code>, <code>--v-info</code></td><td>Estados</td></tr>
-<tr><td><code>--v-surface</code>, <code>--v-surface-2</code></td><td>Fundos</td></tr>
-<tr><td><code>--v-text</code>, <code>--v-text-muted</code></td><td>Textos</td></tr>
-<tr><td><code>--v-border</code></td><td>Bordas</td></tr>
-<tr><td><code>--v-radius</code>, <code>--v-radius-sm</code></td><td>Raios</td></tr>
-<tr><td><code>--v-shadow</code></td><td>Sombra</td></tr>
-<tr><td><code>--v-ease</code></td><td>Curva das transições</td></tr>
-<tr><td><code>--v-z-modal</code>, <code>--v-z-drawer</code>, <code>--v-z-dropdown</code>, <code>--v-z-toast</code>, <code>--v-z-tooltip</code></td><td>Camadas</td></tr>
+<tr><td><code>--v-primary</code>, <code>--v-primary-hover</code>, <code>--v-primary-contrast</code></td><td>The main colour</td></tr>
+<tr><td><code>--v-accent</code></td><td>The highlight colour</td></tr>
+<tr><td><code>--v-success</code>, <code>--v-warning</code>, <code>--v-danger</code>, <code>--v-info</code></td><td>States</td></tr>
+<tr><td><code>--v-surface</code>, <code>--v-surface-2</code></td><td>Backgrounds</td></tr>
+<tr><td><code>--v-text</code>, <code>--v-text-muted</code></td><td>Text</td></tr>
+<tr><td><code>--v-border</code></td><td>Borders</td></tr>
+<tr><td><code>--v-radius</code>, <code>--v-radius-sm</code></td><td>Radii</td></tr>
+<tr><td><code>--v-shadow</code></td><td>Shadow</td></tr>
+<tr><td><code>--v-ease</code></td><td>The easing curve of the transitions</td></tr>
+<tr><td><code>--v-z-modal</code>, <code>--v-z-drawer</code>, <code>--v-z-dropdown</code>, <code>--v-z-toast</code>, <code>--v-z-tooltip</code></td><td>Layers</td></tr>
 </tbody>
 </table>
 </div>
 
-<p>Depois de <code>V.palette()</code>, o conjunto cresce:</p>
+<p>After <code>V.palette()</code>, the set grows:</p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Token</th><th>Para que serve</th></tr></thead>
+<thead><tr><th>Token</th><th>What it is for</th></tr></thead>
 <tbody>
-<tr><td><code>--v-surface-3</code>, <code>--v-surface-inset</code></td><td>Fundos intermediários</td></tr>
-<tr><td><code>--v-text-soft</code></td><td>Texto ainda mais suave</td></tr>
-<tr><td><code>--v-border-strong</code></td><td>Borda de contraste maior</td></tr>
-<tr><td><code>--v-overlay</code></td><td>Fundo escurecido dos diálogos</td></tr>
-<tr><td><code>--v-shadow-sm</code>, <code>--v-shadow-lg</code></td><td>Sombras menor e maior</td></tr>
-<tr><td><code>--v-radius-lg</code>, <code>--v-radius-xl</code>, <code>--v-radius-full</code></td><td>Raios maiores</td></tr>
-<tr><td><code>--v-focus-ring</code></td><td>Cor do anel de foco</td></tr>
-<tr><td><code>--v-font-sans</code>, <code>--v-font-mono</code></td><td>Famílias tipográficas</td></tr>
-<tr><td>Escalas de 50 a 900</td><td>Tons derivados de cada cor base</td></tr>
+<tr><td><code>--v-surface-3</code>, <code>--v-surface-inset</code></td><td>In-between backgrounds</td></tr>
+<tr><td><code>--v-text-soft</code></td><td>Text softer still</td></tr>
+<tr><td><code>--v-border-strong</code></td><td>A higher-contrast border</td></tr>
+<tr><td><code>--v-overlay</code></td><td>The darkened backdrop of the dialogs</td></tr>
+<tr><td><code>--v-shadow-sm</code>, <code>--v-shadow-lg</code></td><td>A smaller and a larger shadow</td></tr>
+<tr><td><code>--v-radius-lg</code>, <code>--v-radius-xl</code>, <code>--v-radius-full</code></td><td>Larger radii</td></tr>
+<tr><td><code>--v-focus-ring</code></td><td>The colour of the focus ring</td></tr>
+<tr><td><code>--v-font-sans</code>, <code>--v-font-mono</code></td><td>Type families</td></tr>
+<tr><td>Scales from 50 to 900</td><td>Shades derived from each base colour</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="prefixo">Prefixo para HTML estrito</h2>
+<h2 id="prefixo">A prefix for strict HTML</h2>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-prefix="data-v-" defer&gt;&lt;/script&gt;
 
 &lt;div data-v-data="{ n: 0 }"&gt;
-  &lt;button data-v-click="n++"&gt;Somar&lt;/button&gt;
+  &lt;button data-v-click="n++"&gt;Add&lt;/button&gt;
   &lt;b data-v-text="n"&gt;&lt;/b&gt;
 &lt;/div&gt;</code></pre>
 
 <p>
-  A biblioteca sempre aceita <code>data-v-nome</code>, mesmo quando o prefixo configurado é outro.
-  Os atalhos <code>:atributo</code> e <code>@evento</code> continuam funcionando nos dois modos.
+  The library always accepts <code>data-v-name</code>, even when the configured prefix is a
+  different one. The <code>:attribute</code> and <code>@event</code> shorthands keep working in
+  both modes.
 </p>
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>

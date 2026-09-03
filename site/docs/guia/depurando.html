@@ -1,213 +1,211 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Depurando problemas comuns · Documentação da Voodoo.js</title>
-<meta name="description" content="Os sintomas mais frequentes e o que cada um significa: nada acontece, o CSS parou, o valor não reage, a confirmação aparece duas vezes, e os detalhes conhecidos que dependem de correção.">
+<title>Debugging common problems · Voodoo.js documentation</title>
+<meta name="description" content="The most frequent symptoms and what each one means: nothing happens, the CSS stopped working, the value does not react, the confirmation shows up twice, and the known details waiting on a fix.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/depurando">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Estendendo e depurando</p>
-<h1>Depurando problemas comuns</h1>
+<p class="doc-migalha">Extending and debugging</p>
+<h1>Debugging common problems</h1>
 <p class="doc-resumo">
-  Esta página é uma lista de sintomas. Cada um vem com o que ele costuma significar e o que fazer
-  a respeito — a maioria não é bug, e sim uma decisão de projeto encontrando alguém que ainda não
-  a conhecia.
+  This page is a list of symptoms. Each one comes with what it usually means and what to do about
+  it — most are not bugs, but a design decision meeting somebody who did not know about it yet.
 </p>
 
-<h2 id="nada-acontece">Nada acontece, o HTML aparece cru</h2>
+<h2 id="nada-acontece">Nothing happens, the HTML shows up raw</h2>
 
 <p>
-  Confira, nesta ordem: o arquivo carregou (a aba de rede responde em um segundo); ele não está
-  com <code>data-manual</code> sem uma chamada a <code>V.start()</code>; e o console não tem erro
-  de sintaxe de expressão, que aparece com a posição exata.
+  Check, in this order: the file loaded (the network tab answers that in a second); it does not
+  carry <code>data-manual</code> without a call to <code>V.start()</code>; and the console has no
+  expression syntax error, which shows up with the exact position.
 </p>
 
 <p>
-  Se a página usa componentes ou directives próprias registradas em outro arquivo, o registro
-  precisa acontecer <b>antes</b> do <code>V.start()</code>.
+  If the page uses components or directives of your own registered in another file, that
+  registration has to happen <b>before</b> <code>V.start()</code>.
 </p>
 
-<h2 id="pisca">O conteúdo pisca antes de renderizar</h2>
+<h2 id="pisca">The content flashes before rendering</h2>
 
 <pre data-lang="html"><code>&lt;style&gt;[v-cloak] { display: none !important; }&lt;/style&gt;
 &lt;div v-cloak v-data="{}"&gt;...&lt;/div&gt;</code></pre>
 
-<h2 id="css-parou">Meu CSS parou de funcionar</h2>
+<h2 id="css-parou">My CSS stopped working</h2>
 
 <p>
-  Quase sempre é um seletor apoiado em atributo <code>v-*</code>. Depois que a biblioteca processa
-  o elemento, o atributo sai do documento, e <code>[v-tab] { ... }</code> deixa de casar com
-  qualquer coisa. Pelo mesmo motivo, <code>el.getAttribute('v-algo')</code> devolve
-  <code>null</code> e <code>querySelectorAll('[v-show]')</code> devolve vazio.
+  Almost always a selector leaning on a <code>v-*</code> attribute. Once the library processes the
+  element, the attribute leaves the document, and <code>[v-tab] { ... }</code> stops matching
+  anything. For the same reason, <code>el.getAttribute('v-something')</code> returns
+  <code>null</code> and <code>querySelectorAll('[v-show]')</code> comes back empty.
 </p>
 
 <p>
-  Use classes ou <code>data-*</code>. Se você precisa mesmo do comportamento antigo,
-  <code>V.config.cleanAttributes = false</code> — ou <code>data-keep-attributes</code> na tag do
-  script — mantém tudo no HTML.
+  Use classes or <code>data-*</code>. If you really do need the old behaviour,
+  <code>V.config.cleanAttributes = false</code> — or <code>data-keep-attributes</code> on the
+  script tag — keeps everything in the HTML.
 </p>
 
-<h2 id="nao-reage">O valor muda mas a tela não</h2>
+<h2 id="nao-reage">The value changes but the screen does not</h2>
 
-<p>Três causas, em ordem de frequência:</p>
+<p>Three causes, in order of how often they come up:</p>
 
 <ul>
   <li>
-    <b>Erro de digitação no nome.</b> Escrever em uma chave que não existe cria a chave no escopo
-    local, sem erro nenhum. Ligue <code>data-devtools</code> para transformar esses casos em aviso.
+    <b>A typo in the name.</b> Writing to a key that does not exist creates the key in the local
+    scope, with no error at all. Turn on <code>data-devtools</code> to make those cases a warning.
   </li>
   <li>
-    <b>Você leu de uma fonte que não é reativa.</b> <code>$storage.get(...)</code>,
-    <code>$cookie.get(...)</code> e <code>$url.get(...)</code> leem no momento em que a expressão
-    roda, e nada avisa a tela depois. Guarde o valor no escopo, ou use um
-    <a href="stores.html#persistencia">store com <code>persist</code></a>.
+    <b>You read from a source that is not reactive.</b> <code>$storage.get(...)</code>,
+    <code>$cookie.get(...)</code> and <code>$url.get(...)</code> read at the moment the expression
+    runs, and nothing tells the screen afterwards. Keep the value in the scope, or use a
+    <a href="stores.html#persistencia">store with <code>persist</code></a>.
   </li>
   <li>
-    <b>É um getter dentro de um store.</b> Uma propriedade declarada com <code>get</code> é
-    resolvida uma vez, na criação. Para valores derivados, use um método.
+    <b>It is a getter inside a store.</b> A property declared with <code>get</code> is resolved
+    once, at creation. For derived values, use a method.
   </li>
 </ul>
 
-<h2 id="laco">Maximum call stack, ou aviso de laço no console</h2>
+<h2 id="laco">Maximum call stack, or a loop warning in the console</h2>
 
 <p>
-  Algum efeito está escrevendo na mesma chave que lê. O agendador interrompe a repetição e avisa.
-  Reveja a expressão: costuma ser um <code>v-effect</code> que atribui a uma variável que ele
-  mesmo lê.
+  Some effect is writing to the same key it reads. The scheduler stops the repetition and warns.
+  Look the expression over: it is usually a <code>v-effect</code> assigning to a variable it reads
+  itself.
 </p>
 
-<h2 id="foco">O v-for perde o foco do campo quando a lista muda</h2>
+<h2 id="foco">v-for loses the focus of a field when the list changes</h2>
 
 <p>
-  Falta <code>:key</code>. Sem chave, a biblioteca só conhece a posição, e reordenar recria os
-  elementos. Com <code>:key="item.id"</code>, eles são reaproveitados e movidos. A chave precisa
-  ser estável: o índice não serve, porque ele muda junto com a ordem.
+  The <code>:key</code> is missing. With no key, the library only knows the position, and
+  reordering recreates the elements. With <code>:key="item.id"</code>, they are reused and moved.
+  The key has to be stable: the index will not do, because it changes along with the order.
 </p>
 
-<h2 id="for-if">v-if e v-for no mesmo elemento não funcionam</h2>
+<h2 id="for-if">v-if and v-for on the same element do not work</h2>
 
 <p>
-  Os dois assumem o controle do nó. Ponha a condição em um filho, ou filtre na própria expressão
-  do <code>v-for</code>. A página de <a href="listas.html#for-e-if">listas</a> mostra as duas
-  formas.
+  Both take control of the node. Put the condition on a child, or filter in the
+  <code>v-for</code> expression itself. The <a href="listas.html#for-e-if">lists</a> page shows
+  both ways.
 </p>
 
-<h2 id="globais">window, document e fetch são undefined nas expressões</h2>
+<h2 id="globais">window, document and fetch are undefined in expressions</h2>
 
 <p>
-  É proposital: apenas uma lista fechada de globais é liberada, e é isso que permite rodar sob
-  Content Security Policy restritiva. Para chegar ao DOM e a serviços, use as magias —
-  <code>$el</code>, <code>$refs</code>, <code>$http</code>, <code>$storage</code>,
-  <code>$clipboard</code>. Para liberar algo seu:
+  That is on purpose: only a closed list of globals is exposed, and it is what makes running under
+  a restrictive Content Security Policy possible. To reach the DOM and services, use the magic
+  variables — <code>$el</code>, <code>$refs</code>, <code>$http</code>, <code>$storage</code>,
+  <code>$clipboard</code>. To expose something of your own:
 </p>
 
-<pre data-lang="js"><code>V.config.globals.minhaFuncao = minhaFuncao;</code></pre>
+<pre data-lang="js"><code>V.config.globals.myFunction = myFunction;</code></pre>
 
 <p>
-  O objeto <code>V</code> também não está disponível dentro das expressões, pelo mesmo motivo.
+  The <code>V</code> object is not available inside expressions either, for the same reason.
 </p>
 
-<h2 id="varias-linhas">Como escrevo uma função com várias linhas em um atributo?</h2>
+<h2 id="varias-linhas">How do I write a multi-line function in an attribute?</h2>
 
 <p>
-  Não escreva. O parser aceita expressões, não blocos. Coloque a lógica em um método do
-  <code>v-data</code>, de um store ou do escopo raiz:
+  Do not. The parser takes expressions, not blocks. Put the logic in a method of the
+  <code>v-data</code>, of a store, or of the root scope:
 </p>
 
-<pre data-lang="js"><code>V.data({ limpar() { this.itens = []; this.total = 0; } });</code></pre>
+<pre data-lang="js"><code>V.data({ clear() { this.items = []; this.total = 0; } });</code></pre>
 
-<pre data-lang="html"><code>&lt;button @click="limpar()"&gt;Limpar&lt;/button&gt;</code></pre>
+<pre data-lang="html"><code>&lt;button @click="clear()"&gt;Clear&lt;/button&gt;</code></pre>
 
-<h2 id="componente-escopo">O componente não enxerga o v-data em volta</h2>
+<h2 id="componente-escopo">The component does not see the v-data around it</h2>
 
 <p>
-  É o comportamento padrão: componentes isolam o escopo, para não dependerem por acidente do lugar
-  onde foram colados. Passe o valor por prop, ou declare <code>inheritScope: true</code> na
-  definição.
+  That is the default behaviour: components isolate the scope, so as not to depend by accident on
+  the place they were pasted into. Pass the value in as a prop, or declare
+  <code>inheritScope: true</code> in the definition.
 </p>
 
 <p>
-  O contrário também confunde: o conteúdo de um <code>&lt;slot&gt;</code> pertence ao escopo de
-  quem escreveu a tag, e não ao do componente. Slots com escopo não existem.
+  The opposite confuses people too: the content of a <code>&lt;slot&gt;</code> belongs to the scope
+  of whoever wrote the tag, not to the component's. Scoped slots do not exist.
 </p>
 
-<h2 id="tag-propria">Um trecho da página some sem erro nenhum</h2>
+<h2 id="tag-propria">A stretch of the page disappears with no error at all</h2>
 
 <p>
-  Se o trecho que sumiu vem logo depois de uma tag de componente, olhe o fechamento dela. O HTML
-  não aceita fechamento automático fora das tags conhecidas:
-  <code>&lt;VInput ... /&gt;</code> não fecha nada, e o navegador coloca todo o resto do bloco
-  dentro do componente. Escreva sempre
-  <code>&lt;VInput ...&gt;&lt;/VInput&gt;</code>.
+  If the stretch that disappeared comes right after a component tag, look at how that tag was
+  closed. HTML does not accept self-closing outside the known tags:
+  <code>&lt;VInput ... /&gt;</code> closes nothing, and the browser puts the whole rest of the block
+  inside the component. Always write <code>&lt;VInput ...&gt;&lt;/VInput&gt;</code>.
 </p>
 
-<h2 id="chaves">A interpolação apareceu crua na tela</h2>
+<h2 id="chaves">The interpolation showed up raw on screen</h2>
 
 <p>
-  Duas causas. A primeira: o trecho está dentro de <code>&lt;pre&gt;</code>,
+  Two causes. The first: the stretch is inside <code>&lt;pre&gt;</code>,
   <code>&lt;code&gt;</code>, <code>&lt;script&gt;</code>, <code>&lt;style&gt;</code>,
-  <code>&lt;textarea&gt;</code> ou de um <code>v-ignore</code>, onde a varredura não entra de
-  propósito.
+  <code>&lt;textarea&gt;</code> or a <code>v-ignore</code>, where the sweep deliberately does not
+  go.
 </p>
 
 <p>
-  A segunda: o texto entre as chaves não é uma expressão que a biblioteca consiga ler. Quando a
-  análise falha, o trecho fica como está, de propósito — é o que impede um <code>{</code> solto
-  em um parágrafo de virar erro na tela. Objeto dentro da expressão
-  (<code>{ $t('itens', { n: total }) }</code>) e expressão em várias linhas funcionam; o que não
-  funciona é o que também não funcionaria em um atributo, como <code>function</code> e
+  The second: the text between the braces is not an expression the library can read. When parsing
+  fails, the stretch stays as it is, on purpose — it is what stops a lone <code>{</code> in a
+  paragraph from becoming an error on screen. An object inside the expression
+  (<code>{ $t('items', { n: total }) }</code>) and a multi-line expression both work; what does not
+  work is what would not work in an attribute either, such as <code>function</code> and
   <code>new</code>.
 </p>
 
-<h2 id="conhecidos">Detalhes conhecidos, com contorno</h2>
+<h2 id="conhecidos">Known details, with a workaround</h2>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Estes dependem de correção</span>
+  <span class="doc-aviso__rotulo">These are waiting on a fix</span>
   <ul>
     <li>
-      <b>A confirmação aparece duas vezes.</b> Acontece quando <code>v-confirm</code> está no mesmo
-      elemento de um verbo HTTP ou de <code>v-submit</code>: as duas camadas leem o mesmo atributo.
-      Deixe a pergunta em um lugar só, usando <code>v-click</code> com <code>$http</code>, ou
-      <code>$confirm(...)</code> dentro da própria expressão.
+      <b>The confirmation shows up twice.</b> It happens when <code>v-confirm</code> sits on the
+      same element as an HTTP verb or as <code>v-submit</code>: both layers read the same attribute.
+      Keep the question in one place, using <code>v-click</code> with <code>$http</code>, or
+      <code>$confirm(...)</code> inside the expression itself.
     </li>
     <li>
-      <b>A tradução some ao trocar de idioma.</b> <code>v-t-params</code> é lido apenas na primeira
-      renderização. Use a interpolação reativa:
-      <code>{ $t('itens', { n: total }) }</code>.
+      <b>The translation disappears when the language changes.</b> <code>v-t-params</code> is read
+      only on the first render. Use reactive interpolation:
+      <code>{ $t('items', { n: total }) }</code>.
     </li>
     <li>
-      <b>O gráfico volta a ser de linha quando os dados mudam.</b> Os atributos
-      <code>v-chart-*</code> são lidos na montagem. Com dados reativos, declare tudo no objeto:
-      <code>v-chart="{ type: 'bar', data: vendas }"</code>.
+      <b>The chart goes back to being a line chart when the data changes.</b> The
+      <code>v-chart-*</code> attributes are read on mount. With reactive data, declare everything in
+      the object: <code>v-chart="{ type: 'bar', data: sales }"</code>.
     </li>
     <li>
-      <b>Os textos extras do <code>v-confirm</code></b>, como <code>v-confirm-title</code>, só
-      funcionam com <code>V.config.cleanAttributes = false</code>.
+      <b>The extra texts of <code>v-confirm</code></b>, such as <code>v-confirm-title</code>, only
+      work with <code>V.config.cleanAttributes = false</code>.
     </li>
   </ul>
 </div>
 
-<h2 id="ferramentas">As ferramentas</h2>
+<h2 id="ferramentas">The tools</h2>
 
 <p>
-  Quando o sintoma não está nesta lista, a página do
-  <a href="inspetor.html">inspetor de reatividade</a> mostra como ver os escopos, os efeitos e as
-  requisições acontecendo — e como instalar um tratador global de erros para o que escapa em
-  produção.
+  When the symptom is not on this list, the
+  <a href="inspetor.html">reactivity inspector</a> page shows how to watch the scopes, the effects
+  and the requests happening — and how to install a global error handler for what slips through in
+  production.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++; $log('n agora é', n, 'escopo:', $data)"&gt;
-    Somar e registrar no console
+  &lt;button @click="n++; $log('n is now', n, 'scope:', $data)"&gt;
+    Add and log to the console
   &lt;/button&gt;
   &lt;p&gt;{ n }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
@@ -215,6 +213,6 @@
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>

@@ -1,169 +1,169 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>O inspetor de reatividade · Documentação da Voodoo.js</title>
-<meta name="description" content="O inspetor xray roda dentro da própria página: mostra escopos, componentes, stores, eventos, rede e desempenho, e faz o elemento piscar quando um efeito escreve nele.">
+<title>The reactivity inspector · Voodoo.js documentation</title>
+<meta name="description" content="The xray inspector runs inside the page itself: it shows scopes, components, stores, events, network and performance, and flashes an element whenever an effect writes into it.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/inspetor">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css">
+<link rel="stylesheet" href="../assets/docs.css?v=0.6.0">
 <script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Estendendo e depurando</p>
-<h1>O inspetor de reatividade</h1>
+<p class="doc-migalha">Extending and debugging</p>
+<h1>The reactivity inspector</h1>
 <p class="doc-resumo">
-  O <code>xray</code> roda dentro da própria página, sem extensão de navegador. Ligado, ele
-  contorna todo elemento que tem directives, mostra o escopo de cada um e faz o elemento piscar
-  toda vez que um efeito reativo escreve nele. Dá para ver a reatividade acontecendo.
+  <code>xray</code> runs inside the page itself, with no browser extension. Switched on, it outlines
+  every element that has directives, shows the scope of each one and flashes the element every time
+  a reactive effect writes into it. You can watch the reactivity happening.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
-  <p>O inspetor existe apenas no build completo.</p>
+  <span class="doc-aviso__rotulo">voodoo.full.min.js only</span>
+  <p>The inspector exists only in the full build.</p>
 </div>
 
-<h2 id="ligando">Ligando</h2>
+<h2 id="ligando">Switching it on</h2>
 
-<pre data-lang="js"><code>V.xray();        // liga e desliga
-V.xray(true);    // força ligar
-V.xray(false);   // força desligar</code></pre>
+<pre data-lang="js"><code>V.xray();        // on and off
+V.xray(true);    // force it on
+V.xray(false);   // force it off</code></pre>
 
 <p>
-  O atalho <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> é instalado na primeira chamada. Para
-  ter o atalho disponível desde o começo, sem ligar nada:
+  The shortcut <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>X</kbd> is installed on the first call. To
+  have the shortcut available from the start, without switching anything on:
 </p>
 
 <pre data-lang="js"><code>V.enableXrayShortcut();</code></pre>
 
-<h2 id="abas">O que ele mostra</h2>
+<h2 id="abas">What it shows</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Aba</th><th>O que traz</th></tr></thead>
+<thead><tr><th>Tab</th><th>What it brings</th></tr></thead>
 <tbody>
-<tr><td>Estado</td><td>Todos os escopos da página, com as variáveis visíveis em cada um. Valores simples são editáveis ali mesmo</td></tr>
-<tr><td>Componentes</td><td>Instâncias montadas, com props, estado e o elemento hospedeiro</td></tr>
-<tr><td>Stores</td><td>Stores globais e o conteúdo de cada um</td></tr>
-<tr><td>Eventos</td><td>Eventos disparados por directives, com o elemento de origem</td></tr>
-<tr><td>Rede</td><td>Requisições, com método, URL, status e duração</td></tr>
-<tr><td>Desempenho</td><td>Contagem de efeitos por elemento e quantas vezes cada um reexecutou</td></tr>
+<tr><td>State</td><td>Every scope on the page, with the variables visible in each. Simple values are editable right there</td></tr>
+<tr><td>Components</td><td>Mounted instances, with props, state and the host element</td></tr>
+<tr><td>Stores</td><td>The global stores and the contents of each</td></tr>
+<tr><td>Events</td><td>Events fired by directives, with the element they came from</td></tr>
+<tr><td>Network</td><td>Requests, with method, URL, status and duration</td></tr>
+<tr><td>Performance</td><td>The count of effects per element and how many times each one has re-run</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  Clicar em um elemento na página seleciona o escopo correspondente. Clicar em um elemento no
-  painel o destaca e rola a página até ele.
+  Clicking an element on the page selects the matching scope. Clicking an element in the panel
+  highlights it and scrolls the page to it.
 </p>
 
-<h2 id="desempenho">Como ler a aba de desempenho</h2>
+<h2 id="desempenho">How to read the performance tab</h2>
 
 <p>
-  A contagem soma, para cada elemento, os efeitos criados pelas directives dele mais os efeitos
-  dos textos interpolados que são filhos diretos. Um número alto em um elemento pequeno costuma
-  indicar interpolação demais em um lugar só, e vale quebrar o bloco — cada trecho passa a
-  reexecutar por conta própria, em vez de todos juntos.
+  The count adds up, for each element, the effects created by its own directives plus the effects of
+  the interpolated texts that are its direct children. A high number on a small element usually
+  means too much interpolation in one place, and it is worth breaking the block up — each stretch
+  then re-runs on its own, instead of all of them together.
 </p>
 
-<h2 id="custo">Custo em produção</h2>
+<h2 id="custo">The cost in production</h2>
 
 <p>
-  O módulo não registra nada ao ser importado: nenhum ouvinte, nenhum estilo e nenhum temporizador
-  existe antes da primeira chamada. Ainda assim, em produção o caminho mais seguro é servir o
-  <code>voodoo.min.js</code>, que não traz o inspetor.
+  The module registers nothing when it is imported: no listener, no style and no timer exists before
+  the first call. Even so, in production the safer road is to serve <code>voodoo.min.js</code>,
+  which does not carry the inspector.
 </p>
 
-<h2 id="sem-inspetor">Depurando sem o inspetor</h2>
+<h2 id="sem-inspetor">Debugging without the inspector</h2>
 
-<h3 id="avisos">Avisos detalhados</h3>
+<h3 id="avisos">Detailed warnings</h3>
 
 <pre data-lang="js"><code>V.config.devtools = true;</code></pre>
 
 <p>
-  Com essa opção, os comentários âncora criados por <code>v-if</code> e <code>v-for</code> ganham
-  nome, o que deixa a árvore muito mais legível no inspetor do navegador. Componentes não
-  registrados também passam a avisar no console. O mesmo existe como atributo na tag do script:
+  With this option on, the anchor comments created by <code>v-if</code> and <code>v-for</code> get
+  names, which makes the tree far more readable in the browser inspector. Unregistered components
+  start warning in the console as well. The same thing exists as an attribute on the script tag:
   <code>data-devtools</code>.
 </p>
 
-<h3 id="erros">Tratador global de erros</h3>
+<h3 id="erros">The global error handler</h3>
 
-<pre data-lang="js"><code>V.onError((err, contexto) =&gt; {
-  console.error('[app]', contexto, err);
-  enviarParaOMonitoramento(err, contexto);
+<pre data-lang="js"><code>V.onError((err, context) =&gt; {
+  console.error('[app]', context, err);
+  sendToMonitoring(err, context);
 });</code></pre>
 
 <p>
-  O contexto diz de onde veio: <code>directive v-click</code>, <code>interpolacao</code>,
-  <code>hook mounted</code>, <code>requisicao GET /api/x</code>,
-  <code>evento click ("salvar()")</code> e assim por diante. É o gancho para mandar erro de
-  produção para um serviço de monitoramento.
+  The context says where it came from: <code>directive v-click</code>,
+  <code>expression "..."</code>, <code>hook mounted</code>, <code>request GET /api/x</code>,
+  <code>event click ("save()")</code> and so on. It is the hook for shipping production errors to a
+  monitoring service.
 </p>
 
-<h3 id="inspecionando">Inspecionando pelo console</h3>
+<h3 id="inspecionando">Inspecting from the console</h3>
 
-<pre data-lang="js"><code>V.scope.data;                                  // escopo raiz
-V.getScope(document.querySelector('#lista'));  // escopo do elemento, se ele criou um
-V.findScope(document.querySelector('li'));     // escopo efetivo, subindo os ancestrais
-V.instances;                                   // Set com os componentes montados
-V.components;                                  // Map com as definições registradas
-V.directives;                                  // Map com as directives registradas
-V.magics;                                      // Map com as variáveis mágicas
-V.stores;                                      // todos os stores</code></pre>
+<pre data-lang="js"><code>V.scope.data;                                  // the root scope
+V.getScope(document.querySelector('#list'));   // the element's scope, if it created one
+V.findScope(document.querySelector('li'));     // the effective scope, walking up the ancestors
+V.instances;                                   // a Set of the mounted components
+V.components;                                  // a Map of the registered definitions
+V.directives;                                  // a Map of the registered directives
+V.magics;                                      // a Map of the magic variables
+V.stores;                                      // every store</code></pre>
 
-<h3 id="log">Log dentro do HTML</h3>
+<h3 id="log">Logging from the HTML</h3>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++; $log('n agora é', n)"&gt;Somar e registrar&lt;/button&gt;
-  &lt;p&gt;Abra o console do navegador para ver as mensagens.&lt;/p&gt;
+  &lt;button @click="n++; $log('n is now', n)"&gt;Add and log&lt;/button&gt;
+  &lt;p&gt;Open the browser console to see the messages.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<p><code>$log</code> escreve no console com o prefixo <code>[Voodoo]</code>.</p>
+<p><code>$log</code> writes to the console with the prefix <code>[Voodoo]</code>.</p>
 
-<h3 id="controle">Forçando e parando o processamento</h3>
+<h3 id="controle">Forcing and stopping the processing</h3>
 
-<pre data-lang="js"><code>V.start();                     // percorre e inicializa a partir do body
+<pre data-lang="js"><code>V.start();                     // walks and initializes from the body
 V.start(document.querySelector('#area'));
-V.walk(elemento, escopo);      // inicializa um trecho com um escopo específico
-V.refresh(elemento);           // reinicializa uma raiz
-V.destroy(elemento);           // desmonta, parando efeitos e removendo ouvintes
-V.stopObserving();             // desliga o MutationObserver</code></pre>
+V.walk(element, scope);        // initializes a stretch with a specific scope
+V.refresh(element);            // reinitializes a root
+V.destroy(element);            // unmounts, stopping effects and removing listeners
+V.stopObserving();             // switches the MutationObserver off</code></pre>
 
-<h2 id="barramento">O barramento de eventos das devtools</h2>
+<h2 id="barramento">The devtools event bus</h2>
 
 <p>
-  Qualquer módulo — inclusive o seu — pode reportar atividade para o painel. A aba Rede lista tudo
-  que chega por <code>network</code>, mesmo quando a requisição não passou pelo cliente
-  <code>V.http</code>.
+  Any module — yours included — can report activity to the panel. The Network tab lists everything
+  that arrives through <code>network</code>, even when the request did not go through the
+  <code>V.http</code> client.
 </p>
 
 <pre data-lang="js"><code>V.devtools.emit('network', {
   method: 'GET',
-  url: '/api/usuarios',
+  url: '/api/users',
   status: 200,
   ok: true,
   duration: 128,
-  source: 'meu-plugin'
+  source: 'my-plugin'
 });
 
-const off = V.devtools.on('network', (evento) =&gt; console.log(evento.url));
+const off = V.devtools.on('network', (event) =&gt; console.log(event.url));
 off();</code></pre>
 
 <p>
-  Os tipos são <code>network</code>, <code>event</code>, <code>navigation</code>,
-  <code>locale</code> e <code>update</code>. Emitir sem nenhum ouvinte registrado custa uma busca
-  em <code>Map</code> e nada mais, então reportar não pesa.
+  The types are <code>network</code>, <code>event</code>, <code>navigation</code>,
+  <code>locale</code> and <code>update</code>. Emitting with no listener registered costs one
+  <code>Map</code> lookup and nothing else, so reporting is cheap.
 </p>
 
 </article>
 
-<script src="../assets/docs.js"></script>
+<script src="../assets/docs.js?v=0.6.0"></script>
 </body>
 </html>
