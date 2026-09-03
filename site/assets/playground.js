@@ -616,7 +616,7 @@
   // =====================================================================
 
   /** Caminho absoluto da biblioteca, para funcionar dentro do `srcdoc`. */
-  var LIB = new URL('voodoo.full.min.js', document.baseURI).href;
+  var LIB = new URL('voodoo.full.min.js?v=0.6.2', document.baseURI).href;
 
   var CSS_QUADRO = [
     '*{box-sizing:border-box}',

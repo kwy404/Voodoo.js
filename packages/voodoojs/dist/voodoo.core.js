@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.4.6
+ * Voodoo.js v0.6.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6566,7 +6566,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.4.6";
+  var version2 = "0.6.2";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,

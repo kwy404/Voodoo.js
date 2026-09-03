@@ -33,7 +33,7 @@
 
   var GITHUB = 'https://github.com/voodoojs/voodoo';
   var SITE = 'https://voodoojs.dev';
-  var CDN = 'voodoo.min.js';
+  var CDN = 'voodoo.min.js?v=0.6.2';
 
   // =====================================================================
   // 1. Idioma, tema e paleta
@@ -297,7 +297,7 @@
   ].join('');
 
   /** Caminho absoluto da biblioteca, para funcionar dentro do `srcdoc`. */
-  var LIB_URL = new URL('voodoo.full.min.js', document.baseURI).href;
+  var LIB_URL = new URL('voodoo.full.min.js?v=0.6.2', document.baseURI).href;
 
   /** Monta o documento completo que vai para dentro do quadro. */
   function frameDocument(html) {
@@ -812,7 +812,7 @@
     github: GITHUB,
     cdn: CDN,
     cdnTag: '<script src="' + CDN + '" defer><\/script>',
-    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js',
+    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js?v=0.6.2',
 
     // Numeros medidos por `node scripts/size.mjs` na raiz do repositorio.
     // Refaca a medida sempre que a biblioteca mudar.

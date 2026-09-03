@@ -59,6 +59,17 @@ const EDITS = [
   // the registry does not have yet, and every page would fail to load its
   // library. The pin moves by hand, after the publish lands.
   {
+    what: 'runtime cache key',
+    // The documentation loads the library itself through docs.js, and that URL
+    // had no version on it. GitHub Pages serves with max-age=600, so for ten
+    // minutes after a deploy every live example kept running the previous
+    // bundle — which is how a router bug that was already fixed carried on
+    // being reported. Stamping assets/ and forgetting the runtime meant
+    // stamping everything except the file that actually matters here.
+    find: /((?:\.\.\/)*voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\d.]+)?(?=['"])/g,
+    to: (m, path) => `${path}?v=${version}`,
+  },
+  {
     what: 'asset cache key',
     // Local scripts and stylesheets only: a version query on a CDN URL would
     // defeat its own caching for no gain.
@@ -73,8 +84,44 @@ const EDITS = [
   },
 ];
 
+/**
+ * Two version strings live outside site/, and both were written by hand.
+ *
+ * `src/core.ts` is the worse one: it is `V.version`, so the library reported
+ * 0.4.6 to anyone who asked while actually being 0.6.2. The banner in
+ * tsup.config.ts is the same drift in the file people read first when checking
+ * which build they have.
+ *
+ * They are stamped rather than derived at build time on purpose: a real string
+ * in the source works without a bundler, and `--check` is what stops it drifting.
+ */
+const SOURCE_EDITS = [
+  {
+    file: 'packages/voodoojs/src/core.ts',
+    find: /export const version = '(\d+\.\d+\.\d+)';/,
+    to: () => `export const version = '${version}';`,
+  },
+  {
+    file: 'packages/voodoojs/tsup.config.ts',
+    find: / \* Voodoo\.js v(\d+\.\d+\.\d+)/,
+    to: () => ` * Voodoo.js v${version}`,
+  },
+];
+
 let changed = 0;
 const drift = [];
+
+for (const { file, find, to } of SOURCE_EDITS) {
+  const before = await readFile(file, 'utf8');
+  const after = before.replace(find, (...args) => {
+    const replacement = to(...args);
+    if (replacement !== args[0]) drift.push({ file, what: 'source version', from: args[0], to: replacement });
+    return replacement;
+  });
+  if (after === before) continue;
+  changed++;
+  if (!check) await writeFile(file, after);
+}
 
 for (const file of await siteFiles()) {
   const before = await readFile(file, 'utf8');
