@@ -209,13 +209,13 @@ own file ensures the rule exists before the first frame.
 
 ## CLI
 
-The `@voodoo/cli` package builds custom bundles with only the modules you use:
+The `voodoojs-cli` package builds custom bundles with only the modules you use:
 
 ```bash
-npx voodoo init            # creates a new project ready to use
-npx voodoo build           # builds a bundle choosing modules one by one
-npx voodoo add card        # copies a component into your project
-npx voodoo info            # shows what's installed and the size of each module
+npx voodoojs-cli init            # creates a new project ready to use
+npx voodoojs-cli build           # builds a bundle choosing modules one by one
+npx voodoojs-cli add card        # copies a component into your project
+npx voodoojs-cli info            # shows what's installed and the size of each module
 ```
 
 ---

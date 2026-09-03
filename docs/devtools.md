@@ -95,7 +95,7 @@ production the safest path is to serve the essential build, or build a custom on
 `devtools` module:
 
 ```bash
-npx voodoo build
+npx voodoojs-cli build
 ```
 
 ## How effect counting is done

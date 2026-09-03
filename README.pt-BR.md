@@ -166,7 +166,7 @@ Cada linha abaixo faz parte do runtime publicado.
 | **Tempo real** | `V.socket` com WebSocket nativo e protocolo Socket.IO, salas publicas e privadas, reconexao com espera progressiva, heartbeat e fila de envio. Declarativo com `v-socket`, `v-room` e `v-on-socket:` |
 | **GPU** | `V.gpu` sobre WebGPU com reflexao de WGSL, e a directive `v-shader`. Sem WebGPU, cai no conteudo alternativo do canvas |
 | **Devtools** | Inspetor de reatividade `V.xray` e um barramento de eventos |
-| **CLI** | `@voodoo/cli`: `init`, `build --modules=…`, `add`, `info` |
+| **CLI** | `voodoojs-cli`: `init`, `build --modules=…`, `add`, `info` |
 
 ## Instalação
 
@@ -216,10 +216,10 @@ cd Voodoo.js && npm install && npm run build   # os bundles saem em packages/voo
 **CLI**
 
 ```bash
-npx voodoo init minha-pagina                     # cria um projeto pronto para abrir
-npx voodoo build --modules=core,directives,http  # bundle sob medida, só com o que você usa
-npx voodoo add card                              # copia um componente para o seu projeto
-npx voodoo info                                  # lista os módulos e o tamanho de cada um
+npx voodoojs-cli init minha-pagina                     # cria um projeto pronto para abrir
+npx voodoojs-cli build --modules=core,directives,http  # bundle sob medida, só com o que você usa
+npx voodoojs-cli add card                              # copia um componente para o seu projeto
+npx voodoojs-cli info                                  # lista os módulos e o tamanho de cada um
 ```
 
 **Qual bundle escolher?**
@@ -230,7 +230,7 @@ npx voodoo info                                  # lista os módulos e o tamanho
 | `voodoo.min.js` | **Build essencial — o padrão.** Soma formulários, validação, máscaras, interface, arrastar e soltar |
 | `voodoo.full.min.js` | Tudo: gráficos, animação, roteador, i18n, devtools, componentes prontos |
 
-Os tamanhos são dinâmicos — veja o badge acima, ou rode `npm run size` / `npx voodoo info`.
+Os tamanhos são dinâmicos — veja o badge acima, ou rode `npm run size` / `npx voodoojs-cli info`.
 
 ## Início rápido
 
@@ -675,7 +675,7 @@ que realmente precisa de canvas.
 | Pacote | Para que serve |
 | --- | --- |
 | [`voodoojs`](packages/voodoojs/) | O framework: runtime, directives, componentes, HTTP, formulários, interface, roteador, i18n |
-| [`@voodoo/cli`](packages/cli/) | Criação de projetos, builds sob medida, cópia de componentes, informação de módulos |
+| [`voodoojs-cli`](packages/cli/) | Criação de projetos, builds sob medida, cópia de componentes, informação de módulos |
 
 ## TypeScript
 
@@ -711,7 +711,7 @@ Um monorepo com npm workspaces: [`packages/voodoojs`](packages/voodoojs/) é o f
 | `npm run test:watch` | A mesma suíte, reexecutando enquanto você edita |
 | `npm run coverage` | Rodada de testes com relatório de cobertura |
 | `npm run typecheck` | `tsc --noEmit` sobre o pacote do framework |
-| `npm run build` | Gera todos os bundles do `voodoojs` e do `@voodoo/cli` |
+| `npm run build` | Gera todos os bundles do `voodoojs` e do `voodoojs-cli` |
 | `npm run size` | Informa o tamanho de cada bundle gerado |
 | `npm run serve` | Servidor estático local para os exemplos e o site |
 | `npm run format` | Prettier sobre o repositório |

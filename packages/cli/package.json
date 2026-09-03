@@ -1,18 +1,17 @@
 {
-  "name": "@voodoo/cli",
+  "name": "voodoojs-cli",
   "version": "0.7.0",
-  "description": "Linha de comando da Voodoo.js: cria projetos, monta builds sob medida e copia componentes para o seu codigo.",
+  "description": "Command line for Voodoo.js: scaffold projects, build custom bundles and copy components into your code.",
   "license": "MIT",
   "type": "module",
   "bin": {
     "voodoo": "./bin/voodoo.mjs"
   },
   "files": [
-    "bin",
-    "templates"
+    "bin"
   ],
   "scripts": {
-    "build": "node -e \"console.log('CLI e JavaScript puro, nao precisa de build.')\""
+    "build": "node -e \"console.log('The CLI is plain JavaScript, no build needed.')\""
   },
   "dependencies": {
     "esbuild": "^0.24.0"
@@ -20,8 +19,22 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["voodoojs", "cli", "build", "scaffold"],
+  "keywords": [
+    "voodoojs",
+    "cli",
+    "build",
+    "scaffold"
+  ],
   "publishConfig": {
     "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kwy404/Voodoo.js.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://kwy404.github.io/Voodoo.js/",
+  "bugs": {
+    "url": "https://github.com/kwy404/Voodoo.js/issues"
   }
 }

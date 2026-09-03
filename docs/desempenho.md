@@ -61,7 +61,7 @@ import { http } from 'voodoojs/http';
 For a custom browser bundle, with only the modules you use:
 
 ```bash
-npx voodoo build
+npx voodoojs-cli build
 ```
 
 ## Best practices

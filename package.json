@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=voodoojs && npm run build --workspace=@voodoo/cli",
+    "build": "npm run build --workspace=voodoojs && npm run build --workspace=voodoojs-cli",
     "dev": "npm run dev --workspace=voodoojs",
     "test": "vitest run",
     "test:watch": "vitest",

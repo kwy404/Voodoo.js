@@ -161,7 +161,7 @@ Every row below is part of the shipped runtime.
 | **Realtime** | `V.socket` over native WebSocket and the Socket.IO protocol, public and private rooms, backoff reconnection, heartbeat and a send queue. Declarative via `v-socket`, `v-room` and `v-on-socket:` |
 | **GPU** | `V.gpu` over WebGPU with WGSL reflection, plus the `v-shader` directive. Without WebGPU it falls back to the canvas content |
 | **Devtools** | `V.xray` reactivity inspector and an event bus |
-| **CLI** | `@voodoo/cli`: `init`, `build --modules=…`, `add`, `info` |
+| **CLI** | `voodoojs-cli`: `init`, `build --modules=…`, `add`, `info` |
 
 ## Installation
 
@@ -211,10 +211,10 @@ cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoo
 **CLI**
 
 ```bash
-npx voodoo init my-page                          # scaffold a ready-to-open project
-npx voodoo build --modules=core,directives,http  # custom bundle with only what you use
-npx voodoo add card                              # copy a component into your project
-npx voodoo info                                  # list modules and their sizes
+npx voodoojs-cli init my-page                          # scaffold a ready-to-open project
+npx voodoojs-cli build --modules=core,directives,http  # custom bundle with only what you use
+npx voodoojs-cli add card                              # copy a component into your project
+npx voodoojs-cli info                                  # list modules and their sizes
 ```
 
 **Which bundle?**
@@ -225,7 +225,7 @@ npx voodoo info                                  # list modules and their sizes
 | `voodoo.min.js` | **Essential build — the default.** Adds forms, validation, masks, UI, drag-and-drop |
 | `voodoo.full.min.js` | Everything: charts, motion, router, i18n, devtools, ready-made components |
 
-Sizes are dynamic — see the badge above, or run `npm run size` / `npx voodoo info`.
+Sizes are dynamic — see the badge above, or run `npm run size` / `npx voodoojs-cli info`.
 
 ## Quick start
 
@@ -661,7 +661,7 @@ handles what genuinely needs a canvas.
 | Package | Purpose |
 | --- | --- |
 | [`voodoojs`](packages/voodoojs/) | The framework: runtime, directives, components, HTTP, forms, UI, router, i18n |
-| [`@voodoo/cli`](packages/cli/) | Scaffolding, custom builds, component copying, module info |
+| [`voodoojs-cli`](packages/cli/) | Scaffolding, custom builds, component copying, module info |
 
 ## TypeScript
 
@@ -697,7 +697,7 @@ An npm workspaces monorepo: [`packages/voodoojs`](packages/voodoojs/) is the fra
 | `npm run test:watch` | Same suite, re-running as you edit |
 | `npm run coverage` | Test run with a coverage report |
 | `npm run typecheck` | `tsc --noEmit` over the framework package |
-| `npm run build` | Builds every bundle for `voodoojs` and `@voodoo/cli` |
+| `npm run build` | Builds every bundle for `voodoojs` and `voodoojs-cli` |
 | `npm run size` | Reports the size of each generated bundle |
 | `npm run serve` | Local static server for the examples and the site |
 | `npm run format` | Prettier over the repository |

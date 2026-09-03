@@ -12,6 +12,21 @@ repository, the site and the documentation.
 
 ### Fixed
 
+- **The CLI is published under a name that is actually ours.** It was called
+  `@voodoo/cli`, which was never published, and every README and doc told people
+  to run `npx voodoo`. That name belongs to an unrelated, abandoned 2012 package
+  on npm, so anyone following the instructions downloaded a stranger's code and got
+  `TypeError: path.existsSync is not a function` from a Node API removed years
+  ago. The package is now `voodoojs-cli`, matching `voodoojs` on the registry,
+  and the command is `npx voodoojs-cli`. Verified by packing the tarball and
+  running `init` from it before any of this was written down.
+- The CLI speaks English. Its output was Portuguese, including the `info` table
+  headings, which are user-facing because `console.table` draws object keys as
+  column titles.
+- `packages/cli/package.json` listed a `templates` directory in `files` that does
+  not exist.
+
+
 - **The documentation's live example cards stop growing.** Reported three times,
   disclosed as unfixed in 0.7.0, and now understood. The frame measured
   `Math.max(body.scrollHeight, documentElement.scrollHeight)`, and the second of
