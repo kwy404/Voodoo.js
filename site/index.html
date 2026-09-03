@@ -944,7 +944,7 @@
                 <span v-t="hero.liveHead">Running on this page, right now</span>
               </div>
 
-              <pre><code>&lt;<span class="t-tag">div</span> <span class="t-attr">v-data</span>=<span class="t-str">"{ n: 0 }"</span>&gt;
+              <pre v-ignore><code>&lt;<span class="t-tag">div</span> <span class="t-attr">v-data</span>=<span class="t-str">"{ n: 0 }"</span>&gt;
   &lt;<span class="t-tag">output</span>&gt;{ n }&lt;/<span class="t-tag">output</span>&gt;
 
   &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n--"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
@@ -954,13 +954,16 @@
 &lt;/<span class="t-tag">div</span>&gt;</code></pre>
 
               <div class="demo-out">
-                <output class="count">{ n }</output>
+                <output class="count" v-text="n">0</output>
                 <button class="demo-btn" @click="n--; clicks++" v-t:aria-label="hero.dec" aria-label="Decrease">−</button>
                 <button class="demo-btn" @click="n++; clicks++" v-t:aria-label="hero.inc" aria-label="Increase">+</button>
                 <button class="demo-btn" @click="n = 0; clicks++" aria-label="Reset" style="width: auto; padding: 0 12px; font-size: 14px">
                   reset
                 </button>
-                <p class="demo-note"><span v-t="hero.double">double</span>: { n * 2 } · { clicks } <span v-t="hero.clicks">clicks so far</span></p>
+                <p class="demo-note">
+                  <span v-t="hero.double">double</span>: <span v-text="n * 2">0</span> ·
+                  <span v-text="clicks">0</span> <span v-t="hero.clicks">clicks so far</span>
+                </p>
               </div>
             </div>
           </div>
