@@ -1,14 +1,14 @@
-import { http, HttpError, request } from './chunk-HRZNZYX5.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-YPYIXZMZ.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-ACA7OITR.js';
-import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-OHTHDQPA.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-WNHAVJPX.js';
-import { injectStyle, ensureTokens } from './chunk-EOFH6V2Y.js';
-import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-4NJCQ3ZV.js';
-import { __publicField } from './chunk-QWWMJUWO.js';
+import { http, HttpError, request } from './chunk-WSDB7K4X.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-JB2YYNK6.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-4T2UIPWX.js';
+import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-CYN6VLMD.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-ZIWLQZZL.js';
+import { injectStyle, ensureTokens } from './chunk-GIWKGFGY.js';
+import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-MMLUK37L.js';
+import { __publicField } from './chunk-YOZTHZS2.js';
 
 /**
- * Voodoo.js v0.6.2
+ * Voodoo.js v0.7.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2662,7 +2662,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-KB7J2LCE.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-SLQ6PHZK.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -2949,7 +2949,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version2 = "0.6.2";
+var version2 = "0.7.0";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -10271,5 +10271,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-LPG35UHD.js.map
-//# sourceMappingURL=chunk-LPG35UHD.js.map
+//# sourceMappingURL=chunk-II3XBOAP.js.map
+//# sourceMappingURL=chunk-II3XBOAP.js.map

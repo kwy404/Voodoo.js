@@ -7,6 +7,43 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-03
+
+A minor rather than a patch, because a documented keyboard shortcut changed.
+
+### Changed
+
+- **The devtools shortcut is `Alt+Shift+V`, not `Ctrl+Shift+X`.** Opera closes
+  the tab with Ctrl+Shift+X, and browsers claim most of that range for
+  themselves; a shortcut the browser gets to first is not a shortcut. It is
+  matched on `event.code` as well as `event.key`, because Alt composes a
+  different character on some layouts. Changed everywhere it is documented, not
+  only where it is implemented.
+
+### Fixed
+
+- The documentation's live-example frames paint their own background. They were
+  transparent, so their text was drawn with the frame's `--ink` over the card's
+  background, and those two resolve their themes separately: when they disagreed
+  the result was dark text on a dark card.
+- The theme toggle inside those frames does something. They styled themselves
+  from `data-tema`, which the shell stamps, while the library writes
+  `data-theme` when something inside the frame changes it — so the
+  `v-theme-toggle` example flipped a state nothing was listening to.
+
+### Internal
+
+- Site asset URLs are keyed on a content hash rather than the package version.
+  Assets change between releases: docs.js was fixed three times inside 0.6.2 and
+  kept the URL `?v=0.6.2` throughout, so nobody who had already loaded a page
+  received any of it. Each fix was deployed, verified on the server, and
+  correctly reported as still broken by someone whose browser held an older copy.
+- CI downloads the browser before running the browser suite. Without it all 53
+  specs failed with "Executable doesn't exist" and the quality report scored that
+  check 2.0 — red for a reason unrelated to any change, which trains everyone to
+  scroll past it.
+
+
 ## [0.6.2] - 2026-09-03
 
 ### Fixed
