@@ -256,9 +256,9 @@ function build(): Refs {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'v-devtools-btn';
-  button.setAttribute('aria-label', 'Open Voodoo devtools (Ctrl+Shift+X)');
+  button.setAttribute('aria-label', 'Open Voodoo devtools (Alt+Shift+V)');
   button.setAttribute('aria-pressed', 'false');
-  button.title = 'Voodoo devtools — click to inspect, drag to move (Ctrl+Shift+X)';
+  button.title = 'Voodoo devtools — click to inspect, drag to move (Alt+Shift+V)';
   button.innerHTML = MARK;
 
   const label = document.createElement('span');

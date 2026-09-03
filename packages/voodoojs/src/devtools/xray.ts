@@ -1576,7 +1576,7 @@ export function isXrayEnabled(): boolean {
 }
 
 /**
- * Installs only the `Ctrl+Shift+X` shortcut, without opening the panel.
+ * Installs only the `Alt+Shift+V` shortcut, without opening the panel.
  * Useful for keeping the inspector one keystroke away in development, with no
  * cost at all while no one presses the keys.
  */
@@ -1584,8 +1584,16 @@ export function enableXrayShortcut(): void {
   if (shortcutInstalled || typeof document === 'undefined') return;
   shortcutInstalled = true;
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (!event.ctrlKey || !event.shiftKey) return;
-    if (event.key !== 'X' && event.key !== 'x') return;
+    // Alt+Shift+V, not Ctrl+Shift+X.
+    //
+    // Ctrl+Shift+X is taken: Opera closes the tab with it, and browsers claim
+    // most of the Ctrl+Shift range for themselves. A shortcut a browser gets to
+    // first is not a shortcut. Alt+Shift is far less contested, and V is the
+    // letter people already associate with this library.
+    if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+    // `event.key` under Alt can carry a composed character on some layouts, so
+    // the physical key is the reliable one.
+    if (event.code !== 'KeyV' && event.key !== 'V' && event.key !== 'v') return;
     event.preventDefault();
     xray();
   });
@@ -1600,7 +1608,7 @@ export function enableXrayShortcut(): void {
  * V.xray(false)   // disable
  * ```
  *
- * The first call also installs the `Ctrl+Shift+X` shortcut.
+ * The first call also installs the `Alt+Shift+V` shortcut.
  *
  * @param force enable or disable explicitly. Without argument, toggles.
  * @returns the state after the call.

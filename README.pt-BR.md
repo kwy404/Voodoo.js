@@ -446,7 +446,7 @@ V.xray(false)   // fecha
 V.enableXrayShortcut()   // instala apenas o atalho, sem abrir o painel
 ```
 
-A primeira chamada também instala o atalho `Ctrl+Shift+X`, então o inspetor fica a uma tecla de
+A primeira chamada também instala o atalho `Alt+Shift+V`, então o inspetor fica a uma tecla de
 distância durante o desenvolvimento, sem custo nenhum enquanto ninguém aperta.
 
 ## Arquitetura

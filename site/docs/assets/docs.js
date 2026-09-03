@@ -125,7 +125,7 @@
     })();
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
-  var RUNTIME = new URL('../voodoo.full.min.js?v=55911cd7', RAIZ).href; // .../site/voodoo.full.min.js
+  var RUNTIME = new URL('../voodoo.full.min.js?v=758edb1c', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the
@@ -606,7 +606,14 @@
     TOKENS_IFRAME +
     '*,*::before,*::after{box-sizing:border-box}' +
     'body{margin:0;padding:16px;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",' +
-    'Roboto,Helvetica,Arial,sans-serif;background:transparent;color:var(--ink)}' +
+    'Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}' +
+    // Not transparent. The frame's text is painted with the frame's own --ink,
+    // and a transparent body puts it on the card's background instead of its
+    // own. When the two resolve different themes -- which they can, since the
+    // frame decides its theme from an attribute the shell stamps and the page
+    // decides its own -- the result is dark text on a dark card, invisible. A
+    // frame that paints its own surface cannot land in that state.
+
     '[v-cloak]{display:none!important}' +
     'h1,h2,h3,h4,p,ul,ol{margin:0 0 .6rem}' +
     'ul,ol{padding-left:1.2rem}' +

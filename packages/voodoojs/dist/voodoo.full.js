@@ -20712,8 +20712,8 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     if (shortcutInstalled || typeof document === "undefined") return;
     shortcutInstalled = true;
     document.addEventListener("keydown", (event) => {
-      if (!event.ctrlKey || !event.shiftKey) return;
-      if (event.key !== "X" && event.key !== "x") return;
+      if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
+      if (event.code !== "KeyV" && event.key !== "V" && event.key !== "v") return;
       event.preventDefault();
       xray();
     });
@@ -20906,9 +20906,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const button = document.createElement("button");
     button.type = "button";
     button.className = "v-devtools-btn";
-    button.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
+    button.setAttribute("aria-label", "Open Voodoo devtools (Alt+Shift+V)");
     button.setAttribute("aria-pressed", "false");
-    button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
+    button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Alt+Shift+V)";
     button.innerHTML = MARK;
     const label = document.createElement("span");
     label.className = "v-devtools-label";

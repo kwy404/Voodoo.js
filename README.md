@@ -435,7 +435,7 @@ V.xray(false)   // close it
 V.enableXrayShortcut()   // install only the shortcut, without opening the panel
 ```
 
-The first call also installs the `Ctrl+Shift+X` shortcut, so the inspector stays one keystroke
+The first call also installs the `Alt+Shift+V` shortcut, so the inspector stays one keystroke
 away during development at no cost while nobody presses it.
 
 ## Architecture
