@@ -842,9 +842,9 @@
     return el('footer', {
       class: 'doc-rodape',
       html:
-        '<p>Voodoo.js 0.1.0 &#183; documentação em português do Brasil.</p>' +
+        '<p>Voodoo.js 0.5.0 &#183; documentação em português do Brasil.</p>' +
         '<p><a href="https://github.com/kwy404/Voodoo.js">Repositório</a> &#183; ' +
-        '<a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.1.0">Notas da versão</a> &#183; ' +
+        '<a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">Notas da versão</a> &#183; ' +
         '<a href="' +
         href('referencia/perguntas-frequentes') +
         '">Perguntas frequentes</a></p>'
