@@ -28,6 +28,27 @@ const pkg = JSON.parse(await readFile('packages/voodoojs/package.json', 'utf8'))
 const version = pkg.version;
 const minor = version.split('.').slice(0, 2).join('.');
 
+/**
+ * Whether the CDN can already serve this minor line.
+ *
+ * Asked rather than assumed: pinning the site to a tag the registry does not
+ * have breaks every page at once, and it is the kind of break that only shows
+ * up after a deploy. A network failure answers no, which leaves the pin alone.
+ */
+async function cdnHasMinor() {
+  try {
+    const response = await fetch(
+      `https://cdn.jsdelivr.net/npm/${pkg.name}@${minor}/dist/voodoo.min.js`,
+      { method: 'HEAD' }
+    );
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+const pinnable = await cdnHasMinor();
+
 /** Every .html and .js under site/, excluding the copied bundles. */
 async function siteFiles(dir = 'site') {
   const out = [];
@@ -47,17 +68,35 @@ async function siteFiles(dir = 'site') {
 }
 
 const EDITS = [
+  ...(pinnable
+    ? [
+        {
+          what: 'CDN pin',
+          // A literal, not `new RegExp` with a template: inside a template
+          // literal `\d` collapses to `d`, so the built pattern matched nothing
+          // and the pin silently stayed behind while the report claimed it moved.
+          find: /voodoojs@(\d+\.\d+(?:\.\d+)?)/g,
+          to: (match, found) => {
+            // An exact version stays exact, a minor line stays a minor line.
+            const exact = found.split('.').length === 3;
+            return `voodoojs@${exact ? version : minor}`;
+          },
+        },
+      ]
+    : []),
   {
     what: 'visible version',
     // "Voodoo.js 1.2.3" anywhere in prose, and the docs breadcrumb.
     find: /Voodoo\.js (\d+\.\d+\.\d+)/g,
     to: () => `Voodoo.js ${version}`,
   },
-  // Deliberately NOT stamping the CDN pin. The version in package.json exists
-  // the moment it is bumped; the version on npm exists only after someone runs
-  // publish. Moving the pin with the bump would point the whole site at a tag
-  // the registry does not have yet, and every page would fail to load its
-  // library. The pin moves by hand, after the publish lands.
+  // The CDN pin is stamped only when the registry actually has that line.
+  //
+  // The version in package.json exists the moment it is bumped; the version on
+  // npm exists only after someone runs publish. Moving the pin with the bump
+  // would point every page at a tag the registry does not have, and the whole
+  // site would fail to load its library. So the pin follows what is published,
+  // not what is built, and the check below is what tells them apart.
   {
     what: 'runtime cache key',
     // The documentation loads the library itself through docs.js, and that URL
@@ -66,7 +105,12 @@ const EDITS = [
     // bundle — which is how a router bug that was already fixed carried on
     // being reported. Stamping assets/ and forgetting the runtime meant
     // stamping everything except the file that actually matters here.
-    find: /((?:\.\.\/)*voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\d.]+)?(?=['"])/g,
+    // `(?:\.\.\/)+` and not `*`. With the star this matched a bare
+    // `voodoo.min.js` anywhere, including inside a CDN URL that is already
+    // pinned by version, and stamped `?v=` onto it. A cache key on a URL that
+    // carries its own version is redundant at best and defeats the CDN's
+    // caching at worst. Only paths that climb are local paths.
+    find: /((?:\.\.\/)+voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\d.]+)?(?=['"])/g,
     to: (m, path) => `${path}?v=${version}`,
   },
   {
@@ -123,7 +167,9 @@ for (const { file, find, to } of SOURCE_EDITS) {
   if (!check) await writeFile(file, after);
 }
 
-for (const file of await siteFiles()) {
+const EXTRA_FILES = ['README.md', 'README.pt-BR.md', 'packages/voodoojs/README.md'];
+
+for (const file of [...(await siteFiles()), ...EXTRA_FILES]) {
   const before = await readFile(file, 'utf8');
   let after = before;
 
@@ -143,7 +189,9 @@ for (const file of await siteFiles()) {
 const byWhat = {};
 for (const d of drift) byWhat[d.what] = (byWhat[d.what] ?? 0) + 1;
 
-console.log(`version ${version} (CDN pinned to ${minor})`);
+console.log(
+  `version ${version} (CDN ${pinnable ? `pinned to ${minor}` : `left alone: ${minor} is not on the registry yet`})`
+);
 for (const [what, n] of Object.entries(byWhat)) console.log(`  ${what.padEnd(18)} ${n}`);
 console.log(`\n${changed} file(s) ${check ? 'would change' : 'stamped'}`);
 
