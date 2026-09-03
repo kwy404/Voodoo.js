@@ -7746,12 +7746,13 @@ function writeUrl(state2, url2, replace) {
     }
   }
   if (settings2.mode !== "hash") return;
-  const hash = url2.slice(url2.indexOf("#"));
+  const marker = url2.indexOf("#");
+  if (marker < 0) return;
+  const hash = url2.slice(marker);
   if (window.location.hash === hash) return;
   writingHash = true;
   try {
-    if (replace) window.location.replace(url2);
-    else window.location.hash = hash;
+    window.location.hash = hash;
   } finally {
     setTimeout(() => {
       writingHash = false;

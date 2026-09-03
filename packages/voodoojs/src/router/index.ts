@@ -346,13 +346,25 @@ function writeUrl(state: Record<string, unknown>, url: string, replace: boolean)
 
   if (settings.mode !== 'hash') return;
 
-  const hash = url.slice(url.indexOf('#'));
+  const marker = url.indexOf('#');
+  if (marker < 0) return;
+  const hash = url.slice(marker);
   if (window.location.hash === hash) return;
 
   writingHash = true;
   try {
-    if (replace) window.location.replace(url);
-    else window.location.hash = hash;
+    // Only ever the hash, and never `location.replace(url)`.
+    //
+    // `buildUrl` returns pathname + search + hash, and in an `about:srcdoc`
+    // document the pathname resolves against the parent: assigning the whole
+    // URL navigated the frame to `/docs/guia/srcdoc`, which does not exist, and
+    // the example was replaced by a 404 page. Trading an exception for a wrong
+    // navigation is worse than the exception.
+    //
+    // Replace semantics cannot be honoured here either: a document that refuses
+    // the History API gives no way to avoid a history entry. One extra entry is
+    // a lesser wrong than leaving the page.
+    window.location.hash = hash;
   } finally {
     // Cleared on the next task: assigning the hash fires hashchange
     // asynchronously, and it has to still be set when that arrives.

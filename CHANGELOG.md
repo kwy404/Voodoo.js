@@ -7,6 +7,37 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-09-03
+
+### Fixed
+
+- **The router fallback no longer navigates the page away.** 0.6.1 stopped the
+  router throwing in a document with an opaque origin, but the fallback it added
+  called `location.replace(url)` for a replacing navigation. `buildUrl` returns
+  pathname + search + hash, and in an `about:srcdoc` document `location.pathname`
+  is the bare string `srcdoc`, which resolves against the parent: the frame left
+  for `/docs/guia/srcdoc` and the live example was replaced by a 404 page. An
+  exception was bad; walking off the page was worse.
+
+  The fallback now touches the hash and nothing else. Replace semantics cannot be
+  honoured in a document that refuses the History API, and one extra history
+  entry is a lesser wrong than leaving the page.
+
+- Nine browser tests cover this, in a real Chromium against a real
+  `about:srcdoc` frame, and all nine fail against 0.6.1. They live in the browser
+  suite because neither bug is reachable from jsdom: it has no opaque origins, so
+  `pushState` never refuses, and `location.replace` is a no-op there, so the
+  escape cannot happen either. A jsdom test for either passes whether the fix is
+  present or not, which is worse than no test.
+
+### Changed
+
+- The published package README is no longer a stub. It carries the site links,
+  the component list, the benchmark table with its honest reading, and the CSP
+  and attribute-cleanup properties that are the reasons to pick this over the
+  alternatives.
+
+
 ## [0.6.1] - 2026-09-03
 
 ### Fixed

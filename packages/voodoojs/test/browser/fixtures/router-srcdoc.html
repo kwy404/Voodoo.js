@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Router inside an about:srcdoc frame</title>
+    <style>
+      body {
+        font: 14px system-ui, sans-serif;
+        margin: 0;
+        padding: 16px;
+      }
+      iframe {
+        width: 420px;
+        height: 220px;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      The shape the documentation uses for its live examples, and the shape that
+      broke: an iframe written through `srcdoc`. Such a document has an opaque
+      origin, and an opaque origin refuses the History API outright.
+
+      The frame is built from script rather than written inline so the fixture
+      can point it at whichever bundle the harness is testing.
+    -->
+    <iframe id="stage" title="Live example"></iframe>
+
+    <script>
+      const source = `
+        <div>
+          <script>
+            V.component('page-home', { template: '<p id="view">home</p>' });
+            V.component('page-about', { template: '<p id="view">about</p>' });
+
+            V.router({
+              mode: 'hash',
+              routes: {
+                '/': { component: 'page-home' },
+                '/about': { component: 'page-about' }
+              }
+            });
+          <\/script>
+
+          <nav>
+            <a id="to-about" v-link href="#/about">About</a>
+            <a id="to-home" v-link href="#/">Home</a>
+
+            <!--
+              A replacing navigation, which a v-link click does not perform.
+              The bug this fixture exists for lived in that branch alone: the
+              fallback called location.replace(url) with a full path, and the
+              frame left for a URL that does not exist. Without a button that
+              actually replaces, the test passed against the bug.
+            -->
+            <button id="replace-about" @click="$router.replace('/about')">replace about</button>
+            <button id="replace-home" @click="$router.replace('/')">replace home</button>
+          </nav>
+
+          <main v-router-view>loading</main>
+          <small id="path">{ $route.path }</small>
+        </div>
+      `;
+
+      // The server mounts the real built bundles at /dist.
+      const bundle = new URL('/dist/voodoo.full.min.js', location.href).href;
+
+      document.getElementById('stage').srcdoc =
+        '<!doctype html><html><head><meta charset="utf-8">' +
+        '<scr' + 'ipt src="' + bundle + '"><\/scr' + 'ipt>' +
+        '</head><body>' + source + '</body></html>';
+    </script>
+  </body>
+</html>

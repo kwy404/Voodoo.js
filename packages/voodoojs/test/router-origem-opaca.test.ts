@@ -175,3 +175,37 @@ describe('with a working History API, nothing changed', () => {
     await expect(router.push('/about')).rejects.toThrow('something genuinely broken');
   });
 });
+
+describe('the fallback must not leave the page', () => {
+  // The first version of this fix called `location.replace(url)` for a replacing
+  // navigation. buildUrl returns pathname + search + hash, and in an
+  // about:srcdoc document the pathname resolves against the parent, so the frame
+  // navigated to /docs/guia/srcdoc and the example was replaced by a 404. An
+  // exception is bad; walking off the page is worse.
+  //
+  // jsdom makes location.replace and location.assign non-configurable, so a spy
+  // is not available. The pathname staying put is the same proof and a more
+  // direct one: had the frame navigated, it could not have.
+  it('a replacing navigation still lands on the route', async () => {
+    refuseHistory();
+    await mountExample('hash');
+
+    await router.replace('/about');
+    await nextTick();
+
+    expect(route.path).toBe('/about');
+    expect(window.location.hash).toContain('/about');
+  });
+
+  it('the pathname is left exactly as it was', async () => {
+    refuseHistory();
+    const before = window.location.pathname;
+
+    await mountExample('hash');
+    await router.push('/about');
+    await router.replace('/');
+    await nextTick();
+
+    expect(window.location.pathname).toBe(before);
+  });
+});
