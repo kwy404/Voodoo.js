@@ -1,11 +1,17 @@
 /**
- * Servidor estatico minimo para abrir as demos, a landing page e a galeria da
- * marca sem precisar de nenhuma dependencia.
+ * Minimal static server for opening the site, the demos and the brand gallery
+ * with no dependencies at all.
  *
- * Uso:
- *   node scripts/serve.mjs           serve a raiz do projeto na porta 5173
- *   node scripts/serve.mjs 3000      escolhe a porta
- *   node scripts/serve.mjs 3000 site serve apenas a pasta informada
+ * It assembles the same layout the Pages workflow publishes: `site/` is the
+ * root, and the folders that workflow copies alongside it are mounted where it
+ * puts them. Before this, a link written as `examples/` resolved to
+ * `site/examples/` locally and 404'd, while the same link worked in production,
+ * so the site could only be tested after deploying it.
+ *
+ * Usage:
+ *   node scripts/serve.mjs            serves the assembled site on port 5173
+ *   node scripts/serve.mjs 3000       picks the port
+ *   node scripts/serve.mjs 3000 .     serves a raw folder instead, unassembled
  */
 
 import { createServer } from 'node:http';
@@ -13,7 +19,32 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
 const port = Number(process.argv[2] || 5173);
-const rootDir = resolve(process.argv[3] || '.');
+const repoRoot = resolve('.');
+const explicitRoot = process.argv[3] ? resolve(process.argv[3]) : null;
+const rootDir = explicitRoot ?? join(repoRoot, 'site');
+
+/**
+ * Paths the Pages workflow copies into the published site. Keep this in step
+ * with .github/workflows/pages.yml, or local and production disagree again.
+ */
+const MOUNTS = explicitRoot
+  ? {}
+  : {
+      '/examples': join(repoRoot, 'examples'),
+      '/design-system': join(repoRoot, 'design-system'),
+      '/brand': join(repoRoot, 'brand'),
+      '/packages': join(repoRoot, 'packages'),
+    };
+
+/** Resolves a request path against the mounts first, then the served root. */
+function resolveRequest(pathname) {
+  for (const [prefix, target] of Object.entries(MOUNTS)) {
+    if (pathname === prefix || pathname.startsWith(prefix + '/')) {
+      return { base: target, rest: pathname.slice(prefix.length) || '/' };
+    }
+  }
+  return { base: rootDir, rest: pathname };
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -35,10 +66,11 @@ const MIME = {
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://localhost:${port}`);
-    let filePath = join(rootDir, normalize(decodeURIComponent(url.pathname)));
+    const { base, rest } = resolveRequest(decodeURIComponent(url.pathname));
+    let filePath = join(base, normalize(rest));
 
     // Impede sair da raiz servida.
-    if (!filePath.startsWith(rootDir)) {
+    if (!filePath.startsWith(base)) {
       res.writeHead(403).end('Acesso negado');
       return;
     }

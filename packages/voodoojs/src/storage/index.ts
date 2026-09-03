@@ -248,10 +248,23 @@ export type ThemeName = 'light' | 'dark' | 'system';
 
 const THEME_KEY = 'voodoo:theme';
 
+/**
+ * The choice made during this page's life, independent of whether it could be
+ * written down.
+ *
+ * `storage` swallows its own failures, which is right, but it meant a choice
+ * made where localStorage is unavailable was silently discarded: `set()` wrote
+ * nothing, `chosen` stayed false, and `apply()` returned without touching the
+ * document. A sandboxed iframe has an opaque origin and throws on localStorage,
+ * so a `v-theme-toggle` button inside one did nothing at all, with no error.
+ * Persistence is a convenience; the visitor pressing the button is the decision.
+ */
+let picked: ThemeName | null = null;
+
 export const theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current(): ThemeName {
-    return (storage.get<ThemeName>(THEME_KEY) ?? 'system') as ThemeName;
+    return (storage.get<ThemeName>(THEME_KEY) ?? picked ?? 'system') as ThemeName;
   },
 
   /** Theme effectively applied, resolving `system`. */
@@ -263,6 +276,7 @@ export const theme = {
   },
 
   set(value: ThemeName): void {
+    picked = value;
     storage.set(THEME_KEY, value);
     this.apply();
   },
@@ -275,7 +289,7 @@ export const theme = {
 
   /** `true` once the visitor has actually picked a theme. */
   get chosen(): boolean {
-    return storage.get<ThemeName>(THEME_KEY) != null;
+    return picked !== null || storage.get<ThemeName>(THEME_KEY) != null;
   },
 
   /** Writes `data-theme` on the root element and notifies the page. */

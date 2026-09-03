@@ -1304,7 +1304,14 @@ function draw(state: ChartState): void {
   const format = options.format ?? 'number';
 
   const width = Math.max(160, Math.round(el.clientWidth || options.width || 640));
-  const height = Math.max(48, Math.round(options.height ?? defaultHeight(type)));
+  // Height measured the same way width already was. Without this the SVG was
+  // drawn at a fixed 260px no matter how tall the host element actually was, so
+  // `<div v-chart style="height:150px">` overflowed its own box by 110px and
+  // painted over whatever followed it. Three stacked charts drew on top of each
+  // other. An explicit `height` option still wins; the element's own height is
+  // the next best answer, and the per-type default is the last resort for a host
+  // that has no height of its own.
+  const height = Math.max(48, Math.round(options.height ?? (el.clientHeight || defaultHeight(type))));
   state.lastWidth = width;
   state.viewWidth = width;
   state.viewHeight = height;

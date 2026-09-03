@@ -1,5 +1,5 @@
 import { http, HttpError, request } from './chunk-PQZEVFVZ.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-34CGORMO.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-CRBAIP62.js';
 import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-NNU6WOOU.js';
 import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-A2UOVQBP.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-234ZLC6W.js';
@@ -1115,10 +1115,11 @@ var cache = {
   }
 };
 var THEME_KEY = "voodoo:theme";
+var picked = null;
 var theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current() {
-    return storage.get(THEME_KEY) ?? "system";
+    return storage.get(THEME_KEY) ?? picked ?? "system";
   },
   /** Theme effectively applied, resolving `system`. */
   get resolved() {
@@ -1128,6 +1129,7 @@ var theme = {
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   },
   set(value) {
+    picked = value;
     storage.set(THEME_KEY, value);
     this.apply();
   },
@@ -1138,7 +1140,7 @@ var theme = {
   },
   /** `true` once the visitor has actually picked a theme. */
   get chosen() {
-    return storage.get(THEME_KEY) != null;
+    return picked !== null || storage.get(THEME_KEY) != null;
   },
   /** Writes `data-theme` on the root element and notifies the page. */
   apply() {
@@ -9523,7 +9525,7 @@ function openDialog(request2) {
             source.remove();
           }
           sourceAnchors.delete(source);
-          if (source.hasAttribute(`${config.prefix}modal-content`) || source.hasAttribute("data-v-modal-content")) {
+          if (hasDirective(source, "modal-content")) {
             source.setAttribute("hidden", "");
           }
         }
@@ -10268,5 +10270,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-ABRZI32G.js.map
-//# sourceMappingURL=chunk-ABRZI32G.js.map
+//# sourceMappingURL=chunk-VCIH4MEK.js.map
+//# sourceMappingURL=chunk-VCIH4MEK.js.map

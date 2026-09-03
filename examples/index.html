@@ -28,7 +28,12 @@
         color-scheme: light;
       }
 
-      [data-theme='dark'] {
+      /* Three states, matching the rest of the site and the library's own
+         V.palette(): the system decides unless the visitor chose, and an
+         explicit choice wins either way. A page pinned light while the library
+         follows the OS puts dark widgets on white paper. */
+      @media (prefers-color-scheme: dark) {
+        html:root:not([data-theme='light']) {
         --ink: #f2f0f6;
         --ink-soft: #b3adc2;
         --ink-faint: #837d93;
@@ -38,6 +43,29 @@
         --accent: #a688ff;
         --accent-soft: #221c3a;
         color-scheme: dark;
+        }
+      }
+
+      html:root[data-theme='dark'] {
+        --ink: #f2f0f6;
+        --ink-soft: #b3adc2;
+        --ink-faint: #837d93;
+        --bg: #131118;
+        --bg-soft: #191722;
+        --line: #2b2735;
+        --accent: #a688ff;
+        --accent-soft: #221c3a;
+        color-scheme: dark;
+      }
+
+      /* The library paints its built-in UI from these. */
+      html:root {
+        --v-surface: var(--bg) !important;
+        --v-surface-2: var(--bg-soft) !important;
+        --v-border: var(--line) !important;
+        --v-text: var(--ink) !important;
+        --v-text-muted: var(--ink-faint) !important;
+        --v-primary: var(--accent) !important;
       }
 
       * {
@@ -131,6 +159,10 @@
         font-size: 14.5px;
         color: var(--ink-soft);
         text-decoration: none;
+        /* Translated labels are longer than the English ones. Without this,
+           "Por quê" wrapped onto a second line and pushed the header out of
+           shape in Portuguese and Spanish. */
+        white-space: nowrap;
       }
 
       .top nav a:hover,

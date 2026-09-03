@@ -156,7 +156,7 @@ test('closing returns the content to exactly where it came from', async ({ page 
  * source is fixed this test starts passing, Playwright reports "expected to
  * fail but passed", and whoever fixed it removes this annotation.
  */
-test.fail('closing hides the content again', async ({ page }) => {
+test('closing hides the content again', async ({ page }) => {
   await openModal(page);
   await page.keyboard.press('Escape');
   await expect(page.locator(panel)).toHaveCount(0);

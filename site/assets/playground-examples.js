@@ -291,11 +291,11 @@
       desc: 'v-get fetches and drops the result into the target, with no JavaScript at all.',
       code: [
         '<div v-data="{}">',
-        '  <button v-get="https://api.github.com/repos/vuejs/core"',
+        '  <button v-get="https://api.github.com/repos/kwy404/Voodoo.js"',
         '          v-target="#output"',
         '          v-json-path="stargazers_count"',
         '          v-loading-class="loading">',
-        '    Fetch the star count for Vue',
+        '    Fetch the star count for Voodoo.js',
         '  </button>',
         '',
         '  <div id="output" style="margin-top:12px;padding:10px;border:1px dashed #8886">',

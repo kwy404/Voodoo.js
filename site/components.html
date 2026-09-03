@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Components — Voodoo.js</title>
+    <meta
+      name="description"
+      content="The 29 ready-made components that ship with Voodoo.js, each one running on this page with the markup that produced it."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/components.html" />
+
+    <style>
+      :root {
+        --ink: #16141c;
+        --ink-soft: #57526a;
+        --ink-faint: #8b8598;
+        --bg: #ffffff;
+        --bg-soft: #faf9fb;
+        --bg-code: #f6f5f8;
+        --line: #e7e4ec;
+        --accent: #5b2ee5;
+        --accent-soft: #f1ecfe;
+        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+          sans-serif;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        color-scheme: light;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html:root:not([data-theme='light']) {
+          --ink: #f2f0f6;
+          --ink-soft: #b3adc2;
+          --ink-faint: #837d93;
+          --bg: #131118;
+          --bg-soft: #191722;
+          --bg-code: #1d1a26;
+          --line: #2b2735;
+          --accent: #a688ff;
+          --accent-soft: #221c3a;
+          color-scheme: dark;
+        }
+      }
+
+      html:root[data-theme='dark'] {
+        --ink: #f2f0f6;
+        --ink-soft: #b3adc2;
+        --ink-faint: #837d93;
+        --bg: #131118;
+        --bg-soft: #191722;
+        --bg-code: #1d1a26;
+        --line: #2b2735;
+        --accent: #a688ff;
+        --accent-soft: #221c3a;
+        color-scheme: dark;
+      }
+
+      /* The library paints its own widgets from these. Without the mapping the
+         cards come out in the library's default palette while the page is in
+         this one, which is how dark controls end up on white paper. */
+      html:root {
+        --v-surface: var(--bg) !important;
+        --v-surface-2: var(--bg-soft) !important;
+        --v-border: var(--line) !important;
+        --v-text: var(--ink) !important;
+        --v-text-muted: var(--ink-faint) !important;
+        --v-primary: var(--accent) !important;
+      }
+
+      * { box-sizing: border-box; }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      h1, h2, h3 { margin: 0; line-height: 1.15; letter-spacing: -0.02em; font-weight: 640; }
+      p { margin: 0; }
+      a { color: inherit; }
+
+      .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+      .top {
+        position: sticky; top: 0; z-index: 20;
+        background: var(--bg); border-bottom: 1px solid var(--line);
+      }
+      .top-in { display: flex; align-items: center; gap: 18px; height: 60px; }
+      .brand {
+        display: flex; align-items: center; gap: 9px; font-weight: 680;
+        font-size: 16.5px; letter-spacing: -0.02em; text-decoration: none; white-space: nowrap;
+      }
+      .brand svg { width: 24px; height: 24px; flex: none; }
+      .top nav { display: flex; gap: 4px; margin-left: 6px; }
+      .top nav a {
+        padding: 6px 10px; border-radius: 7px; font-size: 14.5px;
+        color: var(--ink-soft); text-decoration: none; white-space: nowrap;
+      }
+      .top nav a:hover, .top nav a[aria-current='page'] { color: var(--ink); background: var(--bg-soft); }
+      .top-end { margin-left: auto; }
+      .icon-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 8px;
+        background: transparent; color: var(--ink-soft); cursor: pointer;
+      }
+      .icon-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+      header.page { padding: 58px 0 34px; }
+      h1 { font-size: clamp(31px, 5vw, 44px); letter-spacing: -0.035em; font-weight: 700; }
+      .lead { margin-top: 15px; font-size: 18px; color: var(--ink-soft); max-width: 38em; }
+
+      .note {
+        margin-top: 20px; padding: 13px 16px; border: 1px solid var(--line);
+        border-left: 2px solid var(--accent); border-radius: 0 9px 9px 0;
+        background: var(--bg-soft); font-size: 14.5px; color: var(--ink-soft); max-width: 62em;
+      }
+      .note code { font-family: var(--mono); font-size: 13px; }
+
+      section { padding: 30px 0 6px; }
+      .sec-head {
+        display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+        border-top: 1px solid var(--line); padding-top: 28px;
+      }
+      h2 { font-size: 20px; }
+      .sec-head span { font-size: 14px; color: var(--ink-faint); }
+
+      .grid {
+        margin-top: 20px; display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;
+      }
+
+      .comp { border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+      .comp header {
+        display: flex; align-items: center; gap: 9px; padding: 10px 14px;
+        border-bottom: 1px solid var(--line); background: var(--bg-soft);
+      }
+      .comp h3 { font-size: 14px; font-weight: 600; }
+      .comp h3 code { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+      .slot {
+        margin-left: auto; font-size: 11px; color: var(--ink-faint);
+        border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; background: var(--bg);
+      }
+
+      .live {
+        padding: 18px 14px; display: flex; flex-wrap: wrap; gap: 8px;
+        align-items: center; min-height: 74px;
+      }
+      .live > * { max-width: 100%; }
+
+      .comp pre {
+        margin: 0; padding: 12px 14px; background: var(--bg-code);
+        border-top: 1px solid var(--line); overflow-x: auto;
+      }
+      .comp pre code { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; }
+
+      .props {
+        padding: 10px 14px; border-top: 1px solid var(--line);
+        display: flex; flex-wrap: wrap; gap: 5px; font-size: 12px;
+      }
+      .prop {
+        font-family: var(--mono); font-size: 11.5px; padding: 1px 6px;
+        border-radius: 5px; background: var(--accent-soft); color: var(--accent);
+      }
+      .none { color: var(--ink-faint); }
+
+      footer {
+        margin-top: 48px; border-top: 1px solid var(--line); padding: 30px 0;
+        font-size: 14px; color: var(--ink-soft);
+      }
+      .foot-in { display: flex; gap: 18px; flex-wrap: wrap; }
+
+      .skip { position: absolute; left: -9999px; }
+      .skip:focus {
+        left: 12px; top: 12px; z-index: 60; background: var(--bg);
+        padding: 9px 14px; border: 1px solid var(--accent); border-radius: 8px;
+      }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+      @media (max-width: 700px) {
+        .top nav { display: none; }
+        header.page { padding: 38px 0 24px; }
+        .wrap { padding: 0 18px; }
+        .grid { grid-template-columns: minmax(0, 1fr); }
+      }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <div class="top">
+      <div class="wrap top-in">
+        <a class="brand" href="./">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
+          </svg>
+          Voodoo.js
+        </a>
+
+        <nav aria-label="Main">
+          <a href="./">Home</a>
+          <a href="docs/">Docs</a>
+          <a href="playground.html">Playground</a>
+          <a href="components.html" aria-current="page">Components</a>
+          <a href="examples/">Examples</a>
+        </nav>
+
+        <div class="top-end">
+          <button class="icon-btn" v-theme-toggle aria-label="Toggle dark mode">
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <main id="main">
+      <div class="wrap">
+        <header class="page">
+          <h1>29 components, already in the box</h1>
+          <p class="lead">
+            No install, no import, no registration. They are custom elements the library defines
+            when it starts, so writing the tag is the whole usage.
+          </p>
+          <p class="note">
+            Every component below is <strong>running on this page</strong>, rendered by the same
+            <code>voodoo.full.min.js</code> the install section hands you. The code under each one
+            is the markup that produced the thing above it, and the chips at the bottom are that
+            component's real props, read out of the source rather than typed by hand.
+          </p>
+        </header>
+
+        <section>
+          <div class="sec-head">
+            <h2>Actions</h2>
+            <span>Things a person presses.</span>
+          </div>
+          <div class="grid">
+          <article class="comp" id="v-button">
+            <header>
+              <h3><code>&lt;v-button&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-button variant="primary">Save</v-button>
+              <v-button variant="ghost">Cancel</v-button>
+              <v-button variant="primary" loading>Sending</v-button>
+            </div>
+
+            <pre v-ignore><code>&lt;v-button variant="primary"&gt;Save&lt;/v-button&gt;
+&lt;v-button variant="ghost"&gt;Cancel&lt;/v-button&gt;
+&lt;v-button variant="primary" loading&gt;Sending&lt;/v-button&gt;</code></pre>
+
+            <p class="props"><code class="prop">variant</code> <code class="prop">size</code> <code class="prop">icon</code> <code class="prop">iconRight</code> <code class="prop">type</code> <code class="prop">loading</code> <code class="prop">disabled</code> <code class="prop">block</code> <code class="prop">rounded</code> <code class="prop">ariaLabel</code></p>
+          </article>
+          <article class="comp" id="v-icon-button">
+            <header>
+              <h3><code>&lt;v-icon-button&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-icon-button icon="+" aria-label="Add"></v-icon-button>
+            </div>
+
+            <pre v-ignore><code>&lt;v-icon-button icon="+" aria-label="Add"&gt;&lt;/v-icon-button&gt;</code></pre>
+
+            <p class="props"><code class="prop">icon</code> <code class="prop">label</code> <code class="prop">variant</code> <code class="prop">size</code> <code class="prop">type</code> <code class="prop">disabled</code> <code class="prop">loading</code> <code class="prop">rounded</code></p>
+          </article>
+          <article class="comp" id="v-tooltip-button">
+            <header>
+              <h3><code>&lt;v-tooltip-button&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-tooltip-button tip="Copies to the clipboard">Copy</v-tooltip-button>
+            </div>
+
+            <pre v-ignore><code>&lt;v-tooltip-button tip="Copies to the clipboard"&gt;Copy&lt;/v-tooltip-button&gt;</code></pre>
+
+            <p class="props"><code class="prop">tooltip</code> <code class="prop">placement</code> <code class="prop">variant</code> <code class="prop">size</code> <code class="prop">icon</code> <code class="prop">type</code> <code class="prop">disabled</code> <code class="prop">ariaLabel</code></p>
+          </article>
+          </div>
+        </section>
+        <section>
+          <div class="sec-head">
+            <h2>Form fields</h2>
+            <span>Every one works with v-model, and with the validation directives.</span>
+          </div>
+          <div class="grid">
+          <article class="comp" id="v-input">
+            <header>
+              <h3><code>&lt;v-input&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-input label="Email" type="email" placeholder="you@example.com"></v-input>
+            </div>
+
+            <pre v-ignore><code>&lt;v-input label="Email" type="email" placeholder="you@example.com"&gt;&lt;/v-input&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">type</code> <code class="prop">placeholder</code> <code class="prop">hint</code> <code class="prop">error</code> <code class="prop">value</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">icon</code> <code class="prop">suffix</code> <code class="prop">size</code> <code class="prop">autocomplete</code> <code class="prop">inputmode</code> <code class="prop">maxlength</code> <code class="prop">min</code> <code class="prop">max</code> <code class="prop">step</code> <code class="prop">required</code> <code class="prop">disabled</code> <code class="prop">readonly</code> <code class="prop">clearable</code></p>
+          </article>
+          <article class="comp" id="v-textarea">
+            <header>
+              <h3><code>&lt;v-textarea&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-textarea label="Notes" rows="3"></v-textarea>
+            </div>
+
+            <pre v-ignore><code>&lt;v-textarea label="Notes" rows="3"&gt;&lt;/v-textarea&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">placeholder</code> <code class="prop">hint</code> <code class="prop">error</code> <code class="prop">value</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">rows</code> <code class="prop">maxlength</code> <code class="prop">size</code> <code class="prop">resize</code> <code class="prop">required</code> <code class="prop">disabled</code> <code class="prop">readonly</code> <code class="prop">counter</code></p>
+          </article>
+          <article class="comp" id="v-select">
+            <header>
+              <h3><code>&lt;v-select&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-select label="Country" :options="['Brazil', 'Portugal', 'Japan']"></v-select>
+            </div>
+
+            <pre v-ignore><code>&lt;v-select label="Country" :options="['Brazil', 'Portugal', 'Japan']"&gt;&lt;/v-select&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">placeholder</code> <code class="prop">searchPlaceholder</code> <code class="prop">emptyText</code> <code class="prop">options</code> <code class="prop">value</code> <code class="prop">hint</code> <code class="prop">error</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">size</code> <code class="prop">multiple</code> <code class="prop">searchable</code> <code class="prop">clearable</code> <code class="prop">disabled</code> <code class="prop">required</code></p>
+          </article>
+          <article class="comp" id="v-checkbox">
+            <header>
+              <h3><code>&lt;v-checkbox&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-checkbox label="Remember me"></v-checkbox>
+            </div>
+
+            <pre v-ignore><code>&lt;v-checkbox label="Remember me"&gt;&lt;/v-checkbox&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">description</code> <code class="prop">error</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">value</code> <code class="prop">checked</code> <code class="prop">disabled</code> <code class="prop">required</code></p>
+          </article>
+          <article class="comp" id="v-radio">
+            <header>
+              <h3><code>&lt;v-radio&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-radio name="plan" label="Monthly"></v-radio>
+            </div>
+
+            <pre v-ignore><code>&lt;v-radio name="plan" label="Monthly"&gt;&lt;/v-radio&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">description</code> <code class="prop">error</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">value</code> <code class="prop">checked</code> <code class="prop">disabled</code> <code class="prop">required</code></p>
+          </article>
+          <article class="comp" id="v-switch">
+            <header>
+              <h3><code>&lt;v-switch&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-switch label="Notifications"></v-switch>
+            </div>
+
+            <pre v-ignore><code>&lt;v-switch label="Notifications"&gt;&lt;/v-switch&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">description</code> <code class="prop">name</code> <code class="prop">id</code> <code class="prop">size</code> <code class="prop">checked</code> <code class="prop">disabled</code></p>
+          </article>
+          <article class="comp" id="v-field">
+            <header>
+              <h3><code>&lt;v-field&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-field label="Name" hint="As it appears on your card"></v-field>
+            </div>
+
+            <pre v-ignore><code>&lt;v-field label="Name" hint="As it appears on your card"&gt;&lt;/v-field&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">hint</code> <code class="prop">error</code> <code class="prop">for</code> <code class="prop">required</code> <code class="prop">disabled</code></p>
+          </article>
+          <article class="comp" id="v-label">
+            <header>
+              <h3><code>&lt;v-label&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-label for="email">Email</v-label>
+            </div>
+
+            <pre v-ignore><code>&lt;v-label for="email"&gt;Email&lt;/v-label&gt;</code></pre>
+
+            <p class="props"><code class="prop">for</code> <code class="prop">size</code> <code class="prop">required</code></p>
+          </article>
+          </div>
+        </section>
+        <section>
+          <div class="sec-head">
+            <h2>Status</h2>
+            <span>Telling the reader what is going on.</span>
+          </div>
+          <div class="grid">
+          <article class="comp" id="v-alert">
+            <header>
+              <h3><code>&lt;v-alert&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-alert tone="info" title="Heads up">The library starts itself.</v-alert>
+            </div>
+
+            <pre v-ignore><code>&lt;v-alert tone="info" title="Heads up"&gt;The library starts itself.&lt;/v-alert&gt;</code></pre>
+
+            <p class="props"><code class="prop">tone</code> <code class="prop">title</code> <code class="prop">icon</code> <code class="prop">closable</code> <code class="prop">closeLabel</code></p>
+          </article>
+          <article class="comp" id="v-badge">
+            <header>
+              <h3><code>&lt;v-badge&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-badge tone="success">Active</v-badge>
+              <v-badge tone="danger">Overdue</v-badge>
+            </div>
+
+            <pre v-ignore><code>&lt;v-badge tone="success"&gt;Active&lt;/v-badge&gt;
+&lt;v-badge tone="danger"&gt;Overdue&lt;/v-badge&gt;</code></pre>
+
+            <p class="props"><code class="prop">tone</code> <code class="prop">variant</code> <code class="prop">size</code> <code class="prop">icon</code> <code class="prop">dot</code></p>
+          </article>
+          <article class="comp" id="v-tag">
+            <header>
+              <h3><code>&lt;v-tag&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-tag>design</v-tag>
+              <v-tag closable>frontend</v-tag>
+            </div>
+
+            <pre v-ignore><code>&lt;v-tag&gt;design&lt;/v-tag&gt;
+&lt;v-tag closable&gt;frontend&lt;/v-tag&gt;</code></pre>
+
+            <p class="props"><code class="prop">tone</code> <code class="prop">variant</code> <code class="prop">icon</code> <code class="prop">closable</code> <code class="prop">removeLabel</code></p>
+          </article>
+          <article class="comp" id="v-progress">
+            <header>
+              <h3><code>&lt;v-progress&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-progress value="70"></v-progress>
+            </div>
+
+            <pre v-ignore><code>&lt;v-progress value="70"&gt;&lt;/v-progress&gt;</code></pre>
+
+            <p class="props"><code class="prop">value</code> <code class="prop">max</code> <code class="prop">tone</code> <code class="prop">size</code> <code class="prop">label</code> <code class="prop">showValue</code> <code class="prop">indeterminate</code></p>
+          </article>
+          <article class="comp" id="v-spinner">
+            <header>
+              <h3><code>&lt;v-spinner&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-spinner></v-spinner>
+            </div>
+
+            <pre v-ignore><code>&lt;v-spinner&gt;&lt;/v-spinner&gt;</code></pre>
+
+            <p class="props"><code class="prop">size</code> <code class="prop">tone</code> <code class="prop">label</code></p>
+          </article>
+          <article class="comp" id="v-skeleton">
+            <header>
+              <h3><code>&lt;v-skeleton&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-skeleton lines="3"></v-skeleton>
+            </div>
+
+            <pre v-ignore><code>&lt;v-skeleton lines="3"&gt;&lt;/v-skeleton&gt;</code></pre>
+
+            <p class="props"><code class="prop">width</code> <code class="prop">height</code> <code class="prop">radius</code> <code class="prop">lines</code> <code class="prop">circle</code></p>
+          </article>
+          <article class="comp" id="v-rating">
+            <header>
+              <h3><code>&lt;v-rating&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-rating value="4"></v-rating>
+            </div>
+
+            <pre v-ignore><code>&lt;v-rating value="4"&gt;&lt;/v-rating&gt;</code></pre>
+
+            <p class="props"><code class="prop">value</code> <code class="prop">max</code> <code class="prop">size</code> <code class="prop">label</code> <code class="prop">readonly</code> <code class="prop">disabled</code> <code class="prop">showValue</code> <code class="prop">allowClear</code></p>
+          </article>
+          </div>
+        </section>
+        <section>
+          <div class="sec-head">
+            <h2>Layout and data</h2>
+            <span>Structure, and the shapes data arrives in.</span>
+          </div>
+          <div class="grid">
+          <article class="comp" id="v-card">
+            <header>
+              <h3><code>&lt;v-card&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-card title="Plan" subtitle="Monthly">Everything included.</v-card>
+            </div>
+
+            <pre v-ignore><code>&lt;v-card title="Plan" subtitle="Monthly"&gt;Everything included.&lt;/v-card&gt;</code></pre>
+
+            <p class="props"><code class="prop">title</code> <code class="prop">subtitle</code> <code class="prop">icon</code> <code class="prop">padded</code> <code class="prop">hoverable</code></p>
+          </article>
+          <article class="comp" id="v-table">
+            <header>
+              <h3><code>&lt;v-table&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-table :columns="['Name', 'Role']"
+                       :rows="[['Ada', 'Engineer'], ['Grace', 'Admiral']]"></v-table>
+            </div>
+
+            <pre v-ignore><code>&lt;v-table :columns="['Name', 'Role']"
+         :rows="[['Ada', 'Engineer'], ['Grace', 'Admiral']]"&gt;&lt;/v-table&gt;</code></pre>
+
+            <p class="props"><code class="prop">columns</code> <code class="prop">rows</code> <code class="prop">empty</code> <code class="prop">sortable</code> <code class="prop">dense</code> <code class="prop">striped</code> <code class="prop">hover</code> <code class="prop">caption</code></p>
+          </article>
+          <article class="comp" id="v-stat">
+            <header>
+              <h3><code>&lt;v-stat&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-stat label="Revenue" value="R$ 12.480" trend="up"></v-stat>
+            </div>
+
+            <pre v-ignore><code>&lt;v-stat label="Revenue" value="R$ 12.480" trend="up"&gt;&lt;/v-stat&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">value</code> <code class="prop">delta</code> <code class="prop">hint</code> <code class="prop">icon</code> <code class="prop">suffix</code> <code class="prop">inverted</code></p>
+          </article>
+          <article class="comp" id="v-timeline">
+            <header>
+              <h3><code>&lt;v-timeline&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-timeline :items="['Opened', 'In review', 'Merged']"></v-timeline>
+            </div>
+
+            <pre v-ignore><code>&lt;v-timeline :items="['Opened', 'In review', 'Merged']"&gt;&lt;/v-timeline&gt;</code></pre>
+
+            <p class="props"><code class="prop">items</code></p>
+          </article>
+          <article class="comp" id="v-divider">
+            <header>
+              <h3><code>&lt;v-divider&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-divider></v-divider>
+            </div>
+
+            <pre v-ignore><code>&lt;v-divider&gt;&lt;/v-divider&gt;</code></pre>
+
+            <p class="props"><code class="prop">label</code> <code class="prop">vertical</code> <code class="prop">spacing</code></p>
+          </article>
+          <article class="comp" id="v-empty-state">
+            <header>
+              <h3><code>&lt;v-empty-state&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-empty-state title="Nothing here yet" text="Add your first item."></v-empty-state>
+            </div>
+
+            <pre v-ignore><code>&lt;v-empty-state title="Nothing here yet" text="Add your first item."&gt;&lt;/v-empty-state&gt;</code></pre>
+
+            <p class="props"><code class="prop">icon</code> <code class="prop">title</code> <code class="prop">description</code></p>
+          </article>
+          <article class="comp" id="v-code-block">
+            <header>
+              <h3><code>&lt;v-code-block&gt;</code></h3>
+              <span class="slot">accepts content</span>
+            </header>
+
+            <div class="live">
+              <v-code-block code="&lt;div v-data=&quot;{ n: 0 }&quot;&gt;"></v-code-block>
+            </div>
+
+            <pre v-ignore><code>&lt;v-code-block code="&amp;lt;div v-data=&amp;quot;{ n: 0 }&amp;quot;&amp;gt;"&gt;&lt;/v-code-block&gt;</code></pre>
+
+            <p class="props"><code class="prop">code</code> <code class="prop">language</code> <code class="prop">filename</code> <code class="prop">copyLabel</code> <code class="prop">copiedLabel</code> <code class="prop">wrap</code></p>
+          </article>
+          <article class="comp" id="v-avatar">
+            <header>
+              <h3><code>&lt;v-avatar&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-avatar name="Ada Lovelace"></v-avatar>
+            </div>
+
+            <pre v-ignore><code>&lt;v-avatar name="Ada Lovelace"&gt;&lt;/v-avatar&gt;</code></pre>
+
+            <p class="props"><code class="prop">name</code> <code class="prop">src</code> <code class="prop">alt</code> <code class="prop">size</code> <code class="prop">shape</code> <code class="prop">status</code></p>
+          </article>
+          </div>
+        </section>
+        <section>
+          <div class="sec-head">
+            <h2>Navigation</h2>
+            <span>Getting around, and showing where you are.</span>
+          </div>
+          <div class="grid">
+          <article class="comp" id="v-breadcrumb">
+            <header>
+              <h3><code>&lt;v-breadcrumb&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-breadcrumb :items="['Home', 'Docs', 'Components']"></v-breadcrumb>
+            </div>
+
+            <pre v-ignore><code>&lt;v-breadcrumb :items="['Home', 'Docs', 'Components']"&gt;&lt;/v-breadcrumb&gt;</code></pre>
+
+            <p class="props"><code class="prop">items</code> <code class="prop">separator</code> <code class="prop">ariaLabel</code></p>
+          </article>
+          <article class="comp" id="v-pagination">
+            <header>
+              <h3><code>&lt;v-pagination&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-pagination pages="8" value="3"></v-pagination>
+            </div>
+
+            <pre v-ignore><code>&lt;v-pagination pages="8" value="3"&gt;&lt;/v-pagination&gt;</code></pre>
+
+            <p class="props"><code class="prop">page</code> <code class="prop">pages</code> <code class="prop">total</code> <code class="prop">perPage</code> <code class="prop">siblings</code> <code class="prop">previousLabel</code> <code class="prop">nextLabel</code> <code class="prop">ariaLabel</code></p>
+          </article>
+          <article class="comp" id="v-steps">
+            <header>
+              <h3><code>&lt;v-steps&gt;</code></h3>
+              
+            </header>
+
+            <div class="live">
+              <v-steps :items="['Cart', 'Address', 'Payment']" value="1"></v-steps>
+            </div>
+
+            <pre v-ignore><code>&lt;v-steps :items="['Cart', 'Address', 'Payment']" value="1"&gt;&lt;/v-steps&gt;</code></pre>
+
+            <p class="props"><code class="prop">steps</code> <code class="prop">current</code> <code class="prop">vertical</code> <code class="prop">ariaLabel</code></p>
+          </article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="wrap foot-in">
+        <span>MIT licensed</span>
+        <a href="./">Home</a>
+        <a href="docs/">Docs</a>
+        <a href="playground.html">Playground</a>
+        <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+        <span style="margin-left: auto">Built with Voodoo.js 0.5.0</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.full.min.js" defer></script>
+  </body>
+</html>

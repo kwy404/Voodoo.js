@@ -103,3 +103,67 @@ describe('once the visitor picks a theme', () => {
     expect(root().getAttribute('data-theme')).toBe('dark');
   });
 });
+
+describe('where localStorage is unavailable', () => {
+  // A sandboxed iframe without allow-same-origin has an opaque origin, and every
+  // localStorage access throws. `storage` swallows that, which is correct, but it
+  // used to mean the visitor's choice was thrown away with it: nothing was
+  // written, `chosen` stayed false, and `apply()` returned early. A
+  // v-theme-toggle button inside such a frame did nothing, silently.
+  function breakStorage(): void {
+    vi.stubGlobal('localStorage', {
+      getItem() {
+        throw new Error('SecurityError: storage is not available');
+      },
+      setItem() {
+        throw new Error('SecurityError: storage is not available');
+      },
+      removeItem() {
+        throw new Error('SecurityError: storage is not available');
+      },
+      clear() {},
+      key: () => null,
+      length: 0,
+    });
+  }
+
+  it('an explicit choice still reaches the document', () => {
+    breakStorage();
+    theme.set('dark');
+    expect(root().getAttribute('data-theme')).toBe('dark');
+    expect(root().style.colorScheme).toBe('dark');
+  });
+
+  it('toggle keeps working, and keeps alternating', () => {
+    breakStorage();
+    theme.set('light');
+    expect(theme.toggle()).toBe('dark');
+    expect(root().getAttribute('data-theme')).toBe('dark');
+    expect(theme.toggle()).toBe('light');
+    expect(root().getAttribute('data-theme')).toBe('light');
+  });
+
+  // The in-memory choice is module state, which is right for a page (one page,
+  // one decision) and awkward for a test file (many pages in one module). These
+  // two need a module that has never been chosen on, so they load a fresh copy.
+  it('a page nobody configured is still left alone', async () => {
+    breakStorage();
+    vi.resetModules();
+    const fresh = await import('../src/storage');
+
+    fresh.theme.init();
+    expect(root().getAttribute('data-theme')).toBeNull();
+    expect(root().style.colorScheme).toBe('');
+  });
+
+  it('reports the choice as made, even unpersisted', async () => {
+    breakStorage();
+    vi.resetModules();
+    const fresh = await import('../src/storage');
+
+    expect(fresh.theme.chosen).toBe(false);
+    fresh.theme.set('dark');
+    expect(fresh.theme.chosen).toBe(true);
+    expect(fresh.theme.current).toBe('dark');
+  });
+});

@@ -4681,11 +4681,12 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     }
   };
   var THEME_KEY = "voodoo:theme";
+  var picked = null;
   var theme = {
     /** Theme chosen by the user, or `system` when never set. */
     get current() {
-      var _a2;
-      return (_a2 = storage.get(THEME_KEY)) != null ? _a2 : "system";
+      var _a2, _b;
+      return (_b = (_a2 = storage.get(THEME_KEY)) != null ? _a2 : picked) != null ? _b : "system";
     },
     /** Theme effectively applied, resolving `system`. */
     get resolved() {
@@ -4695,6 +4696,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     },
     set(value) {
+      picked = value;
       storage.set(THEME_KEY, value);
       this.apply();
     },
@@ -4705,7 +4707,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     },
     /** `true` once the visitor has actually picked a theme. */
     get chosen() {
-      return storage.get(THEME_KEY) != null;
+      return picked !== null || storage.get(THEME_KEY) != null;
     },
     /** Writes `data-theme` on the root element and notifies the page. */
     apply() {

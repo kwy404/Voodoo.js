@@ -137,19 +137,72 @@
   var OPEN = '<scr' + 'ipt';
   var CLOSE = '</scr' + 'ipt>';
 
-  var FRAME_CSS =
-    'body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
-    'margin:0;padding:18px;color:#16141c;background:#fff;line-height:1.6}' +
-    '*{box-sizing:border-box}' +
-    'button{font:inherit;padding:7px 12px;border:1px solid #e7e4ec;border-radius:7px;' +
-    'background:#fff;cursor:pointer;margin:2px 4px 2px 0}' +
-    'button:hover{border-color:#5b2ee5;color:#5b2ee5}' +
-    'input,select,textarea{font:inherit;padding:7px 9px;border:1px solid #e7e4ec;' +
-    'border-radius:7px;margin:2px 0}' +
-    'h1,h2,h3,h4{margin:0 0 8px;line-height:1.2}' +
-    'ul,ol{padding-left:20px}' +
-    '.pg-error{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#fde8e8;' +
-    'color:#9b1c1c;font:12.5px ui-monospace,monospace;white-space:pre-wrap}';
+  /**
+   * The preview carries all three theme states itself.
+   *
+   * An earlier version picked one scheme in the parent and wrote literal colours
+   * into the frame. That broke the v-theme-toggle example: the button flipped
+   * data-theme inside the iframe and nothing responded, because no rule was
+   * keyed on it. Emitting the same three-state shape the library and the site
+   * use means the frame follows the system by default, obeys an explicit choice,
+   * and lets a sample toggle its own theme.
+   *
+   * The --v-* mapping matters just as much: without it the library paints its
+   * built-in widgets from its own tokens, which is how a v-sortable list ended
+   * up as dark rows with invisible labels on white paper.
+   */
+  var LIGHT = {
+    ink: '#16141c', soft: '#57526a', faint: '#8b8598',
+    paper: '#ffffff', surface: '#ffffff', surface2: '#faf9fb',
+    line: '#e7e4ec', accent: '#5b2ee5',
+    errBg: '#fde8e8', errInk: '#9b1c1c',
+  };
+
+  var DARK = {
+    ink: '#f2f0f6', soft: '#b3adc2', faint: '#837d93',
+    paper: '#131118', surface: '#191722', surface2: '#211d2d',
+    line: '#2b2735', accent: '#a688ff',
+    errBg: '#3b1d1d', errInk: '#ffb4b4',
+  };
+
+  function tokens(t, scheme) {
+    return (
+      'color-scheme:' + scheme + ';' +
+      '--pg-ink:' + t.ink + ';--pg-soft:' + t.soft + ';--pg-faint:' + t.faint + ';' +
+      '--pg-paper:' + t.paper + ';--pg-surface:' + t.surface + ';--pg-line:' + t.line + ';' +
+      '--pg-accent:' + t.accent + ';--pg-err-bg:' + t.errBg + ';--pg-err-ink:' + t.errInk + ';' +
+      // The library's own widgets, pointed at the same surfaces.
+      '--v-surface:' + t.surface + ' !important;--v-surface-2:' + t.surface2 + ' !important;' +
+      '--v-border:' + t.line + ' !important;--v-text:' + t.ink + ' !important;' +
+      '--v-text-muted:' + t.faint + ' !important;--v-primary:' + t.accent + ' !important;'
+    );
+  }
+
+  function frameCss() {
+    return (
+      ':root{' + tokens(LIGHT, 'light') + '}' +
+      '@media (prefers-color-scheme: dark){html:root:not([data-theme="light"]){' +
+      tokens(DARK, 'dark') + '}}' +
+      'html:root[data-theme="dark"]{' + tokens(DARK, 'dark') + '}' +
+      'html:root[data-theme="light"]{' + tokens(LIGHT, 'light') + '}' +
+
+      'body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
+      'margin:0;padding:18px;color:var(--pg-ink);background:var(--pg-paper);line-height:1.6}' +
+      '*{box-sizing:border-box}' +
+      'button{font:inherit;padding:7px 12px;border:1px solid var(--pg-line);border-radius:7px;' +
+      'background:var(--pg-surface);color:var(--pg-ink);cursor:pointer;margin:2px 4px 2px 0}' +
+      'button:hover{border-color:var(--pg-accent);color:var(--pg-accent)}' +
+      'input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--pg-line);' +
+      'border-radius:7px;margin:2px 0;background:var(--pg-surface);color:var(--pg-ink)}' +
+      'h1,h2,h3,h4{margin:0 0 8px;line-height:1.2;color:var(--pg-ink)}' +
+      'p,li,td,th,label,span,div{color:inherit}' +
+      'ul,ol{padding-left:20px}' +
+      'a{color:var(--pg-accent)}' +
+      '.pg-error{margin:12px 0 0;padding:10px 12px;border-radius:8px;' +
+      'background:var(--pg-err-bg);color:var(--pg-err-ink);' +
+      'font:12.5px ui-monospace,monospace;white-space:pre-wrap}'
+    );
+  }
 
   // Surfacing runtime errors matters more here than anywhere: a silent failure
   // in a playground reads as "the framework is broken" rather than "line 4 has
@@ -173,7 +226,7 @@
       '<!doctype html><html><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       OPEN + ' src="' + CDN + '" data-manual>' + CLOSE +
-      '<style>' + FRAME_CSS + '</style></head><body>' +
+      '<style>' + frameCss() + '</style></head><body>' +
       code.value +
       OPEN + '>' + BOOT + CLOSE +
       '</body></html>';

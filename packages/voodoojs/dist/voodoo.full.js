@@ -4736,11 +4736,12 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     }
   };
   var THEME_KEY = "voodoo:theme";
+  var picked = null;
   var theme = {
     /** Theme chosen by the user, or `system` when never set. */
     get current() {
-      var _a2;
-      return (_a2 = storage.get(THEME_KEY)) != null ? _a2 : "system";
+      var _a2, _b;
+      return (_b = (_a2 = storage.get(THEME_KEY)) != null ? _a2 : picked) != null ? _b : "system";
     },
     /** Theme effectively applied, resolving `system`. */
     get resolved() {
@@ -4750,6 +4751,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     },
     set(value) {
+      picked = value;
       storage.set(THEME_KEY, value);
       this.apply();
     },
@@ -4760,7 +4762,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     },
     /** `true` once the visitor has actually picked a theme. */
     get chosen() {
-      return storage.get(THEME_KEY) != null;
+      return picked !== null || storage.get(THEME_KEY) != null;
     },
     /** Writes `data-theme` on the root element and notifies the page. */
     apply() {
@@ -15417,7 +15419,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
     const palette2 = options.colors && options.colors.length > 0 ? options.colors : CHART_COLORS;
     const format = (_b = options.format) != null ? _b : "number";
     const width = Math.max(160, Math.round(el.clientWidth || options.width || 640));
-    const height = Math.max(48, Math.round((_c = options.height) != null ? _c : defaultHeight(type)));
+    const height = Math.max(48, Math.round((_c = options.height) != null ? _c : el.clientHeight || defaultHeight(type)));
     state2.lastWidth = width;
     state2.viewWidth = width;
     state2.viewHeight = height;
@@ -18664,7 +18666,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
               source.remove();
             }
             sourceAnchors.delete(source);
-            if (source.hasAttribute(`${config.prefix}modal-content`) || source.hasAttribute("data-v-modal-content")) {
+            if (hasDirective(source, "modal-content")) {
               source.setAttribute("hidden", "");
             }
           }

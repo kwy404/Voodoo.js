@@ -27,7 +27,7 @@
 
 import { ensureTokens, injectStyle } from '../dom/style';
 import { config, defineDirective, PRIORITY } from '../runtime/registry';
-import { readAttr } from '../runtime/walker';
+import { hasDirective, readAttr } from '../runtime/walker';
 import { magic } from '../runtime/scope';
 import { uid } from '../utils';
 import { ensurePalette } from './palette';
@@ -473,7 +473,12 @@ function openDialog(request: OpenRequest): DialogHandle {
             source.remove();
           }
           sourceAnchors.delete(source);
-          if (source.hasAttribute(`${config.prefix}modal-content`) || source.hasAttribute('data-v-modal-content')) {
+          // The attribute is gone by now: `config.cleanAttributes` strips every
+          // v-* attribute as soon as the directives install, so asking the DOM
+          // whether it is still there always answered no and the content stayed
+          // visible in the page after the modal closed. The directive index
+          // remembers what an element declared, which is what we actually mean.
+          if (hasDirective(source, 'modal-content')) {
             source.setAttribute('hidden', '');
           }
         }

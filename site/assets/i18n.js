@@ -24,6 +24,7 @@
         compare: 'Comparison',
         docs: 'Docs',
         playground: 'Playground',
+        components: 'Components',
         examples: 'Examples',
         github: 'GitHub',
         search: 'Search',
@@ -142,6 +143,14 @@
         f3: 'core build, gzipped',
         f4: 'build steps, here or in your project',
       },
+      comp: {
+        eyebrow: 'In the box',
+        title: 'Twenty-nine components you do not install',
+        lead:
+          'They are custom elements the library defines when it starts, so writing the tag is the whole usage. Everything below is running here, on this page.',
+        running: 'Running right here',
+        all: 'See all 29 components',
+      },
       foot: { mit: 'MIT licensed', builtWith: 'Built with Voodoo.js 0.5.0' },
     },
 
@@ -152,6 +161,7 @@
         compare: 'Comparação',
         docs: 'Documentação',
         playground: 'Playground',
+        components: 'Componentes',
         examples: 'Exemplos',
         github: 'GitHub',
         search: 'Buscar',
@@ -272,6 +282,14 @@
         f3: 'build principal, com gzip',
         f4: 'passos de build, aqui ou no seu projeto',
       },
+      comp: {
+        eyebrow: 'Na caixa',
+        title: 'Vinte e nove componentes que você não instala',
+        lead:
+          'São elementos personalizados que a biblioteca define ao iniciar, então escrever a tag é o uso inteiro. Tudo abaixo está rodando aqui, nesta página.',
+        running: 'Rodando aqui mesmo',
+        all: 'Ver os 29 componentes',
+      },
       foot: { mit: 'Licença MIT', builtWith: 'Feito com Voodoo.js 0.5.0' },
     },
 
@@ -282,6 +300,7 @@
         compare: 'Comparación',
         docs: 'Documentación',
         playground: 'Playground',
+        components: 'Componentes',
         examples: 'Ejemplos',
         github: 'GitHub',
         search: 'Buscar',
@@ -405,6 +424,14 @@
         f3: 'build principal, con gzip',
         f4: 'pasos de compilación, aquí o en tu proyecto',
       },
+      comp: {
+        eyebrow: 'En la caja',
+        title: 'Veintinueve componentes que no instalas',
+        lead:
+          'Son elementos personalizados que la biblioteca define al arrancar, así que escribir la etiqueta es todo el uso. Todo lo de abajo está funcionando aquí, en esta página.',
+        running: 'Funcionando aquí mismo',
+        all: 'Ver los 29 componentes',
+      },
       foot: { mit: 'Licencia MIT', builtWith: 'Hecho con Voodoo.js 0.5.0' },
     },
 
@@ -415,6 +442,7 @@
         compare: '비교',
         docs: '문서',
         playground: '플레이그라운드',
+        components: '컴포넌트',
         examples: '예제',
         github: 'GitHub',
         search: '검색',
@@ -532,6 +560,14 @@
         f2: '개의 런타임 의존성',
         f3: '코어 빌드, gzip 기준',
         f4: '개의 빌드 단계, 여기서도 당신의 프로젝트에서도',
+      },
+      comp: {
+        eyebrow: '기본 제공',
+        title: '설치하지 않는 29개의 컴포넌트',
+        lead:
+          '라이브러리가 시작할 때 정의하는 커스텀 엘리먼트이므로, 태그를 쓰는 것이 사용의 전부입니다. 아래의 모든 것이 지금 이 페이지에서 실행되고 있습니다.',
+        running: '바로 여기서 실행 중',
+        all: '29개 컴포넌트 모두 보기',
       },
       foot: { mit: 'MIT 라이선스', builtWith: 'Voodoo.js 0.5.0으로 제작' },
     },

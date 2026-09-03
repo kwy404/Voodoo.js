@@ -1,7 +1,7 @@
 import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-JZIYRIY6.js';
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-JZIYRIY6.js';
 import { http } from './chunk-PQZEVFVZ.js';
-import { originalAttributes, destroy } from './chunk-34CGORMO.js';
+import { originalAttributes, destroy } from './chunk-CRBAIP62.js';
 import { handleError } from './chunk-NNU6WOOU.js';
 import { warn, describeElement } from './chunk-A2UOVQBP.js';
 import './chunk-234ZLC6W.js';

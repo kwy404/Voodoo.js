@@ -4673,10 +4673,11 @@ var cache2 = {
   }
 };
 var THEME_KEY = "voodoo:theme";
+var picked = null;
 var theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current() {
-    return storage.get(THEME_KEY) ?? "system";
+    return storage.get(THEME_KEY) ?? picked ?? "system";
   },
   /** Theme effectively applied, resolving `system`. */
   get resolved() {
@@ -4686,6 +4687,7 @@ var theme = {
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   },
   set(value) {
+    picked = value;
     storage.set(THEME_KEY, value);
     this.apply();
   },
@@ -4696,7 +4698,7 @@ var theme = {
   },
   /** `true` once the visitor has actually picked a theme. */
   get chosen() {
-    return storage.get(THEME_KEY) != null;
+    return picked !== null || storage.get(THEME_KEY) != null;
   },
   /** Writes `data-theme` on the root element and notifies the page. */
   apply() {
@@ -15174,7 +15176,7 @@ function draw(state2) {
   const palette2 = options.colors && options.colors.length > 0 ? options.colors : CHART_COLORS;
   const format = options.format ?? "number";
   const width = Math.max(160, Math.round(el.clientWidth || options.width || 640));
-  const height = Math.max(48, Math.round(options.height ?? defaultHeight(type)));
+  const height = Math.max(48, Math.round(options.height ?? (el.clientHeight || defaultHeight(type))));
   state2.lastWidth = width;
   state2.viewWidth = width;
   state2.viewHeight = height;
@@ -18383,7 +18385,7 @@ function openDialog(request2) {
             source.remove();
           }
           sourceAnchors.delete(source);
-          if (source.hasAttribute(`${exports.config.prefix}modal-content`) || source.hasAttribute("data-v-modal-content")) {
+          if (hasDirective(source, "modal-content")) {
             source.setAttribute("hidden", "");
           }
         }

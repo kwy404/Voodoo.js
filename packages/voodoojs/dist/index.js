@@ -1,12 +1,12 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-ABRZI32G.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-ABRZI32G.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-VCIH4MEK.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-VCIH4MEK.js';
 export { gpu, reflectWgsl } from './chunk-JZIYRIY6.js';
 import { http } from './chunk-PQZEVFVZ.js';
 export { HttpError, http, request } from './chunk-PQZEVFVZ.js';
 import { devtoolsBus } from './chunk-RJUNPXQF.js';
 export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-RJUNPXQF.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-34CGORMO.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-34CGORMO.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-CRBAIP62.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-CRBAIP62.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-NNU6WOOU.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-NNU6WOOU.js';
 import { warnAlias } from './chunk-A2UOVQBP.js';
@@ -2807,7 +2807,7 @@ function draw(state2) {
   const palette2 = options.colors && options.colors.length > 0 ? options.colors : CHART_COLORS;
   const format = options.format ?? "number";
   const width = Math.max(160, Math.round(el.clientWidth || options.width || 640));
-  const height = Math.max(48, Math.round(options.height ?? defaultHeight(type)));
+  const height = Math.max(48, Math.round(options.height ?? (el.clientHeight || defaultHeight(type))));
   state2.lastWidth = width;
   state2.viewWidth = width;
   state2.viewHeight = height;

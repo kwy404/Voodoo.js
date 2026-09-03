@@ -219,8 +219,11 @@
 
       .top nav {
         display: flex;
-        gap: 4px;
-        margin-left: 8px;
+        gap: 2px;
+        margin-left: 6px;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
       }
 
       .top nav a {
@@ -229,6 +232,10 @@
         font-size: 14.5px;
         color: var(--ink-soft);
         text-decoration: none;
+        /* Translated labels are longer than the English ones. Without this,
+           "Por quê" wrapped onto a second line and pushed the header out of
+           shape in Portuguese and Spanish. */
+        white-space: nowrap;
       }
 
       .top nav a:hover {
@@ -902,6 +909,7 @@
             <a href="#compare" v-t="nav.compare" v-command-item="">Comparison</a>
             <a href="docs/" v-t="nav.docs" v-command-item="">Docs</a>
             <a href="playground.html" v-t="nav.playground" v-command-item="">Playground</a>
+            <a href="components.html" v-t="nav.components" v-command-item="">Components</a>
             <a href="examples/" v-t="nav.examples" v-command-item="">Examples</a>
           </nav>
 
@@ -953,6 +961,7 @@
             <a href="#compare" @click="menu = false" v-t="nav.compare">Comparison</a>
             <a href="docs/" @click="menu = false" v-t="nav.docs">Docs</a>
             <a href="playground.html" @click="menu = false" v-t="nav.playground">Playground</a>
+            <a href="components.html" @click="menu = false" v-t="nav.components">Components</a>
             <a href="examples/" @click="menu = false" v-t="nav.examples">Examples</a>
             <a href="https://github.com/kwy404/Voodoo.js" @click="menu = false">GitHub</a>
           </div>
@@ -1325,6 +1334,45 @@
           </div>
         </section>
 
+
+        <!-- ==================================================== components -->
+        <section id="components">
+          <div class="wrap">
+            <p class="eyebrow" v-t="comp.eyebrow">In the box</p>
+            <h2 v-t="comp.title">Twenty-nine components you do not install</h2>
+            <p class="sub" v-t="comp.lead">
+              They are custom elements the library defines when it starts, so writing the tag is
+              the whole usage. Everything below is running here, on this page.
+            </p>
+
+            <div class="two" style="margin-top: 34px">
+              <div class="pane">
+                <div class="pane-head" v-t="dom.write">What you write</div>
+                <pre v-ignore><code>&lt;<span class="t-tag">v-button</span> <span class="t-attr">variant</span>=<span class="t-str">"primary"</span>&gt;Save&lt;/<span class="t-tag">v-button</span>&gt;
+&lt;<span class="t-tag">v-badge</span> <span class="t-attr">tone</span>=<span class="t-str">"success"</span>&gt;Active&lt;/<span class="t-tag">v-badge</span>&gt;
+&lt;<span class="t-tag">v-progress</span> <span class="t-attr">value</span>=<span class="t-str">"70"</span>&gt;&lt;/<span class="t-tag">v-progress</span>&gt;
+&lt;<span class="t-tag">v-rating</span> <span class="t-attr">value</span>=<span class="t-str">"4"</span>&gt;&lt;/<span class="t-tag">v-rating</span>&gt;</code></pre>
+              </div>
+
+              <div class="pane">
+                <div class="pane-head" v-t="comp.running">Running right here</div>
+                <div class="pane-live" style="display: flex; flex-direction: column; gap: 12px">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+                    <v-button variant="primary">Save</v-button>
+                    <v-badge tone="success">Active</v-badge>
+                  </div>
+                  <v-progress value="70"></v-progress>
+                  <v-rating value="4"></v-rating>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta" style="margin-top: 26px">
+              <a class="btn btn-main" href="components.html" v-t="comp.all">See all 29 components</a>
+            </div>
+          </div>
+        </section>
+
         <!-- ========================================================= built -->
         <section class="built">
           <div class="wrap built-box">
@@ -1373,6 +1421,7 @@
           <a href="https://www.npmjs.com/package/voodoojs" v-command-item="">npm</a>
           <a href="docs/" v-t="nav.docs">Docs</a>
           <a href="playground.html" v-t="nav.playground">Playground</a>
+          <a href="components.html" v-t="nav.components">Components</a>
           <a href="examples/" v-t="nav.examples">Examples</a>
           <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 0.5.0</span>
         </div>
