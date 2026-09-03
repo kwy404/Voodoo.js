@@ -1342,8 +1342,8 @@ declare const core: {
  *
  * ```js
  * V.query('.card')
- *   .addClass('ativo')
- *   .on('click', '.botao', function () { V.query(this).closest('.card').remove() })
+ *   .addClass('active')
+ *   .on('click', '.button', function () { V.query(this).closest('.card').remove() })
  * ```
  */
 /** Function executed when the document becomes ready. */
@@ -1566,10 +1566,10 @@ declare class VoodooCollection implements Iterable<HTMLElement> {
  * HTML string, or function.
  *
  * ```js
- * V.query('#lista li')          // selector
+ * V.query('#list li')           // selector
  * V.query(document.body)        // element
- * V.query('<li>novo</li>')      // creates elements
- * V.query(() => iniciar())      // equivalent to V.ready
+ * V.query('<li>new</li>')       // creates elements
+ * V.query(() => start())        // equivalent to V.ready
  * ```
  *
  * @param input selector, node, list, HTML or initialization function

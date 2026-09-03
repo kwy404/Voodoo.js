@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Formulários que validam e enviam sozinhos · Documentação da Voodoo.js</title>
-<meta name="description" content="Um cadastro completo sem JavaScript: v-submit, v-validate, o objeto $form, erros vindos do servidor, mensagens próprias, upload, rascunho automático e proteção contra sair da página.">
+<title>Forms that validate and submit themselves · Voodoo.js documentation</title>
+<meta name="description" content="A complete sign-up form with no JavaScript: v-submit, v-validate, the $form object, errors coming back from the server, custom messages, upload, automatic drafts and a guard against leaving the page.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/formularios">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,217 +14,217 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Dados e formulários</p>
-<h1>Formulários que validam e enviam sozinhos</h1>
+<p class="doc-migalha">Data and forms</p>
+<h1>Forms that validate and submit themselves</h1>
 <p class="doc-resumo">
-  Um cadastro comum precisa de validação, mensagem de erro por campo, máscara, envio por AJAX,
-  aviso de sucesso e tratamento do erro que o servidor devolve. Costuma ser o trecho mais chato
-  de qualquer página, e é o que a Voodoo resolve com mais atributos por linha.
+  An ordinary sign-up form needs validation, an error message per field, a mask, AJAX submission,
+  a success message and handling for the error the server sends back. It tends to be the dullest
+  stretch of any page, and it is what Voodoo settles with the most attributes per line.
 </p>
 
-<h2 id="completo">O formulário inteiro</h2>
+<h2 id="completo">The whole form</h2>
 
-<pre data-lang="html"><code>&lt;form v-submit="/api/usuarios"
+<pre data-lang="html"><code>&lt;form v-submit="/api/users"
       v-method="POST"
       v-validate
-      v-toast-success="Usuário cadastrado!"
-      v-toast-error="Não foi possível cadastrar."
+      v-toast-success="User created!"
+      v-toast-error="Could not create the user."
       v-reset-success
-      v-redirect="/usuarios"&gt;
+      v-redirect="/users"&gt;
 
-  &lt;input name="nome" v-required v-minlength="3"&gt;
+  &lt;input name="name" v-required v-minlength="3"&gt;
   &lt;input name="email" type="email" v-required v-email&gt;
   &lt;input name="cpf" v-mask="cpf" v-cpf&gt;
-  &lt;input name="telefone" v-mask="phone" v-phone&gt;
-  &lt;input name="senha" type="password" v-strong-password&gt;
-  &lt;input name="senha2" type="password" v-match="senha"&gt;
+  &lt;input name="phone" v-mask="phone" v-phone&gt;
+  &lt;input name="password" type="password" v-strong-password&gt;
+  &lt;input name="password2" type="password" v-match="password"&gt;
 
   &lt;button type="submit" :disabled="$form.loading"&gt;
-    { $form.loading ? 'Enviando...' : 'Salvar' }
+    { $form.loading ? 'Sending...' : 'Save' }
   &lt;/button&gt;
 &lt;/form&gt;</code></pre>
 
 <p>
-  Sem uma linha de JavaScript: valida, mostra o erro embaixo de cada campo, envia por AJAX,
-  mostra o aviso, limpa o formulário e redireciona.
+  Without one line of JavaScript: it validates, shows the error under each field, submits over
+  AJAX, shows the message, clears the form and redirects.
 </p>
 
-<h2 id="validacao-ao-vivo">A validação, funcionando</h2>
+<h2 id="validacao-ao-vivo">The validation, working</h2>
 
 <p>
-  A validação não depende de servidor, então este bloco roda de verdade. Escreva um e-mail
-  inválido, um CPF qualquer, e saia do campo com <kbd>Tab</kbd>:
+  Validation does not depend on a server, so this block really runs. Write an invalid email, any
+  old CPF, and leave the field with <kbd>Tab</kbd>:
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;form v-validate&gt;
-  &lt;div class="linha"&gt;&lt;input name="nome" placeholder="Nome" v-required v-minlength="3"&gt;&lt;/div&gt;
-  &lt;div class="linha"&gt;&lt;input name="email" placeholder="E-mail" v-required v-email&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input name="name" placeholder="Name" v-required v-minlength="3"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input name="email" placeholder="Email" v-required v-email&gt;&lt;/div&gt;
   &lt;div class="linha"&gt;&lt;input name="cpf" placeholder="CPF" v-mask="cpf" v-cpf&gt;&lt;/div&gt;
-  &lt;div class="linha"&gt;&lt;input name="idade" placeholder="Idade" v-validate-between="18,120"&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input name="age" placeholder="Age" v-validate-between="18,120"&gt;&lt;/div&gt;
 &lt;/form&gt;</code></pre>
 </div>
 
 <p>
-  O campo reprovado ganha a classe <code>v-invalid</code> e <code>aria-invalid="true"</code>, e a
-  mensagem entra logo depois dele com <code>role="alert"</code> e
-  <code>aria-describedby</code> ligando os dois. O <code>v-validate</code> desliga a validação
-  nativa do navegador e assume o controle, para que a aparência e o texto sejam os seus, iguais
-  em todos os navegadores.
+  The failing field gets the class <code>v-invalid</code> and <code>aria-invalid="true"</code>, and
+  the message goes in right after it with <code>role="alert"</code> and
+  <code>aria-describedby</code> tying the two together. <code>v-validate</code> switches the
+  browser's native validation off and takes over, so that the look and the wording are yours, the
+  same in every browser.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Quando cada checagem acontece</span>
+  <span class="doc-aviso__rotulo">When each check happens</span>
   <p>
-    Sozinho, o <code>v-validate</code> confere <b>campo por campo</b>: quando o campo perde o
-    foco, quando muda, e a cada tecla depois que ele já errou uma vez. A conferência do
-    formulário inteiro, antes de enviar, é feita pelo <code>v-submit</code> — é ele que segura o
-    envio, marca todos os campos reprovados de uma vez e leva o foco para o primeiro deles. Um
-    formulário que trata o envio por conta própria, com <code>@submit.prevent</code>, precisa
-    chamar <code>V.validateForm($el)</code> se quiser essa conferência final.
+    On its own, <code>v-validate</code> checks <b>field by field</b>: when the field loses focus,
+    when it changes, and on every keystroke once it has failed already. The check of the whole
+    form, before submitting, is done by <code>v-submit</code> — it is the one that holds the
+    submission back, marks every failing field at once and moves the focus to the first of them. A
+    form that handles submission itself, with <code>@submit.prevent</code>, has to call
+    <code>V.validateForm($el)</code> if it wants that final check.
   </p>
 </div>
 
-<h2 id="estado">O estado do formulário</h2>
+<h2 id="estado">The state of the form</h2>
 
 <p>
-  Todo formulário com <code>v-submit</code> publica a variável <code>$form</code> para o que
-  estiver dentro dele:
+  Every form with <code>v-submit</code> publishes the variable <code>$form</code> to whatever is
+  inside it:
 </p>
 
-<pre data-lang="html"><code>&lt;form v-submit="/api/contato"&gt;
+<pre data-lang="html"><code>&lt;form v-submit="/api/contact"&gt;
   &lt;input name="email" v-required v-email&gt;
 
   &lt;p v-show="$form.errors.email"&gt;{ $form.errors.email }&lt;/p&gt;
-  &lt;p v-show="$form.success"&gt;{ $form.message || 'Recebemos sua mensagem.' }&lt;/p&gt;
+  &lt;p v-show="$form.success"&gt;{ $form.message || 'We got your message.' }&lt;/p&gt;
 
-  &lt;button :disabled="$form.loading"&gt;Enviar&lt;/button&gt;
+  &lt;button :disabled="$form.loading"&gt;Send&lt;/button&gt;
 &lt;/form&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo de <code>$form</code></th><th>O que guarda</th></tr></thead>
+<thead><tr><th>Field of <code>$form</code></th><th>What it holds</th></tr></thead>
 <tbody>
-<tr><td><code>loading</code></td><td>Verdadeiro enquanto a requisição está em andamento</td></tr>
-<tr><td><code>saving</code></td><td>Verdadeiro durante um salvamento automático</td></tr>
-<tr><td><code>success</code></td><td>Verdadeiro depois de um envio bem-sucedido</td></tr>
-<tr><td><code>errors</code></td><td>Mapa de campo para mensagem</td></tr>
-<tr><td><code>message</code></td><td>Mensagem geral devolvida pelo servidor</td></tr>
-<tr><td><code>data</code></td><td>Corpo da resposta</td></tr>
-<tr><td><code>status</code></td><td>Código HTTP da resposta</td></tr>
-<tr><td><code>dirty</code></td><td>Verdadeiro quando algum campo foi alterado</td></tr>
-<tr><td><code>progress</code></td><td>Progresso do upload, de 0 a 100</td></tr>
+<tr><td><code>loading</code></td><td>True while the request is in flight</td></tr>
+<tr><td><code>saving</code></td><td>True during an automatic save</td></tr>
+<tr><td><code>success</code></td><td>True after a successful submission</td></tr>
+<tr><td><code>errors</code></td><td>A map of field to message</td></tr>
+<tr><td><code>message</code></td><td>The general message returned by the server</td></tr>
+<tr><td><code>data</code></td><td>The response body</td></tr>
+<tr><td><code>status</code></td><td>The HTTP status of the response</td></tr>
+<tr><td><code>dirty</code></td><td>True once any field has been changed</td></tr>
+<tr><td><code>progress</code></td><td>Upload progress, from 0 to 100</td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="erros-do-servidor">Erros vindos do servidor</h2>
+<h2 id="erros-do-servidor">Errors coming from the server</h2>
 
 <p>
-  Uma resposta <code>422</code>, ou qualquer resposta com um mapa de erros, é distribuída de volta
-  para os campos certos. Os três formatos abaixo são entendidos sem configuração:
+  A <code>422</code> response, or any response carrying a map of errors, is handed back out to the
+  right fields. The three shapes below are understood with no configuration:
 </p>
 
-<pre data-lang="js"><code>{ "errors": { "email": "Já cadastrado" } }
-{ "email": ["Já cadastrado"] }
-{ "message": "Dados inválidos", "errors": { "cpf": "Inválido" } }</code></pre>
+<pre data-lang="js"><code>{ "errors": { "email": "Already registered" } }
+{ "email": ["Already registered"] }
+{ "message": "Invalid data", "errors": { "cpf": "Invalid" } }</code></pre>
 
 <p>
-  Mensagens sem campo correspondente viram um resumo no topo. O foco vai para o primeiro campo
-  com problema, o que evita o clássico formulário que falha em um campo fora da tela.
+  Messages with no matching field become a summary at the top. The focus goes to the first field
+  with a problem, which avoids the classic form that fails on a field off screen.
 </p>
 
-<h2 id="regras">As regras disponíveis</h2>
+<h2 id="regras">The available rules</h2>
 
 <p>
-  Como atributo curto: <code>v-required</code>, <code>v-email</code>, <code>v-url</code>,
+  As a short attribute: <code>v-required</code>, <code>v-email</code>, <code>v-url</code>,
   <code>v-number</code>, <code>v-integer</code>, <code>v-minlength</code>,
   <code>v-maxlength</code>, <code>v-min</code>, <code>v-max</code>, <code>v-match</code>,
   <code>v-regex</code>, <code>v-cpf</code>, <code>v-cnpj</code>, <code>v-cep</code>,
-  <code>v-phone</code>, <code>v-date</code>, <code>v-accepted</code> e
+  <code>v-phone</code>, <code>v-date</code>, <code>v-accepted</code> and
   <code>v-strong-password</code>.
 </p>
 
 <p>
-  Na forma longa <code>v-validate-&lt;nome&gt;</code>, todas as anteriores mais
+  In the long form <code>v-validate-&lt;name&gt;</code>, all of the above plus
   <code>decimal</code>, <code>alpha</code>, <code>alphanumeric</code>, <code>between</code>,
   <code>same</code>, <code>different</code>, <code>in</code>, <code>notin</code>,
-  <code>after</code>, <code>before</code>, <code>creditcard</code> e <code>unique</code>, que é
-  assíncrona e consulta uma URL.
+  <code>after</code>, <code>before</code>, <code>creditcard</code> and <code>unique</code>, which
+  is asynchronous and asks a URL.
 </p>
 
 <pre data-lang="html"><code>&lt;input v-validate-between="10,100"&gt;
-&lt;input v-date v-validate-before="hoje"&gt;
-&lt;input name="email" v-validate-unique="/api/checar-email"&gt;</code></pre>
+&lt;input v-date v-validate-before="today"&gt;
+&lt;input name="email" v-validate-unique="/api/check-email"&gt;</code></pre>
 
 <p>
-  CPF e CNPJ conferem os dígitos verificadores de verdade, e cartão passa por Luhn — não é só
-  contagem de caracteres. A lista completa, com o texto padrão de cada mensagem, está na
-  <a href="../referencia/validacao.html">referência de validação</a>.
+  CPF and CNPJ really do check the verification digits, and a card goes through Luhn — it is not
+  just counting characters. The full list, with the default wording of each message, is in the
+  <a href="../referencia/validacao.html">validation reference</a>.
 </p>
 
-<h2 id="mensagens">Mensagem própria e regra própria</h2>
+<h2 id="mensagens">Your own message and your own rule</h2>
 
-<pre data-lang="html"><code>&lt;input v-cpf v-error-message="Este CPF não confere."&gt;
-&lt;input v-required v-error-target="#erro-do-nome"&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-cpf v-error-message="This CPF does not check out."&gt;
+&lt;input v-required v-error-target="#name-error"&gt;</code></pre>
 
-<pre data-lang="js"><code>V.validator('par', (valor) =&gt; Number(valor) % 2 === 0, 'Informe um número par.');</code></pre>
+<pre data-lang="js"><code>V.validator('even', (value) =&gt; Number(value) % 2 === 0, 'Enter an even number.');</code></pre>
 
-<pre data-lang="html"><code>&lt;input v-validate-par&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-validate-even&gt;</code></pre>
 
 <p>
-  Registrar uma regra cria automaticamente a directive <code>v-validate-par</code>. É o mesmo
-  caminho para regras de negócio: um CNPJ que precisa estar em uma lista, um cupom que só vale
-  em certas datas.
+  Registering a rule automatically creates the directive <code>v-validate-even</code>. It is the
+  same road for business rules: a CNPJ that has to be on a list, a coupon that is only valid on
+  certain dates.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.validator('par', (v) =&gt; Number(v) % 2 === 0, 'Informe um número par.');
+    V.validator('even', (v) =&gt; Number(v) % 2 === 0, 'Enter an even number.');
   &lt;/script&gt;
   &lt;form v-validate&gt;
-    &lt;div class="linha"&gt;&lt;input name="n" placeholder="Um número par" v-validate-par&gt;&lt;/div&gt;
+    &lt;div class="linha"&gt;&lt;input name="n" placeholder="An even number" v-validate-even&gt;&lt;/div&gt;
   &lt;/form&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="arquivos">Arquivos, rascunho automático e proteção contra sair</h2>
+<h2 id="arquivos">Files, automatic drafts and a guard against leaving</h2>
 
-<pre data-lang="html"><code>&lt;input type="file" name="anexo" v-upload="/api/upload" v-progress="#barra"&gt;
+<pre data-lang="html"><code>&lt;input type="file" name="attachment" v-upload="/api/upload" v-progress="#bar"&gt;
 
-&lt;div v-dropzone="/api/upload" v-field="anexos" accept="image/*" multiple&gt;
-  Arraste imagens aqui
+&lt;div v-dropzone="/api/upload" v-field="attachments" accept="image/*" multiple&gt;
+  Drag images here
 &lt;/div&gt;
 
-&lt;form v-autosave="/api/rascunhos/7" v-method="PUT" v-guard="Você tem alterações não salvas."&gt;
-  &lt;textarea name="corpo"&gt;&lt;/textarea&gt;
+&lt;form v-autosave="/api/drafts/7" v-method="PUT" v-guard="You have unsaved changes."&gt;
+  &lt;textarea name="body"&gt;&lt;/textarea&gt;
 &lt;/form&gt;</code></pre>
 
 <ul>
-  <li><code>v-upload</code> envia o arquivo assim que ele é escolhido, com progresso em <code>v-progress</code>.</li>
-  <li><code>v-dropzone</code> aceita arquivos arrastados e guarda o resultado no campo indicado por <code>v-field</code>.</li>
-  <li><code>v-autosave</code> salva o rascunho enquanto a pessoa escreve.</li>
-  <li><code>v-guard</code> avisa antes de sair da página com alterações pendentes.</li>
+  <li><code>v-upload</code> sends the file as soon as it is chosen, with progress in <code>v-progress</code>.</li>
+  <li><code>v-dropzone</code> accepts dragged files and keeps the result in the field named by <code>v-field</code>.</li>
+  <li><code>v-autosave</code> saves the draft while the person writes.</li>
+  <li><code>v-guard</code> warns before leaving the page with pending changes.</li>
 </ul>
 
-<h2 id="sem-servidor">Formulário sem servidor</h2>
+<h2 id="sem-servidor">A form with no server</h2>
 
 <p>
-  Nem todo formulário envia para uma API. Quando o destino é a própria página, use
-  <code>@submit.prevent</code> e trate no estado — a validação continua funcionando do mesmo
-  jeito:
+  Not every form submits to an API. When the destination is the page itself, use
+  <code>@submit.prevent</code> and handle it in state — validation keeps working exactly the same
+  way:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ itens: [], texto: '' }"&gt;
-  &lt;form v-validate @submit.prevent="itens.push(texto); texto = ''"&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ items: [], text: '' }"&gt;
+  &lt;form v-validate @submit.prevent="items.push(text); text = ''"&gt;
     &lt;div class="linha"&gt;
-      &lt;input name="texto" v-model="texto" v-required v-minlength="3" placeholder="Nova tarefa"&gt;
-      &lt;button type="submit"&gt;Adicionar&lt;/button&gt;
+      &lt;input name="text" v-model="text" v-required v-minlength="3" placeholder="New task"&gt;
+      &lt;button type="submit"&gt;Add&lt;/button&gt;
     &lt;/div&gt;
   &lt;/form&gt;
-  &lt;ul&gt;&lt;li v-for="(t, i) in itens"&gt;{ t }&lt;/li&gt;&lt;/ul&gt;
+  &lt;ul&gt;&lt;li v-for="(t, i) in items"&gt;{ t }&lt;/li&gt;&lt;/ul&gt;
 &lt;/div&gt;</code></pre>
 </div>
 

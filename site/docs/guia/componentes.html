@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Componentes: props, slots, eventos e ciclo de vida · Documentação da Voodoo.js</title>
-<meta name="description" content="Registrar um componente uma vez e usar como tag: props com tipo, slots nomeados, eventos com emit, computados, métodos, ciclo de vida e o que a instância oferece.">
+<title>Components: props, slots, events and lifecycle · Voodoo.js documentation</title>
+<meta name="description" content="Register a component once and use it as a tag: typed props, named slots, events with emit, computed values, methods, the lifecycle and what the instance offers.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/componentes">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,264 +14,264 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Componentes e estado</p>
-<h1>Componentes: props, slots, eventos e ciclo de vida</h1>
+<p class="doc-migalha">Components and state</p>
+<h1>Components: props, slots, events and lifecycle</h1>
 <p class="doc-resumo">
-  O mesmo cartão aparece em cinco lugares da página. Copiar e colar HTML não escala. Registre uma
-  vez, use como tag — e continue sem passo de build, porque o template é uma string de HTML
-  comum.
+  The same card shows up in five places on the page. Copying and pasting HTML does not scale.
+  Register it once, use it as a tag — and carry on with no build step, because the template is an
+  ordinary HTML string.
 </p>
 
-<h2 id="registrando">Registrando</h2>
+<h2 id="registrando">Registering</h2>
 
-<pre data-lang="js"><code>V.component('cartao-usuario', {
+<pre data-lang="js"><code>V.component('user-card', {
   props: {
-    nome: { type: 'string', default: 'sem nome' },
-    idade: { type: 'number', default: 0 }
+    name: { type: 'string', default: 'no name' },
+    age: { type: 'number', default: 0 }
   },
   state(props) {
-    return { curtidas: 0 };
+    return { likes: 0 };
   },
   computed: {
-    resumo() { return `${this.nome}, ${this.idade} anos`; }
+    summary() { return `${this.name}, ${this.age} years old`; }
   },
   methods: {
-    curtir() { this.curtidas++; this.emit('curtido', this.curtidas); }
+    like() { this.likes++; this.emit('liked', this.likes); }
   },
-  mounted() { console.log('montado', this.nome); },
+  mounted() { console.log('mounted', this.name); },
   template: `
     &lt;article&gt;
-      &lt;h3&gt;{ resumo }&lt;/h3&gt;
+      &lt;h3&gt;{ summary }&lt;/h3&gt;
       &lt;slot&gt;&lt;/slot&gt;
-      &lt;button @click="curtir()"&gt;Curtir ({ curtidas })&lt;/button&gt;
+      &lt;button @click="like()"&gt;Like ({ likes })&lt;/button&gt;
     &lt;/article&gt;
   `
 });</code></pre>
 
-<p>Três escritas usam o mesmo componente:</p>
+<p>Three spellings use the same component:</p>
 
-<pre data-lang="html"><code>&lt;CartaoUsuario nome="Ana" :idade="idadeDaAna" @curtido="registrar($detail)"&gt;
-  &lt;p&gt;Este conteúdo entra no slot.&lt;/p&gt;
-&lt;/CartaoUsuario&gt;
+<pre data-lang="html"><code>&lt;UserCard name="Ann" :age="annsAge" @liked="record($detail)"&gt;
+  &lt;p&gt;This content goes into the slot.&lt;/p&gt;
+&lt;/UserCard&gt;
 
-&lt;cartao-usuario nome="Bia"&gt;&lt;/cartao-usuario&gt;
-&lt;div v-component="cartao-usuario" nome="Cris"&gt;&lt;/div&gt;</code></pre>
+&lt;user-card name="Bea"&gt;&lt;/user-card&gt;
+&lt;div v-component="user-card" name="Chris"&gt;&lt;/div&gt;</code></pre>
 
-<p>E funcionando de verdade, com o registro e o uso no mesmo bloco:</p>
+<p>And really working, with the registration and the use in the same block:</p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.component('contador-simples', {
-      props: { titulo: { type: 'string', default: 'Contador' } },
+    V.component('simple-counter', {
+      props: { title: { type: 'string', default: 'Counter' } },
       state: () =&gt; ({ n: 0 }),
-      computed: { dobro() { return this.n * 2 } },
-      methods: { somar() { this.n++; this.emit('mudou', this.n) } },
-      template: '&lt;p&gt;&lt;b&gt;{ titulo }&lt;/b&gt;: { n } (dobro { dobro }) ' +
-                '&lt;button @click="somar()"&gt;+1&lt;/button&gt;&lt;/p&gt;'
+      computed: { double() { return this.n * 2 } },
+      methods: { add() { this.n++; this.emit('changed', this.n) } },
+      template: '&lt;p&gt;&lt;b&gt;{ title }&lt;/b&gt;: { n } (double { double }) ' +
+                '&lt;button @click="add()"&gt;+1&lt;/button&gt;&lt;/p&gt;'
     });
   &lt;/script&gt;
 
-  &lt;div v-data="{ ultimo: 0 }"&gt;
-    &lt;contador-simples titulo="Visitas" @mudou="ultimo = $detail"&gt;&lt;/contador-simples&gt;
-    &lt;contador-simples titulo="Cliques" @mudou="ultimo = $detail"&gt;&lt;/contador-simples&gt;
-    &lt;p&gt;O último valor emitido foi { ultimo }.&lt;/p&gt;
+  &lt;div v-data="{ last: 0 }"&gt;
+    &lt;simple-counter title="Visits" @changed="last = $detail"&gt;&lt;/simple-counter&gt;
+    &lt;simple-counter title="Clicks" @changed="last = $detail"&gt;&lt;/simple-counter&gt;
+    &lt;p&gt;The last value emitted was { last }.&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os dois contadores têm estado próprio, e o escopo de fora só sabe deles pelo evento que eles
-  emitem. É essa separação que faz o componente valer a pena.
+  The two counters have state of their own, and the outer scope only learns about them through the
+  event they emit. That separation is what makes a component worth it.
 </p>
 
 <h2 id="props">Props</h2>
 
 <p>
-  Props estáticas vêm por atributo, props dinâmicas por <code>:prop</code>. Os tipos aceitos são
+  Static props come in as attributes, dynamic props as <code>:prop</code>. The accepted types are
   <code>string</code>, <code>number</code>, <code>boolean</code>, <code>array</code>,
-  <code>object</code> e <code>any</code>, e o valor do atributo é convertido sozinho.
+  <code>object</code> and <code>any</code>, and the attribute value is converted for you.
 </p>
 
-<pre data-lang="html"><code>&lt;cartao titulo="Faturamento" total="1200" ativo&gt;&lt;/cartao&gt;
-&lt;cartao :titulo="painel.nome" :total="painel.receita" :ativo="painel.ligado"&gt;&lt;/cartao&gt;</code></pre>
+<pre data-lang="html"><code>&lt;card title="Revenue" total="1200" active&gt;&lt;/card&gt;
+&lt;card :title="panel.name" :total="panel.revenue" :active="panel.on"&gt;&lt;/card&gt;</code></pre>
 
 <p>
-  Os três nomes <code>user-name</code>, <code>username</code> e <code>userName</code> chegam todos
-  como <code>userName</code>, o que evita a discussão sobre qual escrita usar no HTML.
+  All three of <code>user-name</code>, <code>username</code> and <code>userName</code> arrive as
+  <code>userName</code>, which heads off the argument about which spelling to use in the HTML.
 </p>
 
-<p>Quando o tipo não importa, existe a forma curta:</p>
+<p>When the type does not matter, there is a short form:</p>
 
-<pre data-lang="js"><code>V.component('saudacao', {
-  props: ['nome', 'idade'],
-  template: '&lt;p&gt;{ nome } tem { idade } anos&lt;/p&gt;'
+<pre data-lang="js"><code>V.component('greeting', {
+  props: ['name', 'age'],
+  template: '&lt;p&gt;{ name } is { age } years old&lt;/p&gt;'
 });</code></pre>
 
 <h2 id="slots">Slots</h2>
 
-<pre data-lang="js"><code>V.component('painel', {
+<pre data-lang="js"><code>V.component('panel', {
   template: `
     &lt;section&gt;
-      &lt;header&gt;&lt;slot name="cabecalho"&gt;&lt;h3&gt;Sem título&lt;/h3&gt;&lt;/slot&gt;&lt;/header&gt;
+      &lt;header&gt;&lt;slot name="header"&gt;&lt;h3&gt;No title&lt;/h3&gt;&lt;/slot&gt;&lt;/header&gt;
       &lt;div&gt;&lt;slot&gt;&lt;/slot&gt;&lt;/div&gt;
-      &lt;footer&gt;&lt;slot name="rodape"&gt;&lt;/slot&gt;&lt;/footer&gt;
+      &lt;footer&gt;&lt;slot name="footer"&gt;&lt;/slot&gt;&lt;/footer&gt;
     &lt;/section&gt;
   `
 });</code></pre>
 
-<pre data-lang="html"><code>&lt;painel&gt;
-  &lt;h3 slot="cabecalho"&gt;Relatório&lt;/h3&gt;
-  &lt;p&gt;Este parágrafo cai no slot padrão.&lt;/p&gt;
-  &lt;button slot="rodape"&gt;Fechar&lt;/button&gt;
-&lt;/painel&gt;</code></pre>
+<pre data-lang="html"><code>&lt;panel&gt;
+  &lt;h3 slot="header"&gt;Report&lt;/h3&gt;
+  &lt;p&gt;This paragraph lands in the default slot.&lt;/p&gt;
+  &lt;button slot="footer"&gt;Close&lt;/button&gt;
+&lt;/panel&gt;</code></pre>
 
 <p>
-  O conteúdo escrito dentro de um <code>&lt;slot&gt;</code> no template é o valor padrão, usado
-  quando ninguém preenche. E o conteúdo do slot é avaliado no escopo de <b>quem escreveu a
-  tag</b>, não no do componente — então ele enxerga as variáveis do lugar onde está, como
-  qualquer HTML normal enxergaria.
+  The content written inside a <code>&lt;slot&gt;</code> in the template is the default, used when
+  nobody fills it. And the slot content is evaluated in the scope of <b>whoever wrote the
+  tag</b>, not the component's — so it sees the variables of the place it sits in, the way any
+  ordinary HTML would.
 </p>
 
-<h2 id="eventos">Eventos</h2>
+<h2 id="eventos">Events</h2>
 
 <pre data-lang="js"><code>methods: {
-  confirmar() { this.emit('confirmado', { id: this.id }); }
+  confirm() { this.emit('confirmed', { id: this.id }); }
 }</code></pre>
 
-<pre data-lang="html"><code>&lt;dialogo @confirmado="registrar($detail)"&gt;&lt;/dialogo&gt;</code></pre>
+<pre data-lang="html"><code>&lt;dialog-box @confirmed="record($detail)"&gt;&lt;/dialog-box&gt;</code></pre>
 
 <p>
-  <code>emit</code> dispara um <code>CustomEvent</code> que sobe pela árvore, e o que você passar
-  como segundo argumento chega em <code>$detail</code>. É o mesmo mecanismo do
-  <code>$dispatch</code>, o que significa que um ancestral qualquer pode escutar o evento sem
-  precisar ser o pai imediato.
+  <code>emit</code> fires a <code>CustomEvent</code> that bubbles up the tree, and whatever you
+  pass as the second argument arrives in <code>$detail</code>. It is the same mechanism as
+  <code>$dispatch</code>, which means any ancestor can listen for the event without having to be
+  the immediate parent.
 </p>
 
-<h2 id="ciclo-de-vida">Ciclo de vida e instância</h2>
+<h2 id="ciclo-de-vida">Lifecycle and instance</h2>
 
 <p>
-  Os ganchos são <code>beforeMount</code>, <code>mounted</code>, <code>updated</code>,
-  <code>beforeUnmount</code> e <code>unmounted</code>. Dentro dos métodos, <code>this</code> tem
+  The hooks are <code>beforeMount</code>, <code>mounted</code>, <code>updated</code>,
+  <code>beforeUnmount</code> and <code>unmounted</code>. Inside the methods, <code>this</code> has
   <code>$el</code>, <code>$props</code>, <code>$refs</code>, <code>$scope</code>,
-  <code>$parent</code>, <code>$name</code>, <code>emit()</code>, <code>$watch()</code> e
+  <code>$parent</code>, <code>$name</code>, <code>emit()</code>, <code>$watch()</code> and
   <code>$nextTick()</code>.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.component('relogio', {
-      state: () =&gt; ({ agora: new Date() }),
+    V.component('a-clock', {
+      state: () =&gt; ({ now: new Date() }),
       mounted() {
-        this.timer = setInterval(() =&gt; { this.agora = new Date() }, 1000);
+        this.timer = setInterval(() =&gt; { this.now = new Date() }, 1000);
       },
       beforeUnmount() { clearInterval(this.timer) },
-      template: '&lt;time&gt;{ agora.toLocaleTimeString() }&lt;/time&gt;'
+      template: '&lt;time&gt;{ now.toLocaleTimeString() }&lt;/time&gt;'
     });
   &lt;/script&gt;
 
-  &lt;div v-data="{ ligado: true }"&gt;
-    &lt;button @click="ligado = !ligado"&gt;Ligar e desligar&lt;/button&gt;
-    &lt;p&gt;&lt;relogio v-if="ligado"&gt;&lt;/relogio&gt;&lt;/p&gt;
+  &lt;div v-data="{ on: true }"&gt;
+    &lt;button @click="on = !on"&gt;Switch on and off&lt;/button&gt;
+    &lt;p&gt;&lt;a-clock v-if="on"&gt;&lt;/a-clock&gt;&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O <code>beforeUnmount</code> existe justamente para casos como esse: sem ele, o
-  <code>setInterval</code> continuaria rodando depois que o elemento saísse da tela.
+  <code>beforeUnmount</code> exists for precisely this kind of case: without it, the
+  <code>setInterval</code> would keep running after the element left the screen.
 </p>
 
-<h2 id="escopo">O componente não enxerga o escopo de fora</h2>
+<h2 id="escopo">A component does not see the scope outside it</h2>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Proposital</span>
+  <span class="doc-aviso__rotulo">On purpose</span>
   <p>
-    Por padrão um componente <b>não</b> enxerga o <code>v-data</code> que o envolve, para que ele
-    não dependa de onde foi colocado. Tudo o que ele precisa entra por prop. Quando você quer o
-    contrário — normalmente em componentes internos de uma página só —, declare
-    <code>inheritScope: true</code> na definição.
+    By default a component does <b>not</b> see the <code>v-data</code> wrapping it, so that it does
+    not depend on where it was placed. Everything it needs comes in as a prop. When you want the
+    opposite — usually for internal components of a single page — declare
+    <code>inheritScope: true</code> in the definition.
   </p>
 </div>
 
-<h2 id="provide-inject">provide e inject</h2>
+<h2 id="provide-inject">provide and inject</h2>
 
 <p>
-  Passar a mesma prop por três níveis cansa. <code>provide</code> entrega um valor à árvore
-  inteira, e <code>inject</code> pega esse valor em qualquer profundidade — os nomes e o
-  comportamento são os do Vue.
+  Passing the same prop down three levels gets old. <code>provide</code> hands a value to the whole
+  tree, and <code>inject</code> picks that value up at any depth — the names and the behaviour are
+  Vue's.
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.component('cracha-usuario', {
-      inject: { usuario: { default: 'visitante' }, plano: { default: 'Grátis' } },
-      template: '&lt;b&gt;{ usuario } — plano { plano }&lt;/b&gt;'
+    V.component('user-badge', {
+      inject: { user: { default: 'guest' }, plan: { default: 'Free' } },
+      template: '&lt;b&gt;{ user } — { plan } plan&lt;/b&gt;'
     });
 
-    V.component('painel-usuario', {
-      provide: { usuario: 'Ana', plano: 'Pro' },
-      template: '&lt;section&gt;&lt;cracha-usuario&gt;&lt;/cracha-usuario&gt;&lt;/section&gt;'
+    V.component('user-panel', {
+      provide: { user: 'Ann', plan: 'Pro' },
+      template: '&lt;section&gt;&lt;user-badge&gt;&lt;/user-badge&gt;&lt;/section&gt;'
     });
   &lt;/script&gt;
 
-  &lt;painel-usuario&gt;&lt;/painel-usuario&gt;
+  &lt;user-panel&gt;&lt;/user-panel&gt;
 
-  &lt;p&gt;Fora do painel, o padrão vale:&lt;/p&gt;
-  &lt;cracha-usuario&gt;&lt;/cracha-usuario&gt;
+  &lt;p&gt;Outside the panel, the default holds:&lt;/p&gt;
+  &lt;user-badge&gt;&lt;/user-badge&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>inject</code> aceita a lista curta de nomes — <code>inject: ['usuario']</code> — ou o
-  objeto com <code>from</code> e <code>default</code>, como acima. O valor entra no estado do
-  componente, então o template usa como qualquer outra variável. Uma aplicação criada com
-  <code>createApp</code> também fornece, pelas opções ou por
-  <code>app.provide(chave, valor)</code>.
+  <code>inject</code> accepts the short list of names — <code>inject: ['user']</code> — or the
+  object with <code>from</code> and <code>default</code>, as above. The value enters the
+  component's state, so the template uses it like any other variable. An application created with
+  <code>createApp</code> provides too, through the options or through
+  <code>app.provide(key, value)</code>.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Vale para a árvore do template, não para o slot</span>
+  <span class="doc-aviso__rotulo">It holds for the template tree, not for the slot</span>
   <p>
-    O valor desce para os componentes que o próprio template monta. Um componente que chega pelo
-    <code>&lt;slot&gt;</code> pertence a quem escreveu a tag, e por isso enxerga o
-    <code>provide</code> de lá, não o do componente que o recebeu. É o mesmo comportamento do Vue,
-    e ele decorre da regra de escopo do slot, explicada acima.
+    The value goes down to the components the template itself mounts. A component arriving through
+    the <code>&lt;slot&gt;</code> belongs to whoever wrote the tag, and therefore sees the
+    <code>provide</code> from over there, not the one from the component that received it. This is
+    Vue's behaviour too, and it follows from the slot scope rule explained above.
   </p>
 </div>
 
-<h2 id="quando-usar">Quando vale a pena</h2>
+<h2 id="quando-usar">When it is worth it</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Use</th></tr></thead>
+<thead><tr><th>Situation</th><th>Use</th></tr></thead>
 <tbody>
-<tr><td>O mesmo HTML se repete com dados diferentes</td><td>Componente</td></tr>
-<tr><td>O trecho aparece uma vez só</td><td><code>v-data</code>, sem componente</td></tr>
-<tr><td>Você precisa do mesmo estado em lugares distantes</td><td><a href="stores.html">Store</a></td></tr>
-<tr><td>É um controle comum de interface</td><td><a href="componentes-prontos.html">Componente pronto</a>, se já existir</td></tr>
-<tr><td>É um comportamento, e não uma estrutura</td><td><a href="directives-e-plugins.html">Directive própria</a></td></tr>
+<tr><td>The same HTML repeats with different data</td><td>A component</td></tr>
+<tr><td>The stretch shows up only once</td><td><code>v-data</code>, with no component</td></tr>
+<tr><td>You need the same state in distant places</td><td>A <a href="stores.html">store</a></td></tr>
+<tr><td>It is an ordinary UI control</td><td>A <a href="componentes-prontos.html">ready-made component</a>, if one exists</td></tr>
+<tr><td>It is a behaviour, not a structure</td><td>A <a href="directives-e-plugins.html">directive of your own</a></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="onde-registrar">Onde registrar</h2>
+<h2 id="onde-registrar">Where to register</h2>
 
 <p>
-  O registro precisa acontecer antes de a biblioteca varrer a página, senão ela passa por uma tag
-  que ainda não conhece. Com <code>data-manual</code>, isso é simples de garantir:
+  The registration has to happen before the library sweeps the page, otherwise it walks past a tag
+  it does not know yet. With <code>data-manual</code>, that is simple to guarantee:
 </p>
 
 <pre data-lang="html"><code>&lt;script src="voodoo.min.js" data-manual defer&gt;&lt;/script&gt;
-&lt;script src="componentes.js" defer&gt;&lt;/script&gt;
+&lt;script src="components.js" defer&gt;&lt;/script&gt;
 &lt;script defer&gt;V.start();&lt;/script&gt;</code></pre>
 
 <p>
-  Um componente registrado depois disso ainda funciona para HTML criado a partir daquele momento,
-  porque o observador do DOM continua ativo — mas as tags que já estavam na página não voltam
-  atrás sozinhas. Nesse caso, chame <code>V.refresh()</code>.
+  A component registered after that still works for HTML created from that moment on, because the
+  DOM observer stays active — but the tags that were already on the page do not go back on their
+  own. In that case, call <code>V.refresh()</code>.
 </p>
 
 </article>

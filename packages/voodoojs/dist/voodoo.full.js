@@ -3387,7 +3387,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   // src/store/index.ts
   init_reactivity();
   var stores = /* @__PURE__ */ new Map();
-  var versao = ref(0);
+  var version = ref(0);
   var persistHandles = /* @__PURE__ */ new Map();
   function store(name, definition, options = {}) {
     const existing = stores.get(name);
@@ -3404,30 +3404,30 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return existing;
     }
     const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-    const descritores = Object.getOwnPropertyDescriptors(definition);
-    const initial = Object.defineProperties({}, descritores);
+    const descriptors = Object.getOwnPropertyDescriptors(definition);
+    const initial = Object.defineProperties({}, descriptors);
     if (options.persist && typeof localStorage !== "undefined") {
       try {
         const saved = localStorage.getItem(key);
         if (saved) {
-          const salvo = JSON.parse(saved);
-          for (const [chave, valor] of Object.entries(salvo)) {
-            if (descritores[chave] && !("value" in descritores[chave])) continue;
-            initial[chave] = valor;
+          const parsed = JSON.parse(saved);
+          for (const [field, value] of Object.entries(parsed)) {
+            if (descriptors[field] && !("value" in descriptors[field])) continue;
+            initial[field] = value;
           }
         }
       } catch (e) {
       }
     }
     const created = reactive(initial);
-    for (const [prop, descritor] of Object.entries(descritores)) {
-      const value = descritor.value;
+    for (const [prop, descriptor] of Object.entries(descriptors)) {
+      const value = descriptor.value;
       if (typeof value === "function") {
         created[prop] = (...args) => value.apply(created, args);
       }
     }
     stores.set(name, created);
-    versao.value++;
+    version.value++;
     if (options.persist && typeof localStorage !== "undefined") {
       const stop2 = watch(
         created,
@@ -3445,10 +3445,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   }
   function stripFunctions(source) {
     const out = {};
-    const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
+    const descriptors = Object.getOwnPropertyDescriptors(toRaw(source));
     for (const [key, value] of Object.entries(source)) {
       if (typeof value === "function") continue;
-      if (descritores[key] && !("value" in descritores[key])) continue;
+      if (descriptors[key] && !("value" in descriptors[key])) continue;
       out[key] = value;
     }
     return out;
@@ -3457,11 +3457,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     {},
     {
       get: (_t, key) => {
-        void versao.value;
+        void version.value;
         return stores.get(key);
       },
       has: (_t, key) => {
-        void versao.value;
+        void version.value;
         return stores.has(key);
       },
       ownKeys: () => [...stores.keys()],
@@ -5237,8 +5237,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
     effect2(() => {
       el.textContent = stringify(ev());
-      const primeiro = el.firstChild;
-      if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
+      const first = el.firstChild;
+      if (first && first.nodeType === 3) markInitialized(first);
     });
   });
   defineDirective("html", (ctx) => {
@@ -5444,10 +5444,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
           next.push({ key, scope: childScope, nodes, data: childScope.data });
         });
         if (batch.fragment.firstChild) (_a3 = anchor.parentNode) == null ? void 0 : _a3.insertBefore(batch.fragment, anchor);
-        for (const [node, escopo] of batch.pending) walk(node, escopo);
-        const reaproveitados = new Set(next);
+        for (const [node, rowScope] of batch.pending) walk(node, rowScope);
+        const reused = new Set(next);
         for (const block2 of blocks) {
-          if (used.has(block2.key) && reaproveitados.has(block2)) continue;
+          if (used.has(block2.key) && reused.has(block2)) continue;
           for (const node of block2.nodes) {
             destroy(node);
             node.remove();
@@ -5517,7 +5517,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     "novalidate",
     "inert"
   ]);
-  var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
+  var URL_ATTRIBUTES = /* @__PURE__ */ new Set([
     "href",
     "src",
     "action",
@@ -5526,15 +5526,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     "ping",
     "poster"
   ]);
-  var RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
-  function urlPerigosa(valor) {
-    const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
-    return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
+  var SCHEME_NOISE = /[\s\x00-\x1f]/g;
+  function isDangerousUrl(value) {
+    const clean = value.replace(SCHEME_NOISE, "").toLowerCase();
+    return clean.startsWith("javascript:") || clean.startsWith("vbscript:") || clean.startsWith("data:text/html") || clean.startsWith("data:application/xhtml");
   }
-  function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
+  function applyBinding(el, name, value, asProp = false, allowDangerous = false) {
     if (name === "class") return applyClass(el, value);
     if (name === "style") return applyStyle(el, value);
-    if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
+    if (config.sanitizeUrls && !allowDangerous && name === "srcdoc") {
       warn2(
         `:srcdoc refused in ${describeElement(el)}: the value becomes a document with active script inside the iframe, the same way v-html becomes markup. If the content is trusted, write :srcdoc.dangerous="..."; to turn off this protection on the entire application, set V.config.sanitizeUrls = false.`
       );
@@ -5542,7 +5542,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return;
     }
     if (config.sanitizeUrls && !asProp) {
-      if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
+      if (URL_ATTRIBUTES.has(name) && typeof value === "string" && isDangerousUrl(value)) {
         warn2(
           `value refused in :${name} of ${describeElement(el)}: "${value.slice(0, 60)}" uses a scheme that executes code. Use an http(s) or relative address. To turn off this protection, set V.config.sanitizeUrls = false.`
         );
@@ -5639,9 +5639,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       }
       if (arg === "key") return;
       const asProp = !!modifiers.prop;
-      const perigoLiberado = !!modifiers.dangerous;
+      const allowDangerous = !!modifiers.dangerous;
       effect2(() => {
-        applyBinding(el, arg, ev(), asProp, perigoLiberado);
+        applyBinding(el, arg, ev(), asProp, allowDangerous);
       });
       void expression;
     },
@@ -6576,7 +6576,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       (ctx) => {
         var _a3, _b2;
         let oldValue;
-        let mounted = false;
+        let mounted2 = false;
         const makeBinding = (value) => {
           var _a4, _b3;
           return {
@@ -6596,8 +6596,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         ctx.effect(() => {
           var _a4, _b3;
           const value = hooks.raw ? ctx.expression : ctx.evaluate();
-          if (!mounted) {
-            mounted = true;
+          if (!mounted2) {
+            mounted2 = true;
             oldValue = value;
             (_a4 = hooks.mounted) == null ? void 0 : _a4.call(hooks, ctx.el, makeBinding(value));
             return;
@@ -6621,11 +6621,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.4.6";
+  var version2 = "0.4.6";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
-    version,
+    version: version2,
     config,
     // Reactivity
     reactive,
@@ -9996,7 +9996,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     if (addedTabIndex) el.setAttribute("tabindex", "0");
     let bubble = null;
     let timer = null;
-    const build = () => {
+    const build2 = () => {
       const node = document.createElement("div");
       node.className = "v-tooltip";
       node.setAttribute("role", "tooltip");
@@ -10010,7 +10010,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     };
     const open = () => {
       if (bubble) return;
-      bubble = build();
+      bubble = build2();
       el.setAttribute("aria-describedby", bubble.id);
       reposition();
       requestAnimationFrame(() => bubble == null ? void 0 : bubble.classList.add("v-in"));
@@ -11220,37 +11220,37 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   init_registry();
   init_style();
   var messages = {
-    required: "Preencha este campo.",
-    email: "Informe um e-mail valido.",
-    url: "Informe uma URL valida.",
-    number: "Informe um numero valido.",
-    integer: "Informe um numero inteiro.",
-    decimal: "Informe um numero decimal valido.",
-    alpha: "Use apenas letras.",
-    alphanumeric: "Use apenas letras e numeros.",
-    minlength: "Use no minimo {param} caracteres.",
-    maxlength: "Use no maximo {param} caracteres.",
-    min: "O valor minimo e {param}.",
-    max: "O valor maximo e {param}.",
-    between: "Informe um valor entre {min} e {max}.",
-    match: "Os campos nao conferem.",
-    regex: "O formato informado nao e valido.",
-    date: "Informe uma data valida.",
-    after: "A data precisa ser posterior a {param}.",
-    before: "A data precisa ser anterior a {param}.",
-    accepted: "E preciso marcar esta opcao para continuar.",
-    same: "Os valores precisam ser iguais.",
-    different: "Os valores precisam ser diferentes.",
-    in: "Escolha uma das opcoes permitidas.",
-    notin: "Este valor nao e permitido.",
-    phone: "Informe um telefone valido com DDD.",
-    cpf: "CPF invalido.",
-    cnpj: "CNPJ invalido.",
-    cep: "CEP invalido.",
-    creditcard: "Numero de cartao invalido.",
-    strongpassword: "Use {param} caracteres ou mais, com maiuscula, minuscula, numero e simbolo.",
-    unique: "Este valor ja esta em uso.",
-    invalid: "Valor invalido."
+    required: "Please fill in this field.",
+    email: "Enter a valid email address.",
+    url: "Enter a valid URL.",
+    number: "Enter a valid number.",
+    integer: "Enter a whole number.",
+    decimal: "Enter a valid decimal number.",
+    alpha: "Use letters only.",
+    alphanumeric: "Use letters and numbers only.",
+    minlength: "Use at least {param} characters.",
+    maxlength: "Use at most {param} characters.",
+    min: "The smallest allowed value is {param}.",
+    max: "The largest allowed value is {param}.",
+    between: "Enter a value between {min} and {max}.",
+    match: "The fields do not match.",
+    regex: "That format is not valid.",
+    date: "Enter a valid date.",
+    after: "The date has to be later than {param}.",
+    before: "The date has to be earlier than {param}.",
+    accepted: "You have to tick this to continue.",
+    same: "The values have to be the same.",
+    different: "The values have to be different.",
+    in: "Choose one of the allowed options.",
+    notin: "That value is not allowed.",
+    phone: "Enter a valid phone number, including the area code.",
+    cpf: "Invalid CPF.",
+    cnpj: "Invalid CNPJ.",
+    cep: "Invalid postcode.",
+    creditcard: "Invalid card number.",
+    strongpassword: "Use {param} characters or more, with an upper case letter, a lower case letter, a number and a symbol.",
+    unique: "That value is already taken.",
+    invalid: "Invalid value."
   };
   function formatMessage(template, data2) {
     var _a2, _b, _c, _d, _e, _f;
@@ -14687,7 +14687,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
     const labels2 = fromOptions ? options.labels.map((label) => String(label)) : [];
     const series = [];
     const raw = options.data;
-    const singleName = (_a2 = options.name) != null ? _a2 : "Valor";
+    const singleName = (_a2 = options.name) != null ? _a2 : "Value";
     if (typeof raw === "number") {
       series.push({ name: singleName, values: [raw], xs: null, color: palette2[0] });
     } else if (Array.isArray(raw) && raw.length > 0) {
@@ -16283,7 +16283,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 @keyframes v-shimmer{0%{background-position:-180% 0}100%{background-position:180% 0}}
 @keyframes v-indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
 
-/* ------------------------------------------------------------------ botao */
+/* ----------------------------------------------------------------- button */
 .v-btn{appearance:none;-webkit-appearance:none;position:relative;display:inline-flex;
   align-items:center;justify-content:center;gap:8px;vertical-align:middle;white-space:nowrap;
   font-family:var(--v-font-sans);font-weight:600;line-height:1;text-decoration:none;
@@ -16327,7 +16327,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-btn-spin{width:1em;height:1em;border-radius:50%;border:2px solid currentColor;
   border-top-color:transparent;animation:v-spin .7s linear infinite;flex:none}
 
-/* ------------------------------------------------------- botao de icone */
+/* ------------------------------------------------------------ icon button */
 .v-icon-btn{appearance:none;-webkit-appearance:none;display:inline-grid;place-items:center;
   border:1px solid transparent;border-radius:var(--v-radius-sm);cursor:pointer;
   font-family:var(--v-font-sans);
@@ -16372,7 +16372,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-card-foot:empty{display:none}
 .v-card[data-padded="false"] .v-card-body{padding:0}
 
-/* ------------------------------------------------------------ formulario */
+/* ------------------------------------------------------------------- form */
 .v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
 .v-label{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;
   line-height:1.3;color:var(--v-text)}
@@ -16451,7 +16451,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-select-opt.is-selected .v-select-check{opacity:1}
 .v-select-empty{padding:14px 10px;text-align:center;font-size:13.5px;color:var(--v-text-muted)}
 
-/* -------------------------------------------- caixa, radio e interruptor */
+/* --------------------------------------------- checkbox, radio and switch */
 .v-check{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;
   font-family:var(--v-font-sans);font-size:14px;line-height:1.45;color:var(--v-text)}
 .v-check[data-disabled="true"]{cursor:not-allowed;opacity:.6}
@@ -16488,7 +16488,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-check[data-size="sm"] .v-switch-thumb{width:16px;height:16px}
 .v-check[data-size="sm"] .v-check-native:checked+.v-switch-track .v-switch-thumb{transform:translateX(14px)}
 
-/* --------------------------------------------------- selo, etiqueta, alerta */
+/* ------------------------------------------------------ badge, tag, alert */
 .v-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--v-font-sans);
   font-weight:600;line-height:1;border-radius:var(--v-radius-full);border:1px solid transparent;
   white-space:nowrap;vertical-align:middle}
@@ -16565,7 +16565,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-avatar-status[data-status="busy"]{background:var(--v-danger)}
 .v-avatar-status[data-status="away"]{background:var(--v-warning)}
 
-/* ------------------------------------------------- spinner e esqueleto */
+/* --------------------------------------------------- spinner and skeleton */
 .v-spinner{display:inline-block;border-radius:50%;border-style:solid;border-color:var(--v-border);
   border-top-color:var(--v-primary);animation:v-spin .7s linear infinite;vertical-align:middle}
 .v-spinner[data-tone="accent"]{border-top-color:var(--v-accent)}
@@ -16582,7 +16582,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-skeleton[data-circle="true"]{border-radius:var(--v-radius-full)}
 .v-skeleton-stack{display:flex;flex-direction:column;gap:8px}
 
-/* ------------------------------------------------------------- progresso */
+/* --------------------------------------------------------------- progress */
 .v-progress{font-family:var(--v-font-sans);display:flex;flex-direction:column;gap:6px}
 .v-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--v-text-muted)}
 .v-progress-value{font-weight:650;color:var(--v-text)}
@@ -16599,7 +16599,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-progress[data-tone="danger"] .v-progress-bar{background:var(--v-danger)}
 .v-progress[data-indeterminate="true"] .v-progress-bar{width:30% !important;animation:v-indeterminate 1.3s var(--v-ease) infinite}
 
-/* ------------------------------------------------------------- divisor */
+/* ---------------------------------------------------------------- divider */
 .v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
   font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
 .v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
@@ -16607,7 +16607,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
 .v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
 
-/* -------------------------------------------------------------- tabela */
+/* ------------------------------------------------------------------ table */
 .v-table-wrap{width:100%;overflow-x:auto;background:var(--v-surface);border:1px solid var(--v-border);
   border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-table{width:100%;border-collapse:collapse;font-size:14px;color:var(--v-text)}
@@ -16628,7 +16628,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-th[aria-sort="ascending"] .v-th-arrow,.v-th[aria-sort="descending"] .v-th-arrow{opacity:1;color:var(--v-primary)}
 .v-table-empty{text-align:center;color:var(--v-text-muted);padding:34px 14px;font-size:14px}
 
-/* ---------------------------------------------------------- paginacao */
+/* ------------------------------------------------------------- pagination */
 .v-pagination{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--v-font-sans)}
 .v-page{appearance:none;min-width:34px;height:34px;padding:0 9px;display:inline-grid;place-items:center;
   background:transparent;border:1px solid transparent;border-radius:var(--v-radius-sm);
@@ -16640,7 +16640,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-page[aria-current="page"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
 .v-page-gap{min-width:24px;text-align:center;color:var(--v-text-soft);user-select:none}
 
-/* ----------------------------------------------------------- migalhas */
+/* ------------------------------------------------------------- breadcrumb */
 .v-breadcrumb{font-family:var(--v-font-sans);font-size:13.5px}
 .v-breadcrumb-list{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0}
 .v-breadcrumb-item{display:inline-flex;align-items:center;gap:6px;color:var(--v-text-muted)}
@@ -16650,7 +16650,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-breadcrumb-item[aria-current="page"]{color:var(--v-text);font-weight:600}
 .v-breadcrumb-sep{color:var(--v-text-soft);user-select:none}
 
-/* ------------------------------------------------------------ metrica */
+/* ------------------------------------------------------------------- stat */
 .v-stat{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;background:var(--v-surface);
   border:1px solid var(--v-border);border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-stat-icon{flex:none;width:40px;height:40px;display:grid;place-items:center;font-size:19px;
@@ -16668,7 +16668,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-stat-delta[data-dir="flat"]{background:var(--v-surface-3);color:var(--v-text-muted)}
 .v-stat-hint{font-size:12.5px;color:var(--v-text-muted)}
 
-/* ------------------------------------------------------- estado vazio */
+/* ------------------------------------------------------------ empty state */
 .v-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
   padding:44px 22px;font-family:var(--v-font-sans);color:var(--v-text)}
 .v-empty-icon{width:58px;height:58px;display:grid;place-items:center;font-size:27px;
@@ -16678,7 +16678,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-empty-actions{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .v-empty-actions:empty{display:none}
 
-/* ----------------------------------------------------------- linha do tempo */
+/* --------------------------------------------------------------- timeline */
 .v-timeline{list-style:none;margin:0;padding:0;font-family:var(--v-font-sans);
   display:flex;flex-direction:column}
 .v-timeline-item{position:relative;display:flex;gap:14px;padding-bottom:20px}
@@ -16698,7 +16698,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-timeline-desc{margin:3px 0 0;font-size:13.5px;line-height:1.55;color:var(--v-text-muted)}
 .v-timeline-time{display:block;margin-top:3px;font-size:12px;color:var(--v-text-soft)}
 
-/* ---------------------------------------------------------------- passos */
+/* ------------------------------------------------------------------ steps */
 .v-steps{display:flex;gap:0;font-family:var(--v-font-sans);list-style:none;margin:0;padding:0}
 .v-steps[data-vertical="true"]{flex-direction:column;gap:4px}
 .v-step{flex:1;display:flex;align-items:flex-start;gap:10px;min-width:0;position:relative;padding-right:12px}
@@ -16717,7 +16717,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-steps[data-vertical="true"] .v-step-line{left:13px;right:auto;top:30px;bottom:2px;width:2px;height:auto}
 .v-step:last-child .v-step-line{display:none}
 
-/* ------------------------------------------------------------ avaliacao */
+/* ----------------------------------------------------------------- rating */
 .v-rating{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans)}
 .v-rating-stars{display:inline-flex;gap:2px}
 .v-star{appearance:none;background:none;border:0;padding:2px;cursor:pointer;line-height:0;
@@ -16744,7 +16744,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
 .v-tip[data-placement="right"]{left:calc(100% + 8px);top:50%;translate:0 -50%}
 .v-tipwrap:hover .v-tip,.v-tipwrap:focus-within .v-tip{opacity:1;transform:none}
 
-/* ------------------------------------------------------------ codigo */
+/* ------------------------------------------------------------------- code */
 .v-code{position:relative;background:var(--v-surface-inset);border:1px solid var(--v-border);
   border-radius:var(--v-radius);overflow:hidden;font-family:var(--v-font-mono)}
 .v-code-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -17757,7 +17757,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     props: {
       columns: { type: "any", default: "" },
       rows: { type: "any", default: "" },
-      empty: { type: "string", default: "Nenhum registro encontrado" },
+      empty: { type: "string", default: "No records found" },
       sortable: { type: "any", default: true },
       dense: BOOL,
       striped: BOOL,
@@ -17869,9 +17869,9 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       total: { type: "number", default: 0 },
       perPage: { type: "number", default: 10 },
       siblings: { type: "number", default: 1 },
-      previousLabel: { type: "string", default: "Anterior" },
-      nextLabel: { type: "string", default: "Pr\xF3xima" },
-      ariaLabel: { type: "string", default: "Pagina\xE7\xE3o" }
+      previousLabel: { type: "string", default: "Previous" },
+      nextLabel: { type: "string", default: "Next" },
+      ariaLabel: { type: "string", default: "Pagination" }
     },
     computed: {
       lastPage() {
@@ -17885,7 +17885,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
         const value = Number(this.page) || 1;
         return Math.min(Math.max(1, Math.round(value)), this.lastPage);
       },
-      /** Numeros visiveis, com `0` marcando as reticencias. */
+      /** Visible page numbers, with `0` marking the ellipsis. */
       items() {
         const last = this.lastPage;
         const current2 = this.currentPage;
@@ -17930,7 +17930,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       <template v-for="(item, index) in items" :key="index">
         <span class="v-page-gap" v-if="item === 0" aria-hidden="true">...</span>
         <button type="button" class="v-page" v-if="item !== 0" :aria-current="isCurrent(item)"
-          :aria-label="'P\xE1gina ' + item" v-click="go(item)" v-text="item"></button>
+          :aria-label="'Page ' + item" v-click="go(item)" v-text="item"></button>
       </template>
       <button type="button" class="v-page" :disabled="currentPage >= lastPage"
         :aria-label="nextLabel" v-click="go(currentPage + 1)" v-html="svgIcon('chevron-right')"></button>
@@ -17963,7 +17963,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     props: {
       items: { type: "any", default: "" },
       separator: { type: "string", default: "/" },
-      ariaLabel: { type: "string", default: "Trilha de navega\xE7\xE3o" }
+      ariaLabel: { type: "string", default: "Breadcrumb" }
     },
     computed: {
       crumbs() {
@@ -17997,7 +17997,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       hint: TEXT,
       icon: TEXT,
       suffix: { type: "string", default: "%" },
-      /** Quando `true`, uma variacao negativa e considerada positiva. */
+      /** When `true`, a negative change counts as positive. */
       inverted: BOOL
     },
     computed: {
@@ -18172,7 +18172,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       value: { type: "number", default: 0 },
       max: { type: "number", default: 5 },
       size: { type: "string", default: "md" },
-      label: { type: "string", default: "Avalia\xE7\xE3o" },
+      label: { type: "string", default: "Rating" },
       readonly: BOOL,
       disabled: BOOL,
       showValue: BOOL,
@@ -18198,7 +18198,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
         return this.hovered > 0 ? this.hovered : this.score;
       },
       valueText() {
-        return `${this.score} de ${this.total}`;
+        return `${this.score} of ${this.total}`;
       }
     },
     methods: {
@@ -18254,7 +18254,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       :tabindex="locked ? -1 : 0" :aria-readonly="locked" v-keydown="onKey" v-mouseleave="reset">
       <span class="v-rating-stars">
         <button type="button" class="v-star" v-for="index in total" :key="index"
-          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' de ' + total"
+          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' of ' + total"
           :tabindex="-1" v-click="pick(index)" v-mouseenter="preview(index)"
           v-html="svgIcon('star')"></button>
       </span>
@@ -20703,14 +20703,14 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
 
   // src/devtools/launcher.ts
   init_style();
-  var POSICAO_KEY = "voodoo:devtools:widget-position";
-  var ESCONDIDO_KEY = "voodoo:devtools:widget-hidden";
-  var LIMIAR_ARRASTO = 4;
+  var POSITION_KEY = "voodoo:devtools:widget-position";
+  var HIDDEN_KEY = "voodoo:devtools:widget-hidden";
+  var DRAG_THRESHOLD = 4;
   var refs2 = null;
-  var montado = false;
-  var timerContador = 0;
-  var timerPulso = 0;
-  var desligar = [];
+  var mounted = false;
+  var counterTimer = 0;
+  var pulseTimer = 0;
+  var teardown2 = [];
   var WIDGET_CSS = `
 .v-devtools-widget{
   all: initial;
@@ -20843,219 +20843,219 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
   .v-devtools-btn:hover{transform:none}
 }
 `;
-  var MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  var MARK = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 <path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
 </svg>`;
-  function lerPosicao() {
+  function readPosition() {
     try {
-      const bruto = localStorage.getItem(POSICAO_KEY);
-      if (!bruto) return null;
-      const valor = JSON.parse(bruto);
-      if (typeof (valor == null ? void 0 : valor.x) !== "number" || typeof (valor == null ? void 0 : valor.y) !== "number") return null;
-      return valor;
+      const raw = localStorage.getItem(POSITION_KEY);
+      if (!raw) return null;
+      const value = JSON.parse(raw);
+      if (typeof (value == null ? void 0 : value.x) !== "number" || typeof (value == null ? void 0 : value.y) !== "number") return null;
+      return value;
     } catch (e) {
       return null;
     }
   }
-  function gravarPosicao(pos) {
+  function writePosition(pos) {
     try {
-      localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
+      localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
     } catch (e) {
     }
   }
-  function aplicarPosicao(raiz, pos) {
-    const largura = raiz.offsetWidth || 120;
-    const altura = raiz.offsetHeight || 38;
-    const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - largura - 8));
-    const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - altura - 8));
-    raiz.style.left = `${x}px`;
-    raiz.style.top = `${y}px`;
-    raiz.style.right = "auto";
-    raiz.style.bottom = "auto";
+  function applyPosition(root, pos) {
+    const width = root.offsetWidth || 120;
+    const height = root.offsetHeight || 38;
+    const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - width - 8));
+    const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - height - 8));
+    root.style.left = `${x}px`;
+    root.style.top = `${y}px`;
+    root.style.right = "auto";
+    root.style.bottom = "auto";
   }
-  function construir() {
-    const raiz = document.createElement("div");
-    raiz.className = "v-devtools-widget";
-    raiz.setAttribute("data-voodoo-devtools", "widget");
-    const botao = document.createElement("button");
-    botao.type = "button";
-    botao.className = "v-devtools-btn";
-    botao.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
-    botao.setAttribute("aria-pressed", "false");
-    botao.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
-    botao.innerHTML = MARCA;
-    const rotulo = document.createElement("span");
-    rotulo.className = "v-devtools-label";
-    rotulo.textContent = "Voodoo";
-    const contador = document.createElement("span");
-    contador.className = "v-devtools-count";
-    contador.textContent = "0";
-    const pulso = document.createElement("span");
-    pulso.className = "v-devtools-pulse";
-    pulso.setAttribute("data-on", "false");
-    botao.append(rotulo, contador, pulso);
-    const fechar = document.createElement("button");
-    fechar.type = "button";
-    fechar.className = "v-devtools-close";
-    fechar.setAttribute("aria-label", "Hide the devtools widget in this tab");
-    fechar.title = "Hide in this tab";
-    fechar.textContent = "\xD7";
-    raiz.append(botao, fechar);
-    document.body.appendChild(raiz);
-    const salva = lerPosicao();
-    if (salva) {
-      aplicarPosicao(raiz, salva);
+  function build() {
+    const root = document.createElement("div");
+    root.className = "v-devtools-widget";
+    root.setAttribute("data-voodoo-devtools", "widget");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "v-devtools-btn";
+    button.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
+    button.setAttribute("aria-pressed", "false");
+    button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
+    button.innerHTML = MARK;
+    const label = document.createElement("span");
+    label.className = "v-devtools-label";
+    label.textContent = "Voodoo";
+    const counter2 = document.createElement("span");
+    counter2.className = "v-devtools-count";
+    counter2.textContent = "0";
+    const pulse = document.createElement("span");
+    pulse.className = "v-devtools-pulse";
+    pulse.setAttribute("data-on", "false");
+    button.append(label, counter2, pulse);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "v-devtools-close";
+    close.setAttribute("aria-label", "Hide the devtools widget in this tab");
+    close.title = "Hide in this tab";
+    close.textContent = "\xD7";
+    root.append(button, close);
+    document.body.appendChild(root);
+    const saved = readPosition();
+    if (saved) {
+      applyPosition(root, saved);
     } else {
-      raiz.style.right = "16px";
-      raiz.style.bottom = "16px";
+      root.style.right = "16px";
+      root.style.bottom = "16px";
     }
-    return { raiz, botao, pulso, contador, fechar };
+    return { root, button, pulse, counter: counter2, close };
   }
-  function ligarArrasto(refs3, aoClicar) {
-    let arrastando = false;
-    let moveu = false;
-    let deslocX = 0;
-    let deslocY = 0;
-    let inicioX = 0;
-    let inicioY = 0;
-    const aoDescer = (evento) => {
+  function enableDrag(refs3, onClick) {
+    let dragging = false;
+    let moved = false;
+    let offsetX = 0;
+    let offsetY = 0;
+    let startX = 0;
+    let startY = 0;
+    const onPointerDown = (event) => {
       var _a2, _b;
-      if (evento.button !== 0) return;
-      const caixa = refs3.raiz.getBoundingClientRect();
-      arrastando = true;
-      moveu = false;
-      inicioX = evento.clientX;
-      inicioY = evento.clientY;
-      deslocX = evento.clientX - caixa.left;
-      deslocY = evento.clientY - caixa.top;
-      (_b = (_a2 = refs3.botao).setPointerCapture) == null ? void 0 : _b.call(_a2, evento.pointerId);
+      if (event.button !== 0) return;
+      const box = refs3.root.getBoundingClientRect();
+      dragging = true;
+      moved = false;
+      startX = event.clientX;
+      startY = event.clientY;
+      offsetX = event.clientX - box.left;
+      offsetY = event.clientY - box.top;
+      (_b = (_a2 = refs3.button).setPointerCapture) == null ? void 0 : _b.call(_a2, event.pointerId);
     };
-    const aoMover = (evento) => {
-      if (!arrastando) return;
-      const distancia = Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY);
-      if (!moveu && distancia < LIMIAR_ARRASTO) return;
-      moveu = true;
-      evento.preventDefault();
-      aplicarPosicao(refs3.raiz, { x: evento.clientX - deslocX, y: evento.clientY - deslocY });
+    const onPointerMove2 = (event) => {
+      if (!dragging) return;
+      const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+      if (!moved && distance < DRAG_THRESHOLD) return;
+      moved = true;
+      event.preventDefault();
+      applyPosition(refs3.root, { x: event.clientX - offsetX, y: event.clientY - offsetY });
     };
-    const aoSubir = (evento) => {
+    const onPointerUp = (event) => {
       var _a2, _b;
-      if (!arrastando) return;
-      arrastando = false;
-      (_b = (_a2 = refs3.botao).releasePointerCapture) == null ? void 0 : _b.call(_a2, evento.pointerId);
-      if (!moveu) {
-        aoClicar();
+      if (!dragging) return;
+      dragging = false;
+      (_b = (_a2 = refs3.button).releasePointerCapture) == null ? void 0 : _b.call(_a2, event.pointerId);
+      if (!moved) {
+        onClick();
         return;
       }
-      const caixa = refs3.raiz.getBoundingClientRect();
-      gravarPosicao({ x: caixa.left, y: caixa.top });
+      const box = refs3.root.getBoundingClientRect();
+      writePosition({ x: box.left, y: box.top });
     };
-    const aoTeclar = (evento) => {
-      if (evento.key !== "Enter" && evento.key !== " ") return;
-      evento.preventDefault();
-      aoClicar();
+    const onKeyDown = (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      onClick();
     };
-    const aoRedimensionar = () => {
-      const caixa = refs3.raiz.getBoundingClientRect();
-      if (refs3.raiz.style.left) aplicarPosicao(refs3.raiz, { x: caixa.left, y: caixa.top });
+    const onResize = () => {
+      const box = refs3.root.getBoundingClientRect();
+      if (refs3.root.style.left) applyPosition(refs3.root, { x: box.left, y: box.top });
     };
-    refs3.botao.addEventListener("pointerdown", aoDescer);
-    refs3.botao.addEventListener("pointermove", aoMover);
-    refs3.botao.addEventListener("pointerup", aoSubir);
-    refs3.botao.addEventListener("pointercancel", aoSubir);
-    refs3.botao.addEventListener("keydown", aoTeclar);
-    window.addEventListener("resize", aoRedimensionar);
+    refs3.button.addEventListener("pointerdown", onPointerDown);
+    refs3.button.addEventListener("pointermove", onPointerMove2);
+    refs3.button.addEventListener("pointerup", onPointerUp);
+    refs3.button.addEventListener("pointercancel", onPointerUp);
+    refs3.button.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onResize);
     return () => {
-      refs3.botao.removeEventListener("pointerdown", aoDescer);
-      refs3.botao.removeEventListener("pointermove", aoMover);
-      refs3.botao.removeEventListener("pointerup", aoSubir);
-      refs3.botao.removeEventListener("pointercancel", aoSubir);
-      refs3.botao.removeEventListener("keydown", aoTeclar);
-      window.removeEventListener("resize", aoRedimensionar);
+      refs3.button.removeEventListener("pointerdown", onPointerDown);
+      refs3.button.removeEventListener("pointermove", onPointerMove2);
+      refs3.button.removeEventListener("pointerup", onPointerUp);
+      refs3.button.removeEventListener("pointercancel", onPointerUp);
+      refs3.button.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onResize);
     };
   }
-  function piscar() {
+  function blink() {
     if (!refs2) return;
-    refs2.pulso.setAttribute("data-on", "true");
-    window.clearTimeout(timerPulso);
-    timerPulso = window.setTimeout(() => {
-      refs2 == null ? void 0 : refs2.pulso.setAttribute("data-on", "false");
+    refs2.pulse.setAttribute("data-on", "true");
+    window.clearTimeout(pulseTimer);
+    pulseTimer = window.setTimeout(() => {
+      refs2 == null ? void 0 : refs2.pulse.setAttribute("data-on", "false");
     }, 320);
   }
-  function atualizarContador() {
+  function updateCounter() {
     if (!refs2) return;
     const total = instances.size;
-    const texto = total === 1 ? "1 component" : `${total} components`;
-    if (refs2.contador.textContent !== texto) refs2.contador.textContent = texto;
+    const text = total === 1 ? "1 component" : `${total} components`;
+    if (refs2.counter.textContent !== text) refs2.counter.textContent = text;
   }
   function mountDevtoolsWidget() {
-    if (montado || typeof document === "undefined" || !document.body) return;
+    if (mounted || typeof document === "undefined" || !document.body) return;
     try {
-      if (sessionStorage.getItem(ESCONDIDO_KEY) === "1") return;
+      if (sessionStorage.getItem(HIDDEN_KEY) === "1") return;
     } catch (e) {
     }
-    montado = true;
+    mounted = true;
     injectStyle("devtools-widget", WIDGET_CSS);
-    refs2 = construir();
-    const alternar = () => {
-      const ligado = xray();
-      refs2 == null ? void 0 : refs2.raiz.setAttribute("data-active", String(ligado));
-      refs2 == null ? void 0 : refs2.botao.setAttribute("aria-pressed", String(ligado));
+    refs2 = build();
+    const toggle = () => {
+      const enabled2 = xray();
+      refs2 == null ? void 0 : refs2.root.setAttribute("data-active", String(enabled2));
+      refs2 == null ? void 0 : refs2.button.setAttribute("aria-pressed", String(enabled2));
     };
-    desligar.push(ligarArrasto(refs2, alternar));
-    const aoFechar = (evento) => {
-      evento.stopPropagation();
+    teardown2.push(enableDrag(refs2, toggle));
+    const onClose = (event) => {
+      event.stopPropagation();
       try {
-        sessionStorage.setItem(ESCONDIDO_KEY, "1");
+        sessionStorage.setItem(HIDDEN_KEY, "1");
       } catch (e) {
       }
       unmountDevtoolsWidget();
       console.info("[Voodoo] devtools widget hidden. Use V.devtoolsWidget(true) to bring back.");
     };
-    refs2.fechar.addEventListener("click", aoFechar);
-    desligar.push(() => refs2 == null ? void 0 : refs2.fechar.removeEventListener("click", aoFechar));
-    const aoTeclarGlobal = () => {
-      const ligado = isXrayEnabled();
-      refs2 == null ? void 0 : refs2.raiz.setAttribute("data-active", String(ligado));
-      refs2 == null ? void 0 : refs2.botao.setAttribute("aria-pressed", String(ligado));
+    refs2.close.addEventListener("click", onClose);
+    teardown2.push(() => refs2 == null ? void 0 : refs2.close.removeEventListener("click", onClose));
+    const onGlobalKeyUp = () => {
+      const enabled2 = isXrayEnabled();
+      refs2 == null ? void 0 : refs2.root.setAttribute("data-active", String(enabled2));
+      refs2 == null ? void 0 : refs2.button.setAttribute("aria-pressed", String(enabled2));
     };
-    document.addEventListener("keyup", aoTeclarGlobal);
-    desligar.push(() => document.removeEventListener("keyup", aoTeclarGlobal));
-    for (const tipo of ["network", "event", "navigation", "update"]) {
-      desligar.push(devtoolsBus.on(tipo, piscar));
+    document.addEventListener("keyup", onGlobalKeyUp);
+    teardown2.push(() => document.removeEventListener("keyup", onGlobalKeyUp));
+    for (const type of ["network", "event", "navigation", "update"]) {
+      teardown2.push(devtoolsBus.on(type, blink));
     }
-    atualizarContador();
-    timerContador = window.setInterval(atualizarContador, 1e3);
+    updateCounter();
+    counterTimer = window.setInterval(updateCounter, 1e3);
   }
   function unmountDevtoolsWidget() {
-    if (!montado) return;
-    montado = false;
-    for (const fn of desligar.splice(0)) {
+    if (!mounted) return;
+    mounted = false;
+    for (const fn of teardown2.splice(0)) {
       try {
         fn();
       } catch (e) {
       }
     }
-    window.clearInterval(timerContador);
-    window.clearTimeout(timerPulso);
-    timerContador = 0;
-    timerPulso = 0;
-    refs2 == null ? void 0 : refs2.raiz.remove();
+    window.clearInterval(counterTimer);
+    window.clearTimeout(pulseTimer);
+    counterTimer = 0;
+    pulseTimer = 0;
+    refs2 == null ? void 0 : refs2.root.remove();
     refs2 = null;
   }
   function devtoolsWidget(force) {
-    const alvo = force != null ? force : !montado;
-    if (alvo) {
+    const target = force != null ? force : !mounted;
+    if (target) {
       try {
-        sessionStorage.removeItem(ESCONDIDO_KEY);
+        sessionStorage.removeItem(HIDDEN_KEY);
       } catch (e) {
       }
       mountDevtoolsWidget();
     } else {
       unmountDevtoolsWidget();
     }
-    return montado;
+    return mounted;
   }
 
   // src/index.ts

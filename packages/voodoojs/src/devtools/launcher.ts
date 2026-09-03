@@ -38,27 +38,27 @@ import { isXrayEnabled, xray } from './xray';
 // ---------------------------------------------------------------------------
 
 /** Where the dragged position is saved between reloads. */
-const POSICAO_KEY = 'voodoo:devtools:widget-position';
+const POSITION_KEY = 'voodoo:devtools:widget-position';
 
 /** Marks that the developer hid the widget in this tab. */
-const ESCONDIDO_KEY = 'voodoo:devtools:widget-hidden';
+const HIDDEN_KEY = 'voodoo:devtools:widget-hidden';
 
 /** Minimum distance in pixels for the gesture to count as drag, not click. */
-const LIMIAR_ARRASTO = 4;
+const DRAG_THRESHOLD = 4;
 
 interface Refs {
-  raiz: HTMLElement;
-  botao: HTMLButtonElement;
-  pulso: HTMLElement;
-  contador: HTMLElement;
-  fechar: HTMLButtonElement;
+  root: HTMLElement;
+  button: HTMLButtonElement;
+  pulse: HTMLElement;
+  counter: HTMLElement;
+  close: HTMLButtonElement;
 }
 
 let refs: Refs | null = null;
-let montado = false;
-let timerContador = 0;
-let timerPulso = 0;
-let desligar: Array<() => void> = [];
+let mounted = false;
+let counterTimer = 0;
+let pulseTimer = 0;
+let teardown: Array<() => void> = [];
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -198,7 +198,7 @@ const WIDGET_CSS = `
 `;
 
 /** Voodoo mark drawn in SVG, so the widget doesn't depend on a file. */
-const MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+const MARK = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 <path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
 </svg>`;
@@ -207,93 +207,93 @@ const MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria
 // Position
 // ---------------------------------------------------------------------------
 
-interface Posicao {
+interface Position {
   x: number;
   y: number;
 }
 
-function lerPosicao(): Posicao | null {
+function readPosition(): Position | null {
   try {
-    const bruto = localStorage.getItem(POSICAO_KEY);
-    if (!bruto) return null;
-    const valor = JSON.parse(bruto) as Posicao;
-    if (typeof valor?.x !== 'number' || typeof valor?.y !== 'number') return null;
-    return valor;
+    const raw = localStorage.getItem(POSITION_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Position;
+    if (typeof value?.x !== 'number' || typeof value?.y !== 'number') return null;
+    return value;
   } catch {
     return null;
   }
 }
 
-function gravarPosicao(pos: Posicao): void {
+function writePosition(pos: Position): void {
   try {
-    localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
+    localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
   } catch {
     // Storage blocked: the widget just won't remember the position.
   }
 }
 
 /** Keeps the widget inside the window, even after resizing. */
-function aplicarPosicao(raiz: HTMLElement, pos: Posicao): void {
-  const largura = raiz.offsetWidth || 120;
-  const altura = raiz.offsetHeight || 38;
-  const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - largura - 8));
-  const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - altura - 8));
-  raiz.style.left = `${x}px`;
-  raiz.style.top = `${y}px`;
-  raiz.style.right = 'auto';
-  raiz.style.bottom = 'auto';
+function applyPosition(root: HTMLElement, pos: Position): void {
+  const width = root.offsetWidth || 120;
+  const height = root.offsetHeight || 38;
+  const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - width - 8));
+  const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - height - 8));
+  root.style.left = `${x}px`;
+  root.style.top = `${y}px`;
+  root.style.right = 'auto';
+  root.style.bottom = 'auto';
 }
 
 // ---------------------------------------------------------------------------
 // Construction
 // ---------------------------------------------------------------------------
 
-function construir(): Refs {
-  const raiz = document.createElement('div');
-  raiz.className = 'v-devtools-widget';
-  raiz.setAttribute('data-voodoo-devtools', 'widget');
+function build(): Refs {
+  const root = document.createElement('div');
+  root.className = 'v-devtools-widget';
+  root.setAttribute('data-voodoo-devtools', 'widget');
 
-  const botao = document.createElement('button');
-  botao.type = 'button';
-  botao.className = 'v-devtools-btn';
-  botao.setAttribute('aria-label', 'Open Voodoo devtools (Ctrl+Shift+X)');
-  botao.setAttribute('aria-pressed', 'false');
-  botao.title = 'Voodoo devtools — click to inspect, drag to move (Ctrl+Shift+X)';
-  botao.innerHTML = MARCA;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'v-devtools-btn';
+  button.setAttribute('aria-label', 'Open Voodoo devtools (Ctrl+Shift+X)');
+  button.setAttribute('aria-pressed', 'false');
+  button.title = 'Voodoo devtools — click to inspect, drag to move (Ctrl+Shift+X)';
+  button.innerHTML = MARK;
 
-  const rotulo = document.createElement('span');
-  rotulo.className = 'v-devtools-label';
-  rotulo.textContent = 'Voodoo';
+  const label = document.createElement('span');
+  label.className = 'v-devtools-label';
+  label.textContent = 'Voodoo';
 
-  const contador = document.createElement('span');
-  contador.className = 'v-devtools-count';
-  contador.textContent = '0';
+  const counter = document.createElement('span');
+  counter.className = 'v-devtools-count';
+  counter.textContent = '0';
 
-  const pulso = document.createElement('span');
-  pulso.className = 'v-devtools-pulse';
-  pulso.setAttribute('data-on', 'false');
+  const pulse = document.createElement('span');
+  pulse.className = 'v-devtools-pulse';
+  pulse.setAttribute('data-on', 'false');
 
-  botao.append(rotulo, contador, pulso);
+  button.append(label, counter, pulse);
 
-  const fechar = document.createElement('button');
-  fechar.type = 'button';
-  fechar.className = 'v-devtools-close';
-  fechar.setAttribute('aria-label', 'Hide the devtools widget in this tab');
-  fechar.title = 'Hide in this tab';
-  fechar.textContent = '×';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'v-devtools-close';
+  close.setAttribute('aria-label', 'Hide the devtools widget in this tab');
+  close.title = 'Hide in this tab';
+  close.textContent = '×';
 
-  raiz.append(botao, fechar);
-  document.body.appendChild(raiz);
+  root.append(button, close);
+  document.body.appendChild(root);
 
-  const salva = lerPosicao();
-  if (salva) {
-    aplicarPosicao(raiz, salva);
+  const saved = readPosition();
+  if (saved) {
+    applyPosition(root, saved);
   } else {
-    raiz.style.right = '16px';
-    raiz.style.bottom = '16px';
+    root.style.right = '16px';
+    root.style.bottom = '16px';
   }
 
-  return { raiz, botao, pulso, contador, fechar };
+  return { root, button, pulse, counter, close };
 }
 
 // ---------------------------------------------------------------------------
@@ -306,74 +306,74 @@ function construir(): Refs {
  * The gesture only becomes a drag after passing the threshold; below that the
  * pointer releases as a normal click, so the button stays clickable.
  */
-function ligarArrasto(refs: Refs, aoClicar: () => void): () => void {
-  let arrastando = false;
-  let moveu = false;
-  let deslocX = 0;
-  let deslocY = 0;
-  let inicioX = 0;
-  let inicioY = 0;
+function enableDrag(refs: Refs, onClick: () => void): () => void {
+  let dragging = false;
+  let moved = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  let startX = 0;
+  let startY = 0;
 
-  const aoDescer = (evento: PointerEvent): void => {
-    if (evento.button !== 0) return;
-    const caixa = refs.raiz.getBoundingClientRect();
-    arrastando = true;
-    moveu = false;
-    inicioX = evento.clientX;
-    inicioY = evento.clientY;
-    deslocX = evento.clientX - caixa.left;
-    deslocY = evento.clientY - caixa.top;
-    refs.botao.setPointerCapture?.(evento.pointerId);
+  const onPointerDown = (event: PointerEvent): void => {
+    if (event.button !== 0) return;
+    const box = refs.root.getBoundingClientRect();
+    dragging = true;
+    moved = false;
+    startX = event.clientX;
+    startY = event.clientY;
+    offsetX = event.clientX - box.left;
+    offsetY = event.clientY - box.top;
+    refs.button.setPointerCapture?.(event.pointerId);
   };
 
-  const aoMover = (evento: PointerEvent): void => {
-    if (!arrastando) return;
-    const distancia = Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY);
-    if (!moveu && distancia < LIMIAR_ARRASTO) return;
-    moveu = true;
-    evento.preventDefault();
-    aplicarPosicao(refs.raiz, { x: evento.clientX - deslocX, y: evento.clientY - deslocY });
+  const onPointerMove = (event: PointerEvent): void => {
+    if (!dragging) return;
+    const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+    if (!moved && distance < DRAG_THRESHOLD) return;
+    moved = true;
+    event.preventDefault();
+    applyPosition(refs.root, { x: event.clientX - offsetX, y: event.clientY - offsetY });
   };
 
-  const aoSubir = (evento: PointerEvent): void => {
-    if (!arrastando) return;
-    arrastando = false;
-    refs.botao.releasePointerCapture?.(evento.pointerId);
+  const onPointerUp = (event: PointerEvent): void => {
+    if (!dragging) return;
+    dragging = false;
+    refs.button.releasePointerCapture?.(event.pointerId);
 
-    if (!moveu) {
-      aoClicar();
+    if (!moved) {
+      onClick();
       return;
     }
-    const caixa = refs.raiz.getBoundingClientRect();
-    gravarPosicao({ x: caixa.left, y: caixa.top });
+    const box = refs.root.getBoundingClientRect();
+    writePosition({ x: box.left, y: box.top });
   };
 
   // Keyboard never goes through dragging: Enter and Space trigger native click.
-  const aoTeclar = (evento: KeyboardEvent): void => {
-    if (evento.key !== 'Enter' && evento.key !== ' ') return;
-    evento.preventDefault();
-    aoClicar();
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onClick();
   };
 
-  const aoRedimensionar = (): void => {
-    const caixa = refs.raiz.getBoundingClientRect();
-    if (refs.raiz.style.left) aplicarPosicao(refs.raiz, { x: caixa.left, y: caixa.top });
+  const onResize = (): void => {
+    const box = refs.root.getBoundingClientRect();
+    if (refs.root.style.left) applyPosition(refs.root, { x: box.left, y: box.top });
   };
 
-  refs.botao.addEventListener('pointerdown', aoDescer);
-  refs.botao.addEventListener('pointermove', aoMover);
-  refs.botao.addEventListener('pointerup', aoSubir);
-  refs.botao.addEventListener('pointercancel', aoSubir);
-  refs.botao.addEventListener('keydown', aoTeclar);
-  window.addEventListener('resize', aoRedimensionar);
+  refs.button.addEventListener('pointerdown', onPointerDown);
+  refs.button.addEventListener('pointermove', onPointerMove);
+  refs.button.addEventListener('pointerup', onPointerUp);
+  refs.button.addEventListener('pointercancel', onPointerUp);
+  refs.button.addEventListener('keydown', onKeyDown);
+  window.addEventListener('resize', onResize);
 
   return () => {
-    refs.botao.removeEventListener('pointerdown', aoDescer);
-    refs.botao.removeEventListener('pointermove', aoMover);
-    refs.botao.removeEventListener('pointerup', aoSubir);
-    refs.botao.removeEventListener('pointercancel', aoSubir);
-    refs.botao.removeEventListener('keydown', aoTeclar);
-    window.removeEventListener('resize', aoRedimensionar);
+    refs.button.removeEventListener('pointerdown', onPointerDown);
+    refs.button.removeEventListener('pointermove', onPointerMove);
+    refs.button.removeEventListener('pointerup', onPointerUp);
+    refs.button.removeEventListener('pointercancel', onPointerUp);
+    refs.button.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('resize', onResize);
   };
 }
 
@@ -387,20 +387,20 @@ function ligarArrasto(refs: Refs, aoClicar: () => void): () => void {
  * The widget doesn't instrument anything on its own: it only listens to the
  * bus that modules already feed. Without activity, the cost is zero.
  */
-function piscar(): void {
+function blink(): void {
   if (!refs) return;
-  refs.pulso.setAttribute('data-on', 'true');
-  window.clearTimeout(timerPulso);
-  timerPulso = window.setTimeout(() => {
-    refs?.pulso.setAttribute('data-on', 'false');
+  refs.pulse.setAttribute('data-on', 'true');
+  window.clearTimeout(pulseTimer);
+  pulseTimer = window.setTimeout(() => {
+    refs?.pulse.setAttribute('data-on', 'false');
   }, 320);
 }
 
-function atualizarContador(): void {
+function updateCounter(): void {
   if (!refs) return;
   const total = instances.size;
-  const texto = total === 1 ? '1 component' : `${total} components`;
-  if (refs.contador.textContent !== texto) refs.contador.textContent = texto;
+  const text = total === 1 ? '1 component' : `${total} components`;
+  if (refs.counter.textContent !== text) refs.counter.textContent = text;
 }
 
 // ---------------------------------------------------------------------------
@@ -409,31 +409,31 @@ function atualizarContador(): void {
 
 /** Shows the floating widget. Calling twice doesn't duplicate anything. */
 export function mountDevtoolsWidget(): void {
-  if (montado || typeof document === 'undefined' || !document.body) return;
+  if (mounted || typeof document === 'undefined' || !document.body) return;
 
   // Respects whoever hid the widget in this tab.
   try {
-    if (sessionStorage.getItem(ESCONDIDO_KEY) === '1') return;
+    if (sessionStorage.getItem(HIDDEN_KEY) === '1') return;
   } catch {
     // No sessionStorage: the widget simply appears.
   }
 
-  montado = true;
+  mounted = true;
   injectStyle('devtools-widget', WIDGET_CSS);
-  refs = construir();
+  refs = build();
 
-  const alternar = (): void => {
-    const ligado = xray();
-    refs?.raiz.setAttribute('data-active', String(ligado));
-    refs?.botao.setAttribute('aria-pressed', String(ligado));
+  const toggle = (): void => {
+    const enabled = xray();
+    refs?.root.setAttribute('data-active', String(enabled));
+    refs?.button.setAttribute('aria-pressed', String(enabled));
   };
 
-  desligar.push(ligarArrasto(refs, alternar));
+  teardown.push(enableDrag(refs, toggle));
 
-  const aoFechar = (evento: MouseEvent): void => {
-    evento.stopPropagation();
+  const onClose = (event: MouseEvent): void => {
+    event.stopPropagation();
     try {
-      sessionStorage.setItem(ESCONDIDO_KEY, '1');
+      sessionStorage.setItem(HIDDEN_KEY, '1');
     } catch {
       // No sessionStorage: it disappears until the next navigation.
     }
@@ -441,32 +441,32 @@ export function mountDevtoolsWidget(): void {
     // eslint-disable-next-line no-console
     console.info('[Voodoo] devtools widget hidden. Use V.devtoolsWidget(true) to bring back.');
   };
-  refs.fechar.addEventListener('click', aoFechar);
-  desligar.push(() => refs?.fechar.removeEventListener('click', aoFechar));
+  refs.close.addEventListener('click', onClose);
+  teardown.push(() => refs?.close.removeEventListener('click', onClose));
 
   // Keeps visual state up to date when the panel is opened via shortcut.
-  const aoTeclarGlobal = (): void => {
-    const ligado = isXrayEnabled();
-    refs?.raiz.setAttribute('data-active', String(ligado));
-    refs?.botao.setAttribute('aria-pressed', String(ligado));
+  const onGlobalKeyUp = (): void => {
+    const enabled = isXrayEnabled();
+    refs?.root.setAttribute('data-active', String(enabled));
+    refs?.button.setAttribute('aria-pressed', String(enabled));
   };
-  document.addEventListener('keyup', aoTeclarGlobal);
-  desligar.push(() => document.removeEventListener('keyup', aoTeclarGlobal));
+  document.addEventListener('keyup', onGlobalKeyUp);
+  teardown.push(() => document.removeEventListener('keyup', onGlobalKeyUp));
 
-  for (const tipo of ['network', 'event', 'navigation', 'update'] as const) {
-    desligar.push(devtoolsBus.on(tipo, piscar));
+  for (const type of ['network', 'event', 'navigation', 'update'] as const) {
+    teardown.push(devtoolsBus.on(type, blink));
   }
 
-  atualizarContador();
-  timerContador = window.setInterval(atualizarContador, 1000);
+  updateCounter();
+  counterTimer = window.setInterval(updateCounter, 1000);
 }
 
 /** Removes the widget and all listeners it created. */
 export function unmountDevtoolsWidget(): void {
-  if (!montado) return;
-  montado = false;
+  if (!mounted) return;
+  mounted = false;
 
-  for (const fn of desligar.splice(0)) {
+  for (const fn of teardown.splice(0)) {
     try {
       fn();
     } catch {
@@ -474,18 +474,18 @@ export function unmountDevtoolsWidget(): void {
     }
   }
 
-  window.clearInterval(timerContador);
-  window.clearTimeout(timerPulso);
-  timerContador = 0;
-  timerPulso = 0;
+  window.clearInterval(counterTimer);
+  window.clearTimeout(pulseTimer);
+  counterTimer = 0;
+  pulseTimer = 0;
 
-  refs?.raiz.remove();
+  refs?.root.remove();
   refs = null;
 }
 
 /** `true` when the widget is on screen. */
 export function isDevtoolsWidgetMounted(): boolean {
-  return montado;
+  return mounted;
 }
 
 /**
@@ -501,11 +501,11 @@ export function isDevtoolsWidgetMounted(): boolean {
  * @returns the state after the call.
  */
 export function devtoolsWidget(force?: boolean): boolean {
-  const alvo = force ?? !montado;
-  if (alvo) {
+  const target = force ?? !mounted;
+  if (target) {
     // An explicit call overrides "hidden in this tab".
     try {
-      sessionStorage.removeItem(ESCONDIDO_KEY);
+      sessionStorage.removeItem(HIDDEN_KEY);
     } catch {
       // No sessionStorage: nothing to clean up.
     }
@@ -513,5 +513,5 @@ export function devtoolsWidget(force?: boolean): boolean {
   } else {
     unmountDevtoolsWidget();
   }
-  return montado;
+  return mounted;
 }

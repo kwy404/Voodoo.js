@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Campos de formulário com v-model · Documentação da Voodoo.js</title>
-<meta name="description" content="O v-model nos dois sentidos: o que cada tipo de campo escreve no estado, os modificadores number, trim, lazy, debounce e single, e a ligação com caminhos aninhados.">
+<title>Form fields with v-model · Voodoo.js documentation</title>
+<meta name="description" content="v-model in both directions: what each kind of field writes into state, the number, trim, lazy, debounce and single modifiers, and binding to nested paths.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/campos-e-v-model">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,27 +14,27 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Fundamentos</p>
-<h1>Campos de formulário com <code>v-model</code></h1>
+<p class="doc-migalha">Fundamentals</p>
+<h1>Form fields with <code>v-model</code></h1>
 <p class="doc-resumo">
-  Um campo precisa refletir o estado, e o estado precisa refletir o campo. O <code>v-model</code>
-  faz os dois sentidos de uma vez, em qualquer tipo de campo, e converte o valor de acordo com o
-  que aquele campo é.
+  A field has to reflect the state, and the state has to reflect the field. <code>v-model</code>
+  does both directions at once, on any kind of field, and converts the value according to what
+  that field is.
 </p>
 
-<h2 id="todos-os-campos">Todos os tipos de campo</h2>
+<h2 id="todos-os-campos">Every kind of field</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ nome: '', bio: '', aceito: false, uf: 'SP', tags: [], pagamento: 'pix' }"&gt;
-  &lt;div class="linha"&gt;&lt;input v-model="nome" placeholder="Nome"&gt;&lt;/div&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ name: '', bio: '', accepted: false, state: 'SP', tags: [], payment: 'pix' }"&gt;
+  &lt;div class="linha"&gt;&lt;input v-model="name" placeholder="Name"&gt;&lt;/div&gt;
   &lt;div class="linha"&gt;&lt;textarea v-model="bio" placeholder="Bio"&gt;&lt;/textarea&gt;&lt;/div&gt;
 
   &lt;div class="linha"&gt;
-    &lt;label&gt;&lt;input type="checkbox" v-model="aceito"&gt; Aceito os termos&lt;/label&gt;
+    &lt;label&gt;&lt;input type="checkbox" v-model="accepted"&gt; I accept the terms&lt;/label&gt;
   &lt;/div&gt;
 
   &lt;div class="linha"&gt;
-    &lt;select v-model="uf"&gt;&lt;option&gt;SP&lt;/option&gt;&lt;option&gt;RJ&lt;/option&gt;&lt;option&gt;MG&lt;/option&gt;&lt;/select&gt;
+    &lt;select v-model="state"&gt;&lt;option&gt;SP&lt;/option&gt;&lt;option&gt;RJ&lt;/option&gt;&lt;option&gt;MG&lt;/option&gt;&lt;/select&gt;
   &lt;/div&gt;
 
   &lt;div class="linha"&gt;
@@ -43,127 +43,127 @@
   &lt;/div&gt;
 
   &lt;div class="linha"&gt;
-    &lt;label&gt;&lt;input type="radio" value="pix" v-model="pagamento"&gt; Pix&lt;/label&gt;
-    &lt;label&gt;&lt;input type="radio" value="cartao" v-model="pagamento"&gt; Cartão&lt;/label&gt;
+    &lt;label&gt;&lt;input type="radio" value="pix" v-model="payment"&gt; Pix&lt;/label&gt;
+    &lt;label&gt;&lt;input type="radio" value="card" v-model="payment"&gt; Card&lt;/label&gt;
   &lt;/div&gt;
 
-  &lt;p v-text="JSON.stringify({ nome, aceito, uf, tags, pagamento })"&gt;&lt;/p&gt;
+  &lt;p v-text="JSON.stringify({ name, accepted, state, tags, payment })"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="o-que-chega">O que chega ao estado</h2>
+<h2 id="o-que-chega">What lands in the state</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo</th><th>Valor no estado</th></tr></thead>
+<thead><tr><th>Field</th><th>Value in state</th></tr></thead>
 <tbody>
-<tr><td>texto, <code>textarea</code></td><td>texto</td></tr>
-<tr><td><code>number</code>, <code>range</code></td><td>número, convertido sozinho</td></tr>
-<tr><td>checkbox sozinho</td><td>verdadeiro ou falso</td></tr>
-<tr><td>checkbox ligado a uma lista</td><td>a lista com os <code>value</code> marcados</td></tr>
-<tr><td>radio</td><td>o <code>value</code> do escolhido</td></tr>
-<tr><td>select simples</td><td>texto</td></tr>
-<tr><td>select múltiplo</td><td>lista de textos</td></tr>
-<tr><td><code>file</code></td><td>a <code>FileList</code>, ou o primeiro arquivo com <code>.single</code></td></tr>
+<tr><td>text, <code>textarea</code></td><td>a string</td></tr>
+<tr><td><code>number</code>, <code>range</code></td><td>a number, converted for you</td></tr>
+<tr><td>a lone checkbox</td><td>true or false</td></tr>
+<tr><td>a checkbox bound to a list</td><td>the list of checked <code>value</code>s</td></tr>
+<tr><td>radio</td><td>the <code>value</code> of the chosen one</td></tr>
+<tr><td>single select</td><td>a string</td></tr>
+<tr><td>multiple select</td><td>a list of strings</td></tr>
+<tr><td><code>file</code></td><td>the <code>FileList</code>, or the first file with <code>.single</code></td></tr>
 </tbody>
 </table>
 </div>
 
-<h2 id="modificadores">Modificadores</h2>
+<h2 id="modificadores">Modifiers</h2>
 
-<pre data-lang="html"><code>&lt;input v-model.number="idade"&gt;
+<pre data-lang="html"><code>&lt;input v-model.number="age"&gt;
 &lt;input v-model.trim="email"&gt;
 &lt;textarea v-model.lazy="bio"&gt;&lt;/textarea&gt;
-&lt;input v-model.debounce="busca" v-debounce="600"&gt;
-&lt;input type="file" v-model.single="foto"&gt;</code></pre>
+&lt;input v-model.debounce="search" v-debounce="600"&gt;
+&lt;input type="file" v-model.single="photo"&gt;</code></pre>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Modificador</th><th>Efeito</th></tr></thead>
+<thead><tr><th>Modifier</th><th>Effect</th></tr></thead>
 <tbody>
-<tr><td><code>.number</code></td><td>Converte para número. Texto que não vira número fica como está</td></tr>
-<tr><td><code>.trim</code></td><td>Remove os espaços das pontas</td></tr>
-<tr><td><code>.lazy</code></td><td>Escreve no <code>change</code>, e não a cada tecla</td></tr>
-<tr><td><code>.debounce</code></td><td>Espera o usuário parar de digitar; o tempo vem de <code>v-debounce</code></td></tr>
-<tr><td><code>.single</code></td><td>Em um campo de arquivo, guarda o primeiro arquivo em vez da lista</td></tr>
+<tr><td><code>.number</code></td><td>Converts to a number. Text that does not become a number stays as it is</td></tr>
+<tr><td><code>.trim</code></td><td>Strips the spaces off both ends</td></tr>
+<tr><td><code>.lazy</code></td><td>Writes on <code>change</code>, not on every keystroke</td></tr>
+<tr><td><code>.debounce</code></td><td>Waits for the user to stop typing; the delay comes from <code>v-debounce</code></td></tr>
+<tr><td><code>.single</code></td><td>On a file field, keeps the first file instead of the list</td></tr>
 </tbody>
 </table>
 </div>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ idade: 0, email: '', busca: '' }"&gt;
-  &lt;div class="linha"&gt;&lt;input type="number" v-model.number="idade"&gt;
-    &lt;span&gt;Daqui a dez anos: { idade + 10 }&lt;/span&gt;&lt;/div&gt;
-  &lt;div class="linha"&gt;&lt;input v-model.trim="email" placeholder="  com espaços  "&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ age: 0, email: '', search: '' }"&gt;
+  &lt;div class="linha"&gt;&lt;input type="number" v-model.number="age"&gt;
+    &lt;span&gt;Ten years from now: { age + 10 }&lt;/span&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-model.trim="email" placeholder="  with spaces  "&gt;
     &lt;span&gt;[{ email }]&lt;/span&gt;&lt;/div&gt;
-  &lt;div class="linha"&gt;&lt;input v-model.debounce="busca" v-debounce="600" placeholder="Buscar"&gt;
-    &lt;span&gt;{ busca }&lt;/span&gt;&lt;/div&gt;
+  &lt;div class="linha"&gt;&lt;input v-model.debounce="search" v-debounce="600" placeholder="Search"&gt;
+    &lt;span&gt;{ search }&lt;/span&gt;&lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Sem o <code>.number</code>, um <code>&lt;input type="number"&gt;</code> ainda escreve número:
-  a conversão pelo tipo do campo acontece sozinha. O modificador serve para forçar a conversão
-  em campos de texto comuns.
+  Without <code>.number</code>, an <code>&lt;input type="number"&gt;</code> still writes a number:
+  conversion by field type happens on its own. The modifier is there to force the conversion on
+  ordinary text fields.
 </p>
 
-<h2 id="caminhos">Ligando a um caminho, e não a uma variável</h2>
+<h2 id="caminhos">Binding to a path, not to a variable</h2>
 
 <p>
-  <code>v-model</code> funciona em qualquer expressão atribuível, e não só em uma variável solta.
-  Isso evita espalhar o formulário em dez chaves soltas quando ele é, na verdade, um objeto.
+  <code>v-model</code> works on any assignable expression, not only on a loose variable. That
+  keeps you from scattering a form across ten loose keys when it is, in fact, one object.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ form: { nome: '', endereco: { cidade: '', uf: '' } } }"&gt;
-  &lt;div class="linha"&gt;&lt;input v-model="form.nome" placeholder="Nome"&gt;&lt;/div&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ form: { name: '', address: { city: '', state: '' } } }"&gt;
+  &lt;div class="linha"&gt;&lt;input v-model="form.name" placeholder="Name"&gt;&lt;/div&gt;
   &lt;div class="linha"&gt;
-    &lt;input v-model="form.endereco.cidade" placeholder="Cidade"&gt;
-    &lt;input v-model="form.endereco.uf" placeholder="UF"&gt;
+    &lt;input v-model="form.address.city" placeholder="City"&gt;
+    &lt;input v-model="form.address.state" placeholder="State"&gt;
   &lt;/div&gt;
   &lt;p v-text="JSON.stringify(form)"&gt;&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Dentro de um <code>v-for</code>, o mesmo vale para o item da iteração:
-  <code>&lt;input v-model="tarefa.texto"&gt;</code> escreve no objeto certo da lista.
+  Inside a <code>v-for</code>, the same holds for the iteration item:
+  <code>&lt;input v-model="task.text"&gt;</code> writes into the right object of the list.
 </p>
 
-<h2 id="v-watch">Reagindo à digitação</h2>
+<h2 id="v-watch">Reacting to typing</h2>
 
 <p>
-  O <code>v-watch</code> observa o <code>v-model</code> do mesmo elemento e entrega
-  <code>$value</code> e <code>$old</code>. É o caminho curto para disparar uma busca ou um cálculo
-  quando o campo muda, sem escrever um evento à parte.
+  <code>v-watch</code> observes the <code>v-model</code> of the same element and hands you
+  <code>$value</code> and <code>$old</code>. It is the short road to firing a search or a
+  calculation when the field changes, without writing a separate event.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ busca: '', historico: [] }"&gt;
-  &lt;input v-model.debounce="busca" v-debounce="500"
-         v-watch="$value &amp;&amp; historico.unshift($value)" placeholder="Digite e pare"&gt;
-  &lt;ul&gt;&lt;li v-for="(t, i) in historico.slice(0, 5)"&gt;{ t }&lt;/li&gt;&lt;/ul&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ search: '', history: [] }"&gt;
+  &lt;input v-model.debounce="search" v-debounce="500"
+         v-watch="$value &amp;&amp; history.unshift($value)" placeholder="Type and stop"&gt;
+  &lt;ul&gt;&lt;li v-for="(t, i) in history.slice(0, 5)"&gt;{ t }&lt;/li&gt;&lt;/ul&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<h2 id="alem-do-model">O que vem depois</h2>
+<h2 id="alem-do-model">What comes next</h2>
 
 <p>
-  <code>v-model</code> cuida da ligação. O resto do trabalho de formulário tem página própria:
+  <code>v-model</code> takes care of the binding. The rest of the form work has pages of its own:
 </p>
 
 <ul class="doc-cartoes">
   <li><a class="doc-cartao" href="formularios.html">
-    <em>Guia</em><b>Formulários</b>
-    <span>Enviar por AJAX com <code>v-submit</code>, serializar, tratar resposta e erro.</span>
+    <em>Guide</em><b>Forms</b>
+    <span>Submitting over AJAX with <code>v-submit</code>, serializing, handling the response and the error.</span>
   </a></li>
   <li><a class="doc-cartao" href="../referencia/validacao.html">
-    <em>Referência</em><b>Validação</b>
-    <span>Todas as regras, mensagens, validação assíncrona e regras próprias.</span>
+    <em>Reference</em><b>Validation</b>
+    <span>Every rule, the messages, asynchronous validation and rules of your own.</span>
   </a></li>
   <li><a class="doc-cartao" href="mascaras.html">
-    <em>Guia</em><b>Máscaras</b>
-    <span>CPF, CNPJ, telefone, CEP, moeda, cartão e as máscaras que você escrever.</span>
+    <em>Guide</em><b>Masks</b>
+    <span>cpf, cnpj, phone, cep, currency, card and the masks you write yourself.</span>
   </a></li>
 </ul>
 

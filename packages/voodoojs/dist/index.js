@@ -1,12 +1,12 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-7NMQHC33.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-7NMQHC33.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-CNHNFTPC.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-CNHNFTPC.js';
 export { gpu, reflectWgsl } from './chunk-JZIYRIY6.js';
 import { http } from './chunk-PQZEVFVZ.js';
 export { HttpError, http, request } from './chunk-PQZEVFVZ.js';
-import { devtoolsBus } from './chunk-RJUNPXQF.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-RJUNPXQF.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-CRBAIP62.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-CRBAIP62.js';
+import { devtoolsBus } from './chunk-OOIUSRUN.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-OOIUSRUN.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-PHMBDPWH.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-PHMBDPWH.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-NNU6WOOU.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-NNU6WOOU.js';
 import { warnAlias } from './chunk-A2UOVQBP.js';
@@ -2077,7 +2077,7 @@ function normalize(options, type) {
   const labels = fromOptions ? options.labels.map((label) => String(label)) : [];
   const series = [];
   const raw = options.data;
-  const singleName = options.name ?? "Valor";
+  const singleName = options.name ?? "Value";
   if (typeof raw === "number") {
     series.push({ name: singleName, values: [raw], xs: null, color: palette2[0] });
   } else if (Array.isArray(raw) && raw.length > 0) {
@@ -3174,7 +3174,7 @@ var CSS2 = `
 @keyframes v-shimmer{0%{background-position:-180% 0}100%{background-position:180% 0}}
 @keyframes v-indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
 
-/* ------------------------------------------------------------------ botao */
+/* ----------------------------------------------------------------- button */
 .v-btn{appearance:none;-webkit-appearance:none;position:relative;display:inline-flex;
   align-items:center;justify-content:center;gap:8px;vertical-align:middle;white-space:nowrap;
   font-family:var(--v-font-sans);font-weight:600;line-height:1;text-decoration:none;
@@ -3218,7 +3218,7 @@ var CSS2 = `
 .v-btn-spin{width:1em;height:1em;border-radius:50%;border:2px solid currentColor;
   border-top-color:transparent;animation:v-spin .7s linear infinite;flex:none}
 
-/* ------------------------------------------------------- botao de icone */
+/* ------------------------------------------------------------ icon button */
 .v-icon-btn{appearance:none;-webkit-appearance:none;display:inline-grid;place-items:center;
   border:1px solid transparent;border-radius:var(--v-radius-sm);cursor:pointer;
   font-family:var(--v-font-sans);
@@ -3263,7 +3263,7 @@ var CSS2 = `
 .v-card-foot:empty{display:none}
 .v-card[data-padded="false"] .v-card-body{padding:0}
 
-/* ------------------------------------------------------------ formulario */
+/* ------------------------------------------------------------------- form */
 .v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
 .v-label{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;
   line-height:1.3;color:var(--v-text)}
@@ -3342,7 +3342,7 @@ var CSS2 = `
 .v-select-opt.is-selected .v-select-check{opacity:1}
 .v-select-empty{padding:14px 10px;text-align:center;font-size:13.5px;color:var(--v-text-muted)}
 
-/* -------------------------------------------- caixa, radio e interruptor */
+/* --------------------------------------------- checkbox, radio and switch */
 .v-check{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;
   font-family:var(--v-font-sans);font-size:14px;line-height:1.45;color:var(--v-text)}
 .v-check[data-disabled="true"]{cursor:not-allowed;opacity:.6}
@@ -3379,7 +3379,7 @@ var CSS2 = `
 .v-check[data-size="sm"] .v-switch-thumb{width:16px;height:16px}
 .v-check[data-size="sm"] .v-check-native:checked+.v-switch-track .v-switch-thumb{transform:translateX(14px)}
 
-/* --------------------------------------------------- selo, etiqueta, alerta */
+/* ------------------------------------------------------ badge, tag, alert */
 .v-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--v-font-sans);
   font-weight:600;line-height:1;border-radius:var(--v-radius-full);border:1px solid transparent;
   white-space:nowrap;vertical-align:middle}
@@ -3456,7 +3456,7 @@ var CSS2 = `
 .v-avatar-status[data-status="busy"]{background:var(--v-danger)}
 .v-avatar-status[data-status="away"]{background:var(--v-warning)}
 
-/* ------------------------------------------------- spinner e esqueleto */
+/* --------------------------------------------------- spinner and skeleton */
 .v-spinner{display:inline-block;border-radius:50%;border-style:solid;border-color:var(--v-border);
   border-top-color:var(--v-primary);animation:v-spin .7s linear infinite;vertical-align:middle}
 .v-spinner[data-tone="accent"]{border-top-color:var(--v-accent)}
@@ -3473,7 +3473,7 @@ var CSS2 = `
 .v-skeleton[data-circle="true"]{border-radius:var(--v-radius-full)}
 .v-skeleton-stack{display:flex;flex-direction:column;gap:8px}
 
-/* ------------------------------------------------------------- progresso */
+/* --------------------------------------------------------------- progress */
 .v-progress{font-family:var(--v-font-sans);display:flex;flex-direction:column;gap:6px}
 .v-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--v-text-muted)}
 .v-progress-value{font-weight:650;color:var(--v-text)}
@@ -3490,7 +3490,7 @@ var CSS2 = `
 .v-progress[data-tone="danger"] .v-progress-bar{background:var(--v-danger)}
 .v-progress[data-indeterminate="true"] .v-progress-bar{width:30% !important;animation:v-indeterminate 1.3s var(--v-ease) infinite}
 
-/* ------------------------------------------------------------- divisor */
+/* ---------------------------------------------------------------- divider */
 .v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
   font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
 .v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
@@ -3498,7 +3498,7 @@ var CSS2 = `
 .v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
 .v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
 
-/* -------------------------------------------------------------- tabela */
+/* ------------------------------------------------------------------ table */
 .v-table-wrap{width:100%;overflow-x:auto;background:var(--v-surface);border:1px solid var(--v-border);
   border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-table{width:100%;border-collapse:collapse;font-size:14px;color:var(--v-text)}
@@ -3519,7 +3519,7 @@ var CSS2 = `
 .v-th[aria-sort="ascending"] .v-th-arrow,.v-th[aria-sort="descending"] .v-th-arrow{opacity:1;color:var(--v-primary)}
 .v-table-empty{text-align:center;color:var(--v-text-muted);padding:34px 14px;font-size:14px}
 
-/* ---------------------------------------------------------- paginacao */
+/* ------------------------------------------------------------- pagination */
 .v-pagination{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--v-font-sans)}
 .v-page{appearance:none;min-width:34px;height:34px;padding:0 9px;display:inline-grid;place-items:center;
   background:transparent;border:1px solid transparent;border-radius:var(--v-radius-sm);
@@ -3531,7 +3531,7 @@ var CSS2 = `
 .v-page[aria-current="page"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
 .v-page-gap{min-width:24px;text-align:center;color:var(--v-text-soft);user-select:none}
 
-/* ----------------------------------------------------------- migalhas */
+/* ------------------------------------------------------------- breadcrumb */
 .v-breadcrumb{font-family:var(--v-font-sans);font-size:13.5px}
 .v-breadcrumb-list{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0}
 .v-breadcrumb-item{display:inline-flex;align-items:center;gap:6px;color:var(--v-text-muted)}
@@ -3541,7 +3541,7 @@ var CSS2 = `
 .v-breadcrumb-item[aria-current="page"]{color:var(--v-text);font-weight:600}
 .v-breadcrumb-sep{color:var(--v-text-soft);user-select:none}
 
-/* ------------------------------------------------------------ metrica */
+/* ------------------------------------------------------------------- stat */
 .v-stat{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;background:var(--v-surface);
   border:1px solid var(--v-border);border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-stat-icon{flex:none;width:40px;height:40px;display:grid;place-items:center;font-size:19px;
@@ -3559,7 +3559,7 @@ var CSS2 = `
 .v-stat-delta[data-dir="flat"]{background:var(--v-surface-3);color:var(--v-text-muted)}
 .v-stat-hint{font-size:12.5px;color:var(--v-text-muted)}
 
-/* ------------------------------------------------------- estado vazio */
+/* ------------------------------------------------------------ empty state */
 .v-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
   padding:44px 22px;font-family:var(--v-font-sans);color:var(--v-text)}
 .v-empty-icon{width:58px;height:58px;display:grid;place-items:center;font-size:27px;
@@ -3569,7 +3569,7 @@ var CSS2 = `
 .v-empty-actions{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .v-empty-actions:empty{display:none}
 
-/* ----------------------------------------------------------- linha do tempo */
+/* --------------------------------------------------------------- timeline */
 .v-timeline{list-style:none;margin:0;padding:0;font-family:var(--v-font-sans);
   display:flex;flex-direction:column}
 .v-timeline-item{position:relative;display:flex;gap:14px;padding-bottom:20px}
@@ -3589,7 +3589,7 @@ var CSS2 = `
 .v-timeline-desc{margin:3px 0 0;font-size:13.5px;line-height:1.55;color:var(--v-text-muted)}
 .v-timeline-time{display:block;margin-top:3px;font-size:12px;color:var(--v-text-soft)}
 
-/* ---------------------------------------------------------------- passos */
+/* ------------------------------------------------------------------ steps */
 .v-steps{display:flex;gap:0;font-family:var(--v-font-sans);list-style:none;margin:0;padding:0}
 .v-steps[data-vertical="true"]{flex-direction:column;gap:4px}
 .v-step{flex:1;display:flex;align-items:flex-start;gap:10px;min-width:0;position:relative;padding-right:12px}
@@ -3608,7 +3608,7 @@ var CSS2 = `
 .v-steps[data-vertical="true"] .v-step-line{left:13px;right:auto;top:30px;bottom:2px;width:2px;height:auto}
 .v-step:last-child .v-step-line{display:none}
 
-/* ------------------------------------------------------------ avaliacao */
+/* ----------------------------------------------------------------- rating */
 .v-rating{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans)}
 .v-rating-stars{display:inline-flex;gap:2px}
 .v-star{appearance:none;background:none;border:0;padding:2px;cursor:pointer;line-height:0;
@@ -3635,7 +3635,7 @@ var CSS2 = `
 .v-tip[data-placement="right"]{left:calc(100% + 8px);top:50%;translate:0 -50%}
 .v-tipwrap:hover .v-tip,.v-tipwrap:focus-within .v-tip{opacity:1;transform:none}
 
-/* ------------------------------------------------------------ codigo */
+/* ------------------------------------------------------------------- code */
 .v-code{position:relative;background:var(--v-surface-inset);border:1px solid var(--v-border);
   border-radius:var(--v-radius);overflow:hidden;font-family:var(--v-font-mono)}
 .v-code-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -4636,7 +4636,7 @@ register("v-table", {
   props: {
     columns: { type: "any", default: "" },
     rows: { type: "any", default: "" },
-    empty: { type: "string", default: "Nenhum registro encontrado" },
+    empty: { type: "string", default: "No records found" },
     sortable: { type: "any", default: true },
     dense: BOOL,
     striped: BOOL,
@@ -4746,9 +4746,9 @@ register("v-pagination", {
     total: { type: "number", default: 0 },
     perPage: { type: "number", default: 10 },
     siblings: { type: "number", default: 1 },
-    previousLabel: { type: "string", default: "Anterior" },
-    nextLabel: { type: "string", default: "Pr\xF3xima" },
-    ariaLabel: { type: "string", default: "Pagina\xE7\xE3o" }
+    previousLabel: { type: "string", default: "Previous" },
+    nextLabel: { type: "string", default: "Next" },
+    ariaLabel: { type: "string", default: "Pagination" }
   },
   computed: {
     lastPage() {
@@ -4762,7 +4762,7 @@ register("v-pagination", {
       const value = Number(this.page) || 1;
       return Math.min(Math.max(1, Math.round(value)), this.lastPage);
     },
-    /** Numeros visiveis, com `0` marcando as reticencias. */
+    /** Visible page numbers, with `0` marking the ellipsis. */
     items() {
       const last = this.lastPage;
       const current = this.currentPage;
@@ -4807,7 +4807,7 @@ register("v-pagination", {
       <template v-for="(item, index) in items" :key="index">
         <span class="v-page-gap" v-if="item === 0" aria-hidden="true">...</span>
         <button type="button" class="v-page" v-if="item !== 0" :aria-current="isCurrent(item)"
-          :aria-label="'P\xE1gina ' + item" v-click="go(item)" v-text="item"></button>
+          :aria-label="'Page ' + item" v-click="go(item)" v-text="item"></button>
       </template>
       <button type="button" class="v-page" :disabled="currentPage >= lastPage"
         :aria-label="nextLabel" v-click="go(currentPage + 1)" v-html="svgIcon('chevron-right')"></button>
@@ -4839,7 +4839,7 @@ register("v-breadcrumb", {
   props: {
     items: { type: "any", default: "" },
     separator: { type: "string", default: "/" },
-    ariaLabel: { type: "string", default: "Trilha de navega\xE7\xE3o" }
+    ariaLabel: { type: "string", default: "Breadcrumb" }
   },
   computed: {
     crumbs() {
@@ -4872,7 +4872,7 @@ register("v-stat", {
     hint: TEXT,
     icon: TEXT,
     suffix: { type: "string", default: "%" },
-    /** Quando `true`, uma variacao negativa e considerada positiva. */
+    /** When `true`, a negative change counts as positive. */
     inverted: BOOL
   },
   computed: {
@@ -5040,7 +5040,7 @@ register("v-rating", {
     value: { type: "number", default: 0 },
     max: { type: "number", default: 5 },
     size: { type: "string", default: "md" },
-    label: { type: "string", default: "Avalia\xE7\xE3o" },
+    label: { type: "string", default: "Rating" },
     readonly: BOOL,
     disabled: BOOL,
     showValue: BOOL,
@@ -5066,7 +5066,7 @@ register("v-rating", {
       return this.hovered > 0 ? this.hovered : this.score;
     },
     valueText() {
-      return `${this.score} de ${this.total}`;
+      return `${this.score} of ${this.total}`;
     }
   },
   methods: {
@@ -5122,7 +5122,7 @@ register("v-rating", {
       :tabindex="locked ? -1 : 0" :aria-readonly="locked" v-keydown="onKey" v-mouseleave="reset">
       <span class="v-rating-stars">
         <button type="button" class="v-star" v-for="index in total" :key="index"
-          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' de ' + total"
+          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' of ' + total"
           :tabindex="-1" v-click="pick(index)" v-mouseenter="preview(index)"
           v-html="svgIcon('star')"></button>
       </span>
@@ -6491,14 +6491,14 @@ function xray(force) {
 }
 
 // src/devtools/launcher.ts
-var POSICAO_KEY = "voodoo:devtools:widget-position";
-var ESCONDIDO_KEY = "voodoo:devtools:widget-hidden";
-var LIMIAR_ARRASTO = 4;
+var POSITION_KEY = "voodoo:devtools:widget-position";
+var HIDDEN_KEY = "voodoo:devtools:widget-hidden";
+var DRAG_THRESHOLD = 4;
 var refs2 = null;
-var montado = false;
-var timerContador = 0;
-var timerPulso = 0;
-var desligar = [];
+var mounted = false;
+var counterTimer = 0;
+var pulseTimer = 0;
+var teardown = [];
 var WIDGET_CSS = `
 .v-devtools-widget{
   all: initial;
@@ -6631,220 +6631,220 @@ var WIDGET_CSS = `
   .v-devtools-btn:hover{transform:none}
 }
 `;
-var MARCA = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+var MARK = `<svg class="v-devtools-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 <path d="M4 4l8 16 8-16" stroke="#6D3BF5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="12" cy="7.5" r="2" fill="#FF3D8B"/>
 </svg>`;
-function lerPosicao() {
+function readPosition() {
   try {
-    const bruto = localStorage.getItem(POSICAO_KEY);
-    if (!bruto) return null;
-    const valor = JSON.parse(bruto);
-    if (typeof valor?.x !== "number" || typeof valor?.y !== "number") return null;
-    return valor;
+    const raw = localStorage.getItem(POSITION_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw);
+    if (typeof value?.x !== "number" || typeof value?.y !== "number") return null;
+    return value;
   } catch {
     return null;
   }
 }
-function gravarPosicao(pos) {
+function writePosition(pos) {
   try {
-    localStorage.setItem(POSICAO_KEY, JSON.stringify(pos));
+    localStorage.setItem(POSITION_KEY, JSON.stringify(pos));
   } catch {
   }
 }
-function aplicarPosicao(raiz, pos) {
-  const largura = raiz.offsetWidth || 120;
-  const altura = raiz.offsetHeight || 38;
-  const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - largura - 8));
-  const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - altura - 8));
-  raiz.style.left = `${x}px`;
-  raiz.style.top = `${y}px`;
-  raiz.style.right = "auto";
-  raiz.style.bottom = "auto";
+function applyPosition(root, pos) {
+  const width = root.offsetWidth || 120;
+  const height = root.offsetHeight || 38;
+  const x = Math.min(Math.max(8, pos.x), Math.max(8, window.innerWidth - width - 8));
+  const y = Math.min(Math.max(8, pos.y), Math.max(8, window.innerHeight - height - 8));
+  root.style.left = `${x}px`;
+  root.style.top = `${y}px`;
+  root.style.right = "auto";
+  root.style.bottom = "auto";
 }
-function construir() {
-  const raiz = document.createElement("div");
-  raiz.className = "v-devtools-widget";
-  raiz.setAttribute("data-voodoo-devtools", "widget");
-  const botao = document.createElement("button");
-  botao.type = "button";
-  botao.className = "v-devtools-btn";
-  botao.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
-  botao.setAttribute("aria-pressed", "false");
-  botao.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
-  botao.innerHTML = MARCA;
-  const rotulo = document.createElement("span");
-  rotulo.className = "v-devtools-label";
-  rotulo.textContent = "Voodoo";
-  const contador = document.createElement("span");
-  contador.className = "v-devtools-count";
-  contador.textContent = "0";
-  const pulso = document.createElement("span");
-  pulso.className = "v-devtools-pulse";
-  pulso.setAttribute("data-on", "false");
-  botao.append(rotulo, contador, pulso);
-  const fechar = document.createElement("button");
-  fechar.type = "button";
-  fechar.className = "v-devtools-close";
-  fechar.setAttribute("aria-label", "Hide the devtools widget in this tab");
-  fechar.title = "Hide in this tab";
-  fechar.textContent = "\xD7";
-  raiz.append(botao, fechar);
-  document.body.appendChild(raiz);
-  const salva = lerPosicao();
-  if (salva) {
-    aplicarPosicao(raiz, salva);
+function build() {
+  const root = document.createElement("div");
+  root.className = "v-devtools-widget";
+  root.setAttribute("data-voodoo-devtools", "widget");
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "v-devtools-btn";
+  button.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+X)");
+  button.setAttribute("aria-pressed", "false");
+  button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+X)";
+  button.innerHTML = MARK;
+  const label = document.createElement("span");
+  label.className = "v-devtools-label";
+  label.textContent = "Voodoo";
+  const counter = document.createElement("span");
+  counter.className = "v-devtools-count";
+  counter.textContent = "0";
+  const pulse = document.createElement("span");
+  pulse.className = "v-devtools-pulse";
+  pulse.setAttribute("data-on", "false");
+  button.append(label, counter, pulse);
+  const close = document.createElement("button");
+  close.type = "button";
+  close.className = "v-devtools-close";
+  close.setAttribute("aria-label", "Hide the devtools widget in this tab");
+  close.title = "Hide in this tab";
+  close.textContent = "\xD7";
+  root.append(button, close);
+  document.body.appendChild(root);
+  const saved = readPosition();
+  if (saved) {
+    applyPosition(root, saved);
   } else {
-    raiz.style.right = "16px";
-    raiz.style.bottom = "16px";
+    root.style.right = "16px";
+    root.style.bottom = "16px";
   }
-  return { raiz, botao, pulso, contador, fechar };
+  return { root, button, pulse, counter, close };
 }
-function ligarArrasto(refs3, aoClicar) {
-  let arrastando = false;
-  let moveu = false;
-  let deslocX = 0;
-  let deslocY = 0;
-  let inicioX = 0;
-  let inicioY = 0;
-  const aoDescer = (evento) => {
-    if (evento.button !== 0) return;
-    const caixa = refs3.raiz.getBoundingClientRect();
-    arrastando = true;
-    moveu = false;
-    inicioX = evento.clientX;
-    inicioY = evento.clientY;
-    deslocX = evento.clientX - caixa.left;
-    deslocY = evento.clientY - caixa.top;
-    refs3.botao.setPointerCapture?.(evento.pointerId);
+function enableDrag(refs3, onClick) {
+  let dragging = false;
+  let moved = false;
+  let offsetX = 0;
+  let offsetY = 0;
+  let startX = 0;
+  let startY = 0;
+  const onPointerDown = (event) => {
+    if (event.button !== 0) return;
+    const box = refs3.root.getBoundingClientRect();
+    dragging = true;
+    moved = false;
+    startX = event.clientX;
+    startY = event.clientY;
+    offsetX = event.clientX - box.left;
+    offsetY = event.clientY - box.top;
+    refs3.button.setPointerCapture?.(event.pointerId);
   };
-  const aoMover = (evento) => {
-    if (!arrastando) return;
-    const distancia = Math.hypot(evento.clientX - inicioX, evento.clientY - inicioY);
-    if (!moveu && distancia < LIMIAR_ARRASTO) return;
-    moveu = true;
-    evento.preventDefault();
-    aplicarPosicao(refs3.raiz, { x: evento.clientX - deslocX, y: evento.clientY - deslocY });
+  const onPointerMove2 = (event) => {
+    if (!dragging) return;
+    const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+    if (!moved && distance < DRAG_THRESHOLD) return;
+    moved = true;
+    event.preventDefault();
+    applyPosition(refs3.root, { x: event.clientX - offsetX, y: event.clientY - offsetY });
   };
-  const aoSubir = (evento) => {
-    if (!arrastando) return;
-    arrastando = false;
-    refs3.botao.releasePointerCapture?.(evento.pointerId);
-    if (!moveu) {
-      aoClicar();
+  const onPointerUp = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    refs3.button.releasePointerCapture?.(event.pointerId);
+    if (!moved) {
+      onClick();
       return;
     }
-    const caixa = refs3.raiz.getBoundingClientRect();
-    gravarPosicao({ x: caixa.left, y: caixa.top });
+    const box = refs3.root.getBoundingClientRect();
+    writePosition({ x: box.left, y: box.top });
   };
-  const aoTeclar = (evento) => {
-    if (evento.key !== "Enter" && evento.key !== " ") return;
-    evento.preventDefault();
-    aoClicar();
+  const onKeyDown = (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onClick();
   };
-  const aoRedimensionar = () => {
-    const caixa = refs3.raiz.getBoundingClientRect();
-    if (refs3.raiz.style.left) aplicarPosicao(refs3.raiz, { x: caixa.left, y: caixa.top });
+  const onResize = () => {
+    const box = refs3.root.getBoundingClientRect();
+    if (refs3.root.style.left) applyPosition(refs3.root, { x: box.left, y: box.top });
   };
-  refs3.botao.addEventListener("pointerdown", aoDescer);
-  refs3.botao.addEventListener("pointermove", aoMover);
-  refs3.botao.addEventListener("pointerup", aoSubir);
-  refs3.botao.addEventListener("pointercancel", aoSubir);
-  refs3.botao.addEventListener("keydown", aoTeclar);
-  window.addEventListener("resize", aoRedimensionar);
+  refs3.button.addEventListener("pointerdown", onPointerDown);
+  refs3.button.addEventListener("pointermove", onPointerMove2);
+  refs3.button.addEventListener("pointerup", onPointerUp);
+  refs3.button.addEventListener("pointercancel", onPointerUp);
+  refs3.button.addEventListener("keydown", onKeyDown);
+  window.addEventListener("resize", onResize);
   return () => {
-    refs3.botao.removeEventListener("pointerdown", aoDescer);
-    refs3.botao.removeEventListener("pointermove", aoMover);
-    refs3.botao.removeEventListener("pointerup", aoSubir);
-    refs3.botao.removeEventListener("pointercancel", aoSubir);
-    refs3.botao.removeEventListener("keydown", aoTeclar);
-    window.removeEventListener("resize", aoRedimensionar);
+    refs3.button.removeEventListener("pointerdown", onPointerDown);
+    refs3.button.removeEventListener("pointermove", onPointerMove2);
+    refs3.button.removeEventListener("pointerup", onPointerUp);
+    refs3.button.removeEventListener("pointercancel", onPointerUp);
+    refs3.button.removeEventListener("keydown", onKeyDown);
+    window.removeEventListener("resize", onResize);
   };
 }
-function piscar() {
+function blink() {
   if (!refs2) return;
-  refs2.pulso.setAttribute("data-on", "true");
-  window.clearTimeout(timerPulso);
-  timerPulso = window.setTimeout(() => {
-    refs2?.pulso.setAttribute("data-on", "false");
+  refs2.pulse.setAttribute("data-on", "true");
+  window.clearTimeout(pulseTimer);
+  pulseTimer = window.setTimeout(() => {
+    refs2?.pulse.setAttribute("data-on", "false");
   }, 320);
 }
-function atualizarContador() {
+function updateCounter() {
   if (!refs2) return;
   const total = instances.size;
-  const texto = total === 1 ? "1 component" : `${total} components`;
-  if (refs2.contador.textContent !== texto) refs2.contador.textContent = texto;
+  const text = total === 1 ? "1 component" : `${total} components`;
+  if (refs2.counter.textContent !== text) refs2.counter.textContent = text;
 }
 function mountDevtoolsWidget() {
-  if (montado || typeof document === "undefined" || !document.body) return;
+  if (mounted || typeof document === "undefined" || !document.body) return;
   try {
-    if (sessionStorage.getItem(ESCONDIDO_KEY) === "1") return;
+    if (sessionStorage.getItem(HIDDEN_KEY) === "1") return;
   } catch {
   }
-  montado = true;
+  mounted = true;
   injectStyle("devtools-widget", WIDGET_CSS);
-  refs2 = construir();
-  const alternar = () => {
-    const ligado = xray();
-    refs2?.raiz.setAttribute("data-active", String(ligado));
-    refs2?.botao.setAttribute("aria-pressed", String(ligado));
+  refs2 = build();
+  const toggle = () => {
+    const enabled2 = xray();
+    refs2?.root.setAttribute("data-active", String(enabled2));
+    refs2?.button.setAttribute("aria-pressed", String(enabled2));
   };
-  desligar.push(ligarArrasto(refs2, alternar));
-  const aoFechar = (evento) => {
-    evento.stopPropagation();
+  teardown.push(enableDrag(refs2, toggle));
+  const onClose = (event) => {
+    event.stopPropagation();
     try {
-      sessionStorage.setItem(ESCONDIDO_KEY, "1");
+      sessionStorage.setItem(HIDDEN_KEY, "1");
     } catch {
     }
     unmountDevtoolsWidget();
     console.info("[Voodoo] devtools widget hidden. Use V.devtoolsWidget(true) to bring back.");
   };
-  refs2.fechar.addEventListener("click", aoFechar);
-  desligar.push(() => refs2?.fechar.removeEventListener("click", aoFechar));
-  const aoTeclarGlobal = () => {
-    const ligado = isXrayEnabled();
-    refs2?.raiz.setAttribute("data-active", String(ligado));
-    refs2?.botao.setAttribute("aria-pressed", String(ligado));
+  refs2.close.addEventListener("click", onClose);
+  teardown.push(() => refs2?.close.removeEventListener("click", onClose));
+  const onGlobalKeyUp = () => {
+    const enabled2 = isXrayEnabled();
+    refs2?.root.setAttribute("data-active", String(enabled2));
+    refs2?.button.setAttribute("aria-pressed", String(enabled2));
   };
-  document.addEventListener("keyup", aoTeclarGlobal);
-  desligar.push(() => document.removeEventListener("keyup", aoTeclarGlobal));
-  for (const tipo of ["network", "event", "navigation", "update"]) {
-    desligar.push(devtoolsBus.on(tipo, piscar));
+  document.addEventListener("keyup", onGlobalKeyUp);
+  teardown.push(() => document.removeEventListener("keyup", onGlobalKeyUp));
+  for (const type of ["network", "event", "navigation", "update"]) {
+    teardown.push(devtoolsBus.on(type, blink));
   }
-  atualizarContador();
-  timerContador = window.setInterval(atualizarContador, 1e3);
+  updateCounter();
+  counterTimer = window.setInterval(updateCounter, 1e3);
 }
 function unmountDevtoolsWidget() {
-  if (!montado) return;
-  montado = false;
-  for (const fn of desligar.splice(0)) {
+  if (!mounted) return;
+  mounted = false;
+  for (const fn of teardown.splice(0)) {
     try {
       fn();
     } catch {
     }
   }
-  window.clearInterval(timerContador);
-  window.clearTimeout(timerPulso);
-  timerContador = 0;
-  timerPulso = 0;
-  refs2?.raiz.remove();
+  window.clearInterval(counterTimer);
+  window.clearTimeout(pulseTimer);
+  counterTimer = 0;
+  pulseTimer = 0;
+  refs2?.root.remove();
   refs2 = null;
 }
 function isDevtoolsWidgetMounted() {
-  return montado;
+  return mounted;
 }
 function devtoolsWidget(force) {
-  const alvo = force ?? !montado;
-  if (alvo) {
+  const target = force ?? !mounted;
+  if (target) {
     try {
-      sessionStorage.removeItem(ESCONDIDO_KEY);
+      sessionStorage.removeItem(HIDDEN_KEY);
     } catch {
     }
     mountDevtoolsWidget();
   } else {
     unmountDevtoolsWidget();
   }
-  return montado;
+  return mounted;
 }
 
 // src/index.ts

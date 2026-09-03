@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Modal, abas, menu, gaveta, arrastar e soltar · Documentação da Voodoo.js</title>
-<meta name="description" content="Os componentes de interface declarativos: alternar, acordeão, menu suspenso, tooltip, abas, gaveta, modal, avisos, paleta de comandos, rolagem e arrastar e soltar.">
+<title>Modal, tabs, menu, drawer, drag and drop · Voodoo.js documentation</title>
+<meta name="description" content="The declarative UI pieces: toggle, accordion, dropdown menu, tooltip, tabs, drawer, modal, toasts, the command palette, scrolling, and drag and drop.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/interface">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,341 +14,342 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Interface e efeitos</p>
-<h1>Modal, abas, menu, gaveta, arrastar e soltar</h1>
+<p class="doc-migalha">Interface and effects</p>
+<h1>Modal, tabs, menu, drawer, drag and drop</h1>
 <p class="doc-resumo">
-  Tudo nesta página funciona escrevendo apenas HTML. Nenhuma linha de JavaScript é necessária para
-  ter menu suspenso, abas, gaveta lateral, tooltip, paleta de comandos e o resto — e nenhum deles
-  abre mão de acessibilidade para conseguir isso.
+  Everything on this page works by writing HTML alone. Not one line of JavaScript is needed for a
+  dropdown menu, tabs, a side drawer, a tooltip, a command palette and the rest — and none of them
+  gives up accessibility to manage it.
 </p>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">O que vem junto sem você pedir</span>
+  <span class="doc-aviso__rotulo">What comes along without you asking</span>
   <p>
-    Cada componente cuida de papéis ARIA, navegação por teclado, foco visível, fechamento por
-    <kbd>Esc</kbd> e <code>prefers-reduced-motion</code>. O CSS é injetado sob demanda, só quando
-    o recurso é usado, e todas as cores saem das variáveis <code>--v-*</code>, então os dois temas
-    já funcionam.
+    Each piece takes care of ARIA roles, keyboard navigation, a visible focus ring, closing on
+    <kbd>Esc</kbd> and <code>prefers-reduced-motion</code>. The CSS is injected on demand, only
+    when the feature is used, and every colour comes out of the <code>--v-*</code> variables, so
+    both themes already work.
   </p>
 </div>
 
-<h2 id="toggle">Mostrar e esconder</h2>
+<h2 id="toggle">Show and hide</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-toggle="#detalhes"&gt;Ver detalhes&lt;/button&gt;
-  &lt;div id="detalhes" style="display:none"&gt;
-    Este bloco aparece e some, e o botão ganha aria-expanded sozinho.
+  &lt;button v-toggle="#details"&gt;See the details&lt;/button&gt;
+  &lt;div id="details" style="display:none"&gt;
+    This block appears and disappears, and the button gets aria-expanded by itself.
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Sem seletor, o alvo é o irmão seguinte. O modificador <code>.instant</code> corta a animação. O
-  botão recebe <code>aria-controls</code> e <code>aria-expanded</code>, atualizados a cada clique,
-  e dispara <code>voodoo:toggle</code> com <code>{ target, open }</code>.
+  With no selector, the target is the next sibling. The <code>.instant</code> modifier cuts the
+  animation. The button receives <code>aria-controls</code> and <code>aria-expanded</code>, updated
+  on every click, and fires <code>voodoo:toggle</code> with <code>{ target, open }</code>.
 </p>
 
-<h2 id="collapse">Acordeão e painéis</h2>
+<h2 id="collapse">Accordion and panels</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-accordion v-accordion-single&gt;
   &lt;div v-accordion-item="open"&gt;
-    &lt;h4&gt;Entrega&lt;/h4&gt;
-    &lt;div&gt;Enviamos em até dois dias úteis.&lt;/div&gt;
+    &lt;h4&gt;Delivery&lt;/h4&gt;
+    &lt;div&gt;We ship within two business days.&lt;/div&gt;
   &lt;/div&gt;
   &lt;div v-accordion-item&gt;
-    &lt;h4&gt;Troca&lt;/h4&gt;
-    &lt;div&gt;Você tem 30 dias para trocar.&lt;/div&gt;
+    &lt;h4&gt;Returns&lt;/h4&gt;
+    &lt;div&gt;You have 30 days to return it.&lt;/div&gt;
   &lt;/div&gt;
   &lt;div v-accordion-item&gt;
-    &lt;h4&gt;Pagamento&lt;/h4&gt;
-    &lt;div&gt;Pix, boleto e cartão em até 12 vezes.&lt;/div&gt;
+    &lt;h4&gt;Payment&lt;/h4&gt;
+    &lt;div&gt;Pix, bank slip and card in up to 12 instalments.&lt;/div&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Cada item precisa de dois filhos: o primeiro é o cabeçalho, o último é o painel.
-  <code>v-accordion-single</code> mantém apenas um aberto por vez, e
-  <code>v-accordion-item="open"</code> começa aberto. As setas navegam entre os cabeçalhos.
+  Each item needs two children: the first is the header, the last is the panel.
+  <code>v-accordion-single</code> keeps only one open at a time, and
+  <code>v-accordion-item="open"</code> starts open. The arrow keys move between the headers.
 </p>
 
 <p>
-  Para um painel solto, sem grupo, existem <code>v-collapse</code> e
+  For a lone panel, with no group, there are <code>v-collapse</code> and
   <code>v-collapse-toggle</code>:
 </p>
 
-<pre data-lang="html"><code>&lt;button v-collapse-toggle="#faq-1"&gt;O que é a Voodoo?&lt;/button&gt;
+<pre data-lang="html"><code>&lt;button v-collapse-toggle="#faq-1"&gt;What is Voodoo?&lt;/button&gt;
 &lt;div id="faq-1" v-collapse&gt;
-  &lt;p&gt;O framework JavaScript HTML-first.&lt;/p&gt;
+  &lt;p&gt;The HTML-first JavaScript framework.&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 
-<h2 id="abas">Abas</h2>
+<h2 id="abas">Tabs</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-tabs&gt;
   &lt;div role="tablist"&gt;
-    &lt;button v-tab="perfil"&gt;Perfil&lt;/button&gt;
-    &lt;button v-tab="seguranca"&gt;Segurança&lt;/button&gt;
-    &lt;button v-tab="cobranca"&gt;Cobrança&lt;/button&gt;
+    &lt;button v-tab="profile"&gt;Profile&lt;/button&gt;
+    &lt;button v-tab="security"&gt;Security&lt;/button&gt;
+    &lt;button v-tab="billing"&gt;Billing&lt;/button&gt;
   &lt;/div&gt;
 
-  &lt;section v-tab-panel="perfil"&gt;&lt;p&gt;Seu nome, foto e biografia.&lt;/p&gt;&lt;/section&gt;
-  &lt;section v-tab-panel="seguranca"&gt;&lt;p&gt;Senha e verificação em duas etapas.&lt;/p&gt;&lt;/section&gt;
-  &lt;section v-tab-panel="cobranca"&gt;&lt;p&gt;Plano, cartão e notas fiscais.&lt;/p&gt;&lt;/section&gt;
+  &lt;section v-tab-panel="profile"&gt;&lt;p&gt;Your name, photo and bio.&lt;/p&gt;&lt;/section&gt;
+  &lt;section v-tab-panel="security"&gt;&lt;p&gt;Password and two-step verification.&lt;/p&gt;&lt;/section&gt;
+  &lt;section v-tab-panel="billing"&gt;&lt;p&gt;Plan, card and invoices.&lt;/p&gt;&lt;/section&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os papéis <code>tab</code>, <code>tablist</code> e <code>tabpanel</code> são aplicados, a
-  navegação por setas funciona nos dois eixos, e a aba ativa recebe a classe <code>v-active</code>.
-  Abas dentro de abas funcionam, porque cada <code>v-tab</code> pertence ao <code>v-tabs</code>
-  mais próximo.
+  The <code>tab</code>, <code>tablist</code> and <code>tabpanel</code> roles are applied, arrow
+  navigation works on both axes, and the active tab gets the class <code>v-active</code>. Tabs
+  inside tabs work, because each <code>v-tab</code> belongs to the nearest <code>v-tabs</code>.
 </p>
 
-<p>Para guardar a aba escolhida na URL, sem recarregar:</p>
+<p>To keep the chosen tab in the URL, without reloading:</p>
 
-<pre data-lang="html"><code>&lt;div v-tabs v-tabs-url="secao"&gt;...&lt;/div&gt;</code></pre>
+<pre data-lang="html"><code>&lt;div v-tabs v-tabs-url="section"&gt;...&lt;/div&gt;</code></pre>
 
-<h2 id="menus">Menu suspenso, popover e tooltip</h2>
+<h2 id="menus">Dropdown menu, popover and tooltip</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-dropdown="#acoes"&gt;Ações&lt;/button&gt;
-  &lt;div id="acoes" v-dropdown-menu&gt;
-    &lt;button&gt;Editar&lt;/button&gt;
-    &lt;button&gt;Duplicar&lt;/button&gt;
-    &lt;button&gt;Exportar&lt;/button&gt;
+  &lt;button v-dropdown="#actions"&gt;Actions&lt;/button&gt;
+  &lt;div id="actions" v-dropdown-menu&gt;
+    &lt;button&gt;Edit&lt;/button&gt;
+    &lt;button&gt;Duplicate&lt;/button&gt;
+    &lt;button&gt;Export&lt;/button&gt;
   &lt;/div&gt;
 
-  &lt;button v-tooltip="Exclui o registro para sempre" v-tooltip-position="right"&gt;
-    Excluir
+  &lt;button v-tooltip="Deletes the record for good" v-tooltip-position="right"&gt;
+    Delete
   &lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<p>No menu, acontece sozinho:</p>
+<p>In the menu, this happens on its own:</p>
 
 <ul>
-  <li>o menu vira <code>role="menu"</code> e cada filho clicável vira <code>role="menuitem"</code>;</li>
-  <li>setas navegam, <kbd>Home</kbd> e <kbd>End</kbd> vão para as pontas;</li>
-  <li><kbd>Esc</kbd> fecha e devolve o foco ao gatilho, e clicar fora fecha;</li>
-  <li>o menu é movido para o <code>body</code> enquanto aberto, então nenhum <code>overflow: hidden</code> o corta;</li>
-  <li>ele vira para o lado oposto quando não cabe, e nunca sai da tela.</li>
+  <li>the menu becomes <code>role="menu"</code> and each clickable child becomes <code>role="menuitem"</code>;</li>
+  <li>arrows navigate, <kbd>Home</kbd> and <kbd>End</kbd> go to the ends;</li>
+  <li><kbd>Esc</kbd> closes it and hands the focus back to the trigger, and clicking outside closes it;</li>
+  <li>the menu is moved to the <code>body</code> while it is open, so no <code>overflow: hidden</code> clips it;</li>
+  <li>it flips to the opposite side when it does not fit, and never leaves the screen.</li>
 </ul>
 
 <p>
-  <code>v-popover</code> é o mesmo com <code>role="dialog"</code> e foco preso dentro do painel:
-  use quando o conteúdo tiver campos ou mais de um elemento interativo. O tooltip aparece no mouse
-  e no foco de teclado, some no <kbd>Esc</kbd>, e usa <code>aria-describedby</code>.
+  <code>v-popover</code> is the same with <code>role="dialog"</code> and the focus trapped inside
+  the panel: use it when the content has fields or more than one interactive element. The tooltip
+  shows on hover and on keyboard focus, disappears on <kbd>Esc</kbd>, and uses
+  <code>aria-describedby</code>.
 </p>
 
-<h2 id="gaveta">Gaveta lateral</h2>
+<h2 id="gaveta">Side drawer</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-drawer="#menu-lateral"&gt;Abrir menu&lt;/button&gt;
+  &lt;button v-drawer="#side-menu"&gt;Open the menu&lt;/button&gt;
 
-  &lt;aside id="menu-lateral" v-drawer-content v-drawer-side="left"&gt;
-    &lt;h4&gt;Navegação&lt;/h4&gt;
-    &lt;p&gt;&lt;a href="#"&gt;Painel&lt;/a&gt;&lt;/p&gt;
-    &lt;p&gt;&lt;a href="#"&gt;Pedidos&lt;/a&gt;&lt;/p&gt;
-    &lt;button v-drawer-close&gt;Fechar&lt;/button&gt;
+  &lt;aside id="side-menu" v-drawer-content v-drawer-side="left"&gt;
+    &lt;h4&gt;Navigation&lt;/h4&gt;
+    &lt;p&gt;&lt;a href="#"&gt;Dashboard&lt;/a&gt;&lt;/p&gt;
+    &lt;p&gt;&lt;a href="#"&gt;Orders&lt;/a&gt;&lt;/p&gt;
+    &lt;button v-drawer-close&gt;Close&lt;/button&gt;
   &lt;/aside&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-drawer-side</code> aceita <code>left</code>, <code>right</code> (o padrão),
-  <code>top</code> e <code>bottom</code>. <kbd>Esc</kbd> fecha, <kbd>Tab</kbd> circula dentro do
-  painel, e o foco volta para o gatilho ao fechar. <code>v-offcanvas</code> é um apelido de
-  <code>v-drawer</code>.
+  <code>v-drawer-side</code> accepts <code>left</code>, <code>right</code> (the default),
+  <code>top</code> and <code>bottom</code>. <kbd>Esc</kbd> closes it, <kbd>Tab</kbd> cycles inside
+  the panel, and the focus goes back to the trigger on close. <code>v-offcanvas</code> is an alias
+  of <code>v-drawer</code>.
 </p>
 
 <h2 id="modal">Modal</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-modal="#entrar"&gt;Entrar&lt;/button&gt;
+  &lt;button v-modal="#sign-in"&gt;Sign in&lt;/button&gt;
 
-  &lt;div id="entrar" v-modal-content&gt;
-    &lt;h4&gt;Entrar&lt;/h4&gt;
-    &lt;p&gt;&lt;input placeholder="E-mail"&gt;&lt;/p&gt;
-    &lt;button v-modal-close&gt;Cancelar&lt;/button&gt;
+  &lt;div id="sign-in" v-modal-content&gt;
+    &lt;h4&gt;Sign in&lt;/h4&gt;
+    &lt;p&gt;&lt;input placeholder="Email"&gt;&lt;/p&gt;
+    &lt;button v-modal-close&gt;Cancel&lt;/button&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  <code>v-modal-content</code> esconde o bloco até que ele seja adotado por um modal. Os
-  modificadores de <code>v-modal</code> são <code>.close</code>, que fecha em vez de abrir, e
-  <code>.toggle</code>, que alterna.
+  <code>v-modal-content</code> hides the block until a modal adopts it. The modifiers of
+  <code>v-modal</code> are <code>.close</code>, which closes instead of opening, and
+  <code>.toggle</code>, which alternates.
 </p>
 
-<p>Por JavaScript, com controle sobre tamanho, foco e retorno:</p>
+<p>From JavaScript, with control over size, focus and the return value:</p>
 
-<pre data-lang="js"><code>const controle = V.modal.open('#login', { size: 'sm' });
-await controle.closed;      // resolve quando o diálogo termina de fechar
+<pre data-lang="js"><code>const control = V.modal.open('#login', { size: 'sm' });
+await control.closed;      // resolves when the dialog has finished closing
 
 V.modal.close('#login');
 V.modal.closeAll();
 V.modal.isOpen('#login');</code></pre>
 
-<h2 id="dialogos">alert, confirm e prompt</h2>
+<h2 id="dialogos">alert, confirm and prompt</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ resposta: '' }"&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ answer: '' }"&gt;
   &lt;div class="linha"&gt;
-    &lt;button @click="$alert('Pedido enviado com sucesso.', { icon: 'success' })"&gt;
-      Aviso
+    &lt;button @click="$alert('The order went through.', { icon: 'success' })"&gt;
+      Alert
     &lt;/button&gt;
-    &lt;button @click="$confirm('Excluir o pedido?', { danger: true })
-                      .then(ok =&gt; resposta = ok ? 'excluiu' : 'desistiu')"&gt;
-      Confirmação
+    &lt;button @click="$confirm('Delete the order?', { danger: true })
+                      .then(ok =&gt; answer = ok ? 'deleted' : 'backed out')"&gt;
+      Confirm
     &lt;/button&gt;
-    &lt;button @click="$prompt('Como devemos te chamar?', { required: true })
-                      .then(v =&gt; resposta = v || 'cancelou')"&gt;
-      Pergunta
+    &lt;button @click="$prompt('What should we call you?', { required: true })
+                      .then(v =&gt; answer = v || 'cancelled')"&gt;
+      Prompt
     &lt;/button&gt;
   &lt;/div&gt;
-  &lt;p&gt;Resposta: { resposta || 'nada ainda' }&lt;/p&gt;
+  &lt;p&gt;Answer: { answer || 'nothing yet' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os três devolvem promessa, e existem também em JavaScript como <code>V.alert</code>,
-  <code>V.confirm</code> e <code>V.prompt</code>. Para botões próprios, existe
+  All three return a promise, and they exist in JavaScript too as <code>V.alert</code>,
+  <code>V.confirm</code> and <code>V.prompt</code>. For buttons of your own, there is
   <code>V.dialog({ title, description, buttons })</code>.
 </p>
 
 <h2 id="v-confirm">v-confirm</h2>
 
 <p>
-  Intercepta o clique, faz a pergunta e só libera a ação depois do sim. Funciona junto de
-  <code>v-click</code>, <code>@click</code> e links, porque a guarda roda na fase de captura, antes
-  de qualquer outro ouvinte.
+  It intercepts the click, asks the question and only lets the action through after a yes. It works
+  alongside <code>v-click</code>, <code>@click</code> and links, because the guard runs in the
+  capture phase, before any other listener.
 </p>
 
-<pre data-lang="html"><code>&lt;button v-confirm="Excluir mesmo?" v-click="excluir()"&gt;Excluir&lt;/button&gt;
-&lt;button v-confirm.danger="Esta ação não pode ser desfeita."
-        v-click="apagarConta()"&gt;Apagar conta&lt;/button&gt;
-&lt;a v-confirm="Sair da sua conta?" href="/logout"&gt;Sair&lt;/a&gt;</code></pre>
+<pre data-lang="html"><code>&lt;button v-confirm="Really delete?" v-click="remove()"&gt;Delete&lt;/button&gt;
+&lt;button v-confirm.danger="This action cannot be undone."
+        v-click="deleteAccount()"&gt;Delete the account&lt;/button&gt;
+&lt;a v-confirm="Sign out of your account?" href="/logout"&gt;Sign out&lt;/a&gt;</code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Detalhe conhecido</span>
+  <span class="doc-aviso__rotulo">A known detail</span>
   <p>
-    Não combine <code>v-confirm</code> com <code>v-get</code>, <code>v-post</code>,
-    <code>v-put</code>, <code>v-patch</code>, <code>v-delete</code> ou <code>v-submit</code> no
-    mesmo elemento: hoje a pergunta aparece duas vezes, porque essas directives também leem o mesmo
-    atributo. Prefira <code>v-click</code> com <code>$http</code>, ou peça a confirmação com
-    <code>$confirm(...)</code> dentro da própria expressão.
+    Do not combine <code>v-confirm</code> with <code>v-get</code>, <code>v-post</code>,
+    <code>v-put</code>, <code>v-patch</code>, <code>v-delete</code> or <code>v-submit</code> on the
+    same element: today the question shows up twice, because those directives read the same
+    attribute as well. Prefer <code>v-click</code> with <code>$http</code>, or ask for the
+    confirmation with <code>$confirm(...)</code> inside the expression itself.
   </p>
 </div>
 
-<h2 id="avisos">Notificações</h2>
+<h2 id="avisos">Notifications</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div class="linha"&gt;
-  &lt;button @click="$toast.success('Usuário salvo!')"&gt;Sucesso&lt;/button&gt;
-  &lt;button @click="$toast.error('Não foi possível salvar')"&gt;Erro&lt;/button&gt;
-  &lt;button @click="$toast.info('Nova versão disponível')"&gt;Informação&lt;/button&gt;
+  &lt;button @click="$toast.success('User saved!')"&gt;Success&lt;/button&gt;
+  &lt;button @click="$toast.error('Could not save')"&gt;Error&lt;/button&gt;
+  &lt;button @click="$toast.info('A new version is available')"&gt;Info&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Em JavaScript, além dos atalhos por tipo existem <code>V.toast.loading()</code>, que devolve um
-  controle com <code>update()</code> e <code>close()</code>, e
-  <code>V.toast.promise(promessa, { loading, success, error })</code>, que acompanha uma operação
-  do começo ao fim. As posições vão de <code>top-right</code>, o padrão, a
+  In JavaScript, besides the shorthands per type there are <code>V.toast.loading()</code>, which
+  returns a handle with <code>update()</code> and <code>close()</code>, and
+  <code>V.toast.promise(promise, { loading, success, error })</code>, which follows an operation
+  from start to finish. The positions run from <code>top-right</code>, the default, to
   <code>bottom-center</code>.
 </p>
 
-<h2 id="paleta-de-comandos">Paleta de comandos</h2>
+<h2 id="paleta-de-comandos">Command palette</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ feito: '' }"&gt;
-  &lt;button v-command="mod+k"&gt;Buscar comandos&lt;/button&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ done: '' }"&gt;
+  &lt;button v-command="mod+k"&gt;Search the commands&lt;/button&gt;
 
-  &lt;button v-command-item="Ir para o painel" v-command-hint="Ctrl+D"
-          @click="feito = 'painel'"&gt;&lt;/button&gt;
-  &lt;button v-command-item="Criar novo pedido" @click="feito = 'pedido'"&gt;&lt;/button&gt;
-  &lt;button v-command-item="Alternar tema" v-theme-toggle&gt;&lt;/button&gt;
+  &lt;button v-command-item="Go to the dashboard" v-command-hint="Ctrl+D"
+          @click="done = 'dashboard'"&gt;&lt;/button&gt;
+  &lt;button v-command-item="Create a new order" @click="done = 'order'"&gt;&lt;/button&gt;
+  &lt;button v-command-item="Toggle the theme" v-theme-toggle&gt;&lt;/button&gt;
 
-  &lt;p&gt;Último comando: { feito || 'nenhum' }&lt;/p&gt;
+  &lt;p&gt;Last command: { done || 'none' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os itens são indexados na hora em que a paleta abre, então elementos criados por
-  <code>v-for</code> também entram. A busca ignora acentos e caixa; as setas navegam,
-  <kbd>Enter</kbd> executa clicando no elemento original, e <kbd>Esc</kbd> fecha.
+  The items are indexed the moment the palette opens, so elements created by <code>v-for</code>
+  come in too. The search ignores accents and case; the arrows navigate, <kbd>Enter</kbd> runs the
+  item by clicking the original element, and <kbd>Esc</kbd> closes.
 </p>
 
-<h2 id="rolagem">Rolagem, foco e entrada na tela</h2>
+<h2 id="rolagem">Scrolling, focus and entering the viewport</h2>
 
-<pre data-lang="html"><code>&lt;a href="#precos" v-scroll-to v-scroll-offset="80"&gt;Preços&lt;/a&gt;
-&lt;button v-scroll-to="top"&gt;Voltar ao topo&lt;/button&gt;
+<pre data-lang="html"><code>&lt;a href="#pricing" v-scroll-to v-scroll-offset="80"&gt;Pricing&lt;/a&gt;
+&lt;button v-scroll-to="top"&gt;Back to the top&lt;/button&gt;
 
-&lt;nav v-scrollspy v-scrollspy-class="ativo" v-scroll-offset="80"&gt;
-  &lt;a href="#sobre"&gt;Sobre&lt;/a&gt;
-  &lt;a href="#precos"&gt;Preços&lt;/a&gt;
+&lt;nav v-scrollspy v-scrollspy-class="active" v-scroll-offset="80"&gt;
+  &lt;a href="#about"&gt;About&lt;/a&gt;
+  &lt;a href="#pricing"&gt;Pricing&lt;/a&gt;
 &lt;/nav&gt;
 
 &lt;header v-sticky="0"&gt;...&lt;/header&gt;
 
 &lt;input v-focus.select&gt;
-&lt;div v-focus-trap="modalAberto"&gt;...&lt;/div&gt;
+&lt;div v-focus-trap="modalOpen"&gt;...&lt;/div&gt;
 
-&lt;ul v-infinite-scroll="carregarMais()" v-infinite-distance="400px"&gt;...&lt;/ul&gt;
-&lt;img v-lazy-src="/fotos/grande.jpg" alt="Praia"&gt;</code></pre>
+&lt;ul v-infinite-scroll="loadMore()" v-infinite-distance="400px"&gt;...&lt;/ul&gt;
+&lt;img v-lazy-src="/photos/large.jpg" alt="A beach"&gt;</code></pre>
 
 <p>
-  <code>v-scroll-to</code> respeita <code>prefers-reduced-motion</code> e move o foco para a
-  seção, o que mantém a navegação por teclado coerente. <code>v-scrollspy</code> marca o link da
-  seção visível com a classe escolhida e com <code>aria-current</code>. <code>v-sticky</code>
-  aplica <code>position: sticky</code> e acrescenta a classe <code>v-stuck</code> quando o
-  elemento gruda.
+  <code>v-scroll-to</code> respects <code>prefers-reduced-motion</code> and moves the focus to the
+  section, which keeps keyboard navigation coherent. <code>v-scrollspy</code> marks the link of the
+  visible section with the chosen class and with <code>aria-current</code>. <code>v-sticky</code>
+  applies <code>position: sticky</code> and adds the class <code>v-stuck</code> when the element
+  sticks.
 </p>
 
-<h2 id="arrastar">Arrastar e soltar</h2>
+<h2 id="arrastar">Drag and drop</h2>
 
 <p>
-  O sistema é construído sobre eventos de ponteiro. A Drag and Drop API do HTML5 foi deixada de
-  lado de propósito: ela não funciona bem no toque, não deixa customizar a imagem arrastada e não
-  ajuda em listas ordenáveis. Aqui, mouse, caneta, toque e teclado funcionam.
+  The system is built on pointer events. The HTML5 Drag and Drop API was left aside on purpose: it
+  does not work well on touch, it does not let you customize the dragged image and it does not help
+  with sortable lists. Here, mouse, pen, touch and keyboard all work.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ ordem: [] }"&gt;
-  &lt;ul v-sortable @voodoo:sorted="ordem = $detail.order"&gt;
-    &lt;li data-id="a"&gt;Primeiro&lt;/li&gt;
-    &lt;li data-id="b"&gt;Segundo&lt;/li&gt;
-    &lt;li data-id="c"&gt;Terceiro&lt;/li&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ order: [] }"&gt;
+  &lt;ul v-sortable @voodoo:sorted="order = $detail.order"&gt;
+    &lt;li data-id="a"&gt;First&lt;/li&gt;
+    &lt;li data-id="b"&gt;Second&lt;/li&gt;
+    &lt;li data-id="c"&gt;Third&lt;/li&gt;
   &lt;/ul&gt;
-  &lt;p&gt;Ordem atual: { ordem.join(', ') || 'a, b, c' }&lt;/p&gt;
+  &lt;p&gt;Current order: { order.join(', ') || 'a, b, c' }&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Os filhos diretos viram itens arrastáveis, e a chave de cada um é o <code>data-id</code>, ou o
-  <code>id</code>, ou a posição. Ao soltar, a lista dispara <code>voodoo:sorted</code> com
+  The direct children become draggable items, and the key of each is its <code>data-id</code>, or
+  its <code>id</code>, or its position. On drop, the list fires <code>voodoo:sorted</code> with
   <code>item</code>, <code>oldIndex</code>, <code>newIndex</code>, <code>from</code>,
-  <code>to</code> e <code>order</code>.
+  <code>to</code> and <code>order</code>.
 </p>
 
-<p>Para listas que trocam itens entre si, como um quadro de tarefas:</p>
+<p>For lists that trade items with each other, like a task board:</p>
 
 <pre data-lang="html"><code>&lt;div v-dnd-group="kanban"&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;A fazer&lt;/li&gt;&lt;/ul&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;Fazendo&lt;/li&gt;&lt;/ul&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;Feito&lt;/li&gt;&lt;/ul&gt;
+  &lt;ul v-sortable&gt;&lt;li&gt;To do&lt;/li&gt;&lt;/ul&gt;
+  &lt;ul v-sortable&gt;&lt;li&gt;Doing&lt;/li&gt;&lt;/ul&gt;
+  &lt;ul v-sortable&gt;&lt;li&gt;Done&lt;/li&gt;&lt;/ul&gt;
 &lt;/div&gt;</code></pre>
 
 <p>
-  Uma alça limita o arraste a uma parte do item: <code>v-sortable-handle=".alca"</code>, ou o
-  seletor direto no valor, <code>v-sortable=".alca"</code>. E para arrastar até uma área de
-  soltura, sem reordenar nada, existem <code>v-draggable</code> e <code>v-droppable</code>.
+  A handle limits the drag to one part of the item: <code>v-sortable-handle=".handle"</code>, or
+  the selector directly in the value, <code>v-sortable=".handle"</code>. And for dragging onto a
+  drop area, with no reordering at all, there are <code>v-draggable</code> and
+  <code>v-droppable</code>.
 </p>
 
 </article>

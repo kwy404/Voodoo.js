@@ -1722,24 +1722,24 @@ var gpu = {
 
 // src/directives/gpu.ts
 function classifyShaderSource(text) {
-  const valor = text.trim();
-  if (!valor) return "empty";
-  if (valor.startsWith("#")) return "selector";
-  if (/@(?:vertex|fragment|compute)\b/.test(valor)) return "inline";
-  if (/\bfn\s+[A-Za-z_]/.test(valor)) return "inline";
-  if (valor.includes("{") || valor.includes("\n")) return "inline";
+  const value = text.trim();
+  if (!value) return "empty";
+  if (value.startsWith("#")) return "selector";
+  if (/@(?:vertex|fragment|compute)\b/.test(value)) return "inline";
+  if (/\bfn\s+[A-Za-z_]/.test(value)) return "inline";
+  if (value.includes("{") || value.includes("\n")) return "inline";
   return "url";
 }
 async function resolveShaderSource(text) {
-  const valor = text.trim();
-  const kind = classifyShaderSource(valor);
+  const value = text.trim();
+  const kind = classifyShaderSource(value);
   if (kind === "empty") return "";
-  if (kind === "inline") return valor;
+  if (kind === "inline") return value;
   if (kind === "selector") {
     if (typeof document === "undefined") return "";
     let target3 = null;
     try {
-      target3 = document.querySelector(valor);
+      target3 = document.querySelector(value);
     } catch {
       target3 = null;
     }
@@ -1749,10 +1749,10 @@ async function resolveShaderSource(text) {
     return target3.textContent ?? "";
   }
   try {
-    const response = await http.get(valor, { responseType: "text" });
+    const response = await http.get(value, { responseType: "text" });
     return typeof response === "string" ? response : "";
   } catch (err) {
-    handleError(err, `v-shader when fetching "${valor}"`);
+    handleError(err, `v-shader when fetching "${value}"`);
     return "";
   }
 }
@@ -1784,13 +1784,13 @@ function noSupport(el, reason, mount) {
   return revealFallback(el, mount);
 }
 function expressionOfSet(el) {
-  const atributos = originalAttributes(el);
-  for (const nome of [":set", "v-bind:set", "data-v-bind:set"]) {
-    const valor = atributos.get(nome);
-    if (valor) return valor;
+  const attributes = originalAttributes(el);
+  for (const name of [":set", "v-bind:set", "data-v-bind:set"]) {
+    const value = attributes.get(name);
+    if (value) return value;
   }
-  const proprio = el.getAttribute("v-shader-set") ?? el.getAttribute("data-v-shader-set");
-  return proprio || null;
+  const own = el.getAttribute("v-shader-set") ?? el.getAttribute("data-v-shader-set");
+  return own || null;
 }
 function dprRange(el) {
   const raw = el.getAttribute("v-shader-dpr") ?? el.getAttribute("data-v-shader-dpr");

@@ -126,7 +126,7 @@ export class Scope implements EvalScope {
       }
       s = s.parent;
     }
-    // Chave nova: cria no escopo atual para manter a reatividade local.
+    // New key: create it in the current scope so reactivity stays local.
     this.data[name] = value;
   }
 

@@ -80,8 +80,8 @@ defineDirective('text', ({ el, effect, evaluate: ev }) => {
   // to prevent the walk from treating a value like "{ a: 1 }" as interpolation.
   effect(() => {
     el.textContent = stringify(ev());
-    const primeiro = el.firstChild;
-    if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
+    const first = el.firstChild;
+    if (first && first.nodeType === 3) markInitialized(first);
   });
 });
 
@@ -387,15 +387,15 @@ defineDirective(
 
       // One insert for every new row, and only then the walk.
       if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
-      for (const [node, escopo] of batch.pending) walk(node, escopo);
+      for (const [node, rowScope] of batch.pending) walk(node, rowScope);
 
       // Removes blocks that left the list.
       // The set keeps track of who was reused by identity. Previously this was
       // `next.includes(block)`, a scan inside a loop that already iterates the list:
       // on ten thousand lines it gave a hundred million comparisons.
-      const reaproveitados = new Set<ForBlock>(next);
+      const reused = new Set<ForBlock>(next);
       for (const block of blocks) {
-        if (used.has(block.key) && reaproveitados.has(block)) continue;
+        if (used.has(block.key) && reused.has(block)) continue;
         for (const node of block.nodes) {
           destroy(node);
           (node as ChildNode).remove();
@@ -475,7 +475,7 @@ function normalizeSource(
 }
 
 // ---------------------------------------------------------------------------
-// v-bind, :atributo, v-class, v-style
+// v-bind, :attribute, v-class, v-style
 // ---------------------------------------------------------------------------
 
 const BOOLEAN_ATTRIBUTES = new Set([
@@ -497,7 +497,7 @@ const BOOLEAN_ATTRIBUTES = new Set([
  * state may have originated from external data, so the scheme needs to be
  * checked before it becomes `href` or `src`.
  */
-const ATRIBUTOS_DE_URL = new Set([
+const URL_ATTRIBUTES = new Set([
   'href',
   'src',
   'action',
@@ -508,29 +508,29 @@ const ATRIBUTOS_DE_URL = new Set([
 ]);
 
 /** Whitespace and control characters that the browser discards when reading the scheme. */
-const RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
+const SCHEME_NOISE = /[\s\x00-\x1f]/g;
 
 /**
  * `true` when the address uses a scheme that executes code. `data:text/html`
  * is in the list because it opens a document with its own origin and active script.
  */
-export function urlPerigosa(valor: string): boolean {
+export function isDangerousUrl(value: string): boolean {
   // An address can bring a line break in the middle of `javascript:` and the
   // browser still executes it, so the check cleans the noise before comparing,
   // the same way it does.
-  const limpo = valor.replace(RUIDO_DE_ESQUEMA, '').toLowerCase();
+  const clean = value.replace(SCHEME_NOISE, '').toLowerCase();
   return (
-    limpo.startsWith('javascript:') ||
-    limpo.startsWith('vbscript:') ||
-    limpo.startsWith('data:text/html') ||
-    limpo.startsWith('data:application/xhtml')
+    clean.startsWith('javascript:') ||
+    clean.startsWith('vbscript:') ||
+    clean.startsWith('data:text/html') ||
+    clean.startsWith('data:application/xhtml')
   );
 }
 
 /**
  * Applies a value to an attribute, handling special cases.
  *
- * `perigoLiberado` comes from the `.dangerous` modifier and enables bindings
+ * `allowDangerous` comes from the `.dangerous` modifier and enables bindings
  * that write executable markup, currently only `srcdoc`.
  */
 export function applyBinding(
@@ -538,7 +538,7 @@ export function applyBinding(
   name: string,
   value: unknown,
   asProp = false,
-  perigoLiberado = false
+  allowDangerous = false
 ): void {
   if (name === 'class') return applyClass(el, value);
   if (name === 'style') return applyStyle(el, value);
@@ -548,7 +548,7 @@ export function applyBinding(
   // so the danger doesn't show in the HTML reading. Here it needs to be stated out loud:
   // `:srcdoc.dangerous="..."` at the point of use, or `V.config.sanitizeUrls = false`
   // for the entire application.
-  if (config.sanitizeUrls && !perigoLiberado && name === 'srcdoc') {
+  if (config.sanitizeUrls && !allowDangerous && name === 'srcdoc') {
     warn(
       `:srcdoc refused in ${describeElement(el)}: the value becomes a document ` +
         'with active script inside the iframe, the same way v-html becomes markup. ' +
@@ -561,7 +561,7 @@ export function applyBinding(
 
   if (config.sanitizeUrls && !asProp) {
     // Address with executable scheme: attribute doesn't reach the DOM.
-    if (ATRIBUTOS_DE_URL.has(name) && typeof value === 'string' && urlPerigosa(value)) {
+    if (URL_ATTRIBUTES.has(name) && typeof value === 'string' && isDangerousUrl(value)) {
       warn(
         `value refused in :${name} of ${describeElement(el)}: ` +
           `"${value.slice(0, 60)}" uses a scheme that executes code. ` +
@@ -677,9 +677,9 @@ defineDirective(
     const asProp = !!modifiers.prop;
     // `.dangerous` is the explicit way to request a binding that writes executable markup.
     // Without it, `:srcdoc` is refused.
-    const perigoLiberado = !!modifiers.dangerous;
+    const allowDangerous = !!modifiers.dangerous;
     effect(() => {
-      applyBinding(el, arg, ev(), asProp, perigoLiberado);
+      applyBinding(el, arg, ev(), asProp, allowDangerous);
     });
     void expression;
   },

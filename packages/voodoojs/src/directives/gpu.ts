@@ -18,12 +18,12 @@
 import { handleError } from '../reactivity';
 import { warn, describeElement } from '../runtime/avisos';
 import { defineDirective } from '../runtime/registry';
-import { destroy as destruirNo, originalAttributes } from '../runtime/walker';
+import { destroy as destroyNode, originalAttributes } from '../runtime/walker';
 import { http } from '../http';
 import {
   clock,
-  effect as criarEffect,
-  frame as gravarQuadro,
+  effect as createEffect,
+  frame as recordFrame,
   frameLoop,
   shared,
   supported,
@@ -48,12 +48,12 @@ export type ShaderSourceKind = 'inline' | 'selector' | 'url' | 'empty';
  * a declaration or a key. What's left is an address, the most common case.
  */
 export function classifyShaderSource(text: string): ShaderSourceKind {
-  const valor = text.trim();
-  if (!valor) return 'empty';
-  if (valor.startsWith('#')) return 'selector';
-  if (/@(?:vertex|fragment|compute)\b/.test(valor)) return 'inline';
-  if (/\bfn\s+[A-Za-z_]/.test(valor)) return 'inline';
-  if (valor.includes('{') || valor.includes('\n')) return 'inline';
+  const value = text.trim();
+  if (!value) return 'empty';
+  if (value.startsWith('#')) return 'selector';
+  if (/@(?:vertex|fragment|compute)\b/.test(value)) return 'inline';
+  if (/\bfn\s+[A-Za-z_]/.test(value)) return 'inline';
+  if (value.includes('{') || value.includes('\n')) return 'inline';
   return 'url';
 }
 
@@ -63,33 +63,33 @@ export function classifyShaderSource(text: string): ShaderSourceKind {
  * @returns the WGSL, or empty string when the source doesn't exist
  */
 export async function resolveShaderSource(text: string): Promise<string> {
-  const valor = text.trim();
-  const kind = classifyShaderSource(valor);
+  const value = text.trim();
+  const kind = classifyShaderSource(value);
 
   if (kind === 'empty') return '';
-  if (kind === 'inline') return valor;
+  if (kind === 'inline') return value;
 
   if (kind === 'selector') {
     if (typeof document === 'undefined') return '';
     let target: Element | null = null;
     try {
-      target = document.querySelector(valor);
+      target = document.querySelector(value);
     } catch {
       // Invalid selector. Treated as missing shader, without breaking the page.
       target = null;
     }
     if (!target) {
-      warn(`v-shader did not find the element "${valor}" with the shader source.`);
+      warn(`v-shader did not find the element "${value}" with the shader source.`);
       return '';
     }
     return target.textContent ?? '';
   }
 
   try {
-    const response = await http.get<string>(valor, { responseType: 'text' });
+    const response = await http.get<string>(value, { responseType: 'text' });
     return typeof response === 'string' ? response : '';
   } catch (err) {
-    handleError(err, `v-shader when fetching "${valor}"`);
+    handleError(err, `v-shader when fetching "${value}"`);
     return '';
   }
 }
@@ -123,7 +123,7 @@ function revealFallback(el: HTMLCanvasElement, mount: (node: Node) => void): () 
   mount(substitute);
 
   return (): void => {
-    destruirNo(substitute);
+    destroyNode(substitute);
     while (substitute.firstChild) el.appendChild(substitute.firstChild);
     substitute.remove();
     if (previousDisplay) el.style.display = previousDisplay;
@@ -155,13 +155,13 @@ function noSupport(
 
 /** Looks for the `:set` expression, accepting the three equivalent spellings. */
 function expressionOfSet(el: Element): string | null {
-  const atributos = originalAttributes(el);
-  for (const nome of [':set', 'v-bind:set', 'data-v-bind:set']) {
-    const valor = atributos.get(nome);
-    if (valor) return valor;
+  const attributes = originalAttributes(el);
+  for (const name of [':set', 'v-bind:set', 'data-v-bind:set']) {
+    const value = attributes.get(name);
+    if (value) return value;
   }
-  const proprio = el.getAttribute('v-shader-set') ?? el.getAttribute('data-v-shader-set');
-  return proprio || null;
+  const own = el.getAttribute('v-shader-set') ?? el.getAttribute('data-v-shader-set');
+  return own || null;
 }
 
 /** Reads `v-shader-dpr="1,2"`. */
@@ -272,7 +272,7 @@ defineDirective('shader', (ctx) => {
 
   const draw = (gpu: GpuContext): void => {
     feedClock();
-    gravarQuadro(gpu, (frame) => frame.pass(surface_obj, effect_obj));
+    recordFrame(gpu, (frame) => frame.pass(surface_obj, effect_obj));
   };
 
   const isRunning = (): boolean => !!stopLoop;
@@ -302,7 +302,7 @@ defineDirective('shader', (ctx) => {
 
   const mount = (gpu: GpuContext, source: string): void => {
     surface_obj = surface(gpu, canvas, { dpr: dprRange(canvas), alpha: true });
-    effect_obj = criarEffect(gpu, source, {
+    effect_obj = createEffect(gpu, source, {
       set: values,
       format: surface_obj.format || undefined,
       label: `v-shader ${describeElement(canvas)}`,

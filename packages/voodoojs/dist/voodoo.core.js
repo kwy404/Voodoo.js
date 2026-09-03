@@ -3332,7 +3332,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   // src/store/index.ts
   init_reactivity();
   var stores = /* @__PURE__ */ new Map();
-  var versao = ref(0);
+  var version = ref(0);
   var persistHandles = /* @__PURE__ */ new Map();
   function store(name, definition, options = {}) {
     const existing = stores.get(name);
@@ -3349,30 +3349,30 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return existing;
     }
     const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-    const descritores = Object.getOwnPropertyDescriptors(definition);
-    const initial = Object.defineProperties({}, descritores);
+    const descriptors = Object.getOwnPropertyDescriptors(definition);
+    const initial = Object.defineProperties({}, descriptors);
     if (options.persist && typeof localStorage !== "undefined") {
       try {
         const saved = localStorage.getItem(key);
         if (saved) {
-          const salvo = JSON.parse(saved);
-          for (const [chave, valor] of Object.entries(salvo)) {
-            if (descritores[chave] && !("value" in descritores[chave])) continue;
-            initial[chave] = valor;
+          const parsed = JSON.parse(saved);
+          for (const [field, value] of Object.entries(parsed)) {
+            if (descriptors[field] && !("value" in descriptors[field])) continue;
+            initial[field] = value;
           }
         }
       } catch (e) {
       }
     }
     const created = reactive(initial);
-    for (const [prop, descritor] of Object.entries(descritores)) {
-      const value = descritor.value;
+    for (const [prop, descriptor] of Object.entries(descriptors)) {
+      const value = descriptor.value;
       if (typeof value === "function") {
         created[prop] = (...args) => value.apply(created, args);
       }
     }
     stores.set(name, created);
-    versao.value++;
+    version.value++;
     if (options.persist && typeof localStorage !== "undefined") {
       const stop2 = watch(
         created,
@@ -3390,10 +3390,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   }
   function stripFunctions(source) {
     const out = {};
-    const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
+    const descriptors = Object.getOwnPropertyDescriptors(toRaw(source));
     for (const [key, value] of Object.entries(source)) {
       if (typeof value === "function") continue;
-      if (descritores[key] && !("value" in descritores[key])) continue;
+      if (descriptors[key] && !("value" in descriptors[key])) continue;
       out[key] = value;
     }
     return out;
@@ -3402,11 +3402,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     {},
     {
       get: (_t, key) => {
-        void versao.value;
+        void version.value;
         return stores.get(key);
       },
       has: (_t, key) => {
-        void versao.value;
+        void version.value;
         return stores.has(key);
       },
       ownKeys: () => [...stores.keys()],
@@ -5182,8 +5182,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
     effect2(() => {
       el.textContent = stringify(ev());
-      const primeiro = el.firstChild;
-      if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
+      const first = el.firstChild;
+      if (first && first.nodeType === 3) markInitialized(first);
     });
   });
   defineDirective("html", (ctx) => {
@@ -5389,10 +5389,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
           next.push({ key, scope: childScope, nodes, data: childScope.data });
         });
         if (batch.fragment.firstChild) (_a3 = anchor.parentNode) == null ? void 0 : _a3.insertBefore(batch.fragment, anchor);
-        for (const [node, escopo] of batch.pending) walk(node, escopo);
-        const reaproveitados = new Set(next);
+        for (const [node, rowScope] of batch.pending) walk(node, rowScope);
+        const reused = new Set(next);
         for (const block2 of blocks) {
-          if (used.has(block2.key) && reaproveitados.has(block2)) continue;
+          if (used.has(block2.key) && reused.has(block2)) continue;
           for (const node of block2.nodes) {
             destroy(node);
             node.remove();
@@ -5462,7 +5462,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     "novalidate",
     "inert"
   ]);
-  var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
+  var URL_ATTRIBUTES = /* @__PURE__ */ new Set([
     "href",
     "src",
     "action",
@@ -5471,15 +5471,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     "ping",
     "poster"
   ]);
-  var RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
-  function urlPerigosa(valor) {
-    const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
-    return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
+  var SCHEME_NOISE = /[\s\x00-\x1f]/g;
+  function isDangerousUrl(value) {
+    const clean = value.replace(SCHEME_NOISE, "").toLowerCase();
+    return clean.startsWith("javascript:") || clean.startsWith("vbscript:") || clean.startsWith("data:text/html") || clean.startsWith("data:application/xhtml");
   }
-  function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
+  function applyBinding(el, name, value, asProp = false, allowDangerous = false) {
     if (name === "class") return applyClass(el, value);
     if (name === "style") return applyStyle(el, value);
-    if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
+    if (config.sanitizeUrls && !allowDangerous && name === "srcdoc") {
       warn2(
         `:srcdoc refused in ${describeElement(el)}: the value becomes a document with active script inside the iframe, the same way v-html becomes markup. If the content is trusted, write :srcdoc.dangerous="..."; to turn off this protection on the entire application, set V.config.sanitizeUrls = false.`
       );
@@ -5487,7 +5487,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return;
     }
     if (config.sanitizeUrls && !asProp) {
-      if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
+      if (URL_ATTRIBUTES.has(name) && typeof value === "string" && isDangerousUrl(value)) {
         warn2(
           `value refused in :${name} of ${describeElement(el)}: "${value.slice(0, 60)}" uses a scheme that executes code. Use an http(s) or relative address. To turn off this protection, set V.config.sanitizeUrls = false.`
         );
@@ -5584,9 +5584,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       }
       if (arg === "key") return;
       const asProp = !!modifiers.prop;
-      const perigoLiberado = !!modifiers.dangerous;
+      const allowDangerous = !!modifiers.dangerous;
       effect2(() => {
-        applyBinding(el, arg, ev(), asProp, perigoLiberado);
+        applyBinding(el, arg, ev(), asProp, allowDangerous);
       });
       void expression;
     },
@@ -6566,11 +6566,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version = "0.4.6";
+  var version2 = "0.4.6";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
-    version,
+    version: version2,
     config,
     // Reactivity
     reactive,

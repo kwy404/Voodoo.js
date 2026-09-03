@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estado global com stores · Documentação da Voodoo.js</title>
-<meta name="description" content="Quando o mesmo dado aparece em partes distantes da página: V.store, o acesso por $store, métodos em vez de getters, persistência, o escopo raiz e o barramento de eventos.">
+<title>Global state with stores · Voodoo.js documentation</title>
+<meta name="description" content="For when the same data shows up in distant parts of the page: V.store, access through $store, methods instead of getters, persistence, the root scope and the event bus.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/stores">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,154 +14,153 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Componentes e estado</p>
-<h1>Estado global com stores</h1>
+<p class="doc-migalha">Components and state</p>
+<h1>Global state with stores</h1>
 <p class="doc-resumo">
-  O carrinho aparece no cabeçalho e na lateral. Os dois precisam do mesmo dado, e eles não são
-  vizinhos no HTML. Um <code>v-data</code> resolve dentro de um trecho; para a página inteira,
-  use um store.
+  The cart shows up in the header and in the sidebar. Both need the same data, and they are not
+  neighbours in the HTML. A <code>v-data</code> settles it inside one stretch; for the whole page,
+  use a store.
 </p>
 
-<h2 id="criando">Criando um store</h2>
+<h2 id="criando">Creating a store</h2>
 
-<pre data-lang="js"><code>V.store('carrinho', {
-  itens: [],
+<pre data-lang="js"><code>V.store('cart', {
+  items: [],
   total() {
-    return this.itens.reduce((soma, item) =&gt; soma + item.preco, 0);
+    return this.items.reduce((sum, item) =&gt; sum + item.price, 0);
   },
-  adicionar(produto) {
-    this.itens.push(produto);
+  add(product) {
+    this.items.push(product);
   },
-  limpar() {
-    this.itens = [];
+  clear() {
+    this.items = [];
   }
 });</code></pre>
 
 <p>
-  A partir daí ele existe em <code>$store</code>, em qualquer expressão da página, sem precisar
-  ser passado para lugar nenhum:
+  From then on it exists in <code>$store</code>, in any expression on the page, without having to
+  be passed anywhere:
 </p>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.store('carrinho', {
-      itens: [],
-      total() { return this.itens.reduce((s, i) =&gt; s + i.preco, 0) },
-      adicionar(p) { this.itens.push(p) },
-      limpar() { this.itens = [] }
+    V.store('cart', {
+      items: [],
+      total() { return this.items.reduce((s, i) =&gt; s + i.price, 0) },
+      add(p) { this.items.push(p) },
+      clear() { this.items = [] }
     });
   &lt;/script&gt;
 
   &lt;div&gt;
-    &lt;button @click="$store.carrinho.adicionar({ nome: 'Caneca', preco: 39 })"&gt;
-      Adicionar caneca
+    &lt;button @click="$store.cart.add({ name: 'Mug', price: 39 })"&gt;
+      Add a mug
     &lt;/button&gt;
-    &lt;button @click="$store.carrinho.limpar()"&gt;Limpar&lt;/button&gt;
+    &lt;button @click="$store.cart.clear()"&gt;Clear&lt;/button&gt;
   &lt;/div&gt;
 
-  &lt;p&gt;Aqui em cima: { $store.carrinho.itens.length } itens&lt;/p&gt;
+  &lt;p&gt;Up here: { $store.cart.items.length } items&lt;/p&gt;
 
-  &lt;div v-data="{ qualquerOutroEscopo: true }"&gt;
-    &lt;p&gt;Em outro escopo, bem longe: R$ { $store.carrinho.total() }&lt;/p&gt;
+  &lt;div v-data="{ someOtherScope: true }"&gt;
+    &lt;p&gt;In another scope, far away: $ { $store.cart.total() }&lt;/p&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Repare que o segundo parágrafo está dentro de outro <code>v-data</code> e mesmo assim enxerga o
-  carrinho. Não existe herança entre eles: o store não pertence a escopo nenhum.
+  Notice that the second paragraph is inside another <code>v-data</code> and still sees the cart.
+  There is no inheritance between them: the store belongs to no scope at all.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Método, e não getter</span>
+  <span class="doc-aviso__rotulo">A method, not a getter</span>
   <p>
-    Para valores derivados use um método, como o <code>total()</code> acima. Uma propriedade
-    declarada com <code>get</code> é resolvida uma única vez, na criação do store, e não acompanha
-    as mudanças. É o erro mais comum desta página.
+    For derived values use a method, like the <code>total()</code> above. A property declared with
+    <code>get</code> is resolved exactly once, when the store is created, and does not follow the
+    changes. It is the most common mistake on this page.
   </p>
 </div>
 
-<h2 id="persistencia">Persistência</h2>
+<h2 id="persistencia">Persistence</h2>
 
-<pre data-lang="js"><code>V.store('preferencias', { tema: 'system', idioma: 'pt-BR' }, { persist: true });</code></pre>
+<pre data-lang="js"><code>V.store('preferences', { theme: 'system', language: 'en-US' }, { persist: true });</code></pre>
 
 <p>
-  O store é gravado no <code>localStorage</code> a cada mudança e restaurado no próximo
-  carregamento. A chave padrão é <code>voodoo:store:&lt;nome&gt;</code>; passe um texto em
-  <code>persist</code> para escolher outra, como <code>{ persist: 'app:prefs' }</code>. Funções
-  não são gravadas.
+  The store is written to <code>localStorage</code> on every change and restored on the next load.
+  The default key is <code>voodoo:store:&lt;name&gt;</code>; pass a string in <code>persist</code>
+  to pick another, such as <code>{ persist: 'app:prefs' }</code>. Functions are not written.
 </p>
 
-<h2 id="api">A API dos stores</h2>
+<h2 id="api">The store API</h2>
 
-<pre data-lang="js"><code>V.store('carrinho');            // recupera o store existente
-V.store('carrinho', { ... });   // cria, ou atualiza os valores mantendo a referência
-V.stores;                       // objeto com todos os stores, o mesmo que $store
-V.storeNames();                 // ['carrinho', 'preferencias']
-V.removeStore('carrinho');      // remove e para a persistência</code></pre>
+<pre data-lang="js"><code>V.store('cart');            // gets the existing store back
+V.store('cart', { ... });   // creates it, or updates the values keeping the reference
+V.stores;                   // an object with every store, the same as $store
+V.storeNames();             // ['cart', 'preferences']
+V.removeStore('cart');      // removes it and stops the persistence</code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">A ordem dos scripts não importa</span>
+  <span class="doc-aviso__rotulo">The order of the scripts does not matter</span>
   <p>
-    Um store criado depois que a página carregou atualiza quem já estava na tela esperando por
-    ele. Você não precisa garantir que o arquivo do store venha antes do HTML que o usa.
+    A store created after the page has loaded updates whoever was already on screen waiting for it.
+    You do not have to guarantee that the store's file comes before the HTML that uses it.
   </p>
 </div>
 
-<h2 id="escopo-raiz">O nível intermediário: o escopo raiz</h2>
+<h2 id="escopo-raiz">The middle level: the root scope</h2>
 
 <p>
-  Entre o <code>v-data</code> de um bloco e um store nomeado existe o escopo raiz, que vale para a
-  página toda sem virar um objeto com nome próprio:
+  Between the <code>v-data</code> of a block and a named store sits the root scope, which holds for
+  the whole page without becoming an object with a name of its own:
 </p>
 
-<pre data-lang="js"><code>V.data({ usuario: null, versao: '2.1' });</code></pre>
+<pre data-lang="js"><code>V.data({ user: null, version: '2.1' });</code></pre>
 
 <p>
-  Ele aparece como <code>$root</code> em qualquer expressão, e os identificadores soltos caem nele
-  quando não existem em nenhum escopo acima. Serve bem para o que é único e não tem
-  comportamento: o usuário logado, a versão do sistema, uma configuração vinda do servidor.
+  It shows up as <code>$root</code> in any expression, and loose identifiers fall through to it
+  when they exist in no scope above. It suits what is unique and has no behaviour: the signed-in
+  user, the system version, a setting that came from the server.
 </p>
 
-<h2 id="eventos">Barramento de eventos</h2>
+<h2 id="eventos">The event bus</h2>
 
 <p>
-  Quando o que você precisa não é compartilhar um valor, e sim avisar que algo aconteceu:
+  For when what you need is not to share a value, but to announce that something happened:
 </p>
 
-<pre data-lang="js"><code>const off = V.on('pedido:criado', (pedido) =&gt; V.toast.success(`Pedido ${pedido.id} criado`));
-V.once('app:pronto', () =&gt; console.log('só na primeira vez'));
-V.emit('pedido:criado', { id: 42 });
-off();                       // cancela uma assinatura
-V.off('pedido:criado');      // cancela todas do evento</code></pre>
+<pre data-lang="js"><code>const off = V.on('order:created', (order) =&gt; V.toast.success(`Order ${order.id} created`));
+V.once('app:ready', () =&gt; console.log('only the first time'));
+V.emit('order:created', { id: 42 });
+off();                      // cancels one subscription
+V.off('order:created');     // cancels every subscription to that event</code></pre>
 
 <p>
-  No HTML, o equivalente é <code>$dispatch</code>, que dispara um <code>CustomEvent</code> subindo
-  pela árvore — bom para conversas entre partes próximas, enquanto o barramento serve para partes
-  que não se conhecem.
+  In the HTML, the equivalent is <code>$dispatch</code>, which fires a <code>CustomEvent</code> up
+  the tree — good for conversations between parts that are close by, while the bus is for parts
+  that do not know each other.
 </p>
 
-<h2 id="qual-usar">Qual usar</h2>
+<h2 id="qual-usar">Which one to use</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Situação</th><th>Escolha</th></tr></thead>
+<thead><tr><th>Situation</th><th>Choice</th></tr></thead>
 <tbody>
-<tr><td>Estado de um bloco de HTML</td><td><code>v-data</code></td></tr>
-<tr><td>Valor usado por toda a página</td><td><code>V.data()</code></td></tr>
-<tr><td>Carrinho, usuário logado, preferências</td><td><code>V.store()</code></td></tr>
-<tr><td>Precisa sobreviver ao recarregar</td><td><code>v-persist</code>, ou store com <code>persist</code></td></tr>
-<tr><td>Precisa acompanhar outras abas</td><td><code>v-sync</code></td></tr>
-<tr><td>Precisa de desfazer</td><td><code>v-history</code></td></tr>
-<tr><td>Um único campo de texto</td><td><code>v-storage</code></td></tr>
+<tr><td>State of one block of HTML</td><td><code>v-data</code></td></tr>
+<tr><td>A value used by the whole page</td><td><code>V.data()</code></td></tr>
+<tr><td>Cart, signed-in user, preferences</td><td><code>V.store()</code></td></tr>
+<tr><td>Has to survive a reload</td><td><code>v-persist</code>, or a store with <code>persist</code></td></tr>
+<tr><td>Has to follow other tabs</td><td><code>v-sync</code></td></tr>
+<tr><td>Needs undo</td><td><code>v-history</code></td></tr>
+<tr><td>A single text field</td><td><code>v-storage</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  As quatro últimas linhas têm página própria, com os detalhes de chave, limite e comportamento:
-  <a href="estado-persistente.html">estado que persiste, sincroniza e desfaz</a>.
+  The last four rows have a page of their own, with the details of key, limit and behaviour:
+  <a href="estado-persistente.html">state that persists, syncs and undoes</a>.
 </p>
 
 </article>

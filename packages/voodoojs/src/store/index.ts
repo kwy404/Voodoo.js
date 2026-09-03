@@ -25,7 +25,7 @@ const stores = new Map<string, Record<string, any>>();
  * causes creating a new store to update anyone already on screen waiting for it,
  * even if registration happens after load.
  */
-const versao = ref(0);
+const version = ref(0);
 const persistHandles = new Map<string, WatchStopHandle>();
 
 export interface StoreOptions {
@@ -70,20 +70,20 @@ export function store<T extends StoreDefinition>(
   // which is exactly opposite to what the person wrote. With descriptors, the
   // getter remains a getter, and the reactive proxy executes it on each read,
   // tracking dependencies inside it.
-  const descritores = Object.getOwnPropertyDescriptors(definition);
-  const initial: Record<string, any> = Object.defineProperties({}, descritores);
+  const descriptors = Object.getOwnPropertyDescriptors(definition);
+  const initial: Record<string, any> = Object.defineProperties({}, descriptors);
 
   if (options.persist && typeof localStorage !== 'undefined') {
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        const salvo = JSON.parse(saved) as Record<string, unknown>;
+        const parsed = JSON.parse(saved) as Record<string, unknown>;
         // Only restores what is given. Writing over a getter without a setter
         // would fail, and derived values don't need to be restored: they
         // recalculate themselves from what was saved.
-        for (const [chave, valor] of Object.entries(salvo)) {
-          if (descritores[chave] && !('value' in descritores[chave])) continue;
-          initial[chave] = valor;
+        for (const [field, value] of Object.entries(parsed)) {
+          if (descriptors[field] && !('value' in descriptors[field])) continue;
+          initial[field] = value;
         }
       }
     } catch {
@@ -95,15 +95,15 @@ export function store<T extends StoreDefinition>(
 
   // Binds methods to the store itself. Reading is by descriptor to avoid
   // triggering getters unnecessarily.
-  for (const [prop, descritor] of Object.entries(descritores)) {
-    const value = descritor.value;
+  for (const [prop, descriptor] of Object.entries(descriptors)) {
+    const value = descriptor.value;
     if (typeof value === 'function') {
       (created as Record<string, any>)[prop] = (...args: unknown[]) => value.apply(created, args);
     }
   }
 
   stores.set(name, created);
-  versao.value++;
+  version.value++;
 
   if (options.persist && typeof localStorage !== 'undefined') {
     const stop = watch(
@@ -127,10 +127,10 @@ function stripFunctions(source: Record<string, any>): Record<string, any> {
   const out: Record<string, any> = {};
   // Getter-derived values are left out: they recalculate themselves on next load,
   // and saving the result would only create a chance to get out of sync.
-  const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
+  const descriptors = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === 'function') continue;
-    if (descritores[key] && !('value' in descritores[key])) continue;
+    if (descriptors[key] && !('value' in descriptors[key])) continue;
     out[key] = value;
   }
   return out;
@@ -141,11 +141,11 @@ export const allStores: Record<string, Record<string, any>> = new Proxy(
   {},
   {
     get: (_t, key: string) => {
-      void versao.value; // subscribes to new store creation
+      void version.value; // subscribes to new store creation
       return stores.get(key);
     },
     has: (_t, key: string) => {
-      void versao.value;
+      void version.value;
       return stores.has(key as string);
     },
     ownKeys: () => [...stores.keys()],

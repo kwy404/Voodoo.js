@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Componentes prontos · Documentação da Voodoo.js</title>
-<meta name="description" content="Os 29 componentes do build completo: como escrever as tags, como as props booleanas funcionam, como eles se comportam dentro de um formulário e como trocar a paleta inteira.">
+<title>Ready-made components · Voodoo.js documentation</title>
+<meta name="description" content="The 29 components of the full build: how to write the tags, how the boolean props work, how they behave inside a form and how to change the whole palette.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/componentes-prontos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,122 +14,122 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Componentes e estado</p>
-<h1>Componentes prontos</h1>
+<p class="doc-migalha">Components and state</p>
+<h1>Ready-made components</h1>
 <p class="doc-resumo">
-  O build completo registra 29 componentes com aparência própria, acessíveis e alinhados ao tema.
-  Nenhum deles usa a aparência padrão do navegador, e nenhuma cor está fixa no CSS: tudo vem da
-  paleta, que você troca em uma linha.
+  The full build registers 29 components with a look of their own, accessible and in step with the
+  theme. None of them uses the browser's default appearance, and no colour is hardcoded in the
+  CSS: everything comes from the palette, which you change in one line.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Só no voodoo.full.min.js</span>
+  <span class="doc-aviso__rotulo">voodoo.full.min.js only</span>
   <p>
-    Os componentes <code>V*</code> existem apenas no build completo. Nos outros dois arquivos as
-    tags simplesmente não são reconhecidas e ficam no HTML como estão.
+    The <code>V*</code> components exist only in the full build. In the other two files the tags
+    are simply not recognized and stay in the HTML as they are.
   </p>
 </div>
 
-<h2 id="usando">Usando</h2>
+<h2 id="usando">Using them</h2>
 
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div v-data="{ email: '' }"&gt;
-  &lt;VButton variant="primary" size="lg" icon="check"&gt;Salvar&lt;/VButton&gt;
-  &lt;VButton variant="ghost"&gt;Cancelar&lt;/VButton&gt;
-  &lt;VBadge tone="success"&gt;Ativo&lt;/VBadge&gt;
-  &lt;VTag&gt;rascunho&lt;/VTag&gt;
+  &lt;VButton variant="primary" size="lg" icon="check"&gt;Save&lt;/VButton&gt;
+  &lt;VButton variant="ghost"&gt;Cancel&lt;/VButton&gt;
+  &lt;VBadge tone="success"&gt;Active&lt;/VBadge&gt;
+  &lt;VTag&gt;draft&lt;/VTag&gt;
 
-  &lt;VInput label="E-mail" type="email" icon="mail"
-          hint="Nunca compartilhamos" v-model="email"&gt;&lt;/VInput&gt;
+  &lt;VInput label="Email" type="email" icon="mail"
+          hint="We never share it" v-model="email"&gt;&lt;/VInput&gt;
 
-  &lt;VAlert tone="warning" title="Atenção" closable&gt;
-    A cobrança vence em três dias.
+  &lt;VAlert tone="warning" title="Heads up" closable&gt;
+    The invoice is due in three days.
   &lt;/VAlert&gt;
 
-  &lt;VStat label="Receita" value="R$ 128.400" delta="12.4" icon="chart"&gt;&lt;/VStat&gt;
+  &lt;VStat label="Revenue" value="$128,400" delta="12.4" icon="chart"&gt;&lt;/VStat&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Cada um aceita as duas escritas, <code>&lt;VButton&gt;</code> e <code>&lt;v-button&gt;</code>.
-  As props booleanas aceitam o atributo vazio, o texto <code>true</code> e a ligação reativa
-  <code>:loading="salvando"</code>.
+  Each one takes both spellings, <code>&lt;VButton&gt;</code> and <code>&lt;v-button&gt;</code>.
+  The boolean props accept the empty attribute, the text <code>true</code> and the reactive
+  binding <code>:loading="saving"</code>.
 </p>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Feche sempre a tag</span>
+  <span class="doc-aviso__rotulo">Always close the tag</span>
   <p>
-    Estes componentes são tags próprias, e o HTML não aceita fechamento automático fora das tags
-    conhecidas: <code>&lt;VInput ... /&gt;</code> não fecha nada, e o navegador coloca todo o resto
-    do bloco dentro do componente. Escreva sempre
-    <code>&lt;VInput ...&gt;&lt;/VInput&gt;</code>. O sintoma, quando isso passa despercebido, é um
-    trecho da página que some sem erro nenhum no console.
+    These components are custom tags, and HTML does not accept self-closing outside the known tags:
+    <code>&lt;VInput ... /&gt;</code> closes nothing, and the browser puts the whole rest of the
+    block inside the component. Always write
+    <code>&lt;VInput ...&gt;&lt;/VInput&gt;</code>. The symptom, when this slips through, is a
+    stretch of the page vanishing with no error in the console at all.
   </p>
 </div>
 
-<h2 id="lista">A lista inteira</h2>
+<h2 id="lista">The whole list</h2>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Grupo</th><th>Componentes</th></tr></thead>
+<thead><tr><th>Group</th><th>Components</th></tr></thead>
 <tbody>
-<tr><td>Ação</td><td><code>VButton</code>, <code>VIconButton</code>, <code>VTooltipButton</code></td></tr>
-<tr><td>Estrutura</td><td><code>VCard</code>, <code>VDivider</code>, <code>VEmptyState</code></td></tr>
-<tr><td>Formulário</td><td><code>VLabel</code>, <code>VField</code>, <code>VInput</code>, <code>VTextarea</code>, <code>VSelect</code>, <code>VCheckbox</code>, <code>VRadio</code>, <code>VSwitch</code>, <code>VRating</code></td></tr>
-<tr><td>Sinalização</td><td><code>VBadge</code>, <code>VTag</code>, <code>VAlert</code>, <code>VAvatar</code></td></tr>
-<tr><td>Espera</td><td><code>VSpinner</code>, <code>VSkeleton</code>, <code>VProgress</code></td></tr>
-<tr><td>Dados</td><td><code>VStat</code>, <code>VTable</code>, <code>VPagination</code></td></tr>
-<tr><td>Navegação e passo a passo</td><td><code>VBreadcrumb</code>, <code>VSteps</code>, <code>VTimeline</code></td></tr>
-<tr><td>Código</td><td><code>VCodeBlock</code></td></tr>
+<tr><td>Action</td><td><code>VButton</code>, <code>VIconButton</code>, <code>VTooltipButton</code></td></tr>
+<tr><td>Structure</td><td><code>VCard</code>, <code>VDivider</code>, <code>VEmptyState</code></td></tr>
+<tr><td>Form</td><td><code>VLabel</code>, <code>VField</code>, <code>VInput</code>, <code>VTextarea</code>, <code>VSelect</code>, <code>VCheckbox</code>, <code>VRadio</code>, <code>VSwitch</code>, <code>VRating</code></td></tr>
+<tr><td>Signalling</td><td><code>VBadge</code>, <code>VTag</code>, <code>VAlert</code>, <code>VAvatar</code></td></tr>
+<tr><td>Waiting</td><td><code>VSpinner</code>, <code>VSkeleton</code>, <code>VProgress</code></td></tr>
+<tr><td>Data</td><td><code>VStat</code>, <code>VTable</code>, <code>VPagination</code></td></tr>
+<tr><td>Navigation and step by step</td><td><code>VBreadcrumb</code>, <code>VSteps</code>, <code>VTimeline</code></td></tr>
+<tr><td>Code</td><td><code>VCodeBlock</code></td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  As props de cada um, uma por uma, estão na
-  <a href="../referencia/componentes-prontos.html">referência de componentes prontos</a>.
+  The props of each one, one by one, are in the
+  <a href="../referencia/componentes-prontos.html">ready-made components reference</a>.
 </p>
 
-<h2 id="tabela">Tabela e paginação</h2>
+<h2 id="tabela">Table and pagination</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ pedidos: [
-  { nome: 'Ana',  total: 'R$ 1.200' },
-  { nome: 'Beto', total: 'R$ 890' },
-  { nome: 'Cris', total: 'R$ 2.310' }
+<pre data-lang="html"><code>&lt;div v-data="{ orders: [
+  { name: 'Ann',   total: '$1,200' },
+  { name: 'Bob',   total: '$890' },
+  { name: 'Chris', total: '$2,310' }
 ] }"&gt;
-  &lt;VTable columns="nome:Cliente, total:Total:right" :rows="pedidos" striped&gt;&lt;/VTable&gt;
+  &lt;VTable columns="name:Customer, total:Total:right" :rows="orders" striped&gt;&lt;/VTable&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  A escrita de <code>columns</code> é <code>chave:Título:alinhamento</code>, separada por
-  vírgulas. As linhas vêm de qualquer array reativo — inclusive o de um
-  <a href="buscando-dados.html#v-resource"><code>v-resource</code></a>, o que dá uma tabela ligada
-  à API sem nenhum código de montagem.
+  The spelling of <code>columns</code> is <code>key:Title:alignment</code>, separated by commas.
+  The rows come from any reactive array — a
+  <a href="buscando-dados.html#v-resource"><code>v-resource</code></a> included, which gives you a
+  table bound to the API with no assembly code at all.
 </p>
 
-<h2 id="formularios">Dentro de um formulário</h2>
+<h2 id="formularios">Inside a form</h2>
 
 <p>
-  Eles funcionam com <code>v-submit</code> e <code>v-validate</code> sem nenhuma adaptação: o que
-  chega ao servidor é o mesmo que chegaria de campos comuns, porque por baixo são campos comuns.
+  They work with <code>v-submit</code> and <code>v-validate</code> with no adaptation: what reaches
+  the server is what ordinary fields would send, because underneath they are ordinary fields.
 </p>
 
-<pre data-lang="html"><code>&lt;form v-submit="/api/inscricoes" v-validate v-toast-success="Inscrição enviada!"&gt;
-  &lt;VInput label="Nome" name="nome" required&gt;&lt;/VInput&gt;
-  &lt;VInput label="E-mail" name="email" type="email" required&gt;&lt;/VInput&gt;
-  &lt;VSelect label="Plano" name="plano" options="Mensal, Anual" required&gt;&lt;/VSelect&gt;
-  &lt;VCheckbox name="termos" label="Aceito os termos" required&gt;&lt;/VCheckbox&gt;
-  &lt;VButton type="submit" :loading="$form.loading"&gt;Enviar&lt;/VButton&gt;
+<pre data-lang="html"><code>&lt;form v-submit="/api/signups" v-validate v-toast-success="Sign-up sent!"&gt;
+  &lt;VInput label="Name" name="name" required&gt;&lt;/VInput&gt;
+  &lt;VInput label="Email" name="email" type="email" required&gt;&lt;/VInput&gt;
+  &lt;VSelect label="Plan" name="plan" options="Monthly, Yearly" required&gt;&lt;/VSelect&gt;
+  &lt;VCheckbox name="terms" label="I accept the terms" required&gt;&lt;/VCheckbox&gt;
+  &lt;VButton type="submit" :loading="$form.loading"&gt;Send&lt;/VButton&gt;
 &lt;/form&gt;</code></pre>
 
-<h2 id="paleta">A paleta</h2>
+<h2 id="paleta">The palette</h2>
 
 <p>
-  A escala de tons é gerada a partir das suas cores, então trocar a cor da marca troca a interface
-  inteira — botões, campos, avisos, gráficos e os componentes de interface do build essencial
-  junto.
+  The scale of shades is generated from your colours, so changing the brand colour changes the
+  whole interface — buttons, fields, alerts, charts and the UI components of the essential build
+  along with it.
 </p>
 
 <pre data-lang="js"><code>V.palette({ primary: '#0F766E', accent: '#F59E0B', radius: '10px' });</code></pre>
@@ -137,34 +137,34 @@
 <div data-exemplo>
 <pre data-lang="html"><code>&lt;div&gt;
   &lt;script&gt;
-    V.config.globals.aplicarPaleta = (cor) =&gt; V.palette({ primary: cor });
+    V.config.globals.applyPalette = (colour) =&gt; V.palette({ primary: colour });
   &lt;/script&gt;
 
-  &lt;div v-data="{ cor: '#0f766e' }"&gt;
+  &lt;div v-data="{ colour: '#0f766e' }"&gt;
     &lt;div class="linha"&gt;
-      &lt;input type="color" v-model="cor"&gt;
-      &lt;button @click="aplicarPaleta(cor)"&gt;Aplicar na paleta&lt;/button&gt;
+      &lt;input type="color" v-model="colour"&gt;
+      &lt;button @click="applyPalette(colour)"&gt;Apply to the palette&lt;/button&gt;
     &lt;/div&gt;
-    &lt;VButton variant="primary"&gt;Botão primário&lt;/VButton&gt;
-    &lt;VBadge tone="primary"&gt;Etiqueta&lt;/VBadge&gt;
+    &lt;VButton variant="primary"&gt;A primary button&lt;/VButton&gt;
+    &lt;VBadge tone="primary"&gt;A badge&lt;/VBadge&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Por que o exemplo passa por uma função</span>
+  <span class="doc-aviso__rotulo">Why the example goes through a function</span>
   <p>
-    O objeto <code>V</code> não existe dentro das expressões: elas só enxergam os escopos, as
-    variáveis mágicas e uma lista fechada de globais. Para chamar a biblioteca de dentro do HTML,
-    publique a função em <code>V.config.globals</code>, como acima. A
-    <a href="../referencia/objeto-v.html#expressoes">referência de expressões</a> explica o
-    porquê e lista o que é permitido.
+    The <code>V</code> object does not exist inside expressions: they only see the scopes, the
+    magic variables and a closed list of globals. To call the library from inside the HTML,
+    publish the function on <code>V.config.globals</code>, as above. The
+    <a href="../referencia/objeto-v.html#expressoes">expression reference</a> explains why and
+    lists what is allowed.
   </p>
 </div>
 
 <p>
-  A página de <a href="tema-e-paleta.html">tema e paleta</a> mostra os tokens gerados, o tema
-  claro e escuro, e como usar as mesmas variáveis no seu próprio CSS.
+  The <a href="tema-e-paleta.html">theme and palette</a> page shows the generated tokens, the light
+  and dark themes, and how to use the same variables in your own CSS.
 </p>
 
 </article>

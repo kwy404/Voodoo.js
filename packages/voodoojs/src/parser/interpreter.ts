@@ -25,7 +25,7 @@ export interface EvalScope {
 /**
  * Globals allowed within template expressions.
  *
- * Extend with `V.config.globals.Minha = valor`.
+ * Extend with `V.config.globals.MyLib = value`.
  */
 /**
  * Safe subset of `Object`.
@@ -517,7 +517,7 @@ function assign(target: Node, value: unknown, scope: EvalScope): void {
     if (obj == null) {
       throw new VoodooRuntimeError('Could not write to null or undefined');
     }
-    // `x.__proto__.qualquer = 1` would pollute `Object.prototype` for the entire page.
+    // `x.__proto__.anything = 1` would pollute `Object.prototype` for the entire page.
     const key = checkKey(
       target.computed ? evaluate(target.p, scope) : (target.p as { v: string }).v
     );

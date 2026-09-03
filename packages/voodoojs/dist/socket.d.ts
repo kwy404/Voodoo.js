@@ -18,8 +18,8 @@ export { R as RoomOptions, a as RoomState, h as Socket, i as SocketDefaults, j a
  * 2                                                          server ping
  * 3                                                          client pong
  * 40                                                         enter namespace
- * 42["mensagem",{"texto":"oi"}]                              event
- * 421["salvar",{...}]                                        event requesting ack 1
+ * 42["message",{"text":"hi"}]                                event
+ * 421["save",{...}]                                          event requesting ack 1
  * 431[{"ok":true}]                                           ack 1 response
  * ```
  *
@@ -31,7 +31,7 @@ export { R as RoomOptions, a as RoomState, h as Socket, i as SocketDefaults, j a
  * short list is: binary attachments (`45`/`46`), polling transport and upgrade,
  * and namespaces other than `/`.
  */
-/** Codigos de pacote do Engine.IO v4. */
+/** Engine.IO v4 packet codes. */
 declare const ENGINE: {
     readonly OPEN: "0";
     readonly CLOSE: "1";

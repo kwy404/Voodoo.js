@@ -16,8 +16,8 @@
  * 2                                                          server ping
  * 3                                                          client pong
  * 40                                                         enter namespace
- * 42["mensagem",{"texto":"oi"}]                              event
- * 421["salvar",{...}]                                        event requesting ack 1
+ * 42["message",{"text":"hi"}]                                event
+ * 421["save",{...}]                                          event requesting ack 1
  * 431[{"ok":true}]                                           ack 1 response
  * ```
  *
@@ -30,7 +30,7 @@
  * and namespaces other than `/`.
  */
 
-/** Codigos de pacote do Engine.IO v4. */
+/** Engine.IO v4 packet codes. */
 export const ENGINE = {
   OPEN: '0',
   CLOSE: '1',
@@ -41,7 +41,7 @@ export const ENGINE = {
   NOOP: '6',
 } as const;
 
-/** Tipos de pacote do Socket.IO v5 (protocolo do servidor v4). */
+/** Socket.IO v5 packet types (v4 server protocol). */
 export const SIO = {
   CONNECT: 0,
   DISCONNECT: 1,

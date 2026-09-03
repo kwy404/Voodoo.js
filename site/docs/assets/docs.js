@@ -130,18 +130,49 @@
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the
   // same from /docs/, /docs/guia/ and /docs/referencia/.
-  var SITE = new URL('../', RAIZ).pathname; // .../site/
+  // .href, not .pathname. On a file:// URL, .pathname is an absolute path that
+  // starts with a slash ("/C:/Users/.../site/"), and a browser resolves an href
+  // like that from the filesystem root — so every link in the header pointed at
+  // nothing and the page looked broken when opened straight off disk. A full
+  // href works under both file:// and http://.
+  var SITE = new URL('../', RAIZ).href; // .../site/
 
+  // The rest of the site links back here, and now the documentation links out.
+  // Before this the docs were an island: nothing in the header led home, to the
+  // playground, to the components or to the examples.
+  var LINKS_DO_SITE = [
+    { href: SITE, texto: 'Home' },
+    { href: SITE + 'playground.html', texto: 'Playground' },
+    { href: SITE + 'components.html', texto: 'Components' },
+    { href: SITE + 'examples/', texto: 'Examples' }
+  ];
+
+  // The same mark the landing page draws, inline and painted with currentColor
+  // so it follows the theme instead of needing a second file per theme.
+  var MARCA =
+    '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor"/></svg>';
+
+  /** A link to a documentation page, absolute enough to work from any depth. */
   function href(id) {
-    return id ? RAIZ.pathname + id + '.html' : RAIZ.pathname;
+    return id ? RAIZ.href + id + '.html' : RAIZ.href;
   }
 
+  /**
+   * Which page is open, derived by comparing full URLs rather than paths.
+   *
+   * Comparing location.pathname against RAIZ.pathname looks equivalent and is
+   * not: under file:// both carry a drive letter and percent-encoding that do
+   * not always match byte for byte, so the highlight silently stopped working
+   * off disk. Comparing hrefs, with the query and hash stripped, is the same
+   * comparison without that trap.
+   */
   function idAtual() {
-    var base = RAIZ.pathname;
-    var aqui = decodeURIComponent(location.pathname);
-    if (aqui.indexOf(base) !== 0) return '';
+    var base = RAIZ.href;
+    var aqui = decodeURIComponent(location.href.split('#')[0].split('?')[0]);
+    var raiz = decodeURIComponent(base);
+    if (aqui.indexOf(raiz) !== 0) return '';
     return aqui
-      .slice(base.length)
+      .slice(raiz.length)
       .replace(/\.html$/, '')
       .replace(/(^|\/)index$/, '')
       .replace(/^\/+|\/+$/g, '');
@@ -296,7 +327,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 5. Realce de sintaxe
+  // 5. Syntax highlighting
   // ------------------------------------------------------------------------
 
   var PALAVRAS_JS =
@@ -432,11 +463,11 @@
     css: 'css',
     bash: 'terminal',
     shell: 'terminal',
-    txt: 'texto'
+    txt: 'text'
   };
 
   // ------------------------------------------------------------------------
-  // 6. Blocos de código: rótulo, realce e botão de copiar
+  // 6. Code blocks: label, highlighting and copy button
   // ------------------------------------------------------------------------
 
   function prepararCodigo(raiz) {
@@ -460,17 +491,17 @@
       var botao = el('button', {
         type: 'button',
         class: 'doc-copiar',
-        'aria-label': 'Copiar o código',
-        html: ICONES.copiar + '<span>Copiar</span>'
+        'aria-label': 'Copy the code',
+        html: ICONES.copiar + '<span>Copy</span>'
       });
       botao.addEventListener('click', function () {
         copiar(fonte).then(function (deuCerto) {
           botao.innerHTML = deuCerto
-            ? ICONES.ok + '<span>Copiado</span>'
-            : ICONES.copiar + '<span>Falhou</span>';
+            ? ICONES.ok + '<span>Copied</span>'
+            : ICONES.copiar + '<span>Failed</span>';
           botao.setAttribute('data-estado', deuCerto ? 'ok' : 'erro');
           setTimeout(function () {
-            botao.innerHTML = ICONES.copiar + '<span>Copiar</span>';
+            botao.innerHTML = ICONES.copiar + '<span>Copy</span>';
             botao.removeAttribute('data-estado');
           }, 1800);
         });
@@ -512,7 +543,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 7. Exemplos ao vivo
+  // 7. Live examples
   // ------------------------------------------------------------------------
 
   // The stage is a separate document, so it needs the design system in full.
@@ -604,7 +635,7 @@
 
       var cabecalho = el('div', {
         class: 'doc-exemplo__cabecalho',
-        html: 'Exemplo ao vivo <b>&#9679;</b> roda de verdade nesta página'
+        html: 'Live example <b>&#9679;</b> really runs on this page'
       });
 
       var corpo = el('div', { class: 'doc-exemplo__corpo' });
@@ -626,13 +657,13 @@
   function carregarPalco(palco) {
     var quadro = el('iframe', {
       'data-palco': '',
-      title: 'Resultado do exemplo',
+      title: 'Example result',
       loading: 'lazy'
     });
     palco.appendChild(quadro);
 
     var documento =
-      '<!doctype html><html lang="pt-BR" data-tema="' +
+      '<!doctype html><html lang="en" data-tema="' +
       temaAtual() +
       '"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
@@ -688,7 +719,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 8. Cabeçalho
+  // 8. Header
   // ------------------------------------------------------------------------
 
   function montarTopo() {
@@ -698,7 +729,7 @@
       type: 'button',
       class: 'doc-botao-icone doc-topo__menu-btn',
       id: 'doc-abrir-menu',
-      'aria-label': 'Abrir o menu de navegação',
+      'aria-label': 'Open the navigation menu',
       'aria-expanded': 'false',
       'aria-controls': 'doc-menu',
       html: ICONES.menu
@@ -709,13 +740,13 @@
       class: 'doc-topo__marca',
       href: href(''),
       html:
-        '<img src="' +
         MARCA +
-        '" alt="" width="28" height="28"><span>Voodoo<em>.js</em></span>' +
+        '<span>Voodoo.js</span>' +
         '<span class="doc-topo__etiqueta">Docs</span>'
     });
     topo.appendChild(marca);
 
+    topo.appendChild(montarNavegacaoDoSite());
     topo.appendChild(el('div', { class: 'doc-topo__espaco' }));
     topo.appendChild(montarBusca());
 
@@ -724,7 +755,7 @@
       type: 'button',
       class: 'doc-botao-icone',
       id: 'doc-tema',
-      'aria-label': 'Alternar tema'
+      'aria-label': 'Switch theme'
     });
     tema.addEventListener('click', function () {
       aplicarTema(temaAtual() === 'claro' ? 'escuro' : 'claro');
@@ -737,8 +768,8 @@
         href: 'https://github.com/kwy404/Voodoo.js',
         rel: 'noopener',
         target: '_blank',
-        'aria-label': 'Repositório no GitHub',
-        title: 'Repositório no GitHub',
+        'aria-label': 'Repository on GitHub',
+        title: 'Repository on GitHub',
         html:
           '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>'
       })
@@ -752,8 +783,19 @@
     return topo;
   }
 
+  function montarNavegacaoDoSite(classe, rotulo) {
+    var nav = el('nav', {
+      class: classe || 'doc-topo__site',
+      'aria-label': rotulo || 'Site'
+    });
+    LINKS_DO_SITE.forEach(function (link) {
+      nav.appendChild(el('a', { href: link.href, texto: link.texto }));
+    });
+    return nav;
+  }
+
   // ------------------------------------------------------------------------
-  // 9. Menu lateral
+  // 9. Sidebar
   // ------------------------------------------------------------------------
 
   var vidro;
@@ -762,19 +804,23 @@
     var menu = el('nav', {
       class: 'doc-menu',
       id: 'doc-menu',
-      'aria-label': 'Páginas da documentação'
+      'aria-label': 'Documentation pages'
     });
 
     var fechar = el('button', {
       type: 'button',
       class: 'doc-botao-icone doc-menu__fechar',
-      'aria-label': 'Fechar o menu',
+      'aria-label': 'Close the menu',
       html: ICONES.fechar
     });
     fechar.addEventListener('click', function () {
       alternarMenu(false);
     });
     menu.appendChild(fechar);
+
+    // Below 1080px the header has no room for the site links, so they ride
+    // along in the drawer. CSS decides which of the two copies is visible.
+    menu.appendChild(montarNavegacaoDoSite('doc-menu__site', 'Site, in the drawer'));
 
     var contador = 0;
     NAVEGACAO.forEach(function (grupo) {
@@ -823,15 +869,15 @@
   }
 
   // ------------------------------------------------------------------------
-  // 10. Índice da página
+  // 10. On this page
   // ------------------------------------------------------------------------
 
   function montarIndice(artigo) {
-    var aside = el('aside', { class: 'doc-indice', 'aria-label': 'Índice desta página' });
+    var aside = el('aside', { class: 'doc-indice', 'aria-label': 'On this page' });
     var titulos = artigo.querySelectorAll('h2[id], h3[id]');
     if (titulos.length < 2) return aside;
 
-    aside.appendChild(el('h2', { class: 'doc-indice__titulo', texto: 'Nesta página' }));
+    aside.appendChild(el('h2', { class: 'doc-indice__titulo', texto: 'On this page' }));
     var lista = el('ul', { class: 'doc-indice__lista' });
 
     titulos.forEach(function (titulo) {
@@ -883,7 +929,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 11. Âncoras dos títulos
+  // 11. Heading anchors
   // ------------------------------------------------------------------------
 
   function ligarAncoras(artigo) {
@@ -892,7 +938,7 @@
       var ancora = el('a', {
         class: 'doc-ancora',
         href: '#' + titulo.id,
-        'aria-label': 'Link direto para a seção ' + titulo.textContent.trim(),
+        'aria-label': 'Direct link to the section ' + titulo.textContent.trim(),
         texto: '#'
       });
       titulo.appendChild(ancora);
@@ -900,7 +946,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 12. Navegação anterior e próxima
+  // 12. Previous and next page
   // ------------------------------------------------------------------------
 
   function montarPaginacao() {
@@ -909,7 +955,7 @@
     var proxima = LINEAR[INDICE_ATUAL + 1];
     if (!anterior && !proxima) return null;
 
-    var nav = el('nav', { class: 'doc-paginacao', 'aria-label': 'Páginas vizinhas' });
+    var nav = el('nav', { class: 'doc-paginacao', 'aria-label': 'Neighbouring pages' });
 
     if (anterior) {
       nav.appendChild(
@@ -918,7 +964,7 @@
           href: href(anterior.id),
           rel: 'prev',
           html:
-            '<span class="doc-paginacao__rotulo">Anterior</span>' +
+            '<span class="doc-paginacao__rotulo">Previous</span>' +
             '<span class="doc-paginacao__titulo">' +
             esc(anterior.titulo) +
             '</span>'
@@ -933,7 +979,7 @@
           href: href(proxima.id),
           rel: 'next',
           html:
-            '<span class="doc-paginacao__rotulo">Próxima</span>' +
+            '<span class="doc-paginacao__rotulo">Next</span>' +
             '<span class="doc-paginacao__titulo">' +
             esc(proxima.titulo) +
             '</span>'
@@ -948,17 +994,23 @@
     return el('footer', {
       class: 'doc-rodape',
       html:
-        '<p>Voodoo.js 0.5.0 &#183; documentação em português do Brasil.</p>' +
-        '<p><a href="https://github.com/kwy404/Voodoo.js">Repositório</a> &#183; ' +
-        '<a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">Notas da versão</a> &#183; ' +
+        '<p>Voodoo.js 0.5.0 &#183; documentation.</p>' +
+        '<p><a href="' +
+        SITE +
+        '">Home</a> &#183; ' +
+        '<a href="' +
+        SITE +
+        'examples/">Examples</a> &#183; ' +
+        '<a href="https://github.com/kwy404/Voodoo.js">Repository</a> &#183; ' +
+        '<a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">Release notes</a> &#183; ' +
         '<a href="' +
         href('referencia/perguntas-frequentes') +
-        '">Perguntas frequentes</a></p>'
+        '">Frequently asked questions</a></p>'
     });
   }
 
   // ------------------------------------------------------------------------
-  // 13. Busca
+  // 13. Search
   // ------------------------------------------------------------------------
 
   var indiceBusca = null;
@@ -992,20 +1044,20 @@
       type: 'search',
       id: 'doc-busca-campo',
       class: 'doc-busca__campo',
-      placeholder: 'Buscar na documentação...',
+      placeholder: 'Search the documentation...',
       autocomplete: 'off',
       role: 'combobox',
       'aria-expanded': 'false',
       'aria-controls': 'doc-busca-resultados',
       'aria-autocomplete': 'list',
-      'aria-label': 'Buscar na documentação'
+      'aria-label': 'Search the documentation'
     });
 
     var resultados = el('ul', {
       class: 'doc-busca__resultados',
       id: 'doc-busca-resultados',
       role: 'listbox',
-      'aria-label': 'Resultados da busca'
+      'aria-label': 'Search results'
     });
     resultados.hidden = true;
 
@@ -1108,7 +1160,7 @@
       lista.appendChild(
         el('li', {
           class: 'doc-busca__vazio',
-          texto: 'Nada encontrado para "' + termo.trim() + '".'
+          texto: 'Nothing found for "' + termo.trim() + '".'
         })
       );
     } else {
@@ -1158,7 +1210,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 14. Atalhos de teclado
+  // 14. Keyboard shortcuts
   // ------------------------------------------------------------------------
 
   function ligarAtalhos() {
@@ -1184,7 +1236,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 15. Montagem
+  // 15. Assembly
   // ------------------------------------------------------------------------
 
   function iniciar() {
@@ -1195,12 +1247,12 @@
     var conteudo = el('main', { class: 'doc-conteudo', id: 'conteudo', tabindex: '-1' });
     var layout = el('div', { class: 'doc-layout' });
 
-    // Guarda o artigo antes de mexer no body.
+    // Keep the article aside before emptying the body.
     artigo.parentNode.removeChild(artigo);
     document.body.innerHTML = '';
 
     document.body.appendChild(
-      el('a', { class: 'pular-para-conteudo', href: '#conteudo', texto: 'Pular para o conteúdo' })
+      el('a', { class: 'pular-para-conteudo', href: '#conteudo', texto: 'Skip to content' })
     );
     document.body.appendChild(montarTopo());
 
@@ -1226,12 +1278,12 @@
 
     layout.appendChild(montarIndice(artigo));
 
-    aplicarTema(temaAtual());
+    ligarTema();
     ligarAtalhos();
 
     if (pagina) document.body.setAttribute('data-pagina', pagina.id || 'inicio');
 
-    // Rola até a âncora, agora que o conteúdo já está no lugar.
+    // Scroll to the anchor now that the content is in place.
     if (location.hash) {
       var alvo = document.getElementById(decodeURIComponent(location.hash.slice(1)));
       if (alvo) setTimeout(function () {

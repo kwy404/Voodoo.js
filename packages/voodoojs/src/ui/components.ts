@@ -202,7 +202,7 @@ const CSS = `
 @keyframes v-shimmer{0%{background-position:-180% 0}100%{background-position:180% 0}}
 @keyframes v-indeterminate{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
 
-/* ------------------------------------------------------------------ botao */
+/* ----------------------------------------------------------------- button */
 .v-btn{appearance:none;-webkit-appearance:none;position:relative;display:inline-flex;
   align-items:center;justify-content:center;gap:8px;vertical-align:middle;white-space:nowrap;
   font-family:var(--v-font-sans);font-weight:600;line-height:1;text-decoration:none;
@@ -246,7 +246,7 @@ const CSS = `
 .v-btn-spin{width:1em;height:1em;border-radius:50%;border:2px solid currentColor;
   border-top-color:transparent;animation:v-spin .7s linear infinite;flex:none}
 
-/* ------------------------------------------------------- botao de icone */
+/* ------------------------------------------------------------ icon button */
 .v-icon-btn{appearance:none;-webkit-appearance:none;display:inline-grid;place-items:center;
   border:1px solid transparent;border-radius:var(--v-radius-sm);cursor:pointer;
   font-family:var(--v-font-sans);
@@ -291,7 +291,7 @@ const CSS = `
 .v-card-foot:empty{display:none}
 .v-card[data-padded="false"] .v-card-body{padding:0}
 
-/* ------------------------------------------------------------ formulario */
+/* ------------------------------------------------------------------- form */
 .v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
 .v-label{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;
   line-height:1.3;color:var(--v-text)}
@@ -370,7 +370,7 @@ const CSS = `
 .v-select-opt.is-selected .v-select-check{opacity:1}
 .v-select-empty{padding:14px 10px;text-align:center;font-size:13.5px;color:var(--v-text-muted)}
 
-/* -------------------------------------------- caixa, radio e interruptor */
+/* --------------------------------------------- checkbox, radio and switch */
 .v-check{display:inline-flex;align-items:flex-start;gap:9px;cursor:pointer;
   font-family:var(--v-font-sans);font-size:14px;line-height:1.45;color:var(--v-text)}
 .v-check[data-disabled="true"]{cursor:not-allowed;opacity:.6}
@@ -407,7 +407,7 @@ const CSS = `
 .v-check[data-size="sm"] .v-switch-thumb{width:16px;height:16px}
 .v-check[data-size="sm"] .v-check-native:checked+.v-switch-track .v-switch-thumb{transform:translateX(14px)}
 
-/* --------------------------------------------------- selo, etiqueta, alerta */
+/* ------------------------------------------------------ badge, tag, alert */
 .v-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--v-font-sans);
   font-weight:600;line-height:1;border-radius:var(--v-radius-full);border:1px solid transparent;
   white-space:nowrap;vertical-align:middle}
@@ -484,7 +484,7 @@ const CSS = `
 .v-avatar-status[data-status="busy"]{background:var(--v-danger)}
 .v-avatar-status[data-status="away"]{background:var(--v-warning)}
 
-/* ------------------------------------------------- spinner e esqueleto */
+/* --------------------------------------------------- spinner and skeleton */
 .v-spinner{display:inline-block;border-radius:50%;border-style:solid;border-color:var(--v-border);
   border-top-color:var(--v-primary);animation:v-spin .7s linear infinite;vertical-align:middle}
 .v-spinner[data-tone="accent"]{border-top-color:var(--v-accent)}
@@ -501,7 +501,7 @@ const CSS = `
 .v-skeleton[data-circle="true"]{border-radius:var(--v-radius-full)}
 .v-skeleton-stack{display:flex;flex-direction:column;gap:8px}
 
-/* ------------------------------------------------------------- progresso */
+/* --------------------------------------------------------------- progress */
 .v-progress{font-family:var(--v-font-sans);display:flex;flex-direction:column;gap:6px}
 .v-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--v-text-muted)}
 .v-progress-value{font-weight:650;color:var(--v-text)}
@@ -518,7 +518,7 @@ const CSS = `
 .v-progress[data-tone="danger"] .v-progress-bar{background:var(--v-danger)}
 .v-progress[data-indeterminate="true"] .v-progress-bar{width:30% !important;animation:v-indeterminate 1.3s var(--v-ease) infinite}
 
-/* ------------------------------------------------------------- divisor */
+/* ---------------------------------------------------------------- divider */
 .v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
   font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
 .v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
@@ -526,7 +526,7 @@ const CSS = `
 .v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
 .v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
 
-/* -------------------------------------------------------------- tabela */
+/* ------------------------------------------------------------------ table */
 .v-table-wrap{width:100%;overflow-x:auto;background:var(--v-surface);border:1px solid var(--v-border);
   border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-table{width:100%;border-collapse:collapse;font-size:14px;color:var(--v-text)}
@@ -547,7 +547,7 @@ const CSS = `
 .v-th[aria-sort="ascending"] .v-th-arrow,.v-th[aria-sort="descending"] .v-th-arrow{opacity:1;color:var(--v-primary)}
 .v-table-empty{text-align:center;color:var(--v-text-muted);padding:34px 14px;font-size:14px}
 
-/* ---------------------------------------------------------- paginacao */
+/* ------------------------------------------------------------- pagination */
 .v-pagination{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--v-font-sans)}
 .v-page{appearance:none;min-width:34px;height:34px;padding:0 9px;display:inline-grid;place-items:center;
   background:transparent;border:1px solid transparent;border-radius:var(--v-radius-sm);
@@ -559,7 +559,7 @@ const CSS = `
 .v-page[aria-current="page"]{background:var(--v-primary);border-color:var(--v-primary);color:var(--v-primary-contrast)}
 .v-page-gap{min-width:24px;text-align:center;color:var(--v-text-soft);user-select:none}
 
-/* ----------------------------------------------------------- migalhas */
+/* ------------------------------------------------------------- breadcrumb */
 .v-breadcrumb{font-family:var(--v-font-sans);font-size:13.5px}
 .v-breadcrumb-list{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;padding:0}
 .v-breadcrumb-item{display:inline-flex;align-items:center;gap:6px;color:var(--v-text-muted)}
@@ -569,7 +569,7 @@ const CSS = `
 .v-breadcrumb-item[aria-current="page"]{color:var(--v-text);font-weight:600}
 .v-breadcrumb-sep{color:var(--v-text-soft);user-select:none}
 
-/* ------------------------------------------------------------ metrica */
+/* ------------------------------------------------------------------- stat */
 .v-stat{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;background:var(--v-surface);
   border:1px solid var(--v-border);border-radius:var(--v-radius);font-family:var(--v-font-sans)}
 .v-stat-icon{flex:none;width:40px;height:40px;display:grid;place-items:center;font-size:19px;
@@ -587,7 +587,7 @@ const CSS = `
 .v-stat-delta[data-dir="flat"]{background:var(--v-surface-3);color:var(--v-text-muted)}
 .v-stat-hint{font-size:12.5px;color:var(--v-text-muted)}
 
-/* ------------------------------------------------------- estado vazio */
+/* ------------------------------------------------------------ empty state */
 .v-empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;
   padding:44px 22px;font-family:var(--v-font-sans);color:var(--v-text)}
 .v-empty-icon{width:58px;height:58px;display:grid;place-items:center;font-size:27px;
@@ -597,7 +597,7 @@ const CSS = `
 .v-empty-actions{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .v-empty-actions:empty{display:none}
 
-/* ----------------------------------------------------------- linha do tempo */
+/* --------------------------------------------------------------- timeline */
 .v-timeline{list-style:none;margin:0;padding:0;font-family:var(--v-font-sans);
   display:flex;flex-direction:column}
 .v-timeline-item{position:relative;display:flex;gap:14px;padding-bottom:20px}
@@ -617,7 +617,7 @@ const CSS = `
 .v-timeline-desc{margin:3px 0 0;font-size:13.5px;line-height:1.55;color:var(--v-text-muted)}
 .v-timeline-time{display:block;margin-top:3px;font-size:12px;color:var(--v-text-soft)}
 
-/* ---------------------------------------------------------------- passos */
+/* ------------------------------------------------------------------ steps */
 .v-steps{display:flex;gap:0;font-family:var(--v-font-sans);list-style:none;margin:0;padding:0}
 .v-steps[data-vertical="true"]{flex-direction:column;gap:4px}
 .v-step{flex:1;display:flex;align-items:flex-start;gap:10px;min-width:0;position:relative;padding-right:12px}
@@ -636,7 +636,7 @@ const CSS = `
 .v-steps[data-vertical="true"] .v-step-line{left:13px;right:auto;top:30px;bottom:2px;width:2px;height:auto}
 .v-step:last-child .v-step-line{display:none}
 
-/* ------------------------------------------------------------ avaliacao */
+/* ----------------------------------------------------------------- rating */
 .v-rating{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans)}
 .v-rating-stars{display:inline-flex;gap:2px}
 .v-star{appearance:none;background:none;border:0;padding:2px;cursor:pointer;line-height:0;
@@ -663,7 +663,7 @@ const CSS = `
 .v-tip[data-placement="right"]{left:calc(100% + 8px);top:50%;translate:0 -50%}
 .v-tipwrap:hover .v-tip,.v-tipwrap:focus-within .v-tip{opacity:1;transform:none}
 
-/* ------------------------------------------------------------ codigo */
+/* ------------------------------------------------------------------- code */
 .v-code{position:relative;background:var(--v-surface-inset);border:1px solid var(--v-border);
   border-radius:var(--v-radius);overflow:hidden;font-family:var(--v-font-mono)}
 .v-code-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -1039,7 +1039,7 @@ interface SelectOption {
   disabled: boolean;
 }
 
-/** Normaliza qualquer formato de lista para `{ value, label, disabled }`. */
+/** Normalizes any list format into `{ value, label, disabled }`. */
 function normalizeOptions(raw: unknown): SelectOption[] {
   if (!raw) return [];
   const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? splitList(raw) : [];
@@ -1596,8 +1596,8 @@ register('v-avatar', {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
     tone(this: any): string {
-      // Uma soma simples dos codigos do nome escolhe sempre a mesma cor da
-      // paleta para a mesma pessoa.
+      // A simple sum of the name's character codes always picks the same
+      // palette color for the same person.
       const text = String(this.name ?? '');
       let sum = 0;
       for (let i = 0; i < text.length; i++) sum = (sum + text.charCodeAt(i)) % 9973;
@@ -1768,7 +1768,7 @@ interface TableColumn {
  * Read the column declaration from an attribute.
  *
  * ```html
- * <VTable columns="nome:Nome, total:Total:right" rows="pedidos" />
+ * <VTable columns="name:Name, total:Total:right" rows="orders" />
  * ```
  */
 function parseColumns(raw: unknown): TableColumn[] {
@@ -1807,7 +1807,7 @@ register('v-table', {
   props: {
     columns: { type: 'any', default: '' },
     rows: { type: 'any', default: '' },
-    empty: { type: 'string', default: 'Nenhum registro encontrado' },
+    empty: { type: 'string', default: 'No records found' },
     sortable: { type: 'any', default: true },
     dense: BOOL,
     striped: BOOL,
@@ -1922,9 +1922,9 @@ register('v-pagination', {
     total: { type: 'number', default: 0 },
     perPage: { type: 'number', default: 10 },
     siblings: { type: 'number', default: 1 },
-    previousLabel: { type: 'string', default: 'Anterior' },
-    nextLabel: { type: 'string', default: 'Próxima' },
-    ariaLabel: { type: 'string', default: 'Paginação' },
+    previousLabel: { type: 'string', default: 'Previous' },
+    nextLabel: { type: 'string', default: 'Next' },
+    ariaLabel: { type: 'string', default: 'Pagination' },
   },
   computed: {
     lastPage(this: any): number {
@@ -1938,7 +1938,7 @@ register('v-pagination', {
       const value = Number(this.page) || 1;
       return Math.min(Math.max(1, Math.round(value)), this.lastPage);
     },
-    /** Numeros visiveis, com `0` marcando as reticencias. */
+    /** Visible page numbers, with `0` marking the ellipsis. */
     items(this: any): number[] {
       const last = this.lastPage;
       const current = this.currentPage;
@@ -1984,7 +1984,7 @@ register('v-pagination', {
       <template v-for="(item, index) in items" :key="index">
         <span class="v-page-gap" v-if="item === 0" aria-hidden="true">...</span>
         <button type="button" class="v-page" v-if="item !== 0" :aria-current="isCurrent(item)"
-          :aria-label="'Página ' + item" v-click="go(item)" v-text="item"></button>
+          :aria-label="'Page ' + item" v-click="go(item)" v-text="item"></button>
       </template>
       <button type="button" class="v-page" :disabled="currentPage >= lastPage"
         :aria-label="nextLabel" v-click="go(currentPage + 1)" v-html="svgIcon('chevron-right')"></button>
@@ -2001,7 +2001,7 @@ interface CrumbItem {
   href: string;
 }
 
-/** Le `Início:/, Painel:/painel, Perfil` ou uma lista de objetos. */
+/** Reads `Home:/, Dashboard:/dashboard, Profile` or a list of objects. */
 function parseCrumbs(raw: unknown): CrumbItem[] {
   if (Array.isArray(raw)) {
     return raw.map((item) => {
@@ -2028,7 +2028,7 @@ register('v-breadcrumb', {
   props: {
     items: { type: 'any', default: '' },
     separator: { type: 'string', default: '/' },
-    ariaLabel: { type: 'string', default: 'Trilha de navegação' },
+    ariaLabel: { type: 'string', default: 'Breadcrumb' },
   },
   computed: {
     crumbs(this: any): CrumbItem[] {
@@ -2066,7 +2066,7 @@ register('v-stat', {
     hint: TEXT,
     icon: TEXT,
     suffix: { type: 'string', default: '%' },
-    /** Quando `true`, uma variacao negativa e considerada positiva. */
+    /** When `true`, a negative change counts as positive. */
     inverted: BOOL,
   },
   computed: {
@@ -2124,7 +2124,7 @@ register('v-stat', {
 register('v-empty-state', {
   props: {
     icon: { type: 'string', default: 'inbox' },
-    title: { type: 'string', default: 'Nada por aqui' },
+    title: { type: 'string', default: 'Nothing here yet' },
     description: TEXT,
   },
   template: `
@@ -2148,7 +2148,7 @@ interface TimelineItem {
   tone: string;
 }
 
-/** Le `Pedido criado|Recebemos seu pedido|09:12; Enviado||14:30`. */
+/** Reads `Order placed|We received your order|09:12; Shipped||14:30`. */
 function parseTimeline(raw: unknown): TimelineItem[] {
   if (Array.isArray(raw)) {
     return raw.map((item) => {
@@ -2218,7 +2218,7 @@ register('v-steps', {
     steps: { type: 'any', default: '' },
     current: { type: 'number', default: 0 },
     vertical: BOOL,
-    ariaLabel: { type: 'string', default: 'Etapas' },
+    ariaLabel: { type: 'string', default: 'Steps' },
   },
   computed: {
     ...flags('vertical'),
@@ -2269,7 +2269,7 @@ register('v-rating', {
     value: { type: 'number', default: 0 },
     max: { type: 'number', default: 5 },
     size: { type: 'string', default: 'md' },
-    label: { type: 'string', default: 'Avaliação' },
+    label: { type: 'string', default: 'Rating' },
     readonly: BOOL,
     disabled: BOOL,
     showValue: BOOL,
@@ -2295,7 +2295,7 @@ register('v-rating', {
       return this.hovered > 0 ? this.hovered : this.score;
     },
     valueText(this: any): string {
-      return `${this.score} de ${this.total}`;
+      return `${this.score} of ${this.total}`;
     },
   },
   methods: {
@@ -2351,7 +2351,7 @@ register('v-rating', {
       :tabindex="locked ? -1 : 0" :aria-readonly="locked" v-keydown="onKey" v-mouseleave="reset">
       <span class="v-rating-stars">
         <button type="button" class="v-star" v-for="index in total" :key="index"
-          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' de ' + total"
+          :data-on="isOn(index)" :disabled="locked" :aria-label="index + ' of ' + total"
           :tabindex="-1" v-click="pick(index)" v-mouseenter="preview(index)"
           v-html="svgIcon('star')"></button>
       </span>
@@ -2401,7 +2401,7 @@ register('v-tooltip-button', {
 // VCodeBlock
 // ---------------------------------------------------------------------------
 
-/** Copia texto usando a API moderna, com recurso antigo como reserva. */
+/** Copies text with the modern API, falling back to the old one. */
 async function copyText(text: string): Promise<boolean> {
   try {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -2409,7 +2409,7 @@ async function copyText(text: string): Promise<boolean> {
       return true;
     }
   } catch {
-    // Cai para o modo reserva abaixo.
+    // Falls through to the fallback below.
   }
   try {
     const holder = document.createElement('textarea');
@@ -2432,8 +2432,8 @@ register('v-code-block', {
     code: TEXT,
     language: TEXT,
     filename: TEXT,
-    copyLabel: { type: 'string', default: 'Copiar' },
-    copiedLabel: { type: 'string', default: 'Copiado' },
+    copyLabel: { type: 'string', default: 'Copy' },
+    copiedLabel: { type: 'string', default: 'Copied' },
     wrap: BOOL,
   },
   state() {
@@ -2481,10 +2481,10 @@ register('v-code-block', {
 });
 
 // ---------------------------------------------------------------------------
-// Registro publico
+// Public registry
 // ---------------------------------------------------------------------------
 
-/** Nomes de todos os componentes registrados por este modulo. */
+/** Names of every component registered by this module. */
 export const componentNames = [
   'v-button',
   'v-icon-button',
@@ -2517,7 +2517,7 @@ export const componentNames = [
   'v-code-block',
 ] as const;
 
-/** Conjunto de icones disponivel para as props `icon` dos componentes. */
+/** Icon set available to the components' `icon` props. */
 export const iconNames = Object.keys(ICON_PATHS);
 
 export { iconSvg, ensureStyles as ensureComponentStyles };

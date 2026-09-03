@@ -1,5 +1,5 @@
 import { http, HttpError, request } from './chunk-PQZEVFVZ.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-CRBAIP62.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-PHMBDPWH.js';
 import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-NNU6WOOU.js';
 import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-A2UOVQBP.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-234ZLC6W.js';
@@ -617,7 +617,7 @@ function globalThis_V() {
 
 // src/store/index.ts
 var stores = /* @__PURE__ */ new Map();
-var versao = ref(0);
+var version = ref(0);
 var persistHandles = /* @__PURE__ */ new Map();
 function store(name, definition, options = {}) {
   const existing = stores.get(name);
@@ -634,30 +634,30 @@ function store(name, definition, options = {}) {
     return existing;
   }
   const key = typeof options.persist === "string" ? options.persist : `voodoo:store:${name}`;
-  const descritores = Object.getOwnPropertyDescriptors(definition);
-  const initial = Object.defineProperties({}, descritores);
+  const descriptors = Object.getOwnPropertyDescriptors(definition);
+  const initial = Object.defineProperties({}, descriptors);
   if (options.persist && typeof localStorage !== "undefined") {
     try {
       const saved = localStorage.getItem(key);
       if (saved) {
-        const salvo = JSON.parse(saved);
-        for (const [chave, valor] of Object.entries(salvo)) {
-          if (descritores[chave] && !("value" in descritores[chave])) continue;
-          initial[chave] = valor;
+        const parsed = JSON.parse(saved);
+        for (const [field, value] of Object.entries(parsed)) {
+          if (descriptors[field] && !("value" in descriptors[field])) continue;
+          initial[field] = value;
         }
       }
     } catch {
     }
   }
   const created = reactive(initial);
-  for (const [prop, descritor] of Object.entries(descritores)) {
-    const value = descritor.value;
+  for (const [prop, descriptor] of Object.entries(descriptors)) {
+    const value = descriptor.value;
     if (typeof value === "function") {
       created[prop] = (...args) => value.apply(created, args);
     }
   }
   stores.set(name, created);
-  versao.value++;
+  version.value++;
   if (options.persist && typeof localStorage !== "undefined") {
     const stop2 = watch(
       created,
@@ -675,10 +675,10 @@ function store(name, definition, options = {}) {
 }
 function stripFunctions(source) {
   const out = {};
-  const descritores = Object.getOwnPropertyDescriptors(toRaw(source));
+  const descriptors = Object.getOwnPropertyDescriptors(toRaw(source));
   for (const [key, value] of Object.entries(source)) {
     if (typeof value === "function") continue;
-    if (descritores[key] && !("value" in descritores[key])) continue;
+    if (descriptors[key] && !("value" in descriptors[key])) continue;
     out[key] = value;
   }
   return out;
@@ -687,11 +687,11 @@ var allStores = new Proxy(
   {},
   {
     get: (_t, key) => {
-      void versao.value;
+      void version.value;
       return stores.get(key);
     },
     has: (_t, key) => {
-      void versao.value;
+      void version.value;
       return stores.has(key);
     },
     ownKeys: () => [...stores.keys()],
@@ -1593,8 +1593,8 @@ function transitionOptions(el) {
 defineDirective("text", ({ el, effect: effect2, evaluate: ev }) => {
   effect2(() => {
     el.textContent = stringify(ev());
-    const primeiro = el.firstChild;
-    if (primeiro && primeiro.nodeType === 3) markInitialized(primeiro);
+    const first = el.firstChild;
+    if (first && first.nodeType === 3) markInitialized(first);
   });
 });
 defineDirective("html", (ctx) => {
@@ -1797,10 +1797,10 @@ defineDirective(
         next.push({ key, scope: childScope, nodes, data: childScope.data });
       });
       if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
-      for (const [node, escopo] of batch.pending) walk(node, escopo);
-      const reaproveitados = new Set(next);
+      for (const [node, rowScope] of batch.pending) walk(node, rowScope);
+      const reused = new Set(next);
       for (const block2 of blocks) {
-        if (used.has(block2.key) && reaproveitados.has(block2)) continue;
+        if (used.has(block2.key) && reused.has(block2)) continue;
         for (const node of block2.nodes) {
           destroy(node);
           node.remove();
@@ -1870,7 +1870,7 @@ var BOOLEAN_ATTRIBUTES = /* @__PURE__ */ new Set([
   "novalidate",
   "inert"
 ]);
-var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
+var URL_ATTRIBUTES = /* @__PURE__ */ new Set([
   "href",
   "src",
   "action",
@@ -1879,15 +1879,15 @@ var ATRIBUTOS_DE_URL = /* @__PURE__ */ new Set([
   "ping",
   "poster"
 ]);
-var RUIDO_DE_ESQUEMA = /[\s\x00-\x1f]/g;
-function urlPerigosa(valor) {
-  const limpo = valor.replace(RUIDO_DE_ESQUEMA, "").toLowerCase();
-  return limpo.startsWith("javascript:") || limpo.startsWith("vbscript:") || limpo.startsWith("data:text/html") || limpo.startsWith("data:application/xhtml");
+var SCHEME_NOISE = /[\s\x00-\x1f]/g;
+function isDangerousUrl(value) {
+  const clean = value.replace(SCHEME_NOISE, "").toLowerCase();
+  return clean.startsWith("javascript:") || clean.startsWith("vbscript:") || clean.startsWith("data:text/html") || clean.startsWith("data:application/xhtml");
 }
-function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
+function applyBinding(el, name, value, asProp = false, allowDangerous = false) {
   if (name === "class") return applyClass(el, value);
   if (name === "style") return applyStyle(el, value);
-  if (config.sanitizeUrls && !perigoLiberado && name === "srcdoc") {
+  if (config.sanitizeUrls && !allowDangerous && name === "srcdoc") {
     warn$1(
       `:srcdoc refused in ${describeElement(el)}: the value becomes a document with active script inside the iframe, the same way v-html becomes markup. If the content is trusted, write :srcdoc.dangerous="..."; to turn off this protection on the entire application, set V.config.sanitizeUrls = false.`
     );
@@ -1895,7 +1895,7 @@ function applyBinding(el, name, value, asProp = false, perigoLiberado = false) {
     return;
   }
   if (config.sanitizeUrls && !asProp) {
-    if (ATRIBUTOS_DE_URL.has(name) && typeof value === "string" && urlPerigosa(value)) {
+    if (URL_ATTRIBUTES.has(name) && typeof value === "string" && isDangerousUrl(value)) {
       warn$1(
         `value refused in :${name} of ${describeElement(el)}: "${value.slice(0, 60)}" uses a scheme that executes code. Use an http(s) or relative address. To turn off this protection, set V.config.sanitizeUrls = false.`
       );
@@ -1992,9 +1992,9 @@ defineDirective(
     }
     if (arg === "key") return;
     const asProp = !!modifiers.prop;
-    const perigoLiberado = !!modifiers.dangerous;
+    const allowDangerous = !!modifiers.dangerous;
     effect2(() => {
-      applyBinding(el, arg, ev(), asProp, perigoLiberado);
+      applyBinding(el, arg, ev(), asProp, allowDangerous);
     });
   },
   { priority: PRIORITY.BIND }
@@ -2949,11 +2949,11 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version = "0.4.6";
+var version2 = "0.4.6";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
-  version,
+  version: version2,
   config,
   // Reactivity
   reactive,
@@ -6555,37 +6555,37 @@ defineDirective("offline", ({ el, expression, scope, modifiers, cleanup }) => {
 
 // src/forms/validate.ts
 var messages = {
-  required: "Preencha este campo.",
-  email: "Informe um e-mail valido.",
-  url: "Informe uma URL valida.",
-  number: "Informe um numero valido.",
-  integer: "Informe um numero inteiro.",
-  decimal: "Informe um numero decimal valido.",
-  alpha: "Use apenas letras.",
-  alphanumeric: "Use apenas letras e numeros.",
-  minlength: "Use no minimo {param} caracteres.",
-  maxlength: "Use no maximo {param} caracteres.",
-  min: "O valor minimo e {param}.",
-  max: "O valor maximo e {param}.",
-  between: "Informe um valor entre {min} e {max}.",
-  match: "Os campos nao conferem.",
-  regex: "O formato informado nao e valido.",
-  date: "Informe uma data valida.",
-  after: "A data precisa ser posterior a {param}.",
-  before: "A data precisa ser anterior a {param}.",
-  accepted: "E preciso marcar esta opcao para continuar.",
-  same: "Os valores precisam ser iguais.",
-  different: "Os valores precisam ser diferentes.",
-  in: "Escolha uma das opcoes permitidas.",
-  notin: "Este valor nao e permitido.",
-  phone: "Informe um telefone valido com DDD.",
-  cpf: "CPF invalido.",
-  cnpj: "CNPJ invalido.",
-  cep: "CEP invalido.",
-  creditcard: "Numero de cartao invalido.",
-  strongpassword: "Use {param} caracteres ou mais, com maiuscula, minuscula, numero e simbolo.",
-  unique: "Este valor ja esta em uso.",
-  invalid: "Valor invalido."
+  required: "Please fill in this field.",
+  email: "Enter a valid email address.",
+  url: "Enter a valid URL.",
+  number: "Enter a valid number.",
+  integer: "Enter a whole number.",
+  decimal: "Enter a valid decimal number.",
+  alpha: "Use letters only.",
+  alphanumeric: "Use letters and numbers only.",
+  minlength: "Use at least {param} characters.",
+  maxlength: "Use at most {param} characters.",
+  min: "The smallest allowed value is {param}.",
+  max: "The largest allowed value is {param}.",
+  between: "Enter a value between {min} and {max}.",
+  match: "The fields do not match.",
+  regex: "That format is not valid.",
+  date: "Enter a valid date.",
+  after: "The date has to be later than {param}.",
+  before: "The date has to be earlier than {param}.",
+  accepted: "You have to tick this to continue.",
+  same: "The values have to be the same.",
+  different: "The values have to be different.",
+  in: "Choose one of the allowed options.",
+  notin: "That value is not allowed.",
+  phone: "Enter a valid phone number, including the area code.",
+  cpf: "Invalid CPF.",
+  cnpj: "Invalid CNPJ.",
+  cep: "Invalid postcode.",
+  creditcard: "Invalid card number.",
+  strongpassword: "Use {param} characters or more, with an upper case letter, a lower case letter, a number and a symbol.",
+  unique: "That value is already taken.",
+  invalid: "Invalid value."
 };
 function formatMessage(template, data2) {
   const param = data2.param ?? "";
@@ -10271,5 +10271,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-7NMQHC33.js.map
-//# sourceMappingURL=chunk-7NMQHC33.js.map
+//# sourceMappingURL=chunk-CNHNFTPC.js.map
+//# sourceMappingURL=chunk-CNHNFTPC.js.map

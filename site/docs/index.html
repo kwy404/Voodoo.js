@@ -1,127 +1,131 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Documentação da Voodoo.js</title>
-<meta name="description" content="A documentação completa da Voodoo.js: guia do começo ao fim, referência de directives, do objeto V e dos componentes prontos, com exemplos que rodam na própria página.">
+<title>Voodoo.js documentation</title>
+<meta name="description" content="The complete Voodoo.js documentation: a guide from start to finish, a reference for the directives, the V object and the built-in components, with examples that run on the page itself.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/docs.css">
-<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+<!-- Applies the reader's own saved choice before the first paint. Nothing is
+     written when there is no saved choice, so the stylesheet's
+     prefers-color-scheme block governs and the system preference wins. -->
+<script>(function(){try{var t=localStorage.getItem('voodoo-docs-tema');if(t==='claro'||t==='escuro')document.documentElement.setAttribute('data-tema',t)}catch(e){}})();</script>
 </head>
 <body>
 
 <article class="doc-artigo">
 
 <p class="doc-migalha">Voodoo.js 0.5.0</p>
-<h1>Documentação</h1>
+<h1>Documentation</h1>
 <p class="doc-resumo">
-  A Voodoo.js coloca o comportamento da página dentro do próprio HTML. Você escreve atributos,
-  a biblioteca liga cada um ao estado reativo, e a tela se atualiza sozinha. Sem passo de build,
-  sem <code>eval</code>, sem dependência nenhuma.
+  Voodoo.js puts the behaviour of the page inside the HTML itself. You write attributes,
+  the library binds each one to reactive state, and the screen updates on its own. No build
+  step, no <code>eval</code>, no dependencies at all.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ nome: '' }"&gt;
-  &lt;input v-model="nome" placeholder="Seu nome"&gt;
-  &lt;p v-show="nome"&gt;Olá, { nome }!&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ name: '' }"&gt;
+  &lt;input v-model="name" placeholder="Your name"&gt;
+  &lt;p v-show="name"&gt;Hello, { name }!&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  Esse bloco acima não é uma imagem nem um vídeo: ele está rodando de verdade, dentro desta
-  página, com a mesma biblioteca que você vai baixar. Toda a documentação é assim.
+  The block above is not a picture and not a video: it is really running, inside this page,
+  with the same library you are about to download. The whole documentation works like that.
 </p>
 
-<h2 id="por-onde-comecar">Por onde começar</h2>
+<h2 id="por-onde-comecar">Where to start</h2>
 
 <p>
-  Se você nunca usou a biblioteca, siga o guia na ordem. São vinte e quatro páginas curtas, cada
-  uma resolvendo um problema concreto, e cada uma continuando de onde a anterior parou. Em duas
-  horas você passa do arquivo vazio a uma página com dados de servidor, formulário validado e
-  componentes próprios.
+  If you have never used the library, follow the guide in order. It is twenty-four short pages,
+  each one solving a concrete problem, and each one carrying on from where the previous one
+  stopped. In two hours you go from an empty file to a page with server data, a validated form
+  and components of your own.
 </p>
 
 <ul class="doc-cartoes">
   <li><a class="doc-cartao" href="guia/o-que-e.html">
-    <em>Passo 1</em><b>O que é e quando usar</b>
-    <span>Para que serve, quando vale mais a pena escolher outra coisa, e o que a biblioteca faz de diferente.</span>
+    <em>Step 1</em><b>What it is and when to use it</b>
+    <span>What it is for, when something else is the better choice, and what the library does differently.</span>
   </a></li>
   <li><a class="doc-cartao" href="guia/instalacao.html">
-    <em>Passo 2</em><b>Instalação e primeiro arquivo</b>
-    <span>Baixar um arquivo, apontar uma tag, escrever HTML. Do zero até algo funcionando na tela.</span>
+    <em>Step 2</em><b>Installation and your first file</b>
+    <span>Download one file, point a tag at it, write HTML. From nothing to something working on screen.</span>
   </a></li>
   <li><a class="doc-cartao" href="guia/modo-aplicacao.html">
-    <em>Passo 3</em><b>Os dois modos</b>
-    <span>Atributos sobre o HTML que já existe, ou <code>createApp().mount('#app')</code>, no formato do Vue.</span>
+    <em>Step 3</em><b>The two modes</b>
+    <span>Attributes over the HTML you already have, or <code>createApp().mount('#app')</code>, in Vue's shape.</span>
   </a></li>
   <li><a class="doc-cartao" href="guia/estado-e-escopo.html">
-    <em>Passo 4</em><b>Estado e escopo</b>
-    <span>O <code>v-data</code>, o que é escopo, como um escopo enxerga o outro e onde guardar cada coisa.</span>
+    <em>Step 4</em><b>State and scope</b>
+    <span><code>v-data</code>, what a scope is, how one scope sees another, and where to keep each thing.</span>
   </a></li>
 </ul>
 
-<h2 id="ja-conheco">Já conheço, quero a referência</h2>
+<h2 id="ja-conheco">I already know it, take me to the reference</h2>
 
 <p>
-  A referência é a parte que você consulta com pressa, no meio de um problema. Ela lista tudo o
-  que existe, sem narrativa: nomes, argumentos, valores aceitos e o comportamento exato.
+  The reference is the part you consult in a hurry, in the middle of a problem. It lists
+  everything that exists, without narrative: names, arguments, accepted values and the exact
+  behaviour.
 </p>
 
 <ul class="doc-cartoes">
   <li><a class="doc-cartao" href="referencia/directives.html">
-    <em>Referência</em><b>Directives</b>
-    <span>Todas as directives por categoria, com o que cada uma recebe e o que devolve.</span>
+    <em>Reference</em><b>Directives</b>
+    <span>Every directive by category, with what each one takes and what it gives back.</span>
   </a></li>
   <li><a class="doc-cartao" href="referencia/objeto-v.html">
-    <em>Referência</em><b>O objeto V</b>
-    <span>Tudo que a biblioteca publica em <code>window.V</code>, método por método.</span>
+    <em>Reference</em><b>The V object</b>
+    <span>Everything the library publishes on <code>window.V</code>, method by method.</span>
   </a></li>
   <li><a class="doc-cartao" href="referencia/magias.html">
-    <em>Referência</em><b>Variáveis mágicas</b>
-    <span>Os <code>$</code> que existem dentro de qualquer expressão, do <code>$el</code> ao <code>$toast</code>.</span>
+    <em>Reference</em><b>Magic variables</b>
+    <span>The <code>$</code> names that exist inside any expression, from <code>$el</code> to <code>$toast</code>.</span>
   </a></li>
   <li><a class="doc-cartao" href="referencia/componentes-prontos.html">
-    <em>Referência</em><b>Componentes prontos</b>
-    <span>Os 29 componentes do build completo e as props de cada um.</span>
+    <em>Reference</em><b>Built-in components</b>
+    <span>The 29 components in the full build, and the props of each one.</span>
   </a></li>
   <li><a class="doc-cartao" href="referencia/http.html">
-    <em>Referência</em><b>Cliente HTTP</b>
-    <span>O <code>V.http</code>, os interceptadores, o cache e o tratamento de erro.</span>
+    <em>Reference</em><b>HTTP client</b>
+    <span><code>V.http</code>, the interceptors, the cache and the error handling.</span>
   </a></li>
   <li><a class="doc-cartao" href="referencia/utilitarios.html">
-    <em>Referência</em><b>Utilitários</b>
-    <span>Formatadores, funções de array, de texto, de data e o resto da caixa de ferramentas.</span>
+    <em>Reference</em><b>Utilities</b>
+    <span>Formatters, array functions, text, dates and the rest of the toolbox.</span>
   </a></li>
 </ul>
 
-<h2 id="o-que-vem-na-caixa">O que vem na caixa</h2>
+<h2 id="o-que-vem-na-caixa">What comes in the box</h2>
 
 <p>
-  A biblioteca é publicada em três arquivos. Todos são o mesmo projeto, cortado em pontos
-  diferentes. Você escolhe um, baixa, e pronto.
+  The library is published as three files. They are all the same project, cut at different
+  points. You pick one, download it, and that is it.
 </p>
 
 <div class="doc-tabela">
 <table>
 <thead>
-<tr><th>Arquivo</th><th>O que vem dentro</th><th>Gzip</th></tr>
+<tr><th>File</th><th>What is inside</th><th>Gzip</th></tr>
 </thead>
 <tbody>
 <tr>
   <td><code>voodoo.core.min.js</code></td>
-  <td>Reatividade, expressões, componentes, DOM encadeável, estado, renderização, eventos e requisições por atributo</td>
+  <td>Reactivity, expressions, components, chainable DOM, state, rendering, events and requests by attribute</td>
   <td><b>42 KB</b></td>
 </tr>
 <tr>
   <td><code>voodoo.min.js</code></td>
-  <td>O anterior, mais formulários com validação, máscaras, interface completa, arrastar e soltar, diálogos, avisos e som</td>
+  <td>The above, plus forms with validation, masks, the complete interface, drag and drop, dialogs, notices and sound</td>
   <td><b>79 KB</b></td>
 </tr>
 <tr>
   <td><code>voodoo.full.min.js</code></td>
-  <td>Tudo, mais gráficos, animações com física, roteador, idiomas, inspetor de reatividade e 29 componentes prontos</td>
+  <td>Everything, plus charts, physics animations, a router, languages, a reactivity inspector and 29 built-in components</td>
   <td><b>124 KB</b></td>
 </tr>
 </tbody>
@@ -129,52 +133,53 @@
 </div>
 
 <p>
-  Na dúvida, comece pelo <code>voodoo.min.js</code>. A página de
-  <a href="guia/instalacao.html">instalação</a> explica como escolher e como trocar depois.
+  When in doubt, start with <code>voodoo.min.js</code>. The
+  <a href="guia/instalacao.html">installation</a> page explains how to choose and how to switch
+  later.
 </p>
 
-<h2 id="tres-regras">Três regras que evitam quase todo problema</h2>
+<h2 id="tres-regras">Three rules that avoid almost every problem</h2>
 
 <p>
-  Elas aparecem de novo, com calma, nas páginas certas. Ficam aqui porque respondem à maioria das
-  dúvidas de quem está começando.
+  They come up again, unhurried, on the pages where they belong. They are here because they
+  answer most of the questions people have when they are starting out.
 </p>
 
 <ol class="doc-passos">
   <li>
-    <b>Os atributos <code>v-*</code> somem do HTML.</b>
-    Depois que a biblioteca processa um elemento, ela guarda o valor em memória e retira o
-    atributo do documento. Nenhuma regra de CSS e nenhum <code>querySelector</code> pode depender
-    de <code>[v-tab]</code> ou parecido. Use classes ou <code>data-*</code>.
+    <b>The <code>v-*</code> attributes disappear from the HTML.</b>
+    Once the library has processed an element, it keeps the value in memory and removes the
+    attribute from the document. No CSS rule and no <code>querySelector</code> can depend on
+    <code>[v-tab]</code> or anything like it. Use classes or <code>data-*</code>.
   </li>
   <li>
-    <b>Interpolação usa uma chave só.</b>
-    <code>{ nome }</code> é a forma padrão. <code>{{ nome }}</code> também é aceita, para quem vem
-    do Vue. As duas aceitam objeto dentro da expressão e quebra de linha; o que não for uma
-    expressão válida continua sendo texto.
+    <b>Interpolation uses a single brace.</b>
+    <code>{ name }</code> is the standard form. <code>{{ name }}</code> is accepted too, for
+    people coming from Vue. Both accept an object inside the expression and a line break; what
+    is not a valid expression stays as text.
   </li>
   <li>
-    <b>Não existe <code>eval</code>.</b>
-    As expressões passam por um parser próprio. Isso deixa a biblioteca rodar sob Content
-    Security Policy restritiva, e também explica por que a expressão aceita menos coisas do que
-    JavaScript inteiro. A página de
-    <a href="referencia/objeto-v.html">referência</a> lista o que entra.
+    <b>There is no <code>eval</code>.</b>
+    Expressions go through a parser of the library's own. That is what lets the library run
+    under a restrictive Content Security Policy, and it also explains why an expression accepts
+    less than whole JavaScript. The
+    <a href="referencia/objeto-v.html">reference</a> page lists what gets in.
   </li>
 </ol>
 
-<h2 id="mapa">Mapa completo</h2>
+<h2 id="mapa">The full map</h2>
 
 <p>
-  O menu da esquerda tem tudo. Se você prefere buscar, o campo do topo procura em todas as
-  páginas de uma vez — o atalho é <kbd>Ctrl</kbd> + <kbd>K</kbd>, ou apenas <kbd>/</kbd>.
+  The menu on the left has everything. If you would rather search, the field at the top searches
+  every page at once — the shortcut is <kbd>Ctrl</kbd> + <kbd>K</kbd>, or just <kbd>/</kbd>.
 </p>
 
 <div class="doc-aviso doc-aviso--dica">
-  <span class="doc-aviso__rotulo">Prefere ler tudo de uma vez</span>
+  <span class="doc-aviso__rotulo">Prefer to read it all at once</span>
   <p>
-    O <a href="https://github.com/kwy404/Voodoo.js#readme">README do repositório</a> é a
-    documentação inteira em um arquivo só, na mesma ordem do guia. É a versão para ler offline,
-    ou para pesquisar com <kbd>Ctrl</kbd> + <kbd>F</kbd>.
+    The <a href="https://github.com/kwy404/Voodoo.js#readme">repository README</a> is the whole
+    documentation in a single file, in the same order as the guide. It is the version to read
+    offline, or to search with <kbd>Ctrl</kbd> + <kbd>F</kbd>.
   </p>
 </div>
 

@@ -1,6 +1,6 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-7NMQHC33.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-CNHNFTPC.js';
 import './chunk-PQZEVFVZ.js';
-import { magic } from './chunk-CRBAIP62.js';
+import { magic } from './chunk-PHMBDPWH.js';
 import './chunk-NNU6WOOU.js';
 import './chunk-A2UOVQBP.js';
 import './chunk-234ZLC6W.js';

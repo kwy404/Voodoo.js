@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estado que persiste, sincroniza e desfaz · Documentação da Voodoo.js</title>
-<meta name="description" content="v-persist para sobreviver ao F5, v-sync para acompanhar outras abas, v-history com desfazer e refazer, v-storage para um campo só, e o armazenamento por JavaScript.">
+<title>State that persists, syncs and undoes · Voodoo.js documentation</title>
+<meta name="description" content="v-persist to survive an F5, v-sync to follow other tabs, v-history with undo and redo, v-storage for a single field, and storage from JavaScript.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/estado-persistente">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/docs.css">
@@ -14,185 +14,184 @@
 
 <article class="doc-artigo">
 
-<p class="doc-migalha">Componentes e estado</p>
-<h1>Estado que persiste, sincroniza e desfaz</h1>
+<p class="doc-migalha">Components and state</p>
+<h1>State that persists, syncs and undoes</h1>
 <p class="doc-resumo">
-  Três comportamentos que normalmente custam bastante código: sobreviver ao recarregar, andar
-  junto com as outras abas abertas, e ter desfazer. Cada um é um atributo.
+  Three behaviours that normally cost a fair amount of code: surviving a reload, moving in step
+  with the other open tabs, and having undo. Each one is an attribute.
 </p>
 
 <h2 id="v-persist">v-persist</h2>
 
 <p>
-  Guarda o escopo de um <code>v-data</code> no <code>localStorage</code> e restaura no próximo
-  carregamento:
+  Keeps the scope of a <code>v-data</code> in <code>localStorage</code> and restores it on the next
+  load:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ tema: 'escuro', rascunho: '' }" v-persist="editor-de-exemplo"&gt;
-  &lt;textarea v-model="rascunho" placeholder="Escreva e recarregue a página"&gt;&lt;/textarea&gt;
-  &lt;p&gt;{ rascunho.length } caracteres guardados&lt;/p&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ theme: 'dark', draft: '' }" v-persist="example-editor"&gt;
+  &lt;textarea v-model="draft" placeholder="Write something and reload the page"&gt;&lt;/textarea&gt;
+  &lt;p&gt;{ draft.length } characters saved&lt;/p&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
-<p>Os detalhes que importam:</p>
+<p>The details that matter:</p>
 
 <ul>
-  <li>a chave vira <code>voodoo:persist:editor-de-exemplo</code>;</li>
-  <li>sem valor, a chave é derivada do caminho da página e da posição do elemento;</li>
+  <li>the key becomes <code>voodoo:persist:example-editor</code>;</li>
+  <li>with no value, the key is derived from the page path and the position of the element;</li>
   <li>
-    só as chaves que o estado atual declara são restauradas, então acrescentar um campo novo ao
-    <code>v-data</code> não quebra o que já estava salvo;
+    only the keys the current state declares are restored, so adding a new field to the
+    <code>v-data</code> does not break what was already saved;
   </li>
-  <li>funções, valores começando com cifrão e estruturas circulares ficam de fora;</li>
-  <li>a gravação tem debounce de 120 ms;</li>
-  <li>ao remover o elemento, a gravação pendente é aplicada e o observador é encerrado.</li>
+  <li>functions, values starting with a dollar sign and circular structures are left out;</li>
+  <li>the write is debounced by 120 ms;</li>
+  <li>when the element is removed, the pending write is applied and the observer is shut down.</li>
 </ul>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">O que não guardar</span>
+  <span class="doc-aviso__rotulo">What not to keep there</span>
   <p>
-    <code>localStorage</code> é legível por qualquer script da mesma origem e sobrevive
-    indefinidamente. Rascunho de texto, filtro de lista e preferência de tema são bons candidatos.
-    Token, dado de cartão e informação pessoal, não.
+    <code>localStorage</code> is readable by any script of the same origin and survives
+    indefinitely. A text draft, a list filter and a theme preference are good candidates. A token,
+    card data and personal information are not.
   </p>
 </div>
 
 <h2 id="v-sync">v-sync</h2>
 
 <p>
-  Mantém o escopo em sincronia com as outras abas abertas, ao vivo, usando
-  <code>BroadcastChannel</code>:
+  Keeps the scope in sync with the other open tabs, live, using <code>BroadcastChannel</code>:
 </p>
 
-<pre data-lang="html"><code>&lt;div v-data="{ contador: 0 }" v-sync="painel"&gt;
-  &lt;button @click="contador++"&gt;{ contador }&lt;/button&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ counter: 0 }" v-sync="panel"&gt;
+  &lt;button @click="counter++"&gt;{ counter }&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 
 <p>
-  Abra a página em duas abas e clique: as duas mudam juntas. Sem valor, o nome do canal é derivado
-  da posição do elemento. Em navegadores sem <code>BroadcastChannel</code>, a directive
-  simplesmente não faz nada — a página continua funcionando, só não sincroniza.
+  Open the page in two tabs and click: both change together. With no value, the channel name is
+  derived from the position of the element. In browsers with no <code>BroadcastChannel</code>, the
+  directive simply does nothing — the page keeps working, it just does not sync.
 </p>
 
-<p>Para sincronia entre abas <b>e</b> sobrevivência ao recarregar, combine as duas:</p>
+<p>For syncing between tabs <b>and</b> surviving a reload, combine the two:</p>
 
-<pre data-lang="html"><code>&lt;div v-data="{ filtro: '' }" v-persist="lista" v-sync="lista"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html"><code>&lt;div v-data="{ filter: '' }" v-persist="list" v-sync="list"&gt;&lt;/div&gt;</code></pre>
 
-<h2 id="v-history">v-history, v-undo e v-redo</h2>
+<h2 id="v-history">v-history, v-undo and v-redo</h2>
 
-<p>Desfazer e refazer para o escopo inteiro, não para um campo:</p>
+<p>Undo and redo for the whole scope, not for one field:</p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ texto: '', cor: '#6d3bf5' }" v-history="50"&gt;
+<pre data-lang="html"><code>&lt;div v-data="{ text: '', colour: '#5b2ee5' }" v-history="50"&gt;
   &lt;div class="linha"&gt;
-    &lt;input v-model="texto" placeholder="Escreva alguma coisa"&gt;
-    &lt;input type="color" v-model="cor"&gt;
+    &lt;input v-model="text" placeholder="Write something"&gt;
+    &lt;input type="color" v-model="colour"&gt;
   &lt;/div&gt;
   &lt;div class="linha"&gt;
-    &lt;button v-undo :disabled="!$history.canUndo"&gt;Desfazer&lt;/button&gt;
-    &lt;button v-redo :disabled="!$history.canRedo"&gt;Refazer&lt;/button&gt;
-    &lt;small&gt;{ $history.size } estados guardados&lt;/small&gt;
+    &lt;button v-undo :disabled="!$history.canUndo"&gt;Undo&lt;/button&gt;
+    &lt;button v-redo :disabled="!$history.canRedo"&gt;Redo&lt;/button&gt;
+    &lt;small&gt;{ $history.size } states kept&lt;/small&gt;
   &lt;/div&gt;
-  &lt;div :style="{ background: cor, color: '#fff', padding: '.5rem', borderRadius: '6px' }"&gt;
-    { texto || 'nada ainda' }
+  &lt;div :style="{ background: colour, color: '#fff', padding: '.5rem', borderRadius: '6px' }"&gt;
+    { text || 'nothing yet' }
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <p>
-  O valor de <code>v-history</code> é o limite de instantâneos, com padrão 50. Um instantâneo é
-  gravado 300 ms depois da última mudança — por isso digitar uma palavra inteira vira um passo, e
-  não uma letra por passo. Escrever depois de desfazer descarta o futuro, como em qualquer editor.
+  The value of <code>v-history</code> is the snapshot limit, defaulting to 50. A snapshot is taken
+  300 ms after the last change — which is why typing a whole word becomes one step, rather than one
+  letter per step. Writing after undoing throws the future away, as in any editor.
 </p>
 
 <div class="doc-tabela">
 <table>
-<thead><tr><th>Campo de <code>$history</code></th><th>O que é</th></tr></thead>
+<thead><tr><th>Field of <code>$history</code></th><th>What it is</th></tr></thead>
 <tbody>
-<tr><td><code>canUndo</code>, <code>canRedo</code></td><td>Booleanos reativos</td></tr>
-<tr><td><code>size</code></td><td>Quantidade de estados guardados</td></tr>
-<tr><td><code>undo()</code>, <code>redo()</code></td><td>Navega no histórico</td></tr>
-<tr><td><code>clear()</code></td><td>Apaga tudo e recomeça do estado atual</td></tr>
+<tr><td><code>canUndo</code>, <code>canRedo</code></td><td>Reactive booleans</td></tr>
+<tr><td><code>size</code></td><td>How many states are kept</td></tr>
+<tr><td><code>undo()</code>, <code>redo()</code></td><td>Moves through the history</td></tr>
+<tr><td><code>clear()</code></td><td>Wipes it and starts again from the current state</td></tr>
 </tbody>
 </table>
 </div>
 
 <p>
-  <code>v-undo</code> e <code>v-redo</code> ligam o clique ao controlador mais próximo na árvore,
-  então os botões podem estar em qualquer lugar dentro do escopo com histórico.
+  <code>v-undo</code> and <code>v-redo</code> tie the click to the nearest controller in the tree,
+  so the buttons can sit anywhere inside the scope that has the history.
 </p>
 
-<h2 id="v-storage">v-storage, para um campo só</h2>
+<h2 id="v-storage">v-storage, for a single field</h2>
 
 <p>
-  Quando não existe escopo nenhum e você só quer que aquele campo não perca o que foi escrito:
+  For when there is no scope at all and you only want that field not to lose what was written:
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;input v-storage="rascunho-do-comentario" placeholder="Escreva e recarregue"&gt;</code></pre>
+<pre data-lang="html"><code>&lt;input v-storage="comment-draft" placeholder="Write something and reload"&gt;</code></pre>
 </div>
 
 <p>
-  O valor é gravado a cada tecla na chave <code>voodoo:field:&lt;nome&gt;</code> e restaurado ao
-  carregar.
+  The value is written on every keystroke into the key <code>voodoo:field:&lt;name&gt;</code> and
+  restored on load.
 </p>
 
-<h2 id="javascript">Armazenamento por JavaScript</h2>
+<h2 id="javascript">Storage from JavaScript</h2>
 
-<pre data-lang="js"><code>V.storage.set('usuario', { id: 1, nome: 'Ana' });   // localStorage com JSON
-V.storage.get('usuario', {});                       // com valor padrão
-V.storage.remove('usuario');
-V.storage.has('usuario');
+<pre data-lang="js"><code>V.storage.set('user', { id: 1, name: 'Ann' });   // localStorage with JSON
+V.storage.get('user', {});                       // with a default value
+V.storage.remove('user');
+V.storage.has('user');
 V.storage.keys();
 V.storage.clear();
 
-V.session.set('passo', 2);                          // sessionStorage, mesma API
+V.session.set('step', 2);                        // sessionStorage, same API
 
 V.cookie.set('token', 'abc', { expires: 7, sameSite: 'Lax', secure: true });
 V.cookie.get('token');
 V.cookie.remove('token');
 
-V.cache.set('produtos', lista, 60000);              // memória, com expiração
+V.cache.set('products', list, 60000);            // in memory, with an expiry
 await V.cache.remember('cep:01001000', 3600000, () =&gt; V.http.get('/api/cep/01001000'));
 
-V.url.get('pagina');                                // query string
-V.url.set('pagina', 2);                             // sem recarregar
-V.url.merge({ ordem: 'nome', pagina: 1 });
+V.url.get('page');                               // query string
+V.url.set('page', 2);                            // without reloading
+V.url.merge({ sort: 'name', page: 1 });
 V.url.all();</code></pre>
 
 <p>
-  Todas as leituras e escritas são seguras: em modo privado, com cota cheia ou fora do navegador,
-  as chamadas não lançam erro — devolvem o valor padrão e seguem.
+  Every read and write is safe: in private mode, with the quota full or outside a browser, the
+  calls do not throw — they return the default value and carry on.
 </p>
 
 <p>
-  Dentro do HTML, cada um tem a magia correspondente: <code>$storage</code>,
-  <code>$session</code>, <code>$cookie</code>, <code>$cache</code> e <code>$url</code>.
+  Inside the HTML, each one has a matching magic variable: <code>$storage</code>,
+  <code>$session</code>, <code>$cookie</code>, <code>$cache</code> and <code>$url</code>.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ vista: false }" v-init="vista = $storage.get('dica-vista', false)"&gt;
-  &lt;p v-show="!vista"&gt;
-    Dica importante que aparece uma vez só.
-    &lt;button @click="vista = true; $storage.set('dica-vista', true)"&gt;
-      Não mostrar de novo
+<pre data-lang="html"><code>&lt;div v-data="{ seen: false }" v-init="seen = $storage.get('tip-seen', false)"&gt;
+  &lt;p v-show="!seen"&gt;
+    An important tip that shows up only once.
+    &lt;button @click="seen = true; $storage.set('tip-seen', true)"&gt;
+      Do not show again
     &lt;/button&gt;
   &lt;/p&gt;
-  &lt;button @click="vista = false; $storage.remove('dica-vista')"&gt;Mostrar de novo&lt;/button&gt;
+  &lt;button @click="seen = false; $storage.remove('tip-seen')"&gt;Show it again&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
-  <span class="doc-aviso__rotulo">Leitura de armazenamento não é reativa</span>
+  <span class="doc-aviso__rotulo">Reading storage is not reactive</span>
   <p>
-    <code>$storage.get(...)</code> lê o valor na hora em que a expressão roda, e nada avisa a tela
-    quando ele muda depois. Um <code>v-show="!$storage.get('dica-vista')"</code> continuaria
-    visível mesmo depois da gravação. Por isso o exemplo guarda a resposta em uma variável do
-    escopo, que é reativa, e usa o armazenamento só para lembrar entre uma visita e outra. Quando
-    o valor precisa ser reativo <b>e</b> persistente, o caminho mais curto é um
-    <a href="stores.html#persistencia">store com <code>persist</code></a>, ou o
-    <code>v-persist</code> do começo desta página.
+    <code>$storage.get(...)</code> reads the value at the moment the expression runs, and nothing
+    tells the screen when it changes later. A <code>v-show="!$storage.get('tip-seen')"</code> would
+    stay visible even after the write. That is why the example keeps the answer in a scope
+    variable, which is reactive, and uses storage only to remember between one visit and the next.
+    When the value has to be reactive <b>and</b> persistent, the shortest road is a
+    <a href="stores.html#persistencia">store with <code>persist</code></a>, or the
+    <code>v-persist</code> from the start of this page.
   </p>
 </div>
 
