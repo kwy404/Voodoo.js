@@ -97,3 +97,15 @@ jobs:
       # regression test written for it passed against the broken code.
       - name: Check the example frames do not grow
         run: npm run check:frame
+
+      # voodoojs-cli published with no README at all, so its npm page was blank,
+      # and its `files` listed a `templates` directory that does not exist.
+      # Nothing in a normal build looks at what would actually be published.
+      - name: Check what each package would publish
+        run: npm run check:packaging
+
+      # The interpreter against real JavaScript, 2324 expressions with the host
+      # engine as the oracle. Fails when a bug or a gap appears that was not
+      # there before.
+      - name: Check the interpreter still agrees with JavaScript
+        run: npm run build && npm run check:conformance

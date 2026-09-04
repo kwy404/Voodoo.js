@@ -30,7 +30,11 @@
     "check:lang:src": "node scripts/check-source-language.mjs --check",
     "check:lang": "npm run check:lang:docs && npm run check:lang:src",
     "check:version": "node scripts/stamp-version.mjs --check",
-    "check:frame": "node scripts/check-frame-height.mjs"
+    "check:frame": "node scripts/check-frame-height.mjs",
+    "conformance": "node scripts/conformance.mjs",
+    "check:conformance": "node scripts/conformance.mjs --check",
+    "release": "node scripts/release.mjs",
+    "check:packaging": "node scripts/check-packaging.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

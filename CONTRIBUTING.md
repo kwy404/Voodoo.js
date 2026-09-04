@@ -226,19 +226,50 @@ Time-saving tips:
 
 ## Release Process
 
+Use the script. It exists because the manual list below kept losing a step.
+
+```bash
+npm run release -- 0.9.0 --dry-run    # print the plan
+npm run release -- 0.9.0              # do it
+```
+
+It bumps both packages together, builds, copies the bundles the site serves,
+stamps the version and the asset cache keys, refreshes the lockfile, runs every
+gate **before** anything leaves the machine, then commits, tags, pushes, and
+creates the GitHub release **with the six built bundles attached**.
+
+That last part is the reason the script exists. Releases v0.4.4 through v0.8.0
+went out carrying nothing but GitHub's automatic source archives, so anyone who
+opened a release page looking for `voodoo.min.js` found a tarball of TypeScript.
+Attaching them by hand afterwards works exactly until the next person is in a
+hurry.
+
+It stops before `npm publish`, which is the one step that cannot be undone:
+
+```bash
+npm publish --workspace=voodoojs --access public
+npm publish --workspace=voodoojs-cli --access public
+```
+
+The library goes first, because the CLI depends on it. Afterwards, run
+`node scripts/stamp-version.mjs` once more and commit: the CDN pin only moves
+once the registry actually serves the new minor line, so until you publish, the
+site correctly keeps pointing at the previous one.
+
+Then write the release notes. `--generate-notes` gives a commit list, which is
+not the same as telling somebody what changed and why.
+
+Before all of that:
+
 1. Confirm that `main` is green in CI.
 2. `npm run quality` and read `QUALITY_REPORT.md`.
-3. Update the version in `package.json`, in `packages/voodoojs/package.json`, in the
-   `version` constant of `packages/voodoojs/src/core.ts`, and in the banner of
-   `packages/voodoojs/tsup.config.ts`. All four must match.
-4. Close the section in `CHANGELOG.md`: the version, date, and list of changes by type. Every
-   removal must appear with its replacement.
-5. `npm run build` and `npm run size`.
-6. Check the package contents with `npm pack --dry-run --workspace=voodoojs`.
-7. Commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push with tags.
-8. `npm publish --workspace=voodoojs`.
-9. Publish the release on GitHub with the changelog notes and the integrity hash of
-   `voodoo.min.js`.
+3. Close the section in `CHANGELOG.md`: the version, date, and list of changes by
+   type. Every removal must appear with its replacement.
+
+Versions live in `packages/voodoojs/package.json` and `packages/cli/package.json`
+and must match; `packages/voodoojs/src/core.ts` and the banner in
+`packages/voodoojs/tsup.config.ts` are rewritten from those by
+`scripts/stamp-version.mjs`, and `npm run check:version` fails when they drift.
 
 Versioning rules: removing or renaming a `stable` symbol, changing the meaning of an attribute,
 changing a `V.config` default, or changing directive priority are `major`. Adding a

@@ -8,7 +8,8 @@
     "voodoo": "./bin/voodoo.mjs"
   },
   "files": [
-    "bin"
+    "bin",
+    "README.md"
   ],
   "scripts": {
     "build": "node -e \"console.log('The CLI is plain JavaScript, no build needed.')\""
