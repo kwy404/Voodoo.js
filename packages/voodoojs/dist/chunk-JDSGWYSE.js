@@ -1,8 +1,8 @@
-import { handleError } from './chunk-4T2UIPWX.js';
-import { warn } from './chunk-VSOERLB4.js';
+import { handleError } from './chunk-KBGRB5IB.js';
+import { warn } from './chunk-VE7SPUTF.js';
 
 /**
- * Voodoo.js v0.7.0
+ * Voodoo.js v0.8.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1192,5 +1192,5 @@ var gpu = {
 };
 
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct };
-//# sourceMappingURL=chunk-LNKJVNUV.js.map
-//# sourceMappingURL=chunk-LNKJVNUV.js.map
+//# sourceMappingURL=chunk-JDSGWYSE.js.map
+//# sourceMappingURL=chunk-JDSGWYSE.js.map

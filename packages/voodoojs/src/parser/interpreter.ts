@@ -8,7 +8,7 @@
  * allowed globals, configurable by the application.
  */
 
-import type { Node } from './parser';
+import type { Node, Param } from './parser';
 
 /** Minimum contract that a scope must fulfill to be evaluated. */
 export interface EvalScope {
@@ -204,6 +204,32 @@ export function evaluate(node: Node, scope: EvalScope): any {
       return (obj as any)[key];
     }
 
+    case 'new': {
+      // The constructor is resolved the same way any other value is, so `new`
+      // reaches exactly what an expression could already reach and not one name
+      // more: something in scope, or something in `allowedGlobals`. It is not a
+      // second door into the page.
+      const target = evaluate(node.callee, scope);
+
+      if (typeof target !== 'function') {
+        throw new VoodooRuntimeError(
+          `Cannot construct ${stringify(target)}: it is not a constructor`
+        );
+      }
+
+      // `Function` would turn `new` into `eval` by another name, which is the
+      // one thing this library promises it cannot do. It is not in
+      // `allowedGlobals`, so this is defence in depth rather than the only
+      // guard, and it stays because a future addition to that list must not
+      // silently open this route.
+      if (target === Function) {
+        throw new VoodooRuntimeError('Cannot construct Function: expressions never compile code');
+      }
+
+      const args = evalArgs(node.args, scope);
+      return Reflect.construct(target as new (...a: unknown[]) => unknown, args);
+    }
+
     case 'call': {
       let thisArg: unknown;
       let fn: unknown;
@@ -270,6 +296,32 @@ export function evaluate(node: Node, scope: EvalScope): any {
 
     case 'unary': {
       if (node.op === '...') return { [SPREAD]: evaluate(node.a, scope) };
+      // `delete` needs the member expression itself, not its value, so it is
+      // handled before the operand is evaluated.
+      //
+      // It used to be dropped by the parser, which left the bare member behind:
+      // `delete obj.a` evaluated to `1`, the value of `obj.a`, instead of
+      // `true`, and deleted nothing. Reactivity comes for free here because the
+      // reactive proxy already implements `deleteProperty` and notifies from
+      // it, so a `v-for` over the object re-renders the way it does after an
+      // assignment.
+      if (node.op === 'delete') {
+        if (node.a.t !== 'member') {
+          // `delete x` on a plain variable is a no-op in strict mode and a
+          // SyntaxError in a module. Refusing it is clearer than returning a
+          // value that means nothing.
+          throw new VoodooRuntimeError(
+            'delete needs a property, as in `delete user.name` or `delete list[0]`'
+          );
+        }
+        const owner = evaluate(node.a.o, scope);
+        if (owner == null) return true;
+        const key = checkKey(
+          node.a.computed ? evaluate(node.a.p, scope) : (node.a.p as { v: string }).v
+        );
+        return delete (owner as any)[key];
+      }
+
       if (node.op === 'typeof') {
         // typeof of unknown identifier cannot throw error.
         if (node.a.t === 'id') {
@@ -289,6 +341,8 @@ export function evaluate(node: Node, scope: EvalScope): any {
           return -(v as number);
         case '+':
           return +(v as number);
+        case '~':
+          return ~(v as number);
         case 'void':
           return undefined;
       }
@@ -340,6 +394,24 @@ export function evaluate(node: Node, scope: EvalScope): any {
           return (l as PropertyKey) in (r as object);
         case 'instanceof':
           return l instanceof (r as Function);
+
+        // The bitwise operators coerce through ToInt32, and `>>>` through
+        // ToUint32, which is why the two shifts disagree for negatives:
+        // `-1 >> 0` is -1 and `-1 >>> 0` is 4294967295. Applying the JavaScript
+        // operator directly gets that for free; hand-rolling the coercion is
+        // how an implementation ends up subtly wrong on exactly those cases.
+        case '&':
+          return (l as number) & (r as number);
+        case '|':
+          return (l as number) | (r as number);
+        case '^':
+          return (l as number) ^ (r as number);
+        case '<<':
+          return (l as number) << (r as number);
+        case '>>':
+          return (l as number) >> (r as number);
+        case '>>>':
+          return (l as number) >>> (r as number);
       }
       throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
     }
@@ -416,8 +488,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
       const methodParams = node.params;
       const methodBody = node.body;
       return function (this: unknown, ...args: unknown[]): unknown {
-        const vars: Record<string, unknown> = {};
-        for (let i = 0; i < methodParams.length; i++) vars[methodParams[i]] = args[i];
+        const vars = bindParams(methodParams, args, scope);
         const owner = this;
         const base =
           owner !== null && typeof owner === 'object'
@@ -430,11 +501,8 @@ export function evaluate(node: Node, scope: EvalScope): any {
     case 'arrow': {
       const params = node.params;
       const body = node.body;
-      return (...args: unknown[]) => {
-        const vars: Record<string, unknown> = {};
-        for (let i = 0; i < params.length; i++) vars[params[i]] = args[i];
-        return evaluate(body, scope.child(vars));
-      };
+      return (...args: unknown[]) =>
+        evaluate(body, scope.child(bindParams(params, args, scope)));
     }
 
     case 'obj': {
@@ -490,6 +558,82 @@ export function evaluate(node: Node, scope: EvalScope): any {
   }
 
   throw new VoodooRuntimeError(`Unknown node: ${(node as { t: string }).t}`);
+}
+
+/**
+ * Binds one parameter pattern to one argument, writing into `vars`.
+ *
+ * Recursive, because a pattern nests: `({ a: [b = 1] }) => b` is three levels of
+ * this function. Defaults apply on `undefined` only, not on any falsy value,
+ * which is what JavaScript does and is the difference between `f(0)` binding 0
+ * and binding the default.
+ */
+function bindParam(
+  param: Param,
+  value: unknown,
+  vars: Record<string, unknown>,
+  scope: EvalScope
+): void {
+  if (param.kind === 'rest') {
+    vars[param.name] = value;
+    return;
+  }
+
+  if (param.def !== undefined && value === undefined) {
+    // The default is an expression and may read earlier parameters, so it is
+    // evaluated in a scope that already has them.
+    value = evaluate(param.def, scope.child(vars));
+  }
+
+  if (param.kind === 'id') {
+    vars[param.name] = value;
+    return;
+  }
+
+  if (param.kind === 'obj') {
+    if (value == null) {
+      throw new VoodooRuntimeError(
+        `Cannot destructure ${value === null ? 'null' : 'undefined'}`
+      );
+    }
+    const taken = new Set<string>();
+    for (const { key, value: inner } of param.props) {
+      taken.add(key);
+      bindParam(inner, (value as any)[checkKey(key)], vars, scope);
+    }
+    if (param.rest) {
+      const rest: Record<string, unknown> = {};
+      for (const key of Object.keys(value as object)) {
+        if (!taken.has(key)) rest[key] = (value as any)[key];
+      }
+      vars[param.rest] = rest;
+    }
+    return;
+  }
+
+  // An array pattern reads by index, so it works on anything indexable, and
+  // spreads once for the rest element rather than per position.
+  const items = Array.isArray(value) ? value : Array.from(value as Iterable<unknown>);
+  param.elements.forEach((element, index) => {
+    if (element) bindParam(element, items[index], vars, scope);
+  });
+  if (param.rest) vars[param.rest] = items.slice(param.elements.length);
+}
+
+/** Binds a whole parameter list to the arguments a call supplied. */
+function bindParams(
+  params: Param[],
+  args: unknown[],
+  scope: EvalScope
+): Record<string, unknown> {
+  const vars: Record<string, unknown> = {};
+  for (let i = 0; i < params.length; i++) {
+    const param = params[i];
+    // A rest parameter takes everything from its position onward, and is only
+    // ever last.
+    bindParam(param, param.kind === 'rest' ? args.slice(i) : args[i], vars, scope);
+  }
+  return vars;
 }
 
 function evalArgs(args: Node[], scope: EvalScope): unknown[] {

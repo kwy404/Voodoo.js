@@ -41,13 +41,28 @@ export class VoodooSyntaxError extends Error {
   }
 }
 
-/** Multi-character operators, from longest to shortest. */
+/**
+ * Multi-character operators, longest first.
+ *
+ * The order is the whole algorithm: `matchPunctuator` returns the first entry
+ * that matches, so `>>>=` has to be tried before `>>>`, which has to be tried
+ * before `>>`, which has to be tried before `>`. Put a short one early and the
+ * long one becomes unreachable.
+ *
+ * The compound assignments `<<=`, `>>=` and `>>>=` were here from the start
+ * while the plain `<<`, `>>` and `>>>` were not, so `x <<= 1` lexed and
+ * `1 << 4` did not: the lexer matched `<`, then met a second `<` it had no rule
+ * for and reported "Unexpected token". The bitwise operators were 216 of the
+ * 234 expressions the conformance suite found that JavaScript accepts and this
+ * parser refused.
+ */
 const PUNCTUATORS = [
   '>>>=',
   '===',
   '!==',
   '**=',
   '...',
+  '>>>',
   '<<=',
   '>>=',
   '&&=',
@@ -70,6 +85,11 @@ const PUNCTUATORS = [
   '*=',
   '/=',
   '%=',
+  '&=',
+  '|=',
+  '^=',
+  '<<',
+  '>>',
   '+',
   '-',
   '*',
@@ -79,6 +99,10 @@ const PUNCTUATORS = [
   '<',
   '>',
   '=',
+  '&',
+  '|',
+  '^',
+  '~',
   '(',
   ')',
   '[',
@@ -162,6 +186,14 @@ export function tokenize(source: string): Token[] {
         raw = '0b';
         i += 2;
         while (i < len && /[01_]/.test(source[i])) raw += source[i++];
+      } else if (ch === '0' && (source[i + 1] === 'o' || source[i + 1] === 'O')) {
+        // Octal was the one radix missing, and it failed quietly rather than
+        // loudly: `0o17` fell through to the branch below, which read `0`,
+        // stopped at the `o`, and left `o17` behind as an identifier. The
+        // expression evaluated to `undefined` instead of 15, with no error.
+        raw = '0o';
+        i += 2;
+        while (i < len && /[0-7_]/.test(source[i])) raw += source[i++];
       } else {
         while (i < len && /[0-9_]/.test(source[i])) raw += source[i++];
         if (source[i] === '.') {

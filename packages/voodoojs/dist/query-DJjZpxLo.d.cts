@@ -1,6 +1,6 @@
-import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
 
 /**
  * @module parser/lexer
@@ -78,6 +78,10 @@ type Node$1 = {
     args: Node$1[];
     opt: boolean;
 } | {
+    t: 'new';
+    callee: Node$1;
+    args: Node$1[];
+} | {
     t: 'unary';
     op: string;
     a: Node$1;
@@ -108,11 +112,11 @@ type Node$1 = {
     value: Node$1;
 } | {
     t: 'arrow';
-    params: string[];
+    params: Param[];
     body: Node$1;
 } | {
     t: 'method';
-    params: string[];
+    params: Param[];
     body: Node$1;
 } | {
     t: 'if';
@@ -140,6 +144,38 @@ interface ObjectProperty {
     /** `true` for `{ get name() { ... } }`, evaluated on every read. */
     getter?: boolean;
 }
+/**
+ * One parameter of an arrow function or an object method.
+ *
+ * Parameters used to be plain strings, which meant only the simplest form
+ * worked. `((x = 1) => x)()`, `((...xs) => xs)(1, 2)` and
+ * `people.map(({ name }) => name)` all failed to parse, and the last of those
+ * is how anybody actually writes that line.
+ *
+ * `def` carries a default for every shape, because JavaScript allows one
+ * wherever a binding appears, including inside a pattern.
+ */
+type Param = {
+    kind: 'id';
+    name: string;
+    def?: Node$1;
+} | {
+    kind: 'rest';
+    name: string;
+} | {
+    kind: 'obj';
+    props: Array<{
+        key: string;
+        value: Param;
+    }>;
+    rest?: string;
+    def?: Node$1;
+} | {
+    kind: 'arr';
+    elements: Array<Param | null>;
+    rest?: string;
+    def?: Node$1;
+};
 /**
  * Converts text to AST, with caching.
  *

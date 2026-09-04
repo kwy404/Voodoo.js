@@ -1,15 +1,15 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-C53X4Q2C.js';
-import './chunk-BX7XU565.js';
-import { magic } from './chunk-LGKNQVXF.js';
-import './chunk-4T2UIPWX.js';
-import './chunk-VSOERLB4.js';
-import './chunk-ZIWLQZZL.js';
-import './chunk-IETMDKVD.js';
-import './chunk-7HVN5UCK.js';
-import './chunk-YOZTHZS2.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-IG75RSGH.js';
+import './chunk-TSCMFRF6.js';
+import { magic } from './chunk-5IMBSYKH.js';
+import './chunk-KBGRB5IB.js';
+import './chunk-VE7SPUTF.js';
+import './chunk-JOALQ5UO.js';
+import './chunk-OBBELEY5.js';
+import './chunk-LKPICJ77.js';
+import './chunk-P4MQN45W.js';
 
 /**
- * Voodoo.js v0.7.0
+ * Voodoo.js v0.8.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */

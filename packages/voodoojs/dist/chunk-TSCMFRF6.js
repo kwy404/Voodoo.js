@@ -1,9 +1,9 @@
-import { warnOnce } from './chunk-VSOERLB4.js';
-import { parseDuration } from './chunk-ZIWLQZZL.js';
-import { __publicField } from './chunk-YOZTHZS2.js';
+import { warnOnce } from './chunk-VE7SPUTF.js';
+import { parseDuration } from './chunk-JOALQ5UO.js';
+import { __publicField } from './chunk-P4MQN45W.js';
 
 /**
- * Voodoo.js v0.7.0
+ * Voodoo.js v0.8.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -444,5 +444,5 @@ var http = {
 };
 
 export { HttpError, clearCache, flushOfflineQueue, http, request };
-//# sourceMappingURL=chunk-BX7XU565.js.map
-//# sourceMappingURL=chunk-BX7XU565.js.map
+//# sourceMappingURL=chunk-TSCMFRF6.js.map
+//# sourceMappingURL=chunk-TSCMFRF6.js.map

@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.7.0
+ * Voodoo.js v0.8.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -866,6 +866,7 @@ ${pointer}`);
     "!==",
     "**=",
     "...",
+    ">>>",
     "<<=",
     ">>=",
     "&&=",
@@ -888,6 +889,11 @@ ${pointer}`);
     "*=",
     "/=",
     "%=",
+    "&=",
+    "|=",
+    "^=",
+    "<<",
+    ">>",
     "+",
     "-",
     "*",
@@ -897,6 +903,10 @@ ${pointer}`);
     "<",
     ">",
     "=",
+    "&",
+    "|",
+    "^",
+    "~",
     "(",
     ")",
     "[",
@@ -961,6 +971,10 @@ ${pointer}`);
           raw = "0b";
           i += 2;
           while (i < len && /[01_]/.test(source[i])) raw += source[i++];
+        } else if (ch === "0" && (source[i + 1] === "o" || source[i + 1] === "O")) {
+          raw = "0o";
+          i += 2;
+          while (i < len && /[0-7_]/.test(source[i])) raw += source[i++];
         } else {
           while (i < len && /[0-9_]/.test(source[i])) raw += source[i++];
           if (source[i] === ".") {
@@ -1117,25 +1131,31 @@ ${pointer}`);
     "??": 1,
     "||": 2,
     "&&": 3,
-    "==": 6,
-    "!=": 6,
-    "===": 6,
-    "!==": 6,
-    "<": 7,
-    ">": 7,
-    "<=": 7,
-    ">=": 7,
-    in: 7,
-    instanceof: 7,
-    "+": 9,
-    "-": 9,
-    "*": 10,
-    "/": 10,
-    "%": 10,
-    "**": 11
+    "|": 4,
+    "^": 5,
+    "&": 6,
+    "==": 7,
+    "!=": 7,
+    "===": 7,
+    "!==": 7,
+    "<": 8,
+    ">": 8,
+    "<=": 8,
+    ">=": 8,
+    in: 8,
+    instanceof: 8,
+    "<<": 9,
+    ">>": 9,
+    ">>>": 9,
+    "+": 10,
+    "-": 10,
+    "*": 11,
+    "/": 11,
+    "%": 11,
+    "**": 12
   };
   var ASSIGN_OPS = /* @__PURE__ */ new Set(["=", "+=", "-=", "*=", "/=", "%=", "**=", "&&=", "||=", "??="]);
-  var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "typeof", "void"]);
+  var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "~", "typeof", "void", "delete"]);
   var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null), {
     true: true,
     false: false,
@@ -1270,7 +1290,7 @@ ${pointer}`);
       if (this.peek().type === "ident" && this.isPunct("=>", 1)) {
         const param = this.next().value;
         this.next();
-        return { t: "arrow", params: [param], body: this.parseArrowBody() };
+        return { t: "arrow", params: [{ kind: "id", name: param }], body: this.parseArrowBody() };
       }
       if (this.isPunct("(")) {
         const arrow = this.tryParseParenArrow();
@@ -1307,19 +1327,108 @@ ${pointer}`);
       const after = this.tokens[i + 1];
       if (!after || after.type !== "punct" || after.value !== "=>") return null;
       this.next();
-      const params = [];
-      while (!this.isPunct(")")) {
-        const t2 = this.next();
-        if (t2.type !== "ident") {
-          this.pos = start2;
-          return null;
-        }
-        params.push(t2.value);
-        if (this.isPunct(",")) this.next();
+      let params;
+      try {
+        params = this.parseParamList();
+      } catch (e) {
+        this.pos = start2;
+        return null;
       }
-      this.expect(")");
       this.expect("=>");
       return { t: "arrow", params, body: this.parseArrowBody() };
+    }
+    /** Parameters up to the closing parenthesis, which it consumes. */
+    parseParamList() {
+      const params = [];
+      while (!this.isPunct(")")) {
+        params.push(this.parseParam());
+        if (this.isPunct(",")) this.next();
+        else break;
+      }
+      this.expect(")");
+      return params;
+    }
+    /**
+     * One binding: `x`, `x = 1`, `...xs`, `{ a, b: c = 2 }`, `[a, , b]`.
+     *
+     * Recursive, so a pattern nests to any depth the way JavaScript's does.
+     */
+    parseParam() {
+      if (this.isPunct("...")) {
+        this.next();
+        const name = this.next();
+        if (name.type !== "ident") {
+          throw new VoodooSyntaxError("Expected a name after ...", this.source, name.start);
+        }
+        return { kind: "rest", name: name.value };
+      }
+      let param;
+      if (this.isPunct("{")) {
+        this.next();
+        const props = [];
+        let rest;
+        while (!this.isPunct("}")) {
+          if (this.isPunct("...")) {
+            this.next();
+            const name = this.next();
+            if (name.type !== "ident") {
+              throw new VoodooSyntaxError("Expected a name after ...", this.source, name.start);
+            }
+            rest = name.value;
+          } else {
+            const key = this.next();
+            if (key.type !== "ident" && key.type !== "str") {
+              throw new VoodooSyntaxError("Expected a property name", this.source, key.start);
+            }
+            const value = this.isPunct(":") ? (this.next(), this.parseParam()) : { kind: "id", name: key.value };
+            if (this.isPunct("=")) {
+              this.next();
+              value.def = this.parseAssignment();
+            }
+            props.push({ key: String(key.value), value });
+          }
+          if (this.isPunct(",")) this.next();
+          else break;
+        }
+        this.expect("}");
+        param = { kind: "obj", props, rest };
+      } else if (this.isPunct("[")) {
+        this.next();
+        const elements = [];
+        let rest;
+        while (!this.isPunct("]")) {
+          if (this.isPunct(",")) {
+            this.next();
+            elements.push(null);
+            continue;
+          }
+          if (this.isPunct("...")) {
+            this.next();
+            const name = this.next();
+            if (name.type !== "ident") {
+              throw new VoodooSyntaxError("Expected a name after ...", this.source, name.start);
+            }
+            rest = name.value;
+          } else {
+            elements.push(this.parseParam());
+          }
+          if (this.isPunct(",")) this.next();
+          else break;
+        }
+        this.expect("]");
+        param = { kind: "arr", elements, rest };
+      } else {
+        const name = this.next();
+        if (name.type !== "ident") {
+          throw new VoodooSyntaxError("Expected a parameter name", this.source, name.start);
+        }
+        param = { kind: "id", name: name.value };
+      }
+      if (this.isPunct("=")) {
+        this.next();
+        param.def = this.parseAssignment();
+      }
+      return param;
     }
     parseConditional() {
       const test = this.parseBinary(0);
@@ -1379,8 +1488,57 @@ ${pointer}`);
       }
       return expr;
     }
+    /**
+     * `new X`, `new X(a, b)`, and `new a.b.C(x)`.
+     *
+     * `new` did not exist here, in the lexer, or in the interpreter. So
+     * `new Date(0)` lexed as the identifier `new` followed by `Date(0)`, the
+     * parser dropped the dangling identifier, and what ran was `Date(0)`. Called
+     * without `new`, `Date` returns a STRING of the current time, so
+     * `new Date(0)` produced today's date as text, `new Date(0) instanceof Date`
+     * was false, and `new Date(0).getTime()` failed with "getTime is not a
+     * function". Three wrong answers, none of them an error.
+     *
+     * The callee is parsed as a member chain WITHOUT consuming a call, because in
+     * JavaScript the argument list binds to the `new`: `new a.b.C(x)` constructs
+     * `a.b.C` with `x`, and never calls `a.b.C(x)` and constructs the result. The
+     * trailing `(` is then read here, and anything after it, such as
+     * `new Date(0).getTime()`, is left to the ordinary member loop below.
+     */
+    parseNew() {
+      this.next();
+      const callee = this.parseMemberOnly(this.parsePrimary());
+      const args = this.isPunct("(") ? this.parseArguments() : [];
+      return { t: "new", callee, args };
+    }
+    /**
+     * Member access only: `.x`, `?.x` and `[x]`, stopping at a call.
+     *
+     * Used for a `new` callee, where the argument list belongs to the `new`
+     * rather than to the expression it is constructing.
+     */
+    parseMemberOnly(start2) {
+      let expr = start2;
+      for (; ; ) {
+        if (this.isPunct(".")) {
+          this.next();
+          const prop = this.next();
+          if (prop.type !== "ident") {
+            throw new VoodooSyntaxError("Invalid property name", this.source, prop.start);
+          }
+          expr = { t: "member", o: expr, p: { t: "lit", v: prop.value }, computed: false, opt: false };
+        } else if (this.isPunct("[")) {
+          this.next();
+          const p2 = this.parseExpression();
+          this.expect("]");
+          expr = { t: "member", o: expr, p: p2, computed: true, opt: false };
+        } else {
+          return expr;
+        }
+      }
+    }
     parseCallMember() {
-      let expr = this.parsePrimary();
+      let expr = this.isIdent("new") ? this.parseNew() : this.parsePrimary();
       for (; ; ) {
         if (this.isPunct(".")) {
           this.next();
@@ -1445,16 +1603,7 @@ ${pointer}`);
         this.next();
         if (this.peek().type === "ident") this.next();
         this.expect("(");
-        const params = [];
-        while (!this.isPunct(")")) {
-          const param = this.next();
-          if (param.type !== "ident") {
-            throw new VoodooSyntaxError("Expected a parameter name", this.source, param.start);
-          }
-          params.push(param.value);
-          if (this.isPunct(",")) this.next();
-        }
-        this.expect(")");
+        const params = this.parseParamList();
         return { t: "arrow", params, body: this.parseArrowBody() };
       }
       if (t2.type === "num" || t2.type === "str") {
@@ -1560,16 +1709,7 @@ ${pointer}`);
             props.push({ key, value: this.parseAssignment() });
           } else if (this.isPunct("(")) {
             this.next();
-            const params = [];
-            while (!this.isPunct(")")) {
-              const param = this.next();
-              if (param.type !== "ident") {
-                throw new VoodooSyntaxError("Expected a parameter name", this.source, param.start);
-              }
-              params.push(param.value);
-              if (this.isPunct(",")) this.next();
-            }
-            this.expect(")");
+            const params = this.parseParamList();
             props.push({ key, value: { t: "method", params, body: this.parseArrowBody() } });
           } else {
             props.push({ key, value: { t: "id", n: key } });
@@ -1719,6 +1859,19 @@ Expression: ${expression}` : message);
         );
         return obj[key];
       }
+      case "new": {
+        const target = evaluate(node.callee, scope);
+        if (typeof target !== "function") {
+          throw new VoodooRuntimeError(
+            `Cannot construct ${stringify(target)}: it is not a constructor`
+          );
+        }
+        if (target === Function) {
+          throw new VoodooRuntimeError("Cannot construct Function: expressions never compile code");
+        }
+        const args = evalArgs(node.args, scope);
+        return Reflect.construct(target, args);
+      }
       case "call": {
         let thisArg;
         let fn;
@@ -1766,6 +1919,19 @@ Expression: ${expression}` : message);
       }
       case "unary": {
         if (node.op === "...") return { [SPREAD]: evaluate(node.a, scope) };
+        if (node.op === "delete") {
+          if (node.a.t !== "member") {
+            throw new VoodooRuntimeError(
+              "delete needs a property, as in `delete user.name` or `delete list[0]`"
+            );
+          }
+          const owner = evaluate(node.a.o, scope);
+          if (owner == null) return true;
+          const key = checkKey(
+            node.a.computed ? evaluate(node.a.p, scope) : node.a.p.v
+          );
+          return delete owner[key];
+        }
         if (node.op === "typeof") {
           if (node.a.t === "id") {
             if (chaveBloqueada(node.a.n)) return "undefined";
@@ -1783,6 +1949,8 @@ Expression: ${expression}` : message);
             return -v;
           case "+":
             return +v;
+          case "~":
+            return ~v;
           case "void":
             return void 0;
         }
@@ -1830,6 +1998,23 @@ Expression: ${expression}` : message);
             return l in r2;
           case "instanceof":
             return l instanceof r2;
+          // The bitwise operators coerce through ToInt32, and `>>>` through
+          // ToUint32, which is why the two shifts disagree for negatives:
+          // `-1 >> 0` is -1 and `-1 >>> 0` is 4294967295. Applying the JavaScript
+          // operator directly gets that for free; hand-rolling the coercion is
+          // how an implementation ends up subtly wrong on exactly those cases.
+          case "&":
+            return l & r2;
+          case "|":
+            return l | r2;
+          case "^":
+            return l ^ r2;
+          case "<<":
+            return l << r2;
+          case ">>":
+            return l >> r2;
+          case ">>>":
+            return l >>> r2;
         }
         throw new VoodooRuntimeError(`Unsupported operator: ${node.op}`);
       }
@@ -1887,8 +2072,7 @@ Expression: ${expression}` : message);
         const methodParams = node.params;
         const methodBody = node.body;
         return function(...args) {
-          const vars = {};
-          for (let i = 0; i < methodParams.length; i++) vars[methodParams[i]] = args[i];
+          const vars = bindParams(methodParams, args, scope);
           const owner = this;
           const base = owner !== null && typeof owner === "object" ? scope.child(owner) : scope;
           return evaluate(methodBody, base.child(vars));
@@ -1897,11 +2081,7 @@ Expression: ${expression}` : message);
       case "arrow": {
         const params = node.params;
         const body = node.body;
-        return (...args) => {
-          const vars = {};
-          for (let i = 0; i < params.length; i++) vars[params[i]] = args[i];
-          return evaluate(body, scope.child(vars));
-        };
+        return (...args) => evaluate(body, scope.child(bindParams(params, args, scope)));
       }
       case "obj": {
         const out = {};
@@ -1946,6 +2126,52 @@ Expression: ${expression}` : message);
       }
     }
     throw new VoodooRuntimeError(`Unknown node: ${node.t}`);
+  }
+  function bindParam(param, value, vars, scope) {
+    if (param.kind === "rest") {
+      vars[param.name] = value;
+      return;
+    }
+    if (param.def !== void 0 && value === void 0) {
+      value = evaluate(param.def, scope.child(vars));
+    }
+    if (param.kind === "id") {
+      vars[param.name] = value;
+      return;
+    }
+    if (param.kind === "obj") {
+      if (value == null) {
+        throw new VoodooRuntimeError(
+          `Cannot destructure ${value === null ? "null" : "undefined"}`
+        );
+      }
+      const taken = /* @__PURE__ */ new Set();
+      for (const { key, value: inner } of param.props) {
+        taken.add(key);
+        bindParam(inner, value[checkKey(key)], vars, scope);
+      }
+      if (param.rest) {
+        const rest = {};
+        for (const key of Object.keys(value)) {
+          if (!taken.has(key)) rest[key] = value[key];
+        }
+        vars[param.rest] = rest;
+      }
+      return;
+    }
+    const items = Array.isArray(value) ? value : Array.from(value);
+    param.elements.forEach((element, index) => {
+      if (element) bindParam(element, items[index], vars, scope);
+    });
+    if (param.rest) vars[param.rest] = items.slice(param.elements.length);
+  }
+  function bindParams(params, args, scope) {
+    const vars = {};
+    for (let i = 0; i < params.length; i++) {
+      const param = params[i];
+      bindParam(param, param.kind === "rest" ? args.slice(i) : args[i], vars, scope);
+    }
+    return vars;
   }
   function evalArgs(args, scope) {
     const out = [];
@@ -6622,7 +6848,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.7.0";
+  var version2 = "0.8.0";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
