@@ -250,7 +250,7 @@ export interface VoodooStatic {
 }
 
 /** Published version. */
-export const version = '0.12.3';
+export const version = '0.12.4';
 
 /**
  * Core of Voodoo. The exported object is also callable: `V('#app')` returns

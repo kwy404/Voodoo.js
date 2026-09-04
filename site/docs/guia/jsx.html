@@ -448,18 +448,29 @@ text     "))}"</code></pre>
   Three things, listed rather than left to be discovered.
 </p>
 
-<h3 id="atributos">Attribute values must be quoted</h3>
+<h3 id="atributos">There is no <code>style={{ ... }}</code>. Bind the attribute instead</h3>
 
-<pre data-lang="html"><code>&lt;div style="{{ backgroundColor: color }}"&gt;   &lt;!-- works --&gt;
-&lt;div style={{ backgroundColor: color }}&gt;     &lt;!-- does not --&gt;</code></pre>
+<pre data-lang="html"><code>&lt;div :style="{ backgroundColor: color }"&gt;    &lt;!-- this is the way --&gt;
+
+&lt;div style="{{ backgroundColor: color }}"&gt;   &lt;!-- does nothing --&gt;
+&lt;div style={{ backgroundColor: color }}&gt;     &lt;!-- does nothing --&gt;</code></pre>
 
 <p>
-  This is the order things happen in, not a decision. An unquoted attribute value ends at the first
-  space, so the browser turns the second line into six separate attributes,
-  <code>style="{{"</code>, <code>backgroundcolor:=""</code> and so on, before any script has run.
-  The pieces survive in order and could be rejoined, but attribute names are lowercased, so
-  <code>backgroundColor</code> comes back as <code>backgroundcolor</code> and any identifier with a
-  capital in it is gone.
+  An earlier version of this page had the middle line marked as working. It does not, and the
+  correction is worth stating plainly: a plain <code>style</code> attribute is never treated as an
+  expression. Only <code>v-*</code>, <code>:</code> and <code>@</code> attributes are read, so
+  <code>{{ ... }}</code> written into <code>style</code> survives verbatim as a nonsense CSS
+  declaration and the element renders unstyled. Prefix the attribute with a colon and the ordinary
+  binding does exactly what was wanted.
+</p>
+
+<p>
+  The last line fails twice over, and the second reason applies to every attribute. An unquoted
+  value ends at the first space, so the browser turns it into six separate attributes —
+  <code>style="{{"</code>, <code>backgroundcolor:=""</code> and so on — before any script has run.
+  The pieces survive in order and could in principle be rejoined, but attribute names are lowercased
+  on the way in, so <code>backgroundColor</code> comes back as <code>backgroundcolor</code> and any
+  identifier carrying a capital is gone for good. Quote your attribute values.
 </p>
 
 <h3 id="fragmentos">Fragments and loop statements</h3>
@@ -517,6 +528,6 @@ text     "))}"</code></pre>
 
 </article></article>
 
-<script src="../assets/docs.js?v=f84d0686"></script>
+<script src="../assets/docs.js?v=ce28f566"></script>
 </body>
 </html>

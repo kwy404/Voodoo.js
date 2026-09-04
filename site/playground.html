@@ -1103,7 +1103,16 @@
       </div>
     </div>
 
+    <!--
+      Three files rather than one. They are written and revised independently
+      and each is already long; keeping them apart means an edit to the JSX set
+      cannot touch the others, and the diffs stay readable. The app concatenates
+      whichever of the three are present, so any one of them can be dropped
+      without the page noticing.
+    -->
     <script src="assets/playground-examples.js?v=3fc077e6"></script>
-    <script src="assets/playground-app.js?v=fe379ef9"></script>
+    <script src="assets/playground-examples-jsx.js?v=d8242c3c"></script>
+    <script src="assets/playground-examples-showcase.js?v=340b197c"></script>
+    <script src="assets/playground-app.js?v=6251c733"></script>
   </body>
 </html>

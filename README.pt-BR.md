@@ -120,19 +120,25 @@ E `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` e
 `noscript` nunca são varridos, então uma página cheia de código de exemplo
 continua sendo uma página cheia de código de exemplo.
 
-### Uma coisa que o HTML não permite
-
-Valor de atributo precisa de aspas:
+### Não existe `style={{ ... }}`. Use o bind do atributo
 
 ```html
-<div style="{{ backgroundColor: cor }}">   <!-- funciona -->
-<div style={{ backgroundColor: cor }}>     <!-- não funciona -->
+<div :style="{ backgroundColor: cor }">    <!-- é assim -->
+
+<div style="{{ backgroundColor: cor }}">   <!-- não faz nada -->
+<div style={{ backgroundColor: cor }}>     <!-- não faz nada -->
 ```
 
-Isso é ordem de execução, não decisão. Valor de atributo sem aspas termina no
-primeiro espaço, então o navegador transforma a segunda linha em seis atributos
-separados antes de qualquer script rodar, e passa os nomes para minúsculo no
-caminho. Não sobra nada para recuperar.
+Uma versão anterior deste arquivo marcava a linha do meio como funcionando. Ela
+não funciona: um atributo `style` comum nunca é tratado como expressão, porque
+só atributos `v-*`, `:` e `@` são lidos. As chaves sobrevivem literalmente como
+uma declaração CSS sem sentido e o elemento aparece sem estilo. Com dois-pontos
+na frente, o bind normal faz exatamente o que se queria.
+
+A última linha falha por dois motivos, e o segundo vale para qualquer atributo:
+valor sem aspas termina no primeiro espaço, então o navegador o transforma em
+seis atributos separados antes de qualquer script rodar, passando os nomes para
+minúsculo no caminho. Ponha aspas nos valores.
 
 **[Teste os dez exemplos no playground](https://kwy404.github.io/Voodoo.js/playground.html)**
 

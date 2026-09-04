@@ -23,8 +23,36 @@
    * alongside it — on GitHub Pages, from a file:// checkout, or from a local
    * server. There is nothing left to keep in sync.
    */
-  var RUNTIME = new URL('../voodoo.full.min.js?v=6aa47b7d', document.currentScript.src).href;
-  var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
+  var RUNTIME = new URL('../voodoo.full.min.js?v=4b8f9c6f', document.currentScript.src).href;
+  /**
+   * The examples arrive in three files and are joined here.
+   *
+   * Each is maintained on its own, so an edit to one set cannot disturb
+   * another, and a missing file costs only its own examples rather than the
+   * page. Ids are deduplicated on the way in: a later file wins, which makes
+   * overriding a sample a matter of redeclaring its id rather than hunting for
+   * the original.
+   */
+  var examples = (function () {
+    var sources = [
+      window.VOODOO_PLAYGROUND_EXAMPLES,
+      window.VOODOO_PLAYGROUND_EXAMPLES_JSX,
+      window.VOODOO_PLAYGROUND_EXAMPLES_SHOWCASE,
+    ];
+    var byId = Object.create(null);
+    var order = [];
+    sources.forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (ex) {
+        if (!ex || !ex.id) return;
+        if (!(ex.id in byId)) order.push(ex.id);
+        byId[ex.id] = ex;
+      });
+    });
+    return order.map(function (id) {
+      return byId[id];
+    });
+  })();
 
   var code = document.getElementById('code');
   var highlight = document.getElementById('highlight');

@@ -638,14 +638,22 @@ declare const clipboard: {
  * expression, which is what keeps it working under a strict Content Security
  * Policy.
  *
- * ATTRIBUTE VALUES MUST BE QUOTED
+ * THERE IS NO style={{ ... }}. BIND THE ATTRIBUTE
  *
- *   style="{{ backgroundColor: cor }}"     works
- *   style={{ backgroundColor: cor }}       does not
+ *   :style="{ backgroundColor: color }"    this is the way
  *
- * This one is not a decision, it is the order things happen in. An unquoted
- * attribute value ends at the first space, so the browser turns the second line
- * into six separate attributes, `style="{{"`, `backgroundcolor:=""`, `cor,=""`
+ *   style="{{ backgroundColor: color }}"   does nothing
+ *   style={{ backgroundColor: color }}     does nothing
+ *
+ * This comment used to claim the middle line worked. It does not. A plain
+ * `style` attribute is never treated as an expression -- only `v-*`, `:` and
+ * `@` attributes are read -- so the braces survive verbatim as a nonsense CSS
+ * declaration and the element renders unstyled. Prefix with a colon and the
+ * ordinary binding does what was wanted.
+ *
+ * The last line fails twice over, and its second reason applies to every
+ * attribute. An unquoted value ends at the first space, so the browser turns it
+ * into six separate attributes, `style="{{"`, `backgroundcolor:=""`, `color,=""`
  * and so on, before a single line of JavaScript has run.
  *
  * The pieces do survive in order, so they could in principle be rejoined. What

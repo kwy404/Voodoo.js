@@ -119,19 +119,25 @@ And `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` and
 `noscript` are never scanned, so a page full of example code stays a page full
 of example code.
 
-### One thing HTML will not allow
-
-Attribute values have to be quoted:
+### There is no `style={{ ... }}`. Bind the attribute
 
 ```html
-<div style="{{ backgroundColor: color }}">   <!-- works -->
-<div style={{ backgroundColor: color }}>     <!-- does not -->
+<div :style="{ backgroundColor: color }">    <!-- this is the way -->
+
+<div style="{{ backgroundColor: color }}">   <!-- does nothing -->
+<div style={{ backgroundColor: color }}>     <!-- does nothing -->
 ```
 
-That is the order things happen in, not a decision. An unquoted attribute value
-ends at the first space, so the browser turns the second line into six separate
-attributes before any script has run, lowercasing their names on the way. There
-is nothing left to recover.
+An earlier version of this file marked the middle line as working. It does not:
+a plain `style` attribute is never treated as an expression, because only `v-*`,
+`:` and `@` attributes are read. The braces survive verbatim as a nonsense CSS
+declaration and the element renders unstyled. A colon in front, and the ordinary
+binding does exactly what was intended.
+
+The last line fails twice over, and the second reason applies to every
+attribute: an unquoted value ends at the first space, so the browser turns it
+into six separate attributes before any script has run, lowercasing their names
+on the way. Quote your attribute values.
 
 **[Try all ten examples in the playground](https://kwy404.github.io/Voodoo.js/playground.html)**
 

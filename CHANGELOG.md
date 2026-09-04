@@ -7,6 +7,40 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.4] - 2026-09-04
+
+### Fixed
+
+- **The documentation taught a form of `style` that does nothing.** The README,
+  its Portuguese translation, the JSX guide and the module's own header all
+  showed `style="{{ backgroundColor: color }}"` marked as working. It is not: a
+  plain `style` attribute is never treated as an expression, because only
+  `v-*`, `:` and `@` attributes are read. The braces survive verbatim as a
+  nonsense CSS declaration and the element renders unstyled.
+
+  Measured rather than argued: the quoted form leaves the attribute literal and
+  the element full width with no background; `:style="{ ... }"` resolves to
+  `width: 60%; background: tomato` and renders. All four places now show the
+  binding, and say plainly that the earlier advice was wrong.
+
+### Added
+
+- **The playground goes from 51 examples to 122**, every one styled with
+  Tailwind and each verified rendering in a browser rather than assumed.
+
+  53 are JSX, which is where the interesting cases live: nested maps, real
+  `if / else if / else`, callbacks with a block body and an early return,
+  ranges through `Array.from`, `{ const ... }` blocks with no `v-data` at all,
+  and tables more than once — loose text inside a `<tbody>` is foster-parented
+  out of the table by the HTML parser, and it still works, which is the hardest
+  thing the feature does.
+
+  The rest are finished interfaces rather than fixtures: a sign-up form with
+  live validation, a command palette, a masked payment form with a live card
+  preview, a paginated fetch with a loading skeleton, an optimistic create that
+  shows its in-flight row, a cart backed by a store, undo and redo, a custom
+  directive, and a virtualised ten-thousand-row list.
+
 ## [0.12.3] - 2026-09-04
 
 ### Fixed
