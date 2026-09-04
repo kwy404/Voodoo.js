@@ -1,15 +1,15 @@
 /**
- * API Compatibility: a superficie publica nao pode encolher sem alguem notar.
+ * API Compatibility: the public surface cannot shrink without someone noticing.
  *
- * Compara a foto atual da API (ver scripts/api-snapshot.mjs) com a foto
- * commitada em `packages/voodoojs/api-snapshot.json`.
+ * Compares the current snapshot of the API (see scripts/api-snapshot.mjs) with the
+ * committed snapshot in `packages/voodoojs/api-snapshot.json`.
  *
- *   remocao ou renomeacao .... FAIL  (quebra quem ja instalou)
- *   mudanca de forma ......... FAIL  (function virou objeto, classe virou funcao)
- *   adicao ................... PASS com nota
+ *   removal or renaming .... FAIL  (breaks anyone who installed)
+ *   shape change ........... FAIL  (function became object, class became function)
+ *   addition ............... PASS with note
  *
- * Renomeacao aparece como uma remocao mais uma adicao — e por isso que remocao
- * e FAIL: e o unico sinal que temos de que um nome sumiu do contrato.
+ * Renaming appears as a removal plus an addition. That is why removal is FAIL:
+ * it is the only signal we have that a name disappeared from the contract.
  */
 
 import { STATUS, fail, note, rel } from './lib.mjs';
@@ -43,11 +43,11 @@ export async function run(ctx) {
     const diff = previous ? diffSnapshots(previous, current) : { removed: [], added: [], changed: [] };
     return {
       status: STATUS.PASS,
-      summary: `snapshot regravado (${diff.removed.length} removidos, ${diff.added.length} adicionados)`,
+      summary: `snapshot rewritten (${diff.removed.length} removed, ${diff.added.length} added)`,
       findings: [
-        note(`Snapshot atualizado a pedido de --update`, {
+        note(`Snapshot updated on request of --update`, {
           file: rel(SNAPSHOT_PATH),
-          actual: `metodo: ${current.method}`,
+          actual: `method: ${current.method}`,
         }),
       ],
       details: { updated: true, diff, counts: countSurface(current.surface) },
@@ -58,12 +58,12 @@ export async function run(ctx) {
   if (!previous) {
     return {
       status: STATUS.SKIP,
-      summary: 'sem snapshot commitado para comparar',
+      summary: 'no committed snapshot to compare',
       findings: [
-        note('Nao ha linha de base da API publica', {
+        note('There is no baseline for the public API', {
           file: rel(SNAPSHOT_PATH),
-          expected: 'packages/voodoojs/api-snapshot.json versionado',
-          actual: 'ausente',
+          expected: 'packages/voodoojs/api-snapshot.json versioned',
+          actual: 'missing',
         }),
       ],
       details: {
@@ -75,13 +75,13 @@ export async function run(ctx) {
 
   const findings = [];
 
-  // Uma foto estatica comparada com uma de runtime produziria diferenca falsa.
+  // A static snapshot compared with a runtime one would produce false difference.
   if (previous.method !== current.method) {
     findings.push(
-      note('Snapshot commitado e o atual usam metodos de leitura diferentes', {
+      note('Committed and current snapshots use different reading methods', {
         file: rel(SNAPSHOT_PATH),
-        expected: `metodo "${previous.method}"`,
-        actual: `metodo "${current.method}"${
+        expected: `method "${previous.method}"`,
+        actual: `method "${current.method}"${
           current.runtimeFallbackReason ? ` (${current.runtimeFallbackReason})` : ''
         }`,
       })
@@ -92,29 +92,29 @@ export async function run(ctx) {
 
   for (const item of diff.removed) {
     findings.push(
-      fail(`API publica removida: ${item.kind} "${item.name}"`, {
+      fail(`Public API removed: ${item.kind} "${item.name}"`, {
         file: rel(SNAPSHOT_PATH),
-        expected: `${item.kind} "${item.name}" continua exportado${item.was ? ` como ${item.was}` : ''}`,
-        actual: 'ausente na build atual; qualquer codigo que use esse nome quebra',
+        expected: `${item.kind} "${item.name}" continues exported${item.was ? ` as ${item.was}` : ''}`,
+        actual: 'absent in current build; any code using this name breaks',
       })
     );
   }
 
   for (const item of diff.changed) {
     findings.push(
-      fail(`API publica mudou de forma: ${item.kind} "${item.name}"`, {
+      fail(`Public API changed shape: ${item.kind} "${item.name}"`, {
         file: rel(SNAPSHOT_PATH),
-        expected: `${item.name} continua sendo ${item.from}`,
-        actual: `agora e ${item.to}`,
+        expected: `${item.name} continues being ${item.from}`,
+        actual: `now is ${item.to}`,
       })
     );
   }
 
   for (const item of diff.added) {
     findings.push(
-      note(`API publica nova: ${item.kind} "${item.name}"`, {
+      note(`New public API: ${item.kind} "${item.name}"`, {
         file: rel(SNAPSHOT_PATH),
-        actual: 'adicao e compativel; rode com --update para incorporar ao snapshot',
+        actual: 'addition is compatible; run with --update to incorporate into snapshot',
       })
     );
   }
@@ -126,10 +126,10 @@ export async function run(ctx) {
   return {
     status,
     summary: broken
-      ? `${diff.removed.length} removidos, ${diff.changed.length} com forma diferente`
+      ? `${diff.removed.length} removed, ${diff.changed.length} with different shape`
       : diff.added.length
-        ? `${diff.added.length} adicoes compativeis; ${counts.V} chaves em V`
-        : `${counts.V} chaves em V, ${counts.exports} exports, ${counts.directives} directives, ${counts.magics} magics`,
+        ? `${diff.added.length} compatible additions; ${counts.V} keys in V`
+        : `${counts.V} keys in V, ${counts.exports} exports, ${counts.directives} directives, ${counts.magics} magics`,
     findings,
     details: {
       method: current.method,

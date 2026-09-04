@@ -1,27 +1,27 @@
 /**
- * Servidor de chat para a demo `examples/chat-tempo-real/`.
+ * Chat server for the demo `examples/chat-tempo-real/`.
  *
- * Serve os arquivos estaticos do projeto e fala WebSocket na mesma porta, sem
- * nenhuma dependencia: o handshake e o enquadramento do RFC 6455 estao escritos
- * aqui, com `node:crypto` para o `Sec-WebSocket-Accept` e nada mais.
+ * Serves the project's static files and speaks WebSocket on the same port, with no
+ * dependencies: the RFC 6455 handshake and framing are written here, using `node:crypto`
+ * for `Sec-WebSocket-Accept` and nothing else.
  *
- * Uso:
- *   node scripts/chat-servidor.mjs          porta 5174
- *   node scripts/chat-servidor.mjs 8080     escolhe a porta
+ * Usage:
+ *   node scripts/chat-servidor.mjs          port 5174
+ *   node scripts/chat-servidor.mjs 8080     choose the port
  *
- * Depois abra http://localhost:5174/examples/chat-tempo-real/ em duas abas.
+ * Then open http://localhost:5174/examples/chat-tempo-real/ in two tabs.
  *
- * O servidor fala o envelope do modulo `socket` da Voodoo, descrito em
+ * The server speaks the envelope of Voodoo's `socket` module, described in
  * `docs/websocket.md`:
  *
  *   { "event": "join",     "data": { "room": "geral", "private": false } }
  *   { "event": "mensagem", "data": { "room": "geral", "data": { ... } } }
  *   { "event": "mensagem", "data": { "room": "geral", "to": "id", "data": {...} } }
  *
- * E o ponto que a documentacao repete e que este arquivo demonstra: **quem
- * decide o que e privado e o servidor**. A funcao `podeEntrar` abaixo e o lugar
- * onde a autorizacao de sala aconteceria de verdade; aqui ela e permissiva de
- * proposito, porque isto e uma demo, e esta marcada como tal.
+ * And the point that the documentation repeats and this file demonstrates: **it is
+ * the server that decides what is private**. The `podeEntrar` function below is the place
+ * where room authorization would actually happen; here it is permissive on purpose,
+ * because this is a demo and it is marked as such.
  */
 
 import { createServer } from 'node:http';
@@ -44,12 +44,12 @@ const MIME = {
 };
 
 // ---------------------------------------------------------------------------
-// Enquadramento do RFC 6455, so o necessario para texto
+// RFC 6455 framing, only what's needed for text
 // ---------------------------------------------------------------------------
 
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
-/** Monta um quadro de texto. Payloads maiores que 64 KB nao aparecem aqui. */
+/** Assembles a text frame. Payloads larger than 64 KB do not appear here. */
 function enquadrar(texto, opcode = 0x1) {
   const carga = Buffer.from(texto, 'utf8');
   const tamanho = carga.length;
@@ -72,11 +72,11 @@ function enquadrar(texto, opcode = 0x1) {
 }
 
 /**
- * Le quadros completos do buffer acumulado.
+ * Reads complete frames from the accumulated buffer.
  *
- * TCP nao respeita fronteira de mensagem: um quadro pode chegar partido em tres
- * pedaços ou tres quadros podem chegar juntos. Por isso o buffer e acumulado e
- * so os quadros inteiros sao consumidos.
+ * TCP does not respect message boundaries: one frame can arrive split into three
+ * pieces or three frames can arrive together. That is why the buffer is accumulated
+ * and only complete frames are consumed.
  */
 function lerQuadros(estado) {
   const quadros = [];
@@ -109,7 +109,7 @@ function lerQuadros(estado) {
     if (b.length < i + tamanho) break;
 
     const carga = Buffer.from(b.subarray(i, i + tamanho));
-    // O cliente sempre mascara. Desfazer e um XOR com a chave de 4 bytes.
+    // The client always masks. Unmasking is an XOR with a 4-byte key.
     if (mascara) for (let k = 0; k < carga.length; k++) carga[k] ^= mascara[k % 4];
 
     estado.buffer = b.subarray(i + tamanho);
@@ -120,20 +120,20 @@ function lerQuadros(estado) {
 }
 
 // ---------------------------------------------------------------------------
-// Estado do chat
+// Chat state
 // ---------------------------------------------------------------------------
 
 /** id -> { socket, estado, nome, salas: Set<string> } */
 const clientes = new Map();
-/** nome da sala -> Set<id> */
+/** room name -> Set<id> */
 const salas = new Map();
 
 /**
- * Autorizacao de sala. **Este e o lugar onde privacidade acontece de verdade.**
+ * Room authorization. **This is where privacy actually happens.**
  *
- * Numa aplicacao real, aqui entraria a checagem de sessao, de convite, de
- * bloqueio. Nesta demo qualquer um entra em qualquer sala, e isso e uma escolha
- * consciente de uma demo, nao um padrao para copiar.
+ * In a real application, session checks, invitations, and blocks would go here.
+ * In this demo anyone enters any room, and that is a deliberate choice of a demo,
+ * not a pattern to copy.
  */
 function podeEntrar(cliente, sala) {
   // Regra de exemplo: uma sala `dm:<a>+<b>` so aceita `<a>` e `<b>`.
@@ -166,14 +166,14 @@ function membrosDe(nomeSala) {
 
 function entrar(cliente, nomeSala) {
   if (!podeEntrar(cliente, nomeSala)) {
-    enviar(cliente, 'erro', { room: nomeSala, message: 'sem permissao nesta sala' });
+    enviar(cliente, 'erro', { room: nomeSala, message: 'no permission in this room' });
     return;
   }
   if (!salas.has(nomeSala)) salas.set(nomeSala, new Set());
   salas.get(nomeSala).add(cliente.id);
   cliente.salas.add(nomeSala);
 
-  // Quem entrou recebe a lista inteira; quem ja estava recebe so o novato.
+  // The person who joined gets the full list; those already there get just the newcomer.
   enviar(cliente, 'room:members', { room: nomeSala, members: membrosDe(nomeSala) });
   paraSala(
     nomeSala,
@@ -191,7 +191,7 @@ function sair(cliente, nomeSala) {
 }
 
 function tratarMensagem(cliente, texto) {
-  // O heartbeat do transporte nativo e texto puro, nao JSON.
+  // The heartbeat of the native transport is plain text, not JSON.
   if (texto === 'ping') {
     cliente.socket.write(enquadrar('pong'));
     return;
@@ -226,8 +226,8 @@ function tratarMensagem(cliente, texto) {
     em: Date.now(),
   };
 
-  // Mensagem direcionada: so o destinatario e o remetente veem. De novo: e o
-  // servidor que garante isso, e nao o cliente que pediu.
+  // Directed message: only the recipient and sender see it. Again, it is the
+  // server that guarantees this, not the client that requested it.
   if (dados.to) {
     const destino = clientes.get(dados.to);
     const envelope = { room: sala, to: dados.to, data: { ...corpo, privada: true } };
@@ -237,7 +237,7 @@ function tratarMensagem(cliente, texto) {
   }
 
   if (!sala) return;
-  if (!cliente.salas.has(sala)) return; // nao esta na sala, nao fala nela
+  if (!cliente.salas.has(sala)) return; // not in the room, cannot speak in it
   paraSala(sala, evento, { room: sala, data: corpo });
 }
 
@@ -250,7 +250,7 @@ const servidor = createServer(async (req, res) => {
     const url = new URL(req.url, `http://localhost:${porta}`);
     let caminho = join(raiz, normalize(decodeURIComponent(url.pathname)));
     if (!caminho.startsWith(raiz)) {
-      res.writeHead(403).end('Fora da raiz');
+      res.writeHead(403).end('Outside root');
       return;
     }
     const info = await stat(caminho).catch(() => null);
@@ -260,7 +260,7 @@ const servidor = createServer(async (req, res) => {
     res.writeHead(200, { 'content-type': MIME[extname(caminho)] ?? 'application/octet-stream' });
     res.end(conteudo);
   } catch {
-    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Nao encontrado');
+    res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }).end('Not found');
   }
 });
 
@@ -311,9 +311,9 @@ servidor.on('upgrade', (req, socket) => {
 servidor.listen(porta, () => {
   // eslint-disable-next-line no-console
   console.log(
-    `Chat de tempo real no ar.\n` +
+    `Real-time chat is up.\n` +
       `  Demo:      http://localhost:${porta}/examples/chat-tempo-real/\n` +
       `  WebSocket: ws://localhost:${porta}/chat\n` +
-      `Abra em duas abas para ver a sala publica e a mensagem privada.`
+      `Open in two tabs to see the public room and private message.`
   );
 });

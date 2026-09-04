@@ -1,9 +1,9 @@
 /**
- * Roda a suite uma unica vez e compartilha o resultado.
+ * Runs the suite once and shares the result.
  *
- * `correctness`, `unit`, `integration` e `memory` olham para a mesma execucao,
- * entao rodar o vitest quatro vezes seria desperdicio puro. O orquestrador
- * guarda a promessa desta funcao em `ctx` e todo mundo espera pela mesma.
+ * `correctness`, `unit`, `integration` and `memory` look at the same execution,
+ * so running vitest four times would be pure waste. The orchestrator keeps the
+ * promise of this function in `ctx` and everyone waits for the same one.
  */
 
 import { existsSync } from 'node:fs';
@@ -11,7 +11,7 @@ import { join } from 'node:path';
 
 import { ROOT, localBin, read, readJson, run, runNode, writeTemp } from './lib.mjs';
 
-/** Caminho do entry point do vitest instalado, ou `null` se nao houver. */
+/** Path to the installed vitest entry point, or `null` if there is none. */
 export function vitestEntry() {
   return (
     localBin('vitest/vitest.mjs') ||
@@ -22,16 +22,16 @@ export function vitestEntry() {
 }
 
 /**
- * Executa `vitest run --reporter=json`.
+ * Runs `vitest run --reporter=json`.
  *
- * @returns objeto com `available`, `data` (relatorio json) e a saida crua.
+ * @returns object with `available`, `data` (json report) and raw output.
  */
 export function runVitest(scratch) {
   const entry = vitestEntry();
   if (!entry) {
     return {
       available: false,
-      reason: 'vitest nao esta instalado em node_modules',
+      reason: 'vitest is not installed in node_modules',
       data: null,
     };
   }
@@ -55,7 +55,7 @@ export function runVitest(scratch) {
   };
 }
 
-/** Extrai as falhas de um relatorio json do vitest, com arquivo e mensagem. */
+/** Extracts failures from a vitest json report, with file and message. */
 export function failuresOf(report) {
   const out = [];
   for (const file of report?.testResults ?? []) {
@@ -71,7 +71,7 @@ export function failuresOf(report) {
   return out;
 }
 
-/** Estatisticas de um subconjunto de arquivos de teste. */
+/** Statistics of a subset of test files. */
 export function statsFor(report, predicate) {
   const files = (report?.testResults ?? []).filter((f) => predicate(f.name));
   let passed = 0;

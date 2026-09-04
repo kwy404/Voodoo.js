@@ -84,7 +84,7 @@ for (const name of files.sort()) {
 console.table(rows);
 
 if (failed) {
-  console.error('\nAlgum bundle passou da meta de tamanho.');
+  console.error('\nA bundle is over its size budget.');
   process.exit(1);
 }
-console.log('\nTodos os bundles estao dentro da meta.');
+console.log('\nEvery bundle is within its budget.');

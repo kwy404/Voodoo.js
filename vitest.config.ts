@@ -10,21 +10,21 @@ export default defineConfig({
       include: ['packages/voodoojs/src/**/*.ts'],
       reporter: ['text', 'html', 'json-summary'],
       /**
-       * Os limites cobrem so o nucleo: parser, reatividade, runtime, DOM e
-       * HTTP. Uma meta global unica nao serviria de nada aqui, porque modulos
-       * grandes e pouco criticos (UI pronta, graficos, som) puxariam a media
-       * para baixo e obrigariam a fixar um numero que o nucleo passa dormindo.
+       * The thresholds cover only the core: parser, reactivity, runtime, DOM and
+       * HTTP. A single global target would not help here, because large and less
+       * critical modules (ready-made UI, graphics, sound) would pull the average down
+       * and force fixing a number that the core passes easily.
        *
-       * O que interessa e `branches`. Cobertura de linha alta com ramo baixo
-       * quer dizer que o caminho feliz foi visitado e o resto do `if` nunca
-       * rodou, que e exatamente onde os defeitos moram.
+       * What matters is `branches`. High line coverage with low branch coverage means
+       * the happy path was visited and the rest of the `if` never ran, which is exactly
+       * where defects live.
        *
-       * Os valores saem da medicao de 2026-08-31, arredondados uns tres pontos
-       * para baixo. A folga existe para o portao travar regressao de verdade em
-       * vez de disparar a cada refatoracao que move duas linhas. Ao subir um
-       * numero aqui, suba junto com o teste que o sustenta.
+       * The values come from measurement on 2026-08-31, rounded down a few points.
+       * The slack is there so the gate catches real regression instead of firing at every
+       * refactoring that moves two lines. When raising a number here, raise the test
+       * that supports it together.
        *
-       * Medido: parser 85.40 ramos / 85.17 linhas, reactivity 81.47 / 85.69,
+       * Measured: parser 85.40 branches / 85.17 lines, reactivity 81.47 / 85.69,
        * runtime 80.50 / 82.33, dom 51.59 / 36.40, http 76.19 / 65.59.
        */
       thresholds: {
@@ -43,9 +43,9 @@ export default defineConfig({
           statements: 79,
           lines: 79,
         },
-        // `dom` saiu do pior patamar do nucleo para cobertura total. Medido
-        // 100/100 de ramos e linhas; o limite fica logo abaixo, com margem
-        // para o ruido do proprio instrumentador.
+        // `dom` came up from the worst level of the core to full coverage. Measured
+        // 100/100 branches and lines; the threshold sits just below, with margin
+        // for the instrumentation's own noise.
         '**/packages/voodoojs/src/dom/**': {
           branches: 95,
           statements: 95,

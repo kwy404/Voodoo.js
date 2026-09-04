@@ -1,9 +1,9 @@
 /**
- * Correctness: a suite inteira precisa passar.
+ * Correctness: the entire suite must pass.
  *
- * Roda `vitest run` de verdade e le o relatorio json. Se o vitest nao esta
- * instalado, SKIP. Se ele roda mas o relatorio nao pode ser lido, FAIL, porque
- * ai nao da para afirmar nada sobre o estado dos testes.
+ * Runs `vitest run` for real and reads the json report. If vitest is not
+ * installed, SKIP. If it runs but the report cannot be read, FAIL, because
+ * then there is no way to assert anything about the test state.
  */
 
 import { STATUS, fail, rel } from './lib.mjs';
@@ -20,7 +20,7 @@ export async function run(ctx) {
       summary: result.reason,
       findings: [],
       details: {
-        howToEnable: 'npm install (o vitest ja consta em devDependencies da raiz)',
+        howToEnable: 'npm install (vitest is already in devDependencies at the root)',
       },
     };
   }
@@ -28,12 +28,12 @@ export async function run(ctx) {
   if (result.parseFailed) {
     return {
       status: STATUS.FAIL,
-      summary: 'vitest rodou mas nao produziu relatorio json legivel',
+      summary: 'vitest ran but did not produce a readable json report',
       findings: [
-        fail('O relatorio json do vitest nao pode ser lido', {
+        fail('The vitest json report cannot be read', {
           file: rel(result.outputFile),
-          expected: 'json valido com testResults',
-          actual: `exit code ${result.exitCode}; stderr: ${result.stderr.slice(0, 400) || '(vazio)'}`,
+          expected: 'valid json with testResults',
+          actual: `exit code ${result.exitCode}; stderr: ${result.stderr.slice(0, 400) || '(empty)'}`,
         }),
       ],
       details: { exitCode: result.exitCode },
@@ -43,10 +43,10 @@ export async function run(ctx) {
   const report = result.data;
   const failures = failuresOf(report);
   const findings = failures.map((f) =>
-    fail(`Teste falhou: ${f.title}`, {
+    fail(`Test failed: ${f.title}`, {
       file: rel(f.file),
-      expected: 'teste passando',
-      actual: f.message || 'sem mensagem',
+      expected: 'test passing',
+      actual: f.message || 'no message',
     })
   );
 
@@ -61,8 +61,8 @@ export async function run(ctx) {
   const status = totals.failed > 0 || result.exitCode !== 0 ? STATUS.FAIL : STATUS.PASS;
   const summary =
     status === STATUS.FAIL
-      ? `${totals.failed} de ${totals.tests} testes falhando`
-      : `${totals.passed}/${totals.tests} testes em ${totals.files} arquivos`;
+      ? `${totals.failed} of ${totals.tests} tests failing`
+      : `${totals.passed}/${totals.tests} tests in ${totals.files} files`;
 
   return { status, summary, findings, details: totals };
 }

@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Orquestrador de qualidade da Voodoo.js.
+ * Voodoo.js quality orchestrator.
  *
- *   node scripts/quality.mjs                      relatorio completo no terminal
- *   node scripts/quality.mjs --ci                 exit != 0 se houver qualquer FAIL
- *   node scripts/quality.mjs --report             grava QUALITY_REPORT.md
- *   node scripts/quality.mjs --json               saida estruturada
- *   node scripts/quality.mjs --only=docs,bundle   roda so esses checks
- *   node scripts/quality.mjs --skip=browser       pula esses
+ *   node scripts/quality.mjs                      full report in terminal
+ *   node scripts/quality.mjs --ci                 exit != 0 if there is any FAIL
+ *   node scripts/quality.mjs --report             writes QUALITY_REPORT.md
+ *   node scripts/quality.mjs --json               structured output
+ *   node scripts/quality.mjs --only=docs,bundle   runs only these checks
+ *   node scripts/quality.mjs --skip=browser       skips these
  *   node scripts/quality.mjs --only=api-compatibility --update
  *
- * A regra que governa este programa: nenhum resultado falso. Quando a
- * ferramenta que sustentaria um check nao existe no ambiente, o resultado e
- * SKIP com a instrucao de como habilitar — nunca um PASS. Um painel verde que
- * mente e pior que painel nenhum, porque some com a pergunta sem responde-la.
+ * The rule that governs this program: no false results. When the tool that would
+ * support a check does not exist in the environment, the result is SKIP with
+ * instructions on how to enable it, never a PASS. A green panel that lies is worse
+ * than no panel, because it disappears with the question unanswered.
  */
 
 import { writeFileSync } from 'node:fs';
@@ -35,20 +35,20 @@ import {
 import { runVitest } from './quality/vitest-report.mjs';
 import { scoreAll } from './quality/scorecard.mjs';
 
-// No Windows, chamar `npm` exige `shell: true`, e o Node 24 emite DEP0190 por
-// causa disso a cada chamada. Nao ha alternativa (os binarios do npm sao .cmd)
-// e o aviso poluiria o relatorio, entao so este e silenciado — qualquer outro
-// aviso continua aparecendo.
+// On Windows, calling `npm` requires `shell: true`, and Node 24 emits DEP0190 because
+// of this with every call. There is no alternative (npm binaries are .cmd files)
+// and the warning would pollute the report, so only this one is silenced. Any other
+// warning continues to appear.
 process.on('warning', (w) => {
   if (w.name === 'DeprecationWarning' && /shell option true/.test(w.message)) return;
   console.warn(`${w.name}: ${w.message}`);
 });
 
 // ---------------------------------------------------------------------------
-// Registro de checks
+// Check registry
 // ---------------------------------------------------------------------------
 
-/** Ordem de exibicao. O `label` e o que aparece na tabela. */
+/** Display order. The `label` is what appears in the table. */
 const CHECKS = [
   { id: 'correctness', label: 'Correctness', module: './quality/correctness.mjs' },
   { id: 'unit', label: 'Unit Tests', module: './quality/unit.mjs' },
@@ -65,7 +65,7 @@ const CHECKS = [
   { id: 'dead-code', label: 'Dead Code', module: './quality/dead-code.mjs' },
 ];
 
-/** Largura da coluna de rotulo, contando o preenchimento de pontos. */
+/** Width of the label column, counting dot padding. */
 const LABEL_WIDTH = 20;
 
 // ---------------------------------------------------------------------------
@@ -114,7 +114,7 @@ function selectChecks(flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Contexto compartilhado
+// Shared context
 // ---------------------------------------------------------------------------
 
 function makeContext(flags) {
@@ -125,7 +125,7 @@ function makeContext(flags) {
     root: ROOT,
     scratch,
     flags,
-    /** Roda a suite uma unica vez, por mais checks que precisem dela. */
+    /** Runs the suite once, no matter how many checks need it. */
     vitest() {
       if (!vitestPromise) vitestPromise = Promise.resolve().then(() => runVitest(scratch));
       return vitestPromise;
@@ -137,7 +137,7 @@ function makeContext(flags) {
 }
 
 // ---------------------------------------------------------------------------
-// Execucao
+// Execution
 // ---------------------------------------------------------------------------
 
 async function runCheck(check, ctx) {
@@ -162,13 +162,13 @@ async function runCheck(check, ctx) {
       durationMs: Date.now() - startedAt,
       result: {
         status: STATUS.FAIL,
-        summary: 'o proprio check quebrou',
+        summary: 'the check itself broke',
         findings: [
           {
             level: 'fail',
-            message: `O check "${check.id}" lancou uma excecao`,
+            message: `The check "${check.id}" threw an exception`,
             file: check.module,
-            expected: 'execucao sem erro',
+            expected: 'execution without error',
             actual: `${err && err.message}\n${(err && err.stack) || ''}`.slice(0, 900),
           },
         ],
@@ -179,7 +179,7 @@ async function runCheck(check, ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Saida no terminal
+// Terminal output
 // ---------------------------------------------------------------------------
 
 function tableLine(label, result) {
@@ -194,11 +194,11 @@ function describeFinding(finding) {
     ? `${finding.file}${finding.line ? `:${finding.line}` : ''}${finding.column ? `:${finding.column}` : ''}`
     : null;
   lines.push(`  - ${finding.message}`);
-  if (where) lines.push(`      onde:     ${where}`);
-  if (finding.expected) lines.push(`      esperado: ${finding.expected}`);
+  if (where) lines.push(`      where:    ${where}`);
+  if (finding.expected) lines.push(`      expected: ${finding.expected}`);
   if (finding.actual) {
     const actual = String(finding.actual).split('\n');
-    lines.push(`      obtido:   ${actual[0]}`);
+    lines.push(`      actual:   ${actual[0]}`);
     for (const extra of actual.slice(1, 6)) lines.push(`                ${extra}`);
   }
   return lines.join('\n');
@@ -224,17 +224,17 @@ function printReport(results, ctx) {
 
   const skipped = results.filter((e) => e.result.status === STATUS.SKIP);
   if (skipped.length) {
-    out.push('SKIP — o que falta para habilitar');
+    out.push('SKIP: what is missing to enable');
     for (const entry of skipped) {
       const how = entry.result.details?.howToEnable;
       out.push(`  - ${entry.label}: ${entry.result.summary}`);
-      if (how) out.push(`      habilite: ${how}`);
+      if (how) out.push(`      enable: ${how}`);
     }
     out.push('');
   }
 
   const { rows, overall } = scoreAll(results, ctx);
-  out.push(`Nota geral: ${overall.toFixed(1)}/10`);
+  out.push(`Overall score: ${overall.toFixed(1)}/10`);
   for (const row of rows) {
     out.push(`  ${row.label.padEnd(LABEL_WIDTH - 2)} ${row.score.toFixed(1)}`);
   }
@@ -262,7 +262,7 @@ function mdEscape(text) {
 function findingsTable(findings) {
   const rows = findings.filter((f) => f.level === 'fail' || f.level === 'warn');
   if (!rows.length) return null;
-  const out = ['| nivel | onde | problema | esperado | obtido |', '| --- | --- | --- | --- | --- |'];
+  const out = ['| level | where | issue | expected | actual |', '| --- | --- | --- | --- | --- |'];
   for (const f of rows) {
     const where = f.file ? `\`${f.file}${f.line ? `:${f.line}` : ''}\`` : '—';
     out.push(
@@ -290,26 +290,26 @@ function buildMarkdown(results, ctx) {
   md.push('# Voodoo.js Quality Report');
   md.push('');
   md.push(
-    'Gerado por `npm run quality -- --report`. Todo numero deste arquivo saiu da execucao ' +
-      'descrita abaixo. Onde a ferramenta nao existia no ambiente, o resultado e `SKIP` com a ' +
-      'instrucao de como habilitar — nunca um `PASS` de conveniencia.'
+    'Generated by `npm run quality -- --report`. Every number in this file came from the execution ' +
+      'described below. Where the tool did not exist in the environment, the result is `SKIP` with ' +
+      'instructions on how to enable it, never a convenience `PASS`.'
   );
   md.push('');
 
-  md.push('## Execucao');
+  md.push('## Execution');
   md.push('');
-  md.push('| campo | valor |');
+  md.push('| field | value |');
   md.push('| --- | --- |');
-  md.push(`| data | ${new Date().toISOString()} |`);
-  md.push(`| commit | \`${git.sha}\`${git.dirty ? ' (arvore de trabalho com alteracoes nao commitadas)' : ''} |`);
+  md.push(`| date | ${new Date().toISOString()} |`);
+  md.push(`| commit | \`${git.sha}\`${git.dirty ? ' (working tree with uncommitted changes)' : ''} |`);
   md.push(`| branch | \`${git.branch}\` |`);
-  md.push(`| pacote | ${pkg.name ?? 'voodoojs'} ${pkg.version ?? ''} |`);
+  md.push(`| package | ${pkg.name ?? 'voodoojs'} ${pkg.version ?? ''} |`);
   md.push(`| node | ${process.version} |`);
-  md.push(`| plataforma | ${process.platform} ${process.arch} |`);
+  md.push(`| platform | ${process.platform} ${process.arch} |`);
   md.push(`| checks | ${results.length} (${counts.PASS} PASS, ${counts.WARN} WARN, ${counts.FAIL} FAIL, ${counts.SKIP} SKIP) |`);
   md.push('');
 
-  md.push('## Resumo');
+  md.push('## Summary');
   md.push('');
   md.push('```');
   md.push('Voodoo.js Quality Report');
@@ -320,9 +320,9 @@ function buildMarkdown(results, ctx) {
 
   md.push('## Scorecard');
   md.push('');
-  md.push(`**Nota geral: ${overall.toFixed(1)} / 10** (media simples das dimensoes abaixo)`);
+  md.push(`**Overall score: ${overall.toFixed(1)} / 10** (simple average of the dimensions below)`);
   md.push('');
-  md.push('| dimensao | status | nota | justificativa |');
+  md.push('| dimension | status | score | justification |');
   md.push('| --- | --- | --- | --- |');
   for (const row of rows) {
     md.push(
@@ -333,7 +333,7 @@ function buildMarkdown(results, ctx) {
   }
   md.push('');
 
-  md.push('## Achados por check');
+  md.push('## Findings by check');
   md.push('');
   for (const entry of results) {
     md.push(`### ${entry.label} — ${entry.result.status}`);
@@ -349,7 +349,7 @@ function buildMarkdown(results, ctx) {
 
     const notes = entry.result.findings.filter((f) => f.level === 'note');
     if (notes.length) {
-      md.push('<details><summary>Notas informativas</summary>');
+      md.push('<details><summary>Informational notes</summary>');
       md.push('');
       for (const n of notes) {
         const where = n.file ? ` (\`${n.file}${n.line ? `:${n.line}` : ''}\`)` : '';
@@ -361,12 +361,12 @@ function buildMarkdown(results, ctx) {
     }
 
     if (entry.result.status === STATUS.SKIP && entry.result.details?.howToEnable) {
-      md.push(`**Como habilitar:** ${entry.result.details.howToEnable}`);
+      md.push(`**How to enable:** ${entry.result.details.howToEnable}`);
       md.push('');
     }
 
     if (entry.result.details && Object.keys(entry.result.details).length) {
-      md.push('<details><summary>Evidencia coletada</summary>');
+      md.push('<details><summary>Collected evidence</summary>');
       md.push('');
       md.push('```json');
       md.push(JSON.stringify(entry.result.details, null, 2).slice(0, 20000));
@@ -377,13 +377,13 @@ function buildMarkdown(results, ctx) {
     }
   }
 
-  md.push('## Como reproduzir');
+  md.push('## How to reproduce');
   md.push('');
   md.push('```bash');
-  md.push('npm run quality              # relatorio no terminal');
-  md.push('npm run quality -- --ci      # falha o build se houver FAIL');
-  md.push('npm run quality -- --report  # regrava este arquivo');
-  md.push('npm run quality -- --json    # saida estruturada');
+  md.push('npm run quality              # report in terminal');
+  md.push('npm run quality -- --ci      # fail the build if there is any FAIL');
+  md.push('npm run quality -- --report  # rewrite this file');
+  md.push('npm run quality -- --json    # structured output');
   md.push('```');
   md.push('');
 
@@ -391,22 +391,22 @@ function buildMarkdown(results, ctx) {
 }
 
 // ---------------------------------------------------------------------------
-// Principal
+// Main
 // ---------------------------------------------------------------------------
 
 function printHelp() {
   console.log(`
-Voodoo.js Quality — orquestrador de checks
+Voodoo.js Quality — check orchestrator
 
-  node scripts/quality.mjs [opcoes]
+  node scripts/quality.mjs [options]
 
-  --json                saida estruturada em json
-  --only=a,b            roda apenas esses checks
-  --skip=a,b            pula esses checks
-  --ci                  exit code != 0 quando houver qualquer FAIL
-  --report              grava QUALITY_REPORT.md na raiz
-  --report=CAMINHO      grava o relatorio em outro caminho
-  --update              regrava o snapshot de API (use com --only=api-compatibility)
+  --json                structured json output
+  --only=a,b            run only these checks
+  --skip=a,b            skip these checks
+  --ci                  exit code != 0 when there is any FAIL
+  --report              writes QUALITY_REPORT.md at root
+  --report=PATH         write the report to another path
+  --update              rewrite the API snapshot (use with --only=api-compatibility)
 
   checks: ${CHECKS.map((c) => c.id).join(', ')}
 `);
@@ -420,13 +420,13 @@ async function main() {
     return 0;
   }
   if (flags.unknown?.length) {
-    console.error(`Flag desconhecida: ${flags.unknown.join(', ')}\nUse --help.`);
+    console.error(`Unknown flag: ${flags.unknown.join(', ')}\nUse --help.`);
     return 2;
   }
 
   const selected = selectChecks(flags);
   if (!selected.length) {
-    console.error('Nenhum check selecionado. Use --help para ver a lista.');
+    console.error('No checks selected. Use --help to see the list.');
     return 2;
   }
 
@@ -469,7 +469,7 @@ async function main() {
       );
     } else {
       printReport(results, ctx);
-      if (flags.report) console.log(`Relatorio gravado em ${rel(flags.reportPath)}\n`);
+      if (flags.report) console.log(`Report written to ${rel(flags.reportPath)}\n`);
     }
 
     const failed = results.filter((entry) => entry.result.status === STATUS.FAIL);

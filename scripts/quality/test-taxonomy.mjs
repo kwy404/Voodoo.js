@@ -1,10 +1,10 @@
 /**
- * Classifica arquivos de teste em unitarios e de integracao.
+ * Classifies test files as unit or integration.
  *
- * A classificacao e puramente estrutural: pasta ou sufixo no nome do arquivo.
- * Nao existe adivinhacao pelo conteudo. Se o projeto nao adota nenhuma das
- * convencoes, a funcao devolve listas vazias e quem chama reporta SKIP em vez
- * de chutar uma divisao que nao existe no repositorio.
+ * The classification is purely structural: folder or suffix in the file name.
+ * There is no guessing from content. If the project adopts none of the
+ * conventions, the function returns empty lists and the caller reports SKIP instead
+ * of guessing a division that does not exist in the repository.
  */
 
 import { STATUS, note, rel } from './lib.mjs';
@@ -25,12 +25,12 @@ export function isIntegration(file) {
 }
 
 /**
- * Monta o resultado de um check de subconjunto da suite.
+ * Assembles the result of a suite subset check.
  *
- * @param kind    'unit' ou 'integration', so para o texto
- * @param result  saida de `ctx.vitest()`
- * @param match   predicado de classificacao
- * @param hint    instrucao de como habilitar a separacao
+ * @param kind    'unit' or 'integration', for text only
+ * @param result  output from `ctx.vitest()`
+ * @param match   classification predicate
+ * @param hint    instructions on how to enable the separation
  */
 export function subsetResult(kind, result, match, hint) {
   if (!result.available) {
@@ -44,7 +44,7 @@ export function subsetResult(kind, result, match, hint) {
   if (result.parseFailed) {
     return {
       status: STATUS.SKIP,
-      summary: 'relatorio json do vitest indisponivel (ver Correctness)',
+      summary: 'vitest json report unavailable (see Correctness)',
       findings: [],
       details: {},
     };
@@ -56,13 +56,13 @@ export function subsetResult(kind, result, match, hint) {
   if (stats.files.length === 0) {
     return {
       status: STATUS.SKIP,
-      summary: `a suite nao marca testes de ${kind}`,
+      summary: `the suite does not mark ${kind} tests`,
       findings: [
         note(
-          `Nenhum arquivo de teste identificavel como "${kind}". Os ${allFiles.length} arquivos ` +
-            `da suite vivem todos em packages/voodoojs/test/ sem pasta ou sufixo que separe as ` +
-            `camadas, entao este check nao tem como afirmar nada e nao vai fingir que tem.`,
-          { expected: hint, actual: `${allFiles.length} arquivos sem classificacao` }
+          `No test file identifiable as "${kind}". The ${allFiles.length} files ` +
+            `of the suite all live in packages/voodoojs/test/ without a folder or suffix that separates the ` +
+            `layers, so this check has no way to assert anything and won't pretend it does.`,
+          { expected: hint, actual: `${allFiles.length} files without classification` }
         ),
       ],
       details: {
@@ -76,7 +76,7 @@ export function subsetResult(kind, result, match, hint) {
   const status = stats.failed > 0 ? STATUS.FAIL : STATUS.PASS;
   return {
     status,
-    summary: `${stats.passed}/${stats.total} em ${stats.files.length} arquivos`,
+    summary: `${stats.passed}/${stats.total} in ${stats.files.length} files`,
     findings: [],
     details: { ...stats, files: stats.files.map(rel) },
   };

@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Valida os links relativos da documentacao.
+ * Validates the relative links in the documentation.
  *
- *   node scripts/check-links.mjs           relatorio legivel, exit != 0 se quebrado
- *   node scripts/check-links.mjs --json    o mesmo em json
+ *   node scripts/check-links.mjs           readable report, exit != 0 if broken
+ *   node scripts/check-links.mjs --json    same as json
  *
- * Verifica duas coisas para cada link relativo encontrado num `.md`:
- * o arquivo de destino existe, e a ancora (`#alguma-coisa`) existe no destino.
+ * Checks two things for each relative link found in a `.md`:
+ * the target file exists, and the anchor (`#something`) exists in the target.
  *
- * A ancora e a metade que ninguem confere na mao e que quebra sozinha: basta
- * alguem reescrever um titulo em outro arquivo. Links externos ficam de fora de
- * proposito — validar `http` exigiria rede e transformaria um check
- * deterministico numa fonte de falha intermitente.
+ * The anchor is the half that nobody verifies by hand and breaks on its own: it only
+ * takes someone rewriting a title in another file. External links are left out on
+ * purpose — validating `http` would require network and turn a deterministic check
+ * into a source of intermittent failure.
  */
 
 import { existsSync, statSync } from 'node:fs';
@@ -20,9 +20,9 @@ import { pathToFileURL } from 'node:url';
 
 import { ROOT, read, rel, walkFiles } from './quality/lib.mjs';
 
-/** Onde procurar arquivos markdown. */
+/** Where to search for markdown files. */
 const SCAN = [
-  { dir: ROOT, depth: 'flat', label: 'raiz' },
+  { dir: ROOT, depth: 'flat', label: 'root' },
   { dir: join(ROOT, 'docs'), depth: 'deep', label: 'docs' },
   { dir: join(ROOT, 'site', 'docs'), depth: 'deep', label: 'site/docs' },
 ];
@@ -30,10 +30,10 @@ const SCAN = [
 const EXTERNAL = /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i;
 
 /**
- * Apaga trechos de codigo em linha, preservando o comprimento.
+ * Removes inline code snippets, preserving length.
  *
- * Sem isso, uma tabela de migracao com `<a v-link href="/x">` numa celula de
- * codigo vira "link quebrado para /x", que e ruido puro.
+ * Without this, a migration table with `<a v-link href="/x">` in a code cell
+ * becomes "broken link to /x", which is pure noise.
  */
 function stripInlineCode(source) {
   return source.replace(/(`{1,3})(?:(?!\1)[\s\S])*?\1/g, (m) =>
@@ -41,7 +41,7 @@ function stripInlineCode(source) {
   );
 }
 
-/** Remove blocos de codigo cercados, para nao ler link nem titulo de exemplo. */
+/** Removes fenced code blocks, to avoid reading links or example titles. */
 function stripFences(source) {
   const lines = source.split('\n');
   let fence = null;
@@ -63,7 +63,7 @@ function stripFences(source) {
     .join('\n');
 }
 
-/** Slug no estilo do GitHub: minusculas, pontuacao fora, espacos viram hifen. */
+/** Slug in GitHub style: lowercase, punctuation removed, spaces become hyphens. */
 export function slugify(text) {
   return text
     .trim()
@@ -76,7 +76,7 @@ export function slugify(text) {
     .replace(/\s+/g, '-');
 }
 
-/** Todas as ancoras alcancaveis num arquivo markdown. */
+/** All reachable anchors in a markdown file. */
 export function anchorsOf(source) {
   const body = stripFences(source);
   const anchors = new Set();
@@ -92,14 +92,14 @@ export function anchorsOf(source) {
     anchors.add(count === 0 ? base : `${base}-${count}`);
   }
 
-  // Ancoras explicitas em HTML embutido.
+  // Explicit anchors in embedded HTML.
   for (const m of source.matchAll(/<[^>]+\bid\s*=\s*["']([^"']+)["']/g)) anchors.add(m[1]);
   for (const m of source.matchAll(/<a[^>]+\bname\s*=\s*["']([^"']+)["']/g)) anchors.add(m[1]);
 
   return anchors;
 }
 
-/** Ancoras de um arquivo HTML: qualquer `id=`. */
+/** Anchors from an HTML file: any `id=`. */
 function htmlAnchors(source) {
   const anchors = new Set();
   for (const m of source.matchAll(/\bid\s*=\s*["']([^"']+)["']/g)) anchors.add(m[1]);
@@ -107,7 +107,7 @@ function htmlAnchors(source) {
   return anchors;
 }
 
-/** Extrai os links de um markdown, com a linha de origem. */
+/** Extracts links from a markdown, with the source line. */
 function linksOf(source) {
   const body = stripInlineCode(stripFences(source));
   const lines = body.split('\n');
@@ -115,22 +115,22 @@ function linksOf(source) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // [texto](destino "titulo")
+    // [text](target "title")
     for (const m of line.matchAll(/\[(?:[^\][]|\[[^\]]*\])*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)/g)) {
       out.push({ target: m[1], line: i + 1, raw: m[0].slice(0, 100) });
     }
-    // [id]: destino
+    // [id]: target
     const def = /^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)>?/.exec(line);
     if (def) out.push({ target: def[1], line: i + 1, raw: line.trim().slice(0, 100) });
-    // <a href="destino">
+    // <a href="target">
     for (const m of line.matchAll(/<a[^>]+href\s*=\s*["']([^"']+)["']/g)) {
       out.push({ target: m[1], line: i + 1, raw: m[0].slice(0, 100) });
     }
-    // <img src="destino">
+    // <img src="target">
     for (const m of line.matchAll(/<img[^>]+src\s*=\s*["']([^"']+)["']/g)) {
       out.push({ target: m[1], line: i + 1, raw: m[0].slice(0, 100) });
     }
-    // ![alt](destino)
+    // ![alt](target)
     for (const m of line.matchAll(/!\[[^\]]*\]\(\s*<?([^)\s>]+)>?\s*\)/g)) {
       out.push({ target: m[1], line: i + 1, raw: m[0].slice(0, 100) });
     }
@@ -139,9 +139,9 @@ function linksOf(source) {
   return out;
 }
 
-/** Resolve o caminho de um link, aceitando as formas que o GitHub aceita. */
+/** Resolves a link's path, accepting the forms that GitHub accepts. */
 function resolveTarget(fromFile, target) {
-  // Link comecando com "/" e relativo a raiz do repositorio, nao ao arquivo.
+  // Link starting with "/" is relative to the repository root, not the file.
   const base = target.startsWith('/') ? ROOT : dirname(fromFile);
   if (target.startsWith('/')) target = target.replace(/^\/+/, '');
   const candidates = [
@@ -160,19 +160,19 @@ function resolveTarget(fromFile, target) {
     }
     return candidate;
   }
-  // Diretorio sem indice ainda e um destino valido para navegacao no GitHub.
+  // Directory without index is still a valid navigation target on GitHub.
   const asDir = resolve(base, target);
   if (existsSync(asDir)) {
     try {
       if (statSync(asDir).isDirectory()) return asDir;
     } catch {
-      /* segue */
+      /* continue */
     }
   }
   return null;
 }
 
-/** Roda a validacao completa. Devolve `{ checked, broken, files }`. */
+/** Runs the complete validation. Returns `{ checked, broken, files }`. */
 export function checkLinks() {
   const files = [];
   for (const scan of SCAN) {
@@ -219,16 +219,16 @@ export function checkLinks() {
       const pathPart = hashAt < 0 ? target : target.slice(0, hashAt);
       const anchor = hashAt < 0 ? '' : decodeURIComponent(target.slice(hashAt + 1));
 
-      // Link so de ancora: valida contra o proprio arquivo.
+      // Link anchor-only: validate against the file itself.
       if (!pathPart) {
         if (anchor && !selfAnchors.has(anchor)) {
           broken.push({
             file: rel(file),
             line: link.line,
             target,
-            reason: 'ancora',
-            expected: `titulo gerando #${anchor} neste arquivo`,
-            actual: `nenhum titulo com esse slug (${selfAnchors.size} ancoras no arquivo)`,
+            reason: 'anchor',
+            expected: `heading generating #${anchor} in this file`,
+            actual: `no heading with that slug (${selfAnchors.size} anchors in file)`,
           });
         }
         continue;
@@ -240,9 +240,9 @@ export function checkLinks() {
           file: rel(file),
           line: link.line,
           target,
-          reason: 'arquivo',
-          expected: `${pathPart} existente a partir de ${rel(dirname(file)) || '.'}`,
-          actual: 'arquivo nao encontrado',
+          reason: 'file',
+          expected: `${pathPart} existing from ${rel(dirname(file)) || '.'}`,
+          actual: 'file not found',
         });
         continue;
       }
@@ -253,12 +253,12 @@ export function checkLinks() {
       try {
         isDir = statSync(resolved).isDirectory();
       } catch {
-        /* segue */
+        /* continue */
       }
       if (isDir) continue;
 
-      // Ancora so faz sentido em documento navegavel. Num .svg ou .png o "#..."
-      // e sintaxe do proprio GitHub (#gh-dark-mode-only) ou um fragmento SVG.
+      // Anchor only makes sense in a navigable document. In .svg or .png, "#..."
+      // is GitHub's own syntax (#gh-dark-mode-only) or an SVG fragment.
       if (!/\.(md|markdown|html?)$/i.test(resolved)) continue;
 
       const targetAnchors = anchorsFor(resolved);
@@ -267,9 +267,9 @@ export function checkLinks() {
           file: rel(file),
           line: link.line,
           target,
-          reason: 'ancora',
-          expected: `#${anchor} em ${rel(resolved)}`,
-          actual: `${rel(resolved)} nao tem esse slug (${targetAnchors.size} ancoras disponiveis)`,
+          reason: 'anchor',
+          expected: `#${anchor} in ${rel(resolved)}`,
+          actual: `${rel(resolved)} does not have that slug (${targetAnchors.size} anchors available)`,
         });
       }
     }
@@ -288,17 +288,17 @@ if (isMain) {
     console.log(JSON.stringify(result, null, 2));
   } else {
     console.log(
-      `${result.checked} links relativos em ${result.files.length} arquivos markdown ` +
-        `(${result.external} externos ignorados).`
+      `${result.checked} relative links in ${result.files.length} markdown files ` +
+        `(${result.external} external ignored).`
     );
     if (!result.broken.length) {
-      console.log('Nenhum link quebrado.');
+      console.log('No broken links.');
     } else {
-      console.log(`\n${result.broken.length} links quebrados:\n`);
+      console.log(`\n${result.broken.length} broken links:\n`);
       for (const b of result.broken) {
         console.log(`  ${b.file}:${b.line}  ->  ${b.target}`);
-        console.log(`      esperado: ${b.expected}`);
-        console.log(`      obtido:   ${b.actual}\n`);
+        console.log(`      expected: ${b.expected}`);
+        console.log(`      actual:   ${b.actual}\n`);
       }
     }
   }

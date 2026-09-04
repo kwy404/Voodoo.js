@@ -43,7 +43,7 @@ function fencedBlocks(source) {
   return out;
 }
 
-/** Contents of each `<script>` in an html block. */
+/** Contents of each `<script>` in an HTML block. */
 function inlineScripts(html) {
   const out = [];
   for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
@@ -75,17 +75,17 @@ async function loadParser() {
 }
 
 /**
- * Trechos aceitos apesar de nao serem programa completo.
+ * Snippets accepted even though they are not complete programs.
  *
- * Documentacao boa mostra fragmento: uma linha de configuracao, o corpo de um
- * objeto, um `...` indicando continuacao. Reprovar isso seria confundir estilo
- * com defeito.
+ * Good documentation shows a fragment: a configuration line, the body of an
+ * object, a `...` indicating continuation. Rejecting this would confuse style
+ * with defect.
  */
 function isFragment(code) {
   const trimmed = code.trim();
   if (!trimmed) return true;
   if (/^[.…]{3}/m.test(trimmed) && trimmed.split('\n').length <= 3) return true;
-  // Corpo de objeto solto: comeca com "chave:" e nao abre bloco antes.
+  // Loose object body: starts with "key:" and does not open a block first.
   if (/^\s*[\w'"$-]+\s*:/.test(trimmed) && !/^\s*(const|let|var|function|class|import)/.test(trimmed))
     return true;
   return false;
@@ -122,9 +122,9 @@ export async function run() {
 
   if (!parser) {
     findings.push(
-      note('esbuild indisponivel: os exemplos do README nao foram validados', {
-        expected: 'esbuild em node_modules (ja consta via tsup)',
-        actual: 'import falhou',
+      note('esbuild unavailable: README examples were not validated', {
+        expected: 'esbuild in node_modules (already present via tsup)',
+        actual: 'import failed',
       })
     );
   } else {
@@ -161,10 +161,10 @@ export async function run() {
             const detail = (err && (err.errors?.[0]?.text || err.message)) || String(err);
             const at = err?.errors?.[0]?.location;
             findings.push(
-              fail(`Exemplo de ${isHtml ? 'html' : 'js'} nao compila`, {
+              fail(`${isHtml ? 'HTML' : 'JavaScript'} example does not compile`, {
                 file: relPath,
                 line: block.start + snippet.lineOffset + (at?.line ?? 1),
-                expected: 'bloco de exemplo sintaticamente valido',
+                expected: 'syntactically valid example block',
                 actual: detail.split('\n')[0].slice(0, 200),
               })
             );
@@ -175,7 +175,7 @@ export async function run() {
   }
 
   // -------------------------------------------------------------------------
-  // 3. Nada de site/docs em markdown? Vale registrar, nao reprovar.
+  // 3. No markdown in site/docs? Worth recording, not rejecting.
   // -------------------------------------------------------------------------
   const siteDocs = join(ROOT, 'site', 'docs');
   const siteMd = existsSync(siteDocs)
@@ -183,9 +183,9 @@ export async function run() {
     : 0;
   if (existsSync(siteDocs) && siteMd === 0) {
     findings.push(
-      note('site/docs nao tem markdown; a documentacao publicada e HTML gerado', {
+      note('site/docs has no markdown; the published documentation is generated HTML', {
         file: 'site/docs',
-        actual: 'links relativos dentro do HTML do site nao entram neste check',
+        actual: 'relative links inside the site HTML do not enter this check',
       })
     );
   }
@@ -196,7 +196,7 @@ export async function run() {
 
   const summaryParts = [];
   if (links.broken.length) summaryParts.push(`${links.broken.length} broken links`);
-  if (examples.broken) summaryParts.push(`${examples.broken} exemplos quebrados`);
+  if (examples.broken) summaryParts.push(`${examples.broken} broken examples`);
 
   return {
     status,

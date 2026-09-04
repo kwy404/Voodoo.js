@@ -1,5 +1,5 @@
-import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-E5T65CEI.js';
-export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-E5T65CEI.js';
+import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-N3T43YN3.js';
+export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-N3T43YN3.js';
 import { http } from './chunk-WSDB7K4X.js';
 import { originalAttributes, destroy } from './chunk-JB2YYNK6.js';
 import { handleError } from './chunk-4T2UIPWX.js';

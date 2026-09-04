@@ -1,10 +1,10 @@
 /**
- * Memory: os testes de vazamento da suite.
+ * Memory: the suite's leak tests.
  *
- * Procura arquivos de teste com `memory`, `memoria`, `leak` ou `vazamento` no
- * nome e le o resultado deles na execucao ja feita pelo Correctness. Se nenhum
- * existe, SKIP com a instrucao — nao da para afirmar que nao ha vazamento sem
- * um teste que tente provocar um.
+ * Searches for test files with `memory`, `memoria`, `leak` or `vazamento` in the
+ * name and reads their results from the execution already done by Correctness. If none
+ * exist, SKIP with instructions. There is no way to assert there are no leaks without
+ * a test that tries to cause one.
  */
 
 import { STATUS, fail, note, rel } from './lib.mjs';
@@ -15,9 +15,9 @@ export const meta = { label: 'Memory' };
 const MEMORY_TEST = /[\\/][^\\/]*(memory|memoria|leak|vazamento)[^\\/]*\.test\.[cm]?[jt]sx?$/i;
 
 const HOW_TO_ENABLE =
-  'crie packages/voodoojs/test/memory.test.ts (ou *.leak.test.ts) exercitando ' +
-  'walk/destroy, effectScope, listeners de v-on e stores em ciclos repetidos, ' +
-  'verificando que WeakRef/FinalizationRegistry ou os contadores internos voltam a zero';
+  'create packages/voodoojs/test/memory.test.ts (or *.leak.test.ts) exercising ' +
+  'walk/destroy, effectScope, v-on listeners and stores in repeated cycles, ' +
+  'checking that WeakRef/FinalizationRegistry or internal counters return to zero';
 
 export async function run(ctx) {
   const result = await ctx.vitest();
@@ -33,7 +33,7 @@ export async function run(ctx) {
   if (result.parseFailed) {
     return {
       status: STATUS.SKIP,
-      summary: 'relatorio json do vitest indisponivel (ver Correctness)',
+      summary: 'vitest json report unavailable (see Correctness)',
       findings: [],
       details: {},
     };
@@ -44,11 +44,11 @@ export async function run(ctx) {
   if (!stats.files.length) {
     return {
       status: STATUS.SKIP,
-      summary: 'nenhum teste de vazamento na suite',
+      summary: 'no leak tests in the suite',
       findings: [
-        note('Nao existe teste de memoria; este check nao tem o que verificar', {
-          expected: 'arquivo de teste casando com *memory*/*leak*/*vazamento*.test.ts',
-          actual: 'nenhum encontrado em packages/voodoojs/test/',
+        note('There is no memory test; this check has nothing to verify', {
+          expected: 'test file matching *memory*/*leak*/*vazamento*.test.ts',
+          actual: 'none found in packages/voodoojs/test/',
         }),
       ],
       details: { howToEnable: HOW_TO_ENABLE, pattern: String(MEMORY_TEST) },
@@ -61,9 +61,9 @@ export async function run(ctx) {
     for (const assertion of file.assertionResults ?? []) {
       if (assertion.status !== 'failed') continue;
       findings.push(
-        fail(`Teste de vazamento falhou: ${assertion.title}`, {
+        fail(`Leak test failed: ${assertion.title}`, {
           file: rel(file.name),
-          expected: 'sem vazamento',
+          expected: 'no leaks',
           actual: (assertion.failureMessages ?? []).join('\n').split('\n').slice(0, 5).join('\n'),
         })
       );
@@ -72,7 +72,7 @@ export async function run(ctx) {
 
   return {
     status: findings.length ? STATUS.FAIL : STATUS.PASS,
-    summary: `${stats.passed}/${stats.total} em ${stats.files.length} arquivos de vazamento`,
+    summary: `${stats.passed}/${stats.total} in ${stats.files.length} leak files`,
     findings,
     details: { ...stats, files: stats.files.map(rel) },
   };

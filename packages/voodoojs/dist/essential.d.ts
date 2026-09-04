@@ -1,4 +1,4 @@
-import { c as core, V as VoodooCollection } from './query-CGORUh2L.js';
+import { c as core, V as VoodooCollection } from './query-CC-_z7v0.js';
 import './http.js';
 import './utils.js';
 import './reactivity.js';
@@ -13,7 +13,7 @@ import './reactivity.js';
  * Excluded to keep the file small: charts, physics-based animations, router,
  * internationalization, reactivity inspector, and the ready-to-use component
  * library. For these, use `voodoo.full.min.js` or build a custom version with
- * `npx voodoo build`.
+ * `npx voodoojs-cli build`.
  */
 
 interface VoodooEssential extends Omit<typeof core, never> {

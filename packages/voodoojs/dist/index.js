@@ -1,6 +1,6 @@
 import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-II3XBOAP.js';
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-II3XBOAP.js';
-export { gpu, reflectWgsl } from './chunk-E5T65CEI.js';
+export { gpu, reflectWgsl } from './chunk-N3T43YN3.js';
 import { http } from './chunk-WSDB7K4X.js';
 export { HttpError, http, request } from './chunk-WSDB7K4X.js';
 import { devtoolsBus } from './chunk-QO3I7VLJ.js';

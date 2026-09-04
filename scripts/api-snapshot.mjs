@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Fotografa a superficie publica da voodoojs.
+ * Takes a snapshot of the public surface of voodoojs.
  *
- *   node scripts/api-snapshot.mjs            imprime o snapshot atual
- *   node scripts/api-snapshot.mjs --update   regrava packages/voodoojs/api-snapshot.json
- *   node scripts/api-snapshot.mjs --json     so o json, sem texto em volta
+ *   node scripts/api-snapshot.mjs            prints the current snapshot
+ *   node scripts/api-snapshot.mjs --update   overwrites packages/voodoojs/api-snapshot.json
+ *   node scripts/api-snapshot.mjs --json     only json, no surrounding text
  *
- * O metodo preferido e o de runtime: monta um DOM com jsdom, importa
- * `dist/index.js` de verdade e enumera o que existe. E a unica leitura que nao
- * mente, porque conta o que o usuario final realmente recebe — inclusive as
- * directives e magics que so aparecem por efeito colateral de import.
+ * The preferred method is runtime: sets up a DOM with jsdom, imports the real
+ * `dist/index.js` and enumerates what exists. It's the only reading that does not
+ * lie, because it counts what the end user actually receives, including the
+ * directives and magics that only appear as a side effect of import.
  *
- * Se o dist nao existe ou a importacao quebra, cai para uma leitura estatica do
- * `src`, e grava `method: "static"` no arquivo. Quem consome sabe que a foto
- * saiu de um caminho menos preciso, em vez de receber um resultado silencioso.
+ * If dist does not exist or the import breaks, falls back to a static reading of
+ * `src`, and writes `method: "static"` to the file. The consumer knows the snapshot
+ * came from a less precise path, instead of receiving silent results.
  */
 
 import { existsSync, writeFileSync } from 'node:fs';
@@ -26,17 +26,17 @@ export const SNAPSHOT_PATH = join(PKG_DIR, 'api-snapshot.json');
 const SNAPSHOT_VERSION = 1;
 
 // ---------------------------------------------------------------------------
-// Ambiente de DOM
+// DOM environment
 // ---------------------------------------------------------------------------
 
 /**
- * Globais do DOM que precisam sobrescrever os do Node mesmo quando ja existem.
+ * DOM globals that need to override Node's even when they already exist.
  *
- * `Event`, `CustomEvent` e companhia sao o caso critico: o Node 21+ tem os
- * seus, mas um `new CustomEvent` do realm do Node despachado num elemento do
- * jsdom e rejeitado. Os intrinsecos de ECMAScript (Array, Object, Promise) NAO
- * entram nesta lista de proposito — troca-los pelos do outro realm quebraria
- * todo `instanceof` do codigo importado.
+ * `Event`, `CustomEvent` and company are the critical case: Node 21+ has its own,
+ * but a `new CustomEvent` from Node's realm dispatched on a jsdom element is
+ * rejected. ECMAScript intrinsics (Array, Object, Promise) do NOT go on this list
+ * on purpose, because swapping them for the other realm's would break all `instanceof`
+ * checks in the imported code.
  */
 const FORCED_DOM_GLOBALS = [
   'window',
@@ -104,7 +104,7 @@ function define(name, value) {
   }
 }
 
-/** Sobe um DOM com jsdom e instala os globais. Devolve `null` se nao der. */
+/** Sets up a DOM with jsdom and installs the globals. Returns `null` if it fails. */
 async function installDom() {
   let JSDOM;
   try {
@@ -132,7 +132,7 @@ async function installDom() {
     define(name, typeof value === 'function' && !value.prototype ? value.bind(w) : value);
   }
 
-  // O resto do window que o Node ainda nao tem, sem pisar nos intrinsecos.
+  // The rest of window that Node doesn't have yet, without touching intrinsics.
   for (const name of Object.getOwnPropertyNames(w)) {
     if (name in globalThis) continue;
     let value;
@@ -144,7 +144,7 @@ async function installDom() {
     define(name, value);
   }
 
-  // O jsdom nao implementa estes dois; o bundle so os toca sob demanda.
+  // jsdom does not implement these two; the bundle only touches them on demand.
   const observerStub = class {
     observe() {}
     unobserve() {}
@@ -179,10 +179,10 @@ async function installDom() {
 }
 
 // ---------------------------------------------------------------------------
-// Leitura de runtime
+// Runtime reading
 // ---------------------------------------------------------------------------
 
-/** Descreve um valor exportado de um jeito estavel entre execucoes. */
+/** Describes an exported value in a stable way across executions. */
 function describe(value) {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
@@ -190,8 +190,8 @@ function describe(value) {
   if (value instanceof Set) return 'Set';
   const t = typeof value;
   if (t === 'function') {
-    // Classes contam como forma diferente de funcao: trocar uma pela outra
-    // quebra quem faz `new`.
+    // Classes count as a different form of function: swapping one for the other
+    // breaks code that does `new`.
     const src = Function.prototype.toString.call(value);
     return /^\s*class[\s{]/.test(src) ? 'class' : 'function';
   }
@@ -262,10 +262,10 @@ async function collectRuntime() {
 }
 
 // ---------------------------------------------------------------------------
-// Leitura estatica (plano B)
+// Static reading (plan B)
 // ---------------------------------------------------------------------------
 
-/** Extrai as chaves de primeiro nivel de um literal de objeto. */
+/** Extracts top-level keys from an object literal. */
 function objectLiteralKeys(source, startIndex) {
   const open = source.indexOf('{', startIndex);
   if (open < 0) return [];
@@ -349,10 +349,10 @@ function collectStatic() {
 }
 
 // ---------------------------------------------------------------------------
-// API do modulo
+// Module API
 // ---------------------------------------------------------------------------
 
-/** Monta o snapshot atual da superficie publica. */
+/** Assembles the current snapshot of the public surface. */
 export async function collectSnapshot() {
   const pkg = readJson(join(PKG_DIR, 'package.json')) ?? {};
   const runtime = await collectRuntime();
@@ -378,7 +378,7 @@ export function writeSnapshot(snapshot) {
   return SNAPSHOT_PATH;
 }
 
-/** Compara duas fotos. Remocao e renomeacao sao quebra; adicao nao e. */
+/** Compares two snapshots. Removal and renaming are breaking; addition is not. */
 export function diffSnapshots(previous, current) {
   const removed = [];
   const added = [];
@@ -417,7 +417,7 @@ export function diffSnapshots(previous, current) {
 }
 
 // ---------------------------------------------------------------------------
-// Linha de comando
+// Command line
 // ---------------------------------------------------------------------------
 
 const isMain = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
@@ -429,30 +429,30 @@ if (isMain) {
   if (args.includes('--update')) {
     const previous = readSnapshot();
     const path = writeSnapshot(snapshot);
-    console.log(`Snapshot gravado em ${rel(path)} (metodo: ${snapshot.method}).`);
+    console.log(`Snapshot written to ${rel(path)} (method: ${snapshot.method}).`);
     if (previous) {
       const diff = diffSnapshots(previous, snapshot);
       console.log(
-        `Diferenca em relacao ao anterior: ${diff.removed.length} removidos, ` +
-          `${diff.added.length} adicionados, ${diff.changed.length} com forma diferente.`
+        `Difference from previous: ${diff.removed.length} removed, ` +
+          `${diff.added.length} added, ${diff.changed.length} with different shape.`
       );
-      for (const r of diff.removed) console.log(`  - removido  ${r.kind}: ${r.name}`);
-      for (const c of diff.changed) console.log(`  ~ mudou     ${c.kind}: ${c.name} ${c.from} -> ${c.to}`);
+      for (const r of diff.removed) console.log(`  - removed   ${r.kind}: ${r.name}`);
+      for (const c of diff.changed) console.log(`  ~ changed   ${c.kind}: ${c.name} ${c.from} -> ${c.to}`);
     }
   } else if (args.includes('--json')) {
     console.log(JSON.stringify(snapshot, null, 2));
   } else {
     const s = snapshot.surface;
-    console.log(`voodoojs ${snapshot.packageVersion} — superficie publica (metodo: ${snapshot.method})`);
+    console.log(`voodoojs ${snapshot.packageVersion} — public surface (method: ${snapshot.method})`);
     if (snapshot.runtimeFallbackReason)
-      console.log(`  aviso: leitura de runtime falhou (${snapshot.runtimeFallbackReason})`);
-    console.log(`  chaves de V ........ ${Object.keys(s.V).length}`);
-    console.log(`  exports nomeados ... ${Object.keys(s.exports).length}`);
+      console.log(`  warning: runtime reading failed (${snapshot.runtimeFallbackReason})`);
+    console.log(`  V keys ............. ${Object.keys(s.V).length}`);
+    console.log(`  named exports ...... ${Object.keys(s.exports).length}`);
     console.log(`  directives ......... ${s.directives.length}`);
     console.log(`  magics ............. ${s.magics.length}`);
-    console.log(`  componentes ........ ${s.components.length}`);
-    console.log(`  globais permitidos . ${s.allowedGlobals.length}`);
-    console.log('\nUse --update para gravar packages/voodoojs/api-snapshot.json.');
+    console.log(`  components ......... ${s.components.length}`);
+    console.log(`  allowed globals .... ${s.allowedGlobals.length}`);
+    console.log('\nUse --update to write packages/voodoojs/api-snapshot.json.');
   }
   process.exit(0);
 }

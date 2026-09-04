@@ -6,7 +6,7 @@ const banner = `/**
  * (c) 2026 Voodoo.js contributors. MIT License.
  */`;
 
-/** Publica o objeto global depois que o IIFE termina de avaliar. */
+/** Publishes the global object after the IIFE finishes evaluating. */
 const globalFooter = {
   js: 'if(typeof window!=="undefined"){window.V=Voodoo.default||Voodoo;window.Voodoo=window.V;}',
 };
@@ -20,13 +20,13 @@ export default defineConfig([
       reactivity: 'src/reactivity/index.ts',
       http: 'src/http/index.ts',
       utils: 'src/utils/index.ts',
-      // Camada WebGPU. Entrada propria porque ela custa cerca de 8 KB gzip e o
-      // build completo nao tem essa folga no orcamento. Em ESM as partes comuns
-      // saem em chunks compartilhados, entao o runtime continua sendo um so.
+      // WebGPU layer. Separate entry because it costs about 8 KB gzip and the
+      // full build does not have that slack in the budget. In ESM the common parts
+      // go into shared chunks, so the runtime stays as one.
       gpu: 'src/gpu/plugin.ts',
-      // Camada de tempo real. Mesma historia da GPU: dentro do build completo
-      // ela levava o arquivo de 127.58 para 134.22 KB gzip, com teto de 133.
-      // Entrada propria em vez de meta inflada.
+      // Real-time layer. Same story as GPU: within the full build
+      // it took the file from 127.58 to 134.22 KB gzip, with a ceiling of 133.
+      // Separate entry instead of inflated metadata.
       socket: 'src/socket/plugin.ts',
     },
     format: ['esm', 'cjs'],
@@ -38,7 +38,7 @@ export default defineConfig([
     banner: { js: banner },
   },
 
-  // Build minimo: reatividade, directives, componentes, DOM e requisicoes.
+  // Minimal build: reactivity, directives, components, DOM and requests.
   {
     entry: { 'voodoo.core': 'src/browser-minimo.ts' },
     format: ['iife'],
@@ -61,7 +61,7 @@ export default defineConfig([
     footer: globalFooter,
   },
 
-  // Build essencial para CDN. E o arquivo servido por padrao.
+  // Essential build for CDN. It's the file served by default.
   {
     entry: { voodoo: 'src/browser-essential.ts' },
     format: ['iife'],
@@ -84,8 +84,8 @@ export default defineConfig([
     footer: globalFooter,
   },
 
-  // Build completo: soma graficos, animacoes, roteador, idiomas, inspetor e
-  // a biblioteca de componentes prontos.
+  // Full build: includes graphics, animations, router, languages, inspector and
+  // the ready-made component library.
   {
     entry: { 'voodoo.full': 'src/browser.ts' },
     format: ['iife'],
