@@ -35,6 +35,7 @@
         { id: 'guia/mostrando-valores', titulo: 'Showing values on screen' },
         { id: 'guia/condicionais', titulo: 'Conditionals' },
         { id: 'guia/listas', titulo: 'Lists, and why the key matters' },
+        { id: 'guia/jsx', titulo: 'JSX in plain HTML' },
         { id: 'guia/eventos', titulo: 'Events and modifiers' },
         { id: 'guia/campos-e-v-model', titulo: 'Form fields with v-model' },
         { id: 'guia/atributos-classes-estilos', titulo: 'Attributes, classes and styles' }

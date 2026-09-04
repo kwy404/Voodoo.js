@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSX in plain HTML · Voodoo.js documentation</title>
+<meta name="description" content="Write JSX inside an ordinary .html file, with no build step, no bundler and no compiler. How it works, what it supports, and the three places HTML will not let it go.">
+<link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/jsx">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
+<style>
+/* ==========================================================================
+   The design system the rest of the site already uses — site/index.html,
+   site/components.html and site/playground.html. The guide carried a palette
+   of its own, which is why it read as a different product. One accent, flat
+   surfaces, no gradients and no glows.
+   ========================================================================== */
+
+:root {
+  --ink: #16141c;
+  --ink-soft: #57526a;
+  --ink-faint: #8b8598;
+  --bg: #ffffff;
+  --bg-soft: #faf9fb;
+  --bg-code: #f6f5f8;
+  --line: #e7e4ec;
+  --accent: #5b2ee5;
+  --accent-soft: #f1ecfe;
+  --fill: #e9e6f0;
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+/* Three states: the system preference wins unless the reader picked a theme,
+   and an explicit choice wins over the system in both directions. The values
+   are `claro` and `escuro` because `data-tema` is the contract docs.js already
+   reads and writes. */
+@media (prefers-color-scheme: dark) {
+  html:root:not([data-tema="claro"]) {
+    --ink: #f2f0f6;
+    --ink-soft: #b3adc2;
+    --ink-faint: #837d93;
+    --bg: #131118;
+    --bg-soft: #191722;
+    --bg-code: #1d1a26;
+    --line: #2b2735;
+    --accent: #a688ff;
+    --accent-soft: #221c3a;
+    --fill: #2f2b3d;
+    color-scheme: dark;
+  }
+}
+
+html:root[data-tema="escuro"] {
+  --ink: #f2f0f6;
+  --ink-soft: #b3adc2;
+  --ink-faint: #837d93;
+  --bg: #131118;
+  --bg-soft: #191722;
+  --bg-code: #1d1a26;
+  --line: #2b2735;
+  --accent: #a688ff;
+  --accent-soft: #221c3a;
+  --fill: #2f2b3d;
+  color-scheme: dark;
+}
+
+/* The library paints its own UI — dialogs, toasts, the command palette, the
+   ready-made components — from --v-* tokens. Point them at this palette, or a
+   live example comes out in the library's own colours while the page is in
+   these: white panels on a dark page.
+   !important is required and not laziness: V.palette() writes
+   :root:not([data-theme="light"]), which outranks any plain selector, and
+   html:root beats the plain :root the library appends later in <head>.
+   --v-surface-3 has no default worth anything here — the progress track, the
+   skeleton fill and the switch rail paint with it and render invisible when it
+   is left unmapped. */
+html:root {
+  --v-surface: var(--bg) !important;
+  --v-surface-2: var(--bg-soft) !important;
+  --v-surface-3: var(--fill) !important;
+  --v-border: var(--line) !important;
+  --v-text: var(--ink) !important;
+  --v-text-muted: var(--ink-faint) !important;
+  --v-primary: var(--accent) !important;
+  --v-radius: 10px;
+  --v-radius-sm: 7px;
+  --v-font-sans: var(--font);
+}
+
+/* docs.css names its own tokens, and its own brand hues underneath them. Point
+   both at the palette above so the shell, the article and the examples agree.
+   !important here too: docs.css redefines these under `:root[data-tema=...]`,
+   which outranks a plain mapping. */
+html:root {
+  --fundo: var(--bg) !important;
+  --fundo-2: var(--bg-soft) !important;
+  --fundo-3: var(--fill) !important;
+  --superficie: var(--bg) !important;
+  --superficie-2: var(--bg-soft) !important;
+  --borda: var(--line) !important;
+  --borda-forte: var(--line) !important;
+  --texto: var(--ink) !important;
+  --texto-2: var(--ink-soft) !important;
+  --texto-3: var(--ink-faint) !important;
+  --acento: var(--accent) !important;
+  --acento-forte: var(--accent) !important;
+  --acento-fundo: var(--accent-soft) !important;
+  --realce-selecao: var(--accent-soft) !important;
+  --cod-fundo: var(--bg-code) !important;
+  --cod-texto: var(--ink) !important;
+  --fonte: var(--font) !important;
+  --fonte-mono: var(--mono) !important;
+  --raio: 10px !important;
+  --raio-p: 7px !important;
+
+  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
+     hairline border. */
+  --sombra: none !important;
+  --sombra-suave: none !important;
+
+  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
+     blockquote bar and the card label all resolve here instead. */
+  --roxo: var(--accent) !important;
+  --roxo-claro: var(--accent) !important;
+  --magenta: var(--accent) !important;
+  --menta: var(--accent) !important;
+  --ambar: var(--ink-soft) !important;
+  --tinta: var(--ink) !important;
+  --creme: var(--bg) !important;
+}
+
+/* Syntax highlighting: ink plus the one accent, so a block reads on the light
+   --bg-code surface as well as on the dark one. */
+.tk-comentario { color: var(--ink-faint); font-style: italic; }
+.tk-tag,
+.tk-seletor { color: var(--accent); }
+.tk-directive,
+.tk-magia,
+.tk-interp { color: var(--accent); font-weight: 600; }
+.tk-atributo,
+.tk-propriedade,
+.tk-texto,
+.tk-numero { color: var(--ink-soft); }
+.tk-palavra,
+.tk-funcao { color: var(--ink); font-weight: 600; }
+.tk-pontuacao { color: var(--ink-faint); }
+
+/* The language label and the copy button are painted dark in docs.css, which
+   is unreadable once the code surface follows the theme. */
+.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
+.doc-copiar {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+.doc-copiar:hover,
+.doc-copiar[data-estado="ok"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Callouts, in the shape the rest of the site gives a note: a hairline box
+   with a single accent rule down the left. The label carries the meaning, so
+   nothing here needs a second or a third hue. */
+.doc-aviso {
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-soft);
+}
+.doc-aviso__rotulo { color: var(--accent); }
+.doc-aviso--roadmap { border-left-color: var(--line); }
+.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
+
+.doc-cartao em,
+.doc-exemplo__cabecalho b { color: var(--accent); }
+.doc-cartao:hover { transform: none; border-color: var(--accent); }
+
+/* At 380px nothing may scroll the page sideways: wide code blocks and tables
+   scroll inside their own box. */
+.doc-artigo pre { overflow-x: auto; }
+.doc-artigo :not(pre) > code { word-break: break-word; }
+.doc-tabela { overflow-x: auto; }
+
+@media (max-width: 30rem) {
+  .doc-tabela table { min-width: 22rem; }
+  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentals</p>
+<h1>JSX in plain HTML</h1>
+<p class="doc-resumo">
+  Write <code>{ list.map(x =&gt; (&lt;li&gt;{ x }&lt;/li&gt;)) }</code> straight into the markup of an
+  ordinary <code>.html</code> file. No build step, no bundler, no compiler, no JSX transform. Save
+  the file, open it in a browser, and it runs.
+</p>
+
+<h2 id="a-primeira">The first one</h2>
+
+<p>
+  Everything below is a real page. Load the full build, write the expression where you want the
+  result, and that is the whole setup.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ fruits: ['apple', 'pear', 'grape'] }"&gt;
+  &lt;ul&gt;
+    {fruits.map((fruit) =&gt; (
+      &lt;li&gt;{fruit}&lt;/li&gt;
+    ))}
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  It has to be <code>voodoo.full.min.js</code>. JSX is not in the core or essential builds, and
+  those two say so in the console rather than failing quietly.
+</p>
+
+<h2 id="como-funciona">How it can possibly work</h2>
+
+<p>
+  There is no compiler here, and no <code>eval</code>. The trick is that the browser has already
+  parsed the page before any script runs, and what it leaves behind is recoverable.
+</p>
+
+<p>
+  For the list above, the DOM is three siblings:
+</p>
+
+<pre data-lang="text"><code>text     "{fruits.map((fruit) =&gt; ("
+element  &lt;li&gt;{fruit}&lt;/li&gt;
+text     "))}"</code></pre>
+
+<p>
+  The element is not damage to route around. It is the template. Rejoining the text with a
+  placeholder where the element sat reconstructs the expression exactly as it was typed:
+</p>
+
+<pre data-lang="js"><code>fruits.map((fruit) =&gt; ($t(0)))</code></pre>
+
+<p>
+  <code>$t(0)</code> hands back a reference to that <code>&lt;li&gt;</code>, together with the scope
+  the call was made in, so the arrow returns one clone per item and each renders where
+  <code>fruit</code> is bound. From there it goes through the same lexer, parser and interpreter as
+  every other expression in the library. Nothing is compiled, nothing is evaluated as a string, and
+  a strict Content Security Policy is unaffected.
+</p>
+
+<h2 id="condicionais">Conditionals that return elements</h2>
+
+<p>
+  A ternary and <code>&amp;&amp;</code> behave the way they do in JSX, down to rendering nothing for
+  <code>true</code>, <code>false</code>, <code>null</code> and <code>undefined</code>.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ loggedIn: true, level: 2 }"&gt;
+  &lt;p&gt;{loggedIn ? &lt;b&gt;Welcome back&lt;/b&gt; : &lt;b&gt;Please sign in&lt;/b&gt;}&lt;/p&gt;
+
+  &lt;p&gt;{loggedIn &amp;&amp; &lt;b&gt;Shown only when true&lt;/b&gt;}&lt;/p&gt;
+
+  &lt;button @click="loggedIn = !loggedIn"&gt;toggle&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  And a real <code>if / else if / else</code>, which JSX itself does not offer.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ score: 72 }"&gt;
+  &lt;input type="range" min="0" max="100" v-model.number="score"&gt;
+  &lt;p&gt;score: {score}&lt;/p&gt;
+
+  &lt;p&gt;
+    {if (score &gt;= 90)
+      (&lt;b&gt;excellent&lt;/b&gt;)
+    else if (score &gt;= 60)
+      (&lt;b&gt;pass&lt;/b&gt;)
+    else
+      (&lt;b&gt;fail&lt;/b&gt;)}
+  &lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="callbacks">Callbacks with a real body</h2>
+
+<p>
+  <code>const</code>, <code>if</code> and an early <code>return</code> all work inside the callback,
+  so branching per item reads the way you would write it anywhere else.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ products: [
+  { name: 'Laptop', stock: 5 },
+  { name: 'Chair', stock: 0 },
+  { name: 'Mouse', stock: 12 }
+] }"&gt;
+  &lt;ul&gt;
+    {products.map(item =&gt; {
+
+      if (item.stock === 0) {
+        return (&lt;li&gt;{item.name}: out of stock&lt;/li&gt;);
+      }
+
+      const label = item.stock &gt; 6 ? 'plenty' : 'a few';
+      return (&lt;li&gt;{item.name}: {label} ({item.stock})&lt;/li&gt;);
+
+    })}
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="aninhado">Nesting</h2>
+
+<p>
+  Templates nest, and an inner one still sees the outer loop variable.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ groups: [
+  { title: 'Fruit', items: ['apple', 'pear'] },
+  { title: 'Tools', items: ['hammer', 'saw', 'drill'] }
+] }"&gt;
+  {groups.map((group, g) =&gt; (
+    &lt;section&gt;
+      &lt;h3&gt;{group.title}&lt;/h3&gt;
+      &lt;ul&gt;
+        {group.items.map((item, i) =&gt; (
+          &lt;li&gt;{g}.{i} {item}&lt;/li&gt;
+        ))}
+      &lt;/ul&gt;
+    &lt;/section&gt;
+  ))}
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="tabelas">Tables</h2>
+
+<p>
+  Tables are the hardest case, and they work. Loose text is not allowed inside
+  <code>&lt;table&gt;</code> or <code>&lt;tbody&gt;</code>, so the HTML parser <b>foster parents</b>
+  it: the text is moved out to just before the table and the elements stay in. The expression and
+  its template end up in different parents.
+</p>
+
+<p>
+  Nothing is lost, though, only moved, and moved predictably. The text keeps the empty parentheses
+  where the element used to be, and the element is in the table alongside, so the two are matched
+  back up and the rendered rows are anchored in the <code>tbody</code> where they belong.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ rows: [
+  { name: 'Ana', score: 92 },
+  { name: 'Bruno', score: 47 },
+  { name: 'Caio', score: 78 }
+] }"&gt;
+  &lt;table&gt;
+    &lt;thead&gt;
+      &lt;tr&gt;&lt;th&gt;Name&lt;/th&gt;&lt;th&gt;Score&lt;/th&gt;&lt;th&gt;Result&lt;/th&gt;&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+      {rows.map(r =&gt; (
+        &lt;tr&gt;
+          &lt;td&gt;{r.name}&lt;/td&gt;
+          &lt;td&gt;{r.score}&lt;/td&gt;
+          &lt;td&gt;{r.score &gt;= 60 ? &lt;b&gt;pass&lt;/b&gt; : &lt;b&gt;fail&lt;/b&gt;}&lt;/td&gt;
+        &lt;/tr&gt;
+      ))}
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="sem-v-data">Declaring the data in the page</h2>
+
+<p>
+  A <code>{ ... }</code> block at the top of the body puts names in scope, with no
+  <code>v-data</code> anywhere. <code>const</code>, <code>let</code> and <code>var</code> all work.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>{
+  const user = 'Ana';
+  const tags = ['html', 'css', 'js'];
+}
+
+&lt;h3&gt;Hello, {user}!&lt;/h3&gt;
+
+&lt;ul&gt;
+  {tags.map(tag =&gt; (
+    &lt;li&gt;#{tag}&lt;/li&gt;
+  ))}
+&lt;/ul&gt;</code></pre>
+</div>
+
+<h2 id="reativo">It stays live</h2>
+
+<p>
+  A region is a reactive effect, not a template rendered once. Mutating the array re-renders the
+  list, and only the nodes that depend on the data are touched.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ items: [1, 2, 3] }"&gt;
+  &lt;button @click="items.push(items.length + 1)"&gt;add&lt;/button&gt;
+  &lt;button @click="items.pop()"&gt;remove&lt;/button&gt;
+  &lt;button @click="items.reverse()"&gt;reverse&lt;/button&gt;
+
+  &lt;p&gt;{items.length &gt; 0 ? &lt;b&gt;{items.length} items&lt;/b&gt; : &lt;b&gt;empty&lt;/b&gt;}&lt;/p&gt;
+
+  &lt;ul&gt;
+    {items.map((x, i) =&gt; (
+      &lt;li&gt;{i}: {x}&lt;/li&gt;
+    ))}
+  &lt;/ul&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="nao-atrapalha">Two rules that keep it out of your way</h2>
+
+<p>
+  A region is only claimed when an <b>element</b> sits inside the braces. <code>{ count }</code> on
+  its own is ordinary interpolation and belongs to the core renderer, and a stray <code>{</code> in
+  prose never balances, so it is left alone.
+</p>
+
+<p>
+  And <code>script</code>, <code>style</code>, <code>pre</code>, <code>code</code>,
+  <code>samp</code>, <code>kbd</code>, <code>textarea</code>, <code>template</code> and
+  <code>noscript</code> are never scanned. A page full of example code stays a page full of example
+  code, which is what lets this documentation show JSX without executing it.
+</p>
+
+<h2 id="limites">What does not work</h2>
+
+<p>
+  Three things, listed rather than left to be discovered.
+</p>
+
+<h3 id="atributos">Attribute values must be quoted</h3>
+
+<pre data-lang="html"><code>&lt;div style="{{ backgroundColor: color }}"&gt;   &lt;!-- works --&gt;
+&lt;div style={{ backgroundColor: color }}&gt;     &lt;!-- does not --&gt;</code></pre>
+
+<p>
+  This is the order things happen in, not a decision. An unquoted attribute value ends at the first
+  space, so the browser turns the second line into six separate attributes,
+  <code>style="{{"</code>, <code>backgroundcolor:=""</code> and so on, before any script has run.
+  The pieces survive in order and could be rejoined, but attribute names are lowercased, so
+  <code>backgroundColor</code> comes back as <code>backgroundcolor</code> and any identifier with a
+  capital in it is gone.
+</p>
+
+<h3 id="fragmentos">Fragments and loop statements</h3>
+
+<p>
+  <code>&lt;&gt;</code> does nothing, because the browser creates no element for it and there is
+  therefore no template to clone. And <code>for</code>, <code>while</code>, <code>do/while</code>,
+  <code>break</code> and <code>continue</code> are not part of the expression language. Use
+  <code>map</code>, or <code>Array.from({ length: n })</code> when you need a range.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ n: 4 }"&gt;
+  &lt;input type="range" min="1" max="10" v-model.number="n"&gt;
+
+  {Array.from({ length: n }, (_, i) =&gt; (
+    &lt;span&gt;[{i}] &lt;/span&gt;
+  ))}
+&lt;/div&gt;</code></pre>
+</div>
+
+<h3 id="v-for">Not inside a v-for template</h3>
+
+<p>
+  A <code>v-for</code> template is cloned once per row during the walk, and JSX regions are taken
+  out of the page before it, so each clone would receive an anchor with nothing attached and the
+  cell would come out empty. Use one or the other on the same subtree, not both:
+  <code>v-if</code> on the element when a row needs to branch into markup, or a JSX region instead
+  of <code>v-for</code> entirely.
+</p>
+
+<h2 id="por-que">Why the ordering matters</h2>
+
+<p>
+  Worth knowing if you ever call the pieces yourself. JSX happens in two passes around
+  <code>V.start()</code>, and both sides are load-bearing.
+</p>
+
+<p>
+  The templates leave the document <b>before</b> the walk. An element written inside a region is an
+  ordinary element until then, so the walk would try to render it, fail on the callback parameter it
+  mentions, and rewrite its text in place, which poisons every clone taken from it afterwards.
+</p>
+
+<p>
+  The effects are created <b>after</b> the walk, because <code>v-data</code> builds its scopes
+  during it and a region inside one has to resolve against that scope rather than the page's.
+</p>
+
+<p>
+  <code>V.jsx()</code> does both in one call, which is what you want when driving it by hand.
+  <code>V.extractJsx()</code> and <code>V.activateJsx()</code> are the halves, for when you need
+  them on opposite sides of your own start.
+</p>
+
+</article></article>
+
+<script src="../assets/docs.js?v=7c862c14"></script>
+</body>
+</html>
