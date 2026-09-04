@@ -64,17 +64,31 @@ const pinnable = await cdnHasMinor();
 
 const hashes = new Map();
 
-/** Eight hex characters of the file's SHA-256, or null when it is not there. */
+/**
+ * Eight hex characters of the file's SHA-256, or null when it is not there.
+ *
+ * Line endings are normalised first, and that is not cosmetic. The repository
+ * is checked out with `core.autocrlf=true` and carries no `.gitattributes`, so
+ * the same commit is CRLF on a Windows working copy and LF on the Linux CI
+ * runner. Hashing the raw bytes therefore produced a different key per
+ * platform: the site was stamped `docs.js?v=e7076219` from Windows, CI computed
+ * `7f9b7283` for the identical commit, and `--check` reported all 44 files as
+ * drifted on a tree where nothing had changed. Whoever stamped last won, and
+ * the gate could never agree with the machine enforcing it.
+ *
+ * Everything hashed here is text: the site's own `.js` and `.css`, and the
+ * built bundles. Normalising CRLF to LF makes the key describe the content
+ * rather than the checkout it came from.
+ */
 async function contentKey(file) {
   const key = resolve(file);
   if (hashes.has(key)) return hashes.get(key);
 
   let hash = null;
   if (existsSync(key)) {
-    hash = createHash('sha256')
-      .update(await readFile(key))
-      .digest('hex')
-      .slice(0, 8);
+    const bytes = await readFile(key);
+    const normalised = Buffer.from(bytes.toString('utf8').split('\r\n').join('\n'));
+    hash = createHash('sha256').update(normalised).digest('hex').slice(0, 8);
   }
   hashes.set(key, hash);
   return hash;
