@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hooks · Voodoo.js documentation</title>
+<meta name="description" content="useState, useEffect, useMemo, useRef and useContext, written straight into HTML attributes. What each one maps to, where the dependency array is optional, and the one rule about v-data worth knowing.">
+<link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/hooks">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
+<style>
+/* ==========================================================================
+   The design system the rest of the site already uses — site/index.html,
+   site/components.html and site/playground.html. The guide carried a palette
+   of its own, which is why it read as a different product. One accent, flat
+   surfaces, no gradients and no glows.
+   ========================================================================== */
+
+:root {
+  --ink: #16141c;
+  --ink-soft: #57526a;
+  --ink-faint: #8b8598;
+  --bg: #ffffff;
+  --bg-soft: #faf9fb;
+  --bg-code: #f6f5f8;
+  --line: #e7e4ec;
+  --accent: #5b2ee5;
+  --accent-soft: #f1ecfe;
+  --fill: #e9e6f0;
+  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+
+/* Three states: the system preference wins unless the reader picked a theme,
+   and an explicit choice wins over the system in both directions. The values
+   are `claro` and `escuro` because `data-tema` is the contract docs.js already
+   reads and writes. */
+@media (prefers-color-scheme: dark) {
+  html:root:not([data-tema="claro"]) {
+    --ink: #f2f0f6;
+    --ink-soft: #b3adc2;
+    --ink-faint: #837d93;
+    --bg: #131118;
+    --bg-soft: #191722;
+    --bg-code: #1d1a26;
+    --line: #2b2735;
+    --accent: #a688ff;
+    --accent-soft: #221c3a;
+    --fill: #2f2b3d;
+    color-scheme: dark;
+  }
+}
+
+html:root[data-tema="escuro"] {
+  --ink: #f2f0f6;
+  --ink-soft: #b3adc2;
+  --ink-faint: #837d93;
+  --bg: #131118;
+  --bg-soft: #191722;
+  --bg-code: #1d1a26;
+  --line: #2b2735;
+  --accent: #a688ff;
+  --accent-soft: #221c3a;
+  --fill: #2f2b3d;
+  color-scheme: dark;
+}
+
+/* The library paints its own UI — dialogs, toasts, the command palette, the
+   ready-made components — from --v-* tokens. Point them at this palette, or a
+   live example comes out in the library's own colours while the page is in
+   these: white panels on a dark page.
+   !important is required and not laziness: V.palette() writes
+   :root:not([data-theme="light"]), which outranks any plain selector, and
+   html:root beats the plain :root the library appends later in <head>.
+   --v-surface-3 has no default worth anything here — the progress track, the
+   skeleton fill and the switch rail paint with it and render invisible when it
+   is left unmapped. */
+html:root {
+  --v-surface: var(--bg) !important;
+  --v-surface-2: var(--bg-soft) !important;
+  --v-surface-3: var(--fill) !important;
+  --v-border: var(--line) !important;
+  --v-text: var(--ink) !important;
+  --v-text-muted: var(--ink-faint) !important;
+  --v-primary: var(--accent) !important;
+  --v-radius: 10px;
+  --v-radius-sm: 7px;
+  --v-font-sans: var(--font);
+}
+
+/* docs.css names its own tokens, and its own brand hues underneath them. Point
+   both at the palette above so the shell, the article and the examples agree.
+   !important here too: docs.css redefines these under `:root[data-tema=...]`,
+   which outranks a plain mapping. */
+html:root {
+  --fundo: var(--bg) !important;
+  --fundo-2: var(--bg-soft) !important;
+  --fundo-3: var(--fill) !important;
+  --superficie: var(--bg) !important;
+  --superficie-2: var(--bg-soft) !important;
+  --borda: var(--line) !important;
+  --borda-forte: var(--line) !important;
+  --texto: var(--ink) !important;
+  --texto-2: var(--ink-soft) !important;
+  --texto-3: var(--ink-faint) !important;
+  --acento: var(--accent) !important;
+  --acento-forte: var(--accent) !important;
+  --acento-fundo: var(--accent-soft) !important;
+  --realce-selecao: var(--accent-soft) !important;
+  --cod-fundo: var(--bg-code) !important;
+  --cod-texto: var(--ink) !important;
+  --fonte: var(--font) !important;
+  --fonte-mono: var(--mono) !important;
+  --raio: 10px !important;
+  --raio-p: 7px !important;
+
+  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
+     hairline border. */
+  --sombra: none !important;
+  --sombra-suave: none !important;
+
+  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
+     blockquote bar and the card label all resolve here instead. */
+  --roxo: var(--accent) !important;
+  --roxo-claro: var(--accent) !important;
+  --magenta: var(--accent) !important;
+  --menta: var(--accent) !important;
+  --ambar: var(--ink-soft) !important;
+  --tinta: var(--ink) !important;
+  --creme: var(--bg) !important;
+}
+
+/* Syntax highlighting: ink plus the one accent, so a block reads on the light
+   --bg-code surface as well as on the dark one. */
+.tk-comentario { color: var(--ink-faint); font-style: italic; }
+.tk-tag,
+.tk-seletor { color: var(--accent); }
+.tk-directive,
+.tk-magia,
+.tk-interp { color: var(--accent); font-weight: 600; }
+.tk-atributo,
+.tk-propriedade,
+.tk-texto,
+.tk-numero { color: var(--ink-soft); }
+.tk-palavra,
+.tk-funcao { color: var(--ink); font-weight: 600; }
+.tk-pontuacao { color: var(--ink-faint); }
+
+/* The language label and the copy button are painted dark in docs.css, which
+   is unreadable once the code surface follows the theme. */
+.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
+.doc-copiar {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+.doc-copiar:hover,
+.doc-copiar[data-estado="ok"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Callouts, in the shape the rest of the site gives a note: a hairline box
+   with a single accent rule down the left. The label carries the meaning, so
+   nothing here needs a second or a third hue. */
+.doc-aviso {
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--bg-soft);
+}
+.doc-aviso__rotulo { color: var(--accent); }
+.doc-aviso--roadmap { border-left-color: var(--line); }
+.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
+
+.doc-cartao em,
+.doc-exemplo__cabecalho b { color: var(--accent); }
+.doc-cartao:hover { transform: none; border-color: var(--accent); }
+
+/* At 380px nothing may scroll the page sideways: wide code blocks and tables
+   scroll inside their own box. */
+.doc-artigo pre { overflow-x: auto; }
+.doc-artigo :not(pre) > code { word-break: break-word; }
+.doc-tabela { overflow-x: auto; }
+
+@media (max-width: 30rem) {
+  .doc-tabela table { min-width: 22rem; }
+  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+</head>
+<body>
+
+<article class="doc-artigo">
+
+<p class="doc-migalha">Fundamentals</p>
+<h1>Hooks</h1>
+<p class="doc-resumo">
+  <code>useState</code>, <code>useEffect</code>, <code>useMemo</code>, <code>useRef</code> and
+  <code>useContext</code>, written straight into HTML attributes. They are a surface over
+  primitives the library already had, so someone arriving from React can write what they already
+  know and have it mean the right thing here.
+</p>
+
+<h2 id="estado">useState</h2>
+
+<p>
+  Holds a value and re-renders whatever reads it. It returns a ref, and reactive objects unwrap
+  refs on read, so inside <code>v-data</code> it behaves as a plain value: no <code>.value</code>,
+  and no setter function to thread around.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ count: useState(0) }"&gt;
+  &lt;p&gt;Você clicou {count} vezes&lt;/p&gt;
+  &lt;button @click="count++"&gt;clicar&lt;/button&gt;
+  &lt;button @click="count = 0"&gt;zerar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  <code>count++</code> rather than <code>setCount(count + 1)</code>. The assignment is tracked by
+  the same Proxy that tracks everything else, so there is no second way to write state.
+</p>
+
+<h2 id="efeito">useEffect</h2>
+
+<p>
+  Runs a side effect and re-runs it when what it depends on changes. Returning a function from the
+  body registers cleanup, called before the next run and again when the element is removed.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ segundos: useState(0) }"
+     v-init="useEffect(() =&gt; {
+       const id = setInterval(() =&gt; segundos++, 1000);
+       return () =&gt; clearInterval(id);
+     }, [])"&gt;
+  &lt;p&gt;{segundos}s desde que a página abriu&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  The empty array means once, exactly as in React. The returned <code>clearInterval</code> is what
+  keeps the timer from outliving the element.
+</p>
+
+<h3 id="deps">The dependency array is optional</h3>
+
+<p>
+  This is the one place the hooks here are deliberately not React. Voodoo tracks reads through a
+  Proxy, so with no array an effect re-runs when something it actually read changes. You do not
+  have to list dependencies for correctness — the array is there for when you want to narrow it.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ nome: useState('Ana'), idade: useState(30) }"&gt;
+  &lt;input v-model="nome"&gt;
+  &lt;button @click="idade++"&gt;envelhecer&lt;/button&gt;
+
+  &lt;p v-effect="useEffect(() =&gt; console.log('nome mudou:', nome), [nome])"&gt;&lt;/p&gt;
+  &lt;p v-effect="useEffect(() =&gt; console.log('qualquer um dos dois mudou'))"&gt;&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  The first logs only when the name changes, because the array says so. The second has no array,
+  reads nothing, and so never re-runs. Open the console and type in the field.
+</p>
+
+<h2 id="memo">useMemo</h2>
+
+<p>
+  Caches a computation. With no array it becomes a lazy <code>computed</code>: recomputed only when
+  something it read changed, and not at all while nothing did. With an array it recomputes when that
+  array changes.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  itens: useState([2, 7, 1, 9, 4]),
+  total: useMemo(() =&gt; itens.reduce((a, b) =&gt; a + b, 0)),
+  maior: useMemo(() =&gt; Math.max(...itens))
+}"&gt;
+  &lt;p&gt;itens: {itens.join(', ')}&lt;/p&gt;
+  &lt;p&gt;soma: {total} · maior: {maior}&lt;/p&gt;
+  &lt;button @click="itens.push(itens.length + 10)"&gt;adicionar&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="ref">useRef</h2>
+
+<p>
+  A box that survives re-evaluation and that nothing subscribes to. Use it for a timer id, a
+  previous value, a counter you do not want on screen — anything you want to keep without the page
+  reacting when it changes.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ renders: useRef(0), n: useState(0) }"&gt;
+  &lt;p v-effect="renders.current++"&gt;n vale {n}&lt;/p&gt;
+  &lt;button @click="n++"&gt;mudar n&lt;/button&gt;
+  &lt;button @click="alert('efeitos rodaram ' + renders.current + ' vezes')"&gt;
+    quantas vezes rodou?
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Changing <code>renders.current</code> renders nothing. That is the whole point of it, and it is
+  why <code>useRef</code> is the one hook here that does not return a ref in the reactive sense.
+</p>
+
+<h2 id="context">useContext</h2>
+
+<p>
+  Shared state, reachable from any component without threading it through the markup by hand. It is
+  backed by the store registry, so <code>useContext('sessao')</code> and
+  <code>$store.sessao</code> are the same object.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{ s: useContext('sessao', { nome: 'Ana', tema: 'claro' }) }"&gt;
+  &lt;p&gt;Componente A vê: {s.nome}&lt;/p&gt;
+  &lt;input v-model="s.nome"&gt;
+&lt;/div&gt;
+
+&lt;hr&gt;
+
+&lt;div v-data="{ s: useContext('sessao') }"&gt;
+  &lt;p&gt;Componente B vê: {s.nome}&lt;/p&gt;
+  &lt;button @click="s.nome = 'Bia'"&gt;mudar daqui&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<p>
+  Nothing is passed between the two. The second argument creates the store on first use; leaving it
+  out just reads what is already there.
+</p>
+
+<h2 id="jsx">Together with JSX</h2>
+
+<p>
+  Hooks and <a href="jsx.html">JSX regions</a> are independent, and both work in an ordinary
+  <code>.html</code> file with no build step. A memo feeding a list is the common pairing.
+</p>
+
+<div data-exemplo>
+<pre data-lang="html"><code>&lt;div v-data="{
+  busca: useState(''),
+  frutas: useState(['maçã', 'pera', 'uva', 'melancia']),
+  filtradas: useMemo(() =&gt; frutas.filter(f =&gt; f.includes(busca)))
+}"&gt;
+  &lt;input v-model="busca" placeholder="filtrar"&gt;
+
+  &lt;ul&gt;
+    {filtradas.map(fruta =&gt; (
+      &lt;li&gt;{fruta}&lt;/li&gt;
+    ))}
+  &lt;/ul&gt;
+
+  &lt;p&gt;{filtradas.length === 0 ? &lt;b&gt;nada encontrado&lt;/b&gt; : &lt;span&gt;{filtradas.length} resultado(s)&lt;/span&gt;}&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+</div>
+
+<h2 id="v-data">One rule worth knowing</h2>
+
+<p>
+  Inside <code>v-data</code>, a key can read the keys written before it:
+</p>
+
+<pre data-lang="html"><code>&lt;div v-data="{ n: useState(4), dobro: useMemo(() =&gt; n * 2) }"&gt;</code></pre>
+
+<p>
+  That works because <code>v-data</code> is filled one key at a time into the scope it is defining,
+  rather than being evaluated whole somewhere else and handed over afterwards. Order matters, and
+  only backwards: a key cannot read one written below it.
+</p>
+
+<p>
+  The one shape that keeps the older behaviour is a <code>v-data</code> that is not a plain object
+  literal — a spread, a computed key, or a call returning an object. There is no partial state to
+  expose midway through those, so they are evaluated whole, in the parent scope, as before.
+</p>
+
+<h2 id="diferencas">How these differ from React</h2>
+
+<p>
+  Three differences, all deliberate, and all of them things the reactive model here makes possible
+  rather than corners cut.
+</p>
+
+<p>
+  <b>No rule of hooks.</b> Slots are keyed per element in call order within one evaluation, and
+  <code>v-data</code> and <code>v-init</code> each evaluate once per element. Calling a hook inside
+  a branch does not shift anything, because the order does not come from a render pass you have to
+  keep stable by hand.
+</p>
+
+<p>
+  <b>No setter pair.</b> <code>useState</code> returns the value, not a
+  <code>[value, setValue]</code> tuple. Assignment is already tracked, so a setter would be a second
+  way to do what <code>=</code> does.
+</p>
+
+<p>
+  <b>Dependencies are optional.</b> Covered above, and worth repeating: an omitted array is not a
+  bug waiting to happen here. It means "work it out", and the Proxy does.
+</p>
+
+<h2 id="limites">What they do not do</h2>
+
+<p>
+  There is no <code>useReducer</code>, no <code>useCallback</code> and no
+  <code>useLayoutEffect</code>. The first two have no job in a model with no re-render pass —
+  a function written in an attribute is not recreated on every render, so there is nothing to
+  memoise — and the third would need a render pass to be laid out before.
+</p>
+
+<p>
+  Custom hooks in the React sense, a plain function calling other hooks, are also not available from
+  inside the markup, because expressions cannot declare functions that outlive the attribute they
+  are written in. Use <a href="stores.html">a store</a> for logic shared between components.
+</p>
+
+</article></article>
+
+<script src="../assets/docs.js?v=4e059b8c"></script>
+</body>
+</html>

@@ -191,7 +191,8 @@ export { tokenize, VoodooSyntaxError } from './parser/lexer';
 export { evaluate, stringify, allowedGlobals, VoodooRuntimeError } from './parser/interpreter';
 
 export { config, PRIORITY, defineDirective } from './runtime/registry';
-export { Scope, magic, magics, rootScope } from './runtime/scope';
+export { Scope, magic, magics, hook, hooks, rootScope } from './runtime/scope';
+export { useState, useEffect, useMemo, useRef, useContext, installHooks } from './hooks';
 export { walk, destroy, refresh, start, findScope, getScope, addCleanup } from './runtime/walker';
 export { defineComponent, mountComponent, instances } from './runtime/component';
 export { screen, network, clipboard } from './runtime/magics';

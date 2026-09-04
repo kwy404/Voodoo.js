@@ -1,5 +1,6 @@
-import { S as Scope, c as core, V as VoodooCollection } from './query-DiQAS73Q.cjs';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-DiQAS73Q.cjs';
+import { S as Scope, c as core, V as VoodooCollection } from './query-XooOh4vB.cjs';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as hook, H as hooks, I as injectStyle, J as instances, K as leave, L as magic, M as magics, N as mountComponent, O as parse, Q as query, T as ready, U as refresh, W as removeStore, q as resource, X as rootScope, Y as session, Z as slideDown, _ as slideUp, $ as start, a0 as storage, a1 as store, a2 as storeNames, a3 as stringify, a4 as theme, a5 as toast, a6 as tokenize, a7 as url, a8 as viewTransition, a9 as walk, aa as whenElement, ab as whenReady } from './query-XooOh4vB.cjs';
+import { Ref } from './reactivity.cjs';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.cjs';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.cjs';
 export { R as RoomOptions, a as RoomState, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, f as createSocket, s as socket, g as socketSupported } from './index-DTllqUtj.cjs';
@@ -480,6 +481,80 @@ declare const charts: {
     format: typeof formatChartValue;
     colors: string[];
 };
+
+/**
+ * @module hooks
+ *
+ * React-style hooks, reachable by bare name inside any expression.
+ *
+ * These are a thin surface over primitives the library already had — `effect`,
+ * `computed`, `ref` and `store`. The value is not new machinery, it is that
+ * someone arriving from React can write what they already know and have it mean
+ * the right thing here.
+ *
+ * Two differences from React are deliberate, and both are improvements rather
+ * than gaps:
+ *
+ * 1. `deps` is optional everywhere. Voodoo tracks reads through a Proxy, so a
+ *    hook with no dependency array re-runs exactly when something it actually
+ *    read changes. The array is there for when you want to narrow that, not
+ *    because the library cannot work it out.
+ *
+ * 2. There is no rule against calling a hook in a branch. Slots are keyed per
+ *    scope in call order within one evaluation, and `v-data` and `v-init` each
+ *    evaluate once per scope, so the order is stable without a rule asking you
+ *    to keep it stable.
+ *
+ * `useState` and `useMemo` return refs, and `reactive()` unwraps refs on read,
+ * so inside `v-data` they read as plain values with no `.value` anywhere.
+ * `useRef` deliberately does not: it returns a raw `{ current }` box that no
+ * effect subscribes to, which is the whole point of it.
+ */
+
+/**
+ * A value that survives re-evaluation and re-renders whatever reads it.
+ *
+ * Returns a ref. Written into `v-data` it reads and assigns as a plain value,
+ * because reactive objects unwrap refs, so `count++` works with no `.value`.
+ */
+declare function useState<T>(scope: Scope, initial: T): Ref<T>;
+/**
+ * Runs a side effect, and re-runs it when what it depends on changes.
+ *
+ * With no dependency array it tracks its own reads and re-runs when any of them
+ * change. With `[]` it runs once. With `[a, b]` it re-runs only when one of
+ * those differs from last time. Returning a function from `fn` registers
+ * cleanup, called before the next run and again when the element is removed.
+ */
+declare function useEffect(scope: Scope, fn: () => void | (() => void), deps?: unknown): void;
+/**
+ * Caches a computation.
+ *
+ * With no dependency array it becomes a `computed`: lazy, cached, and
+ * recomputed only when something it read actually changed. With an array it
+ * recomputes when that array changes. Returns a ref, so inside `v-data` it
+ * reads as the value itself.
+ */
+declare function useMemo<T>(scope: Scope, fn: () => T, deps?: unknown): Ref<T>;
+/**
+ * A box that survives re-evaluation and that nothing subscribes to.
+ *
+ * Use it for a DOM element, a timer id, or a previous value — anything you want
+ * to keep without the page reacting when it changes. Deliberately not a ref, so
+ * reading `.current` inside an effect does not make that effect depend on it.
+ */
+declare function useRef<T>(scope: Scope, initial: T): {
+    current: T;
+};
+/**
+ * Shared state, reachable from any component without threading it through the
+ * markup by hand.
+ *
+ * Backed by the store registry, so `useContext('user')` and `$store.user` are
+ * the same object. Passing a second argument creates the store on first use.
+ */
+declare function useContext<T extends Record<string, any>>(name: string, initial?: T): T;
+declare function installHooks(): void;
 
 /**
  * @module runtime/magics
@@ -1714,4 +1789,4 @@ interface Voodoo extends Omit<typeof core, never> {
 }
 declare const V: Voodoo;
 
-export { Scope, V, type Voodoo, VoodooCollection, activateJsx, alert, animate, applyMask, applyRegions, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, devtoolsWidget, dialog, disableXray, easings, enableXray, extractJsx, getLocale, hotkey, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, jsx, mask, masks, modal, motionPresets, mountDevtoolsWidget, navigate, network, palette, prompt, readDeclarationBlock, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, unmountDevtoolsWidget, validate, validator, xray };
+export { Scope, V, type Voodoo, VoodooCollection, activateJsx, alert, animate, applyMask, applyRegions, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, devtoolsWidget, dialog, disableXray, easings, enableXray, extractJsx, getLocale, hotkey, i18n, inView, installHooks, isDevtoolsWidgetMounted, isXrayEnabled, jsx, mask, masks, modal, motionPresets, mountDevtoolsWidget, navigate, network, palette, prompt, readDeclarationBlock, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, unmountDevtoolsWidget, useContext, useEffect, useMemo, useRef, useState, validate, validator, xray };

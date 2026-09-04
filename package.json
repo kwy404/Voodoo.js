@@ -34,7 +34,8 @@
     "conformance": "node scripts/conformance.mjs",
     "check:conformance": "node scripts/conformance.mjs --check",
     "release": "node scripts/release.mjs",
-    "check:packaging": "node scripts/check-packaging.mjs"
+    "check:packaging": "node scripts/check-packaging.mjs",
+    "check:site": "node scripts/check-site-bundles.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

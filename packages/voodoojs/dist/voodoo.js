@@ -2263,6 +2263,10 @@ Expression: ${expression}` : message);
   function magic(name, getter) {
     magics.set(name.startsWith("$") ? name : `$${name}`, getter);
   }
+  var hooks = /* @__PURE__ */ new Map();
+  function hook(name, getter) {
+    hooks.set(name, getter);
+  }
   var Scope = class _Scope {
     // Assignment order matches the order the fields were declared in before, so
     // the properties are created in the same sequence they always were.
@@ -2318,7 +2322,10 @@ Expression: ${expression}` : message);
         s = s.parent;
       }
       if (name.charCodeAt(0) === 36 && magics.has(name)) {
-        return this.magicContainer(name);
+        return this.magicContainer(name, magics);
+      }
+      if (hooks.has(name)) {
+        return this.magicContainer(name, hooks);
       }
       return void 0;
     }
@@ -2347,11 +2354,11 @@ Expression: ${expression}` : message);
     reactiveChild(vars, el = null) {
       return new _Scope(reactive(vars), this, el != null ? el : this.el);
     }
-    magicContainer(name) {
+    magicContainer(name, registry) {
       if (!this.magicCache) this.magicCache = /* @__PURE__ */ new Map();
       const cached = this.magicCache.get(name);
       if (cached) return cached;
-      const getter = magics.get(name);
+      const getter = registry.get(name);
       const scope = this;
       const container2 = {};
       Object.defineProperty(container2, name, {
@@ -2744,7 +2751,16 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       },
       effect(fn) {
         const owner = ownerScope();
-        owner.run(() => effect(fn, { scope: owner }));
+        const hosted = () => {
+          const previous = hookHost;
+          hookHost = el;
+          try {
+            fn();
+          } finally {
+            hookHost = previous;
+          }
+        };
+        owner.run(() => effect(hosted, { scope: owner }));
       },
       cleanup(fn) {
         addCleanup(el, fn);
@@ -2792,6 +2808,56 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       return;
     }
     initialized.add(el);
+    const previousHost = hookHost;
+    hookHost = el;
+    try {
+      walkElementDirectives(el, attrs, tagComponent, current2);
+    } finally {
+      hookHost = previousHost;
+    }
+  }
+  var hookHost = null;
+  function currentHookHost() {
+    return hookHost;
+  }
+  function createDataScope(expression, parent, el) {
+    let ast = null;
+    try {
+      ast = parse(expression);
+    } catch (e) {
+      ast = null;
+    }
+    const plain = ast && ast.t === "obj" && ast.props.every(
+      (p2) => !p2.spread && !p2.keyExpr
+    );
+    if (!plain) {
+      const raw = evaluateIn(expression, parent, "v-data");
+      return parent.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+    }
+    const scope = parent.reactiveChild({}, el);
+    const props = ast.props;
+    for (const prop of props) {
+      if (prop.key === null) continue;
+      try {
+        if (prop.getter) {
+          const compute = evaluate(prop.value, scope);
+          Object.defineProperty(scope.data, prop.key, {
+            enumerable: true,
+            configurable: true,
+            get: () => compute.call(scope.data)
+          });
+        } else {
+          scope.data[prop.key] = evaluate(prop.value, scope);
+        }
+      } catch (err) {
+        if (inDevelopment()) warnInvalidExpression(el, expression, expression, err);
+        else handleError(err, "v-data");
+      }
+    }
+    return scope;
+  }
+  function walkElementDirectives(el, attrs, tagComponent, scope) {
+    let current2 = scope;
     for (const attr2 of attrs) {
       const def = directives.get(attr2.name);
       if (def == null ? void 0 : def.terminal) {
@@ -2811,11 +2877,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         nodeScopes.set(el, current2);
       }
     } else if (dataAttr || componentAttr) {
-      const raw = dataAttr ? evaluateIn(dataAttr.expression || "{}", current2, "v-data") : {};
-      current2 = current2.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+      current2 = createDataScope(dataAttr ? dataAttr.expression || "{}" : "{}", current2, el);
       nodeScopes.set(el, current2);
     }
-    const attributeScope = mountedComponent ? activeScope2 : current2;
+    const attributeScope = mountedComponent ? scope : current2;
     for (const attr2 of attrs) {
       if (attr2.name === "data" || attr2.name === "component") continue;
       runDirective(el, attr2, attributeScope);
@@ -2972,9 +3037,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   var observer = null;
   var startHooks = [];
   function runPhase(target, after) {
-    for (const hook of startHooks) {
+    for (const hook2 of startHooks) {
       try {
-        hook(target, after);
+        hook2(target, after);
       } catch (error) {
         console.error("[Voodoo] a start hook failed", error);
       }
@@ -3358,10 +3423,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     "destroyed"
   ]);
   function callHook(def, instance, name) {
-    const hook = def[name];
-    if (typeof hook !== "function") return;
+    const hook2 = def[name];
+    if (typeof hook2 !== "function") return;
     try {
-      hook.call(instance);
+      hook2.call(instance);
     } catch (err) {
       handleError(err, `hook ${name}`);
     }
@@ -4820,6 +4885,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   );
 
   // src/storage/index.ts
+  init_reactivity();
   function createStorage(getStore, prefix = "") {
     const full = (key) => prefix + key;
     return {
@@ -4995,22 +5061,29 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   };
   var THEME_KEY = "voodoo:theme";
   var picked = null;
+  var revision = ref(0);
   var theme = {
     /** Theme chosen by the user, or `system` when never set. */
     get current() {
       var _a2, _b;
+      void revision.value;
       return (_b = (_a2 = storage.get(THEME_KEY)) != null ? _a2 : picked) != null ? _b : "system";
     },
     /** Theme effectively applied, resolving `system`. */
     get resolved() {
       const value = this.current;
       if (value !== "system") return value;
+      if (typeof document !== "undefined") {
+        const authored = document.documentElement.getAttribute("data-theme");
+        if (authored === "light" || authored === "dark") return authored;
+      }
       if (typeof matchMedia === "undefined") return "light";
       return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     },
     set(value) {
       picked = value;
       storage.set(THEME_KEY, value);
+      revision.value++;
       this.apply();
     },
     toggle() {
@@ -5044,8 +5117,17 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     init() {
       if (typeof document === "undefined") return;
       this.apply();
+      if (typeof MutationObserver !== "undefined") {
+        new MutationObserver(() => {
+          revision.value++;
+        }).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["data-theme"]
+        });
+      }
       if (typeof matchMedia === "undefined") return;
       matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+        revision.value++;
         if (this.current === "system") this.apply();
       });
     }
@@ -5186,6 +5268,141 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       _a2,
       "change",
       updateNetwork
+    );
+  }
+
+  // src/hooks/index.ts
+  init_reactivity();
+  var tables = /* @__PURE__ */ new WeakMap();
+  function tableFor(scope) {
+    var _a2, _b, _c;
+    const host = (_b = (_a2 = currentHookHost()) != null ? _a2 : scope.el) != null ? _b : scope;
+    let table = tables.get(host);
+    if (!table) {
+      table = { slots: [], index: 0, scheduled: false, bound: false };
+      tables.set(host, table);
+    }
+    const el = (_c = currentHookHost()) != null ? _c : scope.el;
+    if (!table.bound && el) {
+      table.bound = true;
+      const owned = table;
+      addCleanup(el, () => {
+        for (const slot of owned.slots) {
+          if (slot.dispose) slot.dispose();
+          if (slot.runner) stop(slot.runner);
+        }
+        owned.slots.length = 0;
+      });
+    }
+    if (!table.scheduled) {
+      table.scheduled = true;
+      const pending = table;
+      queueMicrotask(() => {
+        pending.index = 0;
+        pending.scheduled = false;
+      });
+    }
+    return table;
+  }
+  function nextSlot(scope, kind) {
+    const table = tableFor(scope);
+    const at = table.index++;
+    let slot = table.slots[at];
+    if (!slot || slot.kind !== kind) {
+      if (slot) {
+        if (slot.dispose) slot.dispose();
+        if (slot.runner) stop(slot.runner);
+      }
+      slot = { kind, deps: null, value: void 0 };
+      table.slots[at] = slot;
+    }
+    return slot;
+  }
+  function depsChanged(previous, next) {
+    if (!previous || !next) return true;
+    if (previous.length !== next.length) return true;
+    for (let i = 0; i < next.length; i++) {
+      if (!Object.is(previous[i], next[i])) return true;
+    }
+    return false;
+  }
+  function normalizeDeps(deps) {
+    return Array.isArray(deps) ? deps.slice() : null;
+  }
+  function useState(scope, initial) {
+    const slot = nextSlot(scope, "state");
+    if (slot.value === void 0) slot.value = ref(initial);
+    return slot.value;
+  }
+  function useEffect(scope, fn, deps) {
+    const slot = nextSlot(scope, "effect");
+    const next = normalizeDeps(deps);
+    const runCleanup = () => {
+      if (slot.dispose) {
+        const dispose = slot.dispose;
+        slot.dispose = void 0;
+        dispose();
+      }
+    };
+    if (next) {
+      const first = slot.deps === null && !slot.runner;
+      if (first || depsChanged(slot.deps, next)) {
+        slot.deps = next;
+        runCleanup();
+        const result = fn();
+        if (typeof result === "function") slot.dispose = result;
+      }
+      return;
+    }
+    if (slot.runner) return;
+    slot.deps = null;
+    slot.runner = effect(() => {
+      runCleanup();
+      const result = fn();
+      if (typeof result === "function") slot.dispose = result;
+    });
+  }
+  function useMemo(scope, fn, deps) {
+    const slot = nextSlot(scope, "memo");
+    const next = normalizeDeps(deps);
+    if (!next) {
+      if (!slot.value) slot.value = computed(fn);
+      return slot.value;
+    }
+    if (!slot.value) {
+      slot.value = ref(fn());
+      slot.deps = next;
+    } else if (depsChanged(slot.deps, next)) {
+      slot.deps = next;
+      slot.value.value = fn();
+    }
+    return slot.value;
+  }
+  function useRef(scope, initial) {
+    const slot = nextSlot(scope, "ref");
+    if (!slot.value) slot.value = markRaw({ current: initial });
+    return slot.value;
+  }
+  function useContext(name, initial) {
+    if (initial !== void 0 && !(name in allStores)) {
+      store(name, initial);
+    }
+    return allStores[name];
+  }
+  function installHooks() {
+    hook("useState", (scope) => (initial) => useState(scope, initial));
+    hook(
+      "useEffect",
+      (scope) => (fn, deps) => useEffect(scope, fn, deps)
+    );
+    hook(
+      "useMemo",
+      (scope) => (fn, deps) => useMemo(scope, fn, deps)
+    );
+    hook("useRef", (scope) => (initial) => useRef(scope, initial));
+    hook(
+      "useContext",
+      () => (name, initial) => useContext(name, initial)
     );
   }
 
@@ -6793,6 +7010,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   setScopeMarker(markNodeScope);
   setDirectiveRegistrar(directive);
   installMagics();
+  installHooks();
   var eventBus = /* @__PURE__ */ new Map();
   function on(name, handler) {
     let set2 = eventBus.get(name);
@@ -6828,7 +7046,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   }
   function directive(name, definition) {
     var _a2, _b;
-    const hooks = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
+    const hooks2 = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
     defineDirective(
       name,
       (ctx) => {
@@ -6848,31 +7066,31 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
             instance: (_b3 = (_a4 = ctx.scope.owner) == null ? void 0 : _a4.component) != null ? _b3 : null
           };
         };
-        const initial = hooks.raw ? ctx.expression : ctx.evaluate();
-        (_a3 = hooks.created) == null ? void 0 : _a3.call(hooks, ctx.el, makeBinding(initial));
-        (_b2 = hooks.beforeMount) == null ? void 0 : _b2.call(hooks, ctx.el, makeBinding(initial));
+        const initial = hooks2.raw ? ctx.expression : ctx.evaluate();
+        (_a3 = hooks2.created) == null ? void 0 : _a3.call(hooks2, ctx.el, makeBinding(initial));
+        (_b2 = hooks2.beforeMount) == null ? void 0 : _b2.call(hooks2, ctx.el, makeBinding(initial));
         ctx.effect(() => {
           var _a4, _b3;
-          const value = hooks.raw ? ctx.expression : ctx.evaluate();
+          const value = hooks2.raw ? ctx.expression : ctx.evaluate();
           if (!mounted) {
             mounted = true;
             oldValue = value;
-            (_a4 = hooks.mounted) == null ? void 0 : _a4.call(hooks, ctx.el, makeBinding(value));
+            (_a4 = hooks2.mounted) == null ? void 0 : _a4.call(hooks2, ctx.el, makeBinding(value));
             return;
           }
           if (value === oldValue) return;
           const binding = makeBinding(value);
-          (_b3 = hooks.updated) == null ? void 0 : _b3.call(hooks, ctx.el, binding);
+          (_b3 = hooks2.updated) == null ? void 0 : _b3.call(hooks2, ctx.el, binding);
           oldValue = value;
         });
         ctx.cleanup(() => {
           var _a4, _b3;
           const binding = makeBinding(oldValue);
-          (_a4 = hooks.beforeUnmount) == null ? void 0 : _a4.call(hooks, ctx.el, binding);
-          (_b3 = hooks.unmounted) == null ? void 0 : _b3.call(hooks, ctx.el, binding);
+          (_a4 = hooks2.beforeUnmount) == null ? void 0 : _a4.call(hooks2, ctx.el, binding);
+          (_b3 = hooks2.unmounted) == null ? void 0 : _b3.call(hooks2, ctx.el, binding);
         });
       },
-      { priority: (_a2 = hooks.priority) != null ? _a2 : PRIORITY.DEFAULT, terminal: (_b = hooks.terminal) != null ? _b : false }
+      { priority: (_a2 = hooks2.priority) != null ? _a2 : PRIORITY.DEFAULT, terminal: (_b = hooks2.terminal) != null ? _b : false }
     );
   }
   function data(values) {

@@ -20,6 +20,21 @@ export function magic(name: string, getter: MagicGetter): void {
 }
 
 /**
+ * Registry of helpers reached by a bare name, with no `$` in front.
+ *
+ * Kept apart from `magics` because that one prefixes `$` onto anything missing
+ * it, which is the right default for `$store` and the wrong one for `useEffect`.
+ * Data in scope still wins: `lookup` walks the scope chain first, so a variable
+ * of your own named `useMemo` shadows the hook rather than colliding with it.
+ */
+export const hooks = new Map<string, MagicGetter>();
+
+/** Register a helper callable by bare name inside any expression. */
+export function hook(name: string, getter: MagicGetter): void {
+  hooks.set(name, getter);
+}
+
+/**
  * Fields are `declare`d and assigned in the constructor, not initialised at the
  * declaration.
  *
@@ -103,7 +118,10 @@ export class Scope implements EvalScope {
       s = s.parent;
     }
     if (name.charCodeAt(0) === 36 /* $ */ && magics.has(name)) {
-      return this.magicContainer(name);
+      return this.magicContainer(name, magics);
+    }
+    if (hooks.has(name)) {
+      return this.magicContainer(name, hooks);
     }
     return undefined;
   }
@@ -139,12 +157,15 @@ export class Scope implements EvalScope {
     return new Scope(reactive(vars), this, el ?? this.el);
   }
 
-  private magicContainer(name: string): Record<string, unknown> {
+  private magicContainer(
+    name: string,
+    registry: Map<string, MagicGetter>
+  ): Record<string, unknown> {
     if (!this.magicCache) this.magicCache = new Map();
     const cached = this.magicCache.get(name);
     if (cached) return cached;
 
-    const getter = magics.get(name)!;
+    const getter = registry.get(name)!;
     const scope = this;
     const container = {};
     Object.defineProperty(container, name, {

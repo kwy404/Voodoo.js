@@ -2237,6 +2237,10 @@ var magics = /* @__PURE__ */ new Map();
 function magic(name, getter) {
   magics.set(name.startsWith("$") ? name : `$${name}`, getter);
 }
+var hooks = /* @__PURE__ */ new Map();
+function hook(name, getter) {
+  hooks.set(name, getter);
+}
 var Scope = class _Scope {
   // Assignment order matches the order the fields were declared in before, so
   // the properties are created in the same sequence they always were.
@@ -2292,7 +2296,10 @@ var Scope = class _Scope {
       s = s.parent;
     }
     if (name.charCodeAt(0) === 36 && magics.has(name)) {
-      return this.magicContainer(name);
+      return this.magicContainer(name, magics);
+    }
+    if (hooks.has(name)) {
+      return this.magicContainer(name, hooks);
     }
     return void 0;
   }
@@ -2321,11 +2328,11 @@ var Scope = class _Scope {
   reactiveChild(vars, el = null) {
     return new _Scope(reactive(vars), this, el ?? this.el);
   }
-  magicContainer(name) {
+  magicContainer(name, registry) {
     if (!this.magicCache) this.magicCache = /* @__PURE__ */ new Map();
     const cached = this.magicCache.get(name);
     if (cached) return cached;
-    const getter = magics.get(name);
+    const getter = registry.get(name);
     const scope = this;
     const container2 = {};
     Object.defineProperty(container2, name, {
@@ -2722,7 +2729,16 @@ function runDirective(el, attr2, scope) {
     },
     effect(fn) {
       const owner = ownerScope();
-      owner.run(() => effect(fn, { scope: owner }));
+      const hosted = () => {
+        const previous = hookHost;
+        hookHost = el;
+        try {
+          fn();
+        } finally {
+          hookHost = previous;
+        }
+      };
+      owner.run(() => effect(hosted, { scope: owner }));
     },
     cleanup(fn) {
       addCleanup(el, fn);
@@ -2770,6 +2786,56 @@ function walk(node, scope) {
     return;
   }
   initialized.add(el);
+  const previousHost = hookHost;
+  hookHost = el;
+  try {
+    walkElementDirectives(el, attrs, tagComponent, current2);
+  } finally {
+    hookHost = previousHost;
+  }
+}
+var hookHost = null;
+function currentHookHost() {
+  return hookHost;
+}
+function createDataScope(expression, parent, el) {
+  let ast = null;
+  try {
+    ast = parse(expression);
+  } catch {
+    ast = null;
+  }
+  const plain = ast && ast.t === "obj" && ast.props.every(
+    (p2) => !p2.spread && !p2.keyExpr
+  );
+  if (!plain) {
+    const raw = evaluateIn(expression, parent, "v-data");
+    return parent.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+  }
+  const scope = parent.reactiveChild({}, el);
+  const props = ast.props;
+  for (const prop of props) {
+    if (prop.key === null) continue;
+    try {
+      if (prop.getter) {
+        const compute2 = evaluate(prop.value, scope);
+        Object.defineProperty(scope.data, prop.key, {
+          enumerable: true,
+          configurable: true,
+          get: () => compute2.call(scope.data)
+        });
+      } else {
+        scope.data[prop.key] = evaluate(prop.value, scope);
+      }
+    } catch (err) {
+      if (inDevelopment()) warnInvalidExpression(el, expression, expression, err);
+      else handleError(err, "v-data");
+    }
+  }
+  return scope;
+}
+function walkElementDirectives(el, attrs, tagComponent, scope) {
+  let current2 = scope;
   for (const attr2 of attrs) {
     const def = directives.get(attr2.name);
     if (def?.terminal) {
@@ -2789,11 +2855,10 @@ function walk(node, scope) {
       nodeScopes.set(el, current2);
     }
   } else if (dataAttr || componentAttr) {
-    const raw = dataAttr ? evaluateIn(dataAttr.expression || "{}", current2, "v-data") : {};
-    current2 = current2.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+    current2 = createDataScope(dataAttr ? dataAttr.expression || "{}" : "{}", current2, el);
     nodeScopes.set(el, current2);
   }
-  const attributeScope = mountedComponent ? activeScope2 : current2;
+  const attributeScope = mountedComponent ? scope : current2;
   for (const attr2 of attrs) {
     if (attr2.name === "data" || attr2.name === "component") continue;
     runDirective(el, attr2, attributeScope);
@@ -2948,13 +3013,13 @@ var componentAliases = /* @__PURE__ */ new Map();
 var started = false;
 var observer = null;
 var startHooks = [];
-function onStart(hook) {
-  startHooks.push(hook);
+function onStart(hook2) {
+  startHooks.push(hook2);
 }
 function runPhase(target2, after) {
-  for (const hook of startHooks) {
+  for (const hook2 of startHooks) {
     try {
-      hook(target2, after);
+      hook2(target2, after);
     } catch (error) {
       console.error("[Voodoo] a start hook failed", error);
     }
@@ -3332,10 +3397,10 @@ var LIFECYCLE = /* @__PURE__ */ new Set([
   "destroyed"
 ]);
 function callHook(def, instance, name) {
-  const hook = def[name];
-  if (typeof hook !== "function") return;
+  const hook2 = def[name];
+  if (typeof hook2 !== "function") return;
   try {
-    hook.call(instance);
+    hook2.call(instance);
   } catch (err) {
     handleError(err, `hook ${name}`);
   }
@@ -4775,6 +4840,7 @@ var toast = Object.assign(
 );
 
 // src/storage/index.ts
+init_reactivity();
 function createStorage(getStore, prefix = "") {
   const full = (key) => prefix + key;
   return {
@@ -4944,21 +5010,28 @@ var cache2 = {
 };
 var THEME_KEY = "voodoo:theme";
 var picked = null;
+var revision = ref(0);
 var theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current() {
+    void revision.value;
     return storage.get(THEME_KEY) ?? picked ?? "system";
   },
   /** Theme effectively applied, resolving `system`. */
   get resolved() {
     const value = this.current;
     if (value !== "system") return value;
+    if (typeof document !== "undefined") {
+      const authored = document.documentElement.getAttribute("data-theme");
+      if (authored === "light" || authored === "dark") return authored;
+    }
     if (typeof matchMedia === "undefined") return "light";
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   },
   set(value) {
     picked = value;
     storage.set(THEME_KEY, value);
+    revision.value++;
     this.apply();
   },
   toggle() {
@@ -4992,8 +5065,17 @@ var theme = {
   init() {
     if (typeof document === "undefined") return;
     this.apply();
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(() => {
+        revision.value++;
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+      });
+    }
     if (typeof matchMedia === "undefined") return;
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      revision.value++;
       if (this.current === "system") this.apply();
     });
   }
@@ -5123,6 +5205,140 @@ function installMagics() {
   navigator.connection?.addEventListener?.(
     "change",
     updateNetwork
+  );
+}
+
+// src/hooks/index.ts
+init_reactivity();
+var tables = /* @__PURE__ */ new WeakMap();
+function tableFor(scope) {
+  const host = currentHookHost() ?? scope.el ?? scope;
+  let table = tables.get(host);
+  if (!table) {
+    table = { slots: [], index: 0, scheduled: false, bound: false };
+    tables.set(host, table);
+  }
+  const el = currentHookHost() ?? scope.el;
+  if (!table.bound && el) {
+    table.bound = true;
+    const owned = table;
+    addCleanup(el, () => {
+      for (const slot of owned.slots) {
+        if (slot.dispose) slot.dispose();
+        if (slot.runner) stop(slot.runner);
+      }
+      owned.slots.length = 0;
+    });
+  }
+  if (!table.scheduled) {
+    table.scheduled = true;
+    const pending2 = table;
+    queueMicrotask(() => {
+      pending2.index = 0;
+      pending2.scheduled = false;
+    });
+  }
+  return table;
+}
+function nextSlot(scope, kind) {
+  const table = tableFor(scope);
+  const at = table.index++;
+  let slot = table.slots[at];
+  if (!slot || slot.kind !== kind) {
+    if (slot) {
+      if (slot.dispose) slot.dispose();
+      if (slot.runner) stop(slot.runner);
+    }
+    slot = { kind, deps: null, value: void 0 };
+    table.slots[at] = slot;
+  }
+  return slot;
+}
+function depsChanged(previous, next) {
+  if (!previous || !next) return true;
+  if (previous.length !== next.length) return true;
+  for (let i = 0; i < next.length; i++) {
+    if (!Object.is(previous[i], next[i])) return true;
+  }
+  return false;
+}
+function normalizeDeps(deps) {
+  return Array.isArray(deps) ? deps.slice() : null;
+}
+function useState(scope, initial) {
+  const slot = nextSlot(scope, "state");
+  if (slot.value === void 0) slot.value = ref(initial);
+  return slot.value;
+}
+function useEffect(scope, fn, deps) {
+  const slot = nextSlot(scope, "effect");
+  const next = normalizeDeps(deps);
+  const runCleanup = () => {
+    if (slot.dispose) {
+      const dispose = slot.dispose;
+      slot.dispose = void 0;
+      dispose();
+    }
+  };
+  if (next) {
+    const first = slot.deps === null && !slot.runner;
+    if (first || depsChanged(slot.deps, next)) {
+      slot.deps = next;
+      runCleanup();
+      const result = fn();
+      if (typeof result === "function") slot.dispose = result;
+    }
+    return;
+  }
+  if (slot.runner) return;
+  slot.deps = null;
+  slot.runner = effect(() => {
+    runCleanup();
+    const result = fn();
+    if (typeof result === "function") slot.dispose = result;
+  });
+}
+function useMemo(scope, fn, deps) {
+  const slot = nextSlot(scope, "memo");
+  const next = normalizeDeps(deps);
+  if (!next) {
+    if (!slot.value) slot.value = computed(fn);
+    return slot.value;
+  }
+  if (!slot.value) {
+    slot.value = ref(fn());
+    slot.deps = next;
+  } else if (depsChanged(slot.deps, next)) {
+    slot.deps = next;
+    slot.value.value = fn();
+  }
+  return slot.value;
+}
+function useRef(scope, initial) {
+  const slot = nextSlot(scope, "ref");
+  if (!slot.value) slot.value = markRaw({ current: initial });
+  return slot.value;
+}
+function useContext(name, initial) {
+  if (initial !== void 0 && !(name in allStores)) {
+    store(name, initial);
+  }
+  return allStores[name];
+}
+function installHooks() {
+  hook("useState", (scope) => (initial) => useState(scope, initial));
+  hook(
+    "useEffect",
+    (scope) => (fn, deps) => useEffect(scope, fn, deps)
+  );
+  hook(
+    "useMemo",
+    (scope) => (fn, deps) => useMemo(scope, fn, deps)
+  );
+  hook("useRef", (scope) => (initial) => useRef(scope, initial));
+  hook(
+    "useContext",
+    () => (name, initial) => useContext(name, initial)
   );
 }
 
@@ -6708,6 +6924,7 @@ setComponentMounter(mountComponent);
 setScopeMarker(markNodeScope);
 setDirectiveRegistrar(directive);
 installMagics();
+installHooks();
 var eventBus = /* @__PURE__ */ new Map();
 function on(name, handler) {
   let set2 = eventBus.get(name);
@@ -6741,7 +6958,7 @@ function off(name, handler) {
   eventBus.get(name)?.delete(handler);
 }
 function directive(name, definition) {
-  const hooks = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
+  const hooks2 = typeof definition === "function" ? { mounted: definition, updated: definition } : definition;
   defineDirective(
     name,
     (ctx) => {
@@ -6757,29 +6974,29 @@ function directive(name, definition) {
         scope: ctx.scope,
         instance: ctx.scope.owner?.component ?? null
       });
-      const initial = hooks.raw ? ctx.expression : ctx.evaluate();
-      hooks.created?.(ctx.el, makeBinding(initial));
-      hooks.beforeMount?.(ctx.el, makeBinding(initial));
+      const initial = hooks2.raw ? ctx.expression : ctx.evaluate();
+      hooks2.created?.(ctx.el, makeBinding(initial));
+      hooks2.beforeMount?.(ctx.el, makeBinding(initial));
       ctx.effect(() => {
-        const value = hooks.raw ? ctx.expression : ctx.evaluate();
+        const value = hooks2.raw ? ctx.expression : ctx.evaluate();
         if (!mounted2) {
           mounted2 = true;
           oldValue = value;
-          hooks.mounted?.(ctx.el, makeBinding(value));
+          hooks2.mounted?.(ctx.el, makeBinding(value));
           return;
         }
         if (value === oldValue) return;
         const binding = makeBinding(value);
-        hooks.updated?.(ctx.el, binding);
+        hooks2.updated?.(ctx.el, binding);
         oldValue = value;
       });
       ctx.cleanup(() => {
         const binding = makeBinding(oldValue);
-        hooks.beforeUnmount?.(ctx.el, binding);
-        hooks.unmounted?.(ctx.el, binding);
+        hooks2.beforeUnmount?.(ctx.el, binding);
+        hooks2.unmounted?.(ctx.el, binding);
       });
     },
-    { priority: hooks.priority ?? exports.PRIORITY.DEFAULT, terminal: hooks.terminal ?? false }
+    { priority: hooks2.priority ?? exports.PRIORITY.DEFAULT, terminal: hooks2.terminal ?? false }
   );
 }
 function data(values) {
@@ -23569,11 +23786,14 @@ exports.getLocale = getLocale;
 exports.getScope = getScope;
 exports.gpu = gpu;
 exports.groupBy = groupBy;
+exports.hook = hook;
+exports.hooks = hooks;
 exports.hotkey = hotkey;
 exports.http = http;
 exports.i18n = i18n;
 exports.inView = inView;
 exports.injectStyle = injectStyle;
+exports.installHooks = installHooks;
 exports.instances = instances;
 exports.isBrowser = isBrowser;
 exports.isDevtoolsWidgetMounted = isDevtoolsWidgetMounted;
@@ -23660,6 +23880,11 @@ exports.unmask = unmask;
 exports.unmountDevtoolsWidget = unmountDevtoolsWidget;
 exports.unref = unref;
 exports.url = url;
+exports.useContext = useContext;
+exports.useEffect = useEffect;
+exports.useMemo = useMemo;
+exports.useRef = useRef;
+exports.useState = useState;
 exports.uuid = uuid;
 exports.validate = validate;
 exports.validator = validator;

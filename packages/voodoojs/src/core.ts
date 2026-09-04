@@ -66,6 +66,7 @@ import { defineComponent, instances, mountComponent, setScopeMarker } from './ru
 import { createApp, setAppHost, setDirectiveRegistrar, type App } from './runtime/app';
 import { whenElement, whenReady } from './runtime/boot';
 import { installMagics, clipboard, network, screen } from './runtime/magics';
+import { installHooks } from './hooks';
 
 import { http, HttpError, request } from './http';
 import { createResource } from './http/resource';
@@ -96,6 +97,7 @@ setComponentMounter(mountComponent);
 setScopeMarker(markNodeScope);
 setDirectiveRegistrar(directive);
 installMagics();
+installHooks();
 
 // ---------------------------------------------------------------------------
 // Event bus
@@ -248,7 +250,7 @@ export interface VoodooStatic {
 }
 
 /** Published version. */
-export const version = '0.11.2';
+export const version = '0.12.0';
 
 /**
  * Core of Voodoo. The exported object is also callable: `V('#app')` returns

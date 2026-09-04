@@ -109,3 +109,10 @@ jobs:
       # there before.
       - name: Check the interpreter still agrees with JavaScript
         run: npm run build && npm run check:conformance
+
+      # `site/*.min.js` are copies kept by hand, and nothing checked them. They
+      # had drifted by a whole session's work, so the documentation, playground
+      # and landing page were running an older library than the one being
+      # tested and published. Every test passed the entire time.
+      - name: Check the site serves the bundles that were just built
+        run: npm run check:site

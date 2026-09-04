@@ -510,7 +510,7 @@ ${sections}
         <a href="docs/">Docs</a>
         <a href="playground.html">Playground</a>
         <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
-        <span style="margin-left: auto">Built with Voodoo.js 0.11.2</span>
+        <span style="margin-left: auto">Built with Voodoo.js 0.12.0</span>
       </div>
     </footer>
 

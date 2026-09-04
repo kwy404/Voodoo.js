@@ -1,6 +1,6 @@
 import { http, HttpError, request } from './chunk-DJJB35SR.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-H2ZUEQWV.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, flushSync, effectScope, stop, unref, markRaw, watchEffect, shallowRef, setErrorHandler } from './chunk-WJP3YGUI.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-SXUPQ3OB.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-WJP3YGUI.js';
 import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-UV5PMS7P.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-IGZSDZKU.js';
 import { injectStyle, ensureTokens } from './chunk-V3O3WOZH.js';
@@ -338,10 +338,10 @@ var LIFECYCLE = /* @__PURE__ */ new Set([
   "destroyed"
 ]);
 function callHook(def, instance, name) {
-  const hook = def[name];
-  if (typeof hook !== "function") return;
+  const hook2 = def[name];
+  if (typeof hook2 !== "function") return;
   try {
-    hook.call(instance);
+    hook2.call(instance);
   } catch (err) {
     handleError(err, `hook ${name}`);
   }
@@ -1116,21 +1116,28 @@ var cache = {
 };
 var THEME_KEY = "voodoo:theme";
 var picked = null;
+var revision = ref(0);
 var theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current() {
+    void revision.value;
     return storage.get(THEME_KEY) ?? picked ?? "system";
   },
   /** Theme effectively applied, resolving `system`. */
   get resolved() {
     const value = this.current;
     if (value !== "system") return value;
+    if (typeof document !== "undefined") {
+      const authored = document.documentElement.getAttribute("data-theme");
+      if (authored === "light" || authored === "dark") return authored;
+    }
     if (typeof matchMedia === "undefined") return "light";
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   },
   set(value) {
     picked = value;
     storage.set(THEME_KEY, value);
+    revision.value++;
     this.apply();
   },
   toggle() {
@@ -1164,8 +1171,17 @@ var theme = {
   init() {
     if (typeof document === "undefined") return;
     this.apply();
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(() => {
+        revision.value++;
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+      });
+    }
     if (typeof matchMedia === "undefined") return;
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      revision.value++;
       if (this.current === "system") this.apply();
     });
   }
@@ -1295,6 +1311,139 @@ function installMagics() {
   navigator.connection?.addEventListener?.(
     "change",
     updateNetwork
+  );
+}
+
+// src/hooks/index.ts
+var tables = /* @__PURE__ */ new WeakMap();
+function tableFor(scope) {
+  const host = currentHookHost() ?? scope.el ?? scope;
+  let table = tables.get(host);
+  if (!table) {
+    table = { slots: [], index: 0, scheduled: false, bound: false };
+    tables.set(host, table);
+  }
+  const el = currentHookHost() ?? scope.el;
+  if (!table.bound && el) {
+    table.bound = true;
+    const owned = table;
+    addCleanup(el, () => {
+      for (const slot of owned.slots) {
+        if (slot.dispose) slot.dispose();
+        if (slot.runner) stop(slot.runner);
+      }
+      owned.slots.length = 0;
+    });
+  }
+  if (!table.scheduled) {
+    table.scheduled = true;
+    const pending = table;
+    queueMicrotask(() => {
+      pending.index = 0;
+      pending.scheduled = false;
+    });
+  }
+  return table;
+}
+function nextSlot(scope, kind) {
+  const table = tableFor(scope);
+  const at = table.index++;
+  let slot = table.slots[at];
+  if (!slot || slot.kind !== kind) {
+    if (slot) {
+      if (slot.dispose) slot.dispose();
+      if (slot.runner) stop(slot.runner);
+    }
+    slot = { kind, deps: null, value: void 0 };
+    table.slots[at] = slot;
+  }
+  return slot;
+}
+function depsChanged(previous, next) {
+  if (!previous || !next) return true;
+  if (previous.length !== next.length) return true;
+  for (let i = 0; i < next.length; i++) {
+    if (!Object.is(previous[i], next[i])) return true;
+  }
+  return false;
+}
+function normalizeDeps(deps) {
+  return Array.isArray(deps) ? deps.slice() : null;
+}
+function useState(scope, initial) {
+  const slot = nextSlot(scope, "state");
+  if (slot.value === void 0) slot.value = ref(initial);
+  return slot.value;
+}
+function useEffect(scope, fn, deps) {
+  const slot = nextSlot(scope, "effect");
+  const next = normalizeDeps(deps);
+  const runCleanup = () => {
+    if (slot.dispose) {
+      const dispose = slot.dispose;
+      slot.dispose = void 0;
+      dispose();
+    }
+  };
+  if (next) {
+    const first = slot.deps === null && !slot.runner;
+    if (first || depsChanged(slot.deps, next)) {
+      slot.deps = next;
+      runCleanup();
+      const result = fn();
+      if (typeof result === "function") slot.dispose = result;
+    }
+    return;
+  }
+  if (slot.runner) return;
+  slot.deps = null;
+  slot.runner = effect(() => {
+    runCleanup();
+    const result = fn();
+    if (typeof result === "function") slot.dispose = result;
+  });
+}
+function useMemo(scope, fn, deps) {
+  const slot = nextSlot(scope, "memo");
+  const next = normalizeDeps(deps);
+  if (!next) {
+    if (!slot.value) slot.value = computed(fn);
+    return slot.value;
+  }
+  if (!slot.value) {
+    slot.value = ref(fn());
+    slot.deps = next;
+  } else if (depsChanged(slot.deps, next)) {
+    slot.deps = next;
+    slot.value.value = fn();
+  }
+  return slot.value;
+}
+function useRef(scope, initial) {
+  const slot = nextSlot(scope, "ref");
+  if (!slot.value) slot.value = markRaw({ current: initial });
+  return slot.value;
+}
+function useContext(name, initial) {
+  if (initial !== void 0 && !(name in allStores)) {
+    store(name, initial);
+  }
+  return allStores[name];
+}
+function installHooks() {
+  hook("useState", (scope) => (initial) => useState(scope, initial));
+  hook(
+    "useEffect",
+    (scope) => (fn, deps) => useEffect(scope, fn, deps)
+  );
+  hook(
+    "useMemo",
+    (scope) => (fn, deps) => useMemo(scope, fn, deps)
+  );
+  hook("useRef", (scope) => (initial) => useRef(scope, initial));
+  hook(
+    "useContext",
+    () => (name, initial) => useContext(name, initial)
   );
 }
 
@@ -2871,6 +3020,7 @@ setComponentMounter(mountComponent);
 setScopeMarker(markNodeScope);
 setDirectiveRegistrar(directive);
 installMagics();
+installHooks();
 var eventBus = /* @__PURE__ */ new Map();
 function on(name, handler) {
   let set = eventBus.get(name);
@@ -10270,6 +10420,6 @@ defineDirective(
   { priority: PRIORITY.MODEL + 5 }
 );
 
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-AH2VXDZD.js.map
-//# sourceMappingURL=chunk-AH2VXDZD.js.map
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
+//# sourceMappingURL=chunk-NR4GXNP2.js.map
+//# sourceMappingURL=chunk-NR4GXNP2.js.map

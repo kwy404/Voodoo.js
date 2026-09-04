@@ -14,7 +14,7 @@ Sem passo de build obrigatório · Sem dependências em tempo de execução · S
 [![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6.svg)](#typescript)
 [![npm](https://img.shields.io/npm/v/voodoojs.svg?label=npm&color=CB3837)](https://www.npmjs.com/package/voodoojs)
 [![downloads](https://img.shields.io/npm/dm/voodoojs.svg?label=downloads&color=CB3837)](https://www.npmjs.com/package/voodoojs)
-[![voodoo.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.min.js?branch=main&label=voodoo.min.js)](packages/voodoojs/dist/voodoo.min.js)
+[![voodoo.full.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.full.min.js?branch=main&label=voodoo.full.min.js)](packages/voodoojs/dist/voodoo.full.min.js)
 
 <img src="brand/mascot/vudu-wave.svg" alt="Vudu, o mascote da Voodoo.js" width="120">
 
@@ -143,7 +143,7 @@ caminho. Não sobra nada para recuperar.
 Salve este arquivo. Abra no navegador. Funciona.
 
 ```html
-<script src="voodoo.min.js?v=0.6.2" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 
 <div v-data="{ contador: 0 }">
   <button @click="contador--">-</button>
@@ -285,7 +285,7 @@ Cada linha abaixo faz parte do runtime publicado.
 ```
 
 Essa é a instalação inteira. A biblioteca começa sozinha assim que a página fica pronta. O
-[unpkg](https://unpkg.com/voodoojs@0.11.2/dist/voodoo.min.js) serve o mesmo arquivo, se você preferir.
+[unpkg](https://unpkg.com/voodoojs@0.11.2/dist/voodoo.full.min.js) serve o mesmo arquivo, se você preferir.
 
 A tag acima nomeia uma versão exata, então o que você carrega não muda sozinho e a página diz qual
 build é. Use a linha `0.11` se preferir que as correções de patch cheguem sem edição. É o build
@@ -320,7 +320,7 @@ cd Voodoo.js && npm install && npm run build   # os bundles saem em packages/voo
 ```
 
 ```html
-<script src="voodoo.min.js?v=0.6.2" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 ```
 
 **CLI**
@@ -719,9 +719,9 @@ pintura, então leia isto como formato relativo, e não como verdade absoluta.
 
 | Build | Minificado | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 129.68 KB | 45.04 KB | 39.50 KB |
-| `voodoo.min.js` | 252.04 KB | 81.66 KB | 69.30 KB |
-| `voodoo.full.min.js` | 424.28 KB | 128.37 KB | 107.08 KB |
+| `voodoo.core.min.js` | 140.23 KB | 47.92 KB | 41.71 KB |
+| `voodoo.min.js` | 263.73 KB | 84.76 KB | 71.68 KB |
+| `voodoo.full.min.js` | 440.85 KB | 133.16 KB | 110.69 KB |
 
 Rode você mesmo: o arcabouço de medição e as versões exatas testadas estão em
 [`benchmarks/`](benchmarks/).

@@ -20,6 +20,168 @@
   if (typeof window === 'undefined') return;
 
   window.VOODOO_PLAYGROUND_EXAMPLES = [
+    // --------------------------------------------------------- hooks
+    {
+      id: 'hooks-state',
+      group: 'hooks',
+      title: "useState",
+      desc: "Holds a value and re-renders what reads it. No .value, and no setter to thread around.",
+      code: [
+        "<div v-data=\"{ count: useState(0) }\">",
+        "  <h3>You clicked { count } times</h3>",
+        "",
+        "  <button @click=\"count++\">click</button>",
+        "  <button @click=\"count--\">back</button>",
+        "  <button @click=\"count = 0\">reset</button>",
+        "",
+        "  <p v-show=\"count > 4\">That is a lot of clicking.</p>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-effect',
+      group: 'hooks',
+      title: "useEffect with cleanup",
+      desc: "An empty array runs once. The returned function is the cleanup, called when the element goes.",
+      code: [
+        "<div v-data=\"{ seconds: useState(0), running: useState(true) }\"",
+        "     v-init=\"useEffect(() => {",
+        "       const id = setInterval(() => { if (running) seconds++ }, 1000);",
+        "       return () => clearInterval(id);",
+        "     }, [])\">",
+        "",
+        "  <h3>{ seconds }s</h3>",
+        "  <button @click=\"running = !running\">{ running ? 'pause' : 'resume' }</button>",
+        "  <button @click=\"seconds = 0\">reset</button>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-effect-deps',
+      group: 'hooks',
+      title: "The dependency array is optional",
+      desc: "With an array it re-runs on those. Without one it works out what it read. Open the console.",
+      code: [
+        "<div v-data=\"{ name: useState('Ana'), age: useState(30) }\">",
+        "  <input v-model=\"name\" placeholder=\"name\">",
+        "  <button @click=\"age++\">age++ ({ age })</button>",
+        "",
+        "  <!-- listed: fires only for the name -->",
+        "  <p v-effect=\"useEffect(() => console.log('name is now', name), [name])\"></p>",
+        "",
+        "  <!-- unlisted: works out its own reads -->",
+        "  <p v-effect=\"useEffect(() => console.log('either changed:', name, age))\"></p>",
+        "",
+        "  <p>Type above, then look at the console.</p>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-memo',
+      group: 'hooks',
+      title: "useMemo",
+      desc: "A cached computation. With no array it recomputes only when something it read changed.",
+      code: [
+        "<div v-data=\"{",
+        "  items: useState([2, 7, 1, 9, 4]),",
+        "  total: useMemo(() => items.reduce((a, b) => a + b, 0)),",
+        "  biggest: useMemo(() => Math.max(...items))",
+        "}\">",
+        "  <h3>sum { total } · biggest { biggest }</h3>",
+        "  <p>{ items.join(', ') }</p>",
+        "",
+        "  <button @click=\"items.push(Math.round(Math.random() * 20))\">add</button>",
+        "  <button @click=\"items.pop()\">remove</button>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-ref',
+      group: 'hooks',
+      title: "useRef",
+      desc: "A box nothing subscribes to. Changing .current renders nothing, which is the point.",
+      code: [
+        "<div v-data=\"{ runs: useRef(0), n: useState(0) }\">",
+        "  <p v-effect=\"runs.current++\">n is { n }</p>",
+        "",
+        "  <button @click=\"n++\">change n</button>",
+        "  <button @click=\"alert('effects ran ' + runs.current + ' times')\">",
+        "    how many runs?",
+        "  </button>",
+        "",
+        "  <p>The counter climbs, but nothing re-renders because of it.</p>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-context',
+      group: 'hooks',
+      title: "useContext",
+      desc: "Shared state between components, with nothing passed through the markup.",
+      code: [
+        "<div v-data=\"{ s: useContext('session', { name: 'Ana' }) }\">",
+        "  <h4>Component A</h4>",
+        "  <p>sees: { s.name }</p>",
+        "  <input v-model=\"s.name\">",
+        "</div>",
+        "",
+        "<hr>",
+        "",
+        "<div v-data=\"{ s: useContext('session') }\">",
+        "  <h4>Component B</h4>",
+        "  <p>sees: { s.name }</p>",
+        "  <button @click=\"s.name = 'Bia'\">change from here</button>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-jsx',
+      group: 'hooks',
+      title: "Hooks feeding JSX",
+      desc: "A memo filtering a list, rendered by a JSX region. Both in a plain .html file.",
+      code: [
+        "<div v-data=\"{",
+        "  search: useState(''),",
+        "  fruit: useState(['apple', 'pear', 'grape', 'melon', 'plum']),",
+        "  found: useMemo(() => fruit.filter(f => f.includes(search)))",
+        "}\">",
+        "  <input v-model=\"search\" placeholder=\"filter\">",
+        "",
+        "  <ul>",
+        "    {found.map(f => (",
+        "      <li>{f}</li>",
+        "    ))}",
+        "  </ul>",
+        "",
+        "  <p>{found.length === 0 ? <b>nothing found</b> : <span>{found.length} of {fruit.length}</span>}</p>",
+        "</div>"
+      ]
+    },
+    {
+      id: 'hooks-self-data',
+      group: 'hooks',
+      title: "v-data reading itself",
+      desc: "A key can read the keys written before it, which is what makes useMemo sit next to useState.",
+      code: [
+        "<div v-data=\"{",
+        "  price: useState(100),",
+        "  qty: useState(3),",
+        "  subtotal: useMemo(() => price * qty),",
+        "  tax: useMemo(() => subtotal * 0.1),",
+        "  total: useMemo(() => subtotal + tax)",
+        "}\">",
+        "  <label>price <input type=\"number\" v-model.number=\"price\"></label>",
+        "  <label>qty <input type=\"number\" v-model.number=\"qty\"></label>",
+        "",
+        "  <p>subtotal: { subtotal.toFixed(2) }</p>",
+        "  <p>tax: { tax.toFixed(2) }</p>",
+        "  <h3>total: { total.toFixed(2) }</h3>",
+        "",
+        "  <p>Each line reads the one above it. Order matters, backwards only.</p>",
+        "</div>"
+      ]
+    },
+
     // --------------------------------------------------------- basics
     {
       id: 'state',

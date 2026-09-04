@@ -1417,6 +1417,10 @@ var magics = /* @__PURE__ */ new Map();
 function magic(name, getter) {
   magics.set(name.startsWith("$") ? name : `$${name}`, getter);
 }
+var hooks = /* @__PURE__ */ new Map();
+function hook(name, getter) {
+  hooks.set(name, getter);
+}
 var Scope = class _Scope {
   // Assignment order matches the order the fields were declared in before, so
   // the properties are created in the same sequence they always were.
@@ -1472,7 +1476,10 @@ var Scope = class _Scope {
       s = s.parent;
     }
     if (name.charCodeAt(0) === 36 && magics.has(name)) {
-      return this.magicContainer(name);
+      return this.magicContainer(name, magics);
+    }
+    if (hooks.has(name)) {
+      return this.magicContainer(name, hooks);
     }
     return void 0;
   }
@@ -1501,11 +1508,11 @@ var Scope = class _Scope {
   reactiveChild(vars, el = null) {
     return new _Scope(reactive(vars), this, el ?? this.el);
   }
-  magicContainer(name) {
+  magicContainer(name, registry) {
     if (!this.magicCache) this.magicCache = /* @__PURE__ */ new Map();
     const cached = this.magicCache.get(name);
     if (cached) return cached;
-    const getter = magics.get(name);
+    const getter = registry.get(name);
     const scope = this;
     const container = {};
     Object.defineProperty(container, name, {
@@ -1826,7 +1833,16 @@ function runDirective(el, attr, scope) {
     },
     effect(fn) {
       const owner = ownerScope();
-      owner.run(() => effect(fn, { scope: owner }));
+      const hosted = () => {
+        const previous = hookHost;
+        hookHost = el;
+        try {
+          fn();
+        } finally {
+          hookHost = previous;
+        }
+      };
+      owner.run(() => effect(hosted, { scope: owner }));
     },
     cleanup(fn) {
       addCleanup(el, fn);
@@ -1874,6 +1890,56 @@ function walk(node, scope) {
     return;
   }
   initialized.add(el);
+  const previousHost = hookHost;
+  hookHost = el;
+  try {
+    walkElementDirectives(el, attrs, tagComponent, current);
+  } finally {
+    hookHost = previousHost;
+  }
+}
+var hookHost = null;
+function currentHookHost() {
+  return hookHost;
+}
+function createDataScope(expression, parent, el) {
+  let ast = null;
+  try {
+    ast = parse(expression);
+  } catch {
+    ast = null;
+  }
+  const plain = ast && ast.t === "obj" && ast.props.every(
+    (p) => !p.spread && !p.keyExpr
+  );
+  if (!plain) {
+    const raw = evaluateIn(expression, parent, "v-data");
+    return parent.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+  }
+  const scope = parent.reactiveChild({}, el);
+  const props = ast.props;
+  for (const prop of props) {
+    if (prop.key === null) continue;
+    try {
+      if (prop.getter) {
+        const compute = evaluate(prop.value, scope);
+        Object.defineProperty(scope.data, prop.key, {
+          enumerable: true,
+          configurable: true,
+          get: () => compute.call(scope.data)
+        });
+      } else {
+        scope.data[prop.key] = evaluate(prop.value, scope);
+      }
+    } catch (err) {
+      if (inDevelopment()) warnInvalidExpression(el, expression, expression, err);
+      else handleError(err, "v-data");
+    }
+  }
+  return scope;
+}
+function walkElementDirectives(el, attrs, tagComponent, scope) {
+  let current = scope;
   for (const attr of attrs) {
     const def = directives.get(attr.name);
     if (def?.terminal) {
@@ -1893,11 +1959,10 @@ function walk(node, scope) {
       nodeScopes.set(el, current);
     }
   } else if (dataAttr || componentAttr) {
-    const raw = dataAttr ? evaluateIn(dataAttr.expression || "{}", current, "v-data") : {};
-    current = current.reactiveChild(raw && typeof raw === "object" ? raw : {}, el);
+    current = createDataScope(dataAttr ? dataAttr.expression || "{}" : "{}", current, el);
     nodeScopes.set(el, current);
   }
-  const attributeScope = mountedComponent ? activeScope : current;
+  const attributeScope = mountedComponent ? scope : current;
   for (const attr of attrs) {
     if (attr.name === "data" || attr.name === "component") continue;
     runDirective(el, attr, attributeScope);
@@ -2052,13 +2117,13 @@ var componentAliases = /* @__PURE__ */ new Map();
 var started = false;
 var observer = null;
 var startHooks = [];
-function onStart(hook) {
-  startHooks.push(hook);
+function onStart(hook2) {
+  startHooks.push(hook2);
 }
 function runPhase(target, after) {
-  for (const hook of startHooks) {
+  for (const hook2 of startHooks) {
     try {
-      hook(target, after);
+      hook2(target, after);
     } catch (error) {
       console.error("[Voodoo] a start hook failed", error);
     }
@@ -2109,6 +2174,6 @@ function refresh(root) {
   walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
 }
 
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-H2ZUEQWV.js.map
-//# sourceMappingURL=chunk-H2ZUEQWV.js.map
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
+//# sourceMappingURL=chunk-SXUPQ3OB.js.map
+//# sourceMappingURL=chunk-SXUPQ3OB.js.map

@@ -36,6 +36,7 @@
         { id: 'guia/condicionais', titulo: 'Conditionals' },
         { id: 'guia/listas', titulo: 'Lists, and why the key matters' },
         { id: 'guia/jsx', titulo: 'JSX in plain HTML' },
+        { id: 'guia/hooks', titulo: 'Hooks' },
         { id: 'guia/eventos', titulo: 'Events and modifiers' },
         { id: 'guia/campos-e-v-model', titulo: 'Form fields with v-model' },
         { id: 'guia/atributos-classes-estilos', titulo: 'Attributes, classes and styles' }
@@ -126,7 +127,7 @@
     })();
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
-  var RUNTIME = new URL('../voodoo.full.min.js?v=bb6485be', RAIZ).href; // .../site/voodoo.full.min.js
+  var RUNTIME = new URL('../voodoo.full.min.js?v=708186a4', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the
@@ -301,7 +302,13 @@
     }
     document.querySelectorAll('iframe[data-palco]').forEach(function (quadro) {
       try {
-        quadro.contentDocument.documentElement.setAttribute('data-tema', tema);
+        var raiz = quadro.contentDocument.documentElement;
+        raiz.setAttribute('data-tema', tema);
+        // Also in the library's own spelling. An example that asks Voodoo what
+        // theme it is on, like the one on the theme page, reads `data-theme`
+        // and would otherwise answer from the operating system and contradict
+        // the page around it: light shell, example announcing dark.
+        raiz.setAttribute('data-theme', tema === 'claro' ? 'light' : 'dark');
       } catch (erro) {
         /* still loading */
       }
@@ -689,6 +696,8 @@
     var documento =
       '<!doctype html><html lang="en" data-tema="' +
       temaAtual() +
+      '" data-theme="' +
+      (temaAtual() === 'claro' ? 'light' : 'dark') +
       '"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<style>' +
@@ -1048,7 +1057,7 @@
     return el('footer', {
       class: 'doc-rodape',
       html:
-        '<p>Voodoo.js 0.11.2 &#183; documentation.</p>' +
+        '<p>Voodoo.js 0.12.0 &#183; documentation.</p>' +
         '<p><a href="' +
         SITE +
         '">Home</a> &#183; ' +

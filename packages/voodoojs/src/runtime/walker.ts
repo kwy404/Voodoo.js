@@ -607,7 +607,20 @@ function runDirective(el: HTMLElement, attr: ParsedAttribute, scope: Scope): voi
     },
     effect(fn: () => void): void {
       const owner = ownerScope();
-      owner.run(() => createEffect(fn, { scope: owner }));
+      // Re-runs happen long after the walk, when `hookHost` is back to null, so
+      // it is restored here. Without it a hook inside `v-effect` would find a
+      // different slot table on every re-run, allocate a fresh slot each time,
+      // and never call the cleanup belonging to the previous run.
+      const hosted = (): void => {
+        const previous = hookHost;
+        hookHost = el;
+        try {
+          fn();
+        } finally {
+          hookHost = previous;
+        }
+      };
+      owner.run(() => createEffect(hosted, { scope: owner }));
     },
     cleanup(fn: () => void): void {
       addCleanup(el, fn);
@@ -698,6 +711,101 @@ export function walk(node: Node, scope?: Scope): void {
 
   initialized.add(el);
 
+  // Hooks keep their slots per element rather than per scope, because `v-data`
+  // is evaluated in the PARENT scope before the child exists. Without this,
+  // three sibling `v-data` elements would draw from one shared slot table and
+  // hand each other's state around. Recorded here so a hook called from any
+  // directive on this element knows which element it belongs to.
+  const previousHost = hookHost;
+  hookHost = el;
+  try {
+    walkElementDirectives(el, attrs, tagComponent, current);
+  } finally {
+    hookHost = previousHost;
+  }
+}
+
+let hookHost: Element | null = null;
+
+/** The element whose directives are being evaluated, for per-element hook slots. */
+export function currentHookHost(): Element | null {
+  return hookHost;
+}
+
+/**
+ * Builds the scope for `v-data`, filling it one key at a time.
+ *
+ * The object is evaluated INTO the new scope rather than in the parent and then
+ * handed over, so a key can read the keys written before it:
+ *
+ *   v-data="{ n: 4, dobro: n * 2 }"
+ *
+ * The parent-scope version returned `NaN` there, because `n` was still being
+ * defined when `dobro` was evaluated. It matters most for hooks, where
+ * `useMemo(() => n * 2)` next to `n: useState(4)` is the first thing anyone
+ * coming from React writes.
+ *
+ * Only a plain object literal is taken apart this way. Anything else — a call
+ * returning an object, a spread, a computed key — keeps the previous behaviour
+ * of being evaluated whole in the parent, because there is no partial state to
+ * expose midway through.
+ */
+function createDataScope(expression: string, parent: Scope, el: Element): Scope {
+  let ast: ReturnType<typeof parse> | null = null;
+  try {
+    ast = parse(expression);
+  } catch {
+    ast = null;
+  }
+
+  const plain =
+    ast &&
+    (ast as { t: string }).t === 'obj' &&
+    (ast as unknown as { props: Array<{ spread?: unknown; keyExpr?: unknown }> }).props.every(
+      (p) => !p.spread && !p.keyExpr
+    );
+
+  if (!plain) {
+    const raw = evaluateIn<Record<string, unknown>>(expression, parent, 'v-data');
+    return parent.reactiveChild(raw && typeof raw === 'object' ? raw : {}, el);
+  }
+
+  const scope = parent.reactiveChild({}, el);
+  const props = (ast as unknown as {
+    props: Array<{ key: string | null; getter?: boolean; value: unknown }>;
+  }).props;
+
+  for (const prop of props) {
+    if (prop.key === null) continue;
+    try {
+      if (prop.getter) {
+        // Kept as a real accessor so it recomputes on read and the proxy tracks
+        // whatever the body touches, matching the interpreter's own handling.
+        const compute = evaluate(prop.value as never, scope) as () => unknown;
+        Object.defineProperty(scope.data, prop.key, {
+          enumerable: true,
+          configurable: true,
+          get: () => compute.call(scope.data),
+        });
+      } else {
+        scope.data[prop.key] = evaluate(prop.value as never, scope);
+      }
+    } catch (err) {
+      if (inDevelopment()) warnInvalidExpression(el, expression, expression, err);
+      else handleError(err, 'v-data');
+    }
+  }
+  return scope;
+}
+
+function walkElementDirectives(
+  el: HTMLElement,
+  attrs: ParsedAttribute[],
+  tagComponent: string | null,
+  scope: Scope
+): void {
+  let current = scope;
+
   // Step 1: terminal directives take control of the entire subtree.
   for (const attr of attrs) {
     const def = directives.get(attr.name);
@@ -724,8 +832,7 @@ export function walk(node: Node, scope?: Scope): void {
       nodeScopes.set(el, current);
     }
   } else if (dataAttr || componentAttr) {
-    const raw = dataAttr ? evaluateIn<Record<string, unknown>>(dataAttr.expression || '{}', current, 'v-data') : {};
-    current = current.reactiveChild(raw && typeof raw === 'object' ? raw : {}, el);
+    current = createDataScope(dataAttr ? dataAttr.expression || '{}' : '{}', current, el);
     nodeScopes.set(el, current);
   }
 
@@ -735,7 +842,7 @@ export function walk(node: Node, scope?: Scope): void {
   // that is, to the outer scope. This is what makes `@saved="last = $event"`
   // write to the parent state, not inside the component. The scope created by
   // the component applies to the internal content, handled in step 5.
-  const attributeScope = mountedComponent ? activeScope : current;
+  const attributeScope = mountedComponent ? scope : current;
   for (const attr of attrs) {
     if (attr.name === 'data' || attr.name === 'component') continue;
     runDirective(el, attr, attributeScope);

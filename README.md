@@ -14,7 +14,7 @@ No mandatory build step · No runtime dependencies · No Virtual DOM · No confi
 [![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178C6.svg)](#typescript)
 [![npm](https://img.shields.io/npm/v/voodoojs.svg?label=npm&color=CB3837)](https://www.npmjs.com/package/voodoojs)
 [![downloads](https://img.shields.io/npm/dm/voodoojs.svg?label=downloads&color=CB3837)](https://www.npmjs.com/package/voodoojs)
-[![voodoo.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.min.js?branch=main&label=voodoo.min.js)](packages/voodoojs/dist/voodoo.min.js)
+[![voodoo.full.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.full.min.js?branch=main&label=voodoo.full.min.js)](packages/voodoojs/dist/voodoo.full.min.js)
 
 <img src="brand/mascot/vudu-wave.svg" alt="Vudu, the Voodoo.js mascot" width="120">
 
@@ -142,7 +142,7 @@ is nothing left to recover.
 Save this file. Open it in a browser. It works.
 
 ```html
-<script src="voodoo.min.js?v=0.6.2" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 
 <div v-data="{ count: 0 }">
   <button @click="count--">-</button>
@@ -279,7 +279,7 @@ Every row below is part of the shipped runtime.
 ```
 
 That is the whole installation. The library starts itself once the page is ready.
-[unpkg](https://unpkg.com/voodoojs@0.11.2/dist/voodoo.min.js) serves the same file if you prefer it.
+[unpkg](https://unpkg.com/voodoojs@0.11.2/dist/voodoo.full.min.js) serves the same file if you prefer it.
 
 The tag above names an exact version, so what you load never changes under you and the page tells
 you which build it is. Use the `0.11` line instead if you would rather patch releases arrived on
@@ -314,7 +314,7 @@ cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoo
 ```
 
 ```html
-<script src="voodoo.min.js?v=0.6.2" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 ```
 
 **CLI**
@@ -705,9 +705,9 @@ paint, so read this as relative shape rather than absolute truth.
 
 | Build | Minified | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 129.68 KB | 45.04 KB | 39.50 KB |
-| `voodoo.min.js` | 252.04 KB | 81.66 KB | 69.30 KB |
-| `voodoo.full.min.js` | 424.28 KB | 128.37 KB | 107.08 KB |
+| `voodoo.core.min.js` | 140.23 KB | 47.92 KB | 41.71 KB |
+| `voodoo.min.js` | 263.73 KB | 84.76 KB | 71.68 KB |
+| `voodoo.full.min.js` | 440.85 KB | 133.16 KB | 110.69 KB |
 
 Run them yourself: the harness and the exact versions under test live in
 [`benchmarks/`](benchmarks/).

@@ -6,6 +6,8 @@
  * with full quota, or outside the browser, calls do not throw.
  */
 
+import { ref } from '../reactivity';
+
 export interface StorageAdapter {
   get<T = unknown>(key: string, fallback?: T): T | undefined;
   set(key: string, value: unknown): boolean;
@@ -261,9 +263,23 @@ const THEME_KEY = 'voodoo:theme';
  */
 let picked: ThemeName | null = null;
 
+/**
+ * Bumped whenever the applied theme changes, so that effects reading the theme
+ * re-run.
+ *
+ * Everything the theme is derived from — localStorage, a module variable, an
+ * attribute on `<html>`, a media query — is invisible to the Proxy that drives
+ * reactivity. `v-show="$theme.resolved === 'dark'"` therefore rendered once and
+ * then stayed as it was, and the documentation's own example sat there saying
+ * "You are on the dark theme" on a page the reader had just switched to light.
+ * Reading this ref inside the getters is what subscribes those effects.
+ */
+const revision = ref(0);
+
 export const theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current(): ThemeName {
+    void revision.value;
     return (storage.get<ThemeName>(THEME_KEY) ?? picked ?? 'system') as ThemeName;
   },
 
@@ -271,6 +287,18 @@ export const theme = {
   get resolved(): 'light' | 'dark' {
     const value = this.current;
     if (value !== 'system') return value;
+
+    // Nobody picked, so what the page is actually showing wins over what the
+    // operating system prefers. `apply()` deliberately leaves an authored
+    // `data-theme` alone, and without reading it back here `resolved` would
+    // contradict the screen: a page written as light, on a machine set to
+    // dark, reported "dark" while displaying light. That is what
+    // `v-show="$theme.resolved === 'dark'"` was getting wrong.
+    if (typeof document !== 'undefined') {
+      const authored = document.documentElement.getAttribute('data-theme');
+      if (authored === 'light' || authored === 'dark') return authored;
+    }
+
     if (typeof matchMedia === 'undefined') return 'light';
     return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   },
@@ -278,6 +306,7 @@ export const theme = {
   set(value: ThemeName): void {
     picked = value;
     storage.set(THEME_KEY, value);
+    revision.value++;
     this.apply();
   },
 
@@ -332,8 +361,23 @@ export const theme = {
     // webviews, some embedded browsers -- the bare name threw a ReferenceError
     // and took the whole of init() down with it. `typeof` is the only check
     // that answers for an undeclared name.
+    // Someone else may set `data-theme` on the root: a documentation shell
+    // pushing its theme into an example frame, a server-rendered page, a
+    // no-flash inline script. `resolved` reads that attribute, so a change to
+    // it has to reach the effects that read `resolved`, and only an observer
+    // can see a write the library did not make.
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(() => {
+        revision.value++;
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
+    }
+
     if (typeof matchMedia === 'undefined') return;
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      revision.value++;
       if (this.current === 'system') this.apply();
     });
   },

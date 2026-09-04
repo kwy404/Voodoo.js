@@ -7,6 +7,85 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-04
+
+### Added
+
+- **React hooks, written into HTML attributes.** `useState`, `useEffect`,
+  `useMemo`, `useRef` and `useContext`, reachable by bare name inside any
+  expression. They are a surface over primitives that already existed — `effect`,
+  `computed`, `ref` and `store` — so the whole set costs **70 bytes** in the core
+  bundle. The point is not new machinery. It is that someone arriving from React
+  can write what they already know and have it mean the right thing here.
+
+  ```html
+  <div v-data="{ count: useState(0) }">
+    <p>You clicked {count} times</p>
+    <button @click="count++">click</button>
+  </div>
+  ```
+
+  Three differences from React, all deliberate:
+
+  **The dependency array is optional.** Reads are tracked through a Proxy, so an
+  effect with no array re-runs when something it actually read changes. The array
+  narrows that when you want to; it is not needed for correctness.
+
+  **No rule of hooks.** Slots are keyed per element in call order within one
+  evaluation, and `v-data` and `v-init` each evaluate once per element. Calling a
+  hook inside a branch shifts nothing.
+
+  **No setter pair.** `useState` returns the value, not `[value, setValue]`.
+  Reactive objects unwrap refs, so `count++` is the update and there is no
+  `.value` anywhere in the markup.
+
+  There is no `useReducer`, `useCallback` or `useLayoutEffect`, and the reasons
+  are in the guide rather than left to be discovered.
+
+- **`v-data` can read itself.** A key can now use the keys written before it:
+
+  ```html
+  <div v-data="{ n: useState(4), dobro: useMemo(() => n * 2) }">
+  ```
+
+  Previously `v-data` was evaluated in the PARENT scope and handed over
+  afterwards, so `dobro` there produced `NaN` — `n` did not exist yet. It is now
+  filled one key at a time into the scope it is defining. Order matters, and only
+  backwards.
+
+  A `v-data` that is not a plain object literal — a spread, a computed key, a call
+  returning an object — keeps the old behaviour, because there is no partial state
+  to expose midway through those.
+
+### Fixed
+
+- **`$theme.resolved` contradicted the screen.** It consulted only the stored
+  choice and the operating system, never the `data-theme` the page was actually
+  wearing. `apply()` deliberately leaves an authored attribute alone, so a page
+  written as light, opened on a machine set to dark, *displayed* light while
+  reporting `'dark'`.
+
+  This project's own documentation showed it: the theme page sat on a white
+  background with a live example inside it insisting "You are on the dark theme."
+
+- **The theme was not reactive, so text never followed it.** Everything the theme
+  derives from is invisible to the Proxy — `localStorage`, a module variable, an
+  attribute, a media query — so `v-show="$theme.resolved === 'dark'"` rendered
+  once and then froze. Switching the theme appeared to need two clicks: the first
+  changed the theme, and only a later unrelated render made the text catch up.
+
+  Reads now subscribe, and a `MutationObserver` covers `data-theme` being written
+  by someone else, which is what a documentation shell pushing its theme into an
+  example frame does.
+
+- **The site was serving a different library from the one being tested.**
+  `site/*.min.js` are copies kept by hand and nothing checked them. All three had
+  drifted by a session's work, so the documentation, playground and landing page
+  ran an older build while every test passed against the new one. A feature could
+  be written, tested, committed and published and still be absent from the site.
+
+  `npm run check:site` now compares them and CI fails on drift.
+
 ## [0.11.2] - 2026-09-04
 
 ### Fixed

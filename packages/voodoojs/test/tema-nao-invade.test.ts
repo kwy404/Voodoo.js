@@ -16,8 +16,21 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { theme } from '../src/storage';
+import { effect, stop, nextTick } from '../src/reactivity';
 
 const root = () => document.documentElement;
+
+/** Pretends the operating system is in light mode. */
+function systemPrefersLight(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+  }));
+}
 
 /** Pretends the operating system is in dark mode. */
 function systemPrefersDark(): void {
@@ -209,5 +222,106 @@ describe('where matchMedia does not exist', () => {
     const fresh = await import('../src/storage');
 
     expect(fresh.theme.resolved).toBe('light');
+  });
+});
+
+/**
+ * Regression: `resolved` contradicted the screen.
+ *
+ * `apply()` correctly leaves an authored `data-theme` alone. But `resolved`
+ * only ever consulted the stored choice and the operating system, so a page
+ * written as light, opened on a machine set to dark, DISPLAYED light while
+ * reporting "dark". The documentation's own theme page showed it: the shell
+ * was light and the live example inside it announced, in the reader's face,
+ * "You are on the dark theme."
+ */
+describe('resolved follows what the page is showing', () => {
+  // The module keeps the last pick in a variable of its own, which survives
+  // `localStorage.clear()`. Without putting it back to `system` these tests
+  // read a choice made by an earlier test in this file and never reach the
+  // branch under test.
+  beforeEach(() => {
+    theme.set('system');
+    localStorage.clear();
+    root().removeAttribute('data-theme');
+  });
+
+  it('reads an authored data-theme in preference to the system', () => {
+    systemPrefersDark();
+    root().setAttribute('data-theme', 'light');
+
+    expect(theme.current).toBe('system');
+    expect(theme.resolved).toBe('light');
+  });
+
+  it('works the other way round too', () => {
+    systemPrefersLight();
+    root().setAttribute('data-theme', 'dark');
+
+    expect(theme.resolved).toBe('dark');
+  });
+
+  it('still falls back to the system when the page declares nothing', () => {
+    systemPrefersDark();
+    root().removeAttribute('data-theme');
+
+    expect(theme.resolved).toBe('dark');
+  });
+
+  it('a real choice still beats the attribute', () => {
+    systemPrefersDark();
+    root().setAttribute('data-theme', 'dark');
+    theme.set('light');
+
+    expect(theme.resolved).toBe('light');
+  });
+});
+
+/**
+ * Regression: the text did not follow the theme.
+ *
+ * Everything the theme derives from is invisible to the Proxy — localStorage, a
+ * module variable, an attribute, a media query — so `v-show="$theme.resolved
+ * === 'dark'"` rendered once and then froze. On the documentation's theme page
+ * that produced the reported symptom exactly: a light page with an example
+ * inside it insisting "You are on the dark theme", and a second click needed
+ * before anything moved.
+ */
+describe('an effect reading the theme re-runs when the theme changes', () => {
+  beforeEach(() => {
+    theme.set('system');
+    localStorage.clear();
+    root().removeAttribute('data-theme');
+  });
+
+  it('re-runs when the theme is set', async () => {
+    systemPrefersLight();
+    const seen: string[] = [];
+    const runner = effect(() => seen.push(theme.resolved));
+
+    expect(seen).toEqual(['light']);
+
+    theme.set('dark');
+    await nextTick();
+
+    expect(seen).toEqual(['light', 'dark']);
+    stop(runner);
+  });
+
+  it('re-runs when someone else writes data-theme on the root', async () => {
+    systemPrefersLight();
+    theme.init();
+
+    const seen: string[] = [];
+    const runner = effect(() => seen.push(theme.resolved));
+    expect(seen).toEqual(['light']);
+
+    // What the documentation shell does to an example frame.
+    root().setAttribute('data-theme', 'dark');
+    await nextTick();
+    await nextTick();
+
+    expect(seen[seen.length - 1]).toBe('dark');
+    stop(runner);
   });
 });

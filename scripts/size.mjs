@@ -51,10 +51,29 @@ const DIST = 'packages/voodoojs/dist';
  * When you touch this, say why. Raising a target without a justification is the
  * same as having no target at all.
  */
+/**
+ * 0.12.0 raised core 48 -> 49 and full 133 -> 134.
+ *
+ * Three things bought it, and none of them is bloat:
+ *
+ * - The hooks themselves cost 70 bytes. They are a surface over `effect`,
+ *   `computed`, `ref` and `store`, which were all already in core.
+ * - `v-data` is now filled one key at a time into the scope it defines instead
+ *   of being evaluated whole in the parent, which is what makes
+ *   `{ n: useState(4), dobro: useMemo(() => n * 2) }` produce 8 rather than NaN.
+ *   That is a second code path through scope creation.
+ * - The theme became reactive: a revision ref that the getters read, plus a
+ *   MutationObserver for `data-theme` being written from outside. Without it
+ *   `v-show="$theme.resolved === 'dark'"` rendered once and froze.
+ *
+ * Measured after: core 47.92, full 133.16. Both budgets keep about a kilobyte
+ * of headroom, deliberately — 47.92 against 48 is not a budget, it is a
+ * tripwire that fires on the next correct fix.
+ */
 const BUDGET = {
-  'voodoo.core.min.js': 48,
+  'voodoo.core.min.js': 49,
   'voodoo.min.js': 85,
-  'voodoo.full.min.js': 133,
+  'voodoo.full.min.js': 134,
 };
 
 function kb(bytes) {
