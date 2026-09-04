@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.12.4
+ * Voodoo.js v0.12.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2510,8 +2510,15 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     list.push(scope);
   }
   var ignoredRemovals = /* @__PURE__ */ new WeakSet();
+  var detachedTemplates = /* @__PURE__ */ new WeakMap();
   function removeQuietly(node) {
     ignoredRemovals.add(node);
+    const parent = node.parentNode;
+    if (parent) {
+      let kept = detachedTemplates.get(parent);
+      if (!kept) detachedTemplates.set(parent, kept = /* @__PURE__ */ new Set());
+      kept.add(node);
+    }
     node.remove();
   }
   function addCleanup(node, fn) {
@@ -2526,6 +2533,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
         if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
       }
       for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
+    }
+    const detached = detachedTemplates.get(node);
+    if (detached) {
+      detachedTemplates.delete(node);
+      for (const template of detached) destroy(template);
     }
     const list = nodeCleanups.get(node);
     if (list) {
@@ -7124,7 +7136,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.12.4";
+  var version2 = "0.12.5";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,

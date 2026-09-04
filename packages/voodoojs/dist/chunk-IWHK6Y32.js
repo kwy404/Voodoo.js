@@ -1,7 +1,7 @@
-import { config } from './chunk-FNTYILLW.js';
+import { config } from './chunk-OH6FIDTW.js';
 
 /**
- * Voodoo.js v0.12.4
+ * Voodoo.js v0.12.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -68,5 +68,5 @@ function ensureTokens() {
 }
 
 export { BASE_TOKENS, ensureTokens, injectStyle };
-//# sourceMappingURL=chunk-NKQGUWVF.js.map
-//# sourceMappingURL=chunk-NKQGUWVF.js.map
+//# sourceMappingURL=chunk-IWHK6Y32.js.map
+//# sourceMappingURL=chunk-IWHK6Y32.js.map

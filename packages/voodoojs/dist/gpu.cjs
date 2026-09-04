@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.12.4
+ * Voodoo.js v0.12.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -45,6 +45,7 @@ var nodeScopes = /* @__PURE__ */ new WeakMap();
 var nodeCleanups = /* @__PURE__ */ new WeakMap();
 var initialized = /* @__PURE__ */ new WeakSet();
 var nodeEffectScopes = /* @__PURE__ */ new WeakMap();
+var detachedTemplates = /* @__PURE__ */ new WeakMap();
 function destroy(node) {
   if (node.nodeType === 1) {
     const children = [];
@@ -52,6 +53,11 @@ function destroy(node) {
       if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
     for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
+  }
+  const detached = detachedTemplates.get(node);
+  if (detached) {
+    detachedTemplates.delete(node);
+    for (const template of detached) destroy(template);
   }
   const list = nodeCleanups.get(node);
   if (list) {

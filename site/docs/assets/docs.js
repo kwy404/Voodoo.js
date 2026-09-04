@@ -127,7 +127,7 @@
     })();
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
-  var RUNTIME = new URL('../voodoo.full.min.js?v=4b8f9c6f', RAIZ).href; // .../site/voodoo.full.min.js
+  var RUNTIME = new URL('../voodoo.full.min.js?v=44b1098c', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the
@@ -1057,7 +1057,7 @@
     return el('footer', {
       class: 'doc-rodape',
       html:
-        '<p>Voodoo.js 0.12.4 &#183; documentation.</p>' +
+        '<p>Voodoo.js 0.12.5 &#183; documentation.</p>' +
         '<p><a href="' +
         SITE +
         '">Home</a> &#183; ' +

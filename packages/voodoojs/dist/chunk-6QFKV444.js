@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-FAWOJTRM.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-AR6WDY7K.js';
-import { config, directives, components } from './chunk-FNTYILLW.js';
-import { __publicField } from './chunk-7XRFOONN.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-PPT7RDKJ.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-YH3IDF6L.js';
+import { config, directives, components } from './chunk-OH6FIDTW.js';
+import { __publicField } from './chunk-PO6REBDJ.js';
 
 /**
- * Voodoo.js v0.12.4
+ * Voodoo.js v0.12.5
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1591,8 +1591,15 @@ function getEffectScopes(node) {
   return nodeEffectScopes.get(node) ?? [];
 }
 var ignoredRemovals = /* @__PURE__ */ new WeakSet();
+var detachedTemplates = /* @__PURE__ */ new WeakMap();
 function removeQuietly(node) {
   ignoredRemovals.add(node);
+  const parent = node.parentNode;
+  if (parent) {
+    let kept = detachedTemplates.get(parent);
+    if (!kept) detachedTemplates.set(parent, kept = /* @__PURE__ */ new Set());
+    kept.add(node);
+  }
   node.remove();
 }
 function addCleanup(node, fn) {
@@ -1607,6 +1614,11 @@ function destroy(node) {
       if (child.nodeType === 1 || child.nodeType === 3) children.push(child);
     }
     for (let i = children.length - 1; i >= 0; i--) destroy(children[i]);
+  }
+  const detached = detachedTemplates.get(node);
+  if (detached) {
+    detachedTemplates.delete(node);
+    for (const template of detached) destroy(template);
   }
   const list = nodeCleanups.get(node);
   if (list) {
@@ -2202,5 +2214,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-ELIX2DRQ.js.map
-//# sourceMappingURL=chunk-ELIX2DRQ.js.map
+//# sourceMappingURL=chunk-6QFKV444.js.map
+//# sourceMappingURL=chunk-6QFKV444.js.map

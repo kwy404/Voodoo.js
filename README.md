@@ -37,7 +37,7 @@ compiler and no JSX transform.
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -281,11 +281,11 @@ Every row below is part of the shipped runtime.
 **A script tag, and nothing to install**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js" defer></script>
 ```
 
 That is the whole installation. The library starts itself once the page is ready.
-[unpkg](https://unpkg.com/voodoojs@0.12.3/dist/voodoo.full.min.js) serves the same file if you prefer it.
+[unpkg](https://unpkg.com/voodoojs@0.12.4/dist/voodoo.full.min.js) serves the same file if you prefer it.
 
 The tag above names an exact version, so what you load never changes under you and the page tells
 you which build it is. Use the `0.11` line instead if you would rather patch releases arrived on
@@ -313,7 +313,7 @@ import { debounce } from 'voodoojs/utils'
 For pages that must not reach a third-party host, or an air-gapped network:
 
 ```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js
 # or build from source
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
@@ -553,7 +553,7 @@ watch `count` change in the panel while the button flashes on every write.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <div v-data="{ count: 0, items: ['a', 'b'] }">
@@ -632,15 +632,25 @@ environment and how to reproduce every measurement.
 Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
 buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.
 
-**Tearing down a keyed list.** Profiling found that `destroy()` was reading `node.childNodes`, a
-live collection the DOM rebuilds on every access and invalidates on every mutation. Walking siblings
-instead cut the cost of clearing a large list by about a third:
+**Tearing down a keyed list.** `v-if` and `v-for` take their element out of the document and keep it
+as the thing they clone from. The cleanup for that element — the effect scope holding the template,
+every rendered block and every node inside them — was keyed by that element, and `destroy()` walks
+live children only. Once detached, nothing ever reached it. The scope was never stopped and it held
+on to everything the list had ever rendered.
 
 ![v-for teardown: before and after](docs/media/vfor-teardown.svg)
 
-Measured on Node 24 with jsdom, medians of repeated runs, on one machine. Treat it as the shape of
-the change, not as an absolute number: your browser is not jsdom. The full method is in
-[`benchmarks/README.md`](benchmarks/README.md).
+The old figure grew with the list, because it was proportional to what had been rendered: 394 KB
+retained per mount at 50 rows, 750 KB at 100, 1.5 MB at 200. The new one does not grow, and what is
+left is noise rather than retention. The project's own memory benchmark could not finish before this
+— it exhausted a 3.8 GB heap and took the rest of the suite down with it — and the `v-if` toggle
+case dropped from 5,683 ms to 3,079 ms once the garbage stopped accumulating, so the leak was
+costing time as well as memory.
+
+Measured on Node 24 with jsdom, fifty mount-and-destroy cycles per size with the heap forced between
+samples, on one machine. Treat it as the shape of the change rather than an absolute number: your
+browser is not jsdom. Reproduce with `node --expose-gc scripts/measure-teardown.mjs`, which builds
+both versions, measures them and puts the source back.
 
 One honest caveat from the same run: list *creation* at this size is dominated by the DOM itself.
 Inserting 4,000 nodes with no framework at all took longer in jsdom than Voodoo's whole render, so
@@ -658,24 +668,32 @@ Median of 30 samples, in milliseconds, lower is better. Voodoo.js in bold:
 
 | | create 1k | update every 10th | clear 1k | minified |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 48.74 | 7.52 | 21.06 | 0.6 KB |
-| Preact 10.29.8 | 91.62 | 2.59 | 29.48 | 10.7 KB |
-| **Voodoo.js** | **97.70** | **5.42** | **30.44** | **416.9 KB** |
-| React 19.2.8 | 100.23 | 4.63 | 33.59 | 189.3 KB |
-| Vue 3.5.42 | 110.56 | 19.21 | 31.65 | 62.5 KB |
-| Solid 1.9.15 | 111.63 | 0.91 | 19.99 | 16.7 KB |
-| Alpine 3.17.1 | 179.47 | 104.51 | 31.39 | 55.2 KB |
+| vanilla JS | 56.71 | 7.51 | 32.39 | 0.6 KB |
+| Preact 10.29.8 | 80.40 | 2.54 | 31.68 | 10.7 KB |
+| Solid 1.9.15 | 80.73 | 0.82 | 23.83 | 16.7 KB |
+| **Voodoo.js** | **80.81** | **7.91** | **34.46** | **429.2 KB** |
+| React 19.2.8 | 84.97 | 4.68 | 37.15 | 189.3 KB |
+| Vue 3.5.42 | 89.66 | 11.90 | 34.98 | 62.5 KB |
+| Alpine 3.17.1 | 166.03 | 104.98 | 37.67 | 55.2 KB |
 
-Read honestly. On create Voodoo is **third of seven** — behind hand-written vanilla and Preact,
-ahead of React, Vue and Solid. On clear it is **fourth**. Both were substantially worse before the
-optimisation pass described below, and neither is a victory lap: vanilla still creates a list twice
-as fast as we do.
+Read honestly, and read the spread before the order. On create, Preact, Solid and Voodoo finish
+within **0.4 ms of each other** across a 1,000-row list — that is a three-way tie the ranking column
+cannot express, and calling it fourth place would be as misleading as calling it second. Vanilla
+still builds the list a third faster than any framework here.
 
-On update Voodoo sits just ahead of hand-written vanilla and roughly **19x ahead of Alpine**, which
-is the fair comparison, since Alpine is also HTML-first and also interprets expressions at runtime
-rather than compiling them. Treat that number as a range rather than a ranking: the update scenario
-is the noisiest of the three, and a paired A/B against the pre-optimisation build measured **no
-change at all** on update. We are not claiming to have beaten vanilla on the strength of one sample.
+On clear the same is true of the middle of the field: vanilla, Preact, Voodoo and Vue land inside
+3 ms. Solid wins it outright.
+
+On update Voodoo is level with hand-written vanilla — 7.91 against 7.51, well inside the run-to-run
+noise — and roughly **13x ahead of Alpine**, which is the comparison that actually means something,
+since Alpine is also HTML-first and also interprets expressions at runtime instead of compiling
+them. Solid and Preact are far ahead of both, and they get there with a compiler.
+
+An earlier version of this table reported create at 97.70 ms and called it third of seven. The
+absolute number improved to 80.81 while the position moved to fourth, because the other frameworks
+measured differently in the same run. That is what a coefficient of variation of 31% on create and
+54% on update looks like from the outside, and it is the reason these are presented as a field
+rather than a leaderboard.
 
 Solid wins update by a wide margin because a compiler generates its update path. Voodoo has no build
 step, and that is the trade it makes.

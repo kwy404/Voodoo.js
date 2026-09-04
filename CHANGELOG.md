@@ -7,6 +7,54 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.5] - 2026-09-04
+
+### Fixed
+
+- **`v-if` and `v-for` leaked everything they had ever rendered.** Both take
+  their element out of the document and keep it as the thing they clone from.
+  The cleanup for that element — the effect scope `runDirective` registered on
+  it — is keyed by that element, and `destroy()` walks live children only. Once
+  detached, nothing ever reached it: the scope was never stopped, and it held
+  the template, every rendered block and every node inside them.
+
+  Fifty mount-and-destroy cycles per size, heap forced between samples, retained
+  per cycle:
+
+  | rows | before | after |
+  | ---: | ---: | ---: |
+  | 50 | 393.6 KB | 11.1 KB |
+  | 100 | 749.7 KB | 6.5 KB |
+  | 200 | 1498.4 KB | 13.0 KB |
+
+  The old figure doubles with the list because it was proportional to what had
+  been rendered; the new one does not grow, and what remains is noise.
+
+  It cost time as well as memory: the `v-if` toggle benchmark went from 5,683 ms
+  to 3,079 ms once the garbage stopped accumulating. The project's own memory
+  suite could not finish before this — it exhausted a 3.8 GB heap and took the
+  rest of the run down with it — and now completes all thirteen cases.
+
+  The hypothesis was already written down in `benchmarks/memory/index.mjs`, with
+  an A/B pair built to measure it. What was missing was routing `destroy()` to
+  the detached templates, which it now does by recording them against the parent
+  they left.
+
+### Changed
+
+- **The comparison numbers in both READMEs were re-measured**, and the honest
+  reading changed with them. Create improved in absolute terms, 97.70 ms to
+  80.81 ms, while the position moved from third of seven to fourth, because the
+  other frameworks measured differently in the same run. Preact, Solid and
+  Voodoo now finish within 0.4 ms of each other on a thousand-row create, which
+  is a three-way tie a ranking column cannot express. Both tables say so.
+
+- **The teardown chart is generated from the measurement** rather than hand-
+  edited, the way the framework comparison already was.
+  `node --expose-gc scripts/measure-teardown.mjs` builds both versions, measures
+  them, restores the source, and writes the JSON that
+  `scripts/chart-teardown.mjs` draws.
+
 ## [0.12.4] - 2026-09-04
 
 ### Fixed

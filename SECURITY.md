@@ -499,7 +499,7 @@ You handle:
 - Serving over HTTPS. Subresource Integrity on the CDN tag is recommended:
 
   ```html
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js"
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js"
           integrity="sha384-..."
           crossorigin="anonymous"
           defer></script>
@@ -533,7 +533,7 @@ the published `dist/`. `packages/voodoojs/package.json` restricts the published 
 To verify a published bundle:
 
 ```bash
-npm pack voodoojs@0.12.3
+npm pack voodoojs@0.12.4
 grep -c "eval(\|new Function" package/dist/voodoo.min.js   # expect 0
 ```
 

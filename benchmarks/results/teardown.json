@@ -1,0 +1,21 @@
+{
+  "what": "kilobytes retained per mount-and-destroy cycle of a keyed v-for",
+  "cycles": 50,
+  "node": "v24.16.0",
+  "commit": "7bfb460",
+  "sizes": [
+    50,
+    100,
+    200
+  ],
+  "before": {
+    "50": 393.55875,
+    "100": 749.696875,
+    "200": 1498.4134375
+  },
+  "after": {
+    "50": 11.133125,
+    "100": 6.46890625,
+    "200": 12.9834375
+  }
+}
