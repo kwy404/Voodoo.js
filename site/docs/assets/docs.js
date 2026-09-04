@@ -125,7 +125,7 @@
     })();
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
-  var RUNTIME = new URL('../voodoo.full.min.js?v=bf094e61', RAIZ).href; // .../site/voodoo.full.min.js
+  var RUNTIME = new URL('../voodoo.full.min.js?v=bb6485be', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the

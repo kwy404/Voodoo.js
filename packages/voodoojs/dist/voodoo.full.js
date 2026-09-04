@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.11.1
+ * Voodoo.js v0.11.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1649,9 +1649,17 @@ ${pointer}`);
       if (t2.type === "punct") {
         if (t2.value === "(") {
           this.next();
-          const expr = this.parseExpression();
+          const body = [this.parseExpression()];
+          while (this.isPunct(",")) {
+            this.next();
+            if (this.isPunct(")")) {
+              const stray = this.peek();
+              throw new VoodooSyntaxError("Trailing comma in a group", this.source, stray.start);
+            }
+            body.push(this.parseExpression());
+          }
           this.expect(")");
-          return expr;
+          return body.length === 1 ? body[0] : { t: "seq", body };
         }
         if (t2.value === "[") return this.parseArrayLiteral();
         if (t2.value === "{") return this.parseObjectLiteral();
@@ -6883,7 +6891,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.11.1";
+  var version2 = "0.11.2";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,

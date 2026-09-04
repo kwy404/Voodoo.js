@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.11.1
+ * Voodoo.js v0.11.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -1626,9 +1626,17 @@ var Parser = class {
     if (t.type === "punct") {
       if (t.value === "(") {
         this.next();
-        const expr = this.parseExpression();
+        const body = [this.parseExpression()];
+        while (this.isPunct(",")) {
+          this.next();
+          if (this.isPunct(")")) {
+            const stray = this.peek();
+            throw new VoodooSyntaxError("Trailing comma in a group", this.source, stray.start);
+          }
+          body.push(this.parseExpression());
+        }
         this.expect(")");
-        return expr;
+        return body.length === 1 ? body[0] : { t: "seq", body };
       }
       if (t.value === "[") return this.parseArrayLiteral();
       if (t.value === "{") return this.parseObjectLiteral();
@@ -6764,7 +6772,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version2 = "0.11.1";
+var version2 = "0.11.2";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,

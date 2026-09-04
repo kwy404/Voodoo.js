@@ -12,6 +12,7 @@ import { reactive, nextTick, setErrorHandler } from '../src/reactivity';
 import { Scope } from '../src/runtime/scope';
 import { walk, evaluateIn } from '../src/runtime/walker';
 import { parse, clearParseCache, VoodooSyntaxError } from '../src/parser/parser';
+import { evaluate } from '../src/parser/interpreter';
 import { config } from '../src/runtime/registry';
 import { clearWarnings } from '../src/runtime/avisos';
 import '../src/core';
@@ -270,5 +271,56 @@ describe('detailed warning in development mode', () => {
     });
     expect(aviso).not.toHaveBeenCalled();
     aviso.mockRestore();
+  });
+});
+
+describe('the comma operator', () => {
+  /**
+   * `(a, b)` evaluates both and yields the last.
+   *
+   * The top level already accepted `,` between statements, so `@click="a++, b++"`
+   * worked while `@click="ok && (a++, b++)"` did not, a distinction nobody would
+   * predict. It surfaced through this project's own playground, where
+   * `draft && (items.push(...), draft = '')` failed with
+   * `Expected ")" but found ","` and the todo example could not add an item.
+   */
+  const run = (source: string, data: Record<string, unknown> = {}) =>
+    evaluate(parse(source), new Scope(reactive(data)));
+
+  it('yields the last expression', () => {
+    expect(run('(1, 2, 3)')).toBe(3);
+  });
+
+  it('evaluates every expression, not just the last', () => {
+    const state = { list: [] as number[], n: 0 };
+    run('(list.push(1), list.push(2), n = list.length)', state);
+    expect(state.list).toEqual([1, 2]);
+    expect(state.n).toBe(2);
+  });
+
+  it('works as the right side of &&, which is where it is written', () => {
+    const state = { draft: 'x', items: [] as unknown[] };
+    run("draft && (items.push({ text: draft }), draft = '')", state);
+    expect(state.items).toEqual([{ text: 'x' }]);
+    expect(state.draft).toBe('');
+  });
+
+  it('does nothing when the guard is false', () => {
+    const state = { draft: '', items: [] as unknown[] };
+    run("draft && (items.push({ text: draft }), draft = 'no')", state);
+    expect(state.items).toEqual([]);
+    expect(state.draft).toBe('');
+  });
+
+  it('leaves a single parenthesised expression alone', () => {
+    expect(run('(41 + 1)')).toBe(42);
+  });
+
+  it('nests', () => {
+    expect(run('((1, 2), 3)')).toBe(3);
+  });
+
+  it('refuses a trailing comma, as JavaScript does', () => {
+    expect(() => run('(1, 2,)')).toThrow();
   });
 });

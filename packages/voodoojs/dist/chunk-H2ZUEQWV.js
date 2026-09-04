@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-FITEA237.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-TXWSOPF2.js';
-import { config, directives, components } from './chunk-GC3BKNPT.js';
-import { __publicField } from './chunk-BEQEBFQ2.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-WJP3YGUI.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-UV5PMS7P.js';
+import { config, directives, components } from './chunk-NFDXVIII.js';
+import { __publicField } from './chunk-IS3DR2KY.js';
 
 /**
- * Voodoo.js v0.11.1
+ * Voodoo.js v0.11.2
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -810,9 +810,17 @@ var Parser = class {
     if (t.type === "punct") {
       if (t.value === "(") {
         this.next();
-        const expr = this.parseExpression();
+        const body = [this.parseExpression()];
+        while (this.isPunct(",")) {
+          this.next();
+          if (this.isPunct(")")) {
+            const stray = this.peek();
+            throw new VoodooSyntaxError("Trailing comma in a group", this.source, stray.start);
+          }
+          body.push(this.parseExpression());
+        }
         this.expect(")");
-        return expr;
+        return body.length === 1 ? body[0] : { t: "seq", body };
       }
       if (t.value === "[") return this.parseArrayLiteral();
       if (t.value === "{") return this.parseObjectLiteral();
@@ -2102,5 +2110,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-32J7GDLD.js.map
-//# sourceMappingURL=chunk-32J7GDLD.js.map
+//# sourceMappingURL=chunk-H2ZUEQWV.js.map
+//# sourceMappingURL=chunk-H2ZUEQWV.js.map

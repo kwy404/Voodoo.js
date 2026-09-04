@@ -9,10 +9,31 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [0.11.2] - 2026-09-04
 
-Nothing changes in the library. This is what the documentation tells people to
-load, which had been wrong in three separate ways at once.
-
 ### Fixed
+
+- **The comma operator works inside parentheses.** `(a, b)` evaluates both and
+  yields the last, and it did not parse. The top level already accepted `,`
+  between statements, so `@click="a++, b++"` worked while
+  `@click="ok && (a++, b++)"` failed with `Expected ")" but found ","`, a
+  distinction nobody would predict.
+
+  It surfaced through this project's own playground: the todo example could not
+  add an item, because `draft && (items.push({ text: draft }), draft = '')` is
+  how you write "do these two things only if", and that is exactly the shape
+  that did not parse. The example had shipped using syntax the parser rejected.
+
+  Verified in a browser, the whole todo: adding clears the field and updates the
+  count, the three filters select the right items, and the checkbox toggles with
+  the count following.
+
+  Expressions the interpreter answers differently from JavaScript: still 0.
+  Valid JavaScript it refuses: **3 down to 2**, and both remaining are regex
+  literals.
+
+### Changed
+
+The rest of this release is what the documentation tells people to load, which
+had been wrong in three separate ways at once.
 
 - **Every CDN tag names the full build.** Twenty-one of them named
   `voodoo.min.js`, the essential build, which does not contain JSX. So the

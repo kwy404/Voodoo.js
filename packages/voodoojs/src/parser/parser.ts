@@ -730,9 +730,29 @@ class Parser {
     if (t.type === 'punct') {
       if (t.value === '(') {
         this.next();
-        const expr = this.parseExpression();
+
+        // The comma operator: `(a, b, c)` evaluates each and yields the last.
+        //
+        // The top level already accepted `,` between statements, so
+        // `@click="a++, b++"` worked while `@click="ok && (a++, b++)"` did not,
+        // which is a distinction nobody would predict. It is how anybody writes
+        // "do these two things only if", and it is what
+        // `draft && (items.push(...), draft = '')` needs, an expression from
+        // this project's own playground that failed with
+        // `Expected ")" but found ","`.
+        const body = [this.parseExpression()];
+        while (this.isPunct(',')) {
+          this.next();
+          // `(a, b,)` is not valid JavaScript, and neither is an empty group.
+          if (this.isPunct(')')) {
+            const stray = this.peek();
+            throw new VoodooSyntaxError('Trailing comma in a group', this.source, stray.start);
+          }
+          body.push(this.parseExpression());
+        }
+
         this.expect(')');
-        return expr;
+        return body.length === 1 ? body[0] : { t: 'seq', body };
       }
       if (t.value === '[') return this.parseArrayLiteral();
       if (t.value === '{') return this.parseObjectLiteral();
