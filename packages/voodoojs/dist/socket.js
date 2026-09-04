@@ -1,14 +1,14 @@
-import { socketSupported, createSocket, socket } from './chunk-DCE5WIGA.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-DCE5WIGA.js';
-import { evaluateIn, readAttr } from './chunk-SXUPQ3OB.js';
-import { reactive } from './chunk-WJP3YGUI.js';
-import { warnAlias } from './chunk-UV5PMS7P.js';
-import { parseDuration } from './chunk-IGZSDZKU.js';
-import { defineDirective, PRIORITY, config } from './chunk-NFDXVIII.js';
-import './chunk-IS3DR2KY.js';
+import { socketSupported, createSocket, socket } from './chunk-RUF75R2R.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-RUF75R2R.js';
+import { evaluateIn, readAttr } from './chunk-D64VMSZS.js';
+import { reactive } from './chunk-TYG4YDXM.js';
+import { warnAlias } from './chunk-2G2UWA7Q.js';
+import { parseDuration } from './chunk-PCVGGO6F.js';
+import { defineDirective, PRIORITY, config } from './chunk-EAGEBZQA.js';
+import './chunk-DHJ7CTD2.js';
 
 /**
- * Voodoo.js v0.11.2
+ * Voodoo.js v0.12.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */

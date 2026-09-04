@@ -1,15 +1,15 @@
-import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-KQYSJHZR.js';
-export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-KQYSJHZR.js';
-import { http } from './chunk-DJJB35SR.js';
-import { originalAttributes, destroy } from './chunk-SXUPQ3OB.js';
-import { handleError } from './chunk-WJP3YGUI.js';
-import { warn, describeElement } from './chunk-UV5PMS7P.js';
-import './chunk-IGZSDZKU.js';
-import { defineDirective } from './chunk-NFDXVIII.js';
-import './chunk-IS3DR2KY.js';
+import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-NYSHASEO.js';
+export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-NYSHASEO.js';
+import { http } from './chunk-HBRDKBXJ.js';
+import { originalAttributes, destroy } from './chunk-D64VMSZS.js';
+import { handleError } from './chunk-TYG4YDXM.js';
+import { warn, describeElement } from './chunk-2G2UWA7Q.js';
+import './chunk-PCVGGO6F.js';
+import { defineDirective } from './chunk-EAGEBZQA.js';
+import './chunk-DHJ7CTD2.js';
 
 /**
- * Voodoo.js v0.11.2
+ * Voodoo.js v0.12.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
