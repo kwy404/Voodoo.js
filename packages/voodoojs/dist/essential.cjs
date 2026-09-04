@@ -715,6 +715,7 @@ var init_registry = __esm({
       autoDiscover: true,
       root: null,
       devtools: false,
+      xrayShortcut: "ctrl+shift+f2",
       baseURL: "",
       globals: {},
       locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",

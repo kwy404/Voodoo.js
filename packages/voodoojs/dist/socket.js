@@ -1,10 +1,10 @@
-import { socketSupported, createSocket, socket } from './chunk-QO3I7VLJ.js';
-export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-QO3I7VLJ.js';
-import { evaluateIn, readAttr } from './chunk-JB2YYNK6.js';
+import { socketSupported, createSocket, socket } from './chunk-37L3JWRC.js';
+export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-37L3JWRC.js';
+import { evaluateIn, readAttr } from './chunk-LGKNQVXF.js';
 import { reactive } from './chunk-4T2UIPWX.js';
-import { warnAlias } from './chunk-CYN6VLMD.js';
+import { warnAlias } from './chunk-VSOERLB4.js';
 import { parseDuration } from './chunk-ZIWLQZZL.js';
-import { defineDirective, PRIORITY, config } from './chunk-MMLUK37L.js';
+import { defineDirective, PRIORITY, config } from './chunk-7HVN5UCK.js';
 import './chunk-YOZTHZS2.js';
 
 /**

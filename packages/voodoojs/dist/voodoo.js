@@ -730,6 +730,7 @@ var Voodoo = (() => {
         autoDiscover: true,
         root: null,
         devtools: false,
+        xrayShortcut: "ctrl+shift+f2",
         baseURL: "",
         globals: {},
         locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",
@@ -14146,6 +14147,10 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const locale = script.getAttribute("data-locale");
     if (locale) config.locale = locale;
     if (readDevtoolsFlag(script)) config.devtools = true;
+    const xrayShortcut = script.getAttribute("data-xray-shortcut");
+    if (xrayShortcut !== null) {
+      config.xrayShortcut = xrayShortcut === "false" || xrayShortcut === "" ? false : xrayShortcut;
+    }
     if (script.hasAttribute("data-no-styles")) config.injectStyles = false;
     if (script.hasAttribute("data-no-observer")) config.autoDiscover = false;
     if (script.hasAttribute("data-keep-attributes")) config.cleanAttributes = false;
@@ -14175,6 +14180,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       theme.init();
       applySavedPalette();
       V2.start();
+      if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();
       if (config.devtools) mountDevtools(V2);
     };
     whenReady(boot);

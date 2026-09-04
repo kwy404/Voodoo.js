@@ -1,5 +1,5 @@
 import { handleError } from './chunk-4T2UIPWX.js';
-import { warn } from './chunk-CYN6VLMD.js';
+import { warn } from './chunk-VSOERLB4.js';
 
 /**
  * Voodoo.js v0.7.0
@@ -1192,5 +1192,5 @@ var gpu = {
 };
 
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct };
-//# sourceMappingURL=chunk-N3T43YN3.js.map
-//# sourceMappingURL=chunk-N3T43YN3.js.map
+//# sourceMappingURL=chunk-LNKJVNUV.js.map
+//# sourceMappingURL=chunk-LNKJVNUV.js.map

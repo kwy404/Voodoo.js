@@ -308,7 +308,7 @@ See [Languages](idiomas.md).
 | Member | Description |
 | --- | --- |
 | `V.xray(force?)` | Turns inspector on and off |
-| `V.enableXrayShortcut()` | Installs `Alt+Shift+V` |
+| `V.enableXrayShortcut()` | Installs `Ctrl+Shift+F2` |
 | `V.devtools` | Event bus for devtools |
 
 See [Devtools](devtools.md).

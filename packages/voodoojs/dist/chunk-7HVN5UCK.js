@@ -11,6 +11,7 @@ var config = {
   autoDiscover: true,
   root: null,
   devtools: false,
+  xrayShortcut: "ctrl+shift+f2",
   baseURL: "",
   globals: {},
   locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",
@@ -60,5 +61,5 @@ function usePlugin(V, plugin, options) {
 }
 
 export { PRIORITY, components, config, defineDirective, directives, normalizeComponentName, usePlugin };
-//# sourceMappingURL=chunk-MMLUK37L.js.map
-//# sourceMappingURL=chunk-MMLUK37L.js.map
+//# sourceMappingURL=chunk-7HVN5UCK.js.map
+//# sourceMappingURL=chunk-7HVN5UCK.js.map

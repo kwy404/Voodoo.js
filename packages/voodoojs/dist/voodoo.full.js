@@ -730,6 +730,7 @@ var Voodoo = (() => {
         autoDiscover: true,
         root: null,
         devtools: false,
+        xrayShortcut: "ctrl+shift+f2",
         baseURL: "",
         globals: {},
         locale: typeof navigator !== "undefined" ? navigator.language || "pt-BR" : "pt-BR",
@@ -20708,12 +20709,39 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
   function isXrayEnabled() {
     return enabled;
   }
+  function parseShortcut(text) {
+    const parts = text.toLowerCase().split("+").map((part) => part.trim()).filter(Boolean);
+    if (!parts.length) return null;
+    const key = parts.pop();
+    const shortcut2 = {
+      ctrl: false,
+      alt: false,
+      shift: false,
+      meta: false,
+      code: /^f\d{1,2}$/.test(key) ? key.toUpperCase() : key.length === 1 && key >= "a" && key <= "z" ? `Key${key.toUpperCase()}` : key.length === 1 && key >= "0" && key <= "9" ? `Digit${key}` : key.charAt(0).toUpperCase() + key.slice(1)
+    };
+    for (const part of parts) {
+      if (part === "ctrl" || part === "control") shortcut2.ctrl = true;
+      else if (part === "alt" || part === "option") shortcut2.alt = true;
+      else if (part === "shift") shortcut2.shift = true;
+      else if (part === "meta" || part === "cmd" || part === "command" || part === "win")
+        shortcut2.meta = true;
+      else return null;
+    }
+    return shortcut2;
+  }
   function enableXrayShortcut() {
     if (shortcutInstalled || typeof document === "undefined") return;
     shortcutInstalled = true;
     document.addEventListener("keydown", (event) => {
-      if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
-      if (event.code !== "KeyV" && event.key !== "V" && event.key !== "v") return;
+      const setting = config.xrayShortcut;
+      if (setting === false) return;
+      const wanted = parseShortcut(typeof setting === "string" ? setting : "ctrl+shift+f2");
+      if (!wanted) return;
+      if (event.ctrlKey !== wanted.ctrl || event.altKey !== wanted.alt || event.shiftKey !== wanted.shift || event.metaKey !== wanted.meta)
+        return;
+      if (event.code !== wanted.code && event.key.toUpperCase() !== wanted.code.replace(/^Key/, ""))
+        return;
       event.preventDefault();
       xray();
     });
@@ -20906,9 +20934,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const button = document.createElement("button");
     button.type = "button";
     button.className = "v-devtools-btn";
-    button.setAttribute("aria-label", "Open Voodoo devtools (Alt+Shift+V)");
+    button.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+F2)");
     button.setAttribute("aria-pressed", "false");
-    button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Alt+Shift+V)";
+    button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+F2)";
     button.innerHTML = MARK;
     const label = document.createElement("span");
     label.className = "v-devtools-label";
@@ -21179,6 +21207,10 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const locale = script.getAttribute("data-locale");
     if (locale) config.locale = locale;
     if (readDevtoolsFlag(script)) config.devtools = true;
+    const xrayShortcut = script.getAttribute("data-xray-shortcut");
+    if (xrayShortcut !== null) {
+      config.xrayShortcut = xrayShortcut === "false" || xrayShortcut === "" ? false : xrayShortcut;
+    }
     if (script.hasAttribute("data-no-styles")) config.injectStyles = false;
     if (script.hasAttribute("data-no-observer")) config.autoDiscover = false;
     if (script.hasAttribute("data-keep-attributes")) config.cleanAttributes = false;
@@ -21208,6 +21240,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
       theme.init();
       applySavedPalette();
       V2.start();
+      if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();
       if (config.devtools) mountDevtools(V2);
     };
     whenReady(boot);

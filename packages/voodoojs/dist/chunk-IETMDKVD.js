@@ -1,4 +1,4 @@
-import { config } from './chunk-MMLUK37L.js';
+import { config } from './chunk-7HVN5UCK.js';
 
 /**
  * Voodoo.js v0.7.0
@@ -68,5 +68,5 @@ function ensureTokens() {
 }
 
 export { BASE_TOKENS, ensureTokens, injectStyle };
-//# sourceMappingURL=chunk-GIWKGFGY.js.map
-//# sourceMappingURL=chunk-GIWKGFGY.js.map
+//# sourceMappingURL=chunk-IETMDKVD.js.map
+//# sourceMappingURL=chunk-IETMDKVD.js.map

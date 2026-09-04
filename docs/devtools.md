@@ -60,7 +60,7 @@ V.xray(true);    // force on
 V.xray(false);   // force off
 ```
 
-The `Alt+Shift+V` shortcut is installed on first call. To have the shortcut available from the
+The `Ctrl+Shift+F2` shortcut is installed on first call. To have the shortcut available from the
 start, without turning anything on:
 
 ```js

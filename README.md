@@ -427,16 +427,68 @@ Each of these has its own guide in [`docs/`](docs/).
 The full build ships `xray`, a visual reactivity inspector: it shows the scope tree, live state,
 which effects are running, and the event and network logs.
 
+**Press `Ctrl+Shift+F2`.** That is the whole setup. Load the full build and the shortcut is
+already listening, whether or not you asked for devtools.
+
+Here is a complete page. Save it, open it, click the button a few times, then press the keys and
+watch `count` change in the panel while the button flashes on every write.
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.7/dist/voodoo.full.min.js" defer></script>
+</head>
+<body>
+  <div v-data="{ count: 0, items: ['a', 'b'] }">
+    <button @click="count++">clicked { count } times</button>
+    <button @click="items.push('c')">add an item</button>
+    <ul><li v-for="i in items">{ i }</li></ul>
+  </div>
+</body>
+</html>
+```
+
+It must be `voodoo.full.min.js`. The inspector is not in the core or essential builds, and those
+print a line in the console saying so rather than failing silently.
+
+### Opening it from code
+
 ```js
 V.xray()        // toggle the panel
 V.xray(true)    // open it
 V.xray(false)   // close it
-
-V.enableXrayShortcut()   // install only the shortcut, without opening the panel
 ```
 
-The first call also installs the `Alt+Shift+V` shortcut, so the inspector stays one keystroke
-away during development at no cost while nobody presses it.
+### Changing or removing the shortcut
+
+No key combination is free on every machine, so this one is configurable:
+
+```html
+<script src="voodoo.full.min.js" data-xray-shortcut="alt+shift+d" defer></script>
+<script src="voodoo.full.min.js" data-xray-shortcut="false" defer></script>
+```
+
+```js
+V.config.xrayShortcut = 'ctrl+shift+f9';
+V.config.xrayShortcut = false;
+```
+
+The last part names the **physical** key, so the shortcut behaves the same on every keyboard
+layout. `Ctrl+Shift+F2` is the third default: `Ctrl+Shift+X` closes the tab in Opera, and
+`Alt+Shift+V` is the Windows keyboard layout switcher, which takes the keys before the page sees
+them. `Ctrl+Alt` is unavailable for the same class of reason, being AltGr on Brazilian and most
+European layouts.
+
+### The verbose warnings are separate
+
+`data-devtools` is a different switch. It turns on detailed console warnings and mounts the
+on-screen widget; it is not needed for the shortcut.
+
+```html
+<script src="voodoo.full.min.js" data-devtools defer></script>
+```
 
 ## Architecture
 

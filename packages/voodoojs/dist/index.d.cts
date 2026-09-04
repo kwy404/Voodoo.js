@@ -1,5 +1,5 @@
-import { c as core, V as VoodooCollection } from './query-sEJXe_cO.cjs';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-sEJXe_cO.cjs';
+import { c as core, V as VoodooCollection } from './query-D652Pqta.cjs';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-D652Pqta.cjs';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.cjs';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.cjs';
 export { R as RoomOptions, a as RoomState, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, f as createSocket, s as socket, g as socketSupported } from './index-DTllqUtj.cjs';
@@ -1513,7 +1513,7 @@ declare function isXrayEnabled(): boolean;
  * V.xray(false)   // disable
  * ```
  *
- * The first call also installs the `Alt+Shift+V` shortcut.
+ * The first call also installs the `Ctrl+Shift+F2` shortcut.
  *
  * @param force enable or disable explicitly. Without argument, toggles.
  * @returns the state after the call.

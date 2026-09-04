@@ -21,6 +21,18 @@ export interface VoodooConfig {
   root: Element | null;
   /** Show detailed warnings in the console. */
   devtools: boolean;
+  /**
+   * Keyboard shortcut that opens the reactivity inspector, in the full build.
+   *
+   * Written as `'ctrl+shift+f2'`. The last part names the physical key, so it
+   * behaves the same on every keyboard layout. Set to `false` to install no
+   * listener at all.
+   *
+   * Read `xrayShortcut` in `devtools/xray.ts` before changing the default: the
+   * previous two choices were both taken, one by Opera and one by the Windows
+   * keyboard layout switcher.
+   */
+  xrayShortcut: string | false;
   /** Base URL for requests triggered by attributes. */
   baseURL: string;
   /** Globals allowed inside expressions. */
@@ -50,6 +62,7 @@ export const config: VoodooConfig = {
   autoDiscover: true,
   root: null,
   devtools: false,
+  xrayShortcut: 'ctrl+shift+f2',
   baseURL: '',
   globals: {},
   locale: typeof navigator !== 'undefined' ? navigator.language || 'pt-BR' : 'pt-BR',

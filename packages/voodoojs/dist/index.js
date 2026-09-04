@@ -1,21 +1,21 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-II3XBOAP.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-II3XBOAP.js';
-export { gpu, reflectWgsl } from './chunk-N3T43YN3.js';
-import { http } from './chunk-WSDB7K4X.js';
-export { HttpError, http, request } from './chunk-WSDB7K4X.js';
-import { devtoolsBus } from './chunk-QO3I7VLJ.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-QO3I7VLJ.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-JB2YYNK6.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-JB2YYNK6.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-C53X4Q2C.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-C53X4Q2C.js';
+export { gpu, reflectWgsl } from './chunk-LNKJVNUV.js';
+import { http } from './chunk-BX7XU565.js';
+export { HttpError, http, request } from './chunk-BX7XU565.js';
+import { devtoolsBus } from './chunk-37L3JWRC.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-37L3JWRC.js';
+import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-LGKNQVXF.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-LGKNQVXF.js';
 import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-4T2UIPWX.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-4T2UIPWX.js';
-import { warnAlias } from './chunk-CYN6VLMD.js';
+import { warnAlias } from './chunk-VSOERLB4.js';
 import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-ZIWLQZZL.js';
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-ZIWLQZZL.js';
-import { ensureTokens, injectStyle } from './chunk-GIWKGFGY.js';
-export { ensureTokens, injectStyle } from './chunk-GIWKGFGY.js';
-import { defineDirective, PRIORITY, config } from './chunk-MMLUK37L.js';
-export { PRIORITY, config, defineDirective } from './chunk-MMLUK37L.js';
+import { ensureTokens, injectStyle } from './chunk-IETMDKVD.js';
+export { ensureTokens, injectStyle } from './chunk-IETMDKVD.js';
+import { defineDirective, PRIORITY, config } from './chunk-7HVN5UCK.js';
+export { PRIORITY, config, defineDirective } from './chunk-7HVN5UCK.js';
 import './chunk-YOZTHZS2.js';
 
 /**
@@ -6497,12 +6497,39 @@ function disableXray() {
 function isXrayEnabled() {
   return enabled;
 }
+function parseShortcut(text) {
+  const parts = text.toLowerCase().split("+").map((part) => part.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const key = parts.pop();
+  const shortcut = {
+    ctrl: false,
+    alt: false,
+    shift: false,
+    meta: false,
+    code: /^f\d{1,2}$/.test(key) ? key.toUpperCase() : key.length === 1 && key >= "a" && key <= "z" ? `Key${key.toUpperCase()}` : key.length === 1 && key >= "0" && key <= "9" ? `Digit${key}` : key.charAt(0).toUpperCase() + key.slice(1)
+  };
+  for (const part of parts) {
+    if (part === "ctrl" || part === "control") shortcut.ctrl = true;
+    else if (part === "alt" || part === "option") shortcut.alt = true;
+    else if (part === "shift") shortcut.shift = true;
+    else if (part === "meta" || part === "cmd" || part === "command" || part === "win")
+      shortcut.meta = true;
+    else return null;
+  }
+  return shortcut;
+}
 function enableXrayShortcut() {
   if (shortcutInstalled || typeof document === "undefined") return;
   shortcutInstalled = true;
   document.addEventListener("keydown", (event) => {
-    if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
-    if (event.code !== "KeyV" && event.key !== "V" && event.key !== "v") return;
+    const setting = config.xrayShortcut;
+    if (setting === false) return;
+    const wanted = parseShortcut(typeof setting === "string" ? setting : "ctrl+shift+f2");
+    if (!wanted) return;
+    if (event.ctrlKey !== wanted.ctrl || event.altKey !== wanted.alt || event.shiftKey !== wanted.shift || event.metaKey !== wanted.meta)
+      return;
+    if (event.code !== wanted.code && event.key.toUpperCase() !== wanted.code.replace(/^Key/, ""))
+      return;
     event.preventDefault();
     xray();
   });
@@ -6694,9 +6721,9 @@ function build() {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "v-devtools-btn";
-  button.setAttribute("aria-label", "Open Voodoo devtools (Alt+Shift+V)");
+  button.setAttribute("aria-label", "Open Voodoo devtools (Ctrl+Shift+F2)");
   button.setAttribute("aria-pressed", "false");
-  button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Alt+Shift+V)";
+  button.title = "Voodoo devtools \u2014 click to inspect, drag to move (Ctrl+Shift+F2)";
   button.innerHTML = MARK;
   const label = document.createElement("span");
   label.className = "v-devtools-label";

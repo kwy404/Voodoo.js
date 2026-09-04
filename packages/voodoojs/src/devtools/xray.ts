@@ -1576,24 +1576,110 @@ export function isXrayEnabled(): boolean {
 }
 
 /**
- * Installs only the `Alt+Shift+V` shortcut, without opening the panel.
- * Useful for keeping the inspector one keystroke away in development, with no
- * cost at all while no one presses the keys.
+ * One parsed shortcut: the modifiers that must be held, and the physical key.
+ */
+interface Shortcut {
+  ctrl: boolean;
+  alt: boolean;
+  shift: boolean;
+  meta: boolean;
+  code: string;
+}
+
+/**
+ * Reads a shortcut written as `'ctrl+shift+f2'`.
+ *
+ * The final part is matched against `KeyboardEvent.code`, the PHYSICAL key, so
+ * `v` becomes `KeyV` and `f2` becomes `F2`. Matching `event.key` instead would
+ * be wrong on any layout where a modifier composes a different character, which
+ * is most of them once Alt is involved.
+ */
+function parseShortcut(text: string): Shortcut | null {
+  const parts = text
+    .toLowerCase()
+    .split('+')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (!parts.length) return null;
+
+  const key = parts.pop() as string;
+  const shortcut: Shortcut = {
+    ctrl: false,
+    alt: false,
+    shift: false,
+    meta: false,
+    code: /^f\d{1,2}$/.test(key)
+      ? key.toUpperCase()
+      : key.length === 1 && key >= 'a' && key <= 'z'
+        ? `Key${key.toUpperCase()}`
+        : key.length === 1 && key >= '0' && key <= '9'
+          ? `Digit${key}`
+          : key.charAt(0).toUpperCase() + key.slice(1),
+  };
+
+  for (const part of parts) {
+    if (part === 'ctrl' || part === 'control') shortcut.ctrl = true;
+    else if (part === 'alt' || part === 'option') shortcut.alt = true;
+    else if (part === 'shift') shortcut.shift = true;
+    else if (part === 'meta' || part === 'cmd' || part === 'command' || part === 'win')
+      shortcut.meta = true;
+    else return null;
+  }
+
+  return shortcut;
+}
+
+/**
+ * Installs the inspector shortcut, without opening the panel.
+ *
+ * The default is `Ctrl+Shift+F2`, and every part of that is a reaction to a
+ * combination that turned out to be taken.
+ *
+ * `Ctrl+Shift+X` was first, and Opera closes the tab with it. `Ctrl+Shift+F2`
+ * replaced it and was worse: on Windows, Alt+Shift is the keyboard layout
+ * switcher, so on any machine with more than one layout installed the
+ * combination belongs to the operating system before the page ever sees it.
+ * `Ctrl+Alt` is not an option either, because on the Brazilian ABNT2 layout,
+ * and on most European ones, Ctrl+Alt is AltGr and composes characters.
+ *
+ * That leaves a modifier pair with a function key. The layout switcher only
+ * fires when Ctrl+Shift is pressed and released with no other key, so adding F2
+ * takes it out of contention, and no browser claims Ctrl+Shift+F2. F12 and the
+ * Ctrl+Shift+I/J/C range are the browser's own devtools and were never
+ * candidates.
+ *
+ * No combination is safe everywhere, which is the real lesson, so this one is
+ * configurable: set `V.config.xrayShortcut` to another string, or to `false` to
+ * install nothing at all.
  */
 export function enableXrayShortcut(): void {
   if (shortcutInstalled || typeof document === 'undefined') return;
   shortcutInstalled = true;
+
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    // Alt+Shift+V, not Ctrl+Shift+X.
-    //
-    // Ctrl+Shift+X is taken: Opera closes the tab with it, and browsers claim
-    // most of the Ctrl+Shift range for themselves. A shortcut a browser gets to
-    // first is not a shortcut. Alt+Shift is far less contested, and V is the
-    // letter people already associate with this library.
-    if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey) return;
-    // `event.key` under Alt can carry a composed character on some layouts, so
-    // the physical key is the reliable one.
-    if (event.code !== 'KeyV' && event.key !== 'V' && event.key !== 'v') return;
+    // The setting is read here, on every press, and not when the listener was
+    // installed. Reading it once meant that assigning `V.config.xrayShortcut`
+    // after startup silently did nothing, because the only listener had already
+    // captured the old combination and there was no way to replace it. The
+    // documented way to change the shortcut has to actually change it.
+    const setting = config.xrayShortcut;
+    if (setting === false) return;
+
+    const wanted = parseShortcut(typeof setting === 'string' ? setting : 'ctrl+shift+f2');
+    if (!wanted) return;
+
+    if (
+      event.ctrlKey !== wanted.ctrl ||
+      event.altKey !== wanted.alt ||
+      event.shiftKey !== wanted.shift ||
+      event.metaKey !== wanted.meta
+    )
+      return;
+    // The physical key, for the layout reasons above. `event.key` is accepted
+    // as a fallback only for the single-character case, where the two agree on
+    // an unmodified US layout and some automation tools send no `code` at all.
+    if (event.code !== wanted.code && event.key.toUpperCase() !== wanted.code.replace(/^Key/, ''))
+      return;
     event.preventDefault();
     xray();
   });
@@ -1608,7 +1694,7 @@ export function enableXrayShortcut(): void {
  * V.xray(false)   // disable
  * ```
  *
- * The first call also installs the `Alt+Shift+V` shortcut.
+ * The first call also installs the `Ctrl+Shift+F2` shortcut.
  *
  * @param force enable or disable explicitly. Without argument, toggles.
  * @returns the state after the call.

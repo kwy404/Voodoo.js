@@ -68,6 +68,14 @@ function readScriptOptions(): { manual: boolean } {
   if (locale) config.locale = locale;
 
   if (readDevtoolsFlag(script)) config.devtools = true;
+
+  // `data-xray-shortcut="alt+shift+d"` picks another combination, and
+  // `data-xray-shortcut="false"` installs no listener at all.
+  const xrayShortcut = script.getAttribute('data-xray-shortcut');
+  if (xrayShortcut !== null) {
+    config.xrayShortcut = xrayShortcut === 'false' || xrayShortcut === '' ? false : xrayShortcut;
+  }
+
   if (script.hasAttribute('data-no-styles')) config.injectStyles = false;
   if (script.hasAttribute('data-no-observer')) config.autoDiscover = false;
   if (script.hasAttribute('data-keep-attributes')) config.cleanAttributes = false;
@@ -121,6 +129,22 @@ export function bootstrap(V: any): void {
     theme.init();
     applySavedPalette();
     V.start();
+
+    // The inspector shortcut is installed whenever the build carries the
+    // inspector, not only when `data-devtools` is present.
+    //
+    // It used to be installed by `V.xray()` alone, which meant it only ever
+    // existed after someone had already opened the inspector some other way. On
+    // every ordinary page, including this project's own site, pressing the
+    // documented keys did nothing at all, because no listener had ever been
+    // added. The keys were not the problem; the absence of a listener was.
+    //
+    // A page that loaded the full build has already shipped the inspector, so
+    // the marginal cost here is one keydown listener that does nothing until
+    // the combination is pressed. Set `data-xray-shortcut="false"`, or
+    // `V.config.xrayShortcut = false`, to install nothing.
+    if (typeof V.enableXrayShortcut === 'function') V.enableXrayShortcut();
+
     if (config.devtools) mountDevtools(V);
   };
 

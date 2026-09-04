@@ -7,8 +7,67 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-Nothing here changes the library. The version on npm is unaffected: this is the
-repository, the site and the documentation.
+## [0.8.0] - 2026-09-04
+
+A minor, because the inspector shortcut changed and a configuration option was
+added.
+
+### Fixed
+
+- **The devtools shortcut works.** It never did. `enableXrayShortcut` was only
+  ever called from inside `V.xray()`, so the listener came into existence only
+  after somebody had already opened the inspector some other way. On every
+  ordinary page, including this project's own site, pressing the documented keys
+  did nothing, because nothing was listening. Verified in a browser before and
+  after: on the landing page `V.config.devtools` is `false`, the script tag
+  carries no `data-devtools`, and no keydown handler existed.
+
+  The full build now installs it at startup, whether or not devtools were asked
+  for. A page that loaded the full build has already shipped the inspector, so
+  the cost is one listener that does nothing until the keys are pressed.
+
+- **`V.config.xrayShortcut` can be changed after startup.** The listener read
+  the setting once, when it was installed, so assigning a new combination later
+  silently did nothing. It reads the setting on each press now.
+
+### Changed
+
+- **The shortcut is `Ctrl+Shift+F2`, and configurable.** This is the third
+  default. `Ctrl+Shift+X` closes the tab in Opera. `Alt+Shift+V` replaced it and
+  was worse: Alt+Shift is the Windows keyboard layout switcher, so on a machine
+  with more than one layout installed the operating system takes the keys before
+  the page sees them. `Ctrl+Alt` was never available either, being AltGr on the
+  Brazilian ABNT2 layout and most European ones.
+
+  The Windows layout switcher fires on Ctrl+Shift pressed and released with no
+  other key, so a function key takes the combination out of contention, and no
+  browser claims Ctrl+Shift+F2.
+
+  No combination is free everywhere, which is the actual lesson after three
+  attempts, so it is now a setting: `data-xray-shortcut="alt+shift+d"` on the
+  script tag, or `V.config.xrayShortcut`, and `false` installs nothing.
+
+- The shortcut matches the **physical** key through `event.code`, so it behaves
+  the same on every keyboard layout rather than on the character a layout
+  happens to compose.
+
+### Added
+
+- `xrayShortcut` in `V.config`, and `data-xray-shortcut` on the script tag.
+- Both READMEs document how to turn the inspector on, with a complete page
+  someone can save and open. `data-devtools` is explained as what it actually
+  is, a separate switch for verbose console warnings and the on-screen widget,
+  not a requirement for the shortcut.
+- Eight tests in `test/devtools-shortcut.test.ts`. Five of them fail against the
+  previous code, including the one that matters: pressing the keys on a page
+  that never asked for devtools. The three that still pass are the negative
+  cases, which pass trivially when no listener exists at all, and that is worth
+  knowing about them.
+
+## [Unreleased before 0.8.0]
+
+Nothing here changed the library. This was the repository, the site and the
+documentation.
 
 ### Fixed
 

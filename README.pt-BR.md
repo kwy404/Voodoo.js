@@ -438,16 +438,68 @@ Cada um deles tem o seu guia em [`docs/`](docs/).
 O build completo traz o `xray`, um inspetor visual de reatividade: ele mostra a árvore de escopos,
 o estado ao vivo, quais efeitos estão rodando, e os registros de eventos e de rede.
 
+**Aperte `Ctrl+Shift+F2`.** É toda a configuração. Carregue o build completo e o atalho já está
+escutando, tendo você pedido devtools ou não.
+
+Uma página completa. Salve, abra, clique algumas vezes no botão, aperte as teclas e veja o
+`count` mudar no painel enquanto o botão pisca a cada escrita.
+
+```html
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.7/dist/voodoo.full.min.js" defer></script>
+</head>
+<body>
+  <div v-data="{ count: 0, items: ['a', 'b'] }">
+    <button @click="count++">cliquei { count } vezes</button>
+    <button @click="items.push('c')">adicionar item</button>
+    <ul><li v-for="i in items">{ i }</li></ul>
+  </div>
+</body>
+</html>
+```
+
+Tem que ser o `voodoo.full.min.js`. O inspetor não está nos builds core e essencial, e esses dois
+avisam no console em vez de falhar em silêncio.
+
+### Abrindo por código
+
 ```js
 V.xray()        // alterna o painel
 V.xray(true)    // abre
 V.xray(false)   // fecha
-
-V.enableXrayShortcut()   // instala apenas o atalho, sem abrir o painel
 ```
 
-A primeira chamada também instala o atalho `Alt+Shift+V`, então o inspetor fica a uma tecla de
-distância durante o desenvolvimento, sem custo nenhum enquanto ninguém aperta.
+### Trocando ou removendo o atalho
+
+Nenhuma combinação está livre em toda máquina, então esta é configurável:
+
+```html
+<script src="voodoo.full.min.js" data-xray-shortcut="alt+shift+d" defer></script>
+<script src="voodoo.full.min.js" data-xray-shortcut="false" defer></script>
+```
+
+```js
+V.config.xrayShortcut = 'ctrl+shift+f9';
+V.config.xrayShortcut = false;
+```
+
+A última parte nomeia a tecla **física**, então o atalho se comporta igual em qualquer layout de
+teclado. `Ctrl+Shift+F2` é o terceiro default: o `Ctrl+Shift+X` fecha a aba no Opera, e o
+`Alt+Shift+V` é o alternador de layout de teclado do Windows, que pega as teclas antes da página
+ver. `Ctrl+Alt` está fora pelo mesmo motivo, sendo AltGr no ABNT2 e na maioria dos layouts
+europeus.
+
+### Os avisos detalhados são outra coisa
+
+O `data-devtools` é uma chave diferente. Ele liga os avisos detalhados no console e monta o widget
+na tela; não é necessário para o atalho.
+
+```html
+<script src="voodoo.full.min.js" data-devtools defer></script>
+```
 
 ## Arquitetura
 
