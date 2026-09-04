@@ -1,7 +1,7 @@
-import { __export } from './chunk-GXPNWCGE.js';
+import { __export } from './chunk-5YP5VMW7.js';
 
 /**
- * Voodoo.js v0.12.1
+ * Voodoo.js v0.12.3
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -397,5 +397,5 @@ var device = {
 };
 
 export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, utils_exports, uuid };
-//# sourceMappingURL=chunk-KN7NAKBL.js.map
-//# sourceMappingURL=chunk-KN7NAKBL.js.map
+//# sourceMappingURL=chunk-4DLB2RY5.js.map
+//# sourceMappingURL=chunk-4DLB2RY5.js.map

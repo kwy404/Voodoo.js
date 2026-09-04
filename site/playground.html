@@ -606,11 +606,47 @@
         white-space: pre;
         word-wrap: normal;
         overflow: auto;
+
+        /* The caret is only in the right place while these two lay text out
+           identically, character for character, and ligatures quietly broke
+           that. Cascadia forms `=>` into a single glyph in the textarea, where
+           the text is plain, and cannot form it in the highlighted layer, where
+           the same two characters usually land in different spans. One glyph
+           against two, on every arrow in the file, and everything after it on
+           that line sat a few pixels off from where you were typing.
+
+           Spelt out rather than left to the shorthand so that neither layer can
+           inherit something the other does not. */
+        font-variant-ligatures: none;
+        font-kerning: none;
+        letter-spacing: normal;
+        word-spacing: normal;
+        text-transform: none;
+        font-feature-settings: normal;
       }
 
       .stack pre {
         pointer-events: none;
         color: var(--vs-ink);
+      }
+
+      /* The whole reason the caret drifted from the text.
+         The highlighted layer is `<pre><code>`, and every browser's own
+         stylesheet carries `code { font-family: monospace }`. That beats
+         inheritance, so the `<code>` and every coloured span inside it were
+         drawn in the generic monospace — Courier New on Windows — while the
+         textarea above them used Cascadia. Roughly six percent narrower per
+         character, which is invisible on a short line and, by the middle of a
+         long Tailwind class attribute, put the caret a dozen pixels from the
+         character it was pointing at. Typing landed somewhere other than where
+         you were looking.
+
+         `font: inherit` on both, so the layer cannot pick its own font again. */
+      .stack pre code,
+      .stack pre span {
+        font: inherit;
+        font-variant-ligatures: inherit;
+        letter-spacing: inherit;
       }
 
       .stack textarea {
@@ -623,8 +659,14 @@
         caret-color: #aeafad;
       }
 
+      /* Translucent on purpose.
+         The textarea's own text is transparent, so a solid selection colour
+         painted over the highlighted layer beneath it and the selected code
+         simply vanished: you dragged across a line and watched it turn into a
+         blue bar. Alpha lets the coloured text underneath stay readable while
+         still reading as a selection. */
       .stack textarea::selection {
-        background: var(--vs-select);
+        background: rgba(38, 79, 120, 0.55);
       }
 
       .tk-tag {
@@ -636,9 +678,12 @@
       .tk-str {
         color: var(--c-str);
       }
+      /* Upright, not italic. Italic glyphs are a different width from the
+         upright ones the textarea draws, so a single comment pushed the caret
+         out of step with the painted text for the rest of that line. Dark+
+         renders comments upright anyway, so this is the accurate colour too. */
       .tk-com {
         color: var(--c-com);
-        font-style: italic;
       }
       .tk-interp {
         color: var(--c-key);
@@ -850,6 +895,25 @@
         .brand .tag {
           display: none;
         }
+
+        /* Reset and Share come off the title bar rather than off the page:
+           the activity rail carries both, and at this width the bar had six
+           controls fighting for 375px and losing. */
+        #btn-reset,
+        #btn-share {
+          display: none;
+        }
+
+        .statusbar .right span:not(:last-child) {
+          display: none;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .brand .name,
+        .statusbar #status-lines {
+          display: none;
+        }
       }
     </style>
   </head>
@@ -860,7 +924,7 @@
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
         </svg>
-        Voodoo.js
+        <span class="name">Voodoo.js</span>
         <span class="tag">Playground</span>
       </a>
 
@@ -1008,7 +1072,20 @@
             </div>
           </div>
           <div class="frame-wrap">
-            <iframe id="frame" title="Live preview" sandbox="allow-scripts allow-modals"></iframe>
+            <!--
+              allow-forms is here because a sandboxed frame without it blocks
+              submission outright, before any handler runs. An example written
+              as `<form @submit.prevent="...">` therefore did nothing at all and
+              logged "Blocked form submission because the form's frame is
+              sandboxed" — the prevent never got the chance to prevent anything.
+
+              No allow-same-origin, deliberately: the frame keeps an opaque
+              origin, so page code cannot reach this document, its storage or
+              its cookies. Letting a form submit inside a frame that has no
+              origin of its own costs nothing.
+            -->
+            <iframe id="frame" title="Live preview"
+              sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
           </div>
         </div>
       </div>
@@ -1022,11 +1099,11 @@
         <span>Ctrl+Enter to run</span>
         <span>HTML</span>
         <span>UTF-8</span>
-        <span>voodoojs@0.12.1</span>
+        <span>voodoojs@0.12.3</span>
       </div>
     </div>
 
-    <script src="assets/playground-examples.js?v=7e75d525"></script>
-    <script src="assets/playground-app.js?v=5c6b4afd"></script>
+    <script src="assets/playground-examples.js?v=3fc077e6"></script>
+    <script src="assets/playground-app.js?v=fe379ef9"></script>
   </body>
 </html>

@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Voodoo.js v0.12.1
+ * Voodoo.js v0.12.3
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */

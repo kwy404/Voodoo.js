@@ -23,7 +23,7 @@
    * alongside it — on GitHub Pages, from a file:// checkout, or from a local
    * server. There is nothing left to keep in sync.
    */
-  var RUNTIME = new URL('../voodoo.full.min.js?v=9cafda66', document.currentScript.src).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=6aa47b7d', document.currentScript.src).href;
   var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
 
   var code = document.getElementById('code');
@@ -268,14 +268,20 @@
   var CLOSE = '</scr' + 'ipt>';
 
   /**
-   * The preview carries all three theme states itself.
+   * The preview carries its theme states itself.
    *
    * An earlier version picked one scheme in the parent and wrote literal colours
    * into the frame. That broke the v-theme-toggle example: the button flipped
    * data-theme inside the iframe and nothing responded, because no rule was
-   * keyed on it. Emitting the same three-state shape the library and the site
-   * use means the frame follows the system by default, obeys an explicit choice,
-   * and lets a sample toggle its own theme.
+   * keyed on it. Keying the tokens on data-theme is what makes a sample able to
+   * toggle its own theme, and that is the half that has to stay.
+   *
+   * What is gone is the third state, the one that followed the desktop. Every
+   * example now paints a light canvas of its own, so on a dark desktop the frame
+   * was handing the library's widgets dark tokens and they came out as dark
+   * fields on white cards — the VInput in the component gallery had a navy body
+   * and a label nobody could read. Light is the ground the samples are drawn on,
+   * so light is the default, and data-theme still moves it.
    *
    * The --v-* mapping matters just as much: without it the library paints its
    * built-in widgets from its own tokens, which is how a v-sortable list ended
@@ -311,8 +317,6 @@
   function frameCss() {
     return (
       ':root{' + tokens(LIGHT, 'light') + '}' +
-      '@media (prefers-color-scheme: dark){html:root:not([data-theme="light"]){' +
-      tokens(DARK, 'dark') + '}}' +
       'html:root[data-theme="dark"]{' + tokens(DARK, 'dark') + '}' +
       'html:root[data-theme="light"]{' + tokens(LIGHT, 'light') + '}' +
 
@@ -360,14 +364,17 @@
       // must not reflow the page it is reporting on.
       'body:not(:has(>[class]:not(.pg-error))){padding:18px}' +
 
-      ':where(button[class]){appearance:none;-webkit-appearance:none;border:0;margin:0;' +
-      'padding:0;background:transparent;color:inherit;font:inherit;line-height:inherit;' +
-      'text-align:inherit;cursor:pointer}' +
+      // border-WIDTH, not the border shorthand: the shorthand also resets the
+      // style to none, and a `border border-slate-200` button then drew nothing
+      // at all, because the rule above is the only thing declaring solid.
+      ':where(button[class]){appearance:none;-webkit-appearance:none;border-width:0;' +
+      'margin:0;padding:0;background:transparent;color:inherit;font:inherit;' +
+      'line-height:inherit;text-align:inherit;cursor:pointer}' +
       // Checkbox, radio, range and colour keep the native control: there is no
       // utility that draws one, and a stripped one is an invisible one.
       ':where(input[class]:not([type=checkbox]):not([type=radio]):not([type=range])' +
       ':not([type=color]):not([type=file])),:where(textarea[class],select[class])' +
-      '{appearance:none;-webkit-appearance:none;border:0;margin:0;padding:0;' +
+      '{appearance:none;-webkit-appearance:none;border-width:0;margin:0;padding:0;' +
       'background:transparent;color:inherit;font:inherit;line-height:inherit}' +
       ':where(h1[class],h2[class],h3[class],h4[class],h5[class],h6[class],p[class],' +
       'ul[class],ol[class],dl[class],dd[class],figure[class],pre[class],blockquote[class])' +

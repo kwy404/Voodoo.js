@@ -1,14 +1,14 @@
-import { http, HttpError, request } from './chunk-D7675IJG.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-XTXSD4ZO.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-LLNDLLKV.js';
-import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-72PMUUMT.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-KN7NAKBL.js';
-import { injectStyle, ensureTokens } from './chunk-NP66JM2P.js';
-import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-T5ION5NG.js';
-import { __publicField } from './chunk-GXPNWCGE.js';
+import { http, HttpError, request } from './chunk-ZDLVJ7TA.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-NGDOIDR6.js';
+import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-VI27DQRZ.js';
+import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-FRYNZTKW.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-4DLB2RY5.js';
+import { injectStyle, ensureTokens } from './chunk-NB3JAL4F.js';
+import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-HTBGKRUJ.js';
+import { __publicField } from './chunk-5YP5VMW7.js';
 
 /**
- * Voodoo.js v0.12.1
+ * Voodoo.js v0.12.3
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2811,7 +2811,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-GR4X6O7I.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-JJTTJNSI.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -3099,7 +3099,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version2 = "0.12.1";
+var version2 = "0.12.3";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -10444,5 +10444,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-DLN5EDXB.js.map
-//# sourceMappingURL=chunk-DLN5EDXB.js.map
+//# sourceMappingURL=chunk-UFLF4VNQ.js.map
+//# sourceMappingURL=chunk-UFLF4VNQ.js.map

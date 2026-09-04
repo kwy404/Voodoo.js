@@ -7,6 +7,46 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-09-04
+
+### Fixed
+
+- **0.12.2 shipped bundles that reported the wrong version.** `V.version` said
+  `0.12.1` and the banner at the top of every file said it too, because the
+  release ran build → stamp instead of stamp → build, and stamping is what
+  rewrites the constant in `src/core.ts`. Nothing failed: the tests passed, the
+  tag went up, the assets uploaded, and only a byte-level diff between two
+  builds gave it away.
+
+  `check-site-bundles.mjs` now compares the version baked into each bundle
+  against `package.json` and fails when they disagree, so the ordering mistake
+  cannot reach a release again. It also normalises line endings before hashing,
+  which is why the 0.12.2 run went red on a tree where the bytes that matter
+  were identical.
+
+  Anyone on 0.12.2 gets correct behaviour and a lying `V.version`. Upgrading
+  fixes the label.
+
+- **The playground editor put your caret in the wrong place.** The highlighted
+  layer and the textarea over it have to lay text out identically, character for
+  character, and two things broke that. Cascadia forms `=>` into one glyph where
+  the text is plain and cannot form it where the same two characters land in
+  different spans, so every arrow in the file shifted the rest of its line. And
+  comments were rendered in italic, whose glyphs are a different width from the
+  upright ones being typed. Ligatures are off in both layers now and comments
+  are upright, which is what Dark+ does anyway.
+
+- **Selected code in the playground turned into a blank blue bar.** The
+  textarea's own text is transparent, so a solid selection colour painted over
+  the coloured text underneath it. The selection is translucent now.
+
+- **Forms inside a playground example did nothing.** The preview frame is
+  sandboxed without `allow-forms`, and a sandbox without it blocks submission
+  before any handler runs — so `<form @submit.prevent="...">` never got the
+  chance to prevent anything, and the console said the frame was sandboxed.
+  `allow-forms` and `allow-popups` are granted; `allow-same-origin` is still
+  withheld, so the frame keeps an opaque origin and cannot reach the page.
+
 ## [0.12.2] - 2026-09-04
 
 ### Fixed

@@ -37,7 +37,7 @@ compilador e não tem transform de JSX.
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -281,11 +281,11 @@ Cada linha abaixo faz parte do runtime publicado.
 **Uma tag script, e nada para instalar**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
 ```
 
 Essa é a instalação inteira. A biblioteca começa sozinha assim que a página fica pronta. O
-[unpkg](https://unpkg.com/voodoojs@0.12.1/dist/voodoo.full.min.js) serve o mesmo arquivo, se você preferir.
+[unpkg](https://unpkg.com/voodoojs@0.12.3/dist/voodoo.full.min.js) serve o mesmo arquivo, se você preferir.
 
 A tag acima nomeia uma versão exata, então o que você carrega não muda sozinho e a página diz qual
 build é. Use a linha `0.11` se preferir que as correções de patch cheguem sem edição. É o build
@@ -313,7 +313,7 @@ import { debounce } from 'voodoojs/utils'
 Para páginas que não podem depender de um host de terceiros, ou uma rede isolada:
 
 ```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js
 # ou compile a partir do código
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install && npm run build   # os bundles saem em packages/voodoojs/dist/
@@ -559,7 +559,7 @@ Uma página completa. Salve, abra, clique algumas vezes no botão, aperte as tec
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.3/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <div v-data="{ count: 0, items: ['a', 'b'] }">
