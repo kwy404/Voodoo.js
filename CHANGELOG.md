@@ -7,6 +7,37 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-09-04
+
+### Fixed
+
+- **A `{ const ... }` block above a table works.** 0.11.0 taught JSX regions to
+  survive a table, and this is the case it still got wrong: the block and the
+  table's own expression end up in a single text node, because foster parenting
+  moves `{rows.map(r => ( ))}` out of the `tbody` and the browser joins it onto
+  whatever text is already there.
+
+  The block reader tested "starts with `{` and ends with `}`", which that merged
+  node satisfies, so it swallowed the map along with the declarations and
+  neither one ran. It takes only the first balanced group now, respecting
+  strings, and leaves the rest of the node behind for the region pass. Both
+  forms are verified in a browser: the table with `v-data` and the table with
+  the data in a `const` block.
+
+- **The README that ships to npm carries the right version.** Stamping happens
+  during the release, before the version reaches the registry, so the pin guard
+  correctly refused to move it and the tarball went out pointing at the previous
+  line. The npm page for 0.11.0 told everyone to load 0.10, and every release
+  before it had the same fault.
+
+  Files that ship in the tarball now pin unconditionally. The guard is right for
+  a page on GitHub Pages, which goes live immediately and must not name a
+  version the CDN cannot serve; it is wrong for a file that only becomes visible
+  by being published, where the version is guaranteed to exist by the time
+  anyone reads it. `packages/cli/README.md` was never stamped at all and is now.
+
+Full notes: [v0.11.1](https://github.com/kwy404/Voodoo.js/releases/tag/v0.11.1)
+
 ## [0.11.0] - 2026-09-04
 
 **A JSX region works inside a table.** This was reported as broken, then written

@@ -515,11 +515,27 @@ function install(parent: Element, collected: Collected, hint?: Scope): void {
 export function readDeclarationBlock(root: ParentNode = document.body): Record<string, unknown> | null {
   for (const node of Array.from(root.childNodes)) {
     if (node.nodeType !== Node.TEXT_NODE) continue;
-    const text = (node.textContent ?? '').trim();
-    if (!text.startsWith('{') || !text.endsWith('}')) continue;
-    if (!/\b(const|let|var)\s/.test(text)) continue;
 
-    const body = text.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, '');
+    const raw = node.textContent ?? '';
+    const open = raw.indexOf('{');
+    if (open < 0) continue;
+
+    // Only the FIRST balanced group, and only that group is consumed.
+    //
+    // Taking the whole node was wrong whenever something else had been merged
+    // into it, and the HTML parser merges freely. A declaration block above a
+    // table is the case that exposed it: foster parenting moves the table's
+    // `{rows.map(r => ( ))}` out and the browser joins it onto the block, so one
+    // text node holds both. The old test, "starts with { and ends with }", was
+    // true of that whole node, so the block swallowed the map as well and
+    // neither one worked.
+    const end = matchBrace(raw, open);
+    if (end < 0) continue;
+
+    const group = raw.slice(open, end + 1);
+    if (!/\b(?:const|let|var)\s/.test(group)) continue;
+
+    const body = group.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, '');
     const data = reactive({} as Record<string, unknown>);
     try {
       evaluate(parse(body), new Scope(data));
@@ -530,10 +546,42 @@ export function readDeclarationBlock(root: ParentNode = document.body): Record<s
       }
       return null;
     }
-    node.remove();
+
+    // Cut out exactly the block, leaving whatever shared the node behind for
+    // `applyRegions` to find.
+    node.textContent = raw.slice(0, open) + raw.slice(end + 1);
     return data;
   }
   return null;
+}
+
+/**
+ * Index of the `}` closing the `{` at `from`, or -1.
+ *
+ * Braces inside a string or a template literal are not counted, since
+ * `{ label: "}" }` is an ordinary object.
+ */
+function matchBrace(text: string, from: number): number {
+  let depth = 0;
+  let quote: string | null = null;
+  let escaped = false;
+
+  for (let i = from; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (ch === '\\') escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') quote = ch;
+    else if (ch === '{') depth++;
+    else if (ch === '}' && --depth === 0) return i;
+  }
+  return -1;
 }
 
 /**

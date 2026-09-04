@@ -419,6 +419,23 @@ describe('the declaration block', () => {
     expect(text(document.body)).toBe('x');
   });
 
+  it('consumes only its own braces when something else shares the node', () => {
+    // The bug behind "the table example does not work". A declaration block
+    // above a table ends up in ONE text node with the table's own expression,
+    // because foster parenting moves `{rows.map(r => ( ))}` out of the tbody
+    // and the browser joins the two. The old test was "starts with { and ends
+    // with }", which that whole node satisfies, so the block swallowed the map
+    // and neither one ran.
+    document.body.innerHTML = `{ const a = 1; }  {rows.map(r => ( ))}  <p>x</p>`;
+
+    const data = readDeclarationBlock(document.body);
+
+    expect(data).toEqual({ a: 1 });
+    // The map's text is still there for `applyRegions` to pick up.
+    expect(document.body.textContent).toContain('rows.map');
+    expect(document.body.textContent).not.toContain('const a');
+  });
+
   it('ignores a block with no declaration in it', () => {
     document.body.innerHTML = `{ nothing here }`;
     expect(readDeclarationBlock(document.body)).toBeNull();

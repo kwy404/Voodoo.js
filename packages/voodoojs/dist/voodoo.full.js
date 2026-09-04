@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.10.1
+ * Voodoo.js v0.11.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6883,7 +6883,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.10.1";
+  var version2 = "0.11.0";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
@@ -21233,10 +21233,14 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     var _a2;
     for (const node of Array.from(root.childNodes)) {
       if (node.nodeType !== Node.TEXT_NODE) continue;
-      const text = ((_a2 = node.textContent) != null ? _a2 : "").trim();
-      if (!text.startsWith("{") || !text.endsWith("}")) continue;
-      if (!/\b(const|let|var)\s/.test(text)) continue;
-      const body = text.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
+      const raw = (_a2 = node.textContent) != null ? _a2 : "";
+      const open = raw.indexOf("{");
+      if (open < 0) continue;
+      const end = matchBrace(raw, open);
+      if (end < 0) continue;
+      const group = raw.slice(open, end + 1);
+      if (!/\b(?:const|let|var)\s/.test(group)) continue;
+      const body = group.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
       const data2 = reactive({});
       try {
         evaluate(parse(body), new Scope(data2));
@@ -21246,10 +21250,31 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
         }
         return null;
       }
-      node.remove();
+      node.textContent = raw.slice(0, open) + raw.slice(end + 1);
       return data2;
     }
     return null;
+  }
+  function matchBrace(text, from) {
+    let depth = 0;
+    let quote = null;
+    let escaped = false;
+    for (let i = from; i < text.length; i++) {
+      const ch = text[i];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (quote) {
+        if (ch === "\\") escaped = true;
+        else if (ch === quote) quote = null;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+      else if (ch === "{") depth++;
+      else if (ch === "}" && --depth === 0) return i;
+    }
+    return -1;
   }
   function activateJsx() {
     const work = pending.splice(0, pending.length);

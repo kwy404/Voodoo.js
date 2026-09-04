@@ -1,25 +1,25 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-4MJIS5RZ.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-4MJIS5RZ.js';
-export { gpu, reflectWgsl } from './chunk-WYSN4IOV.js';
-import { http } from './chunk-DNIQLT66.js';
-export { HttpError, http, request } from './chunk-DNIQLT66.js';
-import { devtoolsBus } from './chunk-5D7TM3GL.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-5D7TM3GL.js';
-import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-5E3UZREN.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-5E3UZREN.js';
-import { reactive, warn, handleError, effect, queuePostFlush, nextTick } from './chunk-246ZC2JD.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-246ZC2JD.js';
-import { warnAlias } from './chunk-RREZZ4FB.js';
-import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-F3Z3HMZR.js';
-export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-F3Z3HMZR.js';
-import { ensureTokens, injectStyle } from './chunk-KQRWQPD6.js';
-export { ensureTokens, injectStyle } from './chunk-KQRWQPD6.js';
-import { defineDirective, PRIORITY, config } from './chunk-D4DNTWIS.js';
-export { PRIORITY, config, defineDirective } from './chunk-D4DNTWIS.js';
-import './chunk-2UST7MKN.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-PBZCYF2Y.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-PBZCYF2Y.js';
+export { gpu, reflectWgsl } from './chunk-TZJSPNLV.js';
+import { http } from './chunk-VQEJ4DTE.js';
+export { HttpError, http, request } from './chunk-VQEJ4DTE.js';
+import { devtoolsBus } from './chunk-KAS77SGY.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-KAS77SGY.js';
+import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-NUBOX6YQ.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-NUBOX6YQ.js';
+import { reactive, warn, handleError, effect, queuePostFlush, nextTick } from './chunk-5GWN7E6N.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-5GWN7E6N.js';
+import { warnAlias } from './chunk-OTRGHJIJ.js';
+import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-FBQPFIHZ.js';
+export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-FBQPFIHZ.js';
+import { ensureTokens, injectStyle } from './chunk-QL2GIGVQ.js';
+export { ensureTokens, injectStyle } from './chunk-QL2GIGVQ.js';
+import { defineDirective, PRIORITY, config } from './chunk-WIXAZJYS.js';
+export { PRIORITY, config, defineDirective } from './chunk-WIXAZJYS.js';
+import './chunk-EYGQD7OP.js';
 
 /**
- * Voodoo.js v0.10.1
+ * Voodoo.js v0.11.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6752,10 +6752,14 @@ function install(parent, collected, hint) {
 function readDeclarationBlock(root = document.body) {
   for (const node of Array.from(root.childNodes)) {
     if (node.nodeType !== Node.TEXT_NODE) continue;
-    const text = (node.textContent ?? "").trim();
-    if (!text.startsWith("{") || !text.endsWith("}")) continue;
-    if (!/\b(const|let|var)\s/.test(text)) continue;
-    const body = text.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
+    const raw = node.textContent ?? "";
+    const open = raw.indexOf("{");
+    if (open < 0) continue;
+    const end = matchBrace(raw, open);
+    if (end < 0) continue;
+    const group = raw.slice(open, end + 1);
+    if (!/\b(?:const|let|var)\s/.test(group)) continue;
+    const body = group.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
     const data = reactive({});
     try {
       evaluate(parse(body), new Scope(data));
@@ -6765,10 +6769,31 @@ function readDeclarationBlock(root = document.body) {
       }
       return null;
     }
-    node.remove();
+    node.textContent = raw.slice(0, open) + raw.slice(end + 1);
     return data;
   }
   return null;
+}
+function matchBrace(text, from) {
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  for (let i = from; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (quote) {
+      if (ch === "\\") escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return i;
+  }
+  return -1;
 }
 function activateJsx() {
   const work = pending.splice(0, pending.length);

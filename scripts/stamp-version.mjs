@@ -110,6 +110,23 @@ const ASSET_PATTERNS = [
   /((?:\.\.\/)+voodoo(?:\.core|\.full)?\.min\.js)(?:\?v=[\w.]+)?(?=['"])/g,
 ];
 
+/**
+ * Files that ship inside the npm tarball.
+ *
+ * These pin unconditionally, and the reason is a chicken and egg the guard
+ * below cannot see. Stamping happens during the release, when the version is
+ * not on the registry yet, so `pinnable` is false and the README is left on the
+ * previous line. That README is then published, and the npm page for 0.11.0
+ * tells everybody to load 0.10. It was wrong on every release until somebody
+ * opened the page and noticed.
+ *
+ * For a page served from GitHub Pages the guard is right: it goes live
+ * immediately and must not point at a version the CDN cannot serve. For a file
+ * that only becomes visible BY being published, the version is guaranteed to
+ * exist by the time anyone reads it.
+ */
+const SHIPPED = ['packages/voodoojs/README.md', 'packages/cli/README.md'];
+
 /** Rewrites one file, returning its new text. */
 async function stamp(file, text) {
   let out = text;
@@ -119,7 +136,7 @@ async function stamp(file, text) {
 
   // The CDN pin, only when the registry has the line. An exact version stays
   // exact; a minor line stays a minor line.
-  if (pinnable) {
+  if (pinnable || SHIPPED.includes(file.split('\\').join('/'))) {
     out = out.replace(/voodoojs@(\d+\.\d+(?:\.\d+)?)/g, (match, found) =>
       `voodoojs@${found.split('.').length === 3 ? version : minor}`
     );
@@ -201,7 +218,14 @@ const SOURCE_EDITS = [
   },
 ];
 
-const EXTRA_FILES = ['README.md', 'README.pt-BR.md', 'packages/voodoojs/README.md'];
+const EXTRA_FILES = [
+  'README.md',
+  'README.pt-BR.md',
+  'packages/voodoojs/README.md',
+  // The CLI's README ships too, and was never stamped at all, so its npm page
+  // kept whatever version was written the day it was created.
+  'packages/cli/README.md',
+];
 
 // ---------------------------------------------------------------------------
 // Run

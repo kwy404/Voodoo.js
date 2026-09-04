@@ -22,7 +22,7 @@ npm install voodoojs
 Or drop it into a page, with nothing else:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.10/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js" defer></script>
 
 <div v-data="{ count: 0 }">
   <button @click="count++">Clicked { count } times</button>
