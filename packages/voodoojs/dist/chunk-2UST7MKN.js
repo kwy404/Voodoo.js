@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.10.0
+ * Voodoo.js v0.10.1
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -12,5 +12,5 @@ var __export = (target, all) => {
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
 export { __export, __publicField };
-//# sourceMappingURL=chunk-3JV2AYK6.js.map
-//# sourceMappingURL=chunk-3JV2AYK6.js.map
+//# sourceMappingURL=chunk-2UST7MKN.js.map
+//# sourceMappingURL=chunk-2UST7MKN.js.map

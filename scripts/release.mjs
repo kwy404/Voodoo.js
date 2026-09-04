@@ -27,7 +27,7 @@
  */
 
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs';
 
 const version = process.argv[2];
 const dryRun = process.argv.includes('--dry-run');
@@ -102,6 +102,26 @@ if (dirty && !dryRun) {
 // gets the same treatment, a gate rather than a good intention.
 step('0. Changelog');
 const changelog = readFileSync('CHANGELOG.md', 'utf8');
+
+/**
+ * The section for this version, which becomes the release notes.
+ *
+ * Validating that the section exists and then publishing `--generate-notes`
+ * anyway was half a gate. The notes on v0.9.0, v0.10.0 and v0.10.1 were a list
+ * of commit subjects, which is what the tool produces when you give it nothing,
+ * and somebody opening the page to find out what changed learned nothing. The
+ * changelog entry is already written by then; it just was not being used.
+ */
+function sectionFor(target) {
+  const start = changelog.indexOf(`## [${target}]`);
+  if (start < 0) return null;
+  const rest = changelog.slice(start);
+  const end = rest.indexOf('\n## [', 1);
+  const body = end < 0 ? rest : rest.slice(0, end);
+  // Drop the heading itself: the release already carries the version as a title.
+  return body.slice(body.indexOf('\n') + 1).trim();
+}
+
 if (!changelog.includes(`## [${version}]`)) {
   console.error(`\nCHANGELOG.md has no "## [${version}]" section.`);
   console.error('Write it first. The release notes are generated from nothing otherwise,');
@@ -181,7 +201,28 @@ if (missing.length && !dryRun) {
   process.exit(1);
 }
 
-run(`gh release create v${version} --title "${version}" --generate-notes ${BUNDLES.join(' ')}`);
+// The notes are the changelog section, with a pointer to the rest. Anything
+// that did not fit a release page belongs in the file, and the reader should
+// be told where the file is rather than left to guess.
+const notes = [
+  sectionFor(version) ?? '',
+  '',
+  '---',
+  '',
+  'Read more in the [CHANGELOG](https://github.com/kwy404/Voodoo.js/blob/main/CHANGELOG.md), ' +
+    'or browse the [documentation](https://kwy404.github.io/Voodoo.js/docs/) and the ' +
+    '[playground](https://kwy404.github.io/Voodoo.js/playground.html).',
+  '',
+].join('\n');
+
+if (!dryRun) {
+  writeFileSync('.release-notes.md', notes);
+}
+run(
+  `gh release create v${version} --title "${version}" ` +
+    `--notes-file .release-notes.md ${BUNDLES.join(' ')}`
+);
+if (!dryRun) unlinkSync('.release-notes.md');
 console.log(`  ${BUNDLES.length} bundles attached`);
 
 // ---------------------------------------------------------------------------
