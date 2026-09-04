@@ -97,6 +97,48 @@ const DELIBERATELY_WITHHELD = /* @__PURE__ */ new Set([
   'ServiceWorker',
 ]);
 
+/**
+ * Timers, with the string form refused.
+ *
+ * `setTimeout('alert(1)', 0)` is `eval` wearing a different hat: the browser
+ * compiles that string and runs it. This library's whole claim is that no
+ * expression is ever compiled, and it holds under a strict Content Security
+ * Policy precisely because that never happens. Handing out the raw timer would
+ * have opened the one door everything else keeps shut.
+ *
+ * The callback form is a different thing entirely — the function comes from the
+ * interpreter and can only do what any other expression can do.
+ *
+ * They are here because `useEffect` without them is a hook you cannot use.
+ * Cleanup exists for timers and listeners; a `useEffect` that can register
+ * neither is a demonstration rather than a feature, and it shipped that way:
+ * the documented example and the playground sample both called `setInterval`
+ * and both failed with "setInterval was not found" the moment anyone ran them.
+ */
+function guardedTimer(name: 'setTimeout' | 'setInterval') {
+  return function (handler: unknown, timeout?: number, ...rest: unknown[]) {
+    if (typeof handler !== 'function') {
+      throw new VoodooRuntimeError(
+        `${name} needs a function. Passing a string would compile it, which this library never does.`
+      );
+    }
+    // Looked up now rather than captured when this module loaded. Whoever owns
+    // the global at call time wins, which is what anything that replaces a
+    // timer expects: fake timers in a test, a polyfill, an instrumented page.
+    // Holding the original meant those were silently bypassed.
+    const timer = (globalThis as Record<string, any>)[name];
+    return timer(handler, timeout, ...rest);
+  };
+}
+
+/** Same reasoning as `guardedTimer`: resolve the global when it is called. */
+function forwardGlobal(name: string) {
+  return function (...args: unknown[]) {
+    const fn = (globalThis as Record<string, any>)[name];
+    return fn(...args);
+  };
+}
+
 export const allowedGlobals: Record<string, unknown> = {
   Math,
   JSON,
@@ -116,6 +158,21 @@ export const allowedGlobals: Record<string, unknown> = {
   encodeURIComponent,
   decodeURIComponent,
   console,
+
+  ...(typeof setTimeout !== 'undefined'
+    ? {
+        setTimeout: guardedTimer('setTimeout'),
+        setInterval: guardedTimer('setInterval'),
+        clearTimeout: forwardGlobal('clearTimeout'),
+        clearInterval: forwardGlobal('clearInterval'),
+      }
+    : {}),
+  ...(typeof requestAnimationFrame !== 'undefined'
+    ? {
+        requestAnimationFrame: forwardGlobal('requestAnimationFrame'),
+        cancelAnimationFrame: forwardGlobal('cancelAnimationFrame'),
+      }
+    : {}),
 };
 
 /** Runtime error for an expression, with original text attached. */

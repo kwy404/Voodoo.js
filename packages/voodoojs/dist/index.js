@@ -1,12 +1,12 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-RDHYPGH6.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady } from './chunk-RDHYPGH6.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-DLN5EDXB.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady } from './chunk-DLN5EDXB.js';
 export { gpu, reflectWgsl } from './chunk-AFMCDNYS.js';
 import { http } from './chunk-D7675IJG.js';
 export { HttpError, http, request } from './chunk-D7675IJG.js';
 import { devtoolsBus } from './chunk-HNM3CTBD.js';
 export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-HNM3CTBD.js';
-import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-4M4ZXHNY.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, hook, hooks, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-4M4ZXHNY.js';
+import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-XTXSD4ZO.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, hook, hooks, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-XTXSD4ZO.js';
 import { reactive, warn, handleError, effect, queuePostFlush, nextTick } from './chunk-LLNDLLKV.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-LLNDLLKV.js';
 import { warnAlias } from './chunk-72PMUUMT.js';
@@ -4704,8 +4704,22 @@ register("v-table", {
     }
   },
   methods: {
-    cell(row, column) {
-      const value = get(row, column.key);
+    /**
+     * A row may be an object keyed by column, or a positional array.
+     *
+     * Only the object form was ever read. The documentation's own example on
+     * the components page passes `[['Ada', 'Engineer']]` against columns
+     * `['Name', 'Role']`, and looking `'Name'` up on an array finds nothing, so
+     * every cell rendered empty while the header row and the row count both
+     * looked perfectly right — which is a hard failure to even notice, let
+     * alone diagnose.
+     *
+     * The index comes from the template rather than `cols.indexOf(column)`,
+     * because `cols` is a computed and identity is not guaranteed to survive a
+     * recomputation.
+     */
+    cell(row, column, index) {
+      const value = Array.isArray(row) && typeof index === "number" ? row[index] : get(row, column.key);
       if (value === null || value === void 0) return "";
       return String(value);
     },
@@ -4753,8 +4767,8 @@ register("v-table", {
         </thead>
         <tbody>
           <tr v-for="(row, index) in sorted" :key="index">
-            <td v-for="column in cols" :key="column.key" :style="alignStyle(column)"
-              v-text="cell(row, column)"></td>
+            <td v-for="(column, ci) in cols" :key="column.key" :style="alignStyle(column)"
+              v-text="cell(row, column, ci)"></td>
           </tr>
           <tr v-if="!sorted.length">
             <td class="v-table-empty" :colspan="cols.length || 1" v-text="empty"></td>

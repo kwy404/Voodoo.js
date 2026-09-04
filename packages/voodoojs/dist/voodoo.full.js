@@ -1798,6 +1798,23 @@ ${pointer}`);
     "SharedWorker",
     "ServiceWorker"
   ]);
+  function guardedTimer(name) {
+    return function(handler, timeout, ...rest) {
+      if (typeof handler !== "function") {
+        throw new VoodooRuntimeError(
+          `${name} needs a function. Passing a string would compile it, which this library never does.`
+        );
+      }
+      const timer = globalThis[name];
+      return timer(handler, timeout, ...rest);
+    };
+  }
+  function forwardGlobal(name) {
+    return function(...args) {
+      const fn = globalThis[name];
+      return fn(...args);
+    };
+  }
   var allowedGlobals = {
     Math,
     JSON,
@@ -1816,7 +1833,17 @@ ${pointer}`);
     isFinite,
     encodeURIComponent,
     decodeURIComponent,
-    console
+    console,
+    ...typeof setTimeout !== "undefined" ? {
+      setTimeout: guardedTimer("setTimeout"),
+      setInterval: guardedTimer("setInterval"),
+      clearTimeout: forwardGlobal("clearTimeout"),
+      clearInterval: forwardGlobal("clearInterval")
+    } : {},
+    ...typeof requestAnimationFrame !== "undefined" ? {
+      requestAnimationFrame: forwardGlobal("requestAnimationFrame"),
+      cancelAnimationFrame: forwardGlobal("cancelAnimationFrame")
+    } : {}
   };
   var VoodooRuntimeError = class extends Error {
     constructor(message, expression) {
@@ -10275,6 +10302,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     ensureUi();
     collapseOf(el);
   });
+  var selfToggling = /* @__PURE__ */ new WeakSet();
   defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
     ensureUi();
     const target = resolveTarget(el, expression);
@@ -10283,6 +10311,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     controller.triggers.add(el);
     controller.sync();
     makeInteractive(el, cleanup);
+    selfToggling.add(el);
+    cleanup(() => selfToggling.delete(el));
     const onClick = (event) => {
       event.preventDefault();
       controller.toggle();
@@ -10697,10 +10727,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       if (index === -1) return;
       event.preventDefault();
       const controller = controllers2[index];
-      if (single && !controller.open) {
+      const ownToggle = selfToggling.has(header);
+      if (single && (ownToggle ? controller.open : !controller.open)) {
         for (const other of controllers2) if (other !== controller) other.hide();
       }
-      controller.toggle();
+      if (!ownToggle) controller.toggle();
     };
     const onKeyDown = (event) => {
       var _a2;
@@ -18336,8 +18367,22 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
       }
     },
     methods: {
-      cell(row, column) {
-        const value = get(row, column.key);
+      /**
+       * A row may be an object keyed by column, or a positional array.
+       *
+       * Only the object form was ever read. The documentation's own example on
+       * the components page passes `[['Ada', 'Engineer']]` against columns
+       * `['Name', 'Role']`, and looking `'Name'` up on an array finds nothing, so
+       * every cell rendered empty while the header row and the row count both
+       * looked perfectly right — which is a hard failure to even notice, let
+       * alone diagnose.
+       *
+       * The index comes from the template rather than `cols.indexOf(column)`,
+       * because `cols` is a computed and identity is not guaranteed to survive a
+       * recomputation.
+       */
+      cell(row, column, index) {
+        const value = Array.isArray(row) && typeof index === "number" ? row[index] : get(row, column.key);
         if (value === null || value === void 0) return "";
         return String(value);
       },
@@ -18385,8 +18430,8 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
         </thead>
         <tbody>
           <tr v-for="(row, index) in sorted" :key="index">
-            <td v-for="column in cols" :key="column.key" :style="alignStyle(column)"
-              v-text="cell(row, column)"></td>
+            <td v-for="(column, ci) in cols" :key="column.key" :style="alignStyle(column)"
+              v-text="cell(row, column, ci)"></td>
           </tr>
           <tr v-if="!sorted.length">
             <td class="v-table-empty" :colspan="cols.length || 1" v-text="empty"></td>
@@ -22029,9 +22074,14 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     allowedGlobals.V = V2;
     allowedGlobals.Voodoo = V2;
     if (config.baseURL && ((_a2 = V2.http) == null ? void 0 : _a2.setBaseURL)) V2.http.setBaseURL(config.baseURL);
-    if (options.manual || !config.autoStart) return;
+    theme.init();
+    if (options.manual || !config.autoStart) {
+      whenReady(() => {
+        applySavedPalette();
+      });
+      return;
+    }
     const boot = () => {
-      theme.init();
       applySavedPalette();
       V2.start();
       if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();

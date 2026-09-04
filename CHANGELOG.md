@@ -7,6 +7,54 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-09-04
+
+### Fixed
+
+- **The theme never applied on a page that starts the library itself.**
+  `theme.init()` sat inside the deferred boot, *after* the `data-manual` and
+  `autoStart` guard, so any page that calls `V.start()` on its own — this
+  project's own landing page among them — never ran it. The choice was stored
+  correctly and `V.theme.current` read it back correctly, and nothing ever wrote
+  `data-theme` onto `<html>`.
+
+  From the outside it looked like a dead button on every second press: click,
+  page goes light, reload, page is dark again, click, `light` → `dark` and the
+  already-dark page does not move. Reported as "the site never goes light, and I
+  cannot tell which theme is which".
+
+  `init()` now runs unconditionally. It still writes nothing unless the visitor
+  actually picked a theme, so a page that merely included the script is left
+  alone exactly as before.
+
+- **Timers were unreachable from expressions.** `useEffect` shipped in 0.12.0
+  with cleanup as its headline feature and no way to register anything that
+  needs cleaning up: the documented example and the playground sample both
+  called `setInterval` and both failed with `"setInterval" was not found`.
+
+  `setTimeout`, `setInterval`, their clears and the animation-frame pair are
+  available now, each behind a guard that refuses the string form —
+  `setTimeout('alert(1)')` asks the browser to compile that text, which is
+  `eval` under another name, and never compiling anything is the reason this
+  library works under a strict Content Security Policy. They resolve the global
+  when called rather than when the module loads, so fake timers and polyfills
+  are not bypassed.
+
+- **An accordion built from collapse toggles did nothing at all.** Two handlers
+  ran for one click: `v-collapse-toggle` listens on the button, `v-accordion`
+  delegates from the container, and both called `toggle()` on the same panel.
+  The first opened it, the second closed it again on the way up. Nothing moved,
+  `aria-expanded` never changed, and there was no error to go on.
+
+  The accordion now recognises a header that toggles itself and keeps only the
+  single-open rule.
+
+- **`v-table` rendered every cell empty for positional rows.** Cells were read
+  by column key alone, so a row given as an array found nothing. The components
+  page's own example passes `[['Ada', 'Engineer']]` against columns
+  `['Name', 'Role']`: the header row was right, the row count was right, and
+  every cell was blank. Both shapes work now.
+
 ## [0.12.1] - 2026-09-04
 
 ### Fixed

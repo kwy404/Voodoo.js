@@ -4,6 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- The visitor's theme has to be on the root before the first paint.
+         The library restores it too, but only once the bundle has run, and this
+         page loads the bundle deferred and with `data-manual`: the dictionary
+         must be registered before the first render. Without this block a
+         reader on a dark machine who had chosen LIGHT got a dark page on every
+         load -- `data-theme` was missing, so the `prefers-color-scheme: dark`
+         block below matched -- and the first press of the toggle then read the
+         stored `light` and flipped it to `dark`, so nothing moved on screen.
+         Both themes looked dark and the button looked dead.
+
+         Reads the key the library writes (`voodoo:theme`, stored raw) and
+         writes exactly what `V.theme.apply()` writes, so the two agree. `system`
+         and an unset key are deliberately left alone: that is the state where
+         the operating system decides. -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('voodoo:theme');
+          // `storage.get()` parses the value as JSON before falling back to the
+          // raw string, so a `"dark"` written by an older build reads back as
+          // `dark` there. Matching that here keeps the two from disagreeing on
+          // a visitor who has been on this site for a while.
+          if (saved === '"light"' || saved === '"dark"') saved = saved.slice(1, -1);
+          if (saved !== 'light' && saved !== 'dark') return;
+          document.documentElement.setAttribute('data-theme', saved);
+          document.documentElement.style.colorScheme = saved;
+        } catch (e) {
+          /* Private mode and opaque origins throw on localStorage. No theme,
+             no crash: the page keeps following the operating system. */
+        }
+      })();
+    </script>
+
     <title>Voodoo.js — the HTML-first JavaScript framework</title>
     <meta
       name="description"
@@ -1286,7 +1319,7 @@
                     <td class="num">29.48</td>
                   </tr>
                   <tr class="mine">
-                    <td>Voodoo.js 0.12.1</td>
+                    <td>Voodoo.js 0.12.2</td>
                     <td class="num">97.70</td>
                     <td class="num">5.42</td>
                     <td class="num">30.44</td>
@@ -1457,7 +1490,7 @@
           <a href="playground.html" v-t="nav.playground">Playground</a>
           <a href="components.html" v-t="nav.components">Components</a>
           <a href="examples/" v-t="nav.examples">Examples</a>
-          <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 0.12.1</span>
+          <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 0.12.2</span>
         </div>
       </footer>
 
@@ -1471,6 +1504,6 @@
       data-manual
       defer
     ></script>
-    <script src="assets/i18n.js?v=aa38de9b" defer></script>
+    <script src="assets/i18n.js?v=ce7aa46f" defer></script>
   </body>
 </html>

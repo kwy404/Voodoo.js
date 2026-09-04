@@ -70,9 +70,23 @@ const DIST = 'packages/voodoojs/dist';
  * of headroom, deliberately — 47.92 against 48 is not a budget, it is a
  * tripwire that fires on the next correct fix.
  */
+/**
+ * 0.12.2 raised the essential build 85 -> 86.
+ *
+ * Timers reached the expression language: setTimeout, setInterval, their
+ * clears, and the animation-frame pair, each behind a guard that refuses the
+ * string form because compiling a string is the one thing this library never
+ * does. They are in all three builds, and the essential one landed at 85.04
+ * against a budget of 85.
+ *
+ * Worth the forty bytes: useEffect shipped with cleanup as its headline and no
+ * way to register anything that needs cleaning up. The documented example and
+ * the playground sample both called setInterval and both failed the moment
+ * anyone ran them.
+ */
 const BUDGET = {
   'voodoo.core.min.js': 49,
-  'voodoo.min.js': 85,
+  'voodoo.min.js': 86,
   'voodoo.full.min.js': 134,
 };
 

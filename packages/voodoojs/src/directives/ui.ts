@@ -679,6 +679,21 @@ defineDirective('collapse', ({ el }) => {
   collapseOf(el);
 });
 
+/**
+ * Elements that carry `v-collapse-toggle` and therefore toggle their own panel.
+ *
+ * `v-accordion` also delegates clicks from its headers, and when a header was
+ * written as `<button v-collapse-toggle="#panel">` both handlers fired for one
+ * click: the button's listener opened the panel, the container's listener
+ * closed it again on the way up. The panel never moved and `aria-expanded`
+ * never changed, so the accordion looked completely dead.
+ *
+ * The accordion consults this set at click time to decide whether the header is
+ * already toggling itself, in which case the accordion only enforces the
+ * single-open rule and leaves the toggling alone.
+ */
+const selfToggling = new WeakSet<HTMLElement>();
+
 defineDirective('collapse-toggle', ({ el, expression, cleanup }) => {
   ensureUi();
   const target = resolveTarget(el, expression);
@@ -688,6 +703,8 @@ defineDirective('collapse-toggle', ({ el, expression, cleanup }) => {
   controller.triggers.add(el);
   controller.sync();
   makeInteractive(el, cleanup);
+  selfToggling.add(el);
+  cleanup(() => selfToggling.delete(el));
 
   const onClick = (event: Event): void => {
     event.preventDefault();
@@ -1240,10 +1257,19 @@ defineDirective('accordion', ({ el, cleanup }) => {
     event.preventDefault();
 
     const controller = controllers[index];
-    if (single && !controller.open) {
+
+    // A header written as `<button v-collapse-toggle="#panel">` has already
+    // toggled its own panel by the time this fires: its listener sits on the
+    // button and runs before the click reaches the container. Toggling again
+    // here would put the panel straight back, which is exactly what it did.
+    // The accordion still owns the single-open rule, so that part stays.
+    const ownToggle = selfToggling.has(header);
+
+    if (single && (ownToggle ? controller.open : !controller.open)) {
       for (const other of controllers) if (other !== controller) other.hide();
     }
-    controller.toggle();
+
+    if (!ownToggle) controller.toggle();
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {

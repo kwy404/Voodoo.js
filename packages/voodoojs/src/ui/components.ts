@@ -1850,8 +1850,25 @@ register('v-table', {
     },
   },
   methods: {
-    cell(this: any, row: unknown, column: TableColumn): string {
-      const value = getPath(row, column.key);
+    /**
+     * A row may be an object keyed by column, or a positional array.
+     *
+     * Only the object form was ever read. The documentation's own example on
+     * the components page passes `[['Ada', 'Engineer']]` against columns
+     * `['Name', 'Role']`, and looking `'Name'` up on an array finds nothing, so
+     * every cell rendered empty while the header row and the row count both
+     * looked perfectly right — which is a hard failure to even notice, let
+     * alone diagnose.
+     *
+     * The index comes from the template rather than `cols.indexOf(column)`,
+     * because `cols` is a computed and identity is not guaranteed to survive a
+     * recomputation.
+     */
+    cell(this: any, row: unknown, column: TableColumn, index?: number): string {
+      const value =
+        Array.isArray(row) && typeof index === 'number'
+          ? row[index]
+          : getPath(row, column.key);
       if (value === null || value === undefined) return '';
       return String(value);
     },
@@ -1899,8 +1916,8 @@ register('v-table', {
         </thead>
         <tbody>
           <tr v-for="(row, index) in sorted" :key="index">
-            <td v-for="column in cols" :key="column.key" :style="alignStyle(column)"
-              v-text="cell(row, column)"></td>
+            <td v-for="(column, ci) in cols" :key="column.key" :style="alignStyle(column)"
+              v-text="cell(row, column, ci)"></td>
           </tr>
           <tr v-if="!sorted.length">
             <td class="v-table-empty" :colspan="cols.length || 1" v-text="empty"></td>

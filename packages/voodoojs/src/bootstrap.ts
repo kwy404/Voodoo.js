@@ -122,11 +122,38 @@ export function bootstrap(V: any): void {
 
   if (config.baseURL && V.http?.setBaseURL) V.http.setBaseURL(config.baseURL);
 
-  if (options.manual || !config.autoStart) return;
+  // Giving the visitor back the theme they chose is not part of "starting" the
+  // page, so it must not sit behind `data-manual` or `autoStart`. It used to,
+  // and the effect was the report that led here: this project's own site loads
+  // the library with `data-manual` — the dictionary has to be registered before
+  // the first render — so `theme.init()` never ran on it. The saved choice was
+  // in localStorage and read back correctly by `V.theme.current`, but nothing
+  // ever wrote `data-theme` onto the root, so the page's own
+  // `@media (prefers-color-scheme: dark)` block matched and a visitor on a dark
+  // machine who had picked LIGHT got a dark page on every load. Worse, the
+  // toggle then read that stored `light` and flipped it to `dark`: the first
+  // click changed nothing on screen, and the site looked as though it had one
+  // theme and a dead button.
+  //
+  // Safe to run unconditionally: `init()` writes nothing at all unless the
+  // visitor actually picked a theme, which is what `tema-nao-invade` pins.
+  // Earlier than `whenReady` on purpose, too — this is the call that decides
+  // the colours of the first paint.
+  theme.init();
+
+  if (options.manual || !config.autoStart) {
+    // A page that drives `V.start()` itself still saved its palette in the same
+    // localStorage as any other, and had the same reason to expect it back.
+    // Restored at the same moment an automatic page restores it, so an inline
+    // script keeps the same window to change the configuration first.
+    whenReady(() => {
+      applySavedPalette();
+    });
+    return;
+  }
 
   const boot = (): void => {
-    // Theme and palette first, to prevent the page from flashing with wrong colors.
-    theme.init();
+    // Palette first, to prevent the page from flashing with the wrong colors.
     applySavedPalette();
 
     // JSX needs work on both sides of the walk, and that lives inside `start`

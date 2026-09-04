@@ -1798,6 +1798,23 @@ ${pointer}`);
     "SharedWorker",
     "ServiceWorker"
   ]);
+  function guardedTimer(name) {
+    return function(handler, timeout, ...rest) {
+      if (typeof handler !== "function") {
+        throw new VoodooRuntimeError(
+          `${name} needs a function. Passing a string would compile it, which this library never does.`
+        );
+      }
+      const timer = globalThis[name];
+      return timer(handler, timeout, ...rest);
+    };
+  }
+  function forwardGlobal(name) {
+    return function(...args) {
+      const fn = globalThis[name];
+      return fn(...args);
+    };
+  }
   var allowedGlobals = {
     Math,
     JSON,
@@ -1816,7 +1833,17 @@ ${pointer}`);
     isFinite,
     encodeURIComponent,
     decodeURIComponent,
-    console
+    console,
+    ...typeof setTimeout !== "undefined" ? {
+      setTimeout: guardedTimer("setTimeout"),
+      setInterval: guardedTimer("setInterval"),
+      clearTimeout: forwardGlobal("clearTimeout"),
+      clearInterval: forwardGlobal("clearInterval")
+    } : {},
+    ...typeof requestAnimationFrame !== "undefined" ? {
+      requestAnimationFrame: forwardGlobal("requestAnimationFrame"),
+      cancelAnimationFrame: forwardGlobal("cancelAnimationFrame")
+    } : {}
   };
   var VoodooRuntimeError = class extends Error {
     constructor(message, expression) {
@@ -9316,6 +9343,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     ensureUi();
     collapseOf(el);
   });
+  var selfToggling = /* @__PURE__ */ new WeakSet();
   defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
     ensureUi();
     const target = resolveTarget(el, expression);
@@ -9324,6 +9352,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     controller.triggers.add(el);
     controller.sync();
     makeInteractive(el, cleanup);
+    selfToggling.add(el);
+    cleanup(() => selfToggling.delete(el));
     const onClick = (event) => {
       event.preventDefault();
       controller.toggle();
@@ -9738,10 +9768,11 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       if (index === -1) return;
       event.preventDefault();
       const controller = controllers2[index];
-      if (single && !controller.open) {
+      const ownToggle = selfToggling.has(header);
+      if (single && (ownToggle ? controller.open : !controller.open)) {
         for (const other of controllers2) if (other !== controller) other.hide();
       }
-      controller.toggle();
+      if (!ownToggle) controller.toggle();
     };
     const onKeyDown = (event) => {
       var _a2;
@@ -14680,9 +14711,14 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     allowedGlobals.V = V2;
     allowedGlobals.Voodoo = V2;
     if (config.baseURL && ((_a2 = V2.http) == null ? void 0 : _a2.setBaseURL)) V2.http.setBaseURL(config.baseURL);
-    if (options.manual || !config.autoStart) return;
+    theme.init();
+    if (options.manual || !config.autoStart) {
+      whenReady(() => {
+        applySavedPalette();
+      });
+      return;
+    }
     const boot = () => {
-      theme.init();
       applySavedPalette();
       V2.start();
       if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();

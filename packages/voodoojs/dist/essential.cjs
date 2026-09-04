@@ -1773,6 +1773,23 @@ var DELIBERATELY_WITHHELD = /* @__PURE__ */ new Set([
   "SharedWorker",
   "ServiceWorker"
 ]);
+function guardedTimer(name) {
+  return function(handler, timeout, ...rest) {
+    if (typeof handler !== "function") {
+      throw new VoodooRuntimeError(
+        `${name} needs a function. Passing a string would compile it, which this library never does.`
+      );
+    }
+    const timer = globalThis[name];
+    return timer(handler, timeout, ...rest);
+  };
+}
+function forwardGlobal(name) {
+  return function(...args) {
+    const fn = globalThis[name];
+    return fn(...args);
+  };
+}
 var allowedGlobals = {
   Math,
   JSON,
@@ -1791,7 +1808,17 @@ var allowedGlobals = {
   isFinite,
   encodeURIComponent,
   decodeURIComponent,
-  console
+  console,
+  ...typeof setTimeout !== "undefined" ? {
+    setTimeout: guardedTimer("setTimeout"),
+    setInterval: guardedTimer("setInterval"),
+    clearTimeout: forwardGlobal("clearTimeout"),
+    clearInterval: forwardGlobal("clearInterval")
+  } : {},
+  ...typeof requestAnimationFrame !== "undefined" ? {
+    requestAnimationFrame: forwardGlobal("requestAnimationFrame"),
+    cancelAnimationFrame: forwardGlobal("cancelAnimationFrame")
+  } : {}
 };
 var VoodooRuntimeError = class extends Error {
   constructor(message, expression) {
@@ -9182,6 +9209,7 @@ defineDirective("collapse", ({ el }) => {
   ensureUi();
   collapseOf(el);
 });
+var selfToggling = /* @__PURE__ */ new WeakSet();
 defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
   ensureUi();
   const target = resolveTarget(el, expression);
@@ -9190,6 +9218,8 @@ defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
   controller.triggers.add(el);
   controller.sync();
   makeInteractive(el, cleanup);
+  selfToggling.add(el);
+  cleanup(() => selfToggling.delete(el));
   const onClick = (event) => {
     event.preventDefault();
     controller.toggle();
@@ -9600,10 +9630,11 @@ defineDirective("accordion", ({ el, cleanup }) => {
     if (index === -1) return;
     event.preventDefault();
     const controller = controllers2[index];
-    if (single && !controller.open) {
+    const ownToggle = selfToggling.has(header);
+    if (single && (ownToggle ? controller.open : !controller.open)) {
       for (const other of controllers2) if (other !== controller) other.hide();
     }
-    controller.toggle();
+    if (!ownToggle) controller.toggle();
   };
   const onKeyDown = (event) => {
     const header = event.target?.closest(".v-accordion-header");

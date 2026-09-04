@@ -151,7 +151,7 @@
         running: 'Running right here',
         all: 'See all 29 components',
       },
-      foot: { mit: 'MIT licensed', builtWith: 'Built with Voodoo.js 0.12.1' },
+      foot: { mit: 'MIT licensed', builtWith: 'Built with Voodoo.js 0.12.2' },
     },
 
     'pt-BR': {
@@ -290,7 +290,7 @@
         running: 'Rodando aqui mesmo',
         all: 'Ver os 29 componentes',
       },
-      foot: { mit: 'Licença MIT', builtWith: 'Feito com Voodoo.js 0.12.1' },
+      foot: { mit: 'Licença MIT', builtWith: 'Feito com Voodoo.js 0.12.2' },
     },
 
     es: {
@@ -432,7 +432,7 @@
         running: 'Funcionando aquí mismo',
         all: 'Ver los 29 componentes',
       },
-      foot: { mit: 'Licencia MIT', builtWith: 'Hecho con Voodoo.js 0.12.1' },
+      foot: { mit: 'Licencia MIT', builtWith: 'Hecho con Voodoo.js 0.12.2' },
     },
 
     ko: {
@@ -569,7 +569,7 @@
         running: '바로 여기서 실행 중',
         all: '29개 컴포넌트 모두 보기',
       },
-      foot: { mit: 'MIT 라이선스', builtWith: 'Voodoo.js 0.12.1으로 제작' },
+      foot: { mit: 'MIT 라이선스', builtWith: 'Voodoo.js 0.12.2으로 제작' },
     },
   };
 

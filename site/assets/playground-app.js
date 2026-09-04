@@ -23,7 +23,7 @@
    * alongside it — on GitHub Pages, from a file:// checkout, or from a local
    * server. There is nothing left to keep in sync.
    */
-  var RUNTIME = new URL('../voodoo.full.min.js?v=bd3d3f74', document.currentScript.src).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=9cafda66', document.currentScript.src).href;
   var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
 
   var code = document.getElementById('code');
@@ -35,6 +35,11 @@
   var descEl = document.getElementById('example-desc');
   var statusExample = document.getElementById('status-example');
   var statusLines = document.getElementById('status-lines');
+
+  var breadcrumb = document.getElementById('breadcrumb');
+  var quickopen = document.getElementById('quickopen');
+  var splitter = document.getElementById('splitter');
+  var workbench = splitter && splitter.parentNode;
 
   var current = examples[0];
   var timer = null;
@@ -154,18 +159,96 @@
   examples = inGroupOrder(examples);
   current = examples[0];
 
+  /**
+   * The explorer tree.
+   *
+   * Folders really do fold. A chevron that only points is worse than no
+   * chevron, and eleven groups on a laptop screen need somewhere to go.
+   */
   function buildList() {
-    var seen = {};
     var html = '';
-    examples.forEach(function (ex) {
-      if (!seen[ex.group]) {
-        seen[ex.group] = true;
-        html += '<div class="group">' + (GROUP_LABEL[ex.group] || ex.group) + '</div>';
+    var open = false;
+
+    examples.forEach(function (ex, i) {
+      var first = i === 0 || examples[i - 1].group !== ex.group;
+      if (!first) {
+        html += '<button type="button" data-id="' + ex.id + '" aria-current="false">' +
+          ex.title + '</button>';
+        return;
       }
+
+      var count = 0;
+      for (var j = i; j < examples.length && examples[j].group === ex.group; j++) count++;
+
+      if (open) html += '</div>';
+      open = true;
       html +=
+        '<button type="button" class="group" data-group="' + ex.group + '" aria-expanded="true">' +
+        '<span class="chev" aria-hidden="true"></span>' +
+        (GROUP_LABEL[ex.group] || ex.group) +
+        '<span class="count">' + count + '</span>' +
+        '</button><div class="group-items">' +
         '<button type="button" data-id="' + ex.id + '" aria-current="false">' + ex.title + '</button>';
     });
+
+    if (open) html += '</div>';
     fileList.innerHTML = html;
+  }
+
+  /** Reveals a row that a collapsed folder or an active filter is hiding. */
+  function revealRow(btn) {
+    if (!btn) return;
+    btn.style.display = '';
+    var items = btn.parentNode;
+    if (items && items.className === 'group-items') {
+      items.style.display = '';
+      if (items.previousSibling) items.previousSibling.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  /**
+   * The title-bar field, filtering the tree as you type.
+   *
+   * Rows are hidden rather than removed so the aria-current bookkeeping in
+   * load() keeps working on the same nodes throughout.
+   */
+  function filterList(query) {
+    var needle = query.trim().toLowerCase();
+    var groups = fileList.querySelectorAll('.group');
+    var hits = 0;
+
+    for (var g = 0; g < groups.length; g++) {
+      var header = groups[g];
+      var items = header.nextSibling;
+      var rows = items.querySelectorAll('button[data-id]');
+      var shown = 0;
+
+      for (var r = 0; r < rows.length; r++) {
+        var match =
+          !needle ||
+          rows[r].textContent.toLowerCase().indexOf(needle) !== -1 ||
+          rows[r].getAttribute('data-id').indexOf(needle) !== -1 ||
+          (GROUP_LABEL[header.getAttribute('data-group')] || '').toLowerCase().indexOf(needle) !== -1;
+        rows[r].style.display = match ? '' : 'none';
+        if (match) shown++;
+      }
+
+      hits += shown;
+      header.style.display = shown ? '' : 'none';
+      items.style.display = shown ? '' : 'none';
+      // A search that has to be unfolded by hand is not a search.
+      if (needle && shown) header.setAttribute('aria-expanded', 'true');
+    }
+
+    var empty = fileList.querySelector('.empty');
+    if (!hits && !empty) {
+      empty = document.createElement('p');
+      empty.className = 'empty';
+      empty.textContent = 'No example matches that.';
+      fileList.appendChild(empty);
+    } else if (hits && empty) {
+      fileList.removeChild(empty);
+    }
   }
 
   var lastCount = -1;
@@ -233,19 +316,69 @@
       'html:root[data-theme="dark"]{' + tokens(DARK, 'dark') + '}' +
       'html:root[data-theme="light"]{' + tokens(LIGHT, 'light') + '}' +
 
+      'html,body{height:100%}' +
       'body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;' +
-      'margin:0;padding:18px;color:var(--pg-ink);background:var(--pg-paper);line-height:1.6}' +
+      'margin:0;padding:0;color:var(--pg-ink);background:var(--pg-paper);line-height:1.6}' +
       '*{box-sizing:border-box}' +
-      'button{font:inherit;padding:7px 12px;border:1px solid var(--pg-line);border-radius:7px;' +
-      'background:var(--pg-surface);color:var(--pg-ink);cursor:pointer;margin:2px 4px 2px 0}' +
-      'button:hover{border-color:var(--pg-accent);color:var(--pg-accent)}' +
-      'input,select,textarea{font:inherit;padding:7px 9px;border:1px solid var(--pg-line);' +
-      'border-radius:7px;margin:2px 0;background:var(--pg-surface);color:var(--pg-ink)}' +
-      'h1,h2,h3,h4{margin:0 0 8px;line-height:1.2;color:var(--pg-ink)}' +
-      'p,li,td,th,label,span,div{color:inherit}' +
-      'ul,ol{padding-left:20px}' +
-      'a{color:var(--pg-accent)}' +
-      '.pg-error{margin:12px 0 0;padding:10px 12px;border-radius:8px;' +
+
+      /* Tailwind's border utilities set a width and a colour and nothing else,
+       * because Preflight is what normally declares the style. Preflight is off
+       * here, so `border border-slate-200` drew nothing at all: the initial
+       * border-style is none, and a 1px none border is invisible. */
+      ':where(*,::before,::after){border-width:0;border-style:solid;border-color:#e2e8f0}' +
+      ':where(hr){border-top-width:1px}' +
+
+      /* Two baselines, split on whether the element carries a class.
+       *
+       * Without a class, the element is hand-typed — somebody's own code in the
+       * box, or a shared link — and gets the friendly defaults that have always
+       * been here, so raw markup never looks abandoned.
+       *
+       * With a class, the element is being designed with utilities, so the
+       * browser's own chrome comes off and one utility is enough to style it.
+       * That is Tailwind's Preflight, kept this narrow on purpose: a blanket
+       * reset would also strip the library's own widgets, which bring their own
+       * stylesheet and expect to keep it.
+       *
+       * Every rule sits inside :where() so it carries no specificity at all.
+       * Author rules still beat the browser's, and any single utility class
+       * still beats these. */
+      ':where(button:not([class])){font:inherit;padding:7px 12px;' +
+      'border:1px solid var(--pg-line);border-radius:7px;background:var(--pg-surface);' +
+      'color:var(--pg-ink);cursor:pointer;margin:2px 4px 2px 0}' +
+      ':where(button:not([class]):hover){border-color:var(--pg-accent);color:var(--pg-accent)}' +
+      ':where(input:not([class]),select:not([class]),textarea:not([class]))' +
+      '{font:inherit;padding:7px 9px;border:1px solid var(--pg-line);border-radius:7px;' +
+      'margin:2px 0;background:var(--pg-surface);color:var(--pg-ink)}' +
+      ':where(h1:not([class]),h2:not([class]),h3:not([class]),h4:not([class]))' +
+      '{margin:0 0 8px;line-height:1.2;color:var(--pg-ink)}' +
+      ':where(ul:not([class]),ol:not([class])){padding-left:20px}' +
+      ':where(a:not([class])){color:var(--pg-accent)}' +
+      // Hand-typed markup wants breathing room; a designed example brings its
+      // own and wants the full frame. The presence of a class on a top-level
+      // element is the tell. .pg-error is excluded because an error appearing
+      // must not reflow the page it is reporting on.
+      'body:not(:has(>[class]:not(.pg-error))){padding:18px}' +
+
+      ':where(button[class]){appearance:none;-webkit-appearance:none;border:0;margin:0;' +
+      'padding:0;background:transparent;color:inherit;font:inherit;line-height:inherit;' +
+      'text-align:inherit;cursor:pointer}' +
+      // Checkbox, radio, range and colour keep the native control: there is no
+      // utility that draws one, and a stripped one is an invisible one.
+      ':where(input[class]:not([type=checkbox]):not([type=radio]):not([type=range])' +
+      ':not([type=color]):not([type=file])),:where(textarea[class],select[class])' +
+      '{appearance:none;-webkit-appearance:none;border:0;margin:0;padding:0;' +
+      'background:transparent;color:inherit;font:inherit;line-height:inherit}' +
+      ':where(h1[class],h2[class],h3[class],h4[class],h5[class],h6[class],p[class],' +
+      'ul[class],ol[class],dl[class],dd[class],figure[class],pre[class],blockquote[class])' +
+      '{margin:0;padding:0}' +
+      ':where(ul[class],ol[class]){list-style:none}' +
+      ':where(table[class]){border-collapse:collapse;border-spacing:0}' +
+      ':where(a[class]){color:inherit;text-decoration:none}' +
+      ':where(svg[class]){display:block}' +
+      ':where(img[class]){display:block;max-width:100%;height:auto}' +
+
+      '.pg-error{margin:12px;padding:10px 12px;border-radius:8px;' +
       'background:var(--pg-err-bg);color:var(--pg-err-ink);' +
       'font:12.5px ui-monospace,monospace;white-space:pre-wrap}'
     );
@@ -262,6 +395,23 @@
     'var b=document.createElement("pre");b.className="pg-error";' +
     'b.textContent=e.message;document.body.appendChild(b);}}';
 
+  /**
+   * Tailwind, inside the preview only.
+   *
+   * The examples are meant to look like software somebody shipped, not like
+   * test fixtures, and utility classes are how that gets written inline in a
+   * sample that has to stay readable as a teaching artefact. It goes in the
+   * frame and nowhere near the page chrome, which is hand-written CSS.
+   *
+   * Preflight is off. It would reset the library's own widgets — VButton,
+   * VBadge, the modal, the toasts — which arrive with a stylesheet of their own
+   * and expect to keep it. frameCss() does the small part of the job that is
+   * actually needed instead.
+   */
+  var TAILWIND = 'https://cdn.tailwindcss.com';
+  var TAILWIND_CONFIG =
+    'if(window.tailwind)tailwind.config={corePlugins:{preflight:false}};';
+
   function run() {
     // The library must load BEFORE the sample's own <script> blocks. An inline
     // script runs while the document parses, so a deferred library would still
@@ -273,6 +423,8 @@
       '<!doctype html><html><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
       OPEN + ' src="' + RUNTIME + '" data-manual>' + CLOSE +
+      OPEN + ' src="' + TAILWIND + '">' + CLOSE +
+      OPEN + '>' + TAILWIND_CONFIG + CLOSE +
       '<style>' + frameCss() + '</style></head><body>' +
       code.value +
       OPEN + '>' + BOOT + CLOSE +
@@ -298,12 +450,13 @@
     drawGutter();
     run();
 
-    var buttons = fileList.querySelectorAll('button');
+    if (breadcrumb) breadcrumb.textContent = GROUP_LABEL[ex.group] || ex.group;
+
+    var buttons = fileList.querySelectorAll('button[data-id]');
     for (var i = 0; i < buttons.length; i++) {
-      buttons[i].setAttribute(
-        'aria-current',
-        buttons[i].getAttribute('data-id') === ex.id ? 'true' : 'false'
-      );
+      var on = buttons[i].getAttribute('data-id') === ex.id;
+      buttons[i].setAttribute('aria-current', on ? 'true' : 'false');
+      if (on) revealRow(buttons[i]);
     }
     if (!keepHash) history.replaceState(null, '', '#' + ex.id);
   }
@@ -327,6 +480,7 @@
         code.value = decode(hash.slice(5));
         descEl.textContent = 'Shared code';
         statusExample.textContent = 'shared';
+        if (breadcrumb) breadcrumb.textContent = 'shared';
         markDirty(true);
         repaint();
         drawGutter();
@@ -349,6 +503,15 @@
   // ------------------------------------------------------------------ wiring
 
   fileList.addEventListener('click', function (event) {
+    var folder = event.target.closest('button.group');
+    if (folder) {
+      folder.setAttribute(
+        'aria-expanded',
+        folder.getAttribute('aria-expanded') === 'true' ? 'false' : 'true'
+      );
+      return;
+    }
+
     var btn = event.target.closest('button[data-id]');
     if (!btn) return;
     for (var i = 0; i < examples.length; i++) {
@@ -439,6 +602,148 @@
     event.currentTarget.textContent = document.body.classList.contains('show-preview')
       ? 'Code'
       : 'Preview';
+  });
+
+  // ---------------------------------------------------------------- splitter
+
+  /**
+   * The pane divider, dragged.
+   *
+   * This is the one habit borrowed from a pen rather than from an editor:
+   * anybody who has used one reaches for the seam between the code and the
+   * result, and until now there was nothing there to take hold of. The width
+   * survives a reload because the split somebody chose is a preference, not a
+   * gesture they want to repeat on every visit.
+   */
+  var SPLIT_KEY = 'voodoo.playground.split';
+  var SPLIT_MIN = 18;
+  var SPLIT_MAX = 82;
+
+  function setSplit(percent, remember) {
+    var value = Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, percent));
+    document.documentElement.style.setProperty('--split', value.toFixed(2) + '%');
+    splitter.setAttribute('aria-valuenow', String(Math.round(value)));
+    if (!remember) return;
+    try {
+      localStorage.setItem(SPLIT_KEY, String(value));
+    } catch (err) {
+      /* private mode, or storage full. The split just does not persist. */
+    }
+  }
+
+  function splitAt(clientX) {
+    var box = workbench.getBoundingClientRect();
+    return box.width ? ((clientX - box.left) / box.width) * 100 : 50;
+  }
+
+  if (splitter && workbench) {
+    var saved = null;
+    try {
+      saved = localStorage.getItem(SPLIT_KEY);
+    } catch (err) {
+      /* nothing stored, nothing to restore */
+    }
+    if (saved && !isNaN(parseFloat(saved))) setSplit(parseFloat(saved), false);
+
+    var endDrag = function (event) {
+      if (!document.body.classList.contains('dragging')) return;
+      document.body.classList.remove('dragging');
+      try {
+        splitter.releasePointerCapture(event.pointerId);
+      } catch (err) {
+        /* the pointer was already gone */
+      }
+      setSplit(splitAt(event.clientX), true);
+    };
+
+    splitter.addEventListener('pointerdown', function (event) {
+      event.preventDefault();
+      // Capture, because the drag crosses an iframe: without it the preview
+      // swallows the first pointermove and the divider sticks mid-screen.
+      splitter.setPointerCapture(event.pointerId);
+      document.body.classList.add('dragging');
+    });
+
+    splitter.addEventListener('pointermove', function (event) {
+      if (!document.body.classList.contains('dragging')) return;
+      setSplit(splitAt(event.clientX), false);
+    });
+
+    splitter.addEventListener('pointerup', endDrag);
+    splitter.addEventListener('pointercancel', endDrag);
+
+    splitter.addEventListener('dblclick', function () {
+      setSplit(50, true);
+    });
+
+    splitter.addEventListener('keydown', function (event) {
+      var step = event.shiftKey ? 10 : 2;
+      var now = splitAt(splitter.getBoundingClientRect().left);
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setSplit(now - step, true);
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setSplit(now + step, true);
+      } else if (event.key === 'Home') {
+        event.preventDefault();
+        setSplit(50, true);
+      }
+    });
+  }
+
+  // -------------------------------------------------------------- quick open
+
+  if (quickopen) {
+    quickopen.addEventListener('input', function () {
+      filterList(quickopen.value);
+    });
+
+    quickopen.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        quickopen.value = '';
+        filterList('');
+        quickopen.blur();
+        return;
+      }
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      // offsetParent is null for anything a filter or a folded group is
+      // hiding, which makes it the cheapest "first visible row" there is.
+      var rows = fileList.querySelectorAll('button[data-id]');
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].offsetParent) {
+          rows[i].click();
+          break;
+        }
+      }
+    });
+  }
+
+  // ------------------------------------------------------------- activity bar
+
+  document.querySelector('.activitybar').addEventListener('click', function (event) {
+    var btn = event.target.closest('button[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+
+    if (act === 'explorer') {
+      var hidden = document.body.classList.toggle('no-explorer');
+      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+    } else if (act === 'run') {
+      run();
+    } else if (act === 'share' || act === 'reset') {
+      document.getElementById('btn-' + act).click();
+    }
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (!quickopen) return;
+    if (!(event.ctrlKey || event.metaKey)) return;
+    if (event.key !== 'p' && event.key !== 'P') return;
+    event.preventDefault();
+    quickopen.focus();
+    quickopen.select();
   });
 
   window.addEventListener('hashchange', openFromHash);

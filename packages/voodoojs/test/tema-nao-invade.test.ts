@@ -325,3 +325,96 @@ describe('an effect reading the theme re-runs when the theme changes', () => {
     stop(runner);
   });
 });
+
+/**
+ * Regression: the saved theme was never applied on a `data-manual` page.
+ *
+ * `theme.init()` lived inside the deferred `boot()` of `bootstrap`, which is
+ * reached only after the `data-manual` / `autoStart` guard. A page that starts
+ * the library itself therefore got its walker, its components and its toggle
+ * button, and none of its visitor's theme.
+ *
+ * This project's own site is such a page: it loads the bundle with
+ * `data-manual` so the dictionary is registered before the first render. The
+ * symptom reported from it was exact. A visitor on a dark machine pressed the
+ * toggle, the page went light, and every reload brought the dark page back --
+ * `data-theme` was never written, so the page's own
+ * `@media (prefers-color-scheme: dark)` block matched again. Then the first
+ * press of the toggle read the stored `light` and flipped it to `dark`,
+ * changing nothing on screen. Two themes, both dark, and a button that looked
+ * broken.
+ */
+describe('a page that starts the library itself', () => {
+  /** A `<script>` tag the way `readScriptOptions` finds it. */
+  function scriptTag(...attributes: string[]): void {
+    const script = document.createElement('script');
+    script.src = 'voodoo.full.min.js';
+    for (const name of attributes) script.setAttribute(name, '');
+    document.head.appendChild(script);
+  }
+
+  /** `bootstrap` only reaches for `start` on the object it is handed. */
+  const fakeV = (): Record<string, unknown> => ({ start() {} });
+
+  beforeEach(() => {
+    document.head.innerHTML = '';
+    theme.set('system');
+    localStorage.clear();
+    root().removeAttribute('data-theme');
+    root().style.removeProperty('color-scheme');
+    systemPrefersDark();
+  });
+
+  afterEach(() => {
+    document.head.innerHTML = '';
+  });
+
+  it('gets the theme its visitor chose back', async () => {
+    localStorage.setItem('voodoo:theme', 'light');
+    scriptTag('data-manual');
+    vi.resetModules();
+    const { bootstrap } = await import('../src/bootstrap');
+
+    bootstrap(fakeV());
+
+    // The whole point: light survives a reload on a dark machine.
+    expect(root().getAttribute('data-theme')).toBe('light');
+    expect(root().style.colorScheme).toBe('light');
+  });
+
+  it('the same for a visitor who chose dark', async () => {
+    systemPrefersLight();
+    localStorage.setItem('voodoo:theme', 'dark');
+    scriptTag('data-defer-init');
+    vi.resetModules();
+    const { bootstrap } = await import('../src/bootstrap');
+
+    bootstrap(fakeV());
+
+    expect(root().getAttribute('data-theme')).toBe('dark');
+    expect(root().style.colorScheme).toBe('dark');
+  });
+
+  it('and an automatic page is not disturbed by the move', async () => {
+    localStorage.setItem('voodoo:theme', 'light');
+    scriptTag();
+    vi.resetModules();
+    const { bootstrap } = await import('../src/bootstrap');
+
+    bootstrap(fakeV());
+
+    expect(root().getAttribute('data-theme')).toBe('light');
+  });
+
+  it('still leaves a page alone when nobody picked anything', async () => {
+    // Restoring a choice must not become "impose the operating system".
+    scriptTag('data-manual');
+    vi.resetModules();
+    const { bootstrap } = await import('../src/bootstrap');
+
+    bootstrap(fakeV());
+
+    expect(root().getAttribute('data-theme')).toBeNull();
+    expect(root().style.colorScheme).toBe('');
+  });
+});

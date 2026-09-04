@@ -7,67 +7,72 @@
     <title>Playground — Voodoo.js</title>
     <meta
       name="description"
-      content="Write Voodoo.js in the browser and watch it run. Twenty-six examples, an editor and a live preview, with no build step anywhere in the loop."
+      content="Write Voodoo.js in the browser and watch it run. Fifty examples, an editor and a live preview, with no build step anywhere in the loop."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/playground.html" />
 
     <style>
-      /* The editor chrome is dark in both themes, the way a code editor is, while
-         the preview pane follows the page so you see your work on the surface it
-         will actually ship on. */
+      /* ===================================================================
+         The playground, dressed as the editor people already know.
+
+         The colours are VS Code's Dark+ verbatim, not an impression of it:
+         #1e1e1e for the editor surface, #252526 for the side panels, #333333
+         for the activity rail, #3c3c3c for the seams, and the Dark+ token hues
+         underneath. Somebody who writes code every day recognises this in a
+         glance, and recognition is the entire point — the page is asking them
+         to read code, so it should look like the place they read code.
+
+         The status bar is Voodoo violet rather than VS Code's blue because VS
+         Code itself colours that strip per project, so a branded one reads as
+         "this workspace" instead of "wrong shade".
+
+         The one thing borrowed from CodePen rather than VS Code is the
+         splitter: a pen is a thing you drag to give the half you care about
+         more room, and that expectation arrives with anyone who has used one.
+         =================================================================== */
       :root {
-        --ink: #16141c;
-        --ink-soft: #57526a;
-        --ink-faint: #8b8598;
-        --bg: #ffffff;
-        --bg-soft: #faf9fb;
-        --line: #e7e4ec;
-        --accent: #5b2ee5;
+        --vs-editor: #1e1e1e;
+        --vs-panel: #252526;
+        --vs-rail: #333333;
+        --vs-tab-idle: #2d2d2d;
+        --vs-seam: #1b1b1b;
+        --vs-line: #3c3c3c;
+        --vs-ink: #cccccc;
+        --vs-ink-soft: #9d9d9d;
+        --vs-ink-faint: #7f8285;
+        --vs-gutter: #858585;
+        --vs-focus: #007acc;
+        --vs-select: #264f78;
+        --vs-hover: #2a2d2e;
+        --vs-list-active: #37373d;
+        --vs-status: #4b2ea8;
+        --vs-status-hover: #5c3cc4;
+        --brand: #a688ff;
 
-        --chrome: #1e1e2a;
-        --chrome-2: #252534;
-        --chrome-3: #2d2d3d;
-        --chrome-line: #34344a;
-        --chrome-ink: #d6d3e3;
-        --chrome-faint: #8b87a3;
+        /* Dark+ token colours. */
+        --c-tag: #569cd6;
+        --c-attr: #9cdcfe;
+        --c-str: #ce9178;
+        --c-com: #6a9955;
+        --c-key: #c586c0;
+        --c-punct: #808080;
 
-        --c-tag: #d2a8ff;
-        --c-attr: #79c0ff;
-        --c-str: #7ee2b8;
-        --c-com: #7f7a96;
-        --c-key: #ff7b72;
-
-        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+        --font: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, Roboto, Helvetica, Arial,
           sans-serif;
-        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
-          monospace;
-        --topbar: 46px;
-        --statusbar: 24px;
-        color-scheme: light;
-      }
+        --mono: 'Cascadia Mono', Consolas, ui-monospace, SFMono-Regular, 'SF Mono', Menlo,
+          'Liberation Mono', monospace;
 
-      @media (prefers-color-scheme: dark) {
-        html:root:not([data-theme='light']) {
-          --ink: #f2f0f6;
-          --ink-soft: #b3adc2;
-          --ink-faint: #837d93;
-          --bg: #131118;
-          --bg-soft: #191722;
-          --line: #2b2735;
-          --accent: #a688ff;
-          color-scheme: dark;
-        }
-      }
+        --rail: 48px;
+        --side: 244px;
+        --top: 38px;
+        --status: 22px;
+        --tabs: 35px;
 
-      html:root[data-theme='dark'] {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --line: #2b2735;
-        --accent: #a688ff;
+        /* Where the splitter sits. Rewritten by the drag, restored from
+           localStorage on load. */
+        --split: 50%;
+
         color-scheme: dark;
       }
 
@@ -92,200 +97,424 @@
       }
 
       body {
-        background: var(--bg);
-        color: var(--ink);
-        font-family: var(--font);
-        font-size: 14px;
+        display: grid;
+        grid-template-rows: var(--top) minmax(0, 1fr) var(--status);
+        background: var(--vs-editor);
+        color: var(--vs-ink);
+        font: 13px/1.5 var(--font);
         -webkit-font-smoothing: antialiased;
       }
 
-      /* ------------------------------------------------------------- topbar */
+      :focus-visible {
+        outline: 1px solid var(--vs-focus);
+        outline-offset: -1px;
+      }
+
+      /* ----------------------------------------------------------- title bar */
       .topbar {
-        height: var(--topbar);
         display: flex;
         align-items: center;
         gap: 14px;
-        padding: 0 12px;
-        background: var(--chrome);
-        border-bottom: 1px solid var(--chrome-line);
-        color: var(--chrome-ink);
+        padding: 0 10px;
+        background: var(--vs-rail);
+        border-bottom: 1px solid var(--vs-seam);
+        font-size: 12px;
+        user-select: none;
       }
 
       .brand {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-weight: 660;
-        font-size: 14.5px;
-        letter-spacing: -0.01em;
-        color: #fff;
+        color: var(--vs-ink);
         text-decoration: none;
+        font-weight: 600;
         white-space: nowrap;
       }
 
       .brand svg {
-        width: 20px;
-        height: 20px;
+        width: 17px;
+        height: 17px;
+        color: var(--brand);
       }
 
-      .brand span.tag {
-        font-family: var(--mono);
-        font-size: 10.5px;
-        letter-spacing: 0.06em;
+      .brand .tag {
+        padding: 1px 6px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.09);
+        color: var(--vs-ink-soft);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.07em;
         text-transform: uppercase;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: var(--chrome-3);
-        color: var(--chrome-faint);
       }
 
       .topbar nav {
         display: flex;
-        gap: 2px;
+        gap: 1px;
       }
 
       .topbar nav a {
-        font-size: 13.5px;
-        padding: 5px 9px;
-        border-radius: 6px;
-        color: var(--chrome-faint);
+        padding: 4px 9px;
+        border-radius: 4px;
+        color: var(--vs-ink-soft);
         text-decoration: none;
       }
 
       .topbar nav a:hover {
+        background: rgba(255, 255, 255, 0.09);
         color: #fff;
-        background: var(--chrome-3);
+      }
+
+      /* The command bar. VS Code puts one dead centre, and here it earns the
+         space: typing in it filters the example list beside it. */
+      .quick {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: min(420px, 34vw);
+        height: 24px;
+        padding: 0 8px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 5px;
+        background: #2b2b2b;
+      }
+
+      .quick:focus-within {
+        border-color: var(--vs-focus);
+      }
+
+      .quick svg {
+        width: 13px;
+        height: 13px;
+        flex: none;
+        color: var(--vs-ink-faint);
+      }
+
+      .quick input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--vs-ink);
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+      }
+
+      .quick input::placeholder {
+        color: var(--vs-ink-faint);
+      }
+
+      .quick kbd {
+        flex: none;
+        padding: 0 4px;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.09);
+        color: var(--vs-ink-faint);
+        font: 500 10px/16px var(--font);
       }
 
       .topbar .end {
         margin-left: auto;
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
       }
 
       .tbtn {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        height: 28px;
+        height: 24px;
         padding: 0 10px;
-        border: 1px solid var(--chrome-line);
-        border-radius: 6px;
-        background: transparent;
-        color: var(--chrome-ink);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--vs-ink);
         font: inherit;
-        font-size: 13px;
+        font-size: 12px;
         cursor: pointer;
         white-space: nowrap;
       }
 
       .tbtn:hover {
-        background: var(--chrome-3);
-      }
-
-      .tbtn.primary {
-        background: var(--accent);
-        border-color: var(--accent);
+        background: rgba(255, 255, 255, 0.14);
         color: #fff;
       }
 
-      .tbtn.primary:hover {
-        opacity: 0.9;
+      .tbtn.primary {
+        background: var(--vs-focus);
+        border-color: var(--vs-focus);
+        color: #fff;
+        font-weight: 600;
       }
 
-      /* -------------------------------------------------------------- shell */
+      .tbtn.primary:hover {
+        background: #1b8ad6;
+      }
+
+      .tbtn svg {
+        width: 12px;
+        height: 12px;
+      }
+
+      /* ----------------------------------------------------------- workbench */
       .shell {
         display: grid;
-        grid-template-columns: 232px minmax(0, 1fr) minmax(0, 1fr);
-        height: calc(100vh - var(--topbar) - var(--statusbar));
+        grid-template-columns: var(--rail) var(--side) minmax(0, 1fr);
+        min-height: 0;
       }
 
-      /* ------------------------------------------------------------ sidebar */
+      /* The activity rail. It is the single fastest way to say "editor", so
+         every item on it does something rather than posing for the screenshot. */
+      .activitybar {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--vs-rail);
+        border-right: 1px solid var(--vs-seam);
+      }
+
+      .activitybar a,
+      .activitybar button {
+        width: var(--rail);
+        height: 46px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-left: 2px solid transparent;
+        background: none;
+        color: #858585;
+        cursor: pointer;
+      }
+
+      .activitybar svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .activitybar a:hover,
+      .activitybar button:hover {
+        color: #fff;
+      }
+
+      .activitybar button[aria-pressed='true'] {
+        color: #fff;
+        border-left-color: #fff;
+      }
+
+      .activitybar .spacer {
+        flex: 1;
+      }
+
+      /* ------------------------------------------------------------ explorer */
       .side {
-        background: var(--chrome-2);
-        border-right: 1px solid var(--chrome-line);
-        overflow-y: auto;
-        color: var(--chrome-ink);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: var(--vs-panel);
+        border-right: 1px solid var(--vs-seam);
       }
 
       .side h2 {
         margin: 0;
-        padding: 11px 14px 7px;
-        font-size: 10.5px;
-        font-weight: 640;
-        letter-spacing: 0.09em;
+        padding: 10px 20px 8px;
+        font: 400 11px/1.4 var(--font);
+        letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--chrome-faint);
+        color: var(--vs-ink-soft);
+        user-select: none;
       }
 
-      .side .group {
-        padding: 9px 14px 3px;
-        font-size: 11px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--chrome-faint);
+      #file-list {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 12px;
       }
 
-      .side button {
+      #file-list::-webkit-scrollbar,
+      .stack pre::-webkit-scrollbar,
+      .stack textarea::-webkit-scrollbar,
+      .frame-wrap::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      #file-list::-webkit-scrollbar-thumb,
+      .stack pre::-webkit-scrollbar-thumb,
+      .stack textarea::-webkit-scrollbar-thumb,
+      .frame-wrap::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      #file-list::-webkit-scrollbar-thumb:hover,
+      .stack textarea::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.28);
+      }
+
+      #file-list::-webkit-scrollbar-track,
+      .stack pre::-webkit-scrollbar-track,
+      .stack textarea::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      /* A folder row: chevron, label, count. It collapses, because a tree whose
+         arrows do nothing is worse than no arrows. */
+      #file-list .group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        width: 100%;
+        padding: 4px 10px 4px 6px;
+        border: 0;
+        background: none;
+        color: var(--vs-ink);
+        font: 700 11px/1.6 var(--font);
+        text-align: left;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      #file-list .group:hover {
+        background: var(--vs-hover);
+      }
+
+      #file-list .group .chev {
+        flex: none;
+        width: 16px;
+        height: 16px;
+        display: grid;
+        place-items: center;
+        color: var(--vs-ink-soft);
+      }
+
+      #file-list .group .chev::before {
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-right: 1.4px solid currentColor;
+        border-bottom: 1.4px solid currentColor;
+        transform: translateY(-1px) rotate(45deg);
+        transition: transform 0.12s ease;
+      }
+
+      #file-list .group[aria-expanded='false'] .chev::before {
+        transform: translateX(-1px) rotate(-45deg);
+      }
+
+      #file-list .group .count {
+        margin-left: auto;
+        font-weight: 400;
+        color: var(--vs-ink-faint);
+      }
+
+      #file-list .group[aria-expanded='false'] + .group-items {
+        display: none;
+      }
+
+      #file-list button[data-id] {
+        position: relative;
         display: block;
         width: 100%;
-        text-align: left;
+        padding: 3px 10px 3px 40px;
         border: 0;
-        background: transparent;
-        color: var(--chrome-ink);
+        background: none;
+        color: var(--vs-ink);
         font: inherit;
         font-size: 13px;
-        padding: 5px 14px 5px 22px;
+        text-align: left;
         cursor: pointer;
-        border-left: 2px solid transparent;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      .side button:hover {
-        background: var(--chrome-3);
+      /* The file glyph, so the list reads as an explorer and not a menu. */
+      #file-list button[data-id]::before {
+        content: '';
+        position: absolute;
+        left: 22px;
+        top: 50%;
+        width: 9px;
+        height: 11px;
+        margin-top: -6px;
+        border: 1px solid #6e7681;
+        border-top-right-radius: 3px;
+        background: linear-gradient(rgba(227, 121, 51, 0.35), rgba(227, 121, 51, 0.08));
       }
 
-      .side button[aria-current='true'] {
-        background: var(--chrome-3);
-        border-left-color: var(--accent);
+      #file-list button[data-id]:hover {
+        background: var(--vs-hover);
+      }
+
+      #file-list button[aria-current='true'] {
+        background: var(--vs-list-active);
         color: #fff;
       }
 
-      /* ------------------------------------------------------------- editor */
-      .editor {
-        display: flex;
-        flex-direction: column;
+      #file-list button[aria-current='true']::before {
+        border-color: #e37933;
+      }
+
+      #file-list .empty {
+        padding: 10px 20px;
+        color: var(--vs-ink-faint);
+        font-size: 12px;
+      }
+
+      /* -------------------------------------------------------- editor group */
+      .workbench {
+        display: grid;
+        grid-template-columns: minmax(220px, var(--split)) 6px minmax(220px, 1fr);
         min-width: 0;
-        background: var(--chrome);
-        border-right: 1px solid var(--chrome-line);
+        min-height: 0;
+      }
+
+      .editor {
+        display: grid;
+        grid-template-rows: var(--tabs) auto minmax(0, 1fr);
+        min-width: 0;
+        min-height: 0;
+        background: var(--vs-editor);
       }
 
       .tabstrip {
         display: flex;
         align-items: stretch;
-        background: var(--chrome-2);
-        border-bottom: 1px solid var(--chrome-line);
-        min-height: 34px;
+        min-width: 0;
+        background: var(--vs-tab-idle);
+        border-bottom: 1px solid var(--vs-seam);
+        user-select: none;
       }
 
       .filetab {
         display: flex;
         align-items: center;
-        gap: 7px;
-        padding: 0 13px;
-        font-size: 13px;
-        font-family: var(--mono);
+        gap: 8px;
+        padding: 0 12px;
+        background: var(--vs-editor);
+        border-right: 1px solid var(--vs-seam);
+        border-top: 1px solid var(--brand);
         color: #fff;
-        background: var(--chrome);
-        border-right: 1px solid var(--chrome-line);
-        border-top: 1px solid var(--accent);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .filetab .ext {
+        font: 600 11px/1 var(--mono);
+        color: #e37933;
       }
 
       .filetab .dot {
-        width: 7px;
-        height: 7px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: var(--accent);
+        background: var(--brand);
         flex: none;
         visibility: hidden;
       }
@@ -294,91 +523,108 @@
         visibility: visible;
       }
 
-      .desc {
-        margin-left: auto;
+      /* Breadcrumbs, the row VS Code puts under the tabs. It is the only place
+         the group name appears next to the file, so the picker on the left and
+         the buffer in the middle stay tied together. */
+      .breadcrumbs {
         display: flex;
         align-items: center;
-        padding: 0 12px;
-        font-size: 12px;
-        color: var(--chrome-faint);
+        gap: 6px;
+        min-width: 0;
+        height: 24px;
+        padding: 0 14px;
+        background: var(--vs-editor);
+        color: var(--vs-ink-faint);
+        font-size: 11.5px;
+        white-space: nowrap;
+        user-select: none;
+      }
+
+      .breadcrumbs .sep {
+        width: 5px;
+        height: 5px;
+        flex: none;
+        border-right: 1.2px solid currentColor;
+        border-bottom: 1.2px solid currentColor;
+        transform: rotate(-45deg);
+        opacity: 0.7;
+      }
+
+      .desc {
+        margin-left: auto;
+        padding-left: 16px;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        font-style: italic;
+        color: var(--vs-ink-faint);
       }
 
       .code-area {
-        position: relative;
-        flex: 1;
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr);
+        min-height: 0;
         overflow: hidden;
-        display: flex;
+        background: var(--vs-editor);
       }
 
       .gutter {
-        flex: none;
-        padding: 12px 0 12px;
-        width: 46px;
+        padding: 8px 0;
+        background: var(--vs-editor);
+        color: var(--vs-gutter);
+        font: 13px/1.5 var(--mono);
         text-align: right;
-        font-family: var(--mono);
-        font-size: 12.5px;
-        line-height: 1.55;
-        color: var(--chrome-faint);
-        background: var(--chrome);
-        user-select: none;
         overflow: hidden;
+        user-select: none;
       }
 
       .gutter span {
         display: block;
-        padding-right: 12px;
+        padding-right: 18px;
       }
 
-      /* The editor is a transparent textarea sitting exactly on top of a coloured
-         <pre>. Both use identical metrics, so the caret and selection land on the
-         glyphs the reader sees. This is how you get highlighting without pulling
-         in an editor library, and without eval, which the CSP forbids. */
+      /* The editor is a transparent textarea sitting exactly on top of a
+         coloured <pre>. Both use identical metrics, so the caret and the
+         selection land on the glyphs the reader sees. This is how you get
+         highlighting without pulling in an editor library, and without eval,
+         which the CSP forbids. */
       .stack {
         position: relative;
-        flex: 1;
         min-width: 0;
         overflow: hidden;
       }
 
       .stack pre,
       .stack textarea {
+        position: absolute;
+        inset: 0;
         margin: 0;
-        padding: 12px 14px 12px 0;
-        font-family: var(--mono);
-        font-size: 12.5px;
-        line-height: 1.55;
+        padding: 8px 14px 8px 0;
+        border: 0;
+        font: 13px/1.5 var(--mono);
         tab-size: 2;
         white-space: pre;
         word-wrap: normal;
-        border: 0;
+        overflow: auto;
       }
 
       .stack pre {
-        position: absolute;
-        inset: 0;
-        overflow: auto;
-        color: var(--chrome-ink);
         pointer-events: none;
+        color: var(--vs-ink);
       }
 
       .stack textarea {
-        position: absolute;
-        inset: 0;
         width: 100%;
         height: 100%;
         resize: none;
-        outline: none;
+        outline: 0;
         background: transparent;
         color: transparent;
-        caret-color: var(--accent);
-        overflow: auto;
+        caret-color: #aeafad;
       }
 
       .stack textarea::selection {
-        background: rgba(91, 46, 229, 0.42);
+        background: var(--vs-select);
       }
 
       .tk-tag {
@@ -394,114 +640,184 @@
         color: var(--c-com);
         font-style: italic;
       }
-      .tk-punct {
-        color: var(--chrome-faint);
-      }
       .tk-interp {
         color: var(--c-key);
       }
-
-      textarea::selection {
-        background: rgba(91, 46, 229, 0.4);
+      .tk-punct {
+        color: var(--c-punct);
       }
 
-      /* ------------------------------------------------------------ preview */
+      /* ------------------------------------------------------------ splitter */
+      .splitter {
+        position: relative;
+        background: var(--vs-seam);
+        cursor: col-resize;
+        touch-action: none;
+      }
+
+      .splitter::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: transparent;
+        transition: background 0.12s ease;
+      }
+
+      .splitter:hover::after,
+      body.dragging .splitter::after {
+        background: var(--vs-focus);
+      }
+
+      /* An iframe eats pointer events, so a drag that crosses into the preview
+         would stop dead halfway. Pointer capture keeps the events coming, and
+         this makes sure nothing inside reacts to a cursor merely passing over. */
+      body.dragging {
+        cursor: col-resize;
+        user-select: none;
+      }
+
+      body.dragging iframe {
+        pointer-events: none;
+      }
+
+      /* ------------------------------------------------------------- preview */
       .preview {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: var(--tabs) minmax(0, 1fr);
         min-width: 0;
-        background: var(--bg);
+        min-height: 0;
+        background: var(--vs-panel);
       }
 
       .preview-head {
         display: flex;
         align-items: center;
-        gap: 8px;
-        min-height: 34px;
+        gap: 9px;
         padding: 0 12px;
-        background: var(--bg-soft);
-        border-bottom: 1px solid var(--line);
+        background: var(--vs-tab-idle);
+        border-bottom: 1px solid var(--vs-seam);
         font-size: 12px;
-        color: var(--ink-faint);
+        color: var(--vs-ink-soft);
+        user-select: none;
       }
 
       .live {
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: #16a34a;
+        background: #3fb950;
+        box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.2);
         flex: none;
       }
 
       .widths {
         margin-left: auto;
         display: flex;
-        gap: 3px;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .widths button {
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--ink-faint);
+        padding: 2px 9px;
+        border: 0;
+        border-radius: 3px;
+        background: none;
+        color: var(--vs-ink-soft);
         font: inherit;
-        font-size: 12px;
-        padding: 2px 7px;
-        border-radius: 5px;
+        font-size: 11px;
         cursor: pointer;
       }
 
       .widths button:hover {
-        color: var(--ink);
+        color: #fff;
       }
 
       .widths button[aria-pressed='true'] {
-        border-color: var(--line);
-        background: var(--bg);
-        color: var(--accent);
+        background: var(--vs-focus);
+        color: #fff;
       }
 
+      /* The checkerboard reads as "nothing here yet" at the edges when the
+         preview is narrowed to a phone width, the way a design tool does. */
       .frame-wrap {
-        flex: 1;
-        overflow: auto;
         display: flex;
         justify-content: center;
-        background: var(--bg);
+        min-height: 0;
+        overflow: auto;
+        background: #161616;
+        background-image: linear-gradient(45deg, #1b1b1b 25%, transparent 25%),
+          linear-gradient(-45deg, #1b1b1b 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #1b1b1b 75%),
+          linear-gradient(-45deg, transparent 75%, #1b1b1b 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
       }
 
-      iframe {
-        border: 0;
+      #frame {
         width: 100%;
         height: 100%;
+        border: 0;
         background: #fff;
       }
 
-      /* ---------------------------------------------------------- statusbar */
+      /* ----------------------------------------------------------- statusbar */
       .statusbar {
-        height: var(--statusbar);
+        display: flex;
+        align-items: stretch;
+        background: var(--vs-status);
+        color: #fff;
+        font-size: 12px;
+        user-select: none;
+      }
+
+      .statusbar span {
         display: flex;
         align-items: center;
-        gap: 16px;
-        padding: 0 12px;
-        background: var(--accent);
-        color: #fff;
-        font-size: 11.5px;
+        padding: 0 8px;
+      }
+
+      .statusbar .remote {
+        background: rgba(0, 0, 0, 0.22);
+        font-weight: 600;
       }
 
       .statusbar .right {
         margin-left: auto;
         display: flex;
-        gap: 16px;
+        align-items: stretch;
       }
 
-      /* --------------------------------------------------------- responsive */
+      .statusbar .right span {
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      /* The explorer folds away from the rail, the way it does in the editor. */
+      body.no-explorer .shell {
+        grid-template-columns: var(--rail) minmax(0, 1fr);
+      }
+
+      body.no-explorer .side {
+        display: none;
+      }
+
+      /* ---------------------------------------------------------- responsive */
       .mobile-switch {
         display: none;
       }
 
-      @media (max-width: 1000px) {
-        .shell {
-          grid-template-columns: 190px minmax(0, 1fr);
+      @media (max-width: 1080px) {
+        .quick {
+          display: none;
         }
+      }
+
+      @media (max-width: 1000px) {
+        .workbench {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .splitter,
         .preview {
           display: none;
         }
@@ -509,35 +825,31 @@
           display: none;
         }
         body.show-preview .preview {
-          display: flex;
+          display: grid;
         }
         .mobile-switch {
           display: inline-flex;
         }
       }
 
-      @media (max-width: 680px) {
+      @media (max-width: 760px) {
         .shell {
-          grid-template-columns: minmax(0, 1fr);
+          grid-template-columns: var(--rail) minmax(0, 1fr);
         }
         .side {
           display: none;
         }
         body.show-files .side {
-          display: block;
+          display: flex;
+          grid-column: 2;
         }
-        body.show-files .editor,
-        body.show-files .preview {
+        body.show-files .workbench {
           display: none;
         }
-        .topbar nav {
+        .topbar nav,
+        .brand .tag {
           display: none;
         }
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: -2px;
       }
     </style>
   </head>
@@ -558,74 +870,163 @@
         <a href="examples/">Examples</a>
       </nav>
 
+      <div class="quick">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" stroke-linecap="round" />
+        </svg>
+        <input id="quickopen" type="search" placeholder="Go to example" aria-label="Filter examples" />
+        <kbd>Ctrl P</kbd>
+      </div>
+
       <div class="end">
         <button class="tbtn mobile-switch" id="btn-files">Files</button>
         <button class="tbtn mobile-switch" id="btn-view">Preview</button>
         <button class="tbtn" id="btn-reset" title="Restore the original example">Reset</button>
-        <button class="tbtn" id="btn-share" title="Copy a link that reopens this code">
-          Share
+        <button class="tbtn" id="btn-share" title="Copy a link that reopens this code">Share</button>
+        <button class="tbtn primary" id="btn-run" title="Ctrl+Enter">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M7 4.5l13 7.5-13 7.5z" />
+          </svg>
+          Run
         </button>
-        <button class="tbtn primary" id="btn-run" title="Ctrl+Enter">Run</button>
       </div>
     </div>
 
     <div class="shell">
+      <nav class="activitybar" aria-label="Activity">
+        <button
+          type="button"
+          data-act="explorer"
+          aria-pressed="true"
+          title="Explorer"
+          aria-label="Explorer"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M13.5 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8.5z" />
+            <path d="M13.5 3v5.5H19" />
+          </svg>
+        </button>
+
+        <button type="button" data-act="run" title="Run (Ctrl+Enter)" aria-label="Run">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M7 4.5l13 7.5-13 7.5z" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <button type="button" data-act="share" title="Copy a shareable link" aria-label="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.2 1.2" stroke-linecap="round" />
+            <path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.2-1.2" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <button type="button" data-act="reset" title="Restore the original example" aria-label="Reset">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M4 12a8 8 0 1 0 2.6-5.9" stroke-linecap="round" />
+            <path d="M4 4.5V10h5.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <span class="spacer"></span>
+
+        <a href="docs/" title="Documentation" aria-label="Documentation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v18H6.5A1.5 1.5 0 0 1 5 19.5z" />
+            <path d="M8 7.5h7M8 11h7" stroke-linecap="round" />
+          </svg>
+        </a>
+
+        <a href="./" title="Back to the site" aria-label="Back to the site">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 11l8-7 8 7v8.5A1.5 1.5 0 0 1 18.5 21H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19.5z" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </nav>
+
       <aside class="side">
-        <h2>Examples</h2>
+        <h2>Explorer</h2>
         <div id="file-list"></div>
       </aside>
 
-      <div class="editor">
-        <div class="tabstrip">
-          <div class="filetab" id="filetab">
-            <span class="dot" aria-hidden="true"></span>
-            <span id="filename">index.html</span>
+      <div class="workbench">
+        <div class="editor">
+          <div class="tabstrip">
+            <div class="filetab" id="filetab">
+              <span class="ext" aria-hidden="true">&lt;&gt;</span>
+              <span id="filename">index.html</span>
+              <span class="dot" aria-hidden="true"></span>
+            </div>
           </div>
-          <div class="desc" id="example-desc"></div>
+
+          <div class="breadcrumbs">
+            <span>examples</span>
+            <span class="sep" aria-hidden="true"></span>
+            <span id="breadcrumb">basics</span>
+            <span class="sep" aria-hidden="true"></span>
+            <span>index.html</span>
+            <span class="desc" id="example-desc"></span>
+          </div>
+
+          <div class="code-area">
+            <div class="gutter" id="gutter" aria-hidden="true"></div>
+            <div class="stack">
+              <pre id="highlight" aria-hidden="true"><code></code></pre>
+              <textarea
+                id="code"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                autocorrect="off"
+                aria-label="HTML editor"
+              ></textarea>
+            </div>
+          </div>
         </div>
 
-        <div class="code-area">
-          <div class="gutter" id="gutter" aria-hidden="true"></div>
-          <div class="stack">
-            <pre id="highlight" aria-hidden="true"><code></code></pre>
-            <textarea
-              id="code"
-              spellcheck="false"
-              autocapitalize="off"
-              autocomplete="off"
-              autocorrect="off"
-              aria-label="HTML editor"
-            ></textarea>
-          </div>
-        </div>
-      </div>
+        <div
+          class="splitter"
+          id="splitter"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize the editor and the preview"
+          aria-valuemin="18"
+          aria-valuemax="82"
+          aria-valuenow="50"
+          tabindex="0"
+          title="Drag to resize, double-click to even it out"
+        ></div>
 
-      <div class="preview">
-        <div class="preview-head">
-          <span class="live" aria-hidden="true"></span>
-          <span id="preview-label">Live preview</span>
-          <div class="widths" role="group" aria-label="Preview width">
-            <button data-w="100%" aria-pressed="true">Full</button>
-            <button data-w="768px" aria-pressed="false">Tablet</button>
-            <button data-w="380px" aria-pressed="false">Phone</button>
+        <div class="preview">
+          <div class="preview-head">
+            <span class="live" aria-hidden="true"></span>
+            <span id="preview-label">Live preview</span>
+            <div class="widths" role="group" aria-label="Preview width">
+              <button data-w="100%" aria-pressed="true">Full</button>
+              <button data-w="768px" aria-pressed="false">Tablet</button>
+              <button data-w="380px" aria-pressed="false">Phone</button>
+            </div>
           </div>
-        </div>
-        <div class="frame-wrap">
-          <iframe id="frame" title="Live preview" sandbox="allow-scripts allow-modals"></iframe>
+          <div class="frame-wrap">
+            <iframe id="frame" title="Live preview" sandbox="allow-scripts allow-modals"></iframe>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="statusbar">
+      <span class="remote">Voodoo.js</span>
       <span id="status-example">state</span>
       <span id="status-lines">1 line</span>
       <div class="right">
         <span>Ctrl+Enter to run</span>
+        <span>HTML</span>
+        <span>UTF-8</span>
         <span>voodoojs@0.12.1</span>
       </div>
     </div>
 
-    <script src="assets/playground-examples.js?v=221fc167"></script>
-    <script src="assets/playground-app.js?v=36bbaa74"></script>
+    <script src="assets/playground-examples.js?v=7e75d525"></script>
+    <script src="assets/playground-app.js?v=5c6b4afd"></script>
   </body>
 </html>

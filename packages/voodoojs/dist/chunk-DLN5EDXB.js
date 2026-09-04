@@ -1,5 +1,5 @@
 import { http, HttpError, request } from './chunk-D7675IJG.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-4M4ZXHNY.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-XTXSD4ZO.js';
 import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-LLNDLLKV.js';
 import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-72PMUUMT.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-KN7NAKBL.js';
@@ -5282,6 +5282,7 @@ defineDirective("collapse", ({ el }) => {
   ensureUi();
   collapseOf(el);
 });
+var selfToggling = /* @__PURE__ */ new WeakSet();
 defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
   ensureUi();
   const target = resolveTarget(el, expression);
@@ -5290,6 +5291,8 @@ defineDirective("collapse-toggle", ({ el, expression, cleanup }) => {
   controller.triggers.add(el);
   controller.sync();
   makeInteractive(el, cleanup);
+  selfToggling.add(el);
+  cleanup(() => selfToggling.delete(el));
   const onClick = (event) => {
     event.preventDefault();
     controller.toggle();
@@ -5700,10 +5703,11 @@ defineDirective("accordion", ({ el, cleanup }) => {
     if (index === -1) return;
     event.preventDefault();
     const controller = controllers2[index];
-    if (single && !controller.open) {
+    const ownToggle = selfToggling.has(header);
+    if (single && (ownToggle ? controller.open : !controller.open)) {
       for (const other of controllers2) if (other !== controller) other.hide();
     }
-    controller.toggle();
+    if (!ownToggle) controller.toggle();
   };
   const onKeyDown = (event) => {
     const header = event.target?.closest(".v-accordion-header");
@@ -10440,5 +10444,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-RDHYPGH6.js.map
-//# sourceMappingURL=chunk-RDHYPGH6.js.map
+//# sourceMappingURL=chunk-DLN5EDXB.js.map
+//# sourceMappingURL=chunk-DLN5EDXB.js.map
