@@ -1,5 +1,5 @@
 /**
- * Voodoo.js v0.8.0
+ * Voodoo.js v0.9.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6839,7 +6839,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
     return rootScope.data;
   }
-  var version2 = "0.8.0";
+  var version2 = "0.9.0";
   var core = {
     // Utilities first: Voodoo's own names can override.
     ...utils_exports,
@@ -14405,7 +14405,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     const boot = () => {
       theme.init();
       applySavedPalette();
+      if (typeof V2.extractJsx === "function") V2.extractJsx();
       V2.start();
+      if (typeof V2.activateJsx === "function") V2.activateJsx();
       if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();
       if (config.devtools) mountDevtools(V2);
     };

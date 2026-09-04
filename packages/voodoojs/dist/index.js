@@ -1,25 +1,25 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-IG75RSGH.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-IG75RSGH.js';
-export { gpu, reflectWgsl } from './chunk-JDSGWYSE.js';
-import { http } from './chunk-TSCMFRF6.js';
-export { HttpError, http, request } from './chunk-TSCMFRF6.js';
-import { devtoolsBus } from './chunk-ASC3IULI.js';
-export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-ASC3IULI.js';
-import { magic, markSkipChildren, destroy, readAttr, walk, hadDirectives, getScope, collectDirectives, findScope, getEffectScopes, evaluateIn } from './chunk-5IMBSYKH.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-5IMBSYKH.js';
-import { reactive, warn, handleError, queuePostFlush, nextTick } from './chunk-KBGRB5IB.js';
-export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-KBGRB5IB.js';
-import { warnAlias } from './chunk-VE7SPUTF.js';
-import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-JOALQ5UO.js';
-export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-JOALQ5UO.js';
-import { ensureTokens, injectStyle } from './chunk-OBBELEY5.js';
-export { ensureTokens, injectStyle } from './chunk-OBBELEY5.js';
-import { defineDirective, PRIORITY, config } from './chunk-LKPICJ77.js';
-export { PRIORITY, config, defineDirective } from './chunk-LKPICJ77.js';
-import './chunk-P4MQN45W.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-JNRO4MX7.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-JNRO4MX7.js';
+export { gpu, reflectWgsl } from './chunk-32QB4RIE.js';
+import { http } from './chunk-OL43Y2J5.js';
+export { HttpError, http, request } from './chunk-OL43Y2J5.js';
+import { devtoolsBus } from './chunk-R5ETIJM7.js';
+export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-R5ETIJM7.js';
+import { magic, markSkipChildren, destroy, readAttr, rootScope, findScope, walk, evaluate, parse, Scope, getScope, hadDirectives, addCleanup, collectDirectives, getEffectScopes, evaluateIn } from './chunk-I3AF6CVN.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-I3AF6CVN.js';
+import { reactive, warn, handleError, queuePostFlush, effect, nextTick } from './chunk-5PIAZICF.js';
+export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-5PIAZICF.js';
+import { warnAlias } from './chunk-3U3S2KO4.js';
+import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-F6HSKCEY.js';
+export { capitalize, chunk, clone, debounce, device, escapeHtml, formatCurrency, formatDate, formatFileSize, formatNumber, formatPercent, get, groupBy, isBrowser, matchesMedia, memoize, merge, once, parseDuration, random, relativeTime, sample, set, setFormatDefaults, sleep, slugify, sortBy, stripTags, throttle, titleCase, truncate, uid, unique, uuid } from './chunk-F6HSKCEY.js';
+import { ensureTokens, injectStyle } from './chunk-3WZF7NYL.js';
+export { ensureTokens, injectStyle } from './chunk-3WZF7NYL.js';
+import { defineDirective, PRIORITY, config } from './chunk-XJSOTA6W.js';
+export { PRIORITY, config, defineDirective } from './chunk-XJSOTA6W.js';
+import './chunk-7ASZQLMN.js';
 
 /**
- * Voodoo.js v0.8.0
+ * Voodoo.js v0.9.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -536,7 +536,7 @@ defineDirective(
       el.innerHTML = html ?? fallbackHtml;
       for (const child of Array.from(el.childNodes)) walk(child, scope);
     };
-    const render = async (record, current) => {
+    const render2 = async (record, current) => {
       let html = null;
       if (record?.view) {
         el.classList.add("v-router-loading");
@@ -557,7 +557,7 @@ defineDirective(
       const matched = route.matched;
       void paramsSignature(route.params);
       const record = findRecord(matched);
-      void render(record, ++token);
+      void render2(record, ++token);
     });
     cleanup(() => {
       token++;
@@ -765,8 +765,8 @@ async function loadMessages(locale, source) {
     addMessages(locale, source);
     return;
   }
-  const pending = loading.get(locale);
-  if (pending) return pending;
+  const pending2 = loading.get(locale);
+  if (pending2) return pending2;
   const task = http.get(source, { responseType: "json" }).then((data) => {
     if (data && typeof data === "object") addMessages(locale, data);
   }).catch((err) => {
@@ -917,8 +917,8 @@ var frameCallbacks = /* @__PURE__ */ new Set();
 var frameHandle = 0;
 function runFrame(now) {
   frameHandle = 0;
-  const pending = Array.from(frameCallbacks);
-  for (const callback of pending) {
+  const pending2 = Array.from(frameCallbacks);
+  for (const callback of pending2) {
     if (frameCallbacks.has(callback)) callback(now);
   }
   if (frameCallbacks.size > 0) frameHandle = requestAnimationFrame(runFrame);
@@ -6542,6 +6542,215 @@ function xray(force) {
   return enabled;
 }
 
+// src/jsx/index.ts
+var OPAQUE = /* @__PURE__ */ new Set([
+  "SCRIPT",
+  "STYLE",
+  "PRE",
+  "CODE",
+  "SAMP",
+  "KBD",
+  "TEXTAREA",
+  "TEMPLATE",
+  "NOSCRIPT"
+]);
+magic("$__jsx", (scope) => scope);
+var TEMPLATE = /* @__PURE__ */ Symbol("voodoo.jsx.template");
+function isTemplate(value) {
+  return typeof value === "object" && value !== null && TEMPLATE in value;
+}
+function collect(start2, offset) {
+  const templates = [];
+  const nodes = [];
+  let source = "";
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let node = start2;
+  let index = offset;
+  let closed = false;
+  let tail = null;
+  while (node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? "";
+      for (; index < text.length; index++) {
+        const ch = text[index];
+        if (escaped) {
+          escaped = false;
+          source += ch;
+          continue;
+        }
+        if (quote) {
+          if (ch === "\\") escaped = true;
+          else if (ch === quote) quote = null;
+          source += ch;
+          continue;
+        }
+        if (ch === '"' || ch === "'" || ch === "`") {
+          quote = ch;
+          source += ch;
+          continue;
+        }
+        if (ch === "{") {
+          depth++;
+          if (depth > 1) source += ch;
+          continue;
+        }
+        if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            index++;
+            closed = true;
+            break;
+          }
+          source += ch;
+          continue;
+        }
+        source += ch;
+      }
+      nodes.push(node);
+      if (closed) {
+        tail = { node, offset: index };
+        break;
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (depth === 0) return null;
+      source += `$t(${templates.length}, $__jsx)`;
+      templates.push(node);
+      nodes.push(node);
+    } else {
+      nodes.push(node);
+    }
+    index = 0;
+    node = node.nextSibling;
+  }
+  if (!closed) return null;
+  return { source, templates, nodes, tail };
+}
+function render(value, templates, scope, out) {
+  if (value == null || value === false || value === true) return;
+  if (Array.isArray(value)) {
+    for (const item of value) render(item, templates, scope, out);
+    return;
+  }
+  if (isTemplate(value)) {
+    const handle = value;
+    const source = templates[handle.index];
+    const clone2 = source.cloneNode(true);
+    const at = handle.scope ?? scope;
+    applyRegions(clone2, at);
+    walk(clone2, at);
+    out.push(clone2);
+    return;
+  }
+  out.push(document.createTextNode(String(value)));
+}
+function applyRegions(root, parentScope) {
+  if (OPAQUE.has(root.tagName)) return;
+  const scope = parentScope ?? findScope(root);
+  let child = root.firstChild;
+  while (child) {
+    const next = child.nextSibling;
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      applyRegions(child, getScope(child) ?? scope);
+      child = next;
+      continue;
+    }
+    if (child.nodeType !== Node.TEXT_NODE) {
+      child = next;
+      continue;
+    }
+    const text = child.textContent ?? "";
+    const open = text.indexOf("{");
+    if (open < 0) {
+      child = next;
+      continue;
+    }
+    const collected = collect(child, open);
+    if (!collected || collected.templates.length === 0) {
+      child = next;
+      continue;
+    }
+    install(root, collected);
+    child = collected.nodes[collected.nodes.length - 1]?.nextSibling;
+  }
+}
+var pending = [];
+function install(parent, collected) {
+  const { source, templates, nodes, tail } = collected;
+  let ast;
+  try {
+    ast = parse(source);
+  } catch (error) {
+    if (config.devtools) {
+      console.warn(`[Voodoo] could not parse the inline expression: ${source}`, error);
+    }
+    return;
+  }
+  if (tail && tail.offset < (tail.node.textContent ?? "").length) {
+    tail.node.splitText(tail.offset);
+  }
+  const anchor = document.createComment("v-jsx");
+  parent.insertBefore(anchor, nodes[0]);
+  for (const node of nodes) node.remove();
+  let rendered = [];
+  pending.push(() => activateRegion());
+  function activateRegion() {
+    const scope = findScope(anchor);
+    const local = scope.child({
+      $t: (index, at) => ({ [TEMPLATE]: true, index, scope: at })
+    });
+    const runner = effect(() => {
+      const value = evaluate(ast, local);
+      const out = [];
+      render(value, templates, local, out);
+      for (const node of rendered) node.remove();
+      rendered = out;
+      for (const node of out) parent.insertBefore(node, anchor);
+    });
+    addCleanup(anchor, () => {
+      runner.effect.stop();
+      for (const node of rendered) node.remove();
+    });
+  }
+}
+function readDeclarationBlock(root = document.body) {
+  for (const node of Array.from(root.childNodes)) {
+    if (node.nodeType !== Node.TEXT_NODE) continue;
+    const text = (node.textContent ?? "").trim();
+    if (!text.startsWith("{") || !text.endsWith("}")) continue;
+    if (!/\b(const|let|var)\s/.test(text)) continue;
+    const body = text.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
+    const data = reactive({});
+    try {
+      evaluate(parse(body), new Scope(data));
+    } catch (error) {
+      if (config.devtools) {
+        console.warn("[Voodoo] could not read the declaration block", error);
+      }
+      return null;
+    }
+    node.remove();
+    return data;
+  }
+  return null;
+}
+function activateJsx() {
+  const work = pending.splice(0, pending.length);
+  for (const run of work) run();
+}
+function extractJsx(root = document.body) {
+  const data = readDeclarationBlock(root);
+  if (data) {
+    Object.assign(rootScope.data, data);
+  }
+  applyRegions(root, findScope(root));
+}
+function jsx(root = document.body) {
+  extractJsx(root);
+  activateJsx();
+}
+
 // src/devtools/launcher.ts
 var POSITION_KEY = "voodoo:devtools:widget-position";
 var HIDDEN_KEY = "voodoo:devtools:widget-hidden";
@@ -6912,6 +7121,9 @@ Object.assign(V, core, {
   query,
   ready: ready2,
   fromHtml,
+  jsx,
+  extractJsx,
+  activateJsx,
   Collection: VoodooCollection,
   // Routes
   router,
@@ -6971,6 +7183,6 @@ Object.assign(V, core, {
 });
 var src_default = V;
 
-export { V, animate, charts, src_default as default, devtoolsWidget, disableXray, easings, enableXray, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, motionPresets, mountDevtoolsWidget, navigate, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };
+export { V, activateJsx, animate, applyRegions, charts, src_default as default, devtoolsWidget, disableXray, easings, enableXray, extractJsx, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, jsx, motionPresets, mountDevtoolsWidget, navigate, readDeclarationBlock, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

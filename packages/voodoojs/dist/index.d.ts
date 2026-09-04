@@ -1,5 +1,5 @@
-import { c as core, V as VoodooCollection } from './query-_Ff5Ww0G.js';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, S as Scope, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-_Ff5Ww0G.js';
+import { S as Scope, c as core, V as VoodooCollection } from './query-_Ff5Ww0G.js';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as injectStyle, H as instances, I as leave, J as magic, K as magics, L as mountComponent, M as parse, N as query, O as ready, Q as refresh, T as removeStore, q as resource, U as rootScope, W as session, X as slideDown, Y as slideUp, Z as start, _ as storage, $ as store, a0 as storeNames, a1 as stringify, a2 as theme, a3 as toast, a4 as tokenize, a5 as url, a6 as viewTransition, a7 as walk, a8 as whenElement, a9 as whenReady } from './query-_Ff5Ww0G.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.js';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.js';
 export { R as RoomOptions, a as RoomState, S as SocketMessage, b as SocketOptions, c as SocketRoom, d as SocketState, e as SocketTransport, V as VoodooSocket, f as createSocket, s as socket, g as socketSupported } from './index-DTllqUtj.js';
@@ -519,6 +519,120 @@ declare const clipboard: {
     /** Read clipboard content, when the user allows. */
     read(): Promise<string>;
 };
+
+/**
+ * @module jsx
+ *
+ * JSX written directly in ordinary HTML, with no build step and no compiler.
+ *
+ * ```html
+ * <ul>
+ *   {frutas.map((fruta) => (
+ *     <li>{fruta}</li>
+ *   ))}
+ * </ul>
+ * ```
+ *
+ * The trick is that the browser has already parsed the page before any of this
+ * runs, and what it leaves behind is recoverable. For the block above the DOM is
+ * three siblings:
+ *
+ *   text     "{frutas.map((fruta) => ("
+ *   element  <li>{fruta}</li>
+ *   text     "))}"
+ *
+ * The element is not a mistake to be worked around, it is the template. Joining
+ * the text back together with a placeholder where the element sat reconstructs
+ * the expression exactly as it was typed:
+ *
+ *   frutas.map((fruta) => ($t(0, $__jsx)))
+ *
+ * `$t` returns a handle to that `<li>` together with the scope the call was made
+ * in, so the arrow returns one clone per item, each rendered where `fruta` is
+ * bound. Nothing is compiled, nothing is evaluated as a string, and the whole
+ * thing goes through the same lexer, parser and interpreter as every other
+ * expression, which is what keeps it working under a strict Content Security
+ * Policy.
+ *
+ * ATTRIBUTE VALUES MUST BE QUOTED
+ *
+ *   style="{{ backgroundColor: cor }}"     works
+ *   style={{ backgroundColor: cor }}       does not
+ *
+ * This one is not a decision, it is the order things happen in. An unquoted
+ * attribute value ends at the first space, so the browser turns the second line
+ * into six separate attributes, `style="{{"`, `backgroundcolor:=""`, `cor,=""`
+ * and so on, before a single line of JavaScript has run.
+ *
+ * The pieces do survive in order, so they could in principle be rejoined. What
+ * does not survive is case: the browser lowercases every attribute NAME, so
+ * `backgroundColor` comes back as `backgroundcolor` and any identifier with a
+ * capital in it is gone. Quoting costs two characters and has no such rule.
+ */
+
+/**
+ * Finds and installs every `{ ... }` region inside one element's children.
+ *
+ * Text-only interpolation such as `<h1>Ola, {nome}!</h1>` is deliberately left
+ * alone: the core already renders it, and taking it over here would mean two
+ * implementations of the same thing disagreeing at some point. This module only
+ * claims a region that spans an element, which is the part the core cannot do.
+ */
+declare function applyRegions(root: Element, parentScope?: Scope): void;
+/**
+ * Reads a top-level declaration block into state.
+ *
+ * ```html
+ * {
+ * const produtos = [...];
+ * const ativo = true;
+ * }
+ * ```
+ *
+ * The block is a text node in `<body>`, and `const` is not part of the
+ * expression language, so the keywords are stripped and what remains is a
+ * sequence of assignments, which the parser already understands. The names land
+ * on a reactive object that becomes the root scope's data, so everything below
+ * sees them and updates when they change.
+ */
+declare function readDeclarationBlock(root?: ParentNode): Record<string, unknown> | null;
+/**
+ * Turns the whole page into one where JSX works.
+ *
+ * ```js
+ * V.jsx();                  // the document
+ * V.jsx(document.querySelector('#app'));
+ * ```
+ *
+ * Reads the declaration block if there is one, puts its names in scope, and
+ * then installs every `{ ... }` region below the root.
+ */
+/**
+ * Makes every extracted region live.
+ *
+ * Separate from `jsx()` because it must run after `V.start()`, once `v-data`
+ * has created the scopes a region may need to resolve against. `jsx()` takes
+ * the templates out of the document; this puts the rendered result back.
+ */
+declare function activateJsx(): void;
+/**
+ * Takes every region out of the document, without rendering anything yet.
+ *
+ * This is the half that must run BEFORE `V.start()`. `jsx()` is extract plus
+ * activate in one call, which is right for a caller doing it by hand and wrong
+ * for the bootstrap: calling `jsx()` there activated immediately, with the
+ * `v-data` scopes not yet created, and the later `activateJsx()` found an empty
+ * queue. Every list on the page came out blank.
+ */
+declare function extractJsx(root?: Element): void;
+/**
+ * Extract and render in one call, for a caller doing this by hand.
+ *
+ * The bootstrap does not use this: it calls `extractJsx()` before `V.start()`
+ * and `activateJsx()` after, because the two halves belong on opposite sides of
+ * it.
+ */
+declare function jsx(root?: Element): void;
 
 /**
  * @module ui/dialog
@@ -1600,4 +1714,4 @@ interface Voodoo extends Omit<typeof core, never> {
 }
 declare const V: Voodoo;
 
-export { V, type Voodoo, VoodooCollection, alert, animate, applyMask, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, devtoolsWidget, dialog, disableXray, easings, enableXray, getLocale, hotkey, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, mask, masks, modal, motionPresets, mountDevtoolsWidget, navigate, network, palette, prompt, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, unmountDevtoolsWidget, validate, validator, xray };
+export { Scope, V, type Voodoo, VoodooCollection, activateJsx, alert, animate, applyMask, applyRegions, charts, clearErrors, clipboard, confirm, V as default, devtoolsBus, devtoolsWidget, dialog, disableXray, easings, enableXray, extractJsx, getLocale, hotkey, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, jsx, mask, masks, modal, motionPresets, mountDevtoolsWidget, navigate, network, palette, prompt, readDeclarationBlock, registerMask, renderChart, route, router, screen, scrollProgress, serializeForm, setLocale, showFormErrors, sound, efeitos as soundEffects, spring, stagger, t, unmask, unmountDevtoolsWidget, validate, validator, xray };

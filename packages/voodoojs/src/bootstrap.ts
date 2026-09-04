@@ -128,7 +128,23 @@ export function bootstrap(V: any): void {
     // Theme and palette first, to prevent the page from flashing with wrong colors.
     theme.init();
     applySavedPalette();
+
+    // JSX happens in two passes around `V.start()`, and the order is not a
+    // preference.
+    //
+    // The templates have to leave the document BEFORE start. An element written
+    // inside a `{ ... }` region is an ordinary element until this runs, so start
+    // would walk it, fail on the callback parameter it mentions with
+    // `Could not read "n" from undefined`, and then rewrite its text in place,
+    // which poisons every clone taken from it afterwards.
+    if (typeof V.extractJsx === 'function') V.extractJsx();
+
     V.start();
+
+    // And the effects have to be created AFTER start, because `v-data` creates
+    // the scopes during start and a region inside one resolves against that
+    // scope rather than the page's.
+    if (typeof V.activateJsx === 'function') V.activateJsx();
 
     // The inspector shortcut is installed whenever the build carries the
     // inspector, not only when `data-devtools` is present.

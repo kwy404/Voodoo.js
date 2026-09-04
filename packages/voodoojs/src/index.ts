@@ -52,6 +52,7 @@ import { sound } from './sound';
 import { animate, spring, stagger, inView, scrollProgress, motionPresets, easings } from './motion';
 import { renderChart, charts, CHART_COLORS } from './charts';
 import { xray, enableXrayShortcut } from './devtools/xray';
+import { jsx, extractJsx, activateJsx } from './jsx';
 import { devtoolsWidget } from './devtools/launcher';
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,9 @@ Object.assign(V, core, {
   query,
   ready,
   fromHtml,
+  jsx,
+  extractJsx,
+  activateJsx,
   Collection: VoodooCollection,
 
   // Routes
@@ -198,6 +202,7 @@ export type { Resource, ResourceOptions } from './http/resource';
 export type { HttpResponse, RequestConfig, HttpMethod } from './http';
 
 export { socket, createSocket, socketSupported } from './socket';
+export { jsx, extractJsx, activateJsx, applyRegions, readDeclarationBlock } from './jsx';
 export type {
   VoodooSocket,
   SocketOptions,

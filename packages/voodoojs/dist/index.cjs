@@ -3,7 +3,7 @@
 Object.defineProperty(exports, '__esModule', { value: true });
 
 /**
- * Voodoo.js v0.8.0
+ * Voodoo.js v0.9.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -6743,7 +6743,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version2 = "0.8.0";
+var version2 = "0.9.0";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -8367,7 +8367,7 @@ defineDirective(
       el.innerHTML = html ?? fallbackHtml;
       for (const child of Array.from(el.childNodes)) walk(child, scope);
     };
-    const render2 = async (record, current2) => {
+    const render3 = async (record, current2) => {
       let html = null;
       if (record?.view) {
         el.classList.add("v-router-loading");
@@ -8388,7 +8388,7 @@ defineDirective(
       const matched = route.matched;
       void paramsSignature(route.params);
       const record = findRecord(matched);
-      void render2(record, ++token);
+      void render3(record, ++token);
     });
     cleanup(() => {
       token++;
@@ -8598,8 +8598,8 @@ async function loadMessages(locale, source) {
     addMessages(locale, source);
     return;
   }
-  const pending = loading.get(locale);
-  if (pending) return pending;
+  const pending2 = loading.get(locale);
+  if (pending2) return pending2;
   const task = http.get(source, { responseType: "json" }).then((data2) => {
     if (data2 && typeof data2 === "object") addMessages(locale, data2);
   }).catch((err) => {
@@ -11130,7 +11130,7 @@ function commandPalette() {
     close();
     option.el.click();
   };
-  const render2 = () => {
+  const render3 = () => {
     list.replaceChildren();
     if (!visible.length) {
       const empty = document.createElement("li");
@@ -11161,7 +11161,7 @@ function commandPalette() {
       row.addEventListener("pointermove", () => {
         if (cursor === index) return;
         cursor = index;
-        render2();
+        render3();
       });
       list.appendChild(row);
     });
@@ -11175,7 +11175,7 @@ function commandPalette() {
     const term = normalizeSearch(input.value.trim());
     visible = term ? commands.filter((option) => normalizeSearch(`${option.label} ${option.hint}`).includes(term)) : commands;
     cursor = 0;
-    render2();
+    render3();
   };
   const onKeyDown = (event) => {
     if (event.key === "Escape") {
@@ -11186,13 +11186,13 @@ function commandPalette() {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       cursor = visible.length ? (cursor + 1) % visible.length : 0;
-      render2();
+      render3();
       return;
     }
     if (event.key === "ArrowUp") {
       event.preventDefault();
       cursor = visible.length ? (cursor - 1 + visible.length) % visible.length : 0;
-      render2();
+      render3();
       return;
     }
     if (event.key === "Enter") {
@@ -11207,7 +11207,7 @@ function commandPalette() {
   });
   input.addEventListener("input", filter);
   document.addEventListener("keydown", onKeyDown, true);
-  render2();
+  render3();
   input.focus();
   document.addEventListener("focusin", keepFocusTrapped, true);
 }
@@ -13512,8 +13512,8 @@ var frameCallbacks = /* @__PURE__ */ new Set();
 var frameHandle = 0;
 function runFrame(now2) {
   frameHandle = 0;
-  const pending = Array.from(frameCallbacks);
-  for (const callback of pending) {
+  const pending2 = Array.from(frameCallbacks);
+  for (const callback of pending2) {
     if (frameCallbacks.has(callback)) callback(now2);
   }
   if (frameCallbacks.size > 0) frameHandle = requestAnimationFrame(runFrame);
@@ -20665,6 +20665,217 @@ function xray(force) {
   return enabled;
 }
 
+// src/jsx/index.ts
+init_reactivity();
+init_registry();
+var OPAQUE = /* @__PURE__ */ new Set([
+  "SCRIPT",
+  "STYLE",
+  "PRE",
+  "CODE",
+  "SAMP",
+  "KBD",
+  "TEXTAREA",
+  "TEMPLATE",
+  "NOSCRIPT"
+]);
+magic("$__jsx", (scope) => scope);
+var TEMPLATE = /* @__PURE__ */ Symbol("voodoo.jsx.template");
+function isTemplate(value) {
+  return typeof value === "object" && value !== null && TEMPLATE in value;
+}
+function collect(start2, offset) {
+  const templates = [];
+  const nodes = [];
+  let source = "";
+  let depth = 0;
+  let quote = null;
+  let escaped = false;
+  let node = start2;
+  let index = offset;
+  let closed = false;
+  let tail = null;
+  while (node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? "";
+      for (; index < text.length; index++) {
+        const ch = text[index];
+        if (escaped) {
+          escaped = false;
+          source += ch;
+          continue;
+        }
+        if (quote) {
+          if (ch === "\\") escaped = true;
+          else if (ch === quote) quote = null;
+          source += ch;
+          continue;
+        }
+        if (ch === '"' || ch === "'" || ch === "`") {
+          quote = ch;
+          source += ch;
+          continue;
+        }
+        if (ch === "{") {
+          depth++;
+          if (depth > 1) source += ch;
+          continue;
+        }
+        if (ch === "}") {
+          depth--;
+          if (depth === 0) {
+            index++;
+            closed = true;
+            break;
+          }
+          source += ch;
+          continue;
+        }
+        source += ch;
+      }
+      nodes.push(node);
+      if (closed) {
+        tail = { node, offset: index };
+        break;
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (depth === 0) return null;
+      source += `$t(${templates.length}, $__jsx)`;
+      templates.push(node);
+      nodes.push(node);
+    } else {
+      nodes.push(node);
+    }
+    index = 0;
+    node = node.nextSibling;
+  }
+  if (!closed) return null;
+  return { source, templates, nodes, tail };
+}
+function render2(value, templates, scope, out) {
+  if (value == null || value === false || value === true) return;
+  if (Array.isArray(value)) {
+    for (const item of value) render2(item, templates, scope, out);
+    return;
+  }
+  if (isTemplate(value)) {
+    const handle = value;
+    const source = templates[handle.index];
+    const clone2 = source.cloneNode(true);
+    const at = handle.scope ?? scope;
+    applyRegions(clone2, at);
+    walk(clone2, at);
+    out.push(clone2);
+    return;
+  }
+  out.push(document.createTextNode(String(value)));
+}
+function applyRegions(root, parentScope) {
+  if (OPAQUE.has(root.tagName)) return;
+  const scope = parentScope ?? findScope(root);
+  let child = root.firstChild;
+  while (child) {
+    const next = child.nextSibling;
+    if (child.nodeType === Node.ELEMENT_NODE) {
+      applyRegions(child, getScope(child) ?? scope);
+      child = next;
+      continue;
+    }
+    if (child.nodeType !== Node.TEXT_NODE) {
+      child = next;
+      continue;
+    }
+    const text = child.textContent ?? "";
+    const open = text.indexOf("{");
+    if (open < 0) {
+      child = next;
+      continue;
+    }
+    const collected = collect(child, open);
+    if (!collected || collected.templates.length === 0) {
+      child = next;
+      continue;
+    }
+    install(root, collected);
+    child = collected.nodes[collected.nodes.length - 1]?.nextSibling;
+  }
+}
+var pending = [];
+function install(parent, collected) {
+  const { source, templates, nodes, tail } = collected;
+  let ast;
+  try {
+    ast = parse(source);
+  } catch (error) {
+    if (exports.config.devtools) {
+      console.warn(`[Voodoo] could not parse the inline expression: ${source}`, error);
+    }
+    return;
+  }
+  if (tail && tail.offset < (tail.node.textContent ?? "").length) {
+    tail.node.splitText(tail.offset);
+  }
+  const anchor = document.createComment("v-jsx");
+  parent.insertBefore(anchor, nodes[0]);
+  for (const node of nodes) node.remove();
+  let rendered = [];
+  pending.push(() => activateRegion());
+  function activateRegion() {
+    const scope = findScope(anchor);
+    const local = scope.child({
+      $t: (index, at) => ({ [TEMPLATE]: true, index, scope: at })
+    });
+    const runner = effect(() => {
+      const value = evaluate(ast, local);
+      const out = [];
+      render2(value, templates, local, out);
+      for (const node of rendered) node.remove();
+      rendered = out;
+      for (const node of out) parent.insertBefore(node, anchor);
+    });
+    addCleanup(anchor, () => {
+      runner.effect.stop();
+      for (const node of rendered) node.remove();
+    });
+  }
+}
+function readDeclarationBlock(root = document.body) {
+  for (const node of Array.from(root.childNodes)) {
+    if (node.nodeType !== Node.TEXT_NODE) continue;
+    const text = (node.textContent ?? "").trim();
+    if (!text.startsWith("{") || !text.endsWith("}")) continue;
+    if (!/\b(const|let|var)\s/.test(text)) continue;
+    const body = text.slice(1, -1).replace(/\b(?:const|let|var)\s+/g, "");
+    const data2 = reactive({});
+    try {
+      evaluate(parse(body), new Scope(data2));
+    } catch (error) {
+      if (exports.config.devtools) {
+        console.warn("[Voodoo] could not read the declaration block", error);
+      }
+      return null;
+    }
+    node.remove();
+    return data2;
+  }
+  return null;
+}
+function activateJsx() {
+  const work = pending.splice(0, pending.length);
+  for (const run of work) run();
+}
+function extractJsx(root = document.body) {
+  const data2 = readDeclarationBlock(root);
+  if (data2) {
+    Object.assign(rootScope.data, data2);
+  }
+  applyRegions(root, findScope(root));
+}
+function jsx(root = document.body) {
+  extractJsx(root);
+  activateJsx();
+}
+
 // src/devtools/launcher.ts
 init_style();
 var POSITION_KEY = "voodoo:devtools:widget-position";
@@ -21365,9 +21576,9 @@ function createSocket(url2, options = {}) {
   }
   function drainQueue() {
     if (!queue3.length) return;
-    const pending = queue3.splice(0, queue3.length);
+    const pending2 = queue3.splice(0, queue3.length);
     state2.queued = 0;
-    for (const text of pending) sendText(text);
+    for (const text of pending2) sendText(text);
   }
   function sendText(text) {
     if (ws && ws.readyState === 1 && (!socketIo || state2.connected)) {
@@ -23124,6 +23335,9 @@ Object.assign(V, core, {
   query,
   ready: ready2,
   fromHtml,
+  jsx,
+  extractJsx,
+  activateJsx,
   Collection: VoodooCollection,
   // Routes
   router,
@@ -23189,12 +23403,14 @@ exports.V = V;
 exports.VoodooCollection = VoodooCollection;
 exports.VoodooRuntimeError = VoodooRuntimeError;
 exports.VoodooSyntaxError = VoodooSyntaxError;
+exports.activateJsx = activateJsx;
 exports.addCleanup = addCleanup;
 exports.alert = alert;
 exports.allStores = allStores;
 exports.allowedGlobals = allowedGlobals;
 exports.animate = animate;
 exports.applyMask = applyMask;
+exports.applyRegions = applyRegions;
 exports.cache = cache2;
 exports.capitalize = capitalize;
 exports.charts = charts;
@@ -23228,6 +23444,7 @@ exports.ensureTokens = ensureTokens;
 exports.enter = enter;
 exports.escapeHtml = escapeHtml;
 exports.evaluate = evaluate;
+exports.extractJsx = extractJsx;
 exports.fadeIn = fadeIn;
 exports.fadeOut = fadeOut;
 exports.findScope = findScope;
@@ -23253,6 +23470,7 @@ exports.isBrowser = isBrowser;
 exports.isDevtoolsWidgetMounted = isDevtoolsWidgetMounted;
 exports.isReactive = isReactive;
 exports.isXrayEnabled = isXrayEnabled;
+exports.jsx = jsx;
 exports.leave = leave;
 exports.magic = magic;
 exports.magics = magics;
@@ -23277,6 +23495,7 @@ exports.prompt = prompt;
 exports.query = query;
 exports.random = random;
 exports.reactive = reactive;
+exports.readDeclarationBlock = readDeclarationBlock;
 exports.ready = ready2;
 exports.ref = ref;
 exports.reflectWgsl = reflectWgsl;
