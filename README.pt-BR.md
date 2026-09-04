@@ -24,9 +24,117 @@ Sem passo de build obrigatório · Sem dependências em tempo de execução · S
 
 Tudo acima roda no navegador, e foi feito com a própria Voodoo.js.
 
-[Instalação](#instalação) · [Início rápido](#início-rápido) · [Benchmarks](#desempenho) · [Contribuir](#contribuindo) · [English](README.md)
+[JSX em HTML puro](#jsx-em-html-puro) · [Instalação](#instalação) · [Início rápido](#início-rápido) · [Benchmarks](#desempenho) · [Contribuir](#contribuindo) · [English](README.md)
 
 </div>
+
+## JSX em HTML puro
+
+Salve como `index.html` e abra. Não tem passo de build, não tem bundler, não tem
+compilador e não tem transform de JSX.
+
+```html
+<!doctype html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.10/dist/voodoo.full.min.js" defer></script>
+</head>
+<body>
+
+{
+  const usuario = 'Ana';
+  const frutas = ['maçã', 'pera', 'uva'];
+}
+
+<h1>Olá, {usuario}!</h1>
+
+<ul>
+  {frutas.map((fruta) => (
+    <li>{fruta}</li>
+  ))}
+</ul>
+
+</body>
+</html>
+```
+
+Esse é o diferencial. Qualquer outro jeito de escrever JSX precisa de uma
+ferramenta entre o arquivo que você edita e o arquivo que o navegador carrega.
+Aqui é o arquivo que o navegador carrega.
+
+Condicionais devolvem elementos como no JSX, e de um jeito que o JSX não tem:
+
+```html
+<p>{logado ? <b>Bem-vindo de volta</b> : <b>Faça login</b>}</p>
+<p>{logado && <b>Só quando é verdadeiro</b>}</p>
+
+<p>
+  {if (nivel === 1) (<b>um</b>)
+   else if (nivel === 2) (<b>dois</b>)
+   else (<b>outro</b>)}
+</p>
+```
+
+Um `if / else if / else` de verdade devolvendo elementos é coisa que o próprio
+JSX não oferece.
+
+Callbacks têm corpo de verdade, então ramificar por item se escreve como em
+qualquer outro lugar:
+
+```html
+<ul>
+  {produtos.map(item => {
+
+    if (item.estoque === 0) {
+      return (<li>{item.nome}: sem estoque</li>);
+    }
+
+    const rotulo = item.estoque > 6 ? 'bastante' : 'pouco';
+    return (<li>{item.nome}: {rotulo}</li>);
+
+  })}
+</ul>
+```
+
+E é reativo. Uma região é um efeito, então `itens.push(...)` re-renderiza a
+lista, e tudo compõe com o resto: `v-data`, `@click`, `v-model`, stores.
+
+### Como isso é possível
+
+O navegador já parseou a página, e o que sobra dá para recuperar. Para a lista
+acima o DOM são três irmãos: o texto `{frutas.map((fruta) => (`, o elemento
+`<li>{fruta}</li>`, e o texto `))}`. O elemento não é um estrago a contornar, é
+o template. Juntar o texto de volta com um marcador onde o elemento estava
+reconstrói a expressão exatamente como foi digitada, e ela passa pelo mesmo
+lexer, parser e interpretador de qualquer outra expressão. Nada é compilado e
+nada é avaliado como string, então continua funcionando sob uma Content Security
+Policy estrita.
+
+### As duas regras que mantêm isso fora do seu caminho
+
+Uma região só é reivindicada quando existe um **elemento** dentro das chaves.
+`{ contador }` sozinho é interpolação comum, e um `{` solto na prosa nunca
+fecha.
+
+E `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` e
+`noscript` nunca são varridos, então uma página cheia de código de exemplo
+continua sendo uma página cheia de código de exemplo.
+
+### Uma coisa que o HTML não permite
+
+Valor de atributo precisa de aspas:
+
+```html
+<div style="{{ backgroundColor: cor }}">   <!-- funciona -->
+<div style={{ backgroundColor: cor }}>     <!-- não funciona -->
+```
+
+Isso é ordem de execução, não decisão. Valor de atributo sem aspas termina no
+primeiro espaço, então o navegador transforma a segunda linha em seis atributos
+separados antes de qualquer script rodar, e passa os nomes para minúsculo no
+caminho. Não sobra nada para recuperar.
+
+**[Teste os dez exemplos no playground](https://kwy404.github.io/Voodoo.js/playground.html)**
 
 ---
 

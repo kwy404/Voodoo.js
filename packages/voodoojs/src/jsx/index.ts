@@ -50,7 +50,7 @@
 
 import { effect, reactive } from '../reactivity';
 import { magic, rootScope } from '../runtime/scope';
-import { evaluate } from '../parser/interpreter';
+import { evaluate, unwrap } from '../parser/interpreter';
 import { parse, type Node as AstNode } from '../parser/parser';
 import { Scope } from '../runtime/scope';
 import { config } from '../runtime/registry';
@@ -237,6 +237,12 @@ function render(value: unknown, templates: Element[], scope: Scope, out: Node[])
     // The clone carries its own `{ ... }` regions and any ordinary directive on
     // it, so it goes through the same processing as the page did.
     applyRegions(clone, at);
+    // And those regions have to be activated here, not left in the queue. The
+    // page-wide activation pass has already finished by the time a clone is
+    // made, so anything `applyRegions` just queued would sit there forever: a
+    // `map` inside a `map` produced the outer elements with the inner list
+    // missing from every one of them.
+    activateJsx();
     walk(clone, at);
     out.push(clone);
     return;
@@ -292,7 +298,7 @@ export function applyRegions(root: Element, parentScope?: Scope): void {
       continue;
     }
 
-    install(root, collected);
+    install(root, collected, scope);
     child = collected.nodes[collected.nodes.length - 1]?.nextSibling as ChildNode | null;
   }
 }
@@ -314,7 +320,7 @@ export function applyRegions(root: Element, parentScope?: Scope): void {
 const pending: Array<() => void> = [];
 
 /** Replaces a collected region with an anchor and keeps it up to date. */
-function install(parent: Element, collected: Collected): void {
+function install(parent: Element, collected: Collected, hint?: Scope): void {
   const { source, templates, nodes, tail } = collected;
 
   let ast: AstNode;
@@ -354,13 +360,24 @@ function install(parent: Element, collected: Collected): void {
   // filled with `Could not call "map" from undefined` and every list came out
   // empty. By activation the scopes exist, and walking up from the anchor finds
   // the nearest one.
-  const scope = findScope(anchor);
+  // `findScope` walks up parentNode, and a clone is not in the document yet
+  // when its own regions are activated, so the walk reaches nothing and falls
+  // back to the root. That is right for a region on the page and wrong for one
+  // inside a template, where the names come from the callback that produced it:
+  // a `map` inside a `map` rendered the outer elements with every inner list
+  // empty. The hint is the scope the clone is being rendered in, and it wins
+  // whenever the walk found nothing better.
+  const found = findScope(anchor);
+  const scope = found === rootScope && hint ? hint : found;
   const local = scope.child({
     $t: (index: number, at: Scope) => ({ [TEMPLATE]: true, index, scope: at }),
   });
 
   const runner = effect(() => {
-    const value = evaluate(ast, local);
+    // A region is a function boundary too. Without unwrapping here, a
+    // top-level `{if (a) return (<p>x</p>)}` handed the renderer the return
+    // signal itself and the page showed "[object Object]".
+    const value = unwrap(evaluate(ast, local));
     const out: Node[] = [];
     render(value, templates, local, out);
 
@@ -436,7 +453,21 @@ export function readDeclarationBlock(root: ParentNode = document.body): Record<s
  */
 export function activateJsx(): void {
   const work = pending.splice(0, pending.length);
-  for (const run of work) run();
+  for (const run of work) {
+    // One region must not take the rest of the page with it.
+    //
+    // This loop had no guard, so the first expression that threw ended it, and
+    // every region after that one silently never rendered. The symptom was
+    // baffling from the outside: the first two lists on a page worked and the
+    // remaining fourteen were empty, with a single unrelated error in the
+    // console. A broken expression should cost its own region and nothing else.
+    try {
+      run();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[Voodoo] a JSX region failed to render', error);
+    }
+  }
 }
 
 /**

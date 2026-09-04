@@ -1,6 +1,6 @@
 import { socketSupported, createSocket, socket } from './chunk-R5ETIJM7.js';
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-R5ETIJM7.js';
-import { evaluateIn, readAttr } from './chunk-I3AF6CVN.js';
+import { evaluateIn, readAttr } from './chunk-C72Y4OAX.js';
 import { reactive } from './chunk-5PIAZICF.js';
 import { warnAlias } from './chunk-3U3S2KO4.js';
 import { parseDuration } from './chunk-F6HSKCEY.js';

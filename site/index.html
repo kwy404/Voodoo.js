@@ -326,6 +326,20 @@
       }
 
       /* -------------------------------------------------------------- hero */
+      /* The JSX line. Set apart from the lead above it because it is the one
+         claim on this page that no other library can make. */
+      .lead-jsx {
+        margin-top: 1rem;
+        padding: 0.9rem 1.1rem;
+        border-left: 3px solid var(--accent);
+        border-radius: 0 8px 8px 0;
+        background: color-mix(in srgb, var(--accent) 7%, transparent);
+        font-size: 1rem;
+      }
+      .lead-jsx code {
+        white-space: nowrap;
+      }
+
       .hero {
         padding: 84px 0 72px;
       }
@@ -988,6 +1002,17 @@
                 Reactivity, components, HTTP, forms and a UI kit, written as attributes on the
                 markup you already have. One script tag. No build step, no configuration, no
                 dependencies at runtime.
+              </p>
+
+              <!-- The differentiator, stated where the eye lands rather than
+                   buried in the feature list further down. Every other way to
+                   write JSX needs a toolchain between the file you edit and the
+                   file the browser loads. -->
+              <p class="lead lead-jsx">
+                <strong>And JSX, in a plain .html file.</strong> No compiler, no bundler, no
+                transform. <code>{ fruits.map(f =&gt; (&lt;li&gt;{ f }&lt;/li&gt;)) }</code> written
+                straight into the markup, reactive, under a strict CSP.
+                <a href="playground.html#jsx-map">Try it in the playground</a>.
               </p>
 
               <div class="cta">

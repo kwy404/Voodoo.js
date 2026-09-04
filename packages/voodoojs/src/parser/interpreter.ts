@@ -132,6 +132,23 @@ export class VoodooRuntimeError extends Error {
 const SPREAD = Symbol('spread');
 
 /**
+ * Carries the value of a `return` up to the function that owns it.
+ *
+ * A class rather than a thrown exception, because several `evaluate` call sites
+ * catch and swallow errors on purpose so that one broken attribute cannot take
+ * a page down, and a `return` would have been swallowed with them. It is
+ * unwrapped in `callFunction`, which is the only place a function body ends.
+ */
+class ReturnSignal {
+  constructor(readonly value: unknown) {}
+}
+
+/** Unwraps a body's result, so a `return` never escapes its own function. */
+export function unwrap(value: unknown): unknown {
+  return value instanceof ReturnSignal ? value.value : value;
+}
+
+/**
  * Keys that open the prototype chain and are thus outside the reach of
  * template expressions.
  *
@@ -494,7 +511,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
           owner !== null && typeof owner === 'object'
             ? scope.child(owner as Record<string, unknown>)
             : scope;
-        return evaluate(methodBody, base.child(vars));
+        return unwrap(evaluate(methodBody, base.child(vars)));
       };
     }
 
@@ -502,7 +519,7 @@ export function evaluate(node: Node, scope: EvalScope): any {
       const params = node.params;
       const body = node.body;
       return (...args: unknown[]) =>
-        evaluate(body, scope.child(bindParams(params, args, scope)));
+        unwrap(evaluate(body, scope.child(bindParams(params, args, scope))));
     }
 
     case 'obj': {
@@ -550,9 +567,20 @@ export function evaluate(node: Node, scope: EvalScope): any {
       return out;
     }
 
+    case 'return':
+      // Wrapped rather than thrown. An exception would be caught by the
+      // `evaluate` call sites that deliberately swallow errors, and a `return`
+      // is not an error. The wrapper travels up through `seq` and `if` and is
+      // unwrapped at the function boundary, in `callFunction`.
+      return new ReturnSignal(node.a ? evaluate(node.a, scope) : undefined);
+
     case 'seq': {
       let last: unknown;
-      for (const stmt of node.body) last = evaluate(stmt, scope);
+      for (const stmt of node.body) {
+        last = evaluate(stmt, scope);
+        // Everything after a `return` in the same block is dead.
+        if (last instanceof ReturnSignal) return last;
+      }
       return last;
     }
   }

@@ -1,12 +1,12 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-JNRO4MX7.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-JNRO4MX7.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-B5NW2FK2.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-B5NW2FK2.js';
 export { gpu, reflectWgsl } from './chunk-32QB4RIE.js';
 import { http } from './chunk-OL43Y2J5.js';
 export { HttpError, http, request } from './chunk-OL43Y2J5.js';
 import { devtoolsBus } from './chunk-R5ETIJM7.js';
 export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-R5ETIJM7.js';
-import { magic, markSkipChildren, destroy, readAttr, rootScope, findScope, walk, evaluate, parse, Scope, getScope, hadDirectives, addCleanup, collectDirectives, getEffectScopes, evaluateIn } from './chunk-I3AF6CVN.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-I3AF6CVN.js';
+import { magic, markSkipChildren, destroy, readAttr, rootScope, findScope, walk, evaluate, parse, Scope, getScope, hadDirectives, unwrap, addCleanup, collectDirectives, getEffectScopes, evaluateIn } from './chunk-C72Y4OAX.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-C72Y4OAX.js';
 import { reactive, warn, handleError, queuePostFlush, effect, nextTick } from './chunk-5PIAZICF.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-5PIAZICF.js';
 import { warnAlias } from './chunk-3U3S2KO4.js';
@@ -6639,6 +6639,7 @@ function render(value, templates, scope, out) {
     const clone2 = source.cloneNode(true);
     const at = handle.scope ?? scope;
     applyRegions(clone2, at);
+    activateJsx();
     walk(clone2, at);
     out.push(clone2);
     return;
@@ -6671,12 +6672,12 @@ function applyRegions(root, parentScope) {
       child = next;
       continue;
     }
-    install(root, collected);
+    install(root, collected, scope);
     child = collected.nodes[collected.nodes.length - 1]?.nextSibling;
   }
 }
 var pending = [];
-function install(parent, collected) {
+function install(parent, collected, hint) {
   const { source, templates, nodes, tail } = collected;
   let ast;
   try {
@@ -6696,12 +6697,13 @@ function install(parent, collected) {
   let rendered = [];
   pending.push(() => activateRegion());
   function activateRegion() {
-    const scope = findScope(anchor);
+    const found = findScope(anchor);
+    const scope = found === rootScope && hint ? hint : found;
     const local = scope.child({
       $t: (index, at) => ({ [TEMPLATE]: true, index, scope: at })
     });
     const runner = effect(() => {
-      const value = evaluate(ast, local);
+      const value = unwrap(evaluate(ast, local));
       const out = [];
       render(value, templates, local, out);
       for (const node of rendered) node.remove();
@@ -6737,7 +6739,13 @@ function readDeclarationBlock(root = document.body) {
 }
 function activateJsx() {
   const work = pending.splice(0, pending.length);
-  for (const run of work) run();
+  for (const run of work) {
+    try {
+      run();
+    } catch (error) {
+      console.error("[Voodoo] a JSX region failed to render", error);
+    }
+  }
 }
 function extractJsx(root = document.body) {
   const data = readDeclarationBlock(root);

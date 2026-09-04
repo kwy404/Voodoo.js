@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><script src="voodoo.full.min.js" defer></script></head><body>
+<div id="b" v-data="{ n:[3,1,2], p:[{n:'Note',q:5},{n:'Mouse',q:0},{n:'Tec',q:7}], m:[[1,2],[3,4]] }">
+<ul id="b27">{n.map((x,i) => { const dobro = x*2; return (<li>{i}:{x} dobro={dobro}</li>); })}</ul>
+<ul id="b29">{p.map(item => { if (item.q === 0) { return (<li>{item.n}: zerado</li>); } return (<li>{item.n}: ok</li>); })}</ul>
+<div id="b31">{[{user:{name:'Ana'}},{user:null}].map((x,i) => (<p>{i}: {x.user?.name ?? 'sem-user'}</p>))}</div>
+<ul id="s5">{Array.from({length:20},(_,i)=>i+1).filter(x=>x%2===0).map(x=>x*10).filter(x=>x>50).slice(0,5).map((x,i)=>(<li>{i}:{x}</li>))}</ul>
+<ul id="s6">{n.reduce((acc,x)=>{ acc.push(x); acc.push(x*10); return acc; },[]).map(x=>(<li>{x}</li>))}</ul>
+<ul id="s7">{n.map((x,i) => (<li>{`item-${i}-valor-${x}`}</li>))}</ul>
+<ul id="s8">{n.map(x => (<li>{(() => { const d = x*2; return `${d}` })()}</li>))}</ul>
+<div id="con1">{console.log('t1'); <b>console-ok</b>}</div>
+<div>{if(n[0] === 3) (<p>n[0] é 3 aaa </p>) else {(<p>n[0] n é 3 </p>)}}</div>
+<div id="b24">{m.map((linha,i) => (<div><b>L{i}</b><ul>{linha.map((x,j) => (<li>[{i},{j}]={x}</li>))}</ul></div>))}</div>
+</div></body></html>

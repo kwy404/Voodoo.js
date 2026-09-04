@@ -24,9 +24,116 @@ No mandatory build step · No runtime dependencies · No Virtual DOM · No confi
 
 Everything above runs in the browser, built with Voodoo.js itself.
 
-[Install](#installation) · [Quick start](#quick-start) · [Benchmarks](#performance) · [Contributing](#contributing) · [Português](README.pt-BR.md)
+[JSX in plain HTML](#jsx-in-plain-html) · [Install](#installation) · [Quick start](#quick-start) · [Benchmarks](#performance) · [Contributing](#contributing) · [Português](README.pt-BR.md)
 
 </div>
+
+## JSX in plain HTML
+
+Save this as `index.html` and open it. There is no build step, no bundler, no
+compiler and no JSX transform.
+
+```html
+<!doctype html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.10/dist/voodoo.full.min.js" defer></script>
+</head>
+<body>
+
+{
+  const user = 'Ana';
+  const fruits = ['apple', 'pear', 'grape'];
+}
+
+<h1>Hello, {user}!</h1>
+
+<ul>
+  {fruits.map((fruit) => (
+    <li>{fruit}</li>
+  ))}
+</ul>
+
+</body>
+</html>
+```
+
+That is the differentiator. Every other way to write JSX needs a toolchain
+between the file you edit and the file the browser loads. This one is the file
+the browser loads.
+
+Conditionals return elements the way they do in JSX, and one way they do not:
+
+```html
+<p>{loggedIn ? <b>Welcome back</b> : <b>Please sign in</b>}</p>
+<p>{loggedIn && <b>Only when true</b>}</p>
+
+<p>
+  {if (level === 1) (<b>one</b>)
+   else if (level === 2) (<b>two</b>)
+   else (<b>something else</b>)}
+</p>
+```
+
+A real `if / else if / else` that returns elements is not something JSX itself
+offers.
+
+Callbacks have real bodies, so branching per item reads the way you would write
+it anywhere else:
+
+```html
+<ul>
+  {products.map(item => {
+
+    if (item.stock === 0) {
+      return (<li>{item.name}: out of stock</li>);
+    }
+
+    const label = item.stock > 6 ? 'plenty' : 'a few';
+    return (<li>{item.name}: {label}</li>);
+
+  })}
+</ul>
+```
+
+It is reactive. A region is an effect, so `items.push(...)` re-renders the list,
+and it composes with everything else: `v-data`, `@click`, `v-model`, stores.
+
+### How it can possibly work
+
+The browser has already parsed the page, and what it leaves behind is
+recoverable. For the list above the DOM is three siblings: the text
+`{fruits.map((fruit) => (`, the element `<li>{fruit}</li>`, and the text `))}`.
+The element is not damage to route around, it is the template. Rejoining the
+text with a placeholder where the element sat reconstructs the expression
+exactly as it was typed, and it then runs through the same lexer, parser and
+interpreter as every other expression. Nothing is compiled and nothing is
+evaluated as a string, so it still works under a strict Content Security Policy.
+
+### The two rules that keep it out of your way
+
+A region is only claimed when an **element** sits inside the braces. `{ count }`
+on its own is ordinary interpolation, and a stray `{` in prose never balances.
+
+And `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` and
+`noscript` are never scanned, so a page full of example code stays a page full
+of example code.
+
+### One thing HTML will not allow
+
+Attribute values have to be quoted:
+
+```html
+<div style="{{ backgroundColor: color }}">   <!-- works -->
+<div style={{ backgroundColor: color }}>     <!-- does not -->
+```
+
+That is the order things happen in, not a decision. An unquoted attribute value
+ends at the first space, so the browser turns the second line into six separate
+attributes before any script has run, lowercasing their names on the way. There
+is nothing left to recover.
+
+**[Try all ten examples in the playground](https://kwy404.github.io/Voodoo.js/playground.html)**
 
 ---
 

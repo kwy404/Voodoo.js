@@ -37,7 +37,8 @@ export type Node =
   | { t: 'if'; test: Node; cons: Node; alt: Node | null }
   | { t: 'obj'; props: ObjectProperty[] }
   | { t: 'arr'; els: Array<Node | { spread: Node }> }
-  | { t: 'seq'; body: Node[] };
+  | { t: 'seq'; body: Node[] }
+  | { t: 'return'; a: Node | null };
 
 export interface ObjectProperty {
   /** Fixed key name, or `null` when the key is computed. */
@@ -240,6 +241,29 @@ class Parser {
    * language is an expression.
    */
   private parseStatement(): Node {
+    // `return expr` in a block body.
+    //
+    // Blocks already yielded their last value, so `x => { const d = x * 2; d }`
+    // worked while the way anybody actually writes it did not: `return` was
+    // read as an ordinary identifier, and the interpreter reported
+    // `"return" was not found. Expressions cannot reach window: expose it with
+    // V.config.globals.return`, which is a baffling thing to be told about a
+    // keyword.
+    //
+    // It unwinds, which is the whole point. The first version merely yielded the
+    // value, and `if (q === 0) { return 'zerado' } return 'ok'` then answered
+    // "ok" for every item, because the `if` result was discarded and the last
+    // statement won. A wrong answer with no error is worse than the missing
+    // keyword was.
+    if (this.peek().type === 'ident' && this.peek().value === 'return') {
+      this.next();
+      // `return` alone, or followed by a separator, yields undefined.
+      if (this.isPunct(';') || this.isPunct(',') || this.isPunct('}') || this.peek().type === 'eof') {
+        return { t: 'return', a: null };
+      }
+      return { t: 'return', a: this.parseExpression() };
+    }
+
     if (this.peek().type === 'ident' && this.peek().value === 'if' && this.isPunct('(', 1)) {
       this.next(); // if
       this.expect('(');

@@ -582,6 +582,232 @@
         '  <div style="height:120px"></div>',
         '</div>'
       ]
-    }
+    },
+
+    // --------------------------------------------------------- jsx
+    {
+      id: 'jsx-map',
+      group: 'jsx',
+      title: 'JSX in plain HTML',
+      desc: 'Write { list.map(x => (<li>{x}</li>)) } straight in the markup. No build step, no compiler.',
+      code: [
+        '<div v-data="{ fruits: [\'apple\', \'pear\', \'grape\'] }">',
+        '  <ul>',
+        '    {fruits.map((fruit) => (',
+        '      <li>{fruit}</li>',
+        '    ))}',
+        '  </ul>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-conditional',
+      group: 'jsx',
+      title: 'Conditionals that return elements',
+      desc: 'Ternary, &&, and a real if/else if/else. The last one is something JSX itself does not have.',
+      code: [
+        '<div v-data="{ level: 2, loggedIn: true }">',
+        '  <p>{loggedIn ? <b>Welcome back</b> : <b>Please sign in</b>}</p>',
+        '',
+        '  <p>{loggedIn && <b>Shown only when true</b>}</p>',
+        '',
+        '  <p>',
+        '    {if (level === 1)',
+        '      (<b>one</b>)',
+        '    else if (level === 2)',
+        '      (<b>two</b>)',
+        '    else',
+        '      (<b>something else</b>)}',
+        '  </p>',
+        '',
+        '  <button @click="level = level === 1 ? 2 : 1">toggle level</button>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-objects',
+      group: 'jsx',
+      title: 'Filter, sort and read fields',
+      desc: 'Chain the array methods you already know, then read the object in the template.',
+      code: [
+        '<div v-data="{ products: [',
+        '  { name: \'Laptop\', stock: 5 },',
+        '  { name: \'Chair\', stock: 0 },',
+        '  { name: \'Mouse\', stock: 12 }',
+        '] }">',
+        '  <ul>',
+        '    {products',
+        '      .filter(p => p.stock > 0)',
+        '      .sort((a, b) => b.stock - a.stock)',
+        '      .map((p, i) => (',
+        '        <li>#{i + 1} {p.name} has {p.stock}</li>',
+        '      ))',
+        '    }',
+        '  </ul>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-block-body',
+      group: 'jsx',
+      title: 'A callback with a real body',
+      desc: 'const, if and return work inside the callback, so branching per item reads the way you would write it.',
+      code: [
+        '<div v-data="{ products: [',
+        '  { name: \'Laptop\', stock: 5 },',
+        '  { name: \'Chair\', stock: 0 },',
+        '  { name: \'Mouse\', stock: 12 }',
+        '] }">',
+        '  <ul>',
+        '    {products.map(item => {',
+        '',
+        '      if (item.stock === 0) {',
+        '        return (<li>{item.name}: out of stock</li>);',
+        '      }',
+        '',
+        '      const label = item.stock > 6 ? \'plenty\' : \'a few\';',
+        '      return (<li>{item.name}: {label} ({item.stock})</li>);',
+        '',
+        '    })}',
+        '  </ul>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-nested',
+      group: 'jsx',
+      title: 'A map inside a map',
+      desc: 'Templates nest, and the inner one still sees the outer loop variable.',
+      code: [
+        '<div v-data="{ groups: [',
+        '  { title: \'Fruit\', items: [\'apple\', \'pear\'] },',
+        '  { title: \'Tools\', items: [\'hammer\', \'saw\', \'drill\'] }',
+        '] }">',
+        '  {groups.map((group, g) => (',
+        '    <section>',
+        '      <h3>{group.title}</h3>',
+        '      <ul>',
+        '        {group.items.map((item, i) => (',
+        '          <li>{g}.{i} {item}</li>',
+        '        ))}',
+        '      </ul>',
+        '    </section>',
+        '  ))}',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-reactive',
+      group: 'jsx',
+      title: 'It stays live',
+      desc: 'A JSX region is a reactive effect, so mutating the array re-renders the list.',
+      code: [
+        '<div v-data="{ items: [1, 2, 3] }">',
+        '  <button @click="items.push(items.length + 1)">add</button>',
+        '  <button @click="items.pop()">remove</button>',
+        '  <button @click="items.reverse()">reverse</button>',
+        '',
+        '  <p>{items.length > 0 ? <b>{items.length} items</b> : <b>empty</b>}</p>',
+        '',
+        '  <ul>',
+        '    {items.map((x, i) => (',
+        '      <li>{i}: {x}</li>',
+        '    ))}',
+        '  </ul>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-declaration-block',
+      group: 'jsx',
+      title: 'Declaring the data in the page',
+      desc: 'A { const ... } block at the top of the body puts names in scope, with no v-data anywhere.',
+      code: [
+        '{',
+        '  const user = \'Ana\';',
+        '  const tags = [\'html\', \'css\', \'js\'];',
+        '}',
+        '',
+        '<h1>Hello, {user}!</h1>',
+        '',
+        '<ul>',
+        '  {tags.map(tag => (',
+        '    <li>#{tag}</li>',
+        '  ))}',
+        '</ul>'
+      ]
+    },
+    {
+      id: 'jsx-table',
+      group: 'jsx',
+      title: 'Building a table',
+      desc: 'Rows are a map, and the class on each row comes from the item.',
+      code: [
+        '<div v-data="{ rows: [',
+        '  { name: \'Ana\', score: 92 },',
+        '  { name: \'Bruno\', score: 47 },',
+        '  { name: \'Caio\', score: 78 }',
+        '] }">',
+        '  <table>',
+        '    <thead>',
+        '      <tr><th>Name</th><th>Score</th><th>Result</th></tr>',
+        '    </thead>',
+        '    <tbody>',
+        '      {rows.map(r => (',
+        '        <tr>',
+        '          <td>{r.name}</td>',
+        '          <td>{r.score}</td>',
+        '          <td>{r.score >= 60 ? <b>pass</b> : <b>fail</b>}</td>',
+        '        </tr>',
+        '      ))}',
+        '    </tbody>',
+        '  </table>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-search',
+      group: 'jsx',
+      title: 'A live filter',
+      desc: 'v-model feeds the same expression the list is built from, so typing narrows it as you go.',
+      code: [
+        '<div v-data="{ q: \'\', people: [\'Ana\', \'Bruno\', \'Carla\', \'Diego\', \'Elena\'] }">',
+        '  <input v-model="q" placeholder="type a name">',
+        '',
+        '  <ul>',
+        '    {people',
+        '      .filter(p => p.toLowerCase().includes(q.toLowerCase()))',
+        '      .map(p => (',
+        '        <li>{p}</li>',
+        '      ))',
+        '    }',
+        '  </ul>',
+        '',
+        '  <p>',
+        '    {people.filter(p => p.toLowerCase().includes(q.toLowerCase())).length === 0',
+        '      ? <b>nothing matched</b>',
+        '      : <b>keep typing to narrow it</b>}',
+        '  </p>',
+        '</div>'
+      ]
+    },
+    {
+      id: 'jsx-numbers',
+      group: 'jsx',
+      title: 'Generating a range',
+      desc: 'Array.from builds the list, and the template decides what each item looks like.',
+      code: [
+        '<div v-data="{ n: 12 }">',
+        '  <input type="range" min="1" max="24" v-model.number="n">',
+        '  <p>{n} squares</p>',
+        '',
+        '  <div>',
+        '    {Array.from({ length: n }, (_, i) => i + 1).map(i => (',
+        '      <span>{i % 3 === 0 ? <b>[{i}]</b> : <span>{i} </span>}</span>',
+        '    ))}',
+        '  </div>',
+        '</div>'
+      ]
+    },
   ];
 }());

@@ -77,6 +77,47 @@ describe('a conditional that returns an element', () => {
   });
 });
 
+describe('every conditional form', () => {
+  const state = { g: 2, ok: true };
+
+  it('if with a bare template', () => {
+    expect(text(render('<div>{if (g === 2) (<p>yes</p>)}</div>', state))).toBe('yes');
+  });
+
+  it('if with an explicit return', () => {
+    // This one rendered "[object Object]". A region is a function boundary too,
+    // and without unwrapping there the return signal itself reached the
+    // renderer and was stringified.
+    expect(text(render('<div>{if (g === 2) return (<p>yes</p>)}</div>', state))).toBe('yes');
+  });
+
+  it('if with a block and a return', () => {
+    expect(text(render('<div>{if (g === 2) { return (<p>yes</p>); }}</div>', state))).toBe('yes');
+  });
+
+  it('if and else', () => {
+    expect(text(render('<div>{if (g === 9) (<p>a</p>) else (<p>b</p>)}</div>', state))).toBe('b');
+  });
+
+  it('if, else if and else', () => {
+    expect(
+      text(
+        render('<div>{if (g === 1) (<p>one</p>) else if (g === 2) (<p>two</p>) else (<p>other</p>)}</div>', state)
+      )
+    ).toBe('two');
+  });
+
+  it('a nested ternary', () => {
+    expect(
+      text(render('<div>{g === 1 ? <p>one</p> : g === 2 ? <p>two</p> : <p>other</p>}</div>', state))
+    ).toBe('two');
+  });
+
+  it('renders nothing when an if has no else and the test is false', () => {
+    expect(text(render('<div>{if (g === 9) (<p>a</p>)}</div>', state))).toBe('');
+  });
+});
+
 describe('map', () => {
   it('renders one element per item', () => {
     const host = render('<ul>{list.map((x) => (<li>{x}</li>))}</ul>', { list: ['a', 'b', 'c'] });
@@ -135,6 +176,84 @@ describe('map', () => {
       list: [{ nome: 'ana' }, { nome: 'bo' }],
     });
     expect(items(host)).toEqual(['ana', 'bo']);
+  });
+});
+
+describe('a callback with a block body', () => {
+  it('declares a local and returns a template', () => {
+    const host = render('<ul>{list.map((x, i) => { const d = x * 2; return (<li>{i}:{d}</li>); })}</ul>', {
+      list: [1, 2],
+    });
+    expect(items(host)).toEqual(['0:2', '1:4']);
+  });
+
+  it('returns early from an if', () => {
+    // The one that produced a WRONG ANSWER rather than an error. The first
+    // version of `return` yielded its value without unwinding, so the `if`
+    // branch was computed, discarded, and the last statement won: every item
+    // came out "ok", including the one with zero stock.
+    const host = render(
+      '<ul>{list.map(p => { if (p.q === 0) { return (<li>{p.n}: empty</li>); } return (<li>{p.n}: ok</li>); })}</ul>',
+      {
+        list: [
+          { n: 'a', q: 5 },
+          { n: 'b', q: 0 },
+          { n: 'c', q: 7 },
+        ],
+      }
+    );
+    expect(items(host)).toEqual(['a: ok', 'b: empty', 'c: ok']);
+  });
+
+  it('runs a statement before returning', () => {
+    const host = render('<ul>{list.map(x => { const y = x + 1; return (<li>{y}</li>); })}</ul>', {
+      list: [1],
+    });
+    expect(items(host)).toEqual(['2']);
+  });
+
+  it('does not let the return signal escape into the rendered value', () => {
+    // `unwrap` at the function boundary. Without it the signal object travels
+    // out of the callback, `map` collects wrappers instead of values, and each
+    // item renders as "[object Object]" rather than the number.
+    const host = render('<ul>{list.map(x => { return (<li>{x}</li>) })}</ul>', { list: [1, 2] });
+    expect(items(host)).toEqual(['1', '2']);
+  });
+
+  it('returns a computed value, not a wrapper, from a nested call', () => {
+    const host = render('<ul>{list.map(x => (<li>{(() => { return x * 3 })()}</li>))}</ul>', {
+      list: [2],
+    });
+    expect(items(host)).toEqual(['6']);
+  });
+});
+
+describe('nested', () => {
+  it('renders a map inside a map', () => {
+    // A clone is not in the document when its own regions activate, so
+    // `findScope` walked up to nothing and fell back to the root, where the
+    // outer callback's variable does not exist. Every outer element rendered
+    // with its inner list empty.
+    const host = render(
+      '<div>{rows.map((row, i) => (<div><b>L{i}</b><ul>{row.map((x, j) => (<li>[{i},{j}]={x}</li>))}</ul></div>))}</div>',
+      {
+        rows: [
+          [1, 2],
+          [3, 4],
+        ],
+      }
+    );
+    expect(items(host)).toEqual(['[0,0]=1', '[0,1]=2', '[1,0]=3', '[1,1]=4']);
+  });
+
+  it('keeps one failing region from taking the rest of the page', () => {
+    // This loop had no guard, so the first expression that threw ended it and
+    // every region after it silently never rendered.
+    const host = render(
+      '<div><ul>{bad.map(x => (<li>{x}</li>))}</ul><ul>{good.map(x => (<li>{x}</li>))}</ul></div>',
+      { good: ['a', 'b'] }
+    );
+    expect(items(host)).toEqual(['a', 'b']);
   });
 });
 

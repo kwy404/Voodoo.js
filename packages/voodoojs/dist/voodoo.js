@@ -1237,6 +1237,13 @@ ${pointer}`);
      * language is an expression.
      */
     parseStatement() {
+      if (this.peek().type === "ident" && this.peek().value === "return") {
+        this.next();
+        if (this.isPunct(";") || this.isPunct(",") || this.isPunct("}") || this.peek().type === "eof") {
+          return { t: "return", a: null };
+        }
+        return { t: "return", a: this.parseExpression() };
+      }
       if (this.peek().type === "ident" && this.peek().value === "if" && this.isPunct("(", 1)) {
         this.next();
         this.expect("(");
@@ -1813,6 +1820,14 @@ Expression: ${expression}` : message);
     }
   };
   var SPREAD = /* @__PURE__ */ Symbol("spread");
+  var ReturnSignal = class {
+    constructor(value) {
+      __publicField(this, "value", value);
+    }
+  };
+  function unwrap(value) {
+    return value instanceof ReturnSignal ? value.value : value;
+  }
   var BLOCKED_KEYS = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
   function chaveBloqueada(key) {
     return typeof key === "string" && BLOCKED_KEYS.has(key);
@@ -2075,13 +2090,13 @@ Expression: ${expression}` : message);
           const vars = bindParams(methodParams, args, scope);
           const owner = this;
           const base = owner !== null && typeof owner === "object" ? scope.child(owner) : scope;
-          return evaluate(methodBody, base.child(vars));
+          return unwrap(evaluate(methodBody, base.child(vars)));
         };
       }
       case "arrow": {
         const params = node.params;
         const body = node.body;
-        return (...args) => evaluate(body, scope.child(bindParams(params, args, scope)));
+        return (...args) => unwrap(evaluate(body, scope.child(bindParams(params, args, scope))));
       }
       case "obj": {
         const out = {};
@@ -2119,9 +2134,14 @@ Expression: ${expression}` : message);
         }
         return out;
       }
+      case "return":
+        return new ReturnSignal(node.a ? evaluate(node.a, scope) : void 0);
       case "seq": {
         let last;
-        for (const stmt of node.body) last = evaluate(stmt, scope);
+        for (const stmt of node.body) {
+          last = evaluate(stmt, scope);
+          if (last instanceof ReturnSignal) return last;
+        }
         return last;
       }
     }

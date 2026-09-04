@@ -27,6 +27,9 @@
   var timer = null;
 
   var GROUP_LABEL = {
+    // First on purpose. It is the thing this library has that the others do
+    // not, so it is the first thing somebody opening the playground sees.
+    jsx: 'JSX in plain HTML',
     basics: 'Basics',
     forms: 'Forms',
     events: 'Events',
