@@ -7,6 +7,35 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-04
+
+### Fixed
+
+- **JSX works on a page that calls `V.start()` itself.** The two passes lived in
+  `bootstrap.ts`, which returns early when the script tag carries `data-manual`,
+  so any page that configures the library and starts it by hand got no JSX at
+  all. The project's own playground does exactly that, and rendered every JSX
+  example as literal text while correctly reporting version 0.10.0.
+
+  They hook into `start` now, through an `onStart` registry in
+  `runtime/walker.ts`. That is the only place both sides of the walk are
+  guaranteed to run, whoever called it. A registry rather than a direct call,
+  because `start` is core and JSX is only in the full build.
+
+### Changed
+
+- The core build's size budget moves from 47 KB to 48 KB gzipped. This is
+  deliberate growth being paid for rather than a limit being dodged: between
+  0.9.0 and 0.10.0 the expression language gained `new`, `delete`, octal
+  literals, six bitwise operators, three shifts, `return`, and default, rest and
+  destructured parameters, taking the core from 46.03 to 47.01. The differential
+  suite records what that bought, with expressions answering differently from
+  JavaScript going from 4 to 0 and unparseable valid JavaScript from 234 to 3.
+  Compacting the new registry saved almost nothing, so the honest entry is that
+  the feature costs what it costs.
+
+Full notes: [v0.10.1](https://github.com/kwy404/Voodoo.js/releases/tag/v0.10.1)
+
 ## [0.10.0] - 2026-09-04
 
 **JSX written directly in ordinary HTML, with no build step and no compiler.**

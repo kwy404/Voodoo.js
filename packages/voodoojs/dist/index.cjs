@@ -2939,12 +2939,27 @@ function resolveComponentTag(tagName) {
 var componentAliases = /* @__PURE__ */ new Map();
 var started = false;
 var observer = null;
+var startHooks = [];
+function onStart(hook) {
+  startHooks.push(hook);
+}
+function runPhase(target2, after) {
+  for (const hook of startHooks) {
+    try {
+      hook(target2, after);
+    } catch (error) {
+      console.error("[Voodoo] a start hook failed", error);
+    }
+  }
+}
 function start(root) {
   if (typeof document === "undefined") return;
   const target2 = root ?? exports.config.root ?? document.body;
   if (!target2) return;
   Object.assign(allowedGlobals, exports.config.globals);
+  runPhase(target2, false);
   walk(target2, rootScope);
+  runPhase(target2, true);
   if (!started) {
     started = true;
     if (exports.config.autoDiscover) observeDOM(target2);
@@ -20700,6 +20715,10 @@ var OPAQUE = /* @__PURE__ */ new Set([
   "NOSCRIPT"
 ]);
 magic("$__jsx", (scope) => scope);
+onStart((root, after) => {
+  if (after) activateJsx();
+  else extractJsx(root);
+});
 var TEMPLATE = /* @__PURE__ */ Symbol("voodoo.jsx.template");
 function isTemplate(value) {
   return typeof value === "object" && value !== null && TEMPLATE in value;

@@ -2931,12 +2931,24 @@ function resolveComponentTag(tagName) {
 var componentAliases = /* @__PURE__ */ new Map();
 var started = false;
 var observer = null;
+var startHooks = [];
+function runPhase(target, after) {
+  for (const hook of startHooks) {
+    try {
+      hook(target, after);
+    } catch (error) {
+      console.error("[Voodoo] a start hook failed", error);
+    }
+  }
+}
 function start(root) {
   if (typeof document === "undefined") return;
   const target = root ?? config.root ?? document.body;
   if (!target) return;
   Object.assign(allowedGlobals, config.globals);
+  runPhase(target, false);
   walk(target, rootScope);
+  runPhase(target, true);
   if (!started) {
     started = true;
     if (config.autoDiscover) observeDOM(target);

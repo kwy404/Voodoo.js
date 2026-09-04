@@ -54,7 +54,7 @@ import { evaluate, unwrap } from '../parser/interpreter';
 import { parse, type Node as AstNode } from '../parser/parser';
 import { Scope } from '../runtime/scope';
 import { config } from '../runtime/registry';
-import { addCleanup, findScope, getScope, walk } from '../runtime/walker';
+import { addCleanup, findScope, getScope, onStart, walk } from '../runtime/walker';
 
 /**
  * Elements whose contents are never scanned.
@@ -93,6 +93,19 @@ const OPAQUE = /* @__PURE__ */ new Set([
  * with every interpolation inside them unresolved.
  */
 magic('$__jsx', (scope) => scope);
+
+/**
+ * Hooks into `V.start()` itself, not into the bootstrap.
+ *
+ * The bootstrap returns early for `data-manual`, so a page that configures the
+ * library and calls `V.start()` on its own used to get no JSX at all. The
+ * project's own playground does exactly that, and rendered every JSX example as
+ * literal text while reporting the right version.
+ */
+onStart((root, after) => {
+  if (after) activateJsx();
+  else extractJsx(root);
+});
 
 /** A handle to one element that was written inline inside an expression. */
 interface Template {

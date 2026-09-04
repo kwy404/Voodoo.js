@@ -2043,12 +2043,27 @@ function resolveComponentTag(tagName) {
 var componentAliases = /* @__PURE__ */ new Map();
 var started = false;
 var observer = null;
+var startHooks = [];
+function onStart(hook) {
+  startHooks.push(hook);
+}
+function runPhase(target, after) {
+  for (const hook of startHooks) {
+    try {
+      hook(target, after);
+    } catch (error) {
+      console.error("[Voodoo] a start hook failed", error);
+    }
+  }
+}
 function start(root) {
   if (typeof document === "undefined") return;
   const target = root ?? config.root ?? document.body;
   if (!target) return;
   Object.assign(allowedGlobals, config.globals);
+  runPhase(target, false);
   walk(target, rootScope);
+  runPhase(target, true);
   if (!started) {
     started = true;
     if (config.autoDiscover) observeDOM(target);
@@ -2086,6 +2101,6 @@ function refresh(root) {
   walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
 }
 
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-OUEXXXTU.js.map
-//# sourceMappingURL=chunk-OUEXXXTU.js.map
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
+//# sourceMappingURL=chunk-3YVKDCYI.js.map
+//# sourceMappingURL=chunk-3YVKDCYI.js.map

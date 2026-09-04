@@ -18,6 +18,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { jsx, activateJsx, applyRegions, readDeclarationBlock } from '../src/jsx';
 import { rootScope } from '../src/runtime/scope';
+import { start } from '../src/runtime/walker';
 import { Scope } from '../src/runtime/scope';
 import { reactive } from '../src/reactivity';
 
@@ -292,6 +293,25 @@ describe('what it must never touch', () => {
   it('keeps text that follows the closing brace', () => {
     const host = render('<div>{ok ? <b>x</b> : <b>y</b>} tail</div>', { ok: true });
     expect(text(host)).toBe('x tail');
+  });
+});
+
+describe('V.start() on its own', () => {
+  it('renders JSX without the bootstrap', async () => {
+    // The bug a user reported against the published playground, which loads the
+    // library with `data-manual` and calls `V.start()` itself. The bootstrap
+    // returns early in that mode, and the JSX phases used to live there, so
+    // every example rendered as literal text while the page reported the right
+    // version. The phases hook into `start` now, which is the only place both
+    // sides of the walk are guaranteed to run.
+    document.body.innerHTML =
+      '<div id="m" v-data="{ list: [\'a\', \'b\'] }"><ul>{list.map(x => (<li>{x}</li>))}</ul></div>';
+
+    start(document.body);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const host = document.getElementById('m')!;
+    expect(items(host)).toEqual(['a', 'b']);
   });
 });
 

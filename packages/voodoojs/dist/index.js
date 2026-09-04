@@ -1,13 +1,13 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-QWQPKMUH.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-QWQPKMUH.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-6M7B24IQ.js';
+export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, validate, validator, viewTransition, whenElement, whenReady } from './chunk-6M7B24IQ.js';
 export { gpu, reflectWgsl } from './chunk-WGMUFP5Q.js';
 import { http } from './chunk-IK4MQQTO.js';
 export { HttpError, http, request } from './chunk-IK4MQQTO.js';
 import { devtoolsBus } from './chunk-HW75QJLQ.js';
 export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-HW75QJLQ.js';
-import { magic, markSkipChildren, destroy, readAttr, rootScope, findScope, walk, evaluate, parse, Scope, getScope, hadDirectives, unwrap, addCleanup, collectDirectives, getEffectScopes, evaluateIn } from './chunk-OUEXXXTU.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-OUEXXXTU.js';
-import { reactive, warn, handleError, queuePostFlush, effect, nextTick } from './chunk-H64IUSGJ.js';
+import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-3YVKDCYI.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-3YVKDCYI.js';
+import { reactive, warn, handleError, effect, queuePostFlush, nextTick } from './chunk-H64IUSGJ.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-H64IUSGJ.js';
 import { warnAlias } from './chunk-EYNFAYEV.js';
 import { parseDuration, formatNumber, formatCurrency, formatDate, relativeTime, device, setFormatDefaults, uid, merge, escapeHtml, truncate, get, titleCase } from './chunk-H3RGM7PR.js';
@@ -6555,6 +6555,10 @@ var OPAQUE = /* @__PURE__ */ new Set([
   "NOSCRIPT"
 ]);
 magic("$__jsx", (scope) => scope);
+onStart((root, after) => {
+  if (after) activateJsx();
+  else extractJsx(root);
+});
 var TEMPLATE = /* @__PURE__ */ Symbol("voodoo.jsx.template");
 function isTemplate(value) {
   return typeof value === "object" && value !== null && TEMPLATE in value;

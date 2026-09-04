@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Voodoo.js — peça de lançamento</title>
+
+    <!--
+      A self-running motion piece, built to be screen recorded.
+
+      1080x1350, the vertical ratio that takes the most height in a LinkedIn
+      feed. It plays once on load, timed against the Portuguese voiceover, and
+      `?loop` replays it so the recording can be retaken without a reload.
+
+      Everything here is CSS animation on a fixed timeline. No library, no video
+      file, no stock footage. The type does the work and there is one idea per
+      screen, which is what the Vue and Stripe launch pieces do and what makes
+      them read at feed size.
+    -->
+
+    <style>
+      :root {
+        --ink: #14111f;
+        --cream: #fbf7f2;
+        --purple: #6d3bf5;
+        --purple-light: #9b7bff;
+        --magenta: #ff3d8b;
+        --mint: #2ed9a5;
+        --muted: #8b84a8;
+
+        --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: #000;
+      }
+
+      /* The recording frame. Fixed pixels rather than viewport units so the
+         capture is the same on any monitor. */
+      .stage {
+        position: relative;
+        width: 1080px;
+        height: 1350px;
+        margin: 0 auto;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* A very slight vignette, so the flat fill does not read as a dead PNG
+         when the feed compresses it. */
+      .stage::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.45));
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0 90px;
+        opacity: 0;
+        text-align: center;
+      }
+
+      /* ---------------------------------------------------------------- type */
+
+      .kicker {
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--purple-light);
+        margin-bottom: 34px;
+      }
+
+      .huge {
+        font-size: 116px;
+        font-weight: 760;
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+      }
+
+      .big {
+        font-size: 84px;
+        font-weight: 720;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+
+      .sub {
+        margin-top: 40px;
+        font-size: 34px;
+        line-height: 1.45;
+        color: var(--muted);
+        max-width: 780px;
+      }
+
+      .accent {
+        color: var(--magenta);
+      }
+      .accent-p {
+        color: var(--purple-light);
+      }
+
+      /* --------------------------------------------------------------- code */
+
+      .code {
+        width: 100%;
+        max-width: 900px;
+        text-align: left;
+        background: #0d0b16;
+        border: 1px solid #2a2340;
+        border-radius: 18px;
+        padding: 40px 44px;
+        font-family: var(--mono);
+        font-size: 30px;
+        line-height: 1.72;
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+      }
+
+      .code .bar {
+        display: flex;
+        gap: 10px;
+        margin: -12px 0 30px;
+      }
+      .code .bar i {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #2a2340;
+      }
+      .filename {
+        margin-left: 14px;
+        font-size: 21px;
+        color: var(--muted);
+        font-family: var(--sans);
+        letter-spacing: 0.02em;
+      }
+
+      .ln {
+        display: block;
+        opacity: 0;
+        white-space: pre;
+      }
+
+      .t-tag { color: #ff7ab2; }
+      .t-attr { color: var(--purple-light); }
+      .t-str { color: var(--mint); }
+      .t-fn { color: #ffd479; }
+      .t-dim { color: #6b6485; }
+      .t-brace { color: var(--magenta); font-weight: 700; }
+
+      /* --------------------------------------------------------------- split */
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 34px;
+        width: 100%;
+        max-width: 940px;
+        align-items: start;
+      }
+      .split .code {
+        font-size: 23px;
+        padding: 30px 28px;
+        max-width: none;
+      }
+
+      .result {
+        background: var(--cream);
+        color: var(--ink);
+        border-radius: 18px;
+        padding: 34px 32px;
+        text-align: left;
+        box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+      }
+      .result h4 {
+        font-size: 22px;
+        color: #6b6485;
+        margin-bottom: 20px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .result li {
+        list-style: none;
+        font-size: 30px;
+        padding: 13px 0;
+        border-bottom: 1px solid #e6e1ee;
+        opacity: 0;
+      }
+      .result li:last-child { border-bottom: 0; }
+
+      /* --------------------------------------------------------------- badges */
+
+      .badges {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 52px;
+      }
+      .badge {
+        border: 1px solid #372e56;
+        border-radius: 999px;
+        padding: 15px 30px;
+        font-size: 27px;
+        color: var(--cream);
+        opacity: 0;
+        white-space: nowrap;
+      }
+
+      /* ---------------------------------------------------------------- logo */
+
+      .mark {
+        width: 132px;
+        height: 132px;
+        margin-bottom: 40px;
+      }
+      .wordmark {
+        font-size: 96px;
+        font-weight: 780;
+        letter-spacing: -0.04em;
+      }
+      .install {
+        margin-top: 46px;
+        font-family: var(--mono);
+        font-size: 34px;
+        color: var(--cream);
+        background: #0d0b16;
+        border: 1px solid #2a2340;
+        border-radius: 14px;
+        padding: 22px 38px;
+      }
+
+      /* ------------------------------------------------------------ keyframes */
+
+      @keyframes in {
+        from { opacity: 0; transform: translateY(26px); }
+        to { opacity: 1; transform: none; }
+      }
+      @keyframes hold {
+        0%, 100% { opacity: 1; }
+      }
+      @keyframes sceneIn {
+        0% { opacity: 0; }
+        4% { opacity: 1; }
+        94% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @keyframes pop {
+        0% { opacity: 0; transform: scale(0.88); }
+        60% { transform: scale(1.03); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+
+      /* Each scene owns a slice of the timeline. The numbers match the
+         voiceover, so a cut lands on a sentence rather than mid-word. */
+      .s1 { animation: sceneIn 6s linear 0s 1 both; }
+      .s2 { animation: sceneIn 8s linear 5.6s 1 both; }
+      .s3 { animation: sceneIn 11s linear 13.4s 1 both; }
+      .s4 { animation: sceneIn 10s linear 24.2s 1 both; }
+      .s5 { animation: sceneIn 10s linear 34s 1 both; }
+      .s6 { animation: sceneIn 10s linear 43.8s 1 both; }
+      .s7 { animation: sceneIn 12s linear 53.6s 1 both; }
+
+      /* Children animate on their own delays, relative to the page timeline. */
+      .d0 { animation: in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+      /* prefers-reduced-motion is respected even here: a recording is made
+         once, but the page is also a page somebody might open. */
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stage" id="stage">
+      <!-- ============================================================ 1. hook -->
+      <section class="scene s1">
+        <div class="huge" style="animation: in 0.5s 0.15s both">Isso é um</div>
+        <div class="huge accent" style="animation: in 0.5s 0.55s both">arquivo HTML.</div>
+        <div class="sub" style="animation: in 0.5s 1.5s both">
+          Sem build. Sem bundler. Sem compilador.
+        </div>
+      </section>
+
+      <!-- ========================================================= 2. the claim -->
+      <section class="scene s2">
+        <div class="kicker" style="animation: in 0.5s 5.9s both">e isso é</div>
+        <div class="huge accent-p" style="animation: in 0.6s 6.3s both">JSX</div>
+        <div class="big" style="animation: in 0.5s 7.1s both">rodando dentro dele.</div>
+      </section>
+
+      <!-- ============================================================= 3. code -->
+      <section class="scene s3">
+        <div class="code">
+          <div class="bar" style="animation: in 0.4s 13.7s both">
+            <i></i><i></i><i></i><span class="filename">index.html</span>
+          </div>
+          <code>
+            <span class="ln" style="animation: in 0.32s 14.1s both"><span class="t-dim">&lt;!doctype html&gt;</span></span>
+            <span class="ln" style="animation: in 0.32s 14.4s both"><span class="t-tag">&lt;script</span> <span class="t-attr">src</span>=<span class="t-str">"voodoo.full.min.js"</span> <span class="t-attr">defer</span><span class="t-tag">&gt;&lt;/script&gt;</span></span>
+            <span class="ln" style="animation: in 0.32s 14.7s both"> </span>
+            <span class="ln" style="animation: in 0.32s 15.1s both"><span class="t-brace">{</span></span>
+            <span class="ln" style="animation: in 0.32s 15.4s both">  <span class="t-attr">const</span> frutas = [<span class="t-str">'maçã'</span>, <span class="t-str">'pera'</span>, <span class="t-str">'uva'</span>];</span>
+            <span class="ln" style="animation: in 0.32s 15.7s both"><span class="t-brace">}</span></span>
+            <span class="ln" style="animation: in 0.32s 16s both"> </span>
+            <span class="ln" style="animation: in 0.32s 16.4s both"><span class="t-tag">&lt;ul&gt;</span></span>
+            <span class="ln" style="animation: in 0.32s 16.8s both">  <span class="t-brace">{</span>frutas.<span class="t-fn">map</span>((fruta) =&gt; (</span>
+            <span class="ln" style="animation: in 0.32s 17.2s both">    <span class="t-tag">&lt;li&gt;</span><span class="t-brace">{</span>fruta<span class="t-brace">}</span><span class="t-tag">&lt;/li&gt;</span></span>
+            <span class="ln" style="animation: in 0.32s 17.6s both">  ))<span class="t-brace">}</span></span>
+            <span class="ln" style="animation: in 0.32s 18s both"><span class="t-tag">&lt;/ul&gt;</span></span>
+          </code>
+        </div>
+        <div class="sub" style="animation: in 0.5s 19.2s both; font-size: 30px">
+          Nenhuma outra ferramenta. Salva e abre.
+        </div>
+      </section>
+
+      <!-- ====================================================== 4. code + result -->
+      <section class="scene s4">
+        <div class="kicker" style="animation: in 0.5s 24.5s both">o que o navegador mostra</div>
+        <div class="split">
+          <div class="code" style="animation: in 0.5s 24.9s both">
+            <code>
+              <span class="ln" style="opacity: 1"><span class="t-brace">{</span>produtos</span>
+              <span class="ln" style="opacity: 1">  .<span class="t-fn">filter</span>(p =&gt; p.qtd &gt; <span class="t-str">0</span>)</span>
+              <span class="ln" style="opacity: 1">  .<span class="t-fn">map</span>(p =&gt; (</span>
+              <span class="ln" style="opacity: 1">    <span class="t-tag">&lt;li&gt;</span><span class="t-brace">{</span>p.nome<span class="t-brace">}</span> — <span class="t-brace">{</span>p.qtd<span class="t-brace">}</span><span class="t-tag">&lt;/li&gt;</span></span>
+              <span class="ln" style="opacity: 1">  ))<span class="t-brace">}</span></span>
+            </code>
+          </div>
+          <div class="result" style="animation: in 0.5s 26.4s both">
+            <h4>resultado</h4>
+            <ul>
+              <li style="animation: in 0.4s 27s both">Notebook — 5</li>
+              <li style="animation: in 0.4s 27.4s both">Mouse — 12</li>
+              <li style="animation: in 0.4s 27.8s both">Teclado — 7</li>
+            </ul>
+          </div>
+        </div>
+        <div class="sub" style="animation: in 0.5s 29.5s both; font-size: 29px">
+          map, filter, ternário, if com else.
+        </div>
+      </section>
+
+      <!-- ========================================================== 5. reactive -->
+      <section class="scene s5">
+        <div class="huge" style="animation: in 0.5s 34.3s both">Reativo.</div>
+        <div class="big accent" style="animation: in 0.5s 35.1s both">Sem Virtual DOM.</div>
+        <div class="sub" style="animation: in 0.5s 36.4s both">
+          Muda o estado, só o nó que depende dele é tocado.
+        </div>
+        <div class="badges">
+          <span class="badge" style="animation: pop 0.45s 37.6s both">v-data</span>
+          <span class="badge" style="animation: pop 0.45s 37.9s both">@click</span>
+          <span class="badge" style="animation: pop 0.45s 38.2s both">v-model</span>
+          <span class="badge" style="animation: pop 0.45s 38.5s both">stores</span>
+          <span class="badge" style="animation: pop 0.45s 38.8s both">router</span>
+        </div>
+      </section>
+
+      <!-- ============================================================ 6. no eval -->
+      <section class="scene s6">
+        <div class="kicker" style="animation: in 0.5s 44.1s both">e o detalhe que ninguém espera</div>
+        <div class="huge" style="animation: in 0.5s 44.5s both">Sem <span class="accent">eval</span>.</div>
+        <div class="sub" style="animation: in 0.5s 45.8s both">
+          Lexer, parser e interpretador próprios.<br />
+          Roda sob Content Security Policy estrita.
+        </div>
+        <div class="badges">
+          <span class="badge" style="animation: pop 0.45s 47.4s both">0 dependências</span>
+          <span class="badge" style="animation: pop 0.45s 47.7s both">83 KB gzip</span>
+          <span class="badge" style="animation: pop 0.45s 48s both">TypeScript</span>
+        </div>
+      </section>
+
+      <!-- ============================================================= 7. outro -->
+      <section class="scene s7">
+        <svg class="mark" viewBox="0 0 32 32" style="animation: pop 0.6s 54s both" aria-hidden="true">
+          <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="#9B7BFF" />
+        </svg>
+        <div class="wordmark" style="animation: in 0.5s 54.5s both">Voodoo.js</div>
+        <div class="sub" style="animation: in 0.5s 55.2s both; font-size: 32px">
+          O framework JavaScript que começa pelo HTML.
+        </div>
+        <div class="install" style="animation: in 0.5s 56.4s both">npm install voodoojs</div>
+        <div class="sub" style="animation: in 0.5s 57.6s both; font-size: 26px; margin-top: 30px">
+          Open source · MIT · kwy404/Voodoo.js
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // Replays the whole timeline, so a retake needs no reload. The class is
+      // removed and re-added on the next frame, which is what actually restarts
+      // a CSS animation.
+      if (location.search.includes('loop')) {
+        const stage = document.getElementById('stage');
+        setInterval(() => {
+          const clone = stage.cloneNode(true);
+          stage.replaceWith(clone);
+        }, 66000);
+      }
+    </script>
+  </body>
+</html>

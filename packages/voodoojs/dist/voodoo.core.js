@@ -2916,13 +2916,25 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   var componentAliases = /* @__PURE__ */ new Map();
   var started = false;
   var observer = null;
+  var startHooks = [];
+  function runPhase(target, after) {
+    for (const hook of startHooks) {
+      try {
+        hook(target, after);
+      } catch (error) {
+        console.error("[Voodoo] a start hook failed", error);
+      }
+    }
+  }
   function start(root) {
     var _a2;
     if (typeof document === "undefined") return;
     const target = (_a2 = root != null ? root : config.root) != null ? _a2 : document.body;
     if (!target) return;
     Object.assign(allowedGlobals, config.globals);
+    runPhase(target, false);
     walk(target, rootScope);
+    runPhase(target, true);
     if (!started) {
       started = true;
       if (config.autoDiscover) observeDOM(target);
@@ -8453,9 +8465,7 @@ ${block(':root:not([data-theme="light"])', dark.vars)}
     const boot = () => {
       theme.init();
       applySavedPalette();
-      if (typeof V2.extractJsx === "function") V2.extractJsx();
       V2.start();
-      if (typeof V2.activateJsx === "function") V2.activateJsx();
       if (typeof V2.enableXrayShortcut === "function") V2.enableXrayShortcut();
       if (config.devtools) mountDevtools(V2);
     };

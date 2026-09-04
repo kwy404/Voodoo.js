@@ -34,11 +34,25 @@ const DIST = 'packages/voodoojs/dist';
  * gzipped bytes. Raising to 47 restores about 2% of room, in line with the rule
  * stated above.
  *
+ * Revision of 2026-09-04: core 47 -> 48. This one is not a tripwire story, it is
+ * deliberate growth being paid for. Between 0.9.0 and 0.10.0 the expression
+ * language gained `new`, `delete`, octal literals, the six bitwise operators and
+ * the three shifts, `return`, and default, rest and destructured parameters.
+ * That took the core from 46.03 to 47.01, and the differential suite records
+ * what it bought: expressions that answer differently from JavaScript went from
+ * 4 to 0, and valid JavaScript the parser refuses went from 234 to 3.
+ *
+ * The last ten bytes went to the `onStart` registry in `runtime/walker.ts`,
+ * which is how the JSX module gets its two passes around the walk. Compacting
+ * that registry from two arrays to one saved almost nothing, so the honest entry
+ * is that the feature costs what it costs rather than that it was optimised
+ * away.
+ *
  * When you touch this, say why. Raising a target without a justification is the
  * same as having no target at all.
  */
 const BUDGET = {
-  'voodoo.core.min.js': 47,
+  'voodoo.core.min.js': 48,
   'voodoo.min.js': 85,
   'voodoo.full.min.js': 133,
 };

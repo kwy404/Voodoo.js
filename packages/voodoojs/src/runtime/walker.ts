@@ -1049,6 +1049,50 @@ export function onMounted(fn: () => void): void {
 let started = false;
 let observer: MutationObserver | null = null;
 
+/**
+ * Work that has to happen immediately before and after the walk.
+ *
+ * The JSX module needs both sides: its templates must leave the document before
+ * `walk` sees them, because an element written inside a `{ ... }` region names
+ * a callback parameter that does not exist yet, and its effects must be created
+ * after, because `v-data` builds the scopes during the walk.
+ *
+ * A registry rather than a direct call, because `start` is core and JSX is only
+ * in the full build. Importing one from the other would drag the whole module
+ * into every bundle and make a cycle out of it.
+ *
+ * These used to live in `bootstrap.ts`, which was wrong in a way that took a
+ * bug report to notice: `bootstrap` returns early for `data-manual`, so any page
+ * that configures the library and calls `V.start()` itself got no JSX at all.
+ * The project's own playground does exactly that, and rendered every JSX example
+ * as literal text.
+ */
+/**
+ * One list, with the phase passed in, rather than two lists and a helper.
+ *
+ * That is not style: the core build sits at 47 KB gzipped against a 47 KB
+ * budget, and the first version of this registry went over it by ten bytes.
+ * `npm run size` is a gate, so the shape had to earn its place.
+ */
+const startHooks: Array<(root: Element, after: boolean) => void> = [];
+
+/** Registers work to run around every `start`, in registration order. */
+export function onStart(hook: (root: Element, after: boolean) => void): void {
+  startHooks.push(hook);
+}
+
+/** Runs one phase, where a failure costs that hook and nothing else. */
+function runPhase(target: Element, after: boolean): void {
+  for (const hook of startHooks) {
+    try {
+      hook(target, after);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('[Voodoo] a start hook failed', error);
+    }
+  }
+}
+
 /** Initializes Voodoo in a root. Called automatically in the browser. */
 export function start(root?: Element | Document): void {
   if (typeof document === 'undefined') return;
@@ -1057,7 +1101,11 @@ export function start(root?: Element | Document): void {
 
   Object.assign(allowedGlobals, config.globals);
 
+  runPhase(target, false);
+
   walk(target, rootScope);
+
+  runPhase(target, true);
 
   if (!started) {
     started = true;
