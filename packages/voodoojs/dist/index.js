@@ -6631,6 +6631,27 @@ function collect(start2, offset) {
   if (!closed) return null;
   return { source, templates, nodes, tail };
 }
+function recoverFromTable(collected) {
+  const empties = collected.source.match(/\(\s*\)/g);
+  if (!empties) return false;
+  let next = collected.nodes[collected.nodes.length - 1]?.nextSibling ?? null;
+  while (next && next.nodeType === Node.TEXT_NODE && !(next.textContent ?? "").trim()) {
+    next = next.nextSibling;
+  }
+  if (!next || next.nodeType !== Node.ELEMENT_NODE) return false;
+  const table = next;
+  if (table.tagName !== "TABLE") return false;
+  const body = table.querySelector("tbody");
+  if (!body) return false;
+  const rows = Array.from(body.children).filter((el) => el.tagName === "TR");
+  if (rows.length !== empties.length) return false;
+  let index = 0;
+  collected.source = collected.source.replace(/\(\s*\)/g, () => `($t(${index++}, $__jsx))`);
+  collected.templates = rows;
+  collected.host = body;
+  collected.nodes.push(...rows);
+  return true;
+}
 function render(value, templates, scope, out) {
   if (value == null || value === false || value === true) return;
   if (Array.isArray(value)) {
@@ -6672,7 +6693,11 @@ function applyRegions(root, parentScope) {
       continue;
     }
     const collected = collect(child, open);
-    if (!collected || collected.templates.length === 0) {
+    if (!collected) {
+      child = next;
+      continue;
+    }
+    if (collected.templates.length === 0 && !recoverFromTable(collected)) {
       child = next;
       continue;
     }
@@ -6695,8 +6720,9 @@ function install(parent, collected, hint) {
   if (tail && tail.offset < (tail.node.textContent ?? "").length) {
     tail.node.splitText(tail.offset);
   }
+  const target = collected.host ?? parent;
   const anchor = document.createComment("v-jsx");
-  parent.insertBefore(anchor, nodes[0]);
+  target.insertBefore(anchor, collected.host ? collected.host.firstChild : nodes[0]);
   for (const node of nodes) node.remove();
   let rendered = [];
   pending.push(() => activateRegion());
@@ -6712,7 +6738,7 @@ function install(parent, collected, hint) {
       render(value, templates, local, out);
       for (const node of rendered) node.remove();
       rendered = out;
-      for (const node of out) parent.insertBefore(node, anchor);
+      for (const node of out) target.insertBefore(node, anchor);
     });
     addCleanup(anchor, () => {
       runner.effect.stop();

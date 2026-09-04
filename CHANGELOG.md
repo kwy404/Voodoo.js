@@ -7,6 +7,63 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-04
+
+**A JSX region works inside a table.** This was reported as broken, then written
+off as impossible, and it was neither.
+
+```html
+<table>
+  <tbody>
+    {rows.map(r => (
+      <tr>
+        <td>{r.name}</td>
+        <td>{r.score >= 60 ? <b>pass</b> : <b>fail</b>}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+```
+
+### Added
+
+- **Recovery from foster parenting.** Loose text is not allowed inside `<table>`
+  or `<tbody>`, so the HTML parser moves it out and keeps the elements in. The
+  text and its template land in different parents, which is why the sibling walk
+  found a balanced region with nothing in it and declined, leaving the raw
+  expression printed above the table.
+
+  Nothing is lost, though, only moved, and moved predictably: the text keeps the
+  empty parentheses where the element used to be, and the element is in the
+  table alongside. Matching one against the other puts the expression back
+  together, and the rendered rows are anchored in the `tbody` where they belong
+  rather than beside the table, where a `<tr>` is dropped by the browser.
+
+  The rule is deliberately narrow, because guessing would silently claim rows
+  somebody wrote by hand. The region must be balanced, contain no element of its
+  own, sit next to a table, and have exactly as many empty `()` groups as that
+  table has `tbody` rows. A `thead` row is never taken.
+
+  Both foster-parenting orders are accepted. The specification says the text is
+  inserted immediately before the table, which is what Chrome does; jsdom puts
+  it after and splits it into fragments. Neither is worth depending on.
+
+- Three playground examples for it: the same table with `v-data`, the same table
+  with the data declared in a `{ const ... }` block and no attribute anywhere,
+  and the same idea as a plain list. Seventeen JSX examples in total.
+
+### Known limitations
+
+- A JSX region inside a `v-for` template does not render. The template is cloned
+  once per row during the walk, and regions are taken out of the page before it,
+  so each clone receives an anchor with nothing attached. Use `v-if` on the
+  element, or a JSX region instead of `v-for`, not both on the same subtree.
+- The nested-region-inside-a-recovered-row case is verified in a browser and
+  skipped in the unit suite, because jsdom's non-conforming foster parenting
+  cannot express it. Contorting the test to match jsdom would test jsdom.
+
+Full notes: [v0.11.0](https://github.com/kwy404/Voodoo.js/releases/tag/v0.11.0)
+
 ## [0.10.1] - 2026-09-04
 
 ### Fixed

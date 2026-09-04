@@ -125,11 +125,21 @@ function isTemplate(value: unknown): value is Template {
  * elements themselves in the same order.
  */
 interface Collected {
+  /** Mutable: `recoverFromTable` rewrites these when a table displaced them. */
   source: string;
   templates: Element[];
   nodes: ChildNode[];
   /** Where the region ends inside the last text node, if it ends mid-node. */
   tail: { node: Text; offset: number } | null;
+  /**
+   * Where the rendered output belongs, when that is not where the text was.
+   *
+   * Only a table sets this. The HTML parser moved the text out of the tbody, so
+   * the region is discovered on the table's parent, but a `<tr>` rendered
+   * there is outside a table and the browser drops it: the header survived and
+   * every row vanished.
+   */
+  host?: Element;
 }
 
 /**
@@ -231,6 +241,77 @@ function collect(start: Text, offset: number): Collected | null {
   return { source, templates, nodes, tail };
 }
 
+/**
+ * Recovers a region whose templates were foster parented out of a table.
+ *
+ * Loose text is not allowed inside `<table>`, `<tbody>`, `<thead>` or `<tr>`.
+ * The HTML parser moves it OUT, to just before the table, and keeps the
+ * elements where they belong. So this:
+ *
+ * ```html
+ * <tbody>
+ *   {rows.map(r => (
+ *     <tr><td>{r.name}</td></tr>
+ *   ))}
+ * </tbody>
+ * ```
+ *
+ * reaches JavaScript as a text node `{rows.map(r => ( ))}` sitting before the
+ * `<table>`, with the `<tr>` still inside `<tbody>`. The two halves end up in
+ * different parents, so the ordinary sibling walk finds a balanced region with
+ * no element in it and declines.
+ *
+ * But nothing was lost, only moved, and moved predictably: the text keeps the
+ * empty parentheses where each element used to be, and the elements are in the
+ * table that follows. Matching one against the other puts the expression back
+ * together.
+ *
+ * The rule is deliberately narrow, because guessing here would silently claim
+ * rows somebody wrote by hand: the region must be balanced, contain no element
+ * of its own, be followed by a table, and have exactly as many empty `()` groups
+ * as that table has rows to offer.
+ */
+function recoverFromTable(collected: Collected): boolean {
+  const empties = collected.source.match(/\(\s*\)/g);
+  if (!empties) return false;
+
+  // The table that swallowed them, looked for on both sides of the text.
+  //
+  // The spec says foster parenting inserts the node immediately BEFORE the
+  // table, which is what Chrome does: one text node, then `<table>`. jsdom puts
+  // the text AFTER the table instead, and splits it into half a dozen fragments.
+  // Neither ordering is worth depending on, so both are accepted.
+  const first = collected.nodes[0];
+  const last = collected.nodes[collected.nodes.length - 1];
+
+  const table = [last?.nextSibling, first?.previousSibling]
+    .map((from) => {
+      let node: ChildNode | null = (from as ChildNode) ?? null;
+      while (node && node.nodeType === Node.TEXT_NODE && !(node.textContent ?? '').trim()) {
+        node = node === last?.nextSibling ? node.nextSibling : node.previousSibling;
+      }
+      return node && node.nodeType === Node.ELEMENT_NODE ? (node as Element) : null;
+    })
+    .find((el) => el?.tagName === 'TABLE');
+
+  if (!table) return false;
+
+  // Rows in `tbody` only. A `thead` row was written where it belongs and was
+  // never displaced, so claiming it would delete the header.
+  const body = table.querySelector('tbody');
+  if (!body) return false;
+  const rows = Array.from(body.children).filter((el) => el.tagName === 'TR');
+  if (rows.length !== empties.length) return false;
+
+  let index = 0;
+  collected.source = collected.source.replace(/\(\s*\)/g, () => `($t(${index++}, $__jsx))`);
+  collected.templates = rows;
+  collected.host = body;
+  // The displaced rows are part of the region now, so they are removed with it.
+  collected.nodes.push(...(rows as unknown as ChildNode[]));
+  return true;
+}
+
 /** Renders one evaluated value into the fragment that will replace the region. */
 function render(value: unknown, templates: Element[], scope: Scope, out: Node[]): void {
   if (value == null || value === false || value === true) return;
@@ -304,9 +385,16 @@ export function applyRegions(root: Element, parentScope?: Scope): void {
     }
 
     const collected = collect(child as Text, open);
-    if (!collected || collected.templates.length === 0) {
-      // No element inside, so this is plain interpolation and belongs to the
-      // core renderer.
+    if (!collected) {
+      child = next;
+      continue;
+    }
+
+    // A region with no element in it is either plain interpolation, which the
+    // core renderer owns, or a table whose rows the HTML parser moved out from
+    // under it. Only the second one is recoverable, and only under a narrow
+    // rule, so it is tried before giving up.
+    if (collected.templates.length === 0 && !recoverFromTable(collected)) {
       child = next;
       continue;
     }
@@ -353,8 +441,10 @@ function install(parent: Element, collected: Collected, hint?: Scope): void {
     tail.node.splitText(tail.offset);
   }
 
+  // The tbody when a table displaced this region, otherwise where the text was.
+  const target = collected.host ?? parent;
   const anchor = document.createComment('v-jsx');
-  parent.insertBefore(anchor, nodes[0]);
+  target.insertBefore(anchor, collected.host ? collected.host.firstChild : nodes[0]);
   // Out of the document immediately, so `V.start()` never walks a template. A
   // template holds names that only exist inside a callback, such as the `p` of
   // `p.filter(...).map(p => ...)`, and the core walking it produced a console
@@ -396,7 +486,7 @@ function install(parent: Element, collected: Collected, hint?: Scope): void {
 
     for (const node of rendered) (node as ChildNode).remove();
     rendered = out;
-    for (const node of out) parent.insertBefore(node, anchor);
+    for (const node of out) target.insertBefore(node, anchor);
   });
 
   addCleanup(anchor, () => {

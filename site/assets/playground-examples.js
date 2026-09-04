@@ -740,8 +740,8 @@
     {
       id: 'jsx-table',
       group: 'jsx',
-      title: 'Building a table',
-      desc: 'Rows are a map, and the class on each row comes from the item.',
+      title: 'A table, with v-data',
+      desc: 'A map straight inside tbody. The hardest case, because HTML moves loose text out of a table before any script runs.',
       code: [
         '<div v-data="{ rows: [',
         '  { name: \'Ana\', score: 92 },',
@@ -763,6 +763,58 @@
         '    </tbody>',
         '  </table>',
         '</div>'
+      ]
+    },
+    {
+      id: 'jsx-table-block',
+      group: 'jsx',
+      title: 'The same table, no v-data',
+      desc: 'Data declared with const in a { } block at the top of the body. No attribute anywhere.',
+      code: [
+        '{',
+        '  const rows = [',
+        '    { name: \'Ana\', score: 92 },',
+        '    { name: \'Bruno\', score: 47 },',
+        '    { name: \'Caio\', score: 78 }',
+        '  ];',
+        '}',
+        '',
+        '<table>',
+        '  <thead>',
+        '    <tr><th>Name</th><th>Score</th><th>Result</th></tr>',
+        '  </thead>',
+        '  <tbody>',
+        '    {rows.map(r => (',
+        '      <tr>',
+        '        <td>{r.name}</td>',
+        '        <td>{r.score}</td>',
+        '        <td>{r.score >= 60 ? <b>pass</b> : <b>fail</b>}</td>',
+        '      </tr>',
+        '    ))}',
+        '  </tbody>',
+        '</table>'
+      ]
+    },
+    {
+      id: 'jsx-list-block',
+      group: 'jsx',
+      title: 'A list, no v-data',
+      desc: 'Same idea without a table. const and let both work in the block.',
+      code: [
+        '{',
+        '  const title = \'Shopping\';',
+        '  let items = [\'coffee\', \'bread\', \'eggs\'];',
+        '}',
+        '',
+        '<h3>{title}</h3>',
+        '',
+        '<ul>',
+        '  {items.map((item, i) => (',
+        '    <li>{i + 1}. {item}</li>',
+        '  ))}',
+        '</ul>',
+        '',
+        '<p>{items.length > 2 ? <b>a long list</b> : <b>a short one</b>}</p>'
       ]
     },
     {

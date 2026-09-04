@@ -21107,6 +21107,28 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     if (!closed) return null;
     return { source, templates, nodes, tail };
   }
+  function recoverFromTable(collected) {
+    var _a2, _b, _c;
+    const empties = collected.source.match(/\(\s*\)/g);
+    if (!empties) return false;
+    let next = (_b = (_a2 = collected.nodes[collected.nodes.length - 1]) == null ? void 0 : _a2.nextSibling) != null ? _b : null;
+    while (next && next.nodeType === Node.TEXT_NODE && !((_c = next.textContent) != null ? _c : "").trim()) {
+      next = next.nextSibling;
+    }
+    if (!next || next.nodeType !== Node.ELEMENT_NODE) return false;
+    const table = next;
+    if (table.tagName !== "TABLE") return false;
+    const body = table.querySelector("tbody");
+    if (!body) return false;
+    const rows = Array.from(body.children).filter((el) => el.tagName === "TR");
+    if (rows.length !== empties.length) return false;
+    let index = 0;
+    collected.source = collected.source.replace(/\(\s*\)/g, () => `($t(${index++}, $__jsx))`);
+    collected.templates = rows;
+    collected.host = body;
+    collected.nodes.push(...rows);
+    return true;
+  }
   function render2(value, templates, scope, out) {
     var _a2;
     if (value == null || value === false || value === true) return;
@@ -21150,7 +21172,11 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
         continue;
       }
       const collected = collect(child, open);
-      if (!collected || collected.templates.length === 0) {
+      if (!collected) {
+        child = next;
+        continue;
+      }
+      if (collected.templates.length === 0 && !recoverFromTable(collected)) {
         child = next;
         continue;
       }
@@ -21160,7 +21186,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
   }
   var pending = [];
   function install(parent, collected, hint) {
-    var _a2;
+    var _a2, _b;
     const { source, templates, nodes, tail } = collected;
     let ast;
     try {
@@ -21174,8 +21200,9 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     if (tail && tail.offset < ((_a2 = tail.node.textContent) != null ? _a2 : "").length) {
       tail.node.splitText(tail.offset);
     }
+    const target = (_b = collected.host) != null ? _b : parent;
     const anchor = document.createComment("v-jsx");
-    parent.insertBefore(anchor, nodes[0]);
+    target.insertBefore(anchor, collected.host ? collected.host.firstChild : nodes[0]);
     for (const node of nodes) node.remove();
     let rendered = [];
     pending.push(() => activateRegion());
@@ -21191,7 +21218,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
         render2(value, templates, local, out);
         for (const node of rendered) node.remove();
         rendered = out;
-        for (const node of out) parent.insertBefore(node, anchor);
+        for (const node of out) target.insertBefore(node, anchor);
       });
       addCleanup(anchor, () => {
         runner.effect.stop();
