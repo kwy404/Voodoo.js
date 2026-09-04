@@ -23,7 +23,7 @@
    * alongside it — on GitHub Pages, from a file:// checkout, or from a local
    * server. There is nothing left to keep in sync.
    */
-  var RUNTIME = new URL('../voodoo.full.min.js?v=fba373c4', document.currentScript.src).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=bd3d3f74', document.currentScript.src).href;
   var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
 
   var code = document.getElementById('code');
