@@ -20794,13 +20794,16 @@ function collect(start2, offset) {
 function recoverFromTable(collected) {
   const empties = collected.source.match(/\(\s*\)/g);
   if (!empties) return false;
-  let next = collected.nodes[collected.nodes.length - 1]?.nextSibling ?? null;
-  while (next && next.nodeType === Node.TEXT_NODE && !(next.textContent ?? "").trim()) {
-    next = next.nextSibling;
-  }
-  if (!next || next.nodeType !== Node.ELEMENT_NODE) return false;
-  const table = next;
-  if (table.tagName !== "TABLE") return false;
+  const first = collected.nodes[0];
+  const last = collected.nodes[collected.nodes.length - 1];
+  const table = [last?.nextSibling, first?.previousSibling].map((from) => {
+    let node = from ?? null;
+    while (node && node.nodeType === Node.TEXT_NODE && !(node.textContent ?? "").trim()) {
+      node = node === last?.nextSibling ? node.nextSibling : node.previousSibling;
+    }
+    return node && node.nodeType === Node.ELEMENT_NODE ? node : null;
+  }).find((el) => el?.tagName === "TABLE");
+  if (!table) return false;
   const body = table.querySelector("tbody");
   if (!body) return false;
   const rows = Array.from(body.children).filter((el) => el.tagName === "TR");

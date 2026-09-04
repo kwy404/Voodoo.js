@@ -21108,16 +21108,19 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     return { source, templates, nodes, tail };
   }
   function recoverFromTable(collected) {
-    var _a2, _b, _c;
     const empties = collected.source.match(/\(\s*\)/g);
     if (!empties) return false;
-    let next = (_b = (_a2 = collected.nodes[collected.nodes.length - 1]) == null ? void 0 : _a2.nextSibling) != null ? _b : null;
-    while (next && next.nodeType === Node.TEXT_NODE && !((_c = next.textContent) != null ? _c : "").trim()) {
-      next = next.nextSibling;
-    }
-    if (!next || next.nodeType !== Node.ELEMENT_NODE) return false;
-    const table = next;
-    if (table.tagName !== "TABLE") return false;
+    const first = collected.nodes[0];
+    const last = collected.nodes[collected.nodes.length - 1];
+    const table = [last == null ? void 0 : last.nextSibling, first == null ? void 0 : first.previousSibling].map((from) => {
+      var _a2;
+      let node = from != null ? from : null;
+      while (node && node.nodeType === Node.TEXT_NODE && !((_a2 = node.textContent) != null ? _a2 : "").trim()) {
+        node = node === (last == null ? void 0 : last.nextSibling) ? node.nextSibling : node.previousSibling;
+      }
+      return node && node.nodeType === Node.ELEMENT_NODE ? node : null;
+    }).find((el) => (el == null ? void 0 : el.tagName) === "TABLE");
+    if (!table) return false;
     const body = table.querySelector("tbody");
     if (!body) return false;
     const rows = Array.from(body.children).filter((el) => el.tagName === "TR");
