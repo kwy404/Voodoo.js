@@ -29,6 +29,7 @@ import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname, resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const check = process.argv.includes('--check');
 
@@ -134,13 +135,46 @@ async function stamp(file, text) {
   // The version people read.
   out = out.replace(/Voodoo\.js (\d+\.\d+\.\d+)/g, `Voodoo.js ${version}`);
 
-  // The CDN pin, only when the registry has the line. An exact version stays
-  // exact; a minor line stays a minor line.
+  // The CDN pin, written as the EXACT version rather than the minor line.
+  //
+  // A minor range looks friendlier, since patches then arrive without an edit,
+  // and it was the rule here until two things made it untenable.
+  //
+  // It hides the release. `voodoojs@0.11` is unchanged by 0.11.0, 0.11.1 and
+  // everything after, so a reader opening the README or the npm page after a
+  // fix cannot tell whether it landed, and neither could anyone here without
+  // querying the registry.
+  //
+  // And it is slow where it matters most. jsDelivr caches a range at the edge
+  // with `s-maxage=43200`, so a published fix takes twelve hours to reach the
+  // site: 0.10.1 fixed the playground and the playground kept serving 0.10.0
+  // until the cache was purged by hand. An exact version is a different URL,
+  // which no stale range can shadow, and it is live the moment npm has it.
+  //
+  // The cost is that a page pinned this way does not pick up the next patch on
+  // its own. For documentation that is the right trade: these pages are stamped
+  // on every release anyway.
   if (pinnable || SHIPPED.includes(file.split('\\').join('/'))) {
-    out = out.replace(/voodoojs@(\d+\.\d+(?:\.\d+)?)/g, (match, found) =>
-      `voodoojs@${found.split('.').length === 3 ? version : minor}`
-    );
+    out = out.replace(/voodoojs@\d+\.\d+(?:\.\d+)?/g, `voodoojs@${version}`);
   }
+
+  // Every CDN tag names the FULL build, and this is correctness rather than
+  // preference.
+  //
+  // JSX lives only in the full build. A page that loads `voodoo.min.js`, the
+  // essential one, and then shows `{items.map(x => (<li>{x}</li>))}` is showing
+  // something that cannot work, and twenty-one CDN tags across the docs did
+  // exactly that. Someone copying the tag from the installation page and the
+  // example from the JSX page would get a page printing its own source back at
+  // them, with nothing to explain why.
+  //
+  // The cost is real and is stated in the README rather than hidden: the full
+  // build is 132 KB gzipped against 84 for the essential one. Anyone who does
+  // not want JSX can drop `.full`, and the size table says so.
+  out = out.replace(
+    /(cdn\.jsdelivr\.net\/npm\/voodoojs@[\d.]+\/dist\/)voodoo\.min\.js/g,
+    '$1voodoo.full.min.js'
+  );
 
   // The asset cache keys. Async, so the matches are collected first.
   for (const pattern of ASSET_PATTERNS) {
@@ -218,14 +252,35 @@ const SOURCE_EDITS = [
   },
 ];
 
-const EXTRA_FILES = [
-  'README.md',
-  'README.pt-BR.md',
-  'packages/voodoojs/README.md',
-  // The CLI's README ships too, and was never stamped at all, so its npm page
-  // kept whatever version was written the day it was created.
-  'packages/cli/README.md',
-];
+/**
+ * Every tracked file that could name a CDN version, found rather than listed.
+ *
+ * This used to be a hand-written list of four files, and a hand-written list is
+ * always missing something. What it was missing, ten releases in: `SECURITY.md`
+ * and four pages under `docs/` still told people to load `voodoojs@0.1.0`, and
+ * `scripts/components-page.mjs`, which GENERATES `site/components.html`, was
+ * stamped at `0.5` and quietly regenerated that page wrong every time it ran.
+ *
+ * Asking git which files exist cannot go stale the way a list does.
+ *
+ * `CHANGELOG.md` is excluded on purpose. Its older entries name the versions
+ * they shipped with, and rewriting those would turn a record of what happened
+ * into a claim that every release always shipped the current one.
+ */
+function trackedFiles() {
+  const out = execSync('git ls-files', { encoding: 'utf8' }).split('\n').filter(Boolean);
+  return out.filter(
+    (file) =>
+      /\.(md|html|js|mjs|ts)$/.test(file) &&
+      !file.startsWith('packages/voodoojs/dist/') &&
+      !file.startsWith('site/') && // already covered, with its asset hashes
+      !file.endsWith('.map') &&
+      file !== 'CHANGELOG.md' &&
+      // The one file that must keep a literal version in prose: this one
+      // explains why the pin is exact, using a real example.
+      file !== 'scripts/stamp-version.mjs'
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Run
@@ -242,7 +297,7 @@ for (const { file, find, to } of SOURCE_EDITS) {
   if (!check) await writeFile(file, after);
 }
 
-for (const file of [...(await siteFiles()), ...EXTRA_FILES]) {
+for (const file of [...(await siteFiles()), ...trackedFiles()]) {
   const before = await readFile(file, 'utf8');
   const after = await stamp(file, before);
   if (after === before) continue;
@@ -252,7 +307,7 @@ for (const file of [...(await siteFiles()), ...EXTRA_FILES]) {
 
 console.log(
   `version ${version} (CDN ${
-    pinnable ? `pinned to ${minor}` : `left alone: ${minor} is not on the registry`
+    pinnable ? `pinned to ${version}` : `left alone: ${minor} is not on the registry`
   })`
 );
 console.log(`${changed} file(s) ${check ? 'would change' : 'stamped'}`);

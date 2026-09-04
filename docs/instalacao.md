@@ -28,7 +28,7 @@ components:
 Pin the version in production so a new release never changes your page without warning:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.1.0/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js" defer></script>
 ```
 
 ## Which bundle to choose

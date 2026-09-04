@@ -510,11 +510,11 @@ ${sections}
         <a href="docs/">Docs</a>
         <a href="playground.html">Playground</a>
         <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
-        <span style="margin-left: auto">Built with Voodoo.js 0.5.0</span>
+        <span style="margin-left: auto">Built with Voodoo.js 0.11.1</span>
       </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.5/dist/voodoo.full.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js" defer></script>
   </body>
 </html>
 `;

@@ -1022,10 +1022,10 @@
               </div>
 
               <div class="install-line">
-                <code>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js" defer&gt;&lt;/script&gt;</code>
+                <code>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;</code>
                 <button
                   class="copy"
-                  @click="copied = 'tag'; navigator.clipboard.writeText('<script src=\'https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js\' defer></script>')"
+                  @click="copied = 'tag'; navigator.clipboard.writeText('<script src=\'https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js\' defer></script>')"
                 >
                   <span v-show="copied !== 'tag'" v-t="hero.copy">Copy</span>
                   <span v-show="copied === 'tag'" v-t="hero.copied">Copied</span>
@@ -1158,7 +1158,7 @@
 
             <div class="tab-body">
               <div v-show="via === 'voodoo'">
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;
+                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;
 
 &lt;<span class="t-tag">div</span> <span class="t-attr">v-data</span>=<span class="t-str">"{ n: 0 }"</span>&gt;
   &lt;<span class="t-tag">output</span>&gt;{ n }&lt;/<span class="t-tag">output</span>&gt;
@@ -1338,7 +1338,7 @@
             <div class="two">
               <div class="pane">
                 <div class="pane-head" v-t="start.tag">A script tag</div>
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;</code></pre>
+                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;</code></pre>
                 <div class="pane-live">
                   <p style="font-size: 14.5px; color: var(--ink-soft); margin: 0" v-t="start.tagText">
                     That is the entire installation. The library starts itself once the page is
@@ -1467,7 +1467,7 @@
          otherwise the page flashes untranslated keys. assets/i18n.js calls
          V.start() once it has registered the four languages. -->
     <script
-      src="https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.full.min.js"
+      src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js"
       data-manual
       defer
     ></script>

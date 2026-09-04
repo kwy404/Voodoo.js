@@ -13,7 +13,7 @@ One tag. Nothing else.
 Pin an exact version in production:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.1.0/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js" defer></script>
 ```
 
 `defer` is recommended but not required. Voodoo.js runs its own boot loop rather than

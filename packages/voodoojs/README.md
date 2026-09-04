@@ -22,7 +22,7 @@ npm install voodoojs
 Or drop it into a page, with nothing else:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.1/dist/voodoo.full.min.js" defer></script>
 
 <div v-data="{ count: 0 }">
   <button @click="count++">Clicked { count } times</button>
@@ -30,8 +30,9 @@ Or drop it into a page, with nothing else:
 ```
 
 That page is a complete application. There is no build step, no bundler and no
-configuration. The tag is pinned to the `0.6` line, so patch releases arrive
-without an edit; pin the exact version if you would rather approve each one.
+configuration. The tag names an exact version, so what you load never changes
+under you. It is the FULL build, which is the one that carries JSX; drop `.full`
+for the essential build, 84 KB gzipped against 132, if you do not need it.
 
 ## Two ways to write it
 
