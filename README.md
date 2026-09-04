@@ -282,7 +282,7 @@ That is the whole installation. The library starts itself once the page is ready
 [unpkg](https://unpkg.com/voodoojs@0.11/dist/voodoo.min.js) serves the same file if you prefer it.
 
 The tag above is pinned to the `0.4` line, so patch releases arrive without an edit. Pin the exact
-version — `voodoojs@0.11.0` — if you would rather approve every update yourself.
+version — `voodoojs@0.11.1` — if you would rather approve every update yourself.
 
 **npm**
 

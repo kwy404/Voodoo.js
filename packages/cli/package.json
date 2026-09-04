@@ -1,6 +1,6 @@
 {
   "name": "voodoojs-cli",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Command line for Voodoo.js: scaffold projects, build custom bundles and copy components into your code.",
   "license": "MIT",
   "type": "module",

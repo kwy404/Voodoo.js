@@ -288,7 +288,7 @@ Essa é a instalação inteira. A biblioteca começa sozinha assim que a página
 [unpkg](https://unpkg.com/voodoojs@0.11/dist/voodoo.min.js) serve o mesmo arquivo, se você preferir.
 
 A tag acima está fixada na linha `0.4`, então correções de patch chegam sem edição. Fixe a versão
-exata — `voodoojs@0.11.0` — se preferir aprovar cada atualização.
+exata — `voodoojs@0.11.1` — se preferir aprovar cada atualização.
 
 **npm**
 
