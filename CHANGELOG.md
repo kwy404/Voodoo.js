@@ -7,6 +7,164 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-04
+
+**JSX written directly in ordinary HTML, with no build step and no compiler.**
+
+```html
+<ul>
+  {fruits.map((fruit) => (
+    <li>{fruit}</li>
+  ))}
+</ul>
+```
+
+That is a plain `.html` file with a script tag. Every other way to write JSX
+needs a toolchain between the file you edit and the file the browser loads.
+
+### Added
+
+- **The `jsx` module**, in the full build. It costs about 1 KB gzipped.
+
+  It works because the browser has already parsed the page and what it leaves
+  behind is recoverable. For that list the DOM is three siblings: the text
+  `{fruits.map((fruit) => (`, the element `<li>{fruit}</li>`, and the text
+  `))}`. The element is not damage to route around, it is the template.
+  Rejoining the text with a placeholder where the element sat reconstructs the
+  expression exactly as it was typed, and it then runs through the same lexer,
+  parser and interpreter as every other expression. Nothing is compiled and
+  nothing is evaluated as a string, so a strict Content Security Policy is
+  unaffected.
+
+  Verified in a browser: `map`, `filter` into `map`, `sort`, `slice`, `flatMap`,
+  `reduce` with a block body, `Array.from`, `Object.entries`, destructured
+  parameters with renaming, optional chaining with `??`, template literals, an
+  IIFE, ternaries inside a `map`, and nested maps two levels deep.
+
+- **Conditionals that return elements**, including one JSX itself does not have:
+  a real `if / else if / else`. Ternaries and `&&` behave as they do in JSX,
+  down to rendering nothing for `true`, `false`, `null` and `undefined`.
+
+- **`return` in the expression language.** `x => { const d = x * 2; return d }`
+  used to report `"return" was not found. Expressions cannot reach window`,
+  which is a baffling thing to be told about a keyword.
+
+- `V.jsx()`, `V.extractJsx()` and `V.activateJsx()`, plus ten JSX examples in the
+  playground, in a group of their own at the top of the list.
+
+### Fixed
+
+- **The two-phase ordering, which is the whole design.** Templates leave the
+  document before `V.start()` and the effects are created after it. Getting
+  either half wrong produced a distinct failure, and each was found in a browser
+  rather than reasoned about: running late meant the core walked a template,
+  failed on the callback parameter with `Could not read "n" from undefined`, and
+  rewrote the text in place, so every clone taken afterwards was poisoned and a
+  counter read `c=0` forever; running both at once meant every region captured
+  the root scope, where the names do not exist, and every list rendered empty.
+
+- **`return` unwinds.** The first version yielded its value without unwinding,
+  so `if (q === 0) { return 'empty' } return 'ok'` answered "ok" for every item.
+  A wrong answer with no error is worse than the missing keyword was. It travels
+  as a signal now, unwrapped at the function boundary and at the region
+  boundary; the second of those is why a top-level
+  `{if (a) return (<p>x</p>)}` had been rendering `[object Object]`.
+
+- **One failing region no longer takes the rest of the page with it.** The
+  activation loop had no guard, so the first expression that threw ended it and
+  every region after that silently never rendered: two lists worked and the next
+  fourteen were empty, with one unrelated error in the console.
+
+- **A `map` inside a `map`.** A clone is not in the document when its own
+  regions activate, so the scope walk reached nothing and fell back to the root.
+  Every outer element rendered with its inner list missing.
+
+- `collect` called `splitText` on every `{` it examined, including the plain
+  interpolations it went on to decline, so `<li>{p.n}: {p.q}</li>` came out empty
+  because its text node had been cut in half behind the core renderer's back.
+
+### Known limitations
+
+Stated rather than left to be discovered.
+
+- **Attribute values must be quoted.** `style="{{ backgroundColor: color }}"`
+  works and `style={{ backgroundColor: color }}` does not. This is the order
+  things happen in, not a decision: an unquoted attribute value ends at the
+  first space, so the browser turns the second form into six separate attributes
+  before any script has run, lowercasing their names on the way. The pieces
+  survive in order and could be rejoined, but `backgroundColor` comes back as
+  `backgroundcolor` and any identifier with a capital in it is gone.
+- **Fragments (`<>`) do not work.** The browser creates no element for `<>`, so
+  there is no template to clone.
+- **`for`, `while`, `do`/`while`, `break` and `continue` are not supported** in a
+  region. The expression language has no loop statements. Use `map`, or
+  `Array.from({ length: n })`.
+- `forEach` renders nothing, because `forEach` returns `undefined`. That is
+  JavaScript, and it is equally true in React.
+
+Full notes: [v0.10.0](https://github.com/kwy404/Voodoo.js/releases/tag/v0.10.0)
+
+## [0.9.0] - 2026-09-04
+
+**The expression language stops disagreeing with JavaScript.**
+
+Measured, not asserted. A differential suite runs 2324 expressions twice, once
+through the interpreter and once through the host engine over identical inputs,
+and compares.
+
+| | 0.8.0 | 0.9.0 |
+| --- | ---: | ---: |
+| answers differently from JavaScript | 4 | **0** |
+| valid JavaScript it will not parse | 234 | **3** |
+| matching | 2075 | **2310** |
+
+### Fixed
+
+Four silent wrong answers, which is the dangerous kind: no error, just the wrong
+value.
+
+- **`new` did not exist**, in the lexer, the parser or the interpreter. So
+  `new Date(0)` lexed as the identifier `new` followed by `Date(0)`, and `Date()`
+  called without `new` returns a string of the current time. `new Date(0)` gave
+  today's date as text, `new Date(0) instanceof Date` was `false`, and
+  `new Date(0).getTime()` failed with "getTime is not a function". It works now,
+  including `new a.b.C(x)`, where the argument list binds to the `new` rather
+  than to a call. Constructors resolve exactly like any other value, so `new`
+  reaches nothing an expression could not already reach, and `Function` is
+  refused outright.
+- **`0o17` was `undefined`**, not 15. Octal was the one radix the lexer never
+  learned: it read `0`, stopped at the `o`, and left `o17` behind as an
+  identifier.
+- **`delete obj.a` returned `1`**, the value of the property, and deleted
+  nothing. Reactivity came with the fix for free, because the reactive proxy
+  already implements `deleteProperty`.
+
+### Added
+
+- **Bitwise operators and shifts.** 216 of the 234 gaps were this one thing: the
+  lexer knew `<<=`, `>>=` and `>>>=` but not `<<`, `>>`, `>>>`, `&`, `|`, `^` or
+  `~`, so `x <<= 1` parsed and `1 << 4` did not. All present, with JavaScript's
+  precedence, including the wart where `&` binds looser than `===`.
+- **Function parameter forms.** Arrows only accepted plain names, so
+  `people.map(({ name }) => name)`, `((x = 1) => x)()`, `((...xs) => xs)(1, 2)`
+  and `(([a, b]) => a + b)([1, 2])` all failed to parse. All work now, nested to
+  any depth, on arrow functions and on object methods declared in `v-data`.
+- `npm run conformance` and `npm run check:conformance`, which fail when a bug or
+  a gap appears that was not there before.
+- `npm run release`, which attaches the built bundles to the GitHub release.
+  Releases v0.4.4 through v0.8.0 shipped with nothing but GitHub's source
+  archives, so a release page had no `voodoo.min.js` on it.
+- `voodoojs-cli` has a README, so its npm page is no longer blank.
+
+### Known limitations
+
+Three expressions of 2324, listed rather than hidden: `s.match(/l+/)` and
+`s.search(/l/)` need regex literals, which the core build has no room for at
+46.9 KB against a 47 KB ceiling; and `(1, 2, 3)`, the comma operator inside
+parentheses. Note that `@click="a++, b++"` already works.
+
+Full notes: [v0.9.0](https://github.com/kwy404/Voodoo.js/releases/tag/v0.9.0)
+
 ## [0.8.0] - 2026-09-04
 
 A minor, because the inspector shortcut changed and a configuration option was
@@ -341,7 +499,7 @@ entry covers the work in 0.5.0 only; the gap is left visible rather than reconst
   traps focus against script and pointer escapes, not just Tab; toasts announce as a unit with
   `aria-atomic`, which the alert pattern requires because the body is replaced whole on update.
 - `packages/voodoojs/src/runtime/walker.ts` held a raw NUL byte inside the `parseAttribute` cache
-  key, which made git treat a TypeScript file as binary and undiffable. It is written as the ` `
+  key, which made git treat a TypeScript file as binary and undiffable. It is written as the ``
   escape now, producing a byte-identical string.
 - `scripts/quality/browser.mjs` asserted at `waitUntil: 'load'`, before the boot loop mounts. No
   runner had ever been installed, so the check had never once executed; installing Playwright

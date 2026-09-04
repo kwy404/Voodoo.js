@@ -1,7 +1,7 @@
-import { config } from './chunk-XJSOTA6W.js';
+import { config } from './chunk-PXUSD6TT.js';
 
 /**
- * Voodoo.js v0.9.0
+ * Voodoo.js v0.10.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -78,5 +78,5 @@ function warnAlias(alias, canonical) {
 }
 
 export { describeElement, inDevelopment, warn, warnAlias, warnDuplicateKey, warnInvalidExpression, warnOnce, warnRequiredProp, warnUnknownComponent, warnUnknownDirective };
-//# sourceMappingURL=chunk-3U3S2KO4.js.map
-//# sourceMappingURL=chunk-3U3S2KO4.js.map
+//# sourceMappingURL=chunk-EYNFAYEV.js.map
+//# sourceMappingURL=chunk-EYNFAYEV.js.map

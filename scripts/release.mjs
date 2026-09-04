@@ -93,6 +93,30 @@ if (dirty && !dryRun) {
   process.exit(1);
 }
 
+// The changelog has to describe this version before anything is tagged.
+//
+// 0.9.0 and 0.10.0 both went out with no entry at all: the file stopped at
+// 0.8.0, and the release pages carried `--generate-notes`, which is a list of
+// commit subjects and not an account of what changed. Somebody opening either
+// page learned nothing. This is the same failure as the missing bundles, and it
+// gets the same treatment, a gate rather than a good intention.
+step('0. Changelog');
+const changelog = readFileSync('CHANGELOG.md', 'utf8');
+if (!changelog.includes(`## [${version}]`)) {
+  console.error(`\nCHANGELOG.md has no "## [${version}]" section.`);
+  console.error('Write it first. The release notes are generated from nothing otherwise,');
+  console.error('and a list of commit subjects is not a description of the release.');
+  process.exit(1);
+}
+if (changelog.includes('\0')) {
+  // A NUL byte makes git treat the file as binary, so `grep` answers
+  // "Binary file matches" instead of listing the versions, which is how two
+  // missing entries went unnoticed.
+  console.error('\nCHANGELOG.md contains a NUL byte, which makes git treat it as binary.');
+  process.exit(1);
+}
+console.log(`  found the section for ${version}`);
+
 step('1. Version');
 for (const file of PACKAGES) {
   const pkg = JSON.parse(readFileSync(file, 'utf8'));
