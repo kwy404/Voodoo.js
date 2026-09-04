@@ -1,6 +1,6 @@
 {
   "name": "voodoojs",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Voodoo.js: the HTML-first JavaScript framework. Build reactive applications directly in HTML: fine-grained reactivity, components, HTTP, forms, validation, router and UI. No mandatory build step, no runtime dependencies, no Virtual DOM, no eval.",
   "keywords": [
     "javascript",

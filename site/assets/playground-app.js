@@ -1,7 +1,7 @@
 /**
  * The playground: an editor on the left, the result on the right.
  *
- * The preview is a sandboxed iframe loading the same public CDN build the
+ * The preview is a sandboxed iframe loading the very build this site ships,
  * documentation hands out, so the code in the box is the code that executes.
  * There is no compiler in this loop, which is the property the whole framework
  * is built around.
@@ -10,7 +10,20 @@
 (function () {
   'use strict';
 
-  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.11.2/dist/voodoo.full.min.js';
+  /**
+   * The library the preview loads: this site's own copy, not the CDN.
+   *
+   * It used to be a pinned CDN URL, and that made the playground permanently
+   * behind. A release had to reach npm before the playground could show it, and
+   * then jsDelivr caches at the edge, so a fix took hours more to appear. Every
+   * report of "the playground is on the old version" traced back to this line,
+   * and the fix each time was to publish and wait.
+   *
+   * Resolved against this script's own URL, so it is whatever was deployed
+   * alongside it — on GitHub Pages, from a file:// checkout, or from a local
+   * server. There is nothing left to keep in sync.
+   */
+  var RUNTIME = new URL('../voodoo.full.min.js?v=fba373c4', document.currentScript.src).href;
   var examples = window.VOODOO_PLAYGROUND_EXAMPLES || [];
 
   var code = document.getElementById('code');
@@ -110,6 +123,36 @@
   }
 
   // ------------------------------------------------------------------ layout
+
+  /**
+   * Groups appear in the order GROUP_LABEL declares, not the order the examples
+   * file happens to list them in.
+   *
+   * That file is appended to, so the order was whatever editing history left
+   * behind: JSX, the reason to open this page at all, had drifted to the very
+   * bottom under nine other groups. Sorting here keeps the intent in the one
+   * place that states it, and adding an example no longer risks moving a group.
+   *
+   * The sort is stable, so examples keep their order within a group.
+   */
+  var GROUP_ORDER = Object.keys(GROUP_LABEL);
+
+  function inGroupOrder(list) {
+    return list
+      .map(function (ex, i) {
+        var at = GROUP_ORDER.indexOf(ex.group);
+        return { ex: ex, group: at === -1 ? GROUP_ORDER.length : at, index: i };
+      })
+      .sort(function (a, b) {
+        return a.group - b.group || a.index - b.index;
+      })
+      .map(function (row) {
+        return row.ex;
+      });
+  }
+
+  examples = inGroupOrder(examples);
+  current = examples[0];
 
   function buildList() {
     var seen = {};
@@ -229,7 +272,7 @@
     frame.srcdoc =
       '<!doctype html><html><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width,initial-scale=1">' +
-      OPEN + ' src="' + CDN + '" data-manual>' + CLOSE +
+      OPEN + ' src="' + RUNTIME + '" data-manual>' + CLOSE +
       '<style>' + frameCss() + '</style></head><body>' +
       code.value +
       OPEN + '>' + BOOT + CLOSE +

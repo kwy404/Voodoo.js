@@ -293,3 +293,65 @@ describe('environment without support', () => {
     aviso.mockRestore();
   });
 });
+
+/**
+ * Regression: a page could not show whether it was muted.
+ *
+ * `sound.muted` reads a module variable and localStorage, both invisible to the
+ * Proxy, so `v-show="$sound.muted"` rendered once and then never moved. With no
+ * way to display the state, pressing the mute button looked like it did
+ * nothing, and that is exactly how it was reported.
+ */
+describe('mute state is observable', () => {
+  beforeEach(() => {
+    sound.unmute();
+  });
+
+  it('an effect reading $sound.muted re-runs when it changes', async () => {
+    const { effect, stop, nextTick } = await import('../src/reactivity');
+    const seen: boolean[] = [];
+    const runner = effect(() => seen.push(sound.muted));
+
+    expect(seen).toEqual([false]);
+
+    sound.mute();
+    await nextTick();
+    expect(seen).toEqual([false, true]);
+
+    sound.unmute();
+    await nextTick();
+    expect(seen).toEqual([false, true, false]);
+
+    stop(runner);
+  });
+
+  it('v-mute marks the element in both directions', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<button v-mute>Sound</button>';
+    document.body.appendChild(root);
+    walk(root, new Scope(reactive({})));
+
+    const button = root.querySelector('button')!;
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.classList.contains('v-mute-on')).toBe(true);
+    expect(button.classList.contains('v-muted')).toBe(false);
+
+    button.click();
+
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.classList.contains('v-muted')).toBe(true);
+    expect(button.classList.contains('v-mute-on')).toBe(false);
+  });
+
+  it('the muted class is actually styled, so the button changes', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<button v-mute>Sound</button>';
+    document.body.appendChild(root);
+    walk(root, new Scope(reactive({})));
+
+    // The class existed and nothing styled it, which is why pressing the
+    // button appeared to do nothing at all.
+    const sheets = [...document.querySelectorAll('style')].map((s) => s.textContent ?? '');
+    expect(sheets.some((css) => css.includes('.v-muted'))).toBe(true);
+  });
+});

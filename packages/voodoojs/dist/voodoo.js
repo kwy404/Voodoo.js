@@ -12619,12 +12619,15 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
 
   // src/sound/index.ts
   init_registry();
+  init_reactivity();
+  init_style();
   var audioContext = null;
   var masterVolume = 0.35;
   var isMuted = false;
   var hasLoadedPreference = false;
   var VOLUME_KEY = "voodoo:sound:volume";
   var MUTE_KEY = "voodoo:sound:muted";
+  var muteRevision = ref(0);
   function loadPreference() {
     if (hasLoadedPreference) return;
     hasLoadedPreference = true;
@@ -12940,6 +12943,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
       loadPreference();
       isMuted = value;
       storage.set(MUTE_KEY, isMuted);
+      muteRevision.value++;
     },
     /** Unmutes sound. */
     unmute() {
@@ -12951,8 +12955,18 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
       this.mute(!isMuted);
       return isMuted;
     },
-    /** `true` when muted. */
+    /**
+     * `true` when muted.
+     *
+     * Reads a revision ref first, so that an expression asking whether sound is
+     * muted actually re-runs when it changes. The state lives in a module
+     * variable and in localStorage, both invisible to the Proxy, so
+     * `v-show="$sound.muted"` used to render once and then never move: a page had
+     * no way to show whether it was muted, which made the mute button look like
+     * it did nothing at all.
+     */
     get muted() {
+      void muteRevision.value;
       loadPreference();
       return isMuted;
     },
@@ -13003,11 +13017,18 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
     cleanup(() => el.removeEventListener(event, play));
     void scope;
   });
+  var MUTE_CSS = `
+.v-muted{opacity:.55}
+.v-muted::after{content:" \\1F507";font-size:.9em}
+.v-mute-on::after{content:" \\1F50A";font-size:.9em}
+`;
   defineDirective("mute", ({ el, cleanup }) => {
+    injectStyle("mute", MUTE_CSS);
     const sync = () => {
       const isMuted2 = sound.muted;
       el.setAttribute("aria-pressed", String(isMuted2));
       el.classList.toggle("v-muted", isMuted2);
+      el.classList.toggle("v-mute-on", !isMuted2);
     };
     const toggle = () => {
       sound.toggle();

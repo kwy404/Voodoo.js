@@ -34,6 +34,8 @@
 import { defineDirective } from '../runtime/registry';
 import { magic } from '../runtime/scope';
 import { storage } from '../storage';
+import { ref } from '../reactivity';
+import { injectStyle } from '../dom/style';
 
 // ---------------------------------------------------------------------------
 // Audio context
@@ -48,6 +50,9 @@ let hasLoadedPreference = false;
 
 const VOLUME_KEY = 'voodoo:sound:volume';
 const MUTE_KEY = 'voodoo:sound:muted';
+
+/** Bumped on every mute change, so expressions reading `muted` re-run. */
+const muteRevision = ref(0);
 
 function loadPreference(): void {
   if (hasLoadedPreference) return;
@@ -490,6 +495,7 @@ export const sound = {
     loadPreference();
     isMuted = value;
     storage.set(MUTE_KEY, isMuted);
+    muteRevision.value++;
   },
 
   /** Unmutes sound. */
@@ -504,8 +510,18 @@ export const sound = {
     return isMuted;
   },
 
-  /** `true` when muted. */
+  /**
+   * `true` when muted.
+   *
+   * Reads a revision ref first, so that an expression asking whether sound is
+   * muted actually re-runs when it changes. The state lives in a module
+   * variable and in localStorage, both invisible to the Proxy, so
+   * `v-show="$sound.muted"` used to render once and then never move: a page had
+   * no way to show whether it was muted, which made the mute button look like
+   * it did nothing at all.
+   */
   get muted(): boolean {
+    void muteRevision.value;
     loadPreference();
     return isMuted;
   },
@@ -587,19 +603,42 @@ defineDirective('sound', ({ el, arg, expression, modifiers, scope, cleanup, eval
 });
 
 /**
+ * Minimal styling for a muted `v-mute` button.
+ *
+ * The directive always set the `v-muted` class and nothing ever styled it, so
+ * the button looked identical whether sound was on or off. Pressing it appeared
+ * to do nothing at all, which is how it was reported: "I click and nothing
+ * happens." A control that toggles state has to show the state.
+ *
+ * Deliberately small: opacity, a line through the label and the default
+ * strike-through icon. Anything more would be imposing a look on a button whose
+ * appearance belongs to the page.
+ */
+const MUTE_CSS = `
+.v-muted{opacity:.55}
+.v-muted::after{content:" \\1F507";font-size:.9em}
+.v-mute-on::after{content:" \\1F50A";font-size:.9em}
+`;
+
+/**
  * `v-mute` toggles mute on click, and keeps the state on the element itself.
  *
  * ```html
  * <button v-mute>Sound</button>
  * ```
  *
- * The element receives `aria-pressed` and the `v-muted` class when muted.
+ * The element receives `aria-pressed` and the `v-muted` class when muted, and
+ * `v-mute-on` when it is not, so a page can style either state without asking
+ * the library anything.
  */
 defineDirective('mute', ({ el, cleanup }) => {
+  injectStyle('mute', MUTE_CSS);
+
   const sync = (): void => {
     const isMuted = sound.muted;
     el.setAttribute('aria-pressed', String(isMuted));
     el.classList.toggle('v-muted', isMuted);
+    el.classList.toggle('v-mute-on', !isMuted);
   };
 
   const toggle = (): void => {

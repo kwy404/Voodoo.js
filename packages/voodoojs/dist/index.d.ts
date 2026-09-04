@@ -1,5 +1,5 @@
-import { S as Scope, c as core, V as VoodooCollection } from './query-Dl6Urlwd.js';
-export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as hook, H as hooks, I as injectStyle, J as instances, K as leave, L as magic, M as magics, N as mountComponent, O as parse, Q as query, T as ready, U as refresh, W as removeStore, q as resource, X as rootScope, Y as session, Z as slideDown, _ as slideUp, $ as start, a0 as storage, a1 as store, a2 as storeNames, a3 as stringify, a4 as theme, a5 as toast, a6 as tokenize, a7 as url, a8 as viewTransition, a9 as walk, aa as whenElement, ab as whenReady } from './query-Dl6Urlwd.js';
+import { S as Scope, c as core, V as VoodooCollection } from './query-DzHfm8Kg.js';
+export { A as App, a as AppOptions, C as ComponentDefinition, D as DirectiveBinding, b as DirectiveHooks, P as PRIORITY, R as Resource, d as ResourceOptions, e as VoodooConfig, f as VoodooPlugin, g as VoodooRuntimeError, h as VoodooSyntaxError, i as addCleanup, j as allStores, k as allowedGlobals, l as cache, m as clearParseCache, n as config, o as cookie, p as createApp, q as createResource, r as defineComponent, s as defineDirective, t as destroy, u as documentReady, v as ensureTokens, w as enter, x as evaluate, y as fadeIn, z as fadeOut, B as findScope, E as fromHtml, F as getScope, G as hook, H as hooks, I as injectStyle, J as instances, K as leave, L as magic, M as magics, N as mountComponent, O as parse, Q as query, T as ready, U as refresh, W as removeStore, q as resource, X as rootScope, Y as session, Z as slideDown, _ as slideUp, $ as start, a0 as storage, a1 as store, a2 as storeNames, a3 as stringify, a4 as theme, a5 as toast, a6 as tokenize, a7 as url, a8 as viewTransition, a9 as walk, aa as whenElement, ab as whenReady } from './query-DzHfm8Kg.js';
 import { Ref } from './reactivity.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './reactivity.js';
 export { HttpError, HttpMethod, HttpResponse, RequestConfig, http, request } from './http.js';
@@ -172,7 +172,16 @@ declare const sound: {
     unmute(): void;
     /** Toggles between muted and unmuted, and returns the new state. */
     toggle(): boolean;
-    /** `true` when muted. */
+    /**
+     * `true` when muted.
+     *
+     * Reads a revision ref first, so that an expression asking whether sound is
+     * muted actually re-runs when it changes. The state lives in a module
+     * variable and in localStorage, both invisible to the Proxy, so
+     * `v-show="$sound.muted"` used to render once and then never move: a page had
+     * no way to show whether it was muted, which made the mute button look like
+     * it did nothing at all.
+     */
     readonly muted: boolean;
     /** Names of all available effects. */
     readonly names: string[];

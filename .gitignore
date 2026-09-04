@@ -32,3 +32,4 @@ verifica-temp.mjs
 
 # Editor and assistant workspace, never part of the project.
 .claude/
+.release-notes.md

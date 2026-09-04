@@ -44,11 +44,19 @@ const minor = version.split('.').slice(0, 2).join('.');
 /**
  * Asked rather than assumed. A network failure answers no, which leaves the pin
  * where it is: the safe direction, since a wrong pin breaks the whole site.
+ *
+ * The EXACT version, not the minor line, and that distinction is the whole
+ * point. This used to ask for `0.12` while the stamp writes `0.12.1`, so the
+ * moment 0.12.0 was published every later patch passed a check it should have
+ * failed: `0.12` resolved, the site was pinned to a `0.12.1` that did not exist
+ * yet, and the pages served a 404 for their own library until somebody
+ * published. The guard was written to prevent precisely that and was asking the
+ * wrong question.
  */
-async function cdnHasMinor() {
+async function cdnHasVersion() {
   try {
     const response = await fetch(
-      `https://cdn.jsdelivr.net/npm/${pkg.name}@${minor}/dist/voodoo.min.js`,
+      `https://cdn.jsdelivr.net/npm/${pkg.name}@${version}/dist/voodoo.min.js`,
       { method: 'HEAD' }
     );
     return response.ok;
@@ -57,7 +65,7 @@ async function cdnHasMinor() {
   }
 }
 
-const pinnable = await cdnHasMinor();
+const pinnable = await cdnHasVersion();
 
 // ---------------------------------------------------------------------------
 // Content hashes
@@ -298,6 +306,11 @@ for (const { file, find, to } of SOURCE_EDITS) {
 }
 
 for (const file of [...(await siteFiles()), ...trackedFiles()]) {
+  // `git ls-files` lists what the index knows, which is not the same as what is
+  // on disk: a file deleted but not yet committed is still tracked. The release
+  // script writes `.release-notes.md`, uses it and removes it, so stamping
+  // immediately after a release crashed on a path that no longer existed.
+  if (!existsSync(file)) continue;
   const before = await readFile(file, 'utf8');
   const after = await stamp(file, before);
   if (after === before) continue;
@@ -307,7 +320,7 @@ for (const file of [...(await siteFiles()), ...trackedFiles()]) {
 
 console.log(
   `version ${version} (CDN ${
-    pinnable ? `pinned to ${version}` : `left alone: ${minor} is not on the registry`
+    pinnable ? `pinned to ${version}` : `left alone: ${version} is not on the registry yet`
   })`
 );
 console.log(`${changed} file(s) ${check ? 'would change' : 'stamped'}`);

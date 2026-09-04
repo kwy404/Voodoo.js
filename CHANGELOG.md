@@ -7,6 +7,47 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-04
+
+### Fixed
+
+- **The playground stopped following npm.** It loaded the library from a pinned
+  CDN URL, so a release had to reach the registry before the playground could
+  show it, and jsDelivr's edge cache then added hours more. Every report of "the
+  playground is on the old version" traced to that one line, and the answer each
+  time was to publish and wait.
+
+  It now loads the copy deployed beside it, resolved from its own script URL.
+  There is nothing left to keep in sync, on GitHub Pages or off a local checkout.
+
+- **A page could not show whether sound was muted.** `$sound.muted` reads a
+  module variable and `localStorage`, both invisible to the Proxy, so
+  `v-show="$sound.muted"` rendered once and froze. With no way to display the
+  state, pressing the mute button looked like it did nothing — which is exactly
+  how it was reported.
+
+  Reads now subscribe. `v-mute` also sets `v-mute-on` alongside `v-muted`, and
+  the muted class finally has styling: it existed and nothing ever painted it, so
+  the button was identical either way.
+
+- **JSX had drifted to the bottom of the playground.** The examples file is
+  appended to, and the group order was whatever editing history left behind, so
+  the one thing this library has that the others do not sat under nine other
+  groups. Order now follows the label map that declares the intent rather than
+  the order examples happen to be listed in.
+
+- **The version guard asked the wrong question.** It checked whether the *minor*
+  line was on the CDN while the stamp writes the *exact* version. Once 0.12.0
+  was published, every later patch would have passed a check it should have
+  failed — `0.12` resolves, so the site would be pinned to a `0.12.1` that did
+  not exist yet and would serve a 404 for its own library. The guard exists to
+  prevent precisely that.
+
+- **Stamping straight after a release crashed.** `git ls-files` lists what the
+  index knows, not what is on disk, and the release script writes
+  `.release-notes.md`, uses it and deletes it. That build artefact is no longer
+  tracked, and files missing from disk are skipped.
+
 ## [0.12.0] - 2026-09-04
 
 ### Added
