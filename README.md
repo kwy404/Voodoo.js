@@ -37,7 +37,7 @@ compiler and no JSX transform.
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.2/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -275,11 +275,11 @@ Every row below is part of the shipped runtime.
 **A script tag, and nothing to install**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.2/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
 ```
 
 That is the whole installation. The library starts itself once the page is ready.
-[unpkg](https://unpkg.com/voodoojs@0.11.2/dist/voodoo.full.min.js) serves the same file if you prefer it.
+[unpkg](https://unpkg.com/voodoojs@0.12.1/dist/voodoo.full.min.js) serves the same file if you prefer it.
 
 The tag above names an exact version, so what you load never changes under you and the page tells
 you which build it is. Use the `0.11` line instead if you would rather patch releases arrived on
@@ -307,7 +307,7 @@ import { debounce } from 'voodoojs/utils'
 For pages that must not reach a third-party host, or an air-gapped network:
 
 ```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.11.2/dist/voodoo.full.min.js
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js
 # or build from source
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install && npm run build   # bundles land in packages/voodoojs/dist/
@@ -547,7 +547,7 @@ watch `count` change in the panel while the button flashes on every write.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.11.2/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.1/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <div v-data="{ count: 0, items: ['a', 'b'] }">
