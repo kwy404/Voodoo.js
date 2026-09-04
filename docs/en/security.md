@@ -126,7 +126,7 @@ injection disabled. Only the injected `<style>` blocks are affected.
 ### Subresource Integrity
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js"
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js"
         integrity="sha384-..."
         crossorigin="anonymous"
         defer></script>

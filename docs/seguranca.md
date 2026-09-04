@@ -193,7 +193,7 @@ When loading from CDN, pin the version and consider using subresource integrity:
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.4/dist/voodoo.full.min.js"
+  src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js"
   integrity="sha384-..."
   crossorigin="anonymous"
   defer
