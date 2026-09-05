@@ -23,7 +23,7 @@ Paste a single-page HTML file that reproduces it. The smaller the better.
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <div v-data="{ n: 0 }">

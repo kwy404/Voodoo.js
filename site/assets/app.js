@@ -37,7 +37,7 @@
   // FULL build: the essential one has no JSX, and the first thing anyone tries
   // after copying a tag off this page is the JSX example further down it.
   // `stamp-version.mjs` keeps the version here current.
-  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js';
+  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js';
 
   // =====================================================================
   // 1. Idioma, tema e paleta

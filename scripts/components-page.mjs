@@ -514,7 +514,7 @@ ${sections}
       </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
   </body>
 </html>
 `;

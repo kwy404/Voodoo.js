@@ -5,7 +5,7 @@ There are three ways: CDN, npm, and direct download. All deliver the same librar
 ## CDN, the shortest way
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 That's it. On load, the library publishes `window.V` (and `window.Voodoo`, the same object), applies
@@ -22,13 +22,13 @@ components:
 `unpkg` also works:
 
 ```html
-<script src="https://unpkg.com/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://unpkg.com/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 Pin the version in production so a new release never changes your page without warning:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 ## Which bundle to choose

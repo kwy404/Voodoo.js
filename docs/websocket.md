@@ -58,7 +58,7 @@ and the `V` you imported was already mounted. Use the imported `socket`, or hang
 there for the module to hang on:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 <script type="module">
   import 'https://cdn.jsdelivr.net/npm/voodoojs/dist/socket.js';
   // now V.socket exists

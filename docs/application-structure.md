@@ -28,7 +28,7 @@ A small app: a to-do list with counter, saved in the browser.
 <head>
   <meta charset="utf-8">
   <title>Tasks</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <main v-data="{ new: '', tasks: [] }" v-persist="tasks">
@@ -76,7 +76,7 @@ projeto/
 <head>
   <meta charset="utf-8">
   <title>Tarefas</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
   <script type="module" src="/src/app.js"></script>
 </head>
 <body>

@@ -14,7 +14,7 @@ Create `index.html`:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My first Voodoo</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
   <style>[v-cloak] { display: none !important; }</style>
 </head>
 <body>
@@ -220,7 +220,7 @@ Or declaratively, with the confirmation guard:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Task list</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
   <style>
     [v-cloak] { display: none !important; }
     body { font-family: system-ui, sans-serif; max-width: 34rem; margin: 3rem auto; }

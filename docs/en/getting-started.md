@@ -7,13 +7,13 @@
 One tag. Nothing else.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 Pin an exact version in production:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 `defer` is recommended but not required. Voodoo.js runs its own boot loop rather than
@@ -75,7 +75,7 @@ states no numbers.
 <head>
   <meta charset="utf-8">
   <title>Tasks</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <main v-data="{ draft: '', tasks: [] }">
