@@ -84,10 +84,37 @@ const DIST = 'packages/voodoojs/dist';
  * the playground sample both called setInterval and both failed the moment
  * anyone ran them.
  */
+/**
+ * 0.13.0 raised core 49 -> 52, essential 86 -> 89, full 134 -> 138.
+ *
+ * The list reconciler was rewritten, and it is bigger than what it replaced.
+ * Measured against the same entry point, built the same way:
+ *
+ *   essential, before the rewrite   84.76 KB gzip
+ *   essential, after                87.83 KB gzip
+ *
+ * About 2.1 KB of that is the algorithm and roughly 0.4 KB is its counters. The
+ * algorithm is bigger because it is three code paths where there was one: a
+ * mutation log read, a scan inward from both ends, and a keyed region pass with
+ * a longest-increasing-subsequence step. Each exists to avoid work rather than
+ * to add features, and the measurements are in the READMEs: a single-row edit
+ * on ten thousand rows went from 45 ms to 0.85 ms in place, and from 42 ms to
+ * 10 ms when a new array arrives.
+ *
+ * The 0.4 KB of counters stays in the shipped build on purpose. They are behind
+ * one property read that is false in every normal build, and the alternative —
+ * compiling them out — would mean the benchmark measures a different binary
+ * from the one people load, which is not measuring the thing.
+ *
+ * Measured after: core 50.72, essential 87.83, full 136.27. Each budget keeps
+ * between one and two kilobytes of headroom, deliberately, for the same reason
+ * the 0.12.0 entry gives: a budget with none is a tripwire that fires on the
+ * next correct fix.
+ */
 const BUDGET = {
-  'voodoo.core.min.js': 49,
-  'voodoo.min.js': 86,
-  'voodoo.full.min.js': 134,
+  'voodoo.core.min.js': 52,
+  'voodoo.min.js': 89,
+  'voodoo.full.min.js': 138,
 };
 
 function kb(bytes) {

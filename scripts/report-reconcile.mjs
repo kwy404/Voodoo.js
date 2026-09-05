@@ -2,7 +2,7 @@
  * Prints the reconciliation before/after tables as markdown.
  *
  *   node scripts/report-reconcile.mjs            # English
- *   node scripts/report-reconcile.mjs --pt       # Português
+ *   node scripts/report-reconcile.mjs --pt       # the pt-BR README
  *
  * The numbers in the READMEs are pasted from here rather than typed. A figure
  * typed by hand is a figure that drifts from the run it claims to describe, and
