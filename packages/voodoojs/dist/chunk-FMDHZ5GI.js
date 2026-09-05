@@ -1,7 +1,7 @@
-import { __publicField } from './chunk-PO6REBDJ.js';
+import { __publicField } from './chunk-IJQ2PFXU.js';
 
 /**
- * Voodoo.js v0.12.5
+ * Voodoo.js v0.13.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -767,5 +767,5 @@ function traverse(value, seen = /* @__PURE__ */ new Set()) {
 }
 
 export { ArrayOp, EffectScope, ITERATE_KEY, ReactiveEffect, TriggerType, arrayVersion, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, mutationsSince, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };
-//# sourceMappingURL=chunk-OIHNH5XR.js.map
-//# sourceMappingURL=chunk-OIHNH5XR.js.map
+//# sourceMappingURL=chunk-FMDHZ5GI.js.map
+//# sourceMappingURL=chunk-FMDHZ5GI.js.map

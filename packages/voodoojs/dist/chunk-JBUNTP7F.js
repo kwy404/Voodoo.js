@@ -1,10 +1,10 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-OIHNH5XR.js';
-import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-YH3IDF6L.js';
-import { config, directives, components } from './chunk-OH6FIDTW.js';
-import { __publicField } from './chunk-PO6REBDJ.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-FMDHZ5GI.js';
+import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-IBIZ6OUI.js';
+import { config, directives, components } from './chunk-TEVCUTTC.js';
+import { __publicField } from './chunk-IJQ2PFXU.js';
 
 /**
- * Voodoo.js v0.12.5
+ * Voodoo.js v0.13.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2214,5 +2214,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-RZWDWP5A.js.map
-//# sourceMappingURL=chunk-RZWDWP5A.js.map
+//# sourceMappingURL=chunk-JBUNTP7F.js.map
+//# sourceMappingURL=chunk-JBUNTP7F.js.map
