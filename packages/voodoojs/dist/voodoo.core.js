@@ -31,10 +31,12 @@ var Voodoo = (() => {
   // src/reactivity/index.ts
   var reactivity_exports = {};
   __export(reactivity_exports, {
+    ArrayOp: () => ArrayOp,
     EffectScope: () => EffectScope,
     ITERATE_KEY: () => ITERATE_KEY,
     ReactiveEffect: () => ReactiveEffect,
     TriggerType: () => TriggerType,
+    arrayVersion: () => arrayVersion,
     computed: () => computed,
     effect: () => effect,
     effectScope: () => effectScope,
@@ -47,6 +49,7 @@ var Voodoo = (() => {
     isReactive: () => isReactive,
     isRef: () => isRef,
     markRaw: () => markRaw,
+    mutationsSince: () => mutationsSince,
     nextTick: () => nextTick,
     pauseTracking: () => pauseTracking,
     queueJob: () => queueJob,
@@ -210,7 +213,9 @@ var Voodoo = (() => {
         if (!isArr) add(depsMap.get(ITERATE_KEY));
         else if (isIntegerKey(key)) add(depsMap.get("length"));
       } else if (type === "delete" /* DELETE */) {
-        if (!isArr) add(depsMap.get(ITERATE_KEY));
+        add(depsMap.get(ITERATE_KEY));
+      } else if (isArr && isIntegerKey(key)) {
+        add(depsMap.get(ITERATE_KEY));
       } else if (isArr && key === "length") {
         const newLen = Number(_newValue);
         depsMap.forEach((dep, k) => {
@@ -223,11 +228,60 @@ var Voodoo = (() => {
       else queueJob(e);
     }
   }
+  function triggerArrayRange(target, from) {
+    const depsMap = targetMap.get(target);
+    if (!depsMap) return;
+    const effects = /* @__PURE__ */ new Set();
+    const add = (dep) => {
+      if (!dep) return;
+      for (const e of dep) if (e !== activeEffect) effects.add(e);
+    };
+    add(depsMap.get("length"));
+    add(depsMap.get(ITERATE_KEY));
+    if (from >= 0) {
+      depsMap.forEach((dep, k) => {
+        if (typeof k === "string" && isIntegerKey(k) && Number(k) >= from) add(dep);
+      });
+    }
+    for (const e of effects) {
+      if (e.scheduler) e.scheduler();
+      else queueJob(e);
+    }
+  }
+  function record(target, type, index, removed, added) {
+    let log = mutationLogs.get(target);
+    if (!log) mutationLogs.set(target, log = { version: 0, ops: [] });
+    log.version++;
+    if (type === 3 /* RESET */) {
+      log.ops.length = 0;
+      return;
+    }
+    log.ops.push({ type, index, removed, added });
+    if (log.ops.length > LOG_LIMIT) log.ops.shift();
+  }
+  function arrayVersion(target) {
+    const log = mutationLogs.get(target);
+    return log ? log.version : 0;
+  }
+  function mutationsSince(target, since) {
+    const log = mutationLogs.get(target);
+    if (!log) return since === 0 ? NO_MUTATIONS : null;
+    if (since > log.version) return null;
+    const missing = log.version - since;
+    if (missing === 0) return NO_MUTATIONS;
+    if (missing > log.ops.length) return null;
+    return log.ops.slice(log.ops.length - missing);
+  }
   function isIntegerKey(key) {
     return typeof key === "string" && key !== "NaN" && key[0] !== "-" && String(parseInt(key, 10)) === key;
   }
   function isObject(val) {
     return val !== null && typeof val === "object";
+  }
+  function spliceStart(raw, length) {
+    const n = Math.trunc(Number(raw)) || 0;
+    if (n < 0) return Math.max(length + n, 0);
+    return Math.min(n, length);
   }
   function canObserve(value) {
     if (!isObject(value)) return false;
@@ -237,6 +291,23 @@ var Voodoo = (() => {
     const tag = Object.prototype.toString.call(value).slice(8, -1);
     if (NON_REACTIVE.has(tag)) return false;
     return tag === "Object" || tag === "Array" || tag === "Map" || tag === "Set";
+  }
+  function recordDirectWrite(target, key, lengthBefore, hadKey, oldValue, value) {
+    if (key === "length") {
+      const next = target.length;
+      if (next < lengthBefore) record(target, 1 /* SPLICE */, next, lengthBefore - next, 0);
+      else if (next > lengthBefore) record(target, 3 /* RESET */, 0, 0, 0);
+      return;
+    }
+    if (!isIntegerKey(key)) return;
+    const index = Number(key);
+    if (hadKey) {
+      if (hasChanged(value, oldValue)) record(target, 2 /* SET */, index, 1, 1);
+    } else if (index === lengthBefore) {
+      record(target, 1 /* SPLICE */, index, 0, 1);
+    } else {
+      record(target, 3 /* RESET */, 0, 0, 0);
+    }
   }
   function markRaw(value) {
     Object.defineProperty(value, SKIP, { value: true, enumerable: false, configurable: true });
@@ -360,7 +431,7 @@ var Voodoo = (() => {
     else for (const key of Object.keys(value)) traverse(value[key], seen);
     return value;
   }
-  var resolvedPromise, queue, postQueue, isFlushing, isFlushPending, flushPromise, RECURSION_LIMIT, errorHandler, activeEffect, shouldTrack, trackStack, effectId, ReactiveEffect, activeScope, EffectScope, ITERATE_KEY, targetMap, TriggerType, RAW, IS_REACTIVE, SKIP, reactiveMap, arrayInstrumentations, NON_REACTIVE, baseHandlers, collectionHandlers, RefImpl, ComputedRefImpl;
+  var resolvedPromise, queue, postQueue, isFlushing, isFlushPending, flushPromise, RECURSION_LIMIT, errorHandler, activeEffect, shouldTrack, trackStack, effectId, ReactiveEffect, activeScope, EffectScope, ITERATE_KEY, targetMap, TriggerType, ArrayOp, LOG_LIMIT, mutationLogs, NO_MUTATIONS, RAW, IS_REACTIVE, SKIP, reactiveMap, arrayInstrumentations, NON_REACTIVE, baseHandlers, collectionHandlers, RefImpl, ComputedRefImpl;
   var init_reactivity = __esm({
     "src/reactivity/index.ts"() {
       "use strict";
@@ -490,6 +561,15 @@ var Voodoo = (() => {
         TriggerType2["CLEAR"] = "clear";
         return TriggerType2;
       })(TriggerType || {});
+      ArrayOp = /* @__PURE__ */ ((ArrayOp2) => {
+        ArrayOp2[ArrayOp2["SPLICE"] = 1] = "SPLICE";
+        ArrayOp2[ArrayOp2["SET"] = 2] = "SET";
+        ArrayOp2[ArrayOp2["RESET"] = 3] = "RESET";
+        return ArrayOp2;
+      })(ArrayOp || {});
+      LOG_LIMIT = 32;
+      mutationLogs = /* @__PURE__ */ new WeakMap();
+      NO_MUTATIONS = [];
       RAW = /* @__PURE__ */ Symbol("voodoo:raw");
       IS_REACTIVE = /* @__PURE__ */ Symbol("voodoo:isReactive");
       SKIP = /* @__PURE__ */ Symbol("voodoo:skip");
@@ -507,14 +587,61 @@ var Voodoo = (() => {
             return res;
           };
         }
-        for (const key of ["push", "pop", "shift", "unshift", "splice"]) {
+        for (const key of ["push", "pop", "shift", "unshift", "splice", "reverse", "sort"]) {
           inst[key] = function(...args) {
+            const raw = toRaw(this);
+            const before = raw.length;
+            for (let i = 0; i < args.length; i++) args[i] = toRaw(args[i]);
             pauseTracking();
+            let result;
             try {
-              return toRaw(this)[key].apply(this, args);
+              result = raw[key].apply(raw, args);
             } finally {
               resetTracking();
             }
+            const after = raw.length;
+            let from = -1;
+            if (key === "push") {
+              if (args.length) {
+                record(raw, 1 /* SPLICE */, before, 0, args.length);
+                from = before;
+              }
+            } else if (key === "unshift") {
+              if (args.length) {
+                record(raw, 1 /* SPLICE */, 0, 0, args.length);
+                from = 0;
+              }
+            } else if (key === "pop") {
+              if (before > 0) {
+                record(raw, 1 /* SPLICE */, after, 1, 0);
+                from = after;
+              }
+            } else if (key === "shift") {
+              if (before > 0) {
+                record(raw, 1 /* SPLICE */, 0, 1, 0);
+                from = 0;
+              }
+            } else if (key === "splice") {
+              const removed = result.length;
+              const added = args.length > 2 ? args.length - 2 : 0;
+              if (removed || added) {
+                record(raw, 1 /* SPLICE */, spliceStart(args[0], before), removed, added);
+                from = spliceStart(args[0], before);
+              }
+            } else {
+              if (before > 1) {
+                record(raw, 3 /* RESET */, 0, before, after);
+                from = 0;
+              }
+            }
+            if (from >= 0) triggerArrayRange(raw, from);
+            if (key === "pop" || key === "shift") return isObject(result) ? reactive(result) : result;
+            if (key === "splice") {
+              const out = result;
+              for (let i = 0; i < out.length; i++) if (isObject(out[i])) out[i] = reactive(out[i]);
+              return out;
+            }
+            return key === "reverse" || key === "sort" ? this : result;
           };
         }
         return inst;
@@ -556,8 +683,11 @@ var Voodoo = (() => {
             return true;
           }
           const hadKey = Array.isArray(target) && isIntegerKey(key) ? Number(key) < target.length : Object.prototype.hasOwnProperty.call(target, key);
+          const isArr = Array.isArray(target);
+          const arrayLength = isArr ? target.length : 0;
           const result = Reflect.set(target, key, value, receiver);
           if (target === toRaw(receiver)) {
+            if (isArr) recordDirectWrite(target, key, arrayLength, hadKey, oldValue, value);
             if (!hadKey) trigger(target, "add" /* ADD */, key, value);
             else if (hasChanged(value, oldValue)) trigger(target, "set" /* SET */, key, value);
           }
@@ -566,7 +696,10 @@ var Voodoo = (() => {
         deleteProperty(target, key) {
           const hadKey = Object.prototype.hasOwnProperty.call(target, key);
           const result = Reflect.deleteProperty(target, key);
-          if (result && hadKey) trigger(target, "delete" /* DELETE */, key);
+          if (result && hadKey) {
+            if (Array.isArray(target)) record(target, 3 /* RESET */, 0, 0, 0);
+            trigger(target, "delete" /* DELETE */, key);
+          }
           return result;
         },
         has(target, key) {
@@ -5671,6 +5804,35 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   // src/directives/core.ts
   init_reactivity();
   init_registry();
+
+  // src/runtime/metrics.ts
+  function blank() {
+    return {
+      on: false,
+      itemsVisited: 0,
+      keyEvaluations: 0,
+      prefixScanned: 0,
+      suffixScanned: 0,
+      middleReconciled: 0,
+      scopeAllocations: 0,
+      proxyWrites: 0,
+      arrayAllocations: 0,
+      keyMapLookups: 0,
+      domCreates: 0,
+      domRemoves: 0,
+      domMoves: 0,
+      domInserts: 0,
+      lisRuns: 0,
+      lisElements: 0,
+      paths: {}
+    };
+  }
+  var metrics = /* @__PURE__ */ blank();
+  function countPath(name) {
+    metrics.paths[name] = (metrics.paths[name] || 0) + 1;
+  }
+
+  // src/directives/core.ts
   function setValue(expression, scope, value) {
     try {
       const target = parse(expression);
@@ -5816,7 +5978,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     },
     { priority: PRIORITY.IF, terminal: true }
   );
-  function renderTemplate(source, anchor, scope, batch) {
+  function renderTemplate(source, anchor, scope) {
     const parent = anchor.parentNode;
     if (!parent) return [];
     const nodes = [];
@@ -5833,21 +5995,64 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       }
     } else {
       const clone2 = source.cloneNode(true);
+      if (metrics.on) metrics.domCreates++;
       nodes.push(clone2);
       markNodeScope(clone2, scope);
-      if (batch) {
-        batch.fragment.appendChild(clone2);
-        batch.pending.push([clone2, scope]);
-      } else {
-        parent.insertBefore(clone2, anchor);
-        walk(clone2, scope);
-      }
+      parent.insertBefore(clone2, anchor);
+      walk(clone2, scope);
     }
     return nodes;
   }
   defineDirective("else-if", () => void 0, { priority: PRIORITY.IF, terminal: true });
   defineDirective("else", () => void 0, { priority: PRIORITY.IF, terminal: true });
   var FOR_PATTERN = /^\s*\(?\s*([^)]*?)\s*\)?\s+(?:in|of)\s+(.+?)\s*$/;
+  var KEY_PATH = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
+  var NO_BLOCKS = [];
+  function sameStored(stored, incoming) {
+    if (stored === incoming) return true;
+    return incoming !== null && typeof incoming === "object" && stored === toRaw(incoming);
+  }
+  function sameKey(a, b) {
+    return a === b || a !== a && b !== b;
+  }
+  function longestIncreasing(arr) {
+    const length = arr.length;
+    const previous = new Int32Array(length);
+    const tails = [];
+    for (let i = 0; i < length; i++) {
+      const value = arr[i];
+      if (value === 0) continue;
+      if (tails.length === 0) {
+        tails.push(i);
+        continue;
+      }
+      const last = tails[tails.length - 1];
+      if (arr[last] < value) {
+        previous[i] = last;
+        tails.push(i);
+        continue;
+      }
+      let low = 0;
+      let high = tails.length - 1;
+      while (low < high) {
+        const mid = low + high >> 1;
+        if (arr[tails[mid]] < value) low = mid + 1;
+        else high = mid;
+      }
+      if (value < arr[tails[low]]) {
+        if (low > 0) previous[i] = tails[low - 1];
+        tails[low] = i;
+      }
+    }
+    let cursor = tails.length;
+    const out = new Int32Array(cursor);
+    let node = tails[cursor - 1];
+    while (cursor-- > 0) {
+      out[cursor] = node;
+      node = previous[node];
+    }
+    return out;
+  }
   defineDirective(
     "for",
     ({ el, scope, expression, effect: effect2 }) => {
@@ -5873,78 +6078,361 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       template.removeAttribute(`${p2}bind:key`);
       template.removeAttribute(`${p2}key`);
       removeQuietly(el);
+      const isTemplateRow = template.tagName === "TEMPLATE";
+      let keyIsItem = false;
+      let keyIsIndex = false;
+      let keyProp = null;
+      let keyPath = null;
+      if (keyExpression && KEY_PATH.test(keyExpression)) {
+        const parts = keyExpression.split(".");
+        if (parts[0] === itemAlias) {
+          if (parts.length === 1) keyIsItem = true;
+          else if (parts.length === 2) keyProp = parts[1];
+          else keyPath = parts.slice(1);
+        } else if (indexAlias && parts.length === 1 && parts[0] === indexAlias) {
+          keyIsIndex = true;
+        }
+      }
       let blocks = [];
-      const clearAll = () => {
-        for (const block2 of blocks) {
-          for (const node of block2.nodes) {
-            destroy(node);
-            node.remove();
+      let rows = [];
+      let entries = null;
+      let count = 0;
+      let keyScope = null;
+      let lastSource = null;
+      let lastVersion = 0;
+      const pending = [];
+      const pendingRuns = [];
+      const varsAt = (i) => {
+        if (entries) return entries[i];
+        const vars = { [itemAlias]: rows[i] };
+        if (indexAlias) vars[indexAlias] = i;
+        return vars;
+      };
+      const keyAt = (i) => {
+        if (metrics.on) metrics.keyEvaluations++;
+        if (keyIsIndex) return i;
+        if (!keyExpression) {
+          return i;
+        }
+        const item = entries ? entries[i][itemAlias] : rows[i];
+        if (keyIsItem) return item;
+        if (keyProp !== null) return item == null ? void 0 : item[keyProp];
+        if (keyPath !== null) {
+          let value = item;
+          for (let d = 0; d < keyPath.length; d++) {
+            if (value == null) return void 0;
+            value = value[keyPath[d]];
+          }
+          return value;
+        }
+        if (!keyScope) keyScope = scope.child({});
+        keyScope.data = varsAt(i);
+        return evaluateIn(keyExpression, keyScope, ":key");
+      };
+      const syncData = (block2, i) => {
+        const raw = toRaw(block2.data);
+        if (entries) {
+          const vars = entries[i];
+          for (const name in vars) {
+            if (!sameStored(raw[name], vars[name])) {
+              if (metrics.on) metrics.proxyWrites++;
+              block2.data[name] = vars[name];
+            }
+          }
+          return;
+        }
+        const item = rows[i];
+        if (!sameStored(raw[itemAlias], item)) {
+          if (metrics.on) metrics.proxyWrites++;
+          block2.data[itemAlias] = item;
+        }
+        if (indexAlias !== void 0 && raw[indexAlias] !== i) {
+          if (metrics.on) metrics.proxyWrites++;
+          block2.data[indexAlias] = i;
+        }
+      };
+      const buildRange = (from, to, before, out) => {
+        if (from >= to) return;
+        const parent = anchor.parentNode;
+        if (!parent) return;
+        pendingRuns.push(pending.length);
+        if (isTemplateRow) {
+          for (let i = from; i < to; i++) {
+            const childScope = scope.reactiveChild(varsAt(i));
+            if (metrics.on) {
+              metrics.scopeAllocations++;
+              metrics.itemsVisited++;
+            }
+            const nodes = renderTemplate(template, before, childScope);
+            out.push({ key: keyAt(i), scope: childScope, nodes, data: childScope.data });
+          }
+          return;
+        }
+        const fragment = document.createDocumentFragment();
+        for (let i = from; i < to; i++) {
+          const childScope = scope.reactiveChild(varsAt(i));
+          const clone2 = template.cloneNode(true);
+          markNodeScope(clone2, childScope);
+          fragment.appendChild(clone2);
+          pending.push([clone2, childScope]);
+          out.push({ key: keyAt(i), scope: childScope, nodes: [clone2], data: childScope.data });
+          if (metrics.on) {
+            metrics.scopeAllocations++;
+            metrics.domCreates++;
+            metrics.itemsVisited++;
           }
         }
+        if (metrics.on) metrics.domInserts++;
+        parent.insertBefore(fragment, before);
+      };
+      const destroyBlock = (block2) => {
+        const nodes = block2.nodes;
+        for (let j = 0; j < nodes.length; j++) {
+          if (metrics.on) metrics.domRemoves++;
+          destroy(nodes[j]);
+          nodes[j].remove();
+        }
+      };
+      const moveBlock = (block2, before) => {
+        const parent = anchor.parentNode;
+        if (!parent) return;
+        const nodes = block2.nodes;
+        if (nodes[nodes.length - 1].nextSibling === before) return;
+        for (let j = 0; j < nodes.length; j++) {
+          if (metrics.on) metrics.domMoves++;
+          parent.insertBefore(nodes[j], before);
+        }
+      };
+      const nodeAfter = (oldIndex) => oldIndex < blocks.length ? blocks[oldIndex].nodes[0] : anchor;
+      const spliceBlocks = (index, remove, added) => {
+        const addCount = added.length;
+        if (remove === 0 && addCount === 0) return;
+        if (blocks.length === 0) {
+          blocks = added;
+          return;
+        }
+        if (addCount === 0) {
+          blocks.splice(index, remove);
+          return;
+        }
+        if (addCount <= 1024) {
+          blocks.splice(index, remove, ...added);
+          return;
+        }
+        const out = new Array(blocks.length - remove + addCount);
+        let w = 0;
+        for (let k = 0; k < index; k++) out[w++] = blocks[k];
+        for (let k = 0; k < addCount; k++) out[w++] = added[k];
+        for (let k = index + remove; k < blocks.length; k++) out[w++] = blocks[k];
+        blocks = out;
+      };
+      const flushPending = () => {
+        for (let r = pendingRuns.length - 1; r >= 0; r--) {
+          const start2 = pendingRuns[r];
+          const end = r + 1 < pendingRuns.length ? pendingRuns[r + 1] : pending.length;
+          for (let k = start2; k < end; k++) walk(pending[k][0], pending[k][1]);
+        }
+        pending.length = 0;
+        pendingRuns.length = 0;
+      };
+      let lo = 0;
+      let oldHi = 0;
+      let newHi = 0;
+      const regionFromMutations = (source) => {
+        const ops = mutationsSince(source, lastVersion);
+        if (!ops) return false;
+        const oldLen = blocks.length;
+        lo = 0;
+        oldHi = 0;
+        newHi = 0;
+        let current2 = oldLen;
+        for (let k = 0; k < ops.length; k++) {
+          const op = ops[k];
+          const index = op.index;
+          const removed = op.type === 2 /* SET */ ? 1 : op.removed;
+          const added = op.type === 2 /* SET */ ? 1 : op.added;
+          const end = index + removed;
+          if (k === 0) {
+            lo = index;
+            oldHi = end;
+            newHi = index + added;
+          } else if (end <= newHi) {
+            if (index < lo) lo = index;
+            newHi += added - removed;
+          } else {
+            if (index < lo) lo = index;
+            oldHi = end - newHi + oldHi;
+            newHi = index + added;
+          }
+          if (oldHi < lo) oldHi = lo;
+          if (newHi < lo) newHi = lo;
+          current2 += added - removed;
+        }
+        if (current2 !== count) return false;
+        if (lo > oldHi || lo > newHi) return false;
+        if (oldHi > oldLen || newHi > count) return false;
+        if (metrics.on) countPath(ops.length === 0 ? "unchanged" : "mutation");
+        if (indexAlias !== void 0 && oldHi - newHi !== 0) {
+          for (let i = newHi; i < count; i++) syncData(blocks[i - newHi + oldHi], i);
+        }
+        return true;
+      };
+      const regionFromScan = () => {
+        const oldLen = blocks.length;
+        const newLen = count;
+        let i = 0;
+        const shared = oldLen < newLen ? oldLen : newLen;
+        while (i < shared) {
+          const block2 = blocks[i];
+          if (!sameKey(block2.key, keyAt(i))) break;
+          syncData(block2, i);
+          i++;
+        }
+        if (metrics.on) {
+          metrics.prefixScanned += i;
+          metrics.itemsVisited += i;
+        }
+        let oe = oldLen - 1;
+        let ne = newLen - 1;
+        while (oe >= i && ne >= i) {
+          const block2 = blocks[oe];
+          if (!sameKey(block2.key, keyAt(ne))) break;
+          syncData(block2, ne);
+          oe--;
+          ne--;
+        }
+        if (metrics.on) {
+          const scanned = oldLen - 1 - oe;
+          metrics.suffixScanned += scanned;
+          metrics.itemsVisited += scanned;
+          countPath("scan");
+        }
+        lo = i;
+        oldHi = oe + 1;
+        newHi = ne + 1;
+      };
+      const reconcileRegion = () => {
+        const toPatch = newHi - lo;
+        if (lo >= oldHi) {
+          if (toPatch > 0) {
+            const created = [];
+            buildRange(lo, newHi, nodeAfter(lo), created);
+            spliceBlocks(lo, 0, created);
+          }
+          return;
+        }
+        if (toPatch === 0) {
+          if (metrics.on) metrics.itemsVisited += oldHi - lo;
+          for (let j = lo; j < oldHi; j++) destroyBlock(blocks[j]);
+          spliceBlocks(lo, oldHi - lo, NO_BLOCKS);
+          return;
+        }
+        if (metrics.on) {
+          metrics.arrayAllocations += 3;
+          metrics.middleReconciled += toPatch;
+          metrics.itemsVisited += toPatch + (oldHi - lo);
+        }
+        const keyToNew = /* @__PURE__ */ new Map();
+        for (let n = lo; n < newHi; n++) {
+          const key = keyAt(n);
+          if (keyExpression && keyToNew.has(key)) warnDuplicateKey(el, key, expression);
+          keyToNew.set(key, n);
+        }
+        const oldOfNew = new Int32Array(toPatch);
+        const reused = new Array(toPatch);
+        let matched = 0;
+        let moved = false;
+        let highestSoFar = 0;
+        for (let o = lo; o < oldHi; o++) {
+          const block2 = blocks[o];
+          if (metrics.on) metrics.keyMapLookups++;
+          const target = matched >= toPatch ? void 0 : keyToNew.get(block2.key);
+          if (target === void 0 || reused[target - lo] !== void 0) {
+            destroyBlock(block2);
+            continue;
+          }
+          oldOfNew[target - lo] = o + 1;
+          reused[target - lo] = block2;
+          if (target >= highestSoFar) highestSoFar = target;
+          else moved = true;
+          syncData(block2, target);
+          matched++;
+        }
+        const stay = moved ? longestIncreasing(oldOfNew) : null;
+        if (metrics.on && moved) {
+          metrics.lisRuns++;
+          metrics.lisElements += toPatch;
+        }
+        let s = stay ? stay.length - 1 : -1;
+        const region = new Array(toPatch);
+        let before = nodeAfter(oldHi);
+        let runEnd = -1;
+        for (let n = toPatch - 1; n >= 0; n--) {
+          const newIndex = lo + n;
+          const block2 = reused[n];
+          if (block2 === void 0) {
+            if (runEnd < 0) runEnd = newIndex + 1;
+            continue;
+          }
+          if (runEnd >= 0) {
+            const created = [];
+            buildRange(newIndex + 1, runEnd, before, created);
+            for (let c = 0; c < created.length; c++) region[n + 1 + c] = created[c];
+            if (created.length) before = created[0].nodes[0];
+            runEnd = -1;
+          }
+          region[n] = block2;
+          if (moved && (s < 0 || n !== stay[s])) moveBlock(block2, before);
+          else if (moved) s--;
+          before = block2.nodes[0];
+        }
+        if (runEnd >= 0) {
+          const created = [];
+          buildRange(lo, runEnd, before, created);
+          for (let c = 0; c < created.length; c++) region[c] = created[c];
+        }
+        spliceBlocks(lo, oldHi - lo, region);
+      };
+      const clearAll = () => {
+        for (const block2 of blocks) destroyBlock(block2);
         blocks = [];
+        lastSource = null;
+        lastVersion = 0;
       };
       addCleanup(anchor, clearAll);
       effect2(() => {
-        var _a3, _b, _c;
         const source = evaluateIn(sourceExpression, scope, "v-for");
-        const entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
-        const previous = /* @__PURE__ */ new Map();
-        for (const block2 of blocks) previous.set(block2.key, block2);
-        const next = [];
-        const used = /* @__PURE__ */ new Set();
-        const batch = {
-          fragment: document.createDocumentFragment(),
-          pending: []
-        };
-        entries.forEach((vars, index) => {
-          const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
-          if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
-          const existing = previous.get(key);
-          if (existing && !used.has(key)) {
-            used.add(key);
-            for (const [name, value] of Object.entries(vars)) existing.data[name] = value;
-            next.push(existing);
-            return;
+        const raw = toRaw(source);
+        let fromMutations = false;
+        if (Array.isArray(raw)) {
+          track(raw, "length");
+          track(raw, ITERATE_KEY);
+          rows = raw;
+          entries = null;
+          count = raw.length;
+          const version3 = arrayVersion(raw);
+          if (raw === lastSource && keyExpression && !keyIsIndex) {
+            fromMutations = regionFromMutations(raw);
           }
-          const childScope = scope.reactiveChild(vars);
-          const nodes = renderTemplate(template, anchor, childScope, batch);
-          used.add(key);
-          next.push({ key, scope: childScope, nodes, data: childScope.data });
-        });
-        if (batch.fragment.firstChild) (_a3 = anchor.parentNode) == null ? void 0 : _a3.insertBefore(batch.fragment, anchor);
-        for (const [node, rowScope] of batch.pending) walk(node, rowScope);
-        const reused = new Set(next);
-        for (const block2 of blocks) {
-          if (used.has(block2.key) && reused.has(block2)) continue;
-          for (const node of block2.nodes) {
-            destroy(node);
-            node.remove();
-          }
+          lastSource = raw;
+          lastVersion = version3;
+        } else {
+          entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
+          rows = entries;
+          count = entries.length;
+          lastSource = null;
+          lastVersion = 0;
+          if (metrics.on) metrics.arrayAllocations += count + 1;
         }
-        let cursor = anchor;
-        for (let i = next.length - 1; i >= 0; i--) {
-          const block2 = next[i];
-          const last = block2.nodes[block2.nodes.length - 1];
-          if (last && last.nextSibling !== cursor) {
-            for (const node of block2.nodes) (_b = anchor.parentNode) == null ? void 0 : _b.insertBefore(node, cursor);
-          }
-          cursor = (_c = block2.nodes[0]) != null ? _c : cursor;
-        }
-        blocks = next;
+        if (!fromMutations) regionFromScan();
+        reconcileRegion();
+        flushPending();
       });
     },
     { priority: PRIORITY.FOR, terminal: true }
   );
   function normalizeSource(source, itemAlias, indexAlias, thirdAlias) {
     const out = [];
-    if (Array.isArray(source)) {
-      source.forEach((item, index) => {
-        const vars = { [itemAlias]: item };
-        if (indexAlias) vars[indexAlias] = index;
-        out.push(vars);
-      });
-      return out;
-    }
     if (typeof source === "number") {
       for (let i = 1; i <= source; i++) {
         const vars = { [itemAlias]: i };

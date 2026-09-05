@@ -7,7 +7,7 @@
 One tag. Nothing else.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
 ```
 
 Pin an exact version in production:
@@ -75,7 +75,7 @@ states no numbers.
 <head>
   <meta charset="utf-8">
   <title>Tasks</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <main v-data="{ draft: '', tasks: [] }">
@@ -265,7 +265,7 @@ Every field on `V.config`:
 ### From the script tag
 
 ```html
-<script src="voodoo.min.js"
+<script src="voodoo.full.min.js"
         data-prefix="data-v-"
         data-base-url="/api"
         data-locale="en-US"
@@ -289,7 +289,7 @@ Every field on `V.config`:
 Anything that must be set before the page is walked needs `data-manual`:
 
 ```html
-<script src="voodoo.min.js" data-manual defer></script>
+<script src="voodoo.full.min.js" data-manual defer></script>
 <script>
   V.config.prefix = 'data-v-';
   V.config.root = document.querySelector('#app');

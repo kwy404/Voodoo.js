@@ -173,7 +173,7 @@ Com a tag `<script>` normal, `V.start()` é chamado sozinho. Use `data-manual` q
 registrar tudo antes.
 
 ```html
-<script src="voodoo.min.js" data-manual></script>
+<script src="voodoo.full.min.js" data-manual></script>
 <script>
   V.component('x', { ... });
   V.start();

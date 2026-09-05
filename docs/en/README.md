@@ -7,7 +7,7 @@ components, HTTP, forms, validation, UI and routing, driven by attributes, with 
 step, no `eval`, and no runtime dependencies.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
 
 <div v-data="{ count: 0 }">
   <button @click="count++">Clicked { count } times</button>

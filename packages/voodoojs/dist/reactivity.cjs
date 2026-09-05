@@ -280,7 +280,9 @@ function trigger(target, type, key, _newValue) {
       if (!isArr) add(depsMap.get(ITERATE_KEY));
       else if (isIntegerKey(key)) add(depsMap.get("length"));
     } else if (type === "delete" /* DELETE */) {
-      if (!isArr) add(depsMap.get(ITERATE_KEY));
+      add(depsMap.get(ITERATE_KEY));
+    } else if (isArr && isIntegerKey(key)) {
+      add(depsMap.get(ITERATE_KEY));
     } else if (isArr && key === "length") {
       const newLen = Number(_newValue);
       depsMap.forEach((dep, k) => {
@@ -292,6 +294,59 @@ function trigger(target, type, key, _newValue) {
     if (e.scheduler) e.scheduler();
     else queueJob(e);
   }
+}
+function triggerArrayRange(target, from) {
+  const depsMap = targetMap.get(target);
+  if (!depsMap) return;
+  const effects = /* @__PURE__ */ new Set();
+  const add = (dep) => {
+    if (!dep) return;
+    for (const e of dep) if (e !== activeEffect) effects.add(e);
+  };
+  add(depsMap.get("length"));
+  add(depsMap.get(ITERATE_KEY));
+  if (from >= 0) {
+    depsMap.forEach((dep, k) => {
+      if (typeof k === "string" && isIntegerKey(k) && Number(k) >= from) add(dep);
+    });
+  }
+  for (const e of effects) {
+    if (e.scheduler) e.scheduler();
+    else queueJob(e);
+  }
+}
+var ArrayOp = /* @__PURE__ */ ((ArrayOp2) => {
+  ArrayOp2[ArrayOp2["SPLICE"] = 1] = "SPLICE";
+  ArrayOp2[ArrayOp2["SET"] = 2] = "SET";
+  ArrayOp2[ArrayOp2["RESET"] = 3] = "RESET";
+  return ArrayOp2;
+})(ArrayOp || {});
+var LOG_LIMIT = 32;
+var mutationLogs = /* @__PURE__ */ new WeakMap();
+function record(target, type, index, removed, added) {
+  let log = mutationLogs.get(target);
+  if (!log) mutationLogs.set(target, log = { version: 0, ops: [] });
+  log.version++;
+  if (type === 3 /* RESET */) {
+    log.ops.length = 0;
+    return;
+  }
+  log.ops.push({ type, index, removed, added });
+  if (log.ops.length > LOG_LIMIT) log.ops.shift();
+}
+var NO_MUTATIONS = [];
+function arrayVersion(target) {
+  const log = mutationLogs.get(target);
+  return log ? log.version : 0;
+}
+function mutationsSince(target, since) {
+  const log = mutationLogs.get(target);
+  if (!log) return since === 0 ? NO_MUTATIONS : null;
+  if (since > log.version) return null;
+  const missing = log.version - since;
+  if (missing === 0) return NO_MUTATIONS;
+  if (missing > log.ops.length) return null;
+  return log.ops.slice(log.ops.length - missing);
 }
 function isIntegerKey(key) {
   return typeof key === "string" && key !== "NaN" && key[0] !== "-" && String(parseInt(key, 10)) === key;
@@ -313,20 +368,72 @@ var arrayInstrumentations = /* @__PURE__ */ (() => {
       return res;
     };
   }
-  for (const key of ["push", "pop", "shift", "unshift", "splice"]) {
+  for (const key of ["push", "pop", "shift", "unshift", "splice", "reverse", "sort"]) {
     inst[key] = function(...args) {
+      const raw = toRaw(this);
+      const before = raw.length;
+      for (let i = 0; i < args.length; i++) args[i] = toRaw(args[i]);
       pauseTracking();
+      let result;
       try {
-        return toRaw(this)[key].apply(this, args);
+        result = raw[key].apply(raw, args);
       } finally {
         resetTracking();
       }
+      const after = raw.length;
+      let from = -1;
+      if (key === "push") {
+        if (args.length) {
+          record(raw, 1 /* SPLICE */, before, 0, args.length);
+          from = before;
+        }
+      } else if (key === "unshift") {
+        if (args.length) {
+          record(raw, 1 /* SPLICE */, 0, 0, args.length);
+          from = 0;
+        }
+      } else if (key === "pop") {
+        if (before > 0) {
+          record(raw, 1 /* SPLICE */, after, 1, 0);
+          from = after;
+        }
+      } else if (key === "shift") {
+        if (before > 0) {
+          record(raw, 1 /* SPLICE */, 0, 1, 0);
+          from = 0;
+        }
+      } else if (key === "splice") {
+        const removed = result.length;
+        const added = args.length > 2 ? args.length - 2 : 0;
+        if (removed || added) {
+          record(raw, 1 /* SPLICE */, spliceStart(args[0], before), removed, added);
+          from = spliceStart(args[0], before);
+        }
+      } else {
+        if (before > 1) {
+          record(raw, 3 /* RESET */, 0, before, after);
+          from = 0;
+        }
+      }
+      if (from >= 0) triggerArrayRange(raw, from);
+      if (key === "pop" || key === "shift") return isObject(result) ? reactive(result) : result;
+      if (key === "splice") {
+        const out = result;
+        for (let i = 0; i < out.length; i++) if (isObject(out[i])) out[i] = reactive(out[i]);
+        return out;
+      }
+      return key === "reverse" || key === "sort" ? this : result;
     };
   }
   return inst;
 })();
 function isObject(val) {
   return val !== null && typeof val === "object";
+}
+function spliceStart(raw, length) {
+  const n = Math.trunc(Number(raw)) || 0;
+  if (n < 0) return Math.max(length + n, 0);
+  return Math.min(n, length);
 }
 var NON_REACTIVE = /* @__PURE__ */ new Set([
   "Date",
@@ -350,6 +457,23 @@ function canObserve(value) {
   const tag = Object.prototype.toString.call(value).slice(8, -1);
   if (NON_REACTIVE.has(tag)) return false;
   return tag === "Object" || tag === "Array" || tag === "Map" || tag === "Set";
+}
+function recordDirectWrite(target, key, lengthBefore, hadKey, oldValue, value) {
+  if (key === "length") {
+    const next = target.length;
+    if (next < lengthBefore) record(target, 1 /* SPLICE */, next, lengthBefore - next, 0);
+    else if (next > lengthBefore) record(target, 3 /* RESET */, 0, 0, 0);
+    return;
+  }
+  if (!isIntegerKey(key)) return;
+  const index = Number(key);
+  if (hadKey) {
+    if (hasChanged(value, oldValue)) record(target, 2 /* SET */, index, 1, 1);
+  } else if (index === lengthBefore) {
+    record(target, 1 /* SPLICE */, index, 0, 1);
+  } else {
+    record(target, 3 /* RESET */, 0, 0, 0);
+  }
 }
 function markRaw(value) {
   Object.defineProperty(value, SKIP, { value: true, enumerable: false, configurable: true });
@@ -399,8 +523,11 @@ var baseHandlers = {
       return true;
     }
     const hadKey = Array.isArray(target) && isIntegerKey(key) ? Number(key) < target.length : Object.prototype.hasOwnProperty.call(target, key);
+    const isArr = Array.isArray(target);
+    const arrayLength = isArr ? target.length : 0;
     const result = Reflect.set(target, key, value, receiver);
     if (target === toRaw(receiver)) {
+      if (isArr) recordDirectWrite(target, key, arrayLength, hadKey, oldValue, value);
       if (!hadKey) trigger(target, "add" /* ADD */, key, value);
       else if (hasChanged(value, oldValue)) trigger(target, "set" /* SET */, key, value);
     }
@@ -409,7 +536,10 @@ var baseHandlers = {
   deleteProperty(target, key) {
     const hadKey = Object.prototype.hasOwnProperty.call(target, key);
     const result = Reflect.deleteProperty(target, key);
-    if (result && hadKey) trigger(target, "delete" /* DELETE */, key);
+    if (result && hadKey) {
+      if (Array.isArray(target)) record(target, 3 /* RESET */, 0, 0, 0);
+      trigger(target, "delete" /* DELETE */, key);
+    }
     return result;
   },
   has(target, key) {
@@ -639,10 +769,12 @@ function traverse(value, seen = /* @__PURE__ */ new Set()) {
   return value;
 }
 
+exports.ArrayOp = ArrayOp;
 exports.EffectScope = EffectScope;
 exports.ITERATE_KEY = ITERATE_KEY;
 exports.ReactiveEffect = ReactiveEffect;
 exports.TriggerType = TriggerType;
+exports.arrayVersion = arrayVersion;
 exports.computed = computed;
 exports.effect = effect;
 exports.effectScope = effectScope;
@@ -655,6 +787,7 @@ exports.hasChanged = hasChanged;
 exports.isReactive = isReactive;
 exports.isRef = isRef;
 exports.markRaw = markRaw;
+exports.mutationsSince = mutationsSince;
 exports.nextTick = nextTick;
 exports.pauseTracking = pauseTracking;
 exports.queueJob = queueJob;

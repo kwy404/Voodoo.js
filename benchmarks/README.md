@@ -132,6 +132,11 @@ benchmarks/
     report.mjs         markdown + JSON output
     kit.mjs            shared mount/verify helpers, deterministic row data
     paths.mjs          absolute paths
+  reconcile/           list reconciliation: before/after, scaling, teardown memory
+    run.mjs            24 scenarios, timed with counters off and counted with them on
+    scaling.mjs        the same edit from 1.000 to 50.000 rows, to see the growth
+    cases.mjs          the scenarios themselves
+    leak-probe.mjs     does tearing a list down give the memory back
   core/ parser/ dom/ directives/ lists/ components/ startup/ memory/ stress/
   vanilla/             hand-written baselines for the same scenarios
   bundle/              size + composition + tree-shaking analysis
@@ -143,6 +148,36 @@ benchmarks/
 `competitors/` has its own `package.json` and is deliberately **not** a workspace member. Its
 dependencies are pinned to exact versions, and nothing at the repo root — `npm test`,
 `npm run build`, `npm run typecheck` — needs them installed.
+
+---
+
+## The reconciliation suite
+
+`lists/` measures `v-for` as part of the whole framework. `reconcile/` measures the reconciler
+itself, and it is a separate suite because it needs a different discipline:
+
+```
+node --expose-gc --max-old-space-size=8192 benchmarks/reconcile/run.mjs --out=reconcile-after.json
+node --expose-gc --max-old-space-size=8192 benchmarks/reconcile/run.mjs --src=<other-src> --out=reconcile-before.json
+node benchmarks/reconcile/run.mjs --compare benchmarks/results/reconcile-before.json benchmarks/results/reconcile-after.json
+```
+
+**The payload is built outside the clock.** A "remove one of ten thousand" case that times
+`[...rows]` plus `splice` plus the reconciler is timing an O(n) array copy and calling the total
+the algorithm's cost. Every case here separates `prepare` from `apply`, and only `apply` is timed.
+
+**Two families, measured apart.** `replace/*` assigns a new array, so the reconciler is handed two
+lists and no history. `inplace/*` mutates the reactive array, so the mutation itself says what
+changed. They have different lower bounds and averaging them would hide the entire point.
+
+**Counted as well as timed.** The suite runs each case twice: once with the counters in
+`runtime/metrics.ts` off, which produces the timings, and once with them on, which produces
+`itemsVisited`, `proxyWrites`, `domMoves` and the rest. Instrumentation never appears inside a
+measured number, and a time that moved without a counter moving is a time that moved for a reason
+nobody has explained yet.
+
+**`--src` points at any copy of `packages/voodoojs/src`.** That is what makes a before/after
+honest: same harness, same machine, same minute, two source trees.
 
 ---
 

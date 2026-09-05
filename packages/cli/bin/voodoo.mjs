@@ -289,7 +289,7 @@ async function comandoInit(pasta) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My app with Voodoo.js</title>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer><\/script>
   <style>
     body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 4rem auto; padding: 0 1rem; }
     button { font: inherit; padding: .5rem 1rem; border-radius: .5rem; border: 1px solid #ddd; cursor: pointer; }

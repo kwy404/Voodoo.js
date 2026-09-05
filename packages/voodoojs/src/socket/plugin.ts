@@ -10,7 +10,7 @@
  * WebSocket pay for WebSocket; those not using it keep the file the same size as before.
  *
  * ```html
- * <script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
+ * <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
  * <script type="module">
  *   import 'https://cdn.jsdelivr.net/npm/voodoojs/dist/socket.js'
  * </script>

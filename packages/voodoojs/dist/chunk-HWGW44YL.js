@@ -1,4 +1,4 @@
-import { reactive } from './chunk-PPT7RDKJ.js';
+import { reactive } from './chunk-OIHNH5XR.js';
 import { warnOnce } from './chunk-YH3IDF6L.js';
 
 /**
@@ -942,5 +942,5 @@ Object.defineProperty(factory, "open", {
 var socket = factory;
 
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, devtoolsBus, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported };
-//# sourceMappingURL=chunk-L3JNHLTI.js.map
-//# sourceMappingURL=chunk-L3JNHLTI.js.map
+//# sourceMappingURL=chunk-HWGW44YL.js.map
+//# sourceMappingURL=chunk-HWGW44YL.js.map

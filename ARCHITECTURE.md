@@ -187,6 +187,10 @@ The trade is explicit:
 | Owns the whole subtree it renders            | Coexists with server-rendered and foreign HTML    |
 | Keys are a diffing hint                      | Keys (`:key` in `v-for`) identify reusable blocks |
 
+Lists are the exception that proves the rule: `v-for` is one effect over a whole collection, so
+it is the only place a diff exists at all. Section 5 covers how it avoids paying for the rows that
+did not change.
+
 The cost is that Voodoo.js pays for tracking at read time and holds one `ReactiveEffect`
 per bound piece of DOM. Very large lists of very small bindings are therefore the shape
 where a Virtual DOM would win. `docs/performance.md` (pt-BR) covers how to stay on the
@@ -310,7 +314,102 @@ coexist with prose, so the parser itself is the arbiter:
 
 ---
 
-## 5. Scope model
+## 5. List reconciliation
+
+Everything in section 3 says a write re-runs one small effect and touches one node. Lists are the
+one place where that is not enough. `v-for` is a single effect over a whole collection: when the
+collection changes, the effect re-runs and has to work out what to do about `n` rows. Getting from
+"something changed" to "these two rows changed" is the reconciler's job, and it is the only diff in
+the framework.
+
+The design principle is one sentence: **do not rediscover a change that the caller already
+described.**
+
+### The changed region
+
+Every path produces the same three numbers, and everything downstream reads only those:
+
+```
+lo      first index where the old and new lists may differ
+oldHi   end of the changed region in the OLD list
+newHi   end of the changed region in the NEW list
+```
+
+with two guarantees: `old[0, lo)` equals `new[0, lo)`, and `old[oldHi, oldLen)` equals
+`new[newHi, newLen)`, element for element. Rows outside the region are not read, not written to and
+not moved. What differs between the paths is only how much it costs to *find* those numbers.
+
+### Path A — the mutation said what happened
+
+`push`, `pop`, `shift`, `unshift` and `splice` are intercepted in `reactivity/index.ts`. They run
+against the raw array — so they do not fire one proxy trap per element they shuffle — and record
+what they did: an index, how many rows left, how many arrived. A bounded log per array keeps the
+last few, each `v-for` remembers the version it last rendered, and a batch of mutations composes
+into one region by widening a range.
+
+`rows.splice(5000, 1)` on ten thousand rows therefore yields `lo = 5000, oldHi = 5001, newHi = 5000`
+without a single key being read. One row is destroyed. Nothing else is examined.
+
+This path is taken only when the source is the same array object as last render, the log can still
+answer, and the list has keys of its own. A list without `:key` — or keyed on the index — identifies
+rows *by position*, so removing row 5.000 renumbers everything after it; acting on the range would
+leave the stored keys describing positions the rows no longer occupy. Those lists take path B, where
+the numbering stays true by construction.
+
+### Path B — a different array arrived
+
+With a new array there is no history, so the region is found by comparing keys inward from both
+ends: forward while `old[i].key === new[i].key`, then backward from both tails. What is left in the
+middle is the region.
+
+This costs one key read per row and **cannot be made cheaper**. To know that row 9.999 did not
+change you have to look at row 9.999; no fingerprint, block hash or rolling hash avoids that,
+because computing the fingerprint of the new list means reading every key in it. The scan therefore
+does the minimum a correct answer allows, and does it with a compiled key accessor rather than the
+expression interpreter: `:key="row.id"` becomes a property read, once, when the directive is set up.
+
+### The region itself
+
+- Region empty — nothing to do.
+- Only new rows — build them into one fragment, insert once.
+- Only departures — destroy them.
+- Both — build a key map over the new region, match the old rows against it, and move only what has
+  to move. A longest-increasing-subsequence pass over the surviving rows' old positions decides
+  which may stay where they are; it runs **only** when some rows actually crossed each other, so no
+  insertion, removal or append ever pays for it.
+
+### Complexity
+
+`n` is the length of the list, `k` the number of rows the edit actually touched, `r` the size of
+the region.
+
+| Path | When | Cost |
+| --- | --- | --- |
+| mutation, insert or remove | `push` / `pop` / `shift` / `unshift` / `splice` on a keyed list | O(k) |
+| mutation, batch | several mutations in one tick | O(r), r = the range they jointly span |
+| scan, then insert/remove | a new array, one localised edit | O(n) key reads + O(k) work |
+| scan, then reorder | a new array, rows crossed | O(n) key reads + O(r log r) |
+| unkeyed, any change | no `:key` | O(n) — position is the identity, so every row after the edit genuinely changed |
+| `reverse` / `sort` in place | no range describes the result | O(n) + O(n log n) |
+
+The gap between line one and line three is the point: the same edit costs O(k) when the caller
+mutated the array and O(n) when they handed over a copy. Both are correct; one is cheaper because
+more was known.
+
+### What the row scope is spared
+
+A reused row is not rewritten. The reconciler compares what the row's data already holds against
+what it should hold, and writes only on a difference — including the case where the incoming value
+is a reactive proxy of the object already stored, which is what `[...state.rows]` produces and which
+a plain identity test reports as changed on every render forever. The index is written only when
+`v-for` actually declares an index alias.
+
+The measurements, the counters behind them and the reproduction steps are in
+[`benchmarks/README.md`](benchmarks/README.md).
+
+---
+
+## 6. Scope model
 
 `runtime/scope.ts`. A `Scope` is a node in a chain, holding its own `data` object (usually
 a reactive proxy) and a pointer to its parent.
@@ -356,7 +455,7 @@ isolation is the default; `inheritScope: true` opts out of it.
 
 ---
 
-## 6. Component model
+## 7. Component model
 
 `runtime/component.ts`. A component is a scope with state, props, computed values, methods,
 watchers, slots and lifecycle hooks, mounted onto an element that already exists. There is
@@ -437,7 +536,7 @@ root options are registered as a component under a generated name, the container
 
 ---
 
-## 7. Directive system
+## 8. Directive system
 
 A directive is a name plus a `setup(ctx)` function, registered in the `directives` map.
 
@@ -503,7 +602,7 @@ keeps a single mechanism.
 
 ---
 
-## 8. Boot loop
+## 9. Boot loop
 
 `runtime/boot.ts` does not use `DOMContentLoaded` or `document.readyState`. It runs its own
 scheduler.
@@ -553,7 +652,7 @@ Public conditions:
 
 ---
 
-## 9. Expression evaluator and its security model
+## 10. Expression evaluator and its security model
 
 Three files, one direction of flow, no shortcuts.
 
@@ -619,7 +718,7 @@ developer-trust contract of `v-html`.
 
 ---
 
-## 10. Source map
+## 11. Source map
 
 Generated from `packages/voodoojs/src`.
 
@@ -651,7 +750,8 @@ src/
 │   ├── component.ts          props, slots, provide/inject, instance proxy, lifecycle
 │   ├── app.ts                createApp / mount / unmount
 │   ├── boot.ts               the boot loop (whenReady, whenBodyReady, whenElement)
-│   └── magics.ts             $el $refs $store $http $toast $screen $network ...
+│   ├── magics.ts             $el $refs $store $http $toast $screen $network ...
+│   └── metrics.ts            reconciler counters, off by default, not public API
 │
 ├── directives/
 │   ├── core.ts               text, html, show, if/else-if/else, for, bind, class,
@@ -696,7 +796,7 @@ src/
 
 ---
 
-## 11. Module boundaries
+## 12. Module boundaries
 
 The rule the codebase actually follows, expressed as allowed import directions:
 
@@ -761,7 +861,7 @@ import edge.
 
 ---
 
-## 12. Build variants
+## 13. Build variants
 
 `packages/voodoojs/tsup.config.ts` produces:
 
@@ -780,7 +880,7 @@ Size budgets live in `scripts/size.mjs` and are enforced in CI. Measure with
 
 ---
 
-## 13. Related documents
+## 14. Related documents
 
 - [CONVENTIONS.md](CONVENTIONS.md) - API naming rules, stability tiers, deprecation policy
 - [SECURITY.md](SECURITY.md) - threat model, CSP, reporting

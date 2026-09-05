@@ -33,7 +33,11 @@
 
   var GITHUB = 'https://github.com/voodoojs/voodoo';
   var SITE = 'https://voodoojs.dev';
-  var CDN = 'voodoo.min.js?v=0.6.2';
+  // The tag the page offers people to copy. A real, pinned CDN URL for the
+  // FULL build: the essential one has no JSX, and the first thing anyone tries
+  // after copying a tag off this page is the JSX example further down it.
+  // `stamp-version.mjs` keeps the version here current.
+  var CDN = 'https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js';
 
   // =====================================================================
   // 1. Idioma, tema e paleta
@@ -812,15 +816,17 @@
     github: GITHUB,
     cdn: CDN,
     cdnTag: '<script src="' + CDN + '" defer><\/script>',
-    npmCmd: 'curl -L -o voodoo.min.js https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.min.js',
+    npmCmd:
+      'curl -L -o voodoo.full.min.js ' +
+      'https://github.com/kwy404/Voodoo.js/raw/main/packages/voodoojs/dist/voodoo.full.min.js',
 
     // Numeros medidos por `node scripts/size.mjs` na raiz do repositorio.
     // Refaca a medida sempre que a biblioteca mudar.
     stats: {
-      gzip: 120,
-      raw: 400,
-      brotli: 100,
-      essentialGzip: 76,
+      gzip: 134,
+      raw: 442,
+      brotli: 111,
+      essentialGzip: 85,
       directives: V.directives.size,
       components: V.components.size,
       deps: 0,

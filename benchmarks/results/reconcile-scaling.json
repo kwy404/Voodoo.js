@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 1,
+  "kind": "reconcile-scaling",
+  "env": {
+    "timestamp": "2026-09-05T02:03:23.808Z",
+    "voodooVersion": "0.12.5",
+    "commit": "1ac153fd1c4e4bea9a3499c9c1b87861ac58bee5",
+    "commitShort": "1ac153f",
+    "branch": "main",
+    "dirty": true,
+    "node": "v24.16.0",
+    "v8": "13.6.233.17-node.49",
+    "platform": "win32 10.0.19045",
+    "arch": "x64",
+    "cpuModel": "Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz",
+    "cpuCores": 4,
+    "cpuSpeedMHz": 3093,
+    "totalMemMB": 16268,
+    "freeMemMB": 6469,
+    "loadAvg": [
+      0,
+      0,
+      0
+    ],
+    "jsdom": "25.0.1",
+    "gcExposed": true,
+    "buildMode": "esbuild-bundle(src/index.ts, esm, es2020, unminified)",
+    "nodeFlags": [
+      "--expose-gc",
+      "--max-old-space-size=8192"
+    ],
+    "monorepoVersion": "0.7.0",
+    "measuredSrc": "packages\\voodoojs\\src"
+  },
+  "sizes": [
+    1000,
+    2000,
+    5000,
+    10000,
+    20000,
+    50000
+  ],
+  "points": [
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 1000,
+      "median": 0.09095,
+      "p95": 0.1429299999999998,
+      "samples": 60
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 1000,
+      "median": 0.2666,
+      "p95": 0.45838499999999976,
+      "samples": 60
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 1000,
+      "median": 0.6116999999999999,
+      "p95": 1.23741,
+      "samples": 60
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 1000,
+      "median": 1.5519500000000002,
+      "p95": 3.947634999999998,
+      "samples": 60
+    },
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 2000,
+      "median": 0.1653,
+      "p95": 1.1802799999999998,
+      "samples": 60
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 2000,
+      "median": 0.47450000000000003,
+      "p95": 1.7309649999999992,
+      "samples": 60
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 2000,
+      "median": 2.33225,
+      "p95": 5.557379999999988,
+      "samples": 60
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 2000,
+      "median": 1.43595,
+      "p95": 2.0892649999999997,
+      "samples": 60
+    },
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 5000,
+      "median": 0.253,
+      "p95": 0.6394299999999997,
+      "samples": 60
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 5000,
+      "median": 0.55735,
+      "p95": 1.439825,
+      "samples": 60
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 5000,
+      "median": 4.6078,
+      "p95": 6.1344449999999995,
+      "samples": 60
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 5000,
+      "median": 4.72705,
+      "p95": 6.281124999999999,
+      "samples": 60
+    },
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 10000,
+      "median": 0.4491,
+      "p95": 1.5515699999999997,
+      "samples": 40
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 10000,
+      "median": 1.3791,
+      "p95": 2.9371649999999994,
+      "samples": 40
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 10000,
+      "median": 9.676749999999998,
+      "p95": 12.632529999999992,
+      "samples": 40
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 10000,
+      "median": 11.481,
+      "p95": 17.37594999999998,
+      "samples": 40
+    },
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 20000,
+      "median": 1.5126,
+      "p95": 2.9673199999999995,
+      "samples": 25
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 20000,
+      "median": 3.8913,
+      "p95": 5.64142,
+      "samples": 25
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 20000,
+      "median": 21.3106,
+      "p95": 28.68828,
+      "samples": 25
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 20000,
+      "median": 23.4112,
+      "p95": 31.098999999999997,
+      "samples": 25
+    },
+    {
+      "op": "inplace/splice-remove-middle",
+      "label": "remove 1 in the middle (in place)",
+      "n": 50000,
+      "median": 5.5965,
+      "p95": 7.30458,
+      "samples": 25
+    },
+    {
+      "op": "inplace/push",
+      "label": "append 1 (in place)",
+      "n": 50000,
+      "median": 12.9968,
+      "p95": 58.49915999999985,
+      "samples": 25
+    },
+    {
+      "op": "replace/remove-middle",
+      "label": "remove 1 in the middle (new array)",
+      "n": 50000,
+      "median": 60.3979,
+      "p95": 82.50712,
+      "samples": 25
+    },
+    {
+      "op": "replace/append",
+      "label": "append 1 (new array)",
+      "n": 50000,
+      "median": 59.1246,
+      "p95": 87.73463999999998,
+      "samples": 25
+    }
+  ]
+}

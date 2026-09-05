@@ -7,6 +7,117 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-04
+
+### Changed
+
+- **`v-for` no longer rediscovers a change it was already told about.** A list is
+  one effect over a whole collection, so when the collection changes something
+  has to decide what that means for `n` rows. That decision used to cost the
+  same whatever had happened: every row's `:key` through the expression
+  interpreter, one allocated object per row, three hash structures the size of
+  the list, and a placement pass reading a DOM property per row. Reading the
+  rows through the reactive proxy also subscribed the list to all `n` indices
+  and to the key's property on all `n` items, so every re-render removed the
+  effect from those dependency sets and added it back — about `4n` hash
+  operations before the reconciler had looked at anything.
+
+  Three things replace it.
+
+  **The mutation is the answer.** `push`, `pop`, `shift`, `unshift` and `splice`
+  now run against the raw array and record what they did. A list re-rendering
+  reads that record instead of comparing: `rows.splice(5000, 1)` on ten thousand
+  rows says one row left at index 5000, and nothing else is examined. A batch of
+  mutations in one tick composes into one range.
+
+  **A compiled key and a scan from both ends.** When a new array arrives there is
+  no record, so the changed region is found by comparing keys inward from both
+  ends. `:key="row.id"` is compiled once to a property read rather than
+  interpreted per row. This is the floor: knowing that row 9,999 did not change
+  means looking at row 9,999, and no fingerprint avoids that, because computing
+  one means reading every key first.
+
+  **Nothing outside the region is touched.** Not read, not written, not moved. A
+  reused row is only written to when its data actually differs — including the
+  case where the incoming value is a reactive proxy of the object already stored,
+  which `[...state.rows]` produces and which a plain identity test reports as
+  changed forever.
+
+  | edit | before | after | |
+  | --- | ---: | ---: | --- |
+  | shift the first off 10.000, in place | 61.6 ms | **0.096 ms** | **641x** |
+  | swap 2 rows of 10.000 | 9,585 ms | **16.6 ms** | **576x** |
+  | unshift 1 onto 10.000, in place | 56.0 ms | **0.297 ms** | **189x** |
+  | splice 1 into the middle of 10.000, in place | 48.6 ms | **0.684 ms** | **71x** |
+  | splice out the middle of 10.000, in place | 45.3 ms | **0.853 ms** | **53x** |
+  | pop the last off 10.000, in place | 37.5 ms | **1.51 ms** | **25x** |
+  | push 1 onto 10.000, in place | 34.2 ms | **1.94 ms** | **17.6x** |
+  | re-assign an identical 10.000-row array | 52.4 ms | **9.57 ms** | **5.5x** |
+  | prepend 1 to 10.000, new array | 38.6 ms | **8.40 ms** | **4.6x** |
+  | remove the middle of 10.000, new array | 41.7 ms | **10.2 ms** | **4.1x** |
+  | insert 1 into the middle of 10.000, new array | 42.5 ms | **10.7 ms** | **4.0x** |
+  | append 1 to 10.000, new array | 40.9 ms | **11.6 ms** | **3.5x** |
+  | reverse 10.000 rows | 3,989 ms | 4,130 ms | unchanged — see below |
+  | create 10.000 rows | 809 ms | 809 ms | unchanged — see below |
+
+  Median of up to 100 samples per case, jsdom, Node 24 on an i5-4440. Allocations
+  per reconciliation went from one object per row to none: 20,011 to 0 on a
+  ten-thousand-row list.
+
+  Two of those rows are not algorithmic wins and are marked as such. Reversing a
+  list has to move all but one of its rows however the diff is computed, and
+  building one is the cost of inserting the nodes; in both, the clock is measuring
+  the DOM rather than the reconciler. The swap row is not an algorithm win either —
+  it is a bug the counters found: the old placement pass turned a two-row swap into
+  19,994 DOM moves, because one row that did not line up made every row after it
+  fail the same check.
+
+  Full measurements, the counters behind them and how to reproduce any of it:
+  [`benchmarks/README.md`](benchmarks/README.md). The algorithm and its
+  invariants: [`ARCHITECTURE.md`](ARCHITECTURE.md#5-list-reconciliation).
+
+- **An array mutator fires one notification instead of one per element.**
+  `splice(5000, 1)` on a ten-thousand-row array used to pass every element it
+  shuffled through the `set` trap, producing roughly five thousand `trigger`
+  calls — each allocating a Set and walking it — to describe a single removal.
+  The mutators run against the raw array now and notify once. `reverse` and
+  `sort` are instrumented on the same terms.
+
+- **A write to one array index reaches whoever iterates the array.** This used to
+  work by accident: `v-for` read every element through the proxy and so
+  subscribed to all `n` indices. Now the list subscribes to the collection, and
+  `trigger` routes an element write to `ITERATE_KEY` explicitly.
+
+- **`:key` is read without subscribing to it.** A key identifies a row; it is not
+  meant to be a value that changes underneath one. Reading keys untracked is what
+  removes the per-item dependency churn above. A list still re-renders on every
+  structural change and on any element write; what no longer happens is a
+  re-render triggered by mutating the property a key was computed from.
+
+### Fixed
+
+- **A NaN key rebuilt its row on every render.** `NaN === NaN` is false, so a
+  reconciler comparing keys with `===` alone throws that row away and builds it
+  again every time. Keys are compared with SameValueZero now.
+
+### Added
+
+- **A reconciliation benchmark suite**, `benchmarks/reconcile/`: 24 scenarios
+  across both families — a new array assigned, and the reactive array mutated in
+  place — timed with the counters off and counted with them on, so a number that
+  moved can be explained rather than just reported. Plus a scaling sweep from
+  1.000 to 50.000 rows, a path probe that shows which route each edit actually
+  took, and a leak probe for teardown.
+
+- **Ten generated charts** in both READMEs, drawn from the result JSON rather
+  than hand-edited: before/after, rows visited, cost against list size, which
+  path ran, DOM operations, framework comparison, size against speed, bundle
+  sizes, what ships in the box, and teardown memory.
+
+- **`runtime/metrics.ts`**, counters for the reconciler. Off by default, behind
+  one property read, and deliberately not part of the public API — the benchmark
+  compiles its own entry point to reach them.
+
 ## [0.12.5] - 2026-09-04
 
 ### Fixed

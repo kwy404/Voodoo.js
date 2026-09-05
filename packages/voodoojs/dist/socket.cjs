@@ -137,7 +137,9 @@ function trigger(target2, type, key, _newValue) {
       if (!isArr) add(depsMap.get(ITERATE_KEY));
       else if (isIntegerKey(key)) add(depsMap.get("length"));
     } else if (type === "delete" /* DELETE */) {
-      if (!isArr) add(depsMap.get(ITERATE_KEY));
+      add(depsMap.get(ITERATE_KEY));
+    } else if (isArr && isIntegerKey(key)) {
+      add(depsMap.get(ITERATE_KEY));
     } else if (isArr && key === "length") {
       const newLen = Number(_newValue);
       depsMap.forEach((dep, k) => {
@@ -149,6 +151,39 @@ function trigger(target2, type, key, _newValue) {
     if (e.scheduler) e.scheduler();
     else queueJob(e);
   }
+}
+function triggerArrayRange(target2, from) {
+  const depsMap = targetMap.get(target2);
+  if (!depsMap) return;
+  const effects = /* @__PURE__ */ new Set();
+  const add = (dep) => {
+    if (!dep) return;
+    for (const e of dep) if (e !== activeEffect) effects.add(e);
+  };
+  add(depsMap.get("length"));
+  add(depsMap.get(ITERATE_KEY));
+  if (from >= 0) {
+    depsMap.forEach((dep, k) => {
+      if (typeof k === "string" && isIntegerKey(k) && Number(k) >= from) add(dep);
+    });
+  }
+  for (const e of effects) {
+    if (e.scheduler) e.scheduler();
+    else queueJob(e);
+  }
+}
+var LOG_LIMIT = 32;
+var mutationLogs = /* @__PURE__ */ new WeakMap();
+function record(target2, type, index, removed, added) {
+  let log = mutationLogs.get(target2);
+  if (!log) mutationLogs.set(target2, log = { version: 0, ops: [] });
+  log.version++;
+  if (type === 3 /* RESET */) {
+    log.ops.length = 0;
+    return;
+  }
+  log.ops.push({ type, index, removed, added });
+  if (log.ops.length > LOG_LIMIT) log.ops.shift();
 }
 function isIntegerKey(key) {
   return typeof key === "string" && key !== "NaN" && key[0] !== "-" && String(parseInt(key, 10)) === key;
@@ -170,20 +205,72 @@ var arrayInstrumentations = /* @__PURE__ */ (() => {
       return res;
     };
   }
-  for (const key of ["push", "pop", "shift", "unshift", "splice"]) {
+  for (const key of ["push", "pop", "shift", "unshift", "splice", "reverse", "sort"]) {
     inst[key] = function(...args) {
+      const raw = toRaw(this);
+      const before = raw.length;
+      for (let i = 0; i < args.length; i++) args[i] = toRaw(args[i]);
       pauseTracking();
+      let result;
       try {
-        return toRaw(this)[key].apply(this, args);
+        result = raw[key].apply(raw, args);
       } finally {
         resetTracking();
       }
+      const after = raw.length;
+      let from = -1;
+      if (key === "push") {
+        if (args.length) {
+          record(raw, 1 /* SPLICE */, before, 0, args.length);
+          from = before;
+        }
+      } else if (key === "unshift") {
+        if (args.length) {
+          record(raw, 1 /* SPLICE */, 0, 0, args.length);
+          from = 0;
+        }
+      } else if (key === "pop") {
+        if (before > 0) {
+          record(raw, 1 /* SPLICE */, after, 1, 0);
+          from = after;
+        }
+      } else if (key === "shift") {
+        if (before > 0) {
+          record(raw, 1 /* SPLICE */, 0, 1, 0);
+          from = 0;
+        }
+      } else if (key === "splice") {
+        const removed = result.length;
+        const added = args.length > 2 ? args.length - 2 : 0;
+        if (removed || added) {
+          record(raw, 1 /* SPLICE */, spliceStart(args[0], before), removed, added);
+          from = spliceStart(args[0], before);
+        }
+      } else {
+        if (before > 1) {
+          record(raw, 3 /* RESET */, 0, before, after);
+          from = 0;
+        }
+      }
+      if (from >= 0) triggerArrayRange(raw, from);
+      if (key === "pop" || key === "shift") return isObject(result) ? reactive(result) : result;
+      if (key === "splice") {
+        const out = result;
+        for (let i = 0; i < out.length; i++) if (isObject(out[i])) out[i] = reactive(out[i]);
+        return out;
+      }
+      return key === "reverse" || key === "sort" ? this : result;
     };
   }
   return inst;
 })();
 function isObject(val) {
   return val !== null && typeof val === "object";
+}
+function spliceStart(raw, length) {
+  const n = Math.trunc(Number(raw)) || 0;
+  if (n < 0) return Math.max(length + n, 0);
+  return Math.min(n, length);
 }
 var NON_REACTIVE = /* @__PURE__ */ new Set([
   "Date",
@@ -207,6 +294,23 @@ function canObserve(value) {
   const tag = Object.prototype.toString.call(value).slice(8, -1);
   if (NON_REACTIVE.has(tag)) return false;
   return tag === "Object" || tag === "Array" || tag === "Map" || tag === "Set";
+}
+function recordDirectWrite(target2, key, lengthBefore, hadKey, oldValue, value) {
+  if (key === "length") {
+    const next = target2.length;
+    if (next < lengthBefore) record(target2, 1 /* SPLICE */, next, lengthBefore - next, 0);
+    else if (next > lengthBefore) record(target2, 3 /* RESET */, 0, 0, 0);
+    return;
+  }
+  if (!isIntegerKey(key)) return;
+  const index = Number(key);
+  if (hadKey) {
+    if (hasChanged(value, oldValue)) record(target2, 2 /* SET */, index, 1, 1);
+  } else if (index === lengthBefore) {
+    record(target2, 1 /* SPLICE */, index, 0, 1);
+  } else {
+    record(target2, 3 /* RESET */, 0, 0, 0);
+  }
 }
 function toRaw(observed) {
   const raw = observed && observed[RAW];
@@ -252,8 +356,11 @@ var baseHandlers = {
       return true;
     }
     const hadKey = Array.isArray(target2) && isIntegerKey(key) ? Number(key) < target2.length : Object.prototype.hasOwnProperty.call(target2, key);
+    const isArr = Array.isArray(target2);
+    const arrayLength = isArr ? target2.length : 0;
     const result = Reflect.set(target2, key, value, receiver);
     if (target2 === toRaw(receiver)) {
+      if (isArr) recordDirectWrite(target2, key, arrayLength, hadKey, oldValue, value);
       if (!hadKey) trigger(target2, "add" /* ADD */, key, value);
       else if (hasChanged(value, oldValue)) trigger(target2, "set" /* SET */, key, value);
     }
@@ -262,7 +369,10 @@ var baseHandlers = {
   deleteProperty(target2, key) {
     const hadKey = Object.prototype.hasOwnProperty.call(target2, key);
     const result = Reflect.deleteProperty(target2, key);
-    if (result && hadKey) trigger(target2, "delete" /* DELETE */, key);
+    if (result && hadKey) {
+      if (Array.isArray(target2)) record(target2, 3 /* RESET */, 0, 0, 0);
+      trigger(target2, "delete" /* DELETE */, key);
+    }
     return result;
   },
   has(target2, key) {

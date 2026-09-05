@@ -5,7 +5,17 @@
  * classes, styles, events, refs and teleport.
  */
 
-import { handleError, nextTick, queuePostFlush } from '../reactivity';
+import {
+  ArrayOp,
+  arrayVersion,
+  handleError,
+  ITERATE_KEY,
+  mutationsSince,
+  nextTick,
+  queuePostFlush,
+  toRaw,
+  track,
+} from '../reactivity';
 import { evaluate, stringify } from '../parser/interpreter';
 // `AstNode` avoids conflict with DOM `Node`, used throughout this file.
 import { parse, type Node as AstNode } from '../parser/parser';
@@ -23,6 +33,7 @@ import {
   walk,
 } from '../runtime/walker';
 import { enter, leave, type TransitionOptions } from '../dom/transition';
+import { metrics as M, countPath } from '../runtime/metrics';
 import { debounce, parseDuration, throttle } from '../utils';
 
 // ---------------------------------------------------------------------------
@@ -232,12 +243,7 @@ defineDirective(
  * Clones a template, inserts before the anchor and initializes. Supports
  * `<template>` with multiple children.
  */
-function renderTemplate(
-  source: Element,
-  anchor: Node,
-  scope: Scope,
-  batch?: { fragment: DocumentFragment; pending: Array<[Node, Scope]> }
-): Node[] {
+function renderTemplate(source: Element, anchor: Node, scope: Scope): Node[] {
   const parent = anchor.parentNode;
   if (!parent) return [];
 
@@ -256,23 +262,11 @@ function renderTemplate(
     }
   } else {
     const clone = source.cloneNode(true) as Element;
+    if (M.on) M.domCreates++;
     nodes.push(clone);
     markNodeScope(clone, scope);
-
-    if (batch) {
-      // Batched: the row goes into the fragment, outside the document.
-      // Inserting a thousand rows one at a time makes the DOM redo the child
-      // list's index bookkeeping on every call, which the CPU profile showed
-      // dominating creation. The fragment turns that into a single insert.
-      //
-      // Walking still happens AFTER the node is connected, in the same order
-      // as before, because a directive may depend on being in the document.
-      batch.fragment.appendChild(clone);
-      batch.pending.push([clone, scope]);
-    } else {
-      parent.insertBefore(clone, anchor);
-      walk(clone, scope);
-    }
+    parent.insertBefore(clone, anchor);
+    walk(clone, scope);
   }
 
   return nodes;
@@ -289,11 +283,106 @@ defineDirective('else', () => undefined, { priority: PRIORITY.IF, terminal: true
 
 const FOR_PATTERN = /^\s*\(?\s*([^)]*?)\s*\)?\s+(?:in|of)\s+(.+?)\s*$/;
 
+/** A `:key` that is nothing but a path: `item`, `row.id`, `a.b.c`. */
+const KEY_PATH = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
+
 interface ForBlock {
   key: unknown;
   scope: Scope;
   nodes: Node[];
   data: Record<string, unknown>;
+}
+
+const NO_BLOCKS: ForBlock[] = [];
+
+/**
+ * Whether a row's stored variable already holds the incoming value.
+ *
+ * The two are not always the same object even when they are the same value.
+ * Writing through the reactive proxy stores `toRaw(value)`, while the list a
+ * caller hands back can perfectly well hold proxies — `[...state.rows]` reads
+ * every element through the array proxy and so copies out proxies, and
+ * assigning that array back does not unwrap them.
+ *
+ * Comparing only by identity, every row of such a list looks changed on every
+ * render, is written again, is stored raw again, and looks changed again on the
+ * next one: ten thousand proxy writes per render to say nothing had happened.
+ * The identity test still answers first and costs one comparison; unwrapping is
+ * only reached when the values genuinely differ.
+ */
+function sameStored(stored: unknown, incoming: unknown): boolean {
+  if (stored === incoming) return true;
+  return incoming !== null && typeof incoming === 'object' && stored === toRaw(incoming);
+}
+
+/**
+ * Whether two keys name the same row.
+ *
+ * `NaN === NaN` is false, so a list keyed on something that can be NaN would
+ * otherwise tear down and rebuild that row on every single render.
+ */
+function sameKey(a: unknown, b: unknown): boolean {
+  return a === b || (a !== a && b !== b);
+}
+
+/**
+ * Longest increasing subsequence of `arr`, as indices into `arr`. Entries equal
+ * to zero mean "this row is new" and take no part.
+ *
+ * Used for one thing: deciding which rows may stay put during a reorder. Rows
+ * whose old positions already form an increasing run are, by definition,
+ * already in the right order relative to each other; everything else has to
+ * move. Taking the LONGEST such run is what makes the number of DOM moves
+ * minimal — reversing ten thousand rows moves 9.999 of them because no longer
+ * run exists, while sliding one row from the end to the front moves exactly one.
+ *
+ * Patience sorting with a binary search over the tails array: O(n log n).
+ */
+function longestIncreasing(arr: Int32Array): Int32Array {
+  const length = arr.length;
+  // `previous[i]` is the index that precedes `i` in the best run ending at `i`.
+  const previous = new Int32Array(length);
+  // Indices of the smallest possible tail for each run length found so far.
+  const tails: number[] = [];
+
+  for (let i = 0; i < length; i++) {
+    const value = arr[i];
+    if (value === 0) continue;
+
+    if (tails.length === 0) {
+      tails.push(i);
+      continue;
+    }
+
+    const last = tails[tails.length - 1];
+    if (arr[last] < value) {
+      previous[i] = last;
+      tails.push(i);
+      continue;
+    }
+
+    let low = 0;
+    let high = tails.length - 1;
+    while (low < high) {
+      const mid = (low + high) >> 1;
+      if (arr[tails[mid]] < value) low = mid + 1;
+      else high = mid;
+    }
+    if (value < arr[tails[low]]) {
+      if (low > 0) previous[i] = tails[low - 1];
+      tails[low] = i;
+    }
+  }
+
+  // Walk the chain back from the last tail to recover the actual run.
+  let cursor = tails.length;
+  const out = new Int32Array(cursor);
+  let node = tails[cursor - 1];
+  while (cursor-- > 0) {
+    out[cursor] = node;
+    node = previous[node];
+  }
+  return out;
 }
 
 defineDirective(
@@ -313,7 +402,8 @@ defineDirective(
     const [itemAlias, indexAlias, thirdAlias] = aliases;
 
     const p = config.prefix;
-    const keyExpression = el.getAttribute(':key') || el.getAttribute(`${p}bind:key`) || el.getAttribute(`${p}key`);
+    const keyExpression =
+      el.getAttribute(':key') || el.getAttribute(`${p}bind:key`) || el.getAttribute(`${p}key`);
 
     const anchor = document.createComment(config.devtools ? ` v-for: ${expression} ` : '');
     el.parentNode?.insertBefore(anchor, el);
@@ -334,92 +424,539 @@ defineDirective(
     // scene, so the observer should not unmount the list's effect.
     removeQuietly(el);
 
-    let blocks: ForBlock[] = [];
+    const isTemplateRow = template.tagName === 'TEMPLATE';
 
-    const clearAll = (): void => {
-      for (const block of blocks) {
-        for (const node of block.nodes) {
-          destroy(node);
-          (node as ChildNode).remove();
+    // -----------------------------------------------------------------------
+    // Reading the key, decided once instead of once per row
+    // -----------------------------------------------------------------------
+    //
+    // `:key="row.id"` is read once per row, so a ten-thousand-row list reads it
+    // ten thousand times. Sending that through the expression interpreter means
+    // a parse-cache lookup, an AST walk and a scope-chain lookup, per row, to
+    // do what a property read does. When the expression IS just a path rooted at
+    // the item — `item`, `row.id`, `a.b.c`, which is very nearly every list ever
+    // written — it is turned into that property read here, once.
+    //
+    // Anything else still goes through the interpreter, in one shared scope.
+    let keyIsItem = false;
+    let keyIsIndex = false;
+    let keyProp: string | null = null;
+    let keyPath: string[] | null = null;
+
+    if (keyExpression && KEY_PATH.test(keyExpression)) {
+      const parts = keyExpression.split('.');
+      if (parts[0] === itemAlias) {
+        if (parts.length === 1) keyIsItem = true;
+        else if (parts.length === 2) keyProp = parts[1];
+        else keyPath = parts.slice(1);
+      } else if (indexAlias && parts.length === 1 && parts[0] === indexAlias) {
+        keyIsIndex = true;
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Per-pass state
+    // -----------------------------------------------------------------------
+    //
+    // Held here rather than passed between the helpers below, so that the loops
+    // that run once per row do not build argument objects or close over
+    // anything. The helpers are created once, when the directive is set up, not
+    // once per render.
+    let blocks: ForBlock[] = [];
+    let rows: unknown[] = [];
+    let entries: Array<Record<string, unknown>> | null = null;
+    let count = 0;
+    let keyScope: Scope | null = null;
+
+    /** The raw array rendered last time, and how many mutations it had seen. */
+    let lastSource: unknown[] | null = null;
+    let lastVersion = 0;
+
+    /** Rows built this pass, walked once every one of them is connected. */
+    const pending: Array<[Node, Scope]> = [];
+    /** Where each run of newly built rows starts inside `pending`. */
+    const pendingRuns: number[] = [];
+
+    const varsAt = (i: number): Record<string, unknown> => {
+      if (entries) return entries[i];
+      const vars: Record<string, unknown> = { [itemAlias]: rows[i] };
+      if (indexAlias) vars[indexAlias] = i;
+      return vars;
+    };
+
+    const keyAt = (i: number): unknown => {
+      if (M.on) M.keyEvaluations++;
+      if (keyIsIndex) return i;
+      if (!keyExpression) {
+        // No key: position IS the identity. Returning the index makes the
+        // prefix scan below match every row up to the shorter length, which is
+        // exactly what "reuse by position" means, at one integer compare a row.
+        return i;
+      }
+      const item = entries ? entries[i][itemAlias] : rows[i];
+      if (keyIsItem) return item;
+      if (keyProp !== null) return item == null ? undefined : (item as any)[keyProp];
+      if (keyPath !== null) {
+        let value: any = item;
+        for (let d = 0; d < keyPath.length; d++) {
+          if (value == null) return undefined;
+          value = value[keyPath[d]];
+        }
+        return value;
+      }
+      if (!keyScope) keyScope = scope.child({});
+      keyScope.data = varsAt(i);
+      return evaluateIn(keyExpression, keyScope, ':key');
+    };
+
+    /**
+     * Writes into a reused row only what actually differs.
+     *
+     * The comparison reads the raw object on purpose: reading through the proxy
+     * would make this effect depend on every row's data, and re-render the
+     * whole list whenever any single row changed.
+     */
+    const syncData = (block: ForBlock, i: number): void => {
+      const raw = toRaw(block.data);
+      if (entries) {
+        const vars = entries[i];
+        for (const name in vars) {
+          if (!sameStored(raw[name], vars[name])) {
+            if (M.on) M.proxyWrites++;
+            block.data[name] = vars[name];
+          }
+        }
+        return;
+      }
+      const item = rows[i];
+      if (!sameStored(raw[itemAlias], item)) {
+        if (M.on) M.proxyWrites++;
+        block.data[itemAlias] = item;
+      }
+      if (indexAlias !== undefined && raw[indexAlias] !== i) {
+        if (M.on) M.proxyWrites++;
+        block.data[indexAlias] = i;
+      }
+    };
+
+    /**
+     * Builds rows `[from, to)` and puts them in the document before `before`.
+     *
+     * They travel together in one fragment: a thousand new rows arrive in one
+     * `insertBefore` rather than a thousand, each of which would make the DOM
+     * redo its child-list bookkeeping.
+     */
+    const buildRange = (from: number, to: number, before: Node, out: ForBlock[]): void => {
+      if (from >= to) return;
+      const parent = anchor.parentNode;
+      if (!parent) return;
+
+      pendingRuns.push(pending.length);
+
+      if (isTemplateRow) {
+        // A `<template>` row is several nodes; `renderTemplate` inserts and
+        // walks them itself, one row at a time.
+        for (let i = from; i < to; i++) {
+          const childScope = scope.reactiveChild(varsAt(i));
+          if (M.on) {
+            M.scopeAllocations++;
+            M.itemsVisited++;
+          }
+          const nodes = renderTemplate(template, before, childScope);
+          out.push({ key: keyAt(i), scope: childScope, nodes, data: childScope.data });
+        }
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      for (let i = from; i < to; i++) {
+        const childScope = scope.reactiveChild(varsAt(i));
+        const clone = template.cloneNode(true) as Element;
+        markNodeScope(clone, childScope);
+        fragment.appendChild(clone);
+        // Walked only once every row is connected, because a directive may
+        // depend on being in the document.
+        pending.push([clone, childScope]);
+        out.push({ key: keyAt(i), scope: childScope, nodes: [clone], data: childScope.data });
+        if (M.on) {
+          M.scopeAllocations++;
+          M.domCreates++;
+          M.itemsVisited++;
         }
       }
+      if (M.on) M.domInserts++;
+      parent.insertBefore(fragment, before);
+    };
+
+    const destroyBlock = (block: ForBlock): void => {
+      const nodes = block.nodes;
+      for (let j = 0; j < nodes.length; j++) {
+        if (M.on) M.domRemoves++;
+        destroy(nodes[j]);
+        (nodes[j] as ChildNode).remove();
+      }
+    };
+
+    /** Moves an already-placed row so that it sits just before `before`. */
+    const moveBlock = (block: ForBlock, before: Node): void => {
+      const parent = anchor.parentNode;
+      if (!parent) return;
+      const nodes = block.nodes;
+      if (nodes[nodes.length - 1].nextSibling === before) return;
+      for (let j = 0; j < nodes.length; j++) {
+        if (M.on) M.domMoves++;
+        parent.insertBefore(nodes[j], before);
+      }
+    };
+
+    /** The node a row placed at new index `i` must sit before. */
+    const nodeAfter = (oldIndex: number): Node =>
+      oldIndex < blocks.length ? blocks[oldIndex].nodes[0] : anchor;
+
+    const spliceBlocks = (index: number, remove: number, added: ForBlock[]): void => {
+      const addCount = added.length;
+      if (remove === 0 && addCount === 0) return;
+      if (blocks.length === 0) {
+        blocks = added;
+        return;
+      }
+      if (addCount === 0) {
+        blocks.splice(index, remove);
+        return;
+      }
+      // `splice` takes its inserts as arguments, and tens of thousands of them
+      // overflow the call stack. Rebuilding costs one pointer copy per row and
+      // never breaks.
+      if (addCount <= 1024) {
+        blocks.splice(index, remove, ...added);
+        return;
+      }
+      const out: ForBlock[] = new Array(blocks.length - remove + addCount);
+      let w = 0;
+      for (let k = 0; k < index; k++) out[w++] = blocks[k];
+      for (let k = 0; k < addCount; k++) out[w++] = added[k];
+      for (let k = index + remove; k < blocks.length; k++) out[w++] = blocks[k];
+      blocks = out;
+    };
+
+    const flushPending = (): void => {
+      // Runs are built back to front, so walking them in reverse order of
+      // collection walks the document front to back, as it always did.
+      for (let r = pendingRuns.length - 1; r >= 0; r--) {
+        const start = pendingRuns[r];
+        const end = r + 1 < pendingRuns.length ? pendingRuns[r + 1] : pending.length;
+        for (let k = start; k < end; k++) walk(pending[k][0], pending[k][1]);
+      }
+      pending.length = 0;
+      pendingRuns.length = 0;
+    };
+
+    // -----------------------------------------------------------------------
+    // The changed region
+    // -----------------------------------------------------------------------
+    //
+    // Everything below works on three numbers:
+    //
+    //   lo      first index where the old and new lists may differ
+    //   oldHi   end of the changed region in the OLD list
+    //   newHi   end of the changed region in the NEW list
+    //
+    // with the guarantee that old[0, lo) === new[0, lo) and that
+    // old[oldHi, oldLen) === new[newHi, newLen), element for element. Rows
+    // outside the region are not looked at, not written to, and not moved.
+    let lo = 0;
+    let oldHi = 0;
+    let newHi = 0;
+
+    /**
+     * Derives the region from what the mutating calls recorded, without
+     * comparing a single key.
+     *
+     * A splice already says where it happened and how much it took and gave.
+     * Composing a batch of them is just widening a range: whatever any of them
+     * touched is inside, everything else is provably untouched. `push` on ten
+     * thousand rows gives back a region of length one at the end, whatever the
+     * list around it is doing.
+     *
+     * Returns false when the log cannot answer and the lists have to be
+     * compared instead.
+     */
+    const regionFromMutations = (source: unknown[]): boolean => {
+      const ops = mutationsSince(source, lastVersion);
+      if (!ops) return false;
+
+      const oldLen = blocks.length;
+      lo = 0;
+      oldHi = 0;
+      newHi = 0;
+      let current = oldLen;
+
+      for (let k = 0; k < ops.length; k++) {
+        const op = ops[k];
+        const index = op.index;
+        const removed = op.type === ArrayOp.SET ? 1 : op.removed;
+        const added = op.type === ArrayOp.SET ? 1 : op.added;
+        const end = index + removed;
+
+        if (k === 0) {
+          lo = index;
+          oldHi = end;
+          newHi = index + added;
+        } else if (end <= newHi) {
+          // Entirely inside what is already known to have changed.
+          if (index < lo) lo = index;
+          newHi += added - removed;
+        } else {
+          // Reaches past the region into what was untouched. Positions at or
+          // after `newHi` map onto the old list by a fixed offset, which is
+          // what turns `end` back into an old index.
+          if (index < lo) lo = index;
+          oldHi = end - newHi + oldHi;
+          newHi = index + added;
+        }
+
+        if (oldHi < lo) oldHi = lo;
+        if (newHi < lo) newHi = lo;
+        current += added - removed;
+      }
+
+      // The log described a list of a different length than the one in hand, so
+      // something happened that never reached it. Comparing is the safe answer.
+      if (current !== count) return false;
+      if (lo > oldHi || lo > newHi) return false;
+      if (oldHi > oldLen || newHi > count) return false;
+
+      if (M.on) countPath(ops.length === 0 ? 'unchanged' : 'mutation');
+
+      // Rows after the region kept their values but not their positions. When
+      // nothing reads the index there is nothing to write; when something does,
+      // this is the cost of asking for it.
+      if (indexAlias !== undefined && oldHi - newHi !== 0) {
+        for (let i = newHi; i < count; i++) syncData(blocks[i - newHi + oldHi], i);
+      }
+      return true;
+    };
+
+    /** Derives the region by comparing keys from both ends. */
+    const regionFromScan = (): void => {
+      const oldLen = blocks.length;
+      const newLen = count;
+
+      let i = 0;
+      const shared = oldLen < newLen ? oldLen : newLen;
+      while (i < shared) {
+        const block = blocks[i];
+        if (!sameKey(block.key, keyAt(i))) break;
+        syncData(block, i);
+        i++;
+      }
+      if (M.on) {
+        M.prefixScanned += i;
+        M.itemsVisited += i;
+      }
+
+      let oe = oldLen - 1;
+      let ne = newLen - 1;
+      while (oe >= i && ne >= i) {
+        const block = blocks[oe];
+        if (!sameKey(block.key, keyAt(ne))) break;
+        syncData(block, ne);
+        oe--;
+        ne--;
+      }
+      if (M.on) {
+        const scanned = oldLen - 1 - oe;
+        M.suffixScanned += scanned;
+        M.itemsVisited += scanned;
+        countPath('scan');
+      }
+
+      lo = i;
+      oldHi = oe + 1;
+      newHi = ne + 1;
+    };
+
+    /**
+     * Reconciles old[lo, oldHi) against new[lo, newHi) by key, moving as few
+     * rows as the order allows.
+     */
+    const reconcileRegion = (): void => {
+      const toPatch = newHi - lo;
+
+      // Only new rows in the region: nothing to match, nothing to move.
+      if (lo >= oldHi) {
+        if (toPatch > 0) {
+          const created: ForBlock[] = [];
+          buildRange(lo, newHi, nodeAfter(lo), created);
+          spliceBlocks(lo, 0, created);
+        }
+        return;
+      }
+
+      // Only departures in the region. Arrivals are counted as they are built.
+      if (toPatch === 0) {
+        if (M.on) M.itemsVisited += oldHi - lo;
+        for (let j = lo; j < oldHi; j++) destroyBlock(blocks[j]);
+        spliceBlocks(lo, oldHi - lo, NO_BLOCKS);
+        return;
+      }
+
+      // The general case. Everything from here on is proportional to the size
+      // of the REGION, not of the list.
+      if (M.on) {
+        M.arrayAllocations += 3;
+        M.middleReconciled += toPatch;
+        // Rows matched here are looked at from both sides: every old row in the
+        // region is checked against the key map, and every new position is
+        // decided. Leaving them out of `itemsVisited` made a full reorder look
+        // like it had examined nothing at all.
+        M.itemsVisited += toPatch + (oldHi - lo);
+      }
+
+      const keyToNew = new Map<unknown, number>();
+      for (let n = lo; n < newHi; n++) {
+        const key = keyAt(n);
+        if (keyExpression && keyToNew.has(key)) warnDuplicateKey(el, key, expression);
+        keyToNew.set(key, n);
+      }
+
+      // `0` means "no old row claimed this position"; anything else is an old
+      // index, offset by one so that zero can carry that meaning.
+      const oldOfNew = new Int32Array(toPatch);
+      const reused: Array<ForBlock | undefined> = new Array(toPatch);
+      let matched = 0;
+      let moved = false;
+      let highestSoFar = 0;
+
+      for (let o = lo; o < oldHi; o++) {
+        const block = blocks[o];
+        if (M.on) M.keyMapLookups++;
+        const target = matched >= toPatch ? undefined : keyToNew.get(block.key);
+        // A key that appears twice in the new list can only host one old row;
+        // the second is a row that has genuinely left.
+        if (target === undefined || reused[target - lo] !== undefined) {
+          destroyBlock(block);
+          continue;
+        }
+        oldOfNew[target - lo] = o + 1;
+        reused[target - lo] = block;
+        if (target >= highestSoFar) highestSoFar = target;
+        else moved = true;
+        syncData(block, target);
+        matched++;
+      }
+
+      // The rows that may stay where they are. Skipped entirely when the
+      // surviving rows never crossed each other, which is the case for every
+      // pure insertion and every pure removal.
+      const stay = moved ? longestIncreasing(oldOfNew) : (null as Int32Array | null);
+      if (M.on && moved) {
+        M.lisRuns++;
+        M.lisElements += toPatch;
+      }
+      let s = stay ? stay.length - 1 : -1;
+
+      const region: ForBlock[] = new Array(toPatch);
+      // Backwards, so the node each row is placed before is already in place.
+      let before: Node = nodeAfter(oldHi);
+      let runEnd = -1;
+
+      for (let n = toPatch - 1; n >= 0; n--) {
+        const newIndex = lo + n;
+        const block = reused[n];
+
+        if (block === undefined) {
+          if (runEnd < 0) runEnd = newIndex + 1;
+          continue;
+        }
+
+        if (runEnd >= 0) {
+          const created: ForBlock[] = [];
+          buildRange(newIndex + 1, runEnd, before, created);
+          for (let c = 0; c < created.length; c++) region[n + 1 + c] = created[c];
+          // Empty only when the list was detached mid-render and there was
+          // nowhere to insert into; the reference node then stays as it was.
+          if (created.length) before = created[0].nodes[0];
+          runEnd = -1;
+        }
+
+        region[n] = block;
+        if (moved && (s < 0 || n !== stay![s])) moveBlock(block, before);
+        else if (moved) s--;
+        before = block.nodes[0];
+      }
+
+      if (runEnd >= 0) {
+        const created: ForBlock[] = [];
+        buildRange(lo, runEnd, before, created);
+        for (let c = 0; c < created.length; c++) region[c] = created[c];
+      }
+
+      spliceBlocks(lo, oldHi - lo, region);
+    };
+
+    const clearAll = (): void => {
+      for (const block of blocks) destroyBlock(block);
       blocks = [];
+      lastSource = null;
+      lastVersion = 0;
     };
 
     addCleanup(anchor, clearAll);
 
     effect(() => {
       const source = evaluateIn<unknown>(sourceExpression, scope, 'v-for');
-      const entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
+      const raw = toRaw(source) as unknown[];
 
-      const previous = new Map<unknown, ForBlock>();
-      for (const block of blocks) previous.set(block.key, block);
+      let fromMutations = false;
 
-      const next: ForBlock[] = [];
-      const used = new Set<unknown>();
-      const batch = {
-        fragment: document.createDocumentFragment(),
-        pending: [] as Array<[Node, Scope]>,
-      };
+      if (Array.isArray(raw)) {
+        // Subscribe to the COLLECTION, once, instead of to every element.
+        //
+        // Reading the rows through the proxy subscribed this effect to all n
+        // indices, and to whatever property the key touched on all n items.
+        // Every re-render then had to remove the effect from those 2n
+        // dependency sets and add it back, which is 4n hash operations spent
+        // before the reconciler had looked at anything. `trigger` sends element
+        // writes to `ITERATE_KEY`, so a write to any index still arrives.
+        track(raw, 'length');
+        track(raw, ITERATE_KEY);
+        rows = raw;
+        entries = null;
+        count = raw.length;
 
-      entries.forEach((vars, index) => {
-        const key = keyExpression
-          ? evaluateIn(keyExpression, scope.child(vars), ':key')
-          : `__index_${index}`;
-
-        // Repeated key causes the list to reuse the wrong block when reordering.
-        if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
-
-        const existing = previous.get(key);
-        if (existing && !used.has(key)) {
-          used.add(key);
-          // Reuses the block: only updates the scope variables.
-          for (const [name, value] of Object.entries(vars)) existing.data[name] = value;
-          next.push(existing);
-          return;
+        const version = arrayVersion(raw);
+        // Only a list with keys of its own can act on a mutation directly.
+        // Without `:key` — or with the index AS the key — a row's identity IS
+        // its position, so removing the row at 5.000 renumbers every row after
+        // it. Acting on the range would leave the stored keys describing
+        // positions the rows no longer occupy. Positional lists take the scan
+        // path, where the comparison is one integer per row and the numbering
+        // stays true by construction.
+        if (raw === lastSource && keyExpression && !keyIsIndex) {
+          fromMutations = regionFromMutations(raw);
         }
-
-        const childScope = scope.reactiveChild(vars);
-        const nodes = renderTemplate(template, anchor, childScope, batch);
-        used.add(key);
-        next.push({ key, scope: childScope, nodes, data: childScope.data });
-      });
-
-      // One insert for every new row, and only then the walk.
-      if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
-      for (const [node, rowScope] of batch.pending) walk(node, rowScope);
-
-      // Removes blocks that left the list.
-      // The set keeps track of who was reused by identity. Previously this was
-      // `next.includes(block)`, a scan inside a loop that already iterates the list:
-      // on ten thousand lines it gave a hundred million comparisons.
-      const reused = new Set<ForBlock>(next);
-      for (const block of blocks) {
-        if (used.has(block.key) && reused.has(block)) continue;
-        for (const node of block.nodes) {
-          destroy(node);
-          (node as ChildNode).remove();
-        }
+        lastSource = raw;
+        lastVersion = version;
+      } else {
+        entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
+        rows = entries as unknown as unknown[];
+        count = entries.length;
+        lastSource = null;
+        lastVersion = 0;
+        if (M.on) M.arrayAllocations += count + 1;
       }
 
-      // Reorders the DOM by traversing backwards with a cursor.
-      let cursor: Node = anchor;
-      for (let i = next.length - 1; i >= 0; i--) {
-        const block = next[i];
-        const last = block.nodes[block.nodes.length - 1];
-        if (last && last.nextSibling !== cursor) {
-          for (const node of block.nodes) anchor.parentNode?.insertBefore(node, cursor);
-        }
-        cursor = block.nodes[0] ?? cursor;
-      }
+      if (!fromMutations) regionFromScan();
 
-      blocks = next;
+      reconcileRegion();
+      flushPending();
     });
   },
   { priority: PRIORITY.FOR, terminal: true }
 );
 
-/** Converts array, object, number or string into a list of item scopes. */
+/** Converts object, number, string, Map or Set into a list of item scopes. */
 function normalizeSource(
   source: unknown,
   itemAlias: string,
@@ -427,15 +964,6 @@ function normalizeSource(
   thirdAlias?: string
 ): Array<Record<string, unknown>> {
   const out: Array<Record<string, unknown>> = [];
-
-  if (Array.isArray(source)) {
-    source.forEach((item, index) => {
-      const vars: Record<string, unknown> = { [itemAlias]: item };
-      if (indexAlias) vars[indexAlias] = index;
-      out.push(vars);
-    });
-    return out;
-  }
 
   if (typeof source === 'number') {
     for (let i = 1; i <= source; i++) {

@@ -1,7 +1,7 @@
 import { http, HttpError, request } from './chunk-X3FZPWI6.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-6QFKV444.js';
-import { ref, reactive, handleError, nextTick, queuePostFlush, warn, watch, EffectScope, computed, effect, toRaw, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-PPT7RDKJ.js';
-import { warnDuplicateKey, warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp } from './chunk-YH3IDF6L.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-RZWDWP5A.js';
+import { ref, reactive, handleError, toRaw, track, ITERATE_KEY, arrayVersion, nextTick, queuePostFlush, warn, watch, mutationsSince, EffectScope, computed, effect, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-OIHNH5XR.js';
+import { warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp, warnDuplicateKey } from './chunk-YH3IDF6L.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-D45ZEXUO.js';
 import { injectStyle, ensureTokens } from './chunk-IWHK6Y32.js';
 import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-OH6FIDTW.js';
@@ -1852,7 +1852,7 @@ defineDirective(
   },
   { priority: PRIORITY.IF, terminal: true }
 );
-function renderTemplate(source, anchor, scope, batch) {
+function renderTemplate(source, anchor, scope) {
   const parent = anchor.parentNode;
   if (!parent) return [];
   const nodes = [];
@@ -1871,19 +1871,61 @@ function renderTemplate(source, anchor, scope, batch) {
     const clone = source.cloneNode(true);
     nodes.push(clone);
     markNodeScope(clone, scope);
-    if (batch) {
-      batch.fragment.appendChild(clone);
-      batch.pending.push([clone, scope]);
-    } else {
-      parent.insertBefore(clone, anchor);
-      walk(clone, scope);
-    }
+    parent.insertBefore(clone, anchor);
+    walk(clone, scope);
   }
   return nodes;
 }
 defineDirective("else-if", () => void 0, { priority: PRIORITY.IF, terminal: true });
 defineDirective("else", () => void 0, { priority: PRIORITY.IF, terminal: true });
 var FOR_PATTERN = /^\s*\(?\s*([^)]*?)\s*\)?\s+(?:in|of)\s+(.+?)\s*$/;
+var KEY_PATH = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*$/;
+var NO_BLOCKS = [];
+function sameStored(stored, incoming) {
+  if (stored === incoming) return true;
+  return incoming !== null && typeof incoming === "object" && stored === toRaw(incoming);
+}
+function sameKey(a, b) {
+  return a === b || a !== a && b !== b;
+}
+function longestIncreasing(arr) {
+  const length = arr.length;
+  const previous = new Int32Array(length);
+  const tails = [];
+  for (let i = 0; i < length; i++) {
+    const value = arr[i];
+    if (value === 0) continue;
+    if (tails.length === 0) {
+      tails.push(i);
+      continue;
+    }
+    const last = tails[tails.length - 1];
+    if (arr[last] < value) {
+      previous[i] = last;
+      tails.push(i);
+      continue;
+    }
+    let low = 0;
+    let high = tails.length - 1;
+    while (low < high) {
+      const mid = low + high >> 1;
+      if (arr[tails[mid]] < value) low = mid + 1;
+      else high = mid;
+    }
+    if (value < arr[tails[low]]) {
+      if (low > 0) previous[i] = tails[low - 1];
+      tails[low] = i;
+    }
+  }
+  let cursor = tails.length;
+  const out = new Int32Array(cursor);
+  let node = tails[cursor - 1];
+  while (cursor-- > 0) {
+    out[cursor] = node;
+    node = previous[node];
+  }
+  return out;
+}
 defineDirective(
   "for",
   ({ el, scope, expression, effect: effect2 }) => {
@@ -1908,77 +1950,322 @@ defineDirective(
     template.removeAttribute(`${p2}bind:key`);
     template.removeAttribute(`${p2}key`);
     removeQuietly(el);
-    let blocks = [];
-    const clearAll = () => {
-      for (const block2 of blocks) {
-        for (const node of block2.nodes) {
-          destroy(node);
-          node.remove();
-        }
+    const isTemplateRow = template.tagName === "TEMPLATE";
+    let keyIsItem = false;
+    let keyIsIndex = false;
+    let keyProp = null;
+    let keyPath = null;
+    if (keyExpression && KEY_PATH.test(keyExpression)) {
+      const parts = keyExpression.split(".");
+      if (parts[0] === itemAlias) {
+        if (parts.length === 1) keyIsItem = true;
+        else if (parts.length === 2) keyProp = parts[1];
+        else keyPath = parts.slice(1);
+      } else if (indexAlias && parts.length === 1 && parts[0] === indexAlias) {
+        keyIsIndex = true;
       }
+    }
+    let blocks = [];
+    let rows = [];
+    let entries = null;
+    let count = 0;
+    let keyScope = null;
+    let lastSource = null;
+    let lastVersion = 0;
+    const pending = [];
+    const pendingRuns = [];
+    const varsAt = (i) => {
+      if (entries) return entries[i];
+      const vars = { [itemAlias]: rows[i] };
+      if (indexAlias) vars[indexAlias] = i;
+      return vars;
+    };
+    const keyAt = (i) => {
+      if (keyIsIndex) return i;
+      if (!keyExpression) {
+        return i;
+      }
+      const item = entries ? entries[i][itemAlias] : rows[i];
+      if (keyIsItem) return item;
+      if (keyProp !== null) return item == null ? void 0 : item[keyProp];
+      if (keyPath !== null) {
+        let value = item;
+        for (let d = 0; d < keyPath.length; d++) {
+          if (value == null) return void 0;
+          value = value[keyPath[d]];
+        }
+        return value;
+      }
+      if (!keyScope) keyScope = scope.child({});
+      keyScope.data = varsAt(i);
+      return evaluateIn(keyExpression, keyScope, ":key");
+    };
+    const syncData = (block2, i) => {
+      const raw = toRaw(block2.data);
+      if (entries) {
+        const vars = entries[i];
+        for (const name in vars) {
+          if (!sameStored(raw[name], vars[name])) {
+            block2.data[name] = vars[name];
+          }
+        }
+        return;
+      }
+      const item = rows[i];
+      if (!sameStored(raw[itemAlias], item)) {
+        block2.data[itemAlias] = item;
+      }
+      if (indexAlias !== void 0 && raw[indexAlias] !== i) {
+        block2.data[indexAlias] = i;
+      }
+    };
+    const buildRange = (from, to, before, out) => {
+      if (from >= to) return;
+      const parent = anchor.parentNode;
+      if (!parent) return;
+      pendingRuns.push(pending.length);
+      if (isTemplateRow) {
+        for (let i = from; i < to; i++) {
+          const childScope = scope.reactiveChild(varsAt(i));
+          const nodes = renderTemplate(template, before, childScope);
+          out.push({ key: keyAt(i), scope: childScope, nodes, data: childScope.data });
+        }
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      for (let i = from; i < to; i++) {
+        const childScope = scope.reactiveChild(varsAt(i));
+        const clone = template.cloneNode(true);
+        markNodeScope(clone, childScope);
+        fragment.appendChild(clone);
+        pending.push([clone, childScope]);
+        out.push({ key: keyAt(i), scope: childScope, nodes: [clone], data: childScope.data });
+      }
+      parent.insertBefore(fragment, before);
+    };
+    const destroyBlock = (block2) => {
+      const nodes = block2.nodes;
+      for (let j = 0; j < nodes.length; j++) {
+        destroy(nodes[j]);
+        nodes[j].remove();
+      }
+    };
+    const moveBlock = (block2, before) => {
+      const parent = anchor.parentNode;
+      if (!parent) return;
+      const nodes = block2.nodes;
+      if (nodes[nodes.length - 1].nextSibling === before) return;
+      for (let j = 0; j < nodes.length; j++) {
+        parent.insertBefore(nodes[j], before);
+      }
+    };
+    const nodeAfter = (oldIndex) => oldIndex < blocks.length ? blocks[oldIndex].nodes[0] : anchor;
+    const spliceBlocks = (index, remove, added) => {
+      const addCount = added.length;
+      if (remove === 0 && addCount === 0) return;
+      if (blocks.length === 0) {
+        blocks = added;
+        return;
+      }
+      if (addCount === 0) {
+        blocks.splice(index, remove);
+        return;
+      }
+      if (addCount <= 1024) {
+        blocks.splice(index, remove, ...added);
+        return;
+      }
+      const out = new Array(blocks.length - remove + addCount);
+      let w = 0;
+      for (let k = 0; k < index; k++) out[w++] = blocks[k];
+      for (let k = 0; k < addCount; k++) out[w++] = added[k];
+      for (let k = index + remove; k < blocks.length; k++) out[w++] = blocks[k];
+      blocks = out;
+    };
+    const flushPending = () => {
+      for (let r = pendingRuns.length - 1; r >= 0; r--) {
+        const start2 = pendingRuns[r];
+        const end = r + 1 < pendingRuns.length ? pendingRuns[r + 1] : pending.length;
+        for (let k = start2; k < end; k++) walk(pending[k][0], pending[k][1]);
+      }
+      pending.length = 0;
+      pendingRuns.length = 0;
+    };
+    let lo = 0;
+    let oldHi = 0;
+    let newHi = 0;
+    const regionFromMutations = (source) => {
+      const ops = mutationsSince(source, lastVersion);
+      if (!ops) return false;
+      const oldLen = blocks.length;
+      lo = 0;
+      oldHi = 0;
+      newHi = 0;
+      let current2 = oldLen;
+      for (let k = 0; k < ops.length; k++) {
+        const op = ops[k];
+        const index = op.index;
+        const removed = op.type === 2 /* SET */ ? 1 : op.removed;
+        const added = op.type === 2 /* SET */ ? 1 : op.added;
+        const end = index + removed;
+        if (k === 0) {
+          lo = index;
+          oldHi = end;
+          newHi = index + added;
+        } else if (end <= newHi) {
+          if (index < lo) lo = index;
+          newHi += added - removed;
+        } else {
+          if (index < lo) lo = index;
+          oldHi = end - newHi + oldHi;
+          newHi = index + added;
+        }
+        if (oldHi < lo) oldHi = lo;
+        if (newHi < lo) newHi = lo;
+        current2 += added - removed;
+      }
+      if (current2 !== count) return false;
+      if (lo > oldHi || lo > newHi) return false;
+      if (oldHi > oldLen || newHi > count) return false;
+      if (indexAlias !== void 0 && oldHi - newHi !== 0) {
+        for (let i = newHi; i < count; i++) syncData(blocks[i - newHi + oldHi], i);
+      }
+      return true;
+    };
+    const regionFromScan = () => {
+      const oldLen = blocks.length;
+      const newLen = count;
+      let i = 0;
+      const shared = oldLen < newLen ? oldLen : newLen;
+      while (i < shared) {
+        const block2 = blocks[i];
+        if (!sameKey(block2.key, keyAt(i))) break;
+        syncData(block2, i);
+        i++;
+      }
+      let oe = oldLen - 1;
+      let ne = newLen - 1;
+      while (oe >= i && ne >= i) {
+        const block2 = blocks[oe];
+        if (!sameKey(block2.key, keyAt(ne))) break;
+        syncData(block2, ne);
+        oe--;
+        ne--;
+      }
+      lo = i;
+      oldHi = oe + 1;
+      newHi = ne + 1;
+    };
+    const reconcileRegion = () => {
+      const toPatch = newHi - lo;
+      if (lo >= oldHi) {
+        if (toPatch > 0) {
+          const created = [];
+          buildRange(lo, newHi, nodeAfter(lo), created);
+          spliceBlocks(lo, 0, created);
+        }
+        return;
+      }
+      if (toPatch === 0) {
+        for (let j = lo; j < oldHi; j++) destroyBlock(blocks[j]);
+        spliceBlocks(lo, oldHi - lo, NO_BLOCKS);
+        return;
+      }
+      const keyToNew = /* @__PURE__ */ new Map();
+      for (let n = lo; n < newHi; n++) {
+        const key = keyAt(n);
+        if (keyExpression && keyToNew.has(key)) warnDuplicateKey(el, key, expression);
+        keyToNew.set(key, n);
+      }
+      const oldOfNew = new Int32Array(toPatch);
+      const reused = new Array(toPatch);
+      let matched = 0;
+      let moved = false;
+      let highestSoFar = 0;
+      for (let o = lo; o < oldHi; o++) {
+        const block2 = blocks[o];
+        const target = matched >= toPatch ? void 0 : keyToNew.get(block2.key);
+        if (target === void 0 || reused[target - lo] !== void 0) {
+          destroyBlock(block2);
+          continue;
+        }
+        oldOfNew[target - lo] = o + 1;
+        reused[target - lo] = block2;
+        if (target >= highestSoFar) highestSoFar = target;
+        else moved = true;
+        syncData(block2, target);
+        matched++;
+      }
+      const stay = moved ? longestIncreasing(oldOfNew) : null;
+      let s = stay ? stay.length - 1 : -1;
+      const region = new Array(toPatch);
+      let before = nodeAfter(oldHi);
+      let runEnd = -1;
+      for (let n = toPatch - 1; n >= 0; n--) {
+        const newIndex = lo + n;
+        const block2 = reused[n];
+        if (block2 === void 0) {
+          if (runEnd < 0) runEnd = newIndex + 1;
+          continue;
+        }
+        if (runEnd >= 0) {
+          const created = [];
+          buildRange(newIndex + 1, runEnd, before, created);
+          for (let c = 0; c < created.length; c++) region[n + 1 + c] = created[c];
+          if (created.length) before = created[0].nodes[0];
+          runEnd = -1;
+        }
+        region[n] = block2;
+        if (moved && (s < 0 || n !== stay[s])) moveBlock(block2, before);
+        else if (moved) s--;
+        before = block2.nodes[0];
+      }
+      if (runEnd >= 0) {
+        const created = [];
+        buildRange(lo, runEnd, before, created);
+        for (let c = 0; c < created.length; c++) region[c] = created[c];
+      }
+      spliceBlocks(lo, oldHi - lo, region);
+    };
+    const clearAll = () => {
+      for (const block2 of blocks) destroyBlock(block2);
       blocks = [];
+      lastSource = null;
+      lastVersion = 0;
     };
     addCleanup(anchor, clearAll);
     effect2(() => {
       const source = evaluateIn(sourceExpression, scope, "v-for");
-      const entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
-      const previous = /* @__PURE__ */ new Map();
-      for (const block2 of blocks) previous.set(block2.key, block2);
-      const next = [];
-      const used = /* @__PURE__ */ new Set();
-      const batch = {
-        fragment: document.createDocumentFragment(),
-        pending: []
-      };
-      entries.forEach((vars, index) => {
-        const key = keyExpression ? evaluateIn(keyExpression, scope.child(vars), ":key") : `__index_${index}`;
-        if (keyExpression && used.has(key)) warnDuplicateKey(el, key, expression);
-        const existing = previous.get(key);
-        if (existing && !used.has(key)) {
-          used.add(key);
-          for (const [name, value] of Object.entries(vars)) existing.data[name] = value;
-          next.push(existing);
-          return;
+      const raw = toRaw(source);
+      let fromMutations = false;
+      if (Array.isArray(raw)) {
+        track(raw, "length");
+        track(raw, ITERATE_KEY);
+        rows = raw;
+        entries = null;
+        count = raw.length;
+        const version3 = arrayVersion(raw);
+        if (raw === lastSource && keyExpression && !keyIsIndex) {
+          fromMutations = regionFromMutations(raw);
         }
-        const childScope = scope.reactiveChild(vars);
-        const nodes = renderTemplate(template, anchor, childScope, batch);
-        used.add(key);
-        next.push({ key, scope: childScope, nodes, data: childScope.data });
-      });
-      if (batch.fragment.firstChild) anchor.parentNode?.insertBefore(batch.fragment, anchor);
-      for (const [node, rowScope] of batch.pending) walk(node, rowScope);
-      const reused = new Set(next);
-      for (const block2 of blocks) {
-        if (used.has(block2.key) && reused.has(block2)) continue;
-        for (const node of block2.nodes) {
-          destroy(node);
-          node.remove();
-        }
+        lastSource = raw;
+        lastVersion = version3;
+      } else {
+        entries = normalizeSource(source, itemAlias, indexAlias, thirdAlias);
+        rows = entries;
+        count = entries.length;
+        lastSource = null;
+        lastVersion = 0;
       }
-      let cursor = anchor;
-      for (let i = next.length - 1; i >= 0; i--) {
-        const block2 = next[i];
-        const last = block2.nodes[block2.nodes.length - 1];
-        if (last && last.nextSibling !== cursor) {
-          for (const node of block2.nodes) anchor.parentNode?.insertBefore(node, cursor);
-        }
-        cursor = block2.nodes[0] ?? cursor;
-      }
-      blocks = next;
+      if (!fromMutations) regionFromScan();
+      reconcileRegion();
+      flushPending();
     });
   },
   { priority: PRIORITY.FOR, terminal: true }
 );
 function normalizeSource(source, itemAlias, indexAlias, thirdAlias) {
   const out = [];
-  if (Array.isArray(source)) {
-    source.forEach((item, index) => {
-      const vars = { [itemAlias]: item };
-      if (indexAlias) vars[indexAlias] = index;
-      out.push(vars);
-    });
-    return out;
-  }
   if (typeof source === "number") {
     for (let i = 1; i <= source; i++) {
       const vars = { [itemAlias]: i };
@@ -10444,5 +10731,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-TUXGS7XW.js.map
-//# sourceMappingURL=chunk-TUXGS7XW.js.map
+//# sourceMappingURL=chunk-MBHMNRVP.js.map
+//# sourceMappingURL=chunk-MBHMNRVP.js.map

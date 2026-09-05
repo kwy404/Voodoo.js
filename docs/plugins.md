@@ -303,7 +303,7 @@ For CDN usage, publish an IIFE that registers itself:
 ```
 
 ```html
-<script src="voodoo.min.js" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 <script src="voodoo-plugin-x.js" defer></script>
 ```
 

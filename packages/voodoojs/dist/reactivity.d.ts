@@ -131,6 +131,37 @@ declare const enum TriggerType {
     CLEAR = "clear"
 }
 declare function trigger(target: object, type: TriggerType, key?: PropertyKey, _newValue?: unknown): void;
+/**
+ * What happened to an array, in the words of the call that did it.
+ *
+ * A reconciler handed a new array has to work out what changed by comparing it
+ * against the old one, which costs one key read per row however clever it is.
+ * A reconciler told "one row was removed at 5000" does not: the mutation
+ * already carries the answer. This log is how the caller's knowledge survives
+ * the trip to the effect that re-renders the list.
+ */
+declare const enum ArrayOp {
+    /** `removed` elements at `index` gave way to `added` new ones. */
+    SPLICE = 1,
+    /** The element at `index` was replaced, without shifting anything. */
+    SET = 2,
+    /** Something happened that no range can describe. History is unusable. */
+    RESET = 3
+}
+interface ArrayMutation {
+    type: ArrayOp;
+    index: number;
+    removed: number;
+    added: number;
+}
+/** Mutations recorded for an array so far. `0` when it has never been mutated. */
+declare function arrayVersion(target: object): number;
+/**
+ * What happened to `target` since version `since`, oldest first, or `null`
+ * when the log cannot answer — the history was truncated, or something
+ * unrepresentable happened. `null` means "compare the lists yourself".
+ */
+declare function mutationsSince(target: object, since: number): ArrayMutation[] | null;
 /** Marks an object so it is never turned into a reactive proxy. */
 declare function markRaw<T extends object>(value: T): T;
 /** Returns the original object behind a reactive proxy. */
@@ -185,4 +216,4 @@ declare function watch<T>(source: WatchSource<T>, cb: WatchCallback<T>, options?
 /** Executes the effect immediately and re-executes when dependencies change. */
 declare function watchEffect(fn: (onInvalidate: (c: () => void) => void) => void): WatchStopHandle;
 
-export { type ComputedRef, type Dep, type EffectOptions, type EffectRunner, type EffectScheduler, EffectScope, ITERATE_KEY, ReactiveEffect, type Ref, TriggerType, type WatchCallback, type WatchOptions, type WatchSource, type WatchStopHandle, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };
+export { type ArrayMutation, ArrayOp, type ComputedRef, type Dep, type EffectOptions, type EffectRunner, type EffectScheduler, EffectScope, ITERATE_KEY, ReactiveEffect, type Ref, TriggerType, type WatchCallback, type WatchOptions, type WatchSource, type WatchStopHandle, arrayVersion, computed, effect, effectScope, enableTracking, flushSync, getActiveEffect, getActiveScope, handleError, hasChanged, isReactive, isRef, markRaw, mutationsSince, nextTick, pauseTracking, queueJob, queuePostFlush, reactive, ref, resetTracking, setErrorHandler, shallowRef, stop, toRaw, track, trigger, unref, warn, watch, watchEffect };

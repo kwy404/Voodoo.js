@@ -23,7 +23,7 @@
    * alongside it — on GitHub Pages, from a file:// checkout, or from a local
    * server. There is nothing left to keep in sync.
    */
-  var RUNTIME = new URL('../voodoo.full.min.js?v=44b1098c', document.currentScript.src).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=3f24494c', document.currentScript.src).href;
   /**
    * The examples arrive in three files and are joined here.
    *

@@ -175,7 +175,7 @@ The `MutationObserver` that initializes HTML created later has low cost, but on 
 the DOM extensively on their own it can be disabled:
 
 ```html
-<script src="voodoo.min.js" data-no-observer defer></script>
+<script src="voodoo.full.min.js" data-no-observer defer></script>
 ```
 
 ```js

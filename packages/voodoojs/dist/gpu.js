@@ -1,8 +1,8 @@
-import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-JB72AX7G.js';
-export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-JB72AX7G.js';
+import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-7LJ5BW35.js';
+export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-7LJ5BW35.js';
 import { http } from './chunk-X3FZPWI6.js';
-import { originalAttributes, destroy } from './chunk-6QFKV444.js';
-import { handleError } from './chunk-PPT7RDKJ.js';
+import { originalAttributes, destroy } from './chunk-RZWDWP5A.js';
+import { handleError } from './chunk-OIHNH5XR.js';
 import { warn, describeElement } from './chunk-YH3IDF6L.js';
 import './chunk-D45ZEXUO.js';
 import { defineDirective } from './chunk-OH6FIDTW.js';

@@ -162,12 +162,13 @@ async function stamp(file, text) {
   // The cost is that a page pinned this way does not pick up the next patch on
   // its own. For documentation that is the right trade: these pages are stamped
   // on every release anyway.
-  if (pinnable || SHIPPED.includes(file.split('\\').join('/'))) {
+  const shipped = SHIPPED.includes(file.split('\\').join('/'));
+  if (pinnable || shipped) {
     out = out.replace(/voodoojs@\d+\.\d+(?:\.\d+)?/g, `voodoojs@${version}`);
   }
 
-  // Every CDN tag names the FULL build, and this is correctness rather than
-  // preference.
+  // Every CDN tag names the FULL build, pinned, on every CDN, whether or not it
+  // already carried a version. This is correctness rather than preference.
   //
   // JSX lives only in the full build. A page that loads `voodoo.min.js`, the
   // essential one, and then shows `{items.map(x => (<li>{x}</li>))}` is showing
@@ -176,13 +177,38 @@ async function stamp(file, text) {
   // example from the JSX page would get a page printing its own source back at
   // them, with nothing to explain why.
   //
+  // The first version of this rule matched `voodoojs@<version>/dist/` only, so
+  // it silently skipped every tag written WITHOUT a version — and those are
+  // exactly the tags nobody had ever pinned. Twenty-three of them, across the
+  // installation guide, the getting-started page, the issue template and the
+  // example READMEs, still handed out the build JSX does not run in. Matching
+  // the optional version rather than requiring it is the whole fix.
+  //
   // The cost is real and is stated in the README rather than hidden: the full
-  // build is 132 KB gzipped against 84 for the essential one. Anyone who does
+  // build is 133 KB gzipped against 85 for the essential one. Anyone who does
   // not want JSX can drop `.full`, and the size table says so.
   out = out.replace(
-    /(cdn\.jsdelivr\.net\/npm\/voodoojs@[\d.]+\/dist\/)voodoo\.min\.js/g,
-    '$1voodoo.full.min.js'
+    /(https:\/\/(?:cdn\.jsdelivr\.net\/npm|unpkg\.com)\/voodoojs)(@[\d.]+)?(\/dist\/)voodoo(?:\.core)?\.min\.js/g,
+    (match, host, pinned, dist) => {
+      // An unpinned tag resolves to whatever is latest, which is safe to leave
+      // unpinned when the version in hand is not published yet.
+      const at = pinnable || shipped ? `@${version}` : (pinned ?? '');
+      return `${host}${at}${dist}voodoo.full.min.js`;
+    }
   );
+
+  // A documentation example that loads the library from a file, rather than
+  // from a CDN, names the full build for the same reason the CDN tags do: it is
+  // the build the JSX pages need, and somebody copying a script tag out of the
+  // installation guide should not land on the one where JSX prints itself back.
+  //
+  // Scoped to docs/ and site/ deliberately. The browser test fixtures also load
+  // `voodoo.min.js` from a script tag, and they mean it — they exercise the
+  // essential build on purpose, and rewriting them would quietly stop testing it.
+  const isDocumentation = /^(docs|site)[\\/]/.test(file);
+  if (isDocumentation) {
+    out = out.replace(/src="([^"]*?)voodoo\.min\.js(?:\?v=[\w.]+)?"/g, 'src="$1voodoo.full.min.js"');
+  }
 
   // The asset cache keys. Async, so the matches are collected first.
   for (const pattern of ASSET_PATTERNS) {

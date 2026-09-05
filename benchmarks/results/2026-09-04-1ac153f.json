@@ -1,0 +1,1956 @@
+{
+  "schemaVersion": 1,
+  "env": {
+    "timestamp": "2026-09-04T23:45:36.490Z",
+    "voodooVersion": "0.12.5",
+    "commit": "1ac153fd1c4e4bea9a3499c9c1b87861ac58bee5",
+    "commitShort": "1ac153f",
+    "branch": "main",
+    "dirty": true,
+    "node": "v24.16.0",
+    "v8": "13.6.233.17-node.49",
+    "platform": "win32 10.0.19045",
+    "arch": "x64",
+    "cpuModel": "Intel(R) Core(TM) i5-4440 CPU @ 3.10GHz",
+    "cpuCores": 4,
+    "cpuSpeedMHz": 3093,
+    "totalMemMB": 16268,
+    "freeMemMB": 6413,
+    "loadAvg": [
+      0,
+      0,
+      0
+    ],
+    "jsdom": "25.0.1",
+    "gcExposed": true,
+    "buildMode": "esbuild-bundle(working tree, src/index.ts, esm, es2020, unminified)",
+    "nodeFlags": [
+      "--expose-gc"
+    ],
+    "monorepoVersion": "0.7.0",
+    "bundleBytes": 815043,
+    "quick": true,
+    "suites": [
+      "lists"
+    ],
+    "measuredSource": "working tree",
+    "measuredSha": null,
+    "sourceFallback": false,
+    "compileError": null
+  },
+  "wallMs": 232381,
+  "results": [
+    {
+      "id": "lists/create-100",
+      "name": "criar 100 linhas",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-create-100",
+      "curve": "v-for: criar N linhas",
+      "notes": "RSD 38.8% acima do alvo 8% depois de 40 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 40,
+        "mean": 11.756004999764263,
+        "median": 9.712349999696016,
+        "min": 7.6982999965548515,
+        "max": 24.022899992763996,
+        "stddev": 4.563747055531016,
+        "rsd": 38.82056068896305,
+        "p75": 12.605274997651577,
+        "p95": 21.69787000380456,
+        "p99": 23.494566996023057,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 22.668200001120567
+          },
+          {
+            "index": 2,
+            "value": 19.903300002217293
+          },
+          {
+            "index": 10,
+            "value": 24.022899992763996
+          },
+          {
+            "index": 17,
+            "value": 18.823300004005432
+          },
+          {
+            "index": 19,
+            "value": 21.646800003945827
+          },
+          {
+            "index": 25,
+            "value": 19.06579999625683
+          }
+        ],
+        "outlierCount": 6,
+        "iqrFence": {
+          "low": 2.961650009267032,
+          "high": 18.391449990682304
+        },
+        "raw": [
+          22.668200001120567,
+          12.557499997317791,
+          19.903300002217293,
+          14.819399997591972,
+          15.87049999833107,
+          10.187799997627735,
+          9.20389999449253,
+          12.748599998652935,
+          8.885500006377697,
+          8.267599999904633,
+          24.022899992763996,
+          9.569600000977516,
+          7.9514999985694885,
+          8.29839999973774,
+          7.964400000870228,
+          10.17620000243187,
+          9.952899999916553,
+          18.823300004005432,
+          11.688299998641014,
+          21.646800003945827,
+          11.209100000560284,
+          9.181599996984005,
+          10.067699998617172,
+          9.855099998414516,
+          12.496700003743172,
+          19.06579999625683,
+          17.736800000071526,
+          7.9983000010252,
+          8.760300002992153,
+          7.6982999965548515,
+          11.276300005614758,
+          9.026900000870228,
+          9.39639999717474,
+          9.185900002717972,
+          8.771199993789196,
+          8.28149999678135,
+          8.674499996006489,
+          8.710400000214577,
+          8.38620000332594,
+          9.254600003361702
+        ],
+        "cv": 38.82056068896305
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 117,
+      "wallMs": 655.9183000028133,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/create-1000",
+      "name": "criar 1000 linhas",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-create-1000",
+      "curve": "v-for: criar N linhas",
+      "notes": "RSD 37.4% acima do alvo 8% depois de 24 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 24,
+        "mean": 105.90105833330502,
+        "median": 96.33044999837875,
+        "min": 69.72100000083447,
+        "max": 253.89970000088215,
+        "stddev": 39.62064397443418,
+        "rsd": 37.41288765003193,
+        "p75": 117.30680000036955,
+        "p95": 161.4671049986034,
+        "p99": 233.7070570005476,
+        "outliers": [
+          {
+            "index": 4,
+            "value": 253.89970000088215
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 28.221612493507564,
+          "high": 170.75791250448674
+        },
+        "raw": [
+          99.40729999542236,
+          104.66220000386238,
+          128.87319999933243,
+          115.54580000042915,
+          253.89970000088215,
+          135.18229999393225,
+          122.58980000019073,
+          100.90739999711514,
+          86.0949999988079,
+          70.12140000611544,
+          166.1055999994278,
+          132.51510000228882,
+          98.98589999973774,
+          88.86700000613928,
+          73.16690000146627,
+          79.22029999643564,
+          89.79669999331236,
+          82.49019999802113,
+          78.44150000065565,
+          93.67499999701977,
+          90.5701000019908,
+          106.42000000178814,
+          69.72100000083447,
+          74.36600000411272
+        ],
+        "cv": 37.41288765003193
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 113,
+      "wallMs": 3270.4440999999642,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/create-5000",
+      "name": "criar 5000 linhas",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-create-5000",
+      "curve": "v-for: criar N linhas",
+      "notes": "RSD 13.2% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 475.90045499950645,
+        "median": 459.6347499974072,
+        "min": 389.2729000002146,
+        "max": 634.7380999997258,
+        "stddev": 62.83315429659216,
+        "rsd": 13.203003619035691,
+        "p75": 515.8516500014812,
+        "p95": 573.7329949960113,
+        "p99": 622.5370789989828,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 301.0478374976665,
+          "high": 644.73393750377
+        },
+        "raw": [
+          389.2729000002146,
+          570.5221999958158,
+          430.0372999981046,
+          396.11670000106096,
+          429.60860000550747,
+          491.8145999982953,
+          634.7380999997258,
+          464.2461000010371,
+          516.6314999982715,
+          458.8250999972224,
+          478.77879999578,
+          460.444399997592,
+          458.45030000060797,
+          451.24599999934435,
+          434.63069999963045,
+          420.0499000027776,
+          548.9861999973655,
+          515.5917000025511,
+          544.6027000024915,
+          423.41529999673367
+        ],
+        "cv": 13.203003619035691
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 40,
+      "wallMs": 13937.544199995697,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/create-10000",
+      "name": "criar 10000 linhas",
+      "group": "lists",
+      "n": 10000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-create-10000",
+      "curve": "v-for: criar N linhas",
+      "notes": null,
+      "stats": {
+        "samples": 5,
+        "mean": 983.3644399955868,
+        "median": 974.4689999967813,
+        "min": 920.0863999947906,
+        "max": 1048.8266999945045,
+        "stddev": 50.07337872995774,
+        "rsd": 5.092046925164637,
+        "p75": 1015.3408999964595,
+        "p95": 1042.1295399948954,
+        "p99": 1047.4872679945827,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 872.2366499938071,
+          "high": 1101.203449998051
+        },
+        "raw": [
+          1048.8266999945045,
+          974.4689999967813,
+          920.0863999947906,
+          1015.3408999964595,
+          958.0991999953985
+        ],
+        "cv": 5.092046925164637
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 16,
+      "wallMs": 8607.623400002718,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/append-1000-to-1000",
+      "name": "acrescentar 1.000 linhas a uma lista de 1.000",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": null,
+      "notes": "RSD 17.7% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 114.78611000105738,
+        "median": 109.58805000036955,
+        "min": 88.09430000185966,
+        "max": 169.51190000027418,
+        "stddev": 20.3552172748653,
+        "rsd": 17.733171090716283,
+        "p75": 118.01860000193119,
+        "p95": 153.4278300050646,
+        "p99": 166.29508600123225,
+        "outliers": [
+          {
+            "index": 2,
+            "value": 169.51190000027418
+          },
+          {
+            "index": 14,
+            "value": 152.58130000531673
+          }
+        ],
+        "outlierCount": 2,
+        "iqrFence": {
+          "low": 77.27972499746829,
+          "high": 142.46192500460893
+        },
+        "raw": [
+          137.23809999972582,
+          110.57710000127554,
+          169.51190000027418,
+          116.23550000041723,
+          110.45430000126362,
+          101.20109999924898,
+          93.89119999855757,
+          116.11710000038147,
+          103.91709999740124,
+          107.36710000038147,
+          101.78869999945164,
+          113.81149999797344,
+          104.50280000269413,
+          88.09430000185966,
+          152.58130000531673,
+          108.72179999947548,
+          137.6832000017166,
+          123.36790000647306,
+          97.13410000503063,
+          101.52610000222921
+        ],
+        "cv": 17.733171090716283
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 54,
+      "wallMs": 5383.460400000215,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/prepend-1000-to-1000",
+      "name": "inserir 1.000 linhas no INICIO de uma lista de 1.000",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": null,
+      "notes": "Com reconciliacao keyed as 1.000 linhas antigas devem ser reaproveitadas, nao recriadas.; RSD 18.1% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 108.22370500043034,
+        "median": 104.72930000349879,
+        "min": 84.35790000110865,
+        "max": 173.5401000007987,
+        "stddev": 19.573510852076648,
+        "rsd": 18.086158528761157,
+        "p75": 113.9265749976039,
+        "p95": 133.2595299996436,
+        "p99": 165.48398600056763,
+        "outliers": [
+          {
+            "index": 18,
+            "value": 173.5401000007987
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 74.43907500244677,
+          "high": 137.61907499469817
+        },
+        "raw": [
+          131.13949999958277,
+          98.95979999750853,
+          107.79399999976158,
+          113.46459999680519,
+          105.48140000551939,
+          122.32930000126362,
+          84.35790000110865,
+          99.88520000129938,
+          119.58870000392199,
+          115.3125,
+          101.22529999911785,
+          103.9772000014782,
+          107.24249999970198,
+          95.59779999405146,
+          85.27770000696182,
+          101.88359999656677,
+          88.85409999638796,
+          112.91600000113249,
+          173.5401000007987,
+          95.6469000056386
+        ],
+        "cv": 18.086158528761157
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 55,
+      "wallMs": 4993.975100003183,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/update-every-10th-100",
+      "name": "atualizar 1 a cada 10 rotulos em 100 linhas",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: update 1 a cada 10",
+      "notes": "RSD 19.7% acima do alvo 8% depois de 40 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 40,
+        "mean": 0.4300274996086955,
+        "median": 0.3904999978840351,
+        "min": 0.3336000069975853,
+        "max": 0.6431000009179115,
+        "stddev": 0.08486892501324345,
+        "rsd": 19.73569715668652,
+        "p75": 0.4710750002413988,
+        "p95": 0.5990299981087446,
+        "p99": 0.6365089997649193,
+        "outliers": [
+          {
+            "index": 10,
+            "value": 0.6261999979615211
+          },
+          {
+            "index": 13,
+            "value": 0.6431000009179115
+          }
+        ],
+        "outlierCount": 2,
+        "iqrFence": {
+          "low": 0.2170749893411994,
+          "high": 0.6234750067815185
+        },
+        "raw": [
+          0.5103000029921532,
+          0.5913000032305717,
+          0.48589999973773956,
+          0.4604000002145767,
+          0.4529999941587448,
+          0.5975999981164932,
+          0.5174000039696693,
+          0.466499999165535,
+          0.43479999899864197,
+          0.3539000004529953,
+          0.6261999979615211,
+          0.35660000145435333,
+          0.5692000016570091,
+          0.6431000009179115,
+          0.5150000005960464,
+          0.466499999165535,
+          0.40609999746084213,
+          0.37619999796152115,
+          0.4213000014424324,
+          0.33980000019073486,
+          0.3887999951839447,
+          0.3669999986886978,
+          0.3702999949455261,
+          0.3748999983072281,
+          0.3905999958515167,
+          0.4848000034689903,
+          0.37070000171661377,
+          0.3805999979376793,
+          0.3903999999165535,
+          0.3378000035881996,
+          0.44940000027418137,
+          0.3336000069975853,
+          0.3659999966621399,
+          0.3491999953985214,
+          0.35840000212192535,
+          0.3702999949455261,
+          0.38519999384880066,
+          0.38450000435113907,
+          0.4002000018954277,
+          0.3572999984025955
+        ],
+        "cv": 19.73569715668652
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 60,
+      "wallMs": 415.74899999797344,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/update-every-10th-1000",
+      "name": "atualizar 1 a cada 10 rotulos em 1000 linhas",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-update-every-10th-1000",
+      "curve": "v-for: update 1 a cada 10",
+      "notes": null,
+      "stats": {
+        "samples": 6,
+        "mean": 3.8147000012298427,
+        "median": 3.789799999445677,
+        "min": 3.5850000008940697,
+        "max": 4.011600002646446,
+        "stddev": 0.15505973129531359,
+        "rsd": 4.064794905112407,
+        "p75": 3.9260750021785498,
+        "p95": 3.9989500027149916,
+        "p99": 4.009070002660155,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 3.49294999986887,
+          "high": 4.185950003564358
+        },
+        "raw": [
+          4.011600002646446,
+          3.8212999999523163,
+          3.9610000029206276,
+          3.751000002026558,
+          3.7582999989390373,
+          3.5850000008940697
+        ],
+        "cv": 4.064794905112407
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 13,
+      "wallMs": 861.3255999982357,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/update-every-10th-5000",
+      "name": "atualizar 1 a cada 10 rotulos em 5000 linhas",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: update 1 a cada 10",
+      "notes": "RSD 16.5% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 24.106479999795557,
+        "median": 23.362649999558926,
+        "min": 18.809999994933605,
+        "max": 34.80300000309944,
+        "stddev": 3.9841350518612972,
+        "rsd": 16.527236875292807,
+        "p75": 25.8329999987036,
+        "p95": 29.967975000664595,
+        "p99": 33.835995002612464,
+        "outliers": [
+          {
+            "index": 7,
+            "value": 34.80300000309944
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 13.639437498524785,
+          "high": 33.14913749881089
+        },
+        "raw": [
+          18.809999994933605,
+          25.283399999141693,
+          29.219400003552437,
+          27.379900000989437,
+          19.587000004947186,
+          22.698499999940395,
+          20.719700001180172,
+          34.80300000309944,
+          26.511600002646446,
+          22.811099998652935,
+          22.540200002491474,
+          21.153399996459484,
+          24.911799997091293,
+          20.694400005042553,
+          29.713500000536442,
+          20.515099994838238,
+          24.22239999473095,
+          25.606799997389317,
+          23.914200000464916,
+          21.034199997782707
+        ],
+        "cv": 16.527236875292807
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 50,
+      "wallMs": 15718.080800004303,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/update-every-10th-10000",
+      "name": "atualizar 1 a cada 10 rotulos em 10000 linhas",
+      "group": "lists",
+      "n": 10000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: update 1 a cada 10",
+      "notes": "RSD 24.4% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 68.55964499935507,
+        "median": 67.79529999569058,
+        "min": 40.864000000059605,
+        "max": 106.72500000149012,
+        "stddev": 16.710563519786962,
+        "rsd": 24.373760278286383,
+        "p75": 73.60847499966621,
+        "p95": 98.28928500376642,
+        "p99": 105.03785700194537,
+        "outliers": [
+          {
+            "index": 3,
+            "value": 97.84530000388622
+          },
+          {
+            "index": 15,
+            "value": 106.72500000149012
+          }
+        ],
+        "outlierCount": 2,
+        "iqrFence": {
+          "low": 37.14572499319911,
+          "high": 95.48612500354648
+        },
+        "raw": [
+          40.864000000059605,
+          57.900100000202656,
+          68.62680000066757,
+          97.84530000388622,
+          82.07930000126362,
+          72.25789999961853,
+          69.17239999771118,
+          53.96920000016689,
+          92.71119999885559,
+          67.62639999389648,
+          62.87140000611544,
+          67.96419999748468,
+          77.66019999980927,
+          42.9328999966383,
+          60.292499996721745,
+          106.72500000149012,
+          58.99780000001192,
+          59.54259999841452,
+          72.12179999798536,
+          59.031899996101856
+        ],
+        "cv": 24.373760278286383
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 74,
+      "wallMs": 29047.23860000074,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/update-one-of-10000",
+      "name": "atualizar 1 rotulo entre 10.000 linhas",
+      "group": "lists",
+      "n": 1,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": 1,
+      "vanillaOf": null,
+      "curve": null,
+      "notes": "Sem Virtual DOM, o custo deve ser independente do tamanho da lista.",
+      "stats": {
+        "samples": 10,
+        "mean": 14.259130001813173,
+        "median": 13.924650002270937,
+        "min": 13.408699996769428,
+        "max": 16.20540000498295,
+        "stddev": 0.9062611362718282,
+        "rsd": 6.355655191842624,
+        "p75": 14.48072500154376,
+        "p95": 15.858540004119277,
+        "p99": 16.136028004810214,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 16.20540000498295
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 12.476100000552833,
+          "high": 15.683500002138317
+        },
+        "raw": [
+          16.20540000498295,
+          15.434600003063679,
+          14.05120000243187,
+          14.591600000858307,
+          14.14810000360012,
+          13.798100002110004,
+          13.569300003349781,
+          13.665600001811981,
+          13.718699999153614,
+          13.408699996769428
+        ],
+        "cv": 6.355655191842624
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 20,
+      "wallMs": 1157.5388999953866,
+      "rating": "Needs improvement",
+      "ratingBasis": "1392% do budget 1ms"
+    },
+    {
+      "id": "lists/remove-one-of-1000",
+      "name": "remover 1 linha do meio de 1.000",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": null,
+      "notes": "RSD 16.6% acima do alvo 8% depois de 24 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 24,
+        "mean": 24.184895833022892,
+        "median": 23.373499996960163,
+        "min": 21.451200000941753,
+        "max": 42.26650000363588,
+        "stddev": 4.003738614928188,
+        "rsd": 16.55470688222417,
+        "p75": 24.158824998885393,
+        "p95": 25.877595003321765,
+        "p99": 38.52860900387167,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 42.26650000363588
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 20.710574998520315,
+          "high": 26.22777499910444
+        },
+        "raw": [
+          42.26650000363588,
+          23.859999999403954,
+          25.100099995732307,
+          26.014800004661083,
+          24.165199995040894,
+          21.451200000941753,
+          24.756499998271465,
+          23.687799997627735,
+          23.145099997520447,
+          22.24430000036955,
+          24.156700000166893,
+          23.079199999570847,
+          22.804399996995926,
+          21.738300003111362,
+          24.55340000241995,
+          22.89190000295639,
+          24.106000006198883,
+          21.876299999654293,
+          23.307099997997284,
+          23.031799994409084,
+          23.65139999985695,
+          22.404699996113777,
+          23.439899995923042,
+          22.70490000396967
+        ],
+        "cv": 16.55470688222417
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 50,
+      "wallMs": 2765.1432000026107,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/clear-100",
+      "name": "limpar uma lista de 100 linhas",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-clear-100",
+      "curve": "v-for: limpar N linhas (destroy + unindex)",
+      "notes": null,
+      "stats": {
+        "samples": 15,
+        "mean": 1.3800466666618982,
+        "median": 1.344200000166893,
+        "min": 1.283600002527237,
+        "max": 1.6820000037550926,
+        "stddev": 0.10846159967906074,
+        "rsd": 7.859270436224536,
+        "p75": 1.4037999995052814,
+        "p95": 1.558100003004074,
+        "p99": 1.6572200036048887,
+        "outliers": [
+          {
+            "index": 7,
+            "value": 1.6820000037550926
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 1.1810500007122755,
+          "high": 1.537449998781085
+        },
+        "raw": [
+          1.4992999956011772,
+          1.505000002682209,
+          1.3343000039458275,
+          1.355500005185604,
+          1.4314000010490417,
+          1.3148999959230423,
+          1.3761999979615211,
+          1.6820000037550926,
+          1.3145000040531158,
+          1.2900999933481216,
+          1.3012999966740608,
+          1.283600002527237,
+          1.3152999952435493,
+          1.344200000166893,
+          1.3531000018119812
+        ],
+        "cv": 7.859270436224536
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 24,
+      "wallMs": 172.2111000046134,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/clear-1000",
+      "name": "limpar uma lista de 1000 linhas",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-clear-1000",
+      "curve": "v-for: limpar N linhas (destroy + unindex)",
+      "notes": "RSD 76.4% acima do alvo 8% depois de 24 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 24,
+        "mean": 14.45934166572988,
+        "median": 11.5472999997437,
+        "min": 10.535300001502037,
+        "max": 65.21929999440908,
+        "stddev": 11.053846543526138,
+        "rsd": 76.44778579183094,
+        "p75": 12.606124997138977,
+        "p95": 19.57573499716818,
+        "p99": 54.757059994861464,
+        "outliers": [
+          {
+            "index": 3,
+            "value": 19.731299996376038
+          },
+          {
+            "index": 8,
+            "value": 65.21929999440908
+          },
+          {
+            "index": 21,
+            "value": 18.69420000165701
+          }
+        ],
+        "outlierCount": 3,
+        "iqrFence": {
+          "low": 8.59231249243021,
+          "high": 15.014412499964237
+        },
+        "raw": [
+          12.699800007045269,
+          12.568499997258186,
+          12.060300000011921,
+          19.731299996376038,
+          11.041899994015694,
+          11.25109999626875,
+          11.865299999713898,
+          10.859400004148483,
+          65.21929999440908,
+          12.57489999383688,
+          11.148000001907349,
+          12.8733000010252,
+          11.81189999729395,
+          13.700699999928474,
+          11.048699997365475,
+          11.410199999809265,
+          10.868900001049042,
+          11.684399999678135,
+          10.535300001502037,
+          10.8766999989748,
+          10.72240000218153,
+          18.69420000165701,
+          10.673599995672703,
+          11.104099996387959
+        ],
+        "cv": 76.44778579183094
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 230,
+      "wallMs": 2468.0265000015497,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/clear-5000",
+      "name": "limpar uma lista de 5000 linhas",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-clear-5000",
+      "curve": "v-for: limpar N linhas (destroy + unindex)",
+      "notes": null,
+      "stats": {
+        "samples": 5,
+        "mean": 94.97557999789714,
+        "median": 90.94649999588728,
+        "min": 88.85869999974966,
+        "max": 102.95030000060797,
+        "stddev": 6.85862076605147,
+        "rsd": 7.221457101081485,
+        "p75": 101.91609999537468,
+        "p95": 102.74345999956131,
+        "p99": 102.90893200039864,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 72.64160000160336,
+          "high": 119.48079999163747
+        },
+        "raw": [
+          88.85869999974966,
+          101.91609999537468,
+          102.95030000060797,
+          90.20629999786615,
+          90.94649999588728
+        ],
+        "cv": 7.221457101081485
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 22,
+      "wallMs": 4083.953900001943,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/clear-10000",
+      "name": "limpar uma lista de 10000 linhas",
+      "group": "lists",
+      "n": 10000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": "vanilla/list-clear-10000",
+      "curve": "v-for: limpar N linhas (destroy + unindex)",
+      "notes": "RSD 27.5% acima do alvo 8% depois de 20 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 20,
+        "mean": 164.85624500028788,
+        "median": 154.58410000056028,
+        "min": 134.57530000060797,
+        "max": 354.833599999547,
+        "stddev": 45.27026266276158,
+        "rsd": 27.460447532747413,
+        "p75": 158.0774999987334,
+        "p95": 183.82941999956978,
+        "p99": 320.63276399955134,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 134.57530000060797
+          },
+          {
+            "index": 1,
+            "value": 354.833599999547
+          },
+          {
+            "index": 2,
+            "value": 174.82919999957085
+          }
+        ],
+        "outlierCount": 3,
+        "iqrFence": {
+          "low": 144.96493750903755,
+          "high": 165.9450374925509
+        },
+        "raw": [
+          134.57530000060797,
+          354.833599999547,
+          174.82919999957085,
+          152.87690000236034,
+          153.1802999973297,
+          153.4945000037551,
+          154.59939999878407,
+          159.95749999582767,
+          159.23460000008345,
+          152.2487000003457,
+          154.5688000023365,
+          157.6917999982834,
+          152.69920000433922,
+          156.69359999895096,
+          156.04490000009537,
+          153.4539000019431,
+          159.61039999872446,
+          154.68850000202656,
+          152.26359999924898,
+          149.5802000015974
+        ],
+        "cv": 27.460447532747413
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 83,
+      "wallMs": 21984.64929999411,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/replace-all-100",
+      "name": "trocar todas as 100 linhas por outras 100",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: replace-all (nenhuma chave reaproveitada)",
+      "notes": "RSD 29.7% acima do alvo 8% depois de 40 amostras — NAO confiavel para portao de regressao",
+      "stats": {
+        "samples": 40,
+        "mean": 8.98919249996543,
+        "median": 8.076550003141165,
+        "min": 7.119999997317791,
+        "max": 20.07720000296831,
+        "stddev": 2.669112376064886,
+        "rsd": 29.69245987417836,
+        "p75": 9.010850001126528,
+        "p95": 15.799424997717137,
+        "p99": 18.94257300317287,
+        "outliers": [
+          {
+            "index": 6,
+            "value": 15.727399997413158
+          },
+          {
+            "index": 13,
+            "value": 20.07720000296831
+          },
+          {
+            "index": 27,
+            "value": 17.167900003492832
+          }
+        ],
+        "outlierCount": 3,
+        "iqrFence": {
+          "low": 5.782162496820092,
+          "high": 10.94806250371039
+        },
+        "raw": [
+          9.63340000063181,
+          9.287600003182888,
+          10.198599994182587,
+          9.917599998414516,
+          9.325199998915195,
+          8.583599999547005,
+          15.727399997413158,
+          8.642700001597404,
+          9.209299996495247,
+          8.934000000357628,
+          8.627999998629093,
+          10.14360000193119,
+          8.944700002670288,
+          20.07720000296831,
+          7.8169999942183495,
+          8.596100002527237,
+          8.180699996650219,
+          7.9170999974012375,
+          7.791300006210804,
+          7.702799998223782,
+          7.546999998390675,
+          7.865899994969368,
+          7.6978999972343445,
+          8.11490000039339,
+          7.761900000274181,
+          7.626099996268749,
+          7.60530000180006,
+          17.167900003492832,
+          7.600599996745586,
+          7.893800005316734,
+          7.119999997317791,
+          7.249700002372265,
+          7.404799997806549,
+          8.568400003015995,
+          7.839099995791912,
+          8.038200005888939,
+          8.14470000565052,
+          7.724899999797344,
+          7.549300000071526,
+          7.78940000385046
+        ],
+        "cv": 29.69245987417836
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 90,
+      "wallMs": 744.4905999973416,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/replace-all-1000",
+      "name": "trocar todas as 1000 linhas por outras 1000",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: replace-all (nenhuma chave reaproveitada)",
+      "notes": null,
+      "stats": {
+        "samples": 6,
+        "mean": 81.5874000005424,
+        "median": 81.40915000066161,
+        "min": 76.12240000069141,
+        "max": 86.05770000070333,
+        "stddev": 3.600246022395082,
+        "rsd": 4.412747584027861,
+        "p75": 84.1391749996692,
+        "p95": 85.73045000061393,
+        "p99": 85.99225000068546,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 73.69098750315607,
+          "high": 90.40808749757707
+        },
+        "raw": [
+          79.77730000019073,
+          86.05770000070333,
+          84.7487000003457,
+          76.12240000069141,
+          82.31059999763966,
+          80.50770000368357
+        ],
+        "cv": 4.412747584027861
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 14,
+      "wallMs": 1304.1752999946475,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/replace-all-5000",
+      "name": "trocar todas as 5000 linhas por outras 5000",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: replace-all (nenhuma chave reaproveitada)",
+      "notes": null,
+      "stats": {
+        "samples": 5,
+        "mean": 453.9390400022268,
+        "median": 461.3746999949217,
+        "min": 421.5557000041008,
+        "max": 465.87610000371933,
+        "stddev": 18.49998388023762,
+        "rsd": 4.075433538421121,
+        "p75": 464.797300003469,
+        "p95": 465.66034000366926,
+        "p99": 465.8329480037093,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 421.5557000041008
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 443.0325500071049,
+          "high": 477.85615000128746
+        },
+        "raw": [
+          421.5557000041008,
+          465.87610000371933,
+          456.09140000492334,
+          464.797300003469,
+          461.3746999949217
+        ],
+        "cv": 4.075433538421121
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 13,
+      "wallMs": 6674.816300004721,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/reverse-100",
+      "name": "inverter a ordem de 100 linhas (todas as chaves sobrevivem)",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: reverse (todas as chaves sobrevivem)",
+      "notes": null,
+      "stats": {
+        "samples": 10,
+        "mean": 4.216119999438524,
+        "median": 4.138050001114607,
+        "min": 3.813299998641014,
+        "max": 4.61540000140667,
+        "stddev": 0.2785968409856212,
+        "rsd": 6.607896383943601,
+        "p75": 4.452824996784329,
+        "p95": 4.584260000661016,
+        "p99": 4.609172001257539,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 3.4237625021487474,
+          "high": 5.070262493565679
+        },
+        "raw": [
+          4.61540000140667,
+          4.434900000691414,
+          4.458799995481968,
+          4.5461999997496605,
+          4.197500005364418,
+          4.038699999451637,
+          4.078599996864796,
+          3.9290999993681908,
+          3.813299998641014,
+          4.048699997365475
+        ],
+        "cv": 6.607896383943601
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 20,
+      "wallMs": 181.48719999939203,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/reverse-1000",
+      "name": "inverter a ordem de 1000 linhas (todas as chaves sobrevivem)",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: reverse (todas as chaves sobrevivem)",
+      "notes": null,
+      "stats": {
+        "samples": 6,
+        "mean": 66.80963333199422,
+        "median": 66.82369999960065,
+        "min": 62.061099998652935,
+        "max": 72.75389999896288,
+        "stddev": 4.040087192907048,
+        "rsd": 6.047162649180872,
+        "p75": 68.92429999820888,
+        "p95": 71.96174999885261,
+        "p99": 72.59546999894083,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 56.07379999756813,
+          "high": 76.63459999859333
+        },
+        "raw": [
+          72.75389999896288,
+          66.94129999727011,
+          66.70610000193119,
+          62.81009999662638,
+          69.5852999985218,
+          62.061099998652935
+        ],
+        "cv": 6.047162649180872
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 19,
+      "wallMs": 1291.393700003624,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/reverse-5000",
+      "name": "inverter a ordem de 5000 linhas (todas as chaves sobrevivem)",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: reverse (todas as chaves sobrevivem)",
+      "notes": null,
+      "stats": {
+        "samples": 9,
+        "mean": 1079.4874777777327,
+        "median": 1110.7367000058293,
+        "min": 927.1394000053406,
+        "max": 1181.6210999935865,
+        "stddev": 85.6779631749143,
+        "rsd": 7.936911260081839,
+        "p75": 1148.2066000029445,
+        "p95": 1169.6658999949693,
+        "p99": 1179.230059993863,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 817.1438499875367,
+          "high": 1346.8442500121891
+        },
+        "raw": [
+          927.1394000053406,
+          1015.7814999967813,
+          1112.5710000023246,
+          1181.6210999935865,
+          984.6137000024319,
+          1082.9841999933124,
+          1148.2066000029445,
+          1151.7330999970436,
+          1110.7367000058293
+        ],
+        "cv": 7.936911260081839
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 24,
+      "wallMs": 17432.586900003254,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/reverse-10000",
+      "name": "inverter a ordem de 10000 linhas (todas as chaves sobrevivem)",
+      "group": "lists",
+      "n": 10000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: reverse (todas as chaves sobrevivem)",
+      "notes": "parou em 6 amostras pelo teto de tempo",
+      "stats": {
+        "samples": 6,
+        "mean": 4269.431583331277,
+        "median": 4304.836049996316,
+        "min": 3791.790799997747,
+        "max": 4709.797299996018,
+        "stddev": 352.1940758601991,
+        "rsd": 8.2492029439056,
+        "p75": 4503.86505000107,
+        "p95": 4673.473549997434,
+        "p99": 4702.532549996302,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 3313.077299993485,
+          "high": 5218.337700005621
+        },
+        "raw": [
+          3940.8269999995828,
+          3791.790799997747,
+          4321.953299999237,
+          4709.797299996018,
+          4287.718799993396,
+          4564.502300001681
+        ],
+        "cv": 8.2492029439056
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 25,
+      "wallMs": 41914.182399995625,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/swap-100",
+      "name": "trocar 2 linhas de lugar em 100",
+      "group": "lists",
+      "n": 100,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 10,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: swap de 2 linhas em N",
+      "notes": "A mudanca e O(1). O que crescer aqui e overhead da reconciliacao.",
+      "stats": {
+        "samples": 10,
+        "mean": 4.166290000081062,
+        "median": 4.1151000037789345,
+        "min": 3.83729999512434,
+        "max": 4.842100001871586,
+        "stddev": 0.2922518574175029,
+        "rsd": 7.014678704838517,
+        "p75": 4.274574996903539,
+        "p95": 4.625830002129077,
+        "p99": 4.798846001923084,
+        "outliers": [
+          {
+            "index": 0,
+            "value": 4.842100001871586
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 3.5250125024467707,
+          "high": 4.7243124935775995
+        },
+        "raw": [
+          4.842100001871586,
+          4.2893999963998795,
+          4.097500003874302,
+          4.132700003683567,
+          3.8879000023007393,
+          4.2300999984145164,
+          3.9572999998927116,
+          4.027099996805191,
+          3.83729999512434,
+          4.36150000244379
+        ],
+        "cv": 7.014678704838517
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 22,
+      "wallMs": 192.42020000517368,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/swap-1000",
+      "name": "trocar 2 linhas de lugar em 1000",
+      "group": "lists",
+      "n": 1000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 6,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: swap de 2 linhas em N",
+      "notes": "A mudanca e O(1). O que crescer aqui e overhead da reconciliacao.",
+      "stats": {
+        "samples": 6,
+        "mean": 97.8957000002265,
+        "median": 100.00360000133514,
+        "min": 85.18780000507832,
+        "max": 102.7339999973774,
+        "stddev": 6.449145821406614,
+        "rsd": 6.587772314199391,
+        "p75": 101.24362500011921,
+        "p95": 102.36762499809265,
+        "p99": 102.66072499752045,
+        "outliers": [
+          {
+            "index": 1,
+            "value": 85.18780000507832
+          }
+        ],
+        "outlierCount": 1,
+        "iqrFence": {
+          "low": 93.98974999412894,
+          "high": 105.59595000371337
+        },
+        "raw": [
+          102.7339999973774,
+          85.18780000507832,
+          101.16899999976158,
+          98.17669999599457,
+          101.26850000023842,
+          98.8382000029087
+        ],
+        "cv": 6.587772314199391
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 20,
+      "wallMs": 1522.021099999547,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/swap-5000",
+      "name": "trocar 2 linhas de lugar em 5000",
+      "group": "lists",
+      "n": 5000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: swap de 2 linhas em N",
+      "notes": "A mudanca e O(1). O que crescer aqui e overhead da reconciliacao.",
+      "stats": {
+        "samples": 5,
+        "mean": 1949.3419599995018,
+        "median": 2007.8707000017166,
+        "min": 1759.2655000016093,
+        "max": 2107.7813999950886,
+        "stddev": 143.82179355301045,
+        "rsd": 7.377966334498192,
+        "p75": 2030.0223999992013,
+        "p95": 2092.229599995911,
+        "p99": 2104.671039995253,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 1559.3909000009298,
+          "high": 2312.401299998164
+        },
+        "raw": [
+          1841.7697999998927,
+          2007.8707000017166,
+          1759.2655000016093,
+          2107.7813999950886,
+          2030.0223999992013
+        ],
+        "cv": 7.377966334498192
+      },
+      "targetRsd": 8,
+      "stable": true,
+      "suggestedGatePct": 23,
+      "wallMs": 16727.667199999094,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    },
+    {
+      "id": "lists/swap-10000",
+      "name": "trocar 2 linhas de lugar em 10000",
+      "group": "lists",
+      "n": 10000,
+      "unit": "ms",
+      "status": "ok",
+      "verified": true,
+      "verifyMessage": null,
+      "error": null,
+      "plannedSamples": 5,
+      "warmup": 2,
+      "budgetMs": null,
+      "vanillaOf": null,
+      "curve": "v-for: swap de 2 linhas em N",
+      "notes": "A mudanca e O(1). O que crescer aqui e overhead da reconciliacao.; apenas 1 amostra(s): cada uma custa ~26302 ms e o orcamento do caso e 45000 ms; apenas 1 amostra(s): a dispersao nao foi medida (um CV de 0% aqui significa \"sem dados\", nao \"estavel\") — NAO usar como portao",
+      "stats": {
+        "samples": 1,
+        "mean": 8000.288400001824,
+        "median": 8000.288400001824,
+        "min": 8000.288400001824,
+        "max": 8000.288400001824,
+        "stddev": 0,
+        "rsd": 0,
+        "p75": 8000.288400001824,
+        "p95": 8000.288400001824,
+        "p99": 8000.288400001824,
+        "outliers": [],
+        "outlierCount": 0,
+        "iqrFence": {
+          "low": 8000.288400001824,
+          "high": 8000.288400001824
+        },
+        "raw": [
+          8000.288400001824
+        ],
+        "cv": 0
+      },
+      "targetRsd": 8,
+      "stable": false,
+      "suggestedGatePct": 5,
+      "wallMs": 26301.729099996388,
+      "rating": "Unrated",
+      "ratingBasis": "sem baseline vanilla e sem budget declarado"
+    }
+  ],
+  "curves": [
+    {
+      "curve": "v-for: criar N linhas",
+      "points": [
+        {
+          "n": 100,
+          "t": 9.712349999696016,
+          "id": "lists/create-100"
+        },
+        {
+          "n": 1000,
+          "t": 96.33044999837875,
+          "id": "lists/create-1000"
+        },
+        {
+          "n": 5000,
+          "t": 459.6347499974072,
+          "id": "lists/create-5000"
+        },
+        {
+          "n": 10000,
+          "t": 974.4689999967813,
+          "id": "lists/create-10000"
+        }
+      ],
+      "exponent": 0.9954759976975339,
+      "complexity": "O(n)",
+      "nFactor": 100,
+      "timeFactor": 100.33297811830103
+    },
+    {
+      "curve": "v-for: update 1 a cada 10",
+      "points": [
+        {
+          "n": 100,
+          "t": 0.3904999978840351,
+          "id": "lists/update-every-10th-100"
+        },
+        {
+          "n": 1000,
+          "t": 3.789799999445677,
+          "id": "lists/update-every-10th-1000"
+        },
+        {
+          "n": 5000,
+          "t": 23.362649999558926,
+          "id": "lists/update-every-10th-5000"
+        },
+        {
+          "n": 10000,
+          "t": 67.79529999569058,
+          "id": "lists/update-every-10th-10000"
+        }
+      ],
+      "exponent": 1.101774053181647,
+      "complexity": "O(n)",
+      "nFactor": 100,
+      "timeFactor": 173.6115246172765
+    },
+    {
+      "curve": "v-for: limpar N linhas (destroy + unindex)",
+      "points": [
+        {
+          "n": 100,
+          "t": 1.344200000166893,
+          "id": "lists/clear-100"
+        },
+        {
+          "n": 1000,
+          "t": 11.5472999997437,
+          "id": "lists/clear-1000"
+        },
+        {
+          "n": 5000,
+          "t": 90.94649999588728,
+          "id": "lists/clear-5000"
+        },
+        {
+          "n": 10000,
+          "t": 154.58410000056028,
+          "id": "lists/clear-10000"
+        }
+      ],
+      "exponent": 1.055139167705216,
+      "complexity": "O(n)",
+      "nFactor": 100,
+      "timeFactor": 115.00081831674413
+    },
+    {
+      "curve": "v-for: replace-all (nenhuma chave reaproveitada)",
+      "points": [
+        {
+          "n": 100,
+          "t": 8.076550003141165,
+          "id": "lists/replace-all-100"
+        },
+        {
+          "n": 1000,
+          "t": 81.40915000066161,
+          "id": "lists/replace-all-1000"
+        },
+        {
+          "n": 5000,
+          "t": 461.3746999949217,
+          "id": "lists/replace-all-5000"
+        }
+      ],
+      "exponent": 1.031948715722745,
+      "complexity": "O(n)",
+      "nFactor": 50,
+      "timeFactor": 57.12522052305526
+    },
+    {
+      "curve": "v-for: reverse (todas as chaves sobrevivem)",
+      "points": [
+        {
+          "n": 100,
+          "t": 4.138050001114607,
+          "id": "lists/reverse-100"
+        },
+        {
+          "n": 1000,
+          "t": 66.82369999960065,
+          "id": "lists/reverse-1000"
+        },
+        {
+          "n": 5000,
+          "t": 1110.7367000058293,
+          "id": "lists/reverse-5000"
+        },
+        {
+          "n": 10000,
+          "t": 4304.836049996316,
+          "id": "lists/reverse-10000"
+        }
+      ],
+      "exponent": 1.50103321736534,
+      "complexity": "O(n log n)",
+      "nFactor": 100,
+      "timeFactor": 1040.3054696866361
+    },
+    {
+      "curve": "v-for: swap de 2 linhas em N",
+      "points": [
+        {
+          "n": 100,
+          "t": 4.1151000037789345,
+          "id": "lists/swap-100"
+        },
+        {
+          "n": 1000,
+          "t": 100.00360000133514,
+          "id": "lists/swap-1000"
+        },
+        {
+          "n": 5000,
+          "t": 2007.8707000017166,
+          "id": "lists/swap-5000"
+        },
+        {
+          "n": 10000,
+          "t": 8000.288400001824,
+          "id": "lists/swap-10000"
+        }
+      ],
+      "exponent": 1.6401259143569846,
+      "complexity": "O(n^2)",
+      "nFactor": 100,
+      "timeFactor": 1944.1297641989465
+    }
+  ]
+}

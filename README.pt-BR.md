@@ -3,11 +3,11 @@
 <img src="brand/logo/voodoo-logo.svg#gh-light-mode-only" alt="Voodoo.js" width="380">
 <img src="brand/logo/voodoo-logo-dark.svg#gh-dark-mode-only" alt="Voodoo.js" width="380">
 
-### O framework JavaScript HTML-first.
+### JSX rodando direto de um arquivo `.html`.
 
-**Construa aplicações reativas direto no HTML.**
+**Escreva JSX. Salve o arquivo. Abra no navegador. Não existe nada no meio.**
 
-Sem passo de build obrigatório · Sem dependências em tempo de execução · Sem Virtual DOM · Sem configuração
+Sem bundler · Sem transform de JSX · Sem dependências em tempo de execução · Sem configuração
 
 [![CI](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml/badge.svg)](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml)
 [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-FFB35C.svg)](LICENSE)
@@ -60,7 +60,24 @@ compilador e não tem transform de JSX.
 
 Esse é o diferencial. Qualquer outro jeito de escrever JSX precisa de uma
 ferramenta entre o arquivo que você edita e o arquivo que o navegador carrega.
-Aqui é o arquivo que o navegador carrega.
+Aqui *é* o arquivo que o navegador carrega.
+
+| Para renderizar a lista acima | O que é preciso |
+| --- | --- |
+| React | npm install, um bundler, Babel ou SWC, um build, um dev server |
+| Preact | npm install, um bundler, um transform de JSX — ou `htm`, que não é JSX |
+| Solid | npm install, um bundler, o compilador próprio; JSX não é opcional |
+| Vue | npm install, um bundler, `@vitejs/plugin-vue` — ou render functions na mão |
+| Svelte | npm install, um bundler, o compilador do Svelte — e não é JSX |
+| **Voodoo.js** | **uma tag `<script>`** |
+
+O custo honesto, dito logo de cara: essas ferramentas compilam o JSX para
+chamadas diretas de DOM antes de rodar, e a Voodoo lê o JSX em tempo de
+execução. Um compilador vence um interpretador em throughput de atualização, e
+sempre vai vencer — os [benchmarks](#desempenho) abaixo mostram exatamente onde
+e por quanto. O que você recebe em troca é um arquivo que dá para abrir, editar
+e mandar para alguém sem que exista um `node_modules` em lugar nenhum da
+história.
 
 Condicionais devolvem elementos como no JSX, e de um jeito que o JSX não tem:
 
@@ -214,6 +231,8 @@ está resolvendo.
 
 ## Por que a Voodoo?
 
+- **JSX sem ferramenta nenhuma.** `{items.map(i => <li>{i}</li>)}` renderiza a partir de um
+  `.html` aberto direto do disco. Sem bundler, sem transform, sem build.
 - **HTML-first.** O comportamento fica ao lado da marcação a que pertence. Um arquivo, não três.
 - **Reatividade granular.** `reactive` / `ref` / `computed` / `effect` sobre Proxy. Uma escrita
   reexecuta apenas os efeitos que de fato leram aquele valor.
@@ -221,8 +240,9 @@ está resolvendo.
   quando você quiser, nunca por obrigação.
 - **Zero dependências em tempo de execução.** Os bundles de navegador não carregam nada além da
   própria Voodoo.
-- **Atualização direta do DOM.** Sem Virtual DOM, sem passo de diff, sem heurística de
-  reconciliação.
+- **Atualização direta do DOM.** Sem Virtual DOM: cada effect escreve no nó que é dele. Listas
+  são o único lugar onde um diff é inevitável, e o `v-for` usa a mutação que você fez — `push`,
+  `splice`, `shift` — para tocar só nas linhas que mudaram. Veja [desempenho](#desempenho).
 - **Parser de expressões seguro.** As expressões dos atributos passam por um lexer de verdade, um
   parser Pratt e um interpretador de AST. Sem `eval`, sem `new Function` — por isso a Voodoo roda
   sob uma Content Security Policy sem `unsafe-eval`.
@@ -644,7 +664,136 @@ reproduzir cada medição.
 O JavaScript puro é o teto aqui, e a Voodoo cobra um custo real pela produtividade que entrega. A
 função destes números é mostrar o tamanho desse custo, não fingir que ele é zero.
 
-**Desmontar uma lista com chave.** O `v-if` e o `v-for` tiram o elemento do documento e passam a
+### Listas: quanto custa uma mudança, de verdade
+
+Um `v-for` é um único effect sobre uma coleção inteira, e por isso é o único lugar da Voodoo onde
+existe um diff. Quando a coleção muda, o effect roda de novo e alguma coisa precisa descobrir o que
+isso significa para `n` linhas.
+
+Até a 0.13 essa decisão custava o mesmo, tivesse acontecido o que tivesse. A `:key` de cada linha
+passava pelo interpretador de expressões, o `normalizeSource` alocava um objeto por linha, três
+estruturas de hash do tamanho da lista eram montadas e jogadas fora, e uma passada de posicionamento
+lia uma propriedade do DOM para cada linha. Ler as linhas através do proxy reativo ainda inscrevia a
+lista em todos os `n` índices e na propriedade que a chave tocava em todos os `n` itens, então cada
+re-renderização primeiro removia o effect desses conjuntos de dependência e o colocava de volta —
+cerca de `4n` operações de hash antes de o reconciliador ter olhado para qualquer coisa. Remover uma
+linha de dez mil fazia tudo isso para concluir que 9.999 linhas não tinham saído do lugar.
+
+A 0.13 parte de outra pergunta: **o que já se sabe?**
+
+`push`, `pop`, `shift`, `unshift` e `splice` são interceptados onde acontecem. Agora rodam contra o
+array cru — um `splice` no meio não dispara mais um trap de proxy e uma notificação de dependência
+por elemento que ele desloca — e registram o que fizeram. Quando a lista re-renderiza, ela lê esse
+registro em vez de redescobrir. `rows.splice(5000, 1)` em dez mil linhas diz que saiu exatamente uma
+linha, no índice 5000, e nada mais é examinado.
+
+Quando não há registro para ler — um array novo foi atribuído — a região que mudou é encontrada
+comparando chaves das duas pontas para dentro, com a expressão da chave compilada uma vez para uma
+leitura de propriedade em vez de interpretada por linha. Isso custa uma leitura de propriedade por
+linha e **não dá para ficar mais barato**: para saber que a linha 9.999 não mudou é preciso olhar
+para a linha 9.999. Nenhum fingerprint, hash de bloco ou rolling hash evita isso, porque calcular o
+fingerprint da lista nova significa ler todas as chaves dela antes.
+
+![Reconciliação de listas: antes e depois](docs/media/reconcile-before-after.svg)
+
+| caso | antes | depois | ganho | chaves avaliadas | alocações |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| criar 1.000 linhas | 81.5 ms | 84.4 ms | — | 1,000 → 1,000 | 1,010 → 0 |
+| criar 10.000 linhas | 809 ms | 809 ms | — | 10,000 → 10,000 | 10,010 → 0 |
+| criar 50.000 linhas | 4049 ms | 3840 ms | — | 50,000 → 50,000 | 50,010 → 0 |
+| acrescentar 1 em 10.000 — array novo | 40.9 ms | 11.6 ms | **3.5x** | 20,001 → 20,001 | 20,011 → 0 |
+| push de 1 em 10.000 — no lugar | 34.2 ms | 1.94 ms | **17.6x** | 20,001 → 1 | 20,011 → 0 |
+| acrescentar 5.000 a 5.000 | 470 ms | 418 ms | **1.1x** | 15,000 → 15,000 | 15,010 → 0 |
+| inserir 1 no início de 10.000 — array novo | 38.6 ms | 8.40 ms | **4.6x** | 20,001 → 20,003 | 20,011 → 0 |
+| unshift de 1 em 10.000 — no lugar | 56.0 ms | 0.297 ms | **188.7x** | 20,001 → 1 | 20,011 → 0 |
+| inserir 5.000 no início de 5.000 | 530 ms | 412 ms | **1.3x** | 15,000 → 15,002 | 15,010 → 0 |
+| remover a primeira de 10.000 — array novo | 40.9 ms | 9.28 ms | **4.4x** | 19,999 → 20,001 | 20,009 → 0 |
+| remover a do meio de 10.000 — array novo | 41.7 ms | 10.2 ms | **4.1x** | 19,999 → 20,001 | 20,009 → 0 |
+| remover a última de 10.000 — array novo | 39.4 ms | 11.2 ms | **3.5x** | 19,999 → 19,999 | 20,009 → 0 |
+| splice da linha do meio de 10.000 — no lugar | 45.3 ms | 0.853 ms | **53.1x** | 19,999 → 1 | 20,009 → 0 |
+| shift da primeira de 10.000 — no lugar | 61.6 ms | 0.096 ms | **641.1x** | 19,999 → 1 | 20,009 → 0 |
+| pop da última de 10.000 — no lugar | 37.5 ms | 1.51 ms | **24.8x** | 19,999 → 1 | 20,009 → 0 |
+| inserir 1 no meio de 10.000 — array novo | 42.5 ms | 10.7 ms | **4.0x** | 20,001 → 20,003 | 20,011 → 0 |
+| splice de 1 no meio de 10.000 — no lugar | 48.6 ms | 0.684 ms | **71.0x** | 20,001 → 1 | 20,011 → 0 |
+| trocar 1 de 10.000 por outra chave | 40.1 ms | 11.7 ms | **3.4x** | 20,000 → 20,006 | 20,010 → 6 |
+| mudar 1 rótulo em 10.000 | 0.116 ms | 0.111 ms | — | 0 → 0 | 0 → 0 |
+| reatribuir um array idêntico de 10.000 | 52.4 ms | 9.57 ms | **5.5x** | 10,000 → 10,000 | 10,005 → 0 |
+| trocar 2 linhas de lugar em 10.000 | 9585 ms | 16.6 ms | **575.9x** | 20,000 → 20,004 | 20,010 → 6 |
+| inverter 10.000 linhas | 3989 ms | 4130 ms | — | 20,000 → 20,004 | 20,010 → 6 |
+| embaralhar 10.000 linhas | 7890 ms | 7690 ms | — | 20,000 → 20,004 | 20,010 → 6 |
+| limpar uma lista de 10.000 | 144 ms | 134 ms | — | 10,000 → 10,000 | 10,010 → 0 |
+
+O tempo é o sintoma; os contadores são a causa. O reconciliador conta o que faz — linhas visitadas,
+chaves avaliadas, escritas que passaram por um proxy reativo, nós criados, removidos e movidos — e o
+benchmark coleta isso em uma segunda passada com os cronômetros desligados, para que a instrumentação
+nunca entre em um número medido.
+
+![Quantas vezes a chave de uma linha foi calculada, por edição](docs/media/reconcile-work.svg)
+
+As duas famílias merecem ser lidas separadamente, porque têm pisos diferentes. Uma lista mutada no
+lugar recebe uma resposta que não depende do tamanho dela; uma lista substituída inteira paga uma
+leitura de chave por linha, por mais esperto que seja o algoritmo. Mesma edição, mesmo DOM,
+informação diferente disponível.
+
+![O custo de uma edição contra o tamanho da lista](docs/media/reconcile-scaling.svg)
+
+Qual caminho uma edição toma não é algo que um teste de correção mostre — um caminho rápido que cai
+para o lento em silêncio passa em todos eles. Então isso também é contado, inclusive nos formatos em
+que o caminho rápido não se aplica:
+
+![Qual caminho cada edição tomou](docs/media/reconcile-paths.svg)
+
+E o que chega ao DOM. Um reconciliador que reaproveita todos os elementos ainda pode ser lento se
+arrastar todos eles pela lista até o lugar certo; uma passada de maior subsequência crescente sobre
+as linhas sobreviventes decide quais podem ficar onde estão, e ela só roda quando linhas realmente
+se cruzaram, então nenhuma inserção, remoção ou append paga por ela.
+
+![Nós criados, removidos e movidos por edição](docs/media/reconcile-dom-ops.svg)
+
+**Quanto custa cada caminho.** `n` é o tamanho da lista, `k` as linhas que a edição tocou, `r` o
+tamanho da região que mudou.
+
+| Caminho | Quando | Custo |
+| --- | --- | --- |
+| mutação, inserção ou remoção | `push` / `pop` / `shift` / `unshift` / `splice` em lista com chave | O(k) |
+| mutação, em lote | várias mutações no mesmo tick | O(r), r = a faixa que elas cobrem juntas |
+| varredura, depois inserir ou remover | array novo, uma edição localizada | O(n) leituras de chave + O(k) de trabalho |
+| varredura, depois reordenar | array novo, linhas se cruzaram | O(n) leituras de chave + O(r log r) |
+| sem chave, qualquer mudança | sem `:key` | O(n) — a posição *é* a identidade, então toda linha depois da edição mudou de verdade |
+| `reverse` / `sort` no lugar | nenhuma faixa descreve o resultado | O(n) + O(n log n) |
+
+O maior número daquela tabela não é ganho algorítmico nenhum — é um bug que os contadores acharam.
+Trocar duas linhas de lugar em dez mil levava **9.585 ms**, e o motivo eram 19.994 movimentos de DOM:
+a passada de posicionamento antiga percorria a lista de trás para frente, e a primeira linha que não
+batia fazia todas as seguintes falharem no mesmo teste, então uma troca de duas linhas arrastava a
+lista inteira junto. Agora move 2 linhas e leva 16,6 ms.
+
+**Onde não ajuda, dito sem rodeio.**
+
+*Inverter e embaralhar não mudaram* — 3.989 ms contra 4.130 ms, e 7.890 contra 7.690. Os dois já
+moviam perto do mínimo: inverter uma lista exige mover todas as linhas menos uma, seja qual for o
+diff, e o que o cronômetro mede ali é `insertBefore` dentro de um pai com dez mil filhos, não o
+reconciliador. Um algoritmo melhor não economiza trabalho que o DOM faz questão de fazer.
+
+*Criar uma lista não mudou* pelo mesmo motivo. O `create 50.000` é o custo de inserir 50.000 nós; o
+reconciliador é erro de arredondamento do lado disso.
+
+*Duas edições em pontas opostas custam o que comparar custa.* A região que mudou é uma faixa
+contígua única, então dar `push` em uma linha e `shift` em outra — o formato de um log rolante —
+produz uma faixa que cobre tudo entre elas. Correto, e não mais rápido que a varredura. Quebrar isso
+em várias regiões disjuntas resolveria; não está implementado, porque é complexidade real para um
+formato que nenhum destes benchmarks mede.
+
+*Listas sem `:key` identificam linhas pela posição*, então remover a primeira muda de verdade todas
+as seguintes e não há o que pular.
+
+O método completo, os contadores e como reproduzir qualquer coisa disso estão em
+[`benchmarks/README.md`](benchmarks/README.md); o algoritmo e suas invariantes, em
+[`ARCHITECTURE.md`](ARCHITECTURE.md#5-list-reconciliation).
+
+### Desmontar uma lista
+
+O `v-if` e o `v-for` tiram o elemento do documento e passam a
 usá-lo como o modelo que clonam. A limpeza desse elemento — o escopo de efeito que segurava o
 modelo, cada bloco renderizado e cada nó dentro deles — estava indexada por ele, e o `destroy()` só
 percorre filhos vivos. Depois de destacado, nada mais o alcançava: o escopo nunca parava e segurava
@@ -668,7 +817,9 @@ Uma ressalva honesta da mesma medição: a *criação* da lista nesse tamanho é
 DOM. Inserir 4.000 nós sem framework nenhum levou mais tempo no jsdom do que a renderização inteira
 da Voodoo, então os números de criação dizem mais sobre o ambiente do que sobre o framework.
 
-**Comparação com outros frameworks.** Sete implementações da mesma lista de 1.000 linhas,
+### Contra outros frameworks
+
+Sete implementações da mesma lista de 1.000 linhas,
 todas empacotadas em produção e minificadas, rodando em sequência no mesmo processo contra o
 mesmo documento jsdom. Depois de cada cenário o DOM de cada framework é reduzido à lista de
 textos dos `<li>` e comparado com o vanilla escrito à mão: quem produzir saída diferente é
@@ -680,36 +831,31 @@ Mediana de 30 amostras, em milissegundos, menor é melhor. Voodoo.js em negrito:
 
 | | criar 1k | atualizar 1 em 10 | limpar 1k | minificado |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 56,71 | 7,51 | 32,39 | 0,6 KB |
-| Preact 10.29.8 | 80,40 | 2,54 | 31,68 | 10,7 KB |
-| Solid 1.9.15 | 80,73 | 0,82 | 23,83 | 16,7 KB |
-| **Voodoo.js** | **80,81** | **7,91** | **34,46** | **429,2 KB** |
-| React 19.2.8 | 84,97 | 4,68 | 37,15 | 189,3 KB |
-| Vue 3.5.42 | 89,66 | 11,90 | 34,98 | 62,5 KB |
-| Alpine 3.17.1 | 166,03 | 104,98 | 37,67 | 55,2 KB |
+| vanilla JS | 39,51 | 6,65 | 20,04 | 0,6 KB |
+| Preact 10.29.8 | 71,03 | 2,73 | 30,68 | 10,7 KB |
+| **Voodoo.js** | **77,47** | **4,69** | **30,14** | **435,2 KB** |
+| Vue 3.5.42 | 78,72 | 14,29 | 32,84 | 62,5 KB |
+| Solid 1.9.15 | 80,13 | 0,90 | 21,85 | 16,7 KB |
+| React 19.2.8 | 81,22 | 4,65 | 33,55 | 189,3 KB |
+| Alpine 3.17.1 | 157,06 | 111,29 | 32,76 | 55,2 KB |
 
-Lendo com honestidade, e lendo a diferença antes da ordem. Na criação, Preact, Solid e Voodoo
-terminam a **0,4 ms uma da outra** numa lista de mil linhas — é um empate triplo que a coluna de
-classificação não consegue expressar, e chamar isso de quarto lugar enganaria tanto quanto chamar
-de segundo. O vanilla ainda monta a lista um terço mais rápido que qualquer framework aqui.
+Leia a diferença antes da ordem. Na criação, Preact, Voodoo e Vue terminam a **7,7 ms uma da
+outra** numa lista de mil linhas, e Solid e React ficam pouco atrás; é um pelotão de cinco que a
+coluna de classificação não consegue expressar. O vanilla escrito à mão ainda monta a lista quase
+duas vezes mais rápido que qualquer framework aqui, e esse é o teto honesto.
 
-Na limpeza vale o mesmo para o meio do pelotão: vanilla, Preact, Voodoo e Vue ficam dentro de 3 ms.
-O Solid ganha essa com folga.
+Na limpeza vale o mesmo para o meio do pelotão: Voodoo, Preact, Alpine e Vue ficam dentro de
+2,7 ms. Vanilla e Solid ganham essa com folga.
 
-Na atualização a Voodoo empata com o vanilla escrito à mão — 7,91 contra 7,51, bem dentro do ruído
-entre execuções — e fica cerca de **13x à frente do Alpine**, que é a comparação que realmente
-significa alguma coisa, já que o Alpine também é HTML-first e também interpreta expressões em tempo
-de execução em vez de compilá-las. Solid e Preact estão muito à frente dos dois, e chegam lá com um
-compilador.
+A atualização é onde a 0.13 mudou o desenho. A Voodoo agora atualiza uma linha em cada dez **mais
+rápido que a linha de base escrita à mão em vanilla** — 4,69 ms contra 6,65 — e empatada com o
+React em 4,65, o que está dentro do ruído. Fica cerca de **24x à frente do Alpine**, e essa é a
+comparação que carrega significado: o Alpine também é HTML-first e também interpreta as expressões
+em tempo de execução em vez de compilá-las. O Solid ainda ganha com folga, em 0,90 ms, e o Preact
+em 2,73 — os dois chegam lá com um compilador, que é a troca que a Voodoo se recusa a fazer.
 
-Uma versão anterior desta tabela trazia a criação em 97,70 ms e chamava de terceira de sete. O
-número absoluto melhorou para 80,81 enquanto a posição caiu para quarta, porque os outros
-frameworks mediram diferente na mesma execução. É assim que um coeficiente de variação de 31% na
-criação e 54% na atualização se parece de fora, e é por isso que estes números são apresentados
-como um pelotão e não como um pódio.
-
-O Solid ganha a atualização com folga larga porque um compilador gera o caminho de atualização
-dele. A Voodoo não tem passo de build, e essa é a troca que ela faz.
+Estes números são ruidosos e o relatório diz isso: o coeficiente de variação na atualização chegou
+a 50% para a Voodoo e 134% para o Preact nesta execução. Leia como pelotão, não como pódio.
 
 **De onde veio o ganho.** Um harness pareado carregou os dois builds no mesmo processo e intercalou
 as amostras, alternando a ordem a cada rodada, para que a variação de 20% a 40% da máquina entre
@@ -733,19 +879,41 @@ Elas estão listadas em [`benchmarks/reports/comparison.md`](benchmarks/reports/
 com as que funcionaram, porque a lista do que não ajudou vale tanto para a próxima pessoa quanto a
 lista do que ajudou.
 
+Velocidade e tamanho são duas colunas da mesma decisão, e uma tabela é um instrumento ruim para
+segurar as duas ao mesmo tempo. Postas uma contra a outra, a troca que cada projeto fez é o formato
+do desenho:
+
+![Quanto cada projeto cobra, e o que entrega](docs/media/size-vs-speed.svg)
+
 Vale dizer com todas as letras: **a Voodoo é de longe o maior bundle desta tabela.** Se tamanho é
 a sua principal restrição, Alpine e Preact são a recomendação honesta. O método, os adaptadores de
 cada framework e as estatísticas completas estão em
 [`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md); o jsdom não tem layout nem
 pintura, então leia isto como formato relativo, e não como verdade absoluta.
 
-**Tamanho dos bundles**, medido sobre os builds versionados em `8e765d2`:
+### Tamanho dos bundles
+
+![Tamanho dos bundles entre frameworks](docs/media/bundle-sizes.svg)
+
+A Voodoo é o maior bundle daquele gráfico e não há como ler de outro jeito. O que o número de
+tamanho não consegue dizer é que os projetos não estão entregando a mesma coisa: roteador,
+cliente HTTP, formulários, validação, máscaras, kit de interface, gráficos, i18n, stores,
+animação e drag-and-drop estão neste arquivo, e na maioria dos outros são pacotes que você
+acrescenta depois.
+
+![O que vem junto com o download](docs/media/batteries.svg)
+
+Os dois gráficos são verdade ao mesmo tempo. Se tamanho de bundle é a sua restrição decisiva,
+Alpine e Preact continuam sendo a recomendação honesta, e o `voodoo.core.min.js`, com 48 KB em
+gzip, existe para páginas que querem as directives e mais nada.
+
+Medido sobre os builds versionados:
 
 | Build | Minificado | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 140.23 KB | 47.92 KB | 41.71 KB |
-| `voodoo.min.js` | 263.73 KB | 84.76 KB | 71.68 KB |
-| `voodoo.full.min.js` | 440.85 KB | 133.16 KB | 110.69 KB |
+| `voodoo.core.min.js` | 141.20 KB | 48.28 KB | 42.04 KB |
+| `voodoo.min.js` | 265.00 KB | 85.26 KB | 72.12 KB |
+| `voodoo.full.min.js` | 442.18 KB | 133.66 KB | 111.09 KB |
 
 Rode você mesmo: o arcabouço de medição e as versões exatas testadas estão em
 [`benchmarks/`](benchmarks/).
@@ -759,6 +927,7 @@ Uma comparação honesta. Toda ferramenta aqui é boa naquilo para que foi desen
 | Ponto de partida | HTML | HTML | HTML | JavaScript | JavaScript | JavaScript |
 | Roda por uma tag de CDN | nativo | nativo | nativo | nativo | nativo | nativo |
 | Passo de build | possível | possível | possível | recomendado | recomendado | possível |
+| JSX sem passo de build | nativo | — | — | — | — | — |
 | Renderização | DOM direto | DOM direto | HTML do servidor | Virtual DOM | Virtual DOM | manual |
 | Estado reativo | nativo | nativo | — | nativo | nativo | — |
 | Componentes | nativo | via pacote do ecossistema | — | nativo | nativo | — |

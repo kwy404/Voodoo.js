@@ -464,7 +464,15 @@ export function trigger(
       if (!isArr) add(depsMap.get(ITERATE_KEY));
       else if (isIntegerKey(key)) add(depsMap.get('length'));
     } else if (type === TriggerType.DELETE) {
-      if (!isArr) add(depsMap.get(ITERATE_KEY));
+      add(depsMap.get(ITERATE_KEY));
+    } else if (isArr && isIntegerKey(key)) {
+      // Whoever walks the array depends on what is IN it, so `rows[3] = x` has
+      // to reach an effect that iterated `rows` without ever naming index 3.
+      // This used to be covered by accident: `v-for` read every element through
+      // the proxy and so subscribed to all n indices, at the price of n
+      // subscriptions per row per render. The list now subscribes once, to the
+      // collection, and this line is what keeps element writes arriving.
+      add(depsMap.get(ITERATE_KEY));
     } else if (isArr && key === 'length') {
       const newLen = Number(_newValue);
       depsMap.forEach((dep, k) => {
@@ -477,6 +485,128 @@ export function trigger(
     if (e.scheduler) e.scheduler();
     else queueJob(e);
   }
+}
+
+/**
+ * One aggregate notification for a mutation that touched a range of an array.
+ *
+ * The array mutators run against the raw array (see `arrayInstrumentations`),
+ * so they no longer produce one trap — and one `trigger` — per element they
+ * shuffle. `splice(5000, 1)` on ten thousand rows used to fire about five
+ * thousand triggers, each allocating a Set and walking it, to describe a change
+ * that is one removal.
+ *
+ * Everything that iterates the array hears about it through `length` and
+ * `ITERATE_KEY`. An effect that read one specific index still has to hear about
+ * a shift that moved a different element into it, so tracked integer keys at or
+ * after `from` are notified too — only keys something actually subscribed to,
+ * which for a list rendered by `v-for` is none.
+ */
+function triggerArrayRange(target: object, from: number): void {
+  const depsMap = targetMap.get(target);
+  if (!depsMap) return;
+
+  const effects = new Set<ReactiveEffect>();
+  const add = (dep: Dep | undefined): void => {
+    if (!dep) return;
+    for (const e of dep) if (e !== activeEffect) effects.add(e);
+  };
+
+  add(depsMap.get('length'));
+  add(depsMap.get(ITERATE_KEY));
+  if (from >= 0) {
+    depsMap.forEach((dep, k) => {
+      if (typeof k === 'string' && isIntegerKey(k) && Number(k) >= from) add(dep);
+    });
+  }
+
+  for (const e of effects) {
+    if (e.scheduler) e.scheduler();
+    else queueJob(e);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Array mutation log
+// ---------------------------------------------------------------------------
+
+/**
+ * What happened to an array, in the words of the call that did it.
+ *
+ * A reconciler handed a new array has to work out what changed by comparing it
+ * against the old one, which costs one key read per row however clever it is.
+ * A reconciler told "one row was removed at 5000" does not: the mutation
+ * already carries the answer. This log is how the caller's knowledge survives
+ * the trip to the effect that re-renders the list.
+ */
+export const enum ArrayOp {
+  /** `removed` elements at `index` gave way to `added` new ones. */
+  SPLICE = 1,
+  /** The element at `index` was replaced, without shifting anything. */
+  SET = 2,
+  /** Something happened that no range can describe. History is unusable. */
+  RESET = 3,
+}
+
+export interface ArrayMutation {
+  type: ArrayOp;
+  index: number;
+  removed: number;
+  added: number;
+}
+
+interface MutationLog {
+  /** Mutations recorded since the array was first observed. Only ever grows. */
+  version: number;
+  /** The most recent mutations, oldest first. Bounded by `LOG_LIMIT`. */
+  ops: ArrayMutation[];
+}
+
+/**
+ * How much history to keep. A consumer that fell further behind than this gets
+ * `null` and compares the lists instead, which is always correct and only
+ * slower. Keeping more would help nobody: a burst of dozens of mutations
+ * touches most of the list anyway, and comparing is then the cheaper answer.
+ */
+const LOG_LIMIT = 32;
+
+const mutationLogs = new WeakMap<object, MutationLog>();
+
+function record(target: object, type: ArrayOp, index: number, removed: number, added: number): void {
+  let log = mutationLogs.get(target);
+  if (!log) mutationLogs.set(target, (log = { version: 0, ops: [] }));
+  log.version++;
+  if (type === ArrayOp.RESET) {
+    // Nothing recorded before this point can be replayed past it, and keeping
+    // it would let a consumer believe a partial history was a whole one.
+    log.ops.length = 0;
+    return;
+  }
+  log.ops.push({ type, index, removed, added });
+  if (log.ops.length > LOG_LIMIT) log.ops.shift();
+}
+
+const NO_MUTATIONS: ArrayMutation[] = [];
+
+/** Mutations recorded for an array so far. `0` when it has never been mutated. */
+export function arrayVersion(target: object): number {
+  const log = mutationLogs.get(target);
+  return log ? log.version : 0;
+}
+
+/**
+ * What happened to `target` since version `since`, oldest first, or `null`
+ * when the log cannot answer — the history was truncated, or something
+ * unrepresentable happened. `null` means "compare the lists yourself".
+ */
+export function mutationsSince(target: object, since: number): ArrayMutation[] | null {
+  const log = mutationLogs.get(target);
+  if (!log) return since === 0 ? NO_MUTATIONS : null;
+  if (since > log.version) return null;
+  const missing = log.version - since;
+  if (missing === 0) return NO_MUTATIONS;
+  if (missing > log.ops.length) return null;
+  return log.ops.slice(log.ops.length - missing);
 }
 
 function isIntegerKey(key: PropertyKey | undefined): boolean {
@@ -508,14 +638,88 @@ const arrayInstrumentations: Record<string, Function> = /* @__PURE__ */ (() => {
       return res;
     };
   }
-  for (const key of ['push', 'pop', 'shift', 'unshift', 'splice'] as const) {
+  // Mutators run against the RAW array and report the change once.
+  //
+  // They used to run against the proxy, which meant every element the method
+  // shuffled passed through the `set` trap: `splice(5000, 1)` on ten thousand
+  // rows produced five thousand trap calls and five thousand `trigger` calls to
+  // describe one removal. Running on the raw array costs nothing per element,
+  // and the single `triggerArrayRange` at the end says the same thing.
+  //
+  // The change is also what makes O(k) reconciliation possible at all: the
+  // shape of the mutation is known here, exactly, and `record` is what carries
+  // it to the list that has to redraw.
+  for (const key of ['push', 'pop', 'shift', 'unshift', 'splice', 'reverse', 'sort'] as const) {
     inst[key] = function (this: unknown[], ...args: unknown[]) {
+      const raw = toRaw(this) as any[];
+      const before = raw.length;
+
+      // The proxy's own write path called `toRaw` on every value it stored, so
+      // storing raw here keeps what ends up in the array identical. `reactive()`
+      // is applied again on the way out, so nothing downstream can tell.
+      for (let i = 0; i < args.length; i++) args[i] = toRaw(args[i]);
+
+      // A user comparator passed to `sort` must not subscribe whatever effect
+      // is running to everything it happens to read.
       pauseTracking();
+      let result: any;
       try {
-        return (toRaw(this) as any)[key].apply(this, args);
+        result = (raw[key] as Function).apply(raw, args);
       } finally {
         resetTracking();
       }
+
+      const after = raw.length;
+      let from = -1;
+
+      if (key === 'push') {
+        if (args.length) {
+          record(raw, ArrayOp.SPLICE, before, 0, args.length);
+          from = before;
+        }
+      } else if (key === 'unshift') {
+        if (args.length) {
+          record(raw, ArrayOp.SPLICE, 0, 0, args.length);
+          from = 0;
+        }
+      } else if (key === 'pop') {
+        if (before > 0) {
+          record(raw, ArrayOp.SPLICE, after, 1, 0);
+          from = after;
+        }
+      } else if (key === 'shift') {
+        if (before > 0) {
+          record(raw, ArrayOp.SPLICE, 0, 1, 0);
+          from = 0;
+        }
+      } else if (key === 'splice') {
+        const removed = (result as unknown[]).length;
+        const added = args.length > 2 ? args.length - 2 : 0;
+        if (removed || added) {
+          record(raw, ArrayOp.SPLICE, spliceStart(args[0], before), removed, added);
+          from = spliceStart(args[0], before);
+        }
+      } else {
+        // reverse and sort: every position may have changed, and no range says
+        // it. The list falls back to comparing, which is what it did before.
+        if (before > 1) {
+          record(raw, ArrayOp.RESET, 0, before, after);
+          from = 0;
+        }
+      }
+
+      if (from >= 0) triggerArrayRange(raw, from);
+
+      // `pop`, `shift` and `splice` hand back elements. Read through the proxy
+      // they came back reactive, and code that mutates a removed row expects
+      // that to still work.
+      if (key === 'pop' || key === 'shift') return isObject(result) ? reactive(result) : result;
+      if (key === 'splice') {
+        const out = result as unknown[];
+        for (let i = 0; i < out.length; i++) if (isObject(out[i])) out[i] = reactive(out[i] as object);
+        return out;
+      }
+      return key === 'reverse' || key === 'sort' ? this : result;
     };
   }
   return inst;
@@ -523,6 +727,13 @@ const arrayInstrumentations: Record<string, Function> = /* @__PURE__ */ (() => {
 
 function isObject(val: unknown): val is Record<PropertyKey, any> {
   return val !== null && typeof val === 'object';
+}
+
+/** `Array.prototype.splice`'s own reading of its first argument. */
+function spliceStart(raw: unknown, length: number): number {
+  const n = Math.trunc(Number(raw)) || 0;
+  if (n < 0) return Math.max(length + n, 0);
+  return Math.min(n, length);
 }
 
 const NON_REACTIVE = /* @__PURE__ */ new Set([
@@ -548,6 +759,37 @@ function canObserve(value: unknown): boolean {
   const tag = Object.prototype.toString.call(value).slice(8, -1);
   if (NON_REACTIVE.has(tag)) return false;
   return tag === 'Object' || tag === 'Array' || tag === 'Map' || tag === 'Set';
+}
+
+/**
+ * Writes straight to an array — `rows[3] = x`, `rows.length = 0` — recorded in
+ * the same terms the mutators use, so a list can act on them just as cheaply.
+ */
+function recordDirectWrite(
+  target: any[],
+  key: PropertyKey,
+  lengthBefore: number,
+  hadKey: boolean,
+  oldValue: unknown,
+  value: unknown
+): void {
+  if (key === 'length') {
+    const next = target.length;
+    // Shrinking drops a run off the end. Growing leaves holes, which no range
+    // describes.
+    if (next < lengthBefore) record(target, ArrayOp.SPLICE, next, lengthBefore - next, 0);
+    else if (next > lengthBefore) record(target, ArrayOp.RESET, 0, 0, 0);
+    return;
+  }
+  if (!isIntegerKey(key)) return;
+  const index = Number(key);
+  if (hadKey) {
+    if (hasChanged(value, oldValue)) record(target, ArrayOp.SET, index, 1, 1);
+  } else if (index === lengthBefore) {
+    record(target, ArrayOp.SPLICE, index, 0, 1);
+  } else {
+    record(target, ArrayOp.RESET, 0, 0, 0);
+  }
 }
 
 /** Marks an object so it is never turned into a reactive proxy. */
@@ -632,8 +874,12 @@ const baseHandlers: ProxyHandler<Record<PropertyKey, any>> = {
       ? Number(key) < target.length
       : Object.prototype.hasOwnProperty.call(target, key);
 
+    const isArr = Array.isArray(target);
+    const arrayLength = isArr ? target.length : 0;
+
     const result = Reflect.set(target, key, value, receiver);
     if (target === toRaw(receiver)) {
+      if (isArr) recordDirectWrite(target, key, arrayLength, hadKey, oldValue, value);
       if (!hadKey) trigger(target, TriggerType.ADD, key, value);
       else if (hasChanged(value, oldValue)) trigger(target, TriggerType.SET, key, value);
     }
@@ -643,7 +889,12 @@ const baseHandlers: ProxyHandler<Record<PropertyKey, any>> = {
   deleteProperty(target, key) {
     const hadKey = Object.prototype.hasOwnProperty.call(target, key);
     const result = Reflect.deleteProperty(target, key);
-    if (result && hadKey) trigger(target, TriggerType.DELETE, key);
+    if (result && hadKey) {
+      // A hole is not a range edit, and pretending otherwise would let a list
+      // skip rows that no longer exist.
+      if (Array.isArray(target)) record(target, ArrayOp.RESET, 0, 0, 0);
+      trigger(target, TriggerType.DELETE, key);
+    }
     return result;
   },
 

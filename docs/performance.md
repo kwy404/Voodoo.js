@@ -293,7 +293,7 @@ Two ways out.
 **Disable and call by hand.** You only pay the cost when you want:
 
 ```html
-<script src="voodoo.min.js" data-no-observer defer></script>
+<script src="voodoo.full.min.js" data-no-observer defer></script>
 ```
 
 ```js
@@ -304,7 +304,7 @@ V.refresh(list);
 **Limit the observed root.** If Voodoo only governs part of the page, say so:
 
 ```html
-<script src="voodoo.min.js" data-manual defer></script>
+<script src="voodoo.full.min.js" data-manual defer></script>
 <script>
   V.config.root = document.querySelector('#app');
   V.start();
@@ -522,7 +522,7 @@ document.querySelector('[data-role="main-dialog"]');
 Disabling cleanup has a memory cost, not a speed cost:
 
 ```html
-<script src="voodoo.min.js" data-keep-attributes defer></script>
+<script src="voodoo.full.min.js" data-keep-attributes defer></script>
 ```
 
 ---

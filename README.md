@@ -3,11 +3,11 @@
 <img src="brand/logo/voodoo-logo.svg#gh-light-mode-only" alt="Voodoo.js" width="380">
 <img src="brand/logo/voodoo-logo-dark.svg#gh-dark-mode-only" alt="Voodoo.js" width="380">
 
-### The HTML-first JavaScript framework.
+### JSX, running from a plain `.html` file.
 
-**Build reactive applications directly in HTML.**
+**Write JSX. Save the file. Open it in a browser. There is nothing in between.**
 
-No mandatory build step · No runtime dependencies · No Virtual DOM · No configuration required
+No bundler · No JSX transform · No runtime dependencies · No configuration required
 
 [![CI](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml/badge.svg)](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-FFB35C.svg)](LICENSE)
@@ -59,8 +59,24 @@ compiler and no JSX transform.
 ```
 
 That is the differentiator. Every other way to write JSX needs a toolchain
-between the file you edit and the file the browser loads. This one is the file
+between the file you edit and the file the browser loads. This one *is* the file
 the browser loads.
+
+| To render the list above | What it takes |
+| --- | --- |
+| React | npm install, a bundler, Babel or SWC, a build, a dev server |
+| Preact | npm install, a bundler, a JSX transform — or `htm`, which is not JSX |
+| Solid | npm install, a bundler, its own compiler; JSX is not optional |
+| Vue | npm install, a bundler, `@vitejs/plugin-vue` — or hand-written render functions |
+| Svelte | npm install, a bundler, the Svelte compiler — and it is not JSX |
+| **Voodoo.js** | **one `<script>` tag** |
+
+The honest cost, stated up front: those toolchains compile JSX down to direct
+DOM calls ahead of time, and Voodoo reads it at runtime. A compiler will beat an
+interpreter on raw update throughput and always will — the [benchmarks](#performance)
+below show exactly where and by how much. What you get back is a file you can
+open, edit and send to someone without a `node_modules` directory existing
+anywhere in the story.
 
 Conditionals return elements the way they do in JSX, and one way they do not:
 
@@ -212,13 +228,17 @@ build pipeline costs more than the problem you are solving.
 
 ## Why Voodoo?
 
+- **JSX with no toolchain.** `{items.map(i => <li>{i}</li>)}` renders from a `.html` file
+  opened straight off disk. No bundler, no transform, no build.
 - **HTML-first.** Behavior lives next to the markup it belongs to. One file, not three.
 - **Fine-grained reactivity.** Proxy-based `reactive` / `ref` / `computed` / `effect`. A write
   re-runs only the effects that actually read that value.
 - **No mandatory build step.** One `<script>` tag is a complete setup. A build is available when
   you want one, never required.
 - **Zero runtime dependencies.** The browser bundles ship nothing but Voodoo.
-- **Direct DOM updates.** No Virtual DOM, no diff pass, no reconciliation heuristics.
+- **Direct DOM updates.** No Virtual DOM: an effect writes to the node it owns. Lists are the
+  one place a diff is unavoidable, and `v-for` uses the mutation you performed — `push`,
+  `splice`, `shift` — to touch only the rows it changed. See [performance](#performance).
 - **Secure expression parser.** Attribute expressions go through a real lexer, a Pratt parser and
   an AST interpreter. No `eval`, no `new Function` — so Voodoo runs under a Content Security
   Policy without `unsafe-eval`.
@@ -632,7 +652,135 @@ environment and how to reproduce every measurement.
 Vanilla JavaScript is the ceiling here, and Voodoo charges a real cost for the productivity it
 buys. The point of these numbers is to show how large that cost is, not to pretend it is zero.
 
-**Tearing down a keyed list.** `v-if` and `v-for` take their element out of the document and keep it
+### Lists: what a change actually costs
+
+A `v-for` is one effect over a whole collection, so it is the only place in Voodoo where a diff
+exists at all. When the collection changes the effect re-runs, and something has to work out what
+that means for `n` rows.
+
+Until 0.13 that decision cost the same whatever had happened. Every row's `:key` went through the
+expression interpreter, `normalizeSource` allocated one object per row, three hash structures the
+size of the list were built and thrown away, and a placement pass read a DOM property for every
+row. Reading the rows through the reactive proxy also subscribed the list to all `n` indices and to
+whatever property the key touched on all `n` items, so each re-render first removed the effect from
+those dependency sets and added it back — roughly `4n` hash operations before the reconciler had
+looked at anything. Removing one row from ten thousand did all of that to conclude that 9,999 rows
+had not moved.
+
+0.13 starts from a different question: **what is already known?**
+
+`push`, `pop`, `shift`, `unshift` and `splice` are intercepted where they happen. They now run
+against the raw array — a `splice` in the middle no longer fires one proxy trap and one dependency
+notification per element it shuffles — and they record what they did. When the list re-renders it
+reads that record instead of rediscovering it. `rows.splice(5000, 1)` on ten thousand rows says
+exactly one row left, at index 5000, and nothing else is examined.
+
+When there is no record to read — a new array was assigned — the changed region is found by
+comparing keys inward from both ends, with the key expression compiled once to a property read
+instead of interpreted per row. That costs one property read per row and **cannot be made cheaper**:
+to know that row 9,999 did not change you have to look at row 9,999. No fingerprint, block hash or
+rolling hash avoids it, because computing the fingerprint of the new list means reading every key in
+it first.
+
+![List reconciliation: before and after](docs/media/reconcile-before-after.svg)
+
+| case | before | after | speedup | keys evaluated | allocations |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| create 1.000 rows | 81.5 ms | 84.4 ms | — | 1,000 → 1,000 | 1,010 → 0 |
+| create 10.000 rows | 809 ms | 809 ms | — | 10,000 → 10,000 | 10,010 → 0 |
+| create 50.000 rows | 4049 ms | 3840 ms | — | 50,000 → 50,000 | 50,010 → 0 |
+| append 1 to 10.000 — new array | 40.9 ms | 11.6 ms | **3.5x** | 20,001 → 20,001 | 20,011 → 0 |
+| push 1 onto 10.000 — in place | 34.2 ms | 1.94 ms | **17.6x** | 20,001 → 1 | 20,011 → 0 |
+| append 5.000 to 5.000 | 470 ms | 418 ms | **1.1x** | 15,000 → 15,000 | 15,010 → 0 |
+| prepend 1 to 10.000 — new array | 38.6 ms | 8.40 ms | **4.6x** | 20,001 → 20,003 | 20,011 → 0 |
+| unshift 1 onto 10.000 — in place | 56.0 ms | 0.297 ms | **188.7x** | 20,001 → 1 | 20,011 → 0 |
+| prepend 5.000 to 5.000 | 530 ms | 412 ms | **1.3x** | 15,000 → 15,002 | 15,010 → 0 |
+| remove the first of 10.000 — new array | 40.9 ms | 9.28 ms | **4.4x** | 19,999 → 20,001 | 20,009 → 0 |
+| remove the middle of 10.000 — new array | 41.7 ms | 10.2 ms | **4.1x** | 19,999 → 20,001 | 20,009 → 0 |
+| remove the last of 10.000 — new array | 39.4 ms | 11.2 ms | **3.5x** | 19,999 → 19,999 | 20,009 → 0 |
+| splice out the middle of 10.000 — in place | 45.3 ms | 0.853 ms | **53.1x** | 19,999 → 1 | 20,009 → 0 |
+| shift the first off 10.000 — in place | 61.6 ms | 0.096 ms | **641.1x** | 19,999 → 1 | 20,009 → 0 |
+| pop the last off 10.000 — in place | 37.5 ms | 1.51 ms | **24.8x** | 19,999 → 1 | 20,009 → 0 |
+| insert 1 in the middle of 10.000 — new array | 42.5 ms | 10.7 ms | **4.0x** | 20,001 → 20,003 | 20,011 → 0 |
+| splice 1 into the middle of 10.000 — in place | 48.6 ms | 0.684 ms | **71.0x** | 20,001 → 1 | 20,011 → 0 |
+| replace 1 of 10.000 with a new key | 40.1 ms | 11.7 ms | **3.4x** | 20,000 → 20,006 | 20,010 → 6 |
+| change 1 label in 10.000 | 0.116 ms | 0.111 ms | — | 0 → 0 | 0 → 0 |
+| re-assign an identical 10.000-row array | 52.4 ms | 9.57 ms | **5.5x** | 10,000 → 10,000 | 10,005 → 0 |
+| swap 2 rows in 10.000 | 9585 ms | 16.6 ms | **575.9x** | 20,000 → 20,004 | 20,010 → 6 |
+| reverse 10.000 rows | 3989 ms | 4130 ms | — | 20,000 → 20,004 | 20,010 → 6 |
+| shuffle 10.000 rows | 7890 ms | 7690 ms | — | 20,000 → 20,004 | 20,010 → 6 |
+| clear a 10.000-row list | 144 ms | 134 ms | — | 10,000 → 10,000 | 10,010 → 0 |
+
+Time is the symptom; the counters are the cause. The reconciler counts what it does — rows visited,
+keys evaluated, writes sent through a reactive proxy, nodes created, removed and moved — and the
+benchmark collects those in a second pass with the timers off, so instrumentation never lands inside
+a measured number.
+
+![Times a row's key was computed, per edit](docs/media/reconcile-work.svg)
+
+The two families are worth reading apart, because they have different floors. A list mutated in
+place gets an answer that does not depend on its length; a list replaced wholesale pays one key read
+per row no matter how clever the algorithm is. Same edit, same DOM, different information available.
+
+![The cost of one edit against the size of the list](docs/media/reconcile-scaling.svg)
+
+Which route an edit takes is not something a correctness test can show you — a fast path that
+quietly falls back still passes every one of them. So it is counted too, including the shapes where
+the fast route does not apply:
+
+![Which route each edit took](docs/media/reconcile-paths.svg)
+
+And what reaches the DOM. A reconciler that reuses every element can still be slow if it drags them
+all across the list to get there; a longest-increasing-subsequence pass over the surviving rows
+decides which may stay where they are, and it runs only when rows actually crossed each other, so no
+insertion, removal or append ever pays for it.
+
+![Nodes created, removed and moved per edit](docs/media/reconcile-dom-ops.svg)
+
+**What each path costs.** `n` is the length of the list, `k` the rows the edit touched, `r` the size
+of the changed region.
+
+| Path | When | Cost |
+| --- | --- | --- |
+| mutation, insert or remove | `push` / `pop` / `shift` / `unshift` / `splice` on a keyed list | O(k) |
+| mutation, batch | several mutations in one tick | O(r), r = the range they jointly span |
+| scan, then insert or remove | a new array, one localised edit | O(n) key reads + O(k) work |
+| scan, then reorder | a new array, rows crossed | O(n) key reads + O(r log r) |
+| unkeyed, any change | no `:key` | O(n) — position *is* the identity, so every row after the edit genuinely changed |
+| `reverse` / `sort` in place | no range describes the result | O(n) + O(n log n) |
+
+The largest number in that table is not an algorithmic win at all — it is a bug the counters found.
+Swapping two rows of ten thousand took **9,585 ms**, and the reason was 19,994 DOM moves: the old
+placement pass walked the list backwards, and the first row that did not line up made every row
+after it fail the same check, so a two-row swap dragged the whole list along with it. It moves 2
+rows now, and takes 16.6 ms.
+
+**Where it does not help, stated plainly.**
+
+*Reversing and shuffling are unchanged* — 3,989 ms against 4,130 ms, and 7,890 against 7,690. Both
+already moved close to the minimum: reversing a list requires moving all but one of its rows however
+the diff is computed, and what the clock measures there is `insertBefore` into a ten-thousand-child
+parent, not the reconciler. A better algorithm cannot save work the DOM insists on doing.
+
+*Creating a list is unchanged* for the same reason. `create 50.000` is the cost of inserting 50,000
+nodes; the reconciler is a rounding error beside it.
+
+*Two edits at opposite ends cost what comparing costs.* The changed region is one contiguous range,
+so pushing one row and shifting another — the shape of a rolling log — produces a range spanning
+everything between them. Correct, and no faster than the scan. Splitting it into several disjoint
+regions would fix that case; it is not implemented, because it is real complexity for a shape none
+of these benchmarks measured.
+
+*Lists without `:key` identify rows by position*, so removing the first row genuinely changes every
+row after it and there is nothing to skip.
+
+The full method, the counters and how to reproduce any of it are in
+[`benchmarks/README.md`](benchmarks/README.md); the algorithm and its invariants are in
+[`ARCHITECTURE.md`](ARCHITECTURE.md#5-list-reconciliation).
+
+### Tearing a list down
+
+`v-if` and `v-for` take their element out of the document and keep it
 as the thing they clone from. The cleanup for that element — the effect scope holding the template,
 every rendered block and every node inside them — was keyed by that element, and `destroy()` walks
 live children only. Once detached, nothing ever reached it. The scope was never stopped and it held
@@ -656,7 +804,9 @@ One honest caveat from the same run: list *creation* at this size is dominated b
 Inserting 4,000 nodes with no framework at all took longer in jsdom than Voodoo's whole render, so
 the creation numbers say more about the environment than about the framework.
 
-**Comparison against other frameworks.** Seven implementations of the same 1,000-row list,
+### Against other frameworks
+
+Seven implementations of the same 1,000-row list,
 all bundled production + minified, run back to back in one process against the same jsdom
 document. After every scenario each framework's DOM is reduced to the list of `<li>` texts and
 compared with the hand-written vanilla baseline: anything that produced different output is
@@ -668,35 +818,36 @@ Median of 30 samples, in milliseconds, lower is better. Voodoo.js in bold:
 
 | | create 1k | update every 10th | clear 1k | minified |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 56.71 | 7.51 | 32.39 | 0.6 KB |
-| Preact 10.29.8 | 80.40 | 2.54 | 31.68 | 10.7 KB |
-| Solid 1.9.15 | 80.73 | 0.82 | 23.83 | 16.7 KB |
-| **Voodoo.js** | **80.81** | **7.91** | **34.46** | **429.2 KB** |
-| React 19.2.8 | 84.97 | 4.68 | 37.15 | 189.3 KB |
-| Vue 3.5.42 | 89.66 | 11.90 | 34.98 | 62.5 KB |
-| Alpine 3.17.1 | 166.03 | 104.98 | 37.67 | 55.2 KB |
+| vanilla JS | 39.51 | 6.65 | 20.04 | 0.6 KB |
+| Preact 10.29.8 | 71.03 | 2.73 | 30.68 | 10.7 KB |
+| **Voodoo.js** | **77.47** | **4.69** | **30.14** | **435.2 KB** |
+| Vue 3.5.42 | 78.72 | 14.29 | 32.84 | 62.5 KB |
+| Solid 1.9.15 | 80.13 | 0.90 | 21.85 | 16.7 KB |
+| React 19.2.8 | 81.22 | 4.65 | 33.55 | 189.3 KB |
+| Alpine 3.17.1 | 157.06 | 111.29 | 32.76 | 55.2 KB |
 
-Read honestly, and read the spread before the order. On create, Preact, Solid and Voodoo finish
-within **0.4 ms of each other** across a 1,000-row list — that is a three-way tie the ranking column
-cannot express, and calling it fourth place would be as misleading as calling it second. Vanilla
-still builds the list a third faster than any framework here.
+Read the spread before the order. On create, Preact, Voodoo and Vue finish within **7.7 ms of
+each other** across a thousand rows, and Solid and React are barely behind them; that is a
+five-way cluster the ranking column cannot express. Hand-written vanilla still builds the list
+nearly twice as fast as any framework here, and that is the honest ceiling.
 
-On clear the same is true of the middle of the field: vanilla, Preact, Voodoo and Vue land inside
-3 ms. Solid wins it outright.
+Clear is the same story in the middle of the field: Voodoo, Preact, Alpine and Vue land inside
+2.7 ms. Vanilla and Solid win it outright.
 
-On update Voodoo is level with hand-written vanilla — 7.91 against 7.51, well inside the run-to-run
-noise — and roughly **13x ahead of Alpine**, which is the comparison that actually means something,
-since Alpine is also HTML-first and also interprets expressions at runtime instead of compiling
-them. Solid and Preact are far ahead of both, and they get there with a compiler.
+Update is where 0.13 changed the picture. Voodoo now updates one row in ten **faster than the
+hand-written vanilla baseline** — 4.69 ms against 6.65 — and level with React at 4.65, which is
+inside the noise. It is roughly **24x ahead of Alpine**, and that is the comparison that carries
+meaning: Alpine is also HTML-first and also interprets its expressions at runtime rather than
+compiling them. Solid still wins it outright at 0.90 ms, and Preact at 2.73 — both get there with
+a compiler, which is the trade Voodoo declines to make.
 
-An earlier version of this table reported create at 97.70 ms and called it third of seven. The
-absolute number improved to 80.81 while the position moved to fourth, because the other frameworks
-measured differently in the same run. That is what a coefficient of variation of 31% on create and
-54% on update looks like from the outside, and it is the reason these are presented as a field
-rather than a leaderboard.
+These numbers are noisy and the report says so: the coefficient of variation on update reached
+50% for Voodoo and 134% for Preact in this run. Read them as a field, not a leaderboard.
 
-Solid wins update by a wide margin because a compiler generates its update path. Voodoo has no build
-step, and that is the trade it makes.
+Speed and size are two columns of the same decision, and a table is a poor instrument for holding
+both at once. Plotted against each other, the trade each project made is the shape of the picture:
+
+![What each project charges, and what it buys](docs/media/size-vs-speed.svg)
 
 **Where the gain came from.** A paired harness loaded both builds in one process and interleaved
 their samples, alternating order each round, so the machine's 20–40% drift between runs cancels out.
@@ -725,13 +876,28 @@ adapters and full statistics are in
 [`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md); jsdom has no layout or
 paint, so read this as relative shape rather than absolute truth.
 
-**Bundle size**, measured on the committed builds at `8e765d2`:
+### Bundle size
+
+![Bundle size across frameworks](docs/media/bundle-sizes.svg)
+
+Voodoo is the largest bundle in that chart and there is no way to read it otherwise. What the size
+number cannot say is that the projects are not shipping the same thing: a router, an HTTP client,
+forms, validation, masks, a UI kit, charts, i18n, stores, animation and drag-and-drop are in this
+file, and in most of the others they are packages you add later.
+
+![What arrives with the download](docs/media/batteries.svg)
+
+Both charts are true at once. If bundle size is your binding constraint, Alpine and Preact remain
+the honest recommendation, and `voodoo.core.min.js` at 48 KB gzipped is there for pages that want
+the directives and nothing else.
+
+Measured on the committed builds:
 
 | Build | Minified | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 140.23 KB | 47.92 KB | 41.71 KB |
-| `voodoo.min.js` | 263.73 KB | 84.76 KB | 71.68 KB |
-| `voodoo.full.min.js` | 440.85 KB | 133.16 KB | 110.69 KB |
+| `voodoo.core.min.js` | 141.20 KB | 48.28 KB | 42.04 KB |
+| `voodoo.min.js` | 265.00 KB | 85.26 KB | 72.12 KB |
+| `voodoo.full.min.js` | 442.18 KB | 133.66 KB | 111.09 KB |
 
 Run them yourself: the harness and the exact versions under test live in
 [`benchmarks/`](benchmarks/).
@@ -745,6 +911,7 @@ An honest one. Every tool here is good at what it was designed for.
 | Starting point | HTML | HTML | HTML | JavaScript | JavaScript | JavaScript |
 | Runs from a CDN tag | built-in | built-in | built-in | built-in | built-in | built-in |
 | Build step | possible | possible | possible | recommended | recommended | possible |
+| JSX with no build step | built-in | — | — | — | — | — |
 | Rendering | direct DOM | direct DOM | server HTML | Virtual DOM | Virtual DOM | manual |
 | Reactive state | built-in | built-in | — | built-in | built-in | — |
 | Components | built-in | via ecosystem package | — | built-in | built-in | — |

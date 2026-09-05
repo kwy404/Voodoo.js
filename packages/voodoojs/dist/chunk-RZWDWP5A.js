@@ -1,4 +1,4 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-PPT7RDKJ.js';
+import { reactive, handleError, EffectScope, effect } from './chunk-OIHNH5XR.js';
 import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-YH3IDF6L.js';
 import { config, directives, components } from './chunk-OH6FIDTW.js';
 import { __publicField } from './chunk-PO6REBDJ.js';
@@ -2214,5 +2214,5 @@ function refresh(root) {
 }
 
 export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-6QFKV444.js.map
-//# sourceMappingURL=chunk-6QFKV444.js.map
+//# sourceMappingURL=chunk-RZWDWP5A.js.map
+//# sourceMappingURL=chunk-RZWDWP5A.js.map

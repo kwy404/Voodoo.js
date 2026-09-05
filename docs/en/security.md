@@ -97,7 +97,7 @@ one per feature, the first time that feature is used.
 To drop it, disable injection and ship the CSS yourself:
 
 ```html
-<script src="voodoo.min.js" data-no-styles defer></script>
+<script src="voodoo.full.min.js" data-no-styles defer></script>
 <link rel="stylesheet" href="/css/voodoo-ui.css">
 ```
 

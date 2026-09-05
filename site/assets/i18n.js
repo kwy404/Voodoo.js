@@ -108,10 +108,12 @@
         clear: 'Clear 1k',
         honest:
           'Read honestly: on create Voodoo is third of seven, behind hand-written vanilla and ' +
-          'Preact. Vanilla still builds a list twice as fast as we do. The update column is the ' +
-          'noisiest of the three and should be read as a range rather than a ranking. Voodoo is also ' +
-          'by far the largest bundle in this table, and if size is your main constraint, Alpine and ' +
-          'Preact are the honest recommendation.',
+          'Preact, and vanilla still builds a list twice as fast as we do. On update we are now ' +
+          'faster than that hand-written baseline — 4.69 ms against 6.65 — and level with React, ' +
+          'though Solid and Preact are ahead and they get there with a compiler. The update column ' +
+          'is the noisiest of the three and should be read as a range rather than a ranking. Voodoo ' +
+          'is also by far the largest bundle in this table, and if size is your main constraint, ' +
+          'Alpine and Preact are the honest recommendation.',
       },
       start: {
         eyebrow: 'Get started',
@@ -247,10 +249,13 @@
         clear: 'Limpar 1k',
         honest:
           'Lendo com honestidade: na criação a Voodoo é terceira de sete, atrás do vanilla escrito ' +
-          'à mão e do Preact. O vanilla ainda monta uma lista duas vezes mais rápido que a gente. A ' +
-          'coluna de atualização é a mais ruidosa das três e deve ser lida como faixa, não como ' +
-          'classificação. A Voodoo também é de longe o maior bundle desta tabela, e se tamanho é a ' +
-          'sua principal restrição, Alpine e Preact são a recomendação honesta.',
+          'à mão e do Preact, e o vanilla ainda monta uma lista duas vezes mais rápido que a gente. ' +
+          'Na atualização agora somos mais rápidos que essa linha de base escrita à mão — 4,69 ms ' +
+          'contra 6,65 — e empatados com o React, embora Solid e Preact estejam à frente, e cheguem ' +
+          'lá com um compilador. A coluna de atualização é a mais ruidosa das três e deve ser lida ' +
+          'como faixa, não como classificação. A Voodoo também é de longe o maior bundle desta ' +
+          'tabela, e se tamanho é a sua principal restrição, Alpine e Preact são a recomendação ' +
+          'honesta.',
       },
       start: {
         eyebrow: 'Começar',
@@ -387,11 +392,13 @@
         clear: 'Limpiar 1k',
         honest:
           'Leyendo con honestidad: al crear, Voodoo es tercera de siete, por detrás del vanilla ' +
-          'escrito a mano y de Preact. El vanilla todavía construye una lista el doble de rápido que ' +
-          'nosotros. La columna de actualización es la más ruidosa de las tres y debe leerse como un ' +
-          'rango, no como una clasificación. Voodoo es además, con diferencia, el paquete más grande ' +
-          'de esta tabla, y si el tamaño es tu principal restricción, Alpine y Preact son la ' +
-          'recomendación honesta.',
+          'escrito a mano y de Preact, y el vanilla todavía construye una lista el doble de rápido ' +
+          'que nosotros. Al actualizar ahora somos más rápidos que esa línea base escrita a mano ' +
+          '— 4,69 ms frente a 6,65 — y a la par de React, aunque Solid y Preact van por delante y ' +
+          'llegan ahí con un compilador. La columna de actualización es la más ruidosa de las tres y ' +
+          'debe leerse como un rango, no como una clasificación. Voodoo es además, con diferencia, ' +
+          'el paquete más grande de esta tabla, y si el tamaño es tu principal restricción, Alpine y ' +
+          'Preact son la recomendación honesta.',
       },
       start: {
         eyebrow: 'Empezar',
@@ -527,7 +534,9 @@
         clear: '1k 삭제',
         honest:
           '솔직하게 읽자면, 생성에서 Voodoo는 일곱 중 세 번째로, 손으로 쓴 바닐라와 Preact보다 ' +
-          '뒤에 있습니다. 바닐라는 여전히 우리보다 두 배 빠르게 목록을 만듭니다. 갱신 열은 셋 중 ' +
+          '뒤에 있고, 바닐라는 여전히 우리보다 두 배 빠르게 목록을 만듭니다. 갱신에서는 이제 그 ' +
+          '손으로 쓴 기준선보다 빠릅니다 — 4.69 ms 대 6.65 ms — 그리고 React와 대등합니다. 다만 ' +
+          'Solid와 Preact는 앞서 있고, 그들은 컴파일러로 그 자리에 도달합니다. 갱신 열은 셋 중 ' +
           '가장 잡음이 많아 순위가 아니라 범위로 읽어야 합니다. 또한 Voodoo는 이 표에서 압도적으로 ' +
           '가장 큰 번들이며, 용량이 가장 큰 제약이라면 Alpine과 Preact가 정직한 추천입니다.',
       },

@@ -28,7 +28,7 @@ The `'unsafe-inline'` in `style-src` exists because CSS from UI components is in
 runtime. To remove it, disable injection and load the CSS yourself:
 
 ```html
-<script src="voodoo.min.js" data-no-styles defer></script>
+<script src="voodoo.full.min.js" data-no-styles defer></script>
 <link rel="stylesheet" href="/css/voodoo-ui.css">
 ```
 

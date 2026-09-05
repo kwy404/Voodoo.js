@@ -1,4 +1,4 @@
-import { handleError } from './chunk-PPT7RDKJ.js';
+import { handleError } from './chunk-OIHNH5XR.js';
 import { warn } from './chunk-YH3IDF6L.js';
 
 /**
@@ -1192,5 +1192,5 @@ var gpu = {
 };
 
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct };
-//# sourceMappingURL=chunk-JB72AX7G.js.map
-//# sourceMappingURL=chunk-JB72AX7G.js.map
+//# sourceMappingURL=chunk-7LJ5BW35.js.map
+//# sourceMappingURL=chunk-7LJ5BW35.js.map

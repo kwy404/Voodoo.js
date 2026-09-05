@@ -256,7 +256,7 @@ html:root {
 
 <h2 id="apontar">2. Point a tag at the file</h2>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.min.js?v=0.6.2" defer&gt;&lt;/script&gt;</code></pre>
+<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" defer&gt;&lt;/script&gt;</code></pre>
 
 <p>
   Done. There is no <code>V.init()</code> to call: the library starts on its own as soon as the
@@ -294,7 +294,7 @@ html:root {
 &lt;head&gt;
   &lt;meta charset="utf-8"&gt;
   &lt;title&gt;My first Voodoo&lt;/title&gt;
-  &lt;script src="voodoo.min.js?v=0.6.2" defer&gt;&lt;/script&gt;
+  &lt;script src="voodoo.full.min.js" defer&gt;&lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
 
@@ -331,7 +331,7 @@ html:root {
 
 <ol>
   <li>
-    <code>&lt;script src="voodoo.min.js?v=0.6.2" defer&gt;</code> loads the library.
+    <code>&lt;script src="voodoo.full.min.js" defer&gt;</code> loads the library.
   </li>
   <li>
     <code>v-data="{ name: '', count: 0 }"</code> creates a <b>scope</b>: two variables that hold
@@ -391,7 +391,7 @@ html:root {
 </p>
 
 <pre data-lang="html"><code>&lt;script
-  src="voodoo.min.js?v=0.6.2"
+  src="voodoo.full.min.js"
   data-base-url="https://api.example.com"
   data-locale="en-US"
   defer
@@ -427,7 +427,7 @@ html:root {
   first sweep — otherwise the library walks past a tag it does not know yet.
 </p>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.min.js?v=0.6.2" data-manual defer&gt;&lt;/script&gt;
+<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-manual defer&gt;&lt;/script&gt;
 &lt;script src="my-components.js" defer&gt;&lt;/script&gt;
 &lt;script defer&gt;
   V.config.locale = 'en-US';
@@ -450,7 +450,7 @@ html:root {
   If your HTML validator complains about <code>v-text</code>, change the prefix:
 </p>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.min.js?v=0.6.2" data-prefix="data-v-" defer&gt;&lt;/script&gt;
+<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-prefix="data-v-" defer&gt;&lt;/script&gt;
 
 &lt;div data-v-data="{ n: 0 }"&gt;
   &lt;button data-v-click="n++"&gt;Add&lt;/button&gt;
@@ -477,6 +477,6 @@ html:root {
 
 </article>
 
-<script src="../assets/docs.js?v=d9034fef"></script>
+<script src="../assets/docs.js?v=bb46eae0"></script>
 </body>
 </html>

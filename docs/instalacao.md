@@ -5,7 +5,7 @@ There are three ways: CDN, npm, and direct download. All deliver the same librar
 ## CDN, the shortest way
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs/dist/voodoo.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
 ```
 
 That's it. On load, the library publishes `window.V` (and `window.Voodoo`, the same object), applies
@@ -22,7 +22,7 @@ components:
 `unpkg` also works:
 
 ```html
-<script src="https://unpkg.com/voodoojs/dist/voodoo.min.js" defer></script>
+<script src="https://unpkg.com/voodoojs@0.12.5/dist/voodoo.full.min.js" defer></script>
 ```
 
 Pin the version in production so a new release never changes your page without warning:
@@ -99,7 +99,7 @@ Download `dist/voodoo.min.js` (or `dist/voodoo.full.min.js`), place it next to y
 to it:
 
 ```html
-<script src="/js/voodoo.min.js" defer></script>
+<script src="/js/voodoo.full.min.js" defer></script>
 ```
 
 Each file comes with its corresponding `.map`. Copy both if you want to debug the original code.
@@ -110,7 +110,7 @@ The fastest way to configure is with attributes on the tag itself, without writi
 
 ```html
 <script
-  src="voodoo.min.js"
+  src="voodoo.full.min.js"
   data-base-url="https://api.example.com"
   data-locale="en-US"
   defer
@@ -134,7 +134,7 @@ The fastest way to configure is with attributes on the tag itself, without writi
 To adjust before the first render, use `data-manual` and configure manually:
 
 ```html
-<script src="voodoo.min.js" data-manual></script>
+<script src="voodoo.full.min.js" data-manual></script>
 <script>
   V.config.prefix = 'data-v-';
   V.config.locale = 'en-US';
@@ -166,7 +166,7 @@ All `V.config` options:
 If your HTML validator complains about `v-text`, change the prefix:
 
 ```html
-<script src="voodoo.min.js" data-prefix="data-v-" defer></script>
+<script src="voodoo.full.min.js" data-prefix="data-v-" defer></script>
 ```
 
 ```html

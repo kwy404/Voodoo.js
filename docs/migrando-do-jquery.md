@@ -264,7 +264,7 @@ With jQuery you'd need to call the plugin again on each render.
 
 ```html
 <script src="jquery.min.js"></script>
-<script src="voodoo.min.js" defer></script>
+<script src="voodoo.full.min.js" defer></script>
 ```
 
 The two use standard DOM, so they don't fight. A common migration path:
