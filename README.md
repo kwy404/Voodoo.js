@@ -58,6 +58,10 @@ compiler and no JSX transform.
 </html>
 ```
 
+> JSX lives in the full build, `voodoo.full.min.js`. The smaller `voodoo.min.js` and
+> `voodoo.core.min.js` builds do not include the JSX reader, so with them a page like
+> this one shows its source as plain text. Use the full build for JSX.
+
 That is the differentiator. Every other way to write JSX needs a toolchain
 between the file you edit and the file the browser loads. This one *is* the file
 the browser loads.
@@ -354,11 +358,11 @@ npx voodoojs-cli info                                  # list modules and their 
 
 **Which bundle?**
 
-| File | Contents |
-| --- | --- |
-| `voodoo.core.min.js` | Minimal build: reactivity, expressions, directives, components, DOM, requests |
-| `voodoo.min.js` | **Essential build — the default.** Adds forms, validation, masks, UI, drag-and-drop |
-| `voodoo.full.min.js` | Everything: charts, motion, router, i18n, devtools, ready-made components |
+| File | Contents | JSX in HTML |
+| --- | --- | --- |
+| `voodoo.core.min.js` | Minimal build: reactivity, expressions, directives, components, DOM, requests | No |
+| `voodoo.min.js` | **Essential build.** Adds forms, validation, masks, UI, drag-and-drop | No |
+| `voodoo.full.min.js` | Everything: JSX, charts, motion, router, i18n, devtools, ready-made components | **Yes** |
 
 Sizes are dynamic — see the badge above, or run `npm run size` / `npx voodoojs-cli info`.
 
