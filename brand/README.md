@@ -24,6 +24,8 @@ These are the only brand color values. Do not create new shades: if you need var
 | Mid ink | `#2A2440` | Outlines, stitching, dark surfaces, secondary text. |
 | Parchment cream | `#FBF7F2` | Light background, the mascot's fabric, text on a dark background. |
 | Sand | `#EDE4D8` | Fabric shadow, empty fields, neutral surfaces. |
+| Sticker ink | `#1B1033` | Only for the mascot v2: the sticker outline around Vudu and the ink details. |
+| Felt shade | `#7F57FA` | Only for the mascot v2: the shadow side of the purple felt, between the two purples. |
 
 ### Suggested proportion
 
@@ -43,7 +45,9 @@ The wordmark uses Space Grotesk **Bold (700)** with `letter-spacing: -1.2` at th
 
 ---
 
-## The mascot: Vudu
+## The mascot: Vudu (first edition)
+
+This section describes the first Vudu, kept in `mascot/` because older pages still point to it. New material should use the redesigned Vudu in `mascot-v2/`, described in the next section.
 
 Vudu is a little rag doll, cute and friendly, never scary. He is the face of the framework in documentation, UI states and promotional material.
 
@@ -67,6 +71,61 @@ Vudu is a little rag doll, cute and friendly, never scary. He is the face of the
 | `vudu-loading.svg` | Loading and waiting. Comes with CSS animation built in. |
 | `vudu-error.svg` | Error, failed request, exception screen. |
 | `vudu-sleeping.svg` | Idle, expired session, server stopped. |
+
+---
+
+## The mascot v2: Vudu redesigned
+
+Vudu keeps his name and his job, with a new body: a small purple felt voodoo doll with big glossy eyes, three sewing pins in his head that work like little directive flags, and a glowing amber charm with curly braces on his chest, for JSX living inside plain HTML. Every file lives in `mascot-v2/`.
+
+**Fixed anatomy.** These traits do not change between poses:
+
+- A round head and a short body in light purple felt `#9B7BFF`, with the shadow side in felt shade `#7F57FA`.
+- A sticker outline in sticker ink `#1B1033` around the whole silhouette, so he reads on light and dark backgrounds.
+- Big ink eyes with two white highlights, magenta blush on the cheeks.
+- A stitched smile, a cream dashed seam on the left of the head, a small cream cross stitch on the right and a stitched hem on the body.
+- Three pins with pennant flags in the head: magenta on the left, amber in the middle, mint on the right. They stand for directives such as `v-data`, `@click` and `v-model`.
+- The `{ }` charm on the chest: an amber tag with ink braces and a soft amber glow.
+
+**The poses and when to use each one:**
+
+| File | When to use it |
+| --- | --- |
+| `vudu.svg` | The default. README, docs header, presentations. |
+| `vudu-wave.svg` | Onboarding, first run, a welcome in the docs. |
+| `vudu-happy.svg` | Success, build finished, install completed. |
+| `vudu-thinking.svg` | Tips, FAQ, "did you mean", empty search results. |
+| `vudu-error.svg` | 404 and error pages. His middle pin fell to the ground. |
+| `vudu-loading.svg` | Loading. A gentle hop with three pulsing dots, built in CSS. It stops when the system asks for reduced motion. |
+| `vudu-sleeping.svg` | Idle, expired session, server stopped. |
+| `vudu-dark.svg` | The default pose with a cream rim, for dark backgrounds and dark social cards. |
+| `vudu-head.svg` | Avatars and round profile pictures. Square, head and pins only. |
+| `favicon.svg` | Tab icon: the head on a deep ink rounded square. |
+| `banner.svg`, `banner-dark.svg` | README banner, 1280 × 400, one for each background. |
+| `social-preview.png`, `og.png` | GitHub social preview (1280 × 640) and Open Graph image (1200 × 630). |
+
+**Sizes.** Every pose is drawn on a 512 × 512 grid and stays readable at 32 px: the silhouette, the eyes and the three flag colors survive. Below 32 px use `vudu-head.svg` or `favicon.svg`.
+
+**Backgrounds.** The regular files carry the ink outline only, which is enough on light backgrounds and on mid tones. On very dark backgrounds the outline melts into the page, so prefer `vudu-dark.svg` when the mascot is the hero of a dark screen.
+
+**Editing.** Do not edit the SVGs by hand. Change `src/vudu_v2.py` and run it, then run `src/render_social.py` to refresh the two PNG cards:
+
+```sh
+python brand/src/vudu_v2.py
+python brand/src/render_social.py
+```
+
+```html
+<link rel="icon" type="image/svg+xml" href="/brand/mascot-v2/favicon.svg">
+<img src="/brand/mascot-v2/vudu-wave.svg" alt="Vudu waving" width="180" height="180">
+```
+
+```html
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="brand/mascot-v2/banner-dark.svg">
+  <img src="brand/mascot-v2/banner.svg" alt="Voodoo.js: JSX in plain HTML. No build step." width="100%">
+</picture>
+```
 
 ---
 
@@ -150,7 +209,7 @@ The mascot does not depend on this: the body is light with a dark outline, so he
 5. Do not add a shadow, an outline, an outer glow or any effect to the logo.
 6. Do not put the logo inside boxes, circles or badges other than `favicon.svg`.
 7. Do not use the mascot in place of the logo in formal contexts, and do not mix different Vudu poses on the same screen.
-8. Do not redraw Vudu, do not swap the button eyes around and do not make the face scary. He is a friendly little creature.
+8. Do not redraw Vudu by hand: for the v2, change `src/vudu_v2.py` and regenerate, so every pose keeps the same anatomy. Do not make the face scary. He is a friendly little creature.
 9. Do not stretch the illustrations. They have a `viewBox` and must scale keeping their proportions.
 10. Do not use the palette outside the values in this table.
 
@@ -179,6 +238,22 @@ The mascot does not depend on this: the body is light with a dark outline, so he
 | `illustrations/404.svg` | 700 × 480 | Page not found, with Vudu lost and a map. |
 | `patterns/runes-bg.svg` | 480 × 480 | A repeatable rune pattern, for the background of highlight sections. |
 | `README.md` | text | This brand guide. |
+| `mascot-v2/vudu.svg` | 512 × 512 | Vudu v2, the default pose. |
+| `mascot-v2/vudu-wave.svg` | 512 × 512 | Vudu v2 waving. Onboarding and welcome. |
+| `mascot-v2/vudu-happy.svg` | 512 × 512 | Vudu v2 celebrating. Success states. |
+| `mascot-v2/vudu-thinking.svg` | 512 × 512 | Vudu v2 thinking, with a `{ }` thought bubble. Tips, FAQ, empty search. |
+| `mascot-v2/vudu-error.svg` | 512 × 512 | Vudu v2 sad, a pin fallen to the ground. 404 and error pages. |
+| `mascot-v2/vudu-loading.svg` | 512 × 512 | Vudu v2 hopping above three pulsing dots. CSS animation, stops with reduced motion. |
+| `mascot-v2/vudu-sleeping.svg` | 512 × 512 | Vudu v2 asleep. Idle, expired session, server stopped. |
+| `mascot-v2/vudu-dark.svg` | 512 × 512 | The default pose with a cream rim, for dark backgrounds. |
+| `mascot-v2/vudu-head.svg` | 350 × 350 | The head and pins only, square, for avatars. |
+| `mascot-v2/favicon.svg` | 64 × 64 | The head on a deep ink rounded square. Legible at 16 px. |
+| `mascot-v2/banner.svg` | 1280 × 400 | README banner for light backgrounds. |
+| `mascot-v2/banner-dark.svg` | 1280 × 400 | README banner for dark backgrounds. |
+| `mascot-v2/social-preview.png` | 1280 × 640 | GitHub social preview. |
+| `mascot-v2/og.png` | 1200 × 630 | Open Graph image for the site. |
+| `src/vudu_v2.py` | script | Generates every SVG in `mascot-v2/` from shared parts. |
+| `src/render_social.py` | script | Renders the two PNG cards with Edge headless and the brand fonts. |
 | `preview.html` | page | A gallery of every asset. Opens in the dark theme, with a button to switch to the light one. |
 
 ---
@@ -231,6 +306,7 @@ Color tokens in CSS:
 
 - Every SVG has a `viewBox`, `role="img"`, a `<title>` and a `<desc>` tied together by `aria-labelledby`, so it works well with a screen reader.
 - Every SVG has the theme block described in the "Light and dark theme" section, with the brand colors preserved in both modes.
+- The `mascot-v2/` files skip that theme block on purpose: the sticker outline already works on both backgrounds, and `vudu-dark.svg` and `banner-dark.svg` cover the very dark case.
 - The internal gradient identifiers and the animation classes are prefixed per file, so it is safe to paste several SVGs inline on the same page without an `id` conflict.
-- Only `mascot/vudu-loading.svg` has animation. It is pure CSS inside the file itself, and it stops on its own when the system asks for less motion.
+- Only `mascot/vudu-loading.svg` and `mascot-v2/vudu-loading.svg` have animation. It is pure CSS inside the file itself, and it stops on its own when the system asks for less motion.
 - The files are UTF-8, with an explicit XML declaration.
