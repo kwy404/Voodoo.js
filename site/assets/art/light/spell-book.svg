@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 270" role="img" aria-label="An open spell book whose left page holds HTML with Voodoo directives" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<title>An open spell book whose left page holds HTML with Voodoo directives</title>
+<path d="M38 74V224C96 216 148 220 180 236C212 220 264 216 322 224V74" stroke="#2A2440" stroke-width="2.5"/>
+<path d="M30 82V232C92 224 146 228 180 244C214 228 268 224 330 232V82" stroke="#8C82AE" stroke-width="2" opacity=".7"/>
+<path d="M180 76C150 60 100 56 48 64V214C100 206 150 210 180 226Z" fill="#FFFFFF" stroke="#2A2440" stroke-width="2.5"/>
+<path d="M180 76C210 60 260 56 312 64V214C260 206 210 210 180 226Z" fill="#FFFFFF" stroke="#2A2440" stroke-width="2.5"/>
+<path d="M180 76V226" stroke="#2A2440" stroke-width="2"/>
+<path d="M58 222C104 214 150 218 176 230M184 230C210 218 256 214 302 222" stroke="#8C82AE" stroke-width="1.5"/>
+<text x="58" y="104" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#6D3BF5">&lt;</tspan><tspan fill="#2A2440">div </tspan><tspan fill="#E58A1F">v-data</tspan><tspan fill="#8C82AE">="{n:0}"&gt;</tspan></text>
+<text x="58" y="121" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#6D3BF5">  &lt;</tspan><tspan fill="#2A2440">button </tspan><tspan fill="#E58A1F">@click</tspan><tspan fill="#8C82AE">="n++"&gt;</tspan></text>
+<text x="58" y="138" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#2A2440">    cast</tspan></text>
+<text x="58" y="155" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#6D3BF5">  &lt;/</tspan><tspan fill="#2A2440">button&gt;</tspan></text>
+<text x="58" y="172" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#6D3BF5">  &lt;</tspan><tspan fill="#2A2440">p&gt;</tspan><tspan fill="#E0367A">{ n }</tspan><tspan fill="#6D3BF5">&lt;/</tspan><tspan fill="#2A2440">p&gt;</tspan></text>
+<text x="58" y="189" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.2" xml:space="preserve"><tspan fill="#6D3BF5">&lt;/</tspan><tspan fill="#2A2440">div&gt;</tspan></text>
+<circle cx="246" cy="132" r="38" stroke="#6D3BF5" stroke-width="2"/>
+<circle cx="246" cy="132" r="30" stroke="#9B7BFF" stroke-width="1.5" stroke-dasharray="2 5"/>
+<path d="M238 116C232 116 232 120 232 125V128C232 130 230 132 227 132C230 132 232 134 232 136V139C232 144 232 148 238 148" stroke="#6D3BF5" stroke-width="3"/>
+<path d="M254 116C260 116 260 120 260 125V128C260 130 262 132 265 132C262 132 260 134 260 136V139C260 144 260 148 254 148" stroke="#6D3BF5" stroke-width="3"/>
+<path d="M212 186H280M220 198H272" stroke="#8C82AE" stroke-width="2"/>
+<path d="M276 220V252L284 244L292 252V218" fill="#FFF4E6" stroke="#E58A1F" stroke-width="2"/>
+<path d="M180 70C176 52 186 40 182 24" stroke="#E58A1F" stroke-width="2" stroke-dasharray="1 7"/>
+<path d="M182 9C183.008 15.48 184.52 16.992 191 18C184.52 19.008 183.008 20.52 182 27C180.992 20.52 179.48 19.008 173 18C179.48 16.992 180.992 15.48 182 9Z" fill="none" stroke="#E58A1F" stroke-width="2" stroke-linejoin="round"/>
+<path d="M156 34C156.672 38.32 157.68 39.328 162 40C157.68 40.672 156.672 41.68 156 46C155.328 41.68 154.32 40.672 150 40C154.32 39.328 155.328 38.32 156 34Z" fill="none" stroke="#9B7BFF" stroke-width="2" stroke-linejoin="round"/>
+<path d="M210 31C210.56 34.6 211.4 35.44 215 36C211.4 36.56 210.56 37.4 210 41C209.44 37.4 208.6 36.56 205 36C208.6 35.44 209.44 34.6 210 31Z" fill="none" stroke="#FFB35C" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="164" cy="22" r="2" fill="#E0367A"/>
+<circle cx="200" cy="54" r="1.8" fill="#E58A1F"/>
+</svg>

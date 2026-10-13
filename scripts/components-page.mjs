@@ -13,6 +13,7 @@
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
+import { header, footer } from './site-chrome.mjs';
 
 const SOURCE = 'packages/voodoojs/src/ui/components.ts';
 const TARGET = 'site/components.html';
@@ -133,7 +134,7 @@ const DEMOS = {
   'v-skeleton': '<v-skeleton lines="3"></v-skeleton>',
   'v-divider': '<v-divider></v-divider>',
   'v-rating': '<v-rating value="4"></v-rating>',
-  'v-stat': '<v-stat label="Revenue" value="R$ 12.480" trend="up"></v-stat>',
+  'v-stat': '<v-stat label="Revenue" value="12,480" trend="up"></v-stat>',
   'v-table':
     '<div v-data="{\n' +
     '  cols: [\'Name\', \'Role\'],\n' +
@@ -205,44 +206,72 @@ if (ungrouped.length) {
 const escape = (text) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+const icon = (name, cls = 'vd-icon') =>
+  `<svg class="${cls}" aria-hidden="true"><use href="assets/art/icons.svg#i-${name}"></use></svg>`;
+
+/** One component: its tag, the live demo, the markup in a code frame, its props. */
 function card(name) {
   const meta = byName.get(name);
   if (!meta) return '';
   const demo = DEMOS[name] || `<${name}></${name}>`;
   const props = meta.props.length
-    ? meta.props.map((p) => `<code class="prop">${p}</code>`).join(' ')
-    : '<span class="none">no props</span>';
+    ? meta.props.map((p) => `<span class="chip chip-sm chip-outline font-mono">${p}</span>`).join(' ')
+    : '<span class="text-sm text-muted-foreground">no props</span>';
 
   return `
-          <article class="comp" id="${name}">
-            <header>
-              <h3><code>&lt;${name}&gt;</code></h3>
-              ${meta.slots ? '<span class="slot">accepts content</span>' : ''}
-            </header>
+            <article class="card card-bordered vd-comp" id="${name}">
+              <div class="card-body gap-4">
+                <header class="flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">&lt;${name}&gt;</code></h3>
+                  ${meta.slots ? '<span class="badge badge-soft badge-accent">accepts content</span>' : ''}
+                </header>
 
-            <div class="live">
+                <div class="vd-comp-live">
 ${demo
   .split('\n')
-  .map((l) => '              ' + l)
+  .map((l) => '                  ' + l)
   .join('\n')}
-            </div>
+                </div>
 
-            <pre v-ignore><code>${escape(demo)}</code></pre>
+                <figure class="vframe">
+                  <figcaption class="vframe-bar">
+                    <span class="vframe-tab" data-lang="html">${icon('file')}${name}.html</span>
+                    <button type="button" class="vframe-copy" v-copy-from="#code-${name}" aria-label="Copy the markup of ${name}">${icon('copy')}</button>
+                  </figcaption>
+<pre data-lang="html" v-ignore><code id="code-${name}">${escape(demo)}</code></pre>
+                </figure>
 
-            <p class="props">${props}</p>
-          </article>`;
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Props</p>
+                  <p class="mt-2 flex flex-wrap gap-1">${props}</p>
+                </div>
+              </div>
+            </article>`;
 }
+
+const slug = (title) => title.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
 
 const sections = GROUPS.map(
   (g) => `
-        <section>
-          <div class="sec-head">
-            <h2>${g.title}</h2>
-            <span>${g.note}</span>
-          </div>
-          <div class="grid">${g.names.map(card).join('')}
-          </div>
-        </section>`
+          <section id="${slug(g.title)}" class="vd-comp" aria-labelledby="${slug(g.title)}-title">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+              <h2 id="${slug(g.title)}-title" class="text-2xl font-bold tracking-tight">${g.title}</h2>
+              <span class="text-sm text-muted-foreground">${g.note}</span>
+            </div>
+            <div class="mt-6 grid gap-5 xl:grid-cols-2">${g.names.map(card).join('')}
+            </div>
+          </section>`
+).join('\n');
+
+const index = GROUPS.map(
+  (g) => `
+                <li>
+                  <a class="block py-1 text-sm font-semibold text-foreground hover:text-primary" href="#${slug(g.title)}">${g.title}</a>
+                  <ul class="mb-3 border-l border-border pl-3">${g.names
+                    .filter((n) => byName.has(n))
+                    .map((n) => `<li><a class="block py-0.5 font-mono text-xs text-muted-foreground hover:text-primary" href="#${n}">${n}</a></li>`)
+                    .join('')}</ul>
+                </li>`
 ).join('');
 
 const html = `<!doctype html>
@@ -251,270 +280,134 @@ const html = `<!doctype html>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Components — Voodoo.js</title>
+    <!-- The visitor's theme, before the first paint. Same key and values as
+         V.theme (voodoo:theme: light, dark or system, raw or as JSON). This
+         file is generated by scripts/components-page.mjs: edit that instead. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('voodoo:theme');
+          if (t && t.charAt(0) === '"') t = JSON.parse(t);
+          var r = document.documentElement;
+          if (t === 'light' || t === 'dark') {
+            r.setAttribute('data-theme', t);
+            r.style.colorScheme = t;
+          } else if (t === 'system') {
+            r.removeAttribute('data-theme');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <title>Components: Voodoo.js</title>
     <meta
       name="description"
       content="The ${components.length} ready-made components that ship with Voodoo.js, each one running on this page with the markup that produced it."
     />
+    <meta name="theme-color" content="#6d3bf5" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/components.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Components: Voodoo.js" />
+    <meta property="og:description" content="The ${components.length} ready-made components that ship with Voodoo.js, each one running on this page with the markup that produced it." />
+    <meta property="og:url" content="https://kwy404.github.io/Voodoo.js/components.html" />
+    <meta property="og:image" content="https://kwy404.github.io/Voodoo.js/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css" />
+    <link rel="stylesheet" href="assets/site.css" />
     <style>
-      :root {
-        --ink: #16141c;
-        --ink-soft: #57526a;
-        --ink-faint: #8b8598;
-        --bg: #ffffff;
-        --bg-soft: #faf9fb;
-        --bg-code: #f6f5f8;
-        --line: #e7e4ec;
-        --accent: #5b2ee5;
-        --accent-soft: #f1ecfe;
-        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
-          sans-serif;
-        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-        color-scheme: light;
+      /* The stage each component runs on: a quiet dotted field, so a component
+         with no surface of its own (a divider, a spinner) still reads. */
+      .vd-comp-live {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        min-height: 7rem;
+        padding: 1.25rem;
+        border: 1px dashed var(--border);
+        border-radius: var(--m-radius-lg);
+        background:
+          radial-gradient(color-mix(in oklab, var(--foreground) 9%, transparent) 1px, transparent 1.2px) 0 0 / 16px 16px,
+          var(--surface-2);
       }
-
-      @media (prefers-color-scheme: dark) {
-        html:root:not([data-theme='light']) {
-          --ink: #f2f0f6;
-          --ink-soft: #b3adc2;
-          --ink-faint: #837d93;
-          --bg: #131118;
-          --bg-soft: #191722;
-          --bg-code: #1d1a26;
-          --line: #2b2735;
-          --accent: #a688ff;
-          --accent-soft: #221c3a;
-          color-scheme: dark;
-        }
+      .vd-comp-live > * {
+        flex: 1 1 auto;
+        min-width: 0;
       }
-
-      html:root[data-theme='dark'] {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --bg-code: #1d1a26;
-        --line: #2b2735;
-        --accent: #a688ff;
-        --accent-soft: #221c3a;
-        color-scheme: dark;
+      .vd-comp-live > :is(v-button, v-icon-button, v-tooltip-button, v-badge, v-tag, v-avatar, v-spinner, v-label) {
+        flex: 0 0 auto;
       }
-
-      /* The library paints its own widgets from these. Without the mapping the
-         cards come out in the library's default palette while the page is in
-         this one, which is how dark controls end up on white paper. */
-      html:root {
-        --v-surface: var(--bg) !important;
-        --v-surface-2: var(--bg-soft) !important;
-        --v-border: var(--line) !important;
-        --v-text: var(--ink) !important;
-        --v-text-muted: var(--ink-faint) !important;
-        --v-primary: var(--accent) !important;
+      .vd-dname {
+        display: inline-block;
+        padding: 0.15rem 0.6rem;
+        border-radius: var(--m-radius-md);
+        background: color-mix(in oklab, var(--primary) 12%, transparent);
+        color: var(--primary);
+        font-family: var(--font-mono);
+        font-size: 0.875rem;
       }
-
-      * { box-sizing: border-box; }
-
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: var(--font);
-        font-size: 16px;
-        line-height: 1.65;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      h1, h2, h3 { margin: 0; line-height: 1.15; letter-spacing: -0.02em; font-weight: 640; }
-      p { margin: 0; }
-      a { color: inherit; }
-
-      .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
-
-      .top {
-        position: sticky; top: 0; z-index: 20;
-        background: var(--bg); border-bottom: 1px solid var(--line);
-      }
-      .top-in { display: flex; align-items: center; gap: 18px; height: 60px; }
-      .brand {
-        display: flex; align-items: center; gap: 9px; font-weight: 680;
-        font-size: 16.5px; letter-spacing: -0.02em; text-decoration: none; white-space: nowrap;
-      }
-      .brand svg { width: 24px; height: 24px; flex: none; }
-      .top nav { display: flex; gap: 4px; margin-left: 6px; }
-      .top nav a {
-        padding: 6px 10px; border-radius: 7px; font-size: 14.5px;
-        color: var(--ink-soft); text-decoration: none;
-      }
-      .top nav a:hover, .top nav a[aria-current='page'] { color: var(--ink); background: var(--bg-soft); }
-      .top-end { margin-left: auto; }
-      .icon-btn {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 8px;
-        background: transparent; color: var(--ink-soft); cursor: pointer;
-      }
-      .icon-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
-
-      header.page { padding: 58px 0 34px; }
-      h1 { font-size: clamp(31px, 5vw, 44px); letter-spacing: -0.035em; font-weight: 700; }
-      .lead { margin-top: 15px; font-size: 18px; color: var(--ink-soft); max-width: 38em; }
-
-      .note {
-        margin-top: 20px; padding: 13px 16px; border: 1px solid var(--line);
-        border-left: 2px solid var(--accent); border-radius: 0 9px 9px 0;
-        background: var(--bg-soft); font-size: 14.5px; color: var(--ink-soft); max-width: 62em;
-      }
-      .note code { font-family: var(--mono); font-size: 13px; }
-
-      section { padding: 30px 0 6px; }
-      .sec-head {
-        display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
-        border-top: 1px solid var(--line); padding-top: 28px;
-      }
-      h2 { font-size: 20px; }
-      .sec-head span { font-size: 14px; color: var(--ink-faint); }
-
-      .grid {
-        margin-top: 20px; display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px;
-      }
-
-      /* No overflow:hidden here. A select, a menu or a tooltip opens a panel
-         that leaves the card, and clipping it cut the options off mid-list. The
-         children that genuinely need clipping do it themselves. */
-      .comp { border: 1px solid var(--line); border-radius: 11px; }
-      .comp header { border-radius: 11px 11px 0 0; }
-      .comp pre { border-radius: 0; }
-      .comp header {
-        display: flex; align-items: center; gap: 9px; padding: 10px 14px;
-        border-bottom: 1px solid var(--line); background: var(--bg-soft);
-      }
-      .comp h3 { font-size: 14px; font-weight: 600; }
-      .comp h3 code { font-family: var(--mono); font-size: 13px; color: var(--accent); }
-      .slot {
-        margin-left: auto; font-size: 11px; color: var(--ink-faint);
-        border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; background: var(--bg);
-      }
-
-      .live {
-        padding: 18px 14px; display: flex; flex-wrap: wrap; gap: 8px;
-        align-items: center; min-height: 74px; position: relative; z-index: 1;
-      }
-      .comp:focus-within { position: relative; z-index: 5; }
-      .live > * { max-width: 100%; }
-
-      .comp pre {
-        margin: 0; padding: 12px 14px; background: var(--bg-code);
-        border-top: 1px solid var(--line); overflow-x: auto;
-      }
-      .comp pre code { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; }
-
-      .props {
-        padding: 10px 14px; border-top: 1px solid var(--line);
-        display: flex; flex-wrap: wrap; gap: 5px; font-size: 12px;
-      }
-      .prop {
-        font-family: var(--mono); font-size: 11.5px; padding: 1px 6px;
-        border-radius: 5px; background: var(--accent-soft); color: var(--accent);
-      }
-      .none { color: var(--ink-faint); }
-
-      footer {
-        margin-top: 48px; border-top: 1px solid var(--line); padding: 30px 0;
-        font-size: 14px; color: var(--ink-soft);
-      }
-      .foot-in { display: flex; gap: 18px; flex-wrap: wrap; }
-
-      .skip { position: absolute; left: -9999px; }
-      .skip:focus {
-        left: 12px; top: 12px; z-index: 60; background: var(--bg);
-        padding: 9px 14px; border: 1px solid var(--accent); border-radius: 8px;
-      }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-      @media (max-width: 700px) {
-        .top nav { display: none; }
-        header.page { padding: 38px 0 24px; }
-        .wrap { padding: 0 18px; }
-        .grid { grid-template-columns: minmax(0, 1fr); }
+      .vd-comp {
+        scroll-margin-top: 5.5rem;
       }
     </style>
   </head>
 
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <div v-data>
+<!-- chrome:header -->
+${header({ current: 'components' })}
+<!-- /chrome:header -->
 
-    <div class="top">
-      <div class="wrap top-in">
-        <a class="brand" href="./">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
-          </svg>
-          Voodoo.js
-        </a>
+      <main id="main">
+        <section class="vd-aura relative overflow-hidden border-b border-border">
+          <div class="vd-runes absolute inset-0 -z-10" aria-hidden="true"></div>
+          <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-8">
+            <div class="lg:col-span-8">
+              <p class="vd-kicker">Built-in components</p>
+              <h1 class="mt-3 text-4xl font-bold tracking-tight text-balance md:text-5xl">${components.length} components, already in the box</h1>
+              <p class="mt-4 max-w-2xl text-lg text-muted-foreground text-pretty">
+                No install, no import, no registration. They are custom elements the library defines
+                when it starts, so writing the tag is the whole usage.
+              </p>
+              <p class="mt-4 max-w-2xl text-sm text-muted-foreground text-pretty">
+                Every component below is <strong class="text-foreground">running on this page</strong>,
+                rendered by the same <code class="font-mono">voodoo.full.min.js</code> the install guide
+                hands you. The code under each one is the markup that produced it, and the props are read
+                out of the source rather than typed by hand.
+              </p>
+            </div>
+            <div class="hidden justify-center lg:col-span-4 lg:flex">
+              <img class="when-light w-full max-w-xs" src="assets/art/light/rune-circle.svg" alt="A ring of runes around a pair of curly braces" width="300" height="300" />
+              <img class="when-dark w-full max-w-xs" src="assets/art/dark/rune-circle.svg" alt="A ring of runes around a pair of curly braces" width="300" height="300" />
+            </div>
+          </div>
+        </section>
 
-        <nav aria-label="Main">
-          <a href="./">Home</a>
-          <a href="docs/">Docs</a>
-          <a href="playground.html">Playground</a>
-          <a href="components.html" aria-current="page">Components</a>
-          <a href="examples/">Examples</a>
-        </nav>
-
-        <div class="top-end">
-          <button class="icon-btn" v-theme-toggle aria-label="Toggle dark mode">
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
+        <div class="mx-auto grid max-w-7xl gap-10 px-4 py-12 lg:grid-cols-12 lg:px-8">
+          <nav class="hidden lg:col-span-3 lg:block" aria-label="Components on this page">
+            <div class="sticky top-24">
+              <p class="toc-title">On this page</p>
+              <ul class="mt-3">${index}
+              </ul>
+            </div>
+          </nav>
+          <div class="space-y-16 lg:col-span-9">
+${sections}
+          </div>
         </div>
-      </div>
+      </main>
+
+<!-- chrome:footer -->
+${footer()}
+<!-- /chrome:footer -->
     </div>
 
-    <main id="main">
-      <div class="wrap">
-        <header class="page">
-          <h1>${components.length} components, already in the box</h1>
-          <p class="lead">
-            No install, no import, no registration. They are custom elements the library defines
-            when it starts, so writing the tag is the whole usage.
-          </p>
-          <p class="note">
-            Every component below is <strong>running on this page</strong>, rendered by the same
-            <code>voodoo.full.min.js</code> the install section hands you. The code under each one
-            is the markup that produced the thing above it, and the chips at the bottom are that
-            component's real props, read out of the source rather than typed by hand.
-          </p>
-        </header>
-${sections}
-      </div>
-    </main>
-
-    <footer>
-      <div class="wrap foot-in">
-        <span>MIT licensed</span>
-        <a href="./">Home</a>
-        <a href="docs/">Docs</a>
-        <a href="playground.html">Playground</a>
-        <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
-        <span style="margin-left: auto">Built with Voodoo.js 1.0.0</span>
-      </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+    <script src="voodoo.full.min.js" defer></script>
   </body>
 </html>
 `;

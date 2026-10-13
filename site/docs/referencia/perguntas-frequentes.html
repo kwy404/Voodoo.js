@@ -10,7 +10,12 @@
 <meta name="description" content="The questions that come up most often: which file to pick, supported browsers, CSP, attributes that disappear, day-to-day use, common errors and how to contribute.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/perguntas-frequentes">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -104,14 +109,14 @@
 
 <h3 id="ao-carregar">How do I do something as soon as the page loads?</h3>
 
-<pre data-lang="html"><code>&lt;div v-data="{ data: null }" v-init="load()"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ data: null }"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-init</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"load()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>Or <code>V.ready(fn)</code> in JavaScript, or the <code>voodoo:ready</code> event.</p>
 
 <h3 id="elemento">How do I access an element?</h3>
 
-<pre data-lang="html"><code>&lt;input v-ref="search"&gt;
-&lt;button @click="$refs.search.focus()"&gt;Focus&lt;/button&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-ref</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"search"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$refs.search.focus()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Focus</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   Inside handlers, <code>$el</code> is the element that declared the directive.
@@ -141,13 +146,13 @@
 
 <h3 id="debounce">How do I debounce with a delay other than the default?</h3>
 
-<pre data-lang="html"><code>&lt;input v-model.debounce="search" v-debounce="600"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model.debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"search"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"600"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
-<pre data-lang="js"><code>V.data({ search: V.debounce((t) =&gt; load(t), 600) });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">search:</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">((</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> load</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">), </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">600</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) });</span></span></code></pre>
 
 <h3 id="mascara-limpa">How do I send the mask's clean value to the server?</h3>
 
-<pre data-lang="html"><code>&lt;input v-mask.unmask="cpf" v-model="form.cpf" v-cpf&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-mask.unmask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"cpf"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"form.cpf"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-cpf</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>The screen shows <code>123.456.789-01</code> and the state holds <code>12345678901</code>.</p>
 
@@ -167,11 +172,11 @@
   order.
 </p>
 
-<h3 id="css-frameworks">Can I use it together with Bootstrap, Tailwind or my own CSS?</h3>
+<h3 id="css-frameworks">Can I use it together with a CSS framework or my own CSS?</h3>
 
 <p>
   Yes. Voodoo does not impose a style. The interface directives inject only the minimum, and you
-  can turn that off with <code>data-no-styles</code>. For Tailwind, point the theme colours at the
+  can turn that off with <code>data-no-styles</code>. With a utility CSS framework, point the theme colours at the
   <code>--v-*</code> variables and the two start moving together.
 </p>
 
@@ -186,10 +191,10 @@
 
 <p>The core works in jsdom. The project's pattern is to mount a snippet, walk it and check:</p>
 
-<pre data-lang="js"><code>document.body.innerHTML = '&lt;div v-data="{ n: 0 }"&gt;&lt;b v-text="n"&gt;&lt;/b&gt;&lt;/div&gt;';
-V.start();
-await V.nextTick();
-expect(document.querySelector('b').textContent).toBe('0');</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">body</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">innerHTML</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'&#x3C;div v-data="{ n: 0 }">&#x3C;b v-text="n">&#x3C;/b>&#x3C;/div>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">nextTick</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">expect</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">querySelector</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'b'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">).</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">textContent</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">).</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">toBe</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'0'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p><code>V.flushSync()</code> applies everything pending without waiting for the microtask.</p>
 
@@ -240,11 +245,11 @@ expect(document.querySelector('b').textContent).toBe('0');</code></pre>
 
 <h3 id="contribuir">How do I contribute code?</h3>
 
-<pre data-lang="bash"><code>npm install
-npm test
-npm run typecheck
-npm run build
-npm run size</code></pre>
+<pre data-lang="bash" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> install</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> test</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> run</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> typecheck</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> run</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> build</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> run</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> size</span></span></code></pre>
 
 <p>
   The repository's
@@ -254,6 +259,6 @@ npm run size</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

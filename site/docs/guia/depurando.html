@@ -10,186 +10,12 @@
 <meta name="description" content="The most frequent symptoms and what each one means: nothing happens, the CSS stopped working, the value does not react, the confirmation shows up twice, and the known details waiting on a fix.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/depurando">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -199,7 +25,7 @@ html:root {
 <h1>Debugging common problems</h1>
 <p class="doc-resumo">
   This page is a list of symptoms. Each one comes with what it usually means and what to do about
-  it — most are not bugs, but a design decision meeting somebody who did not know about it yet.
+  it. Most are not bugs, but a design decision meeting somebody who did not know about it yet.
 </p>
 
 <h2 id="nada-acontece">Nothing happens, the HTML shows up raw</h2>
@@ -217,8 +43,8 @@ html:root {
 
 <h2 id="pisca">The content flashes before rendering</h2>
 
-<pre data-lang="html"><code>&lt;style&gt;[v-cloak] { display: none !important; }&lt;/style&gt;
-&lt;div v-cloak v-data="{}"&gt;...&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">style</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">v-cloak</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">] { </span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">display</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#0451A5;--shiki-dark:#CE9178">none</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> !important</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">; }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">style</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-cloak</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{}"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="css-parou">My CSS stopped working</h2>
 
@@ -231,8 +57,8 @@ html:root {
 
 <p>
   Use classes or <code>data-*</code>. If you really do need the old behaviour,
-  <code>V.config.cleanAttributes = false</code> — or <code>data-keep-attributes</code> on the
-  script tag — keeps everything in the HTML.
+  <code>V.config.cleanAttributes = false</code> (or <code>data-keep-attributes</code> on the
+  script tag) keeps everything in the HTML.
 </p>
 
 <h2 id="nao-reage">The value changes but the screen does not</h2>
@@ -285,11 +111,11 @@ html:root {
 <p>
   That is on purpose: only a closed list of globals is exposed, and it is what makes running under
   a restrictive Content Security Policy possible. To reach the DOM and services, use the magic
-  variables — <code>$el</code>, <code>$refs</code>, <code>$http</code>, <code>$storage</code>,
+  variables: <code>$el</code>, <code>$refs</code>, <code>$http</code>, <code>$storage</code>,
   <code>$clipboard</code>. To expose something of your own:
 </p>
 
-<pre data-lang="js"><code>V.config.globals.myFunction = myFunction;</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">myFunction</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">myFunction</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span></code></pre>
 
 <p>
   The <code>V</code> object is not available inside expressions either, for the same reason.
@@ -302,9 +128,9 @@ html:root {
   <code>v-data</code>, of a store, or of the root scope:
 </p>
 
-<pre data-lang="js"><code>V.data({ clear() { this.items = []; this.total = 0; } });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">clear</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = []; </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">total</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">; } });</span></span></code></pre>
 
-<pre data-lang="html"><code>&lt;button @click="clear()"&gt;Clear&lt;/button&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"clear()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Clear</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="componente-escopo">The component does not see the v-data around it</h2>
 
@@ -339,7 +165,7 @@ html:root {
 
 <p>
   The second: the text between the braces is not an expression the library can read. When parsing
-  fails, the stretch stays as it is, on purpose — it is what stops a lone <code>{</code> in a
+  fails, the stretch stays as it is, on purpose: it is what stops a lone <code>{</code> in a
   paragraph from becoming an error on screen. An object inside the expression
   (<code>{ $t('items', { n: total }) }</code>) and a multi-line expression both work; what does not
   work is what would not work in an attribute either, such as <code>function</code> and
@@ -379,21 +205,21 @@ html:root {
 <p>
   When the symptom is not on this list, the
   <a href="inspetor.html">reactivity inspector</a> page shows how to watch the scopes, the effects
-  and the requests happening — and how to install a global error handler for what slips through in
+  and the requests happening, and how to install a global error handler for what slips through in
   production.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++; $log('n is now', n, 'scope:', $data)"&gt;
-    Add and log to the console
-  &lt;/button&gt;
-  &lt;p&gt;{ n }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ n: 0 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"n++; $log('n is now', n, 'scope:', $data)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    Add and log to the console</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ n }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

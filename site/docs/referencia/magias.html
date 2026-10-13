@@ -10,7 +10,12 @@
 <meta name="description" content="The 40 magic variables available in any expression: context, state and services, environment, flow, the ones that only ship in the full build, and the local ones that exist in certain places only.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/magias">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -25,13 +30,13 @@
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{}"&gt;
-  &lt;button @click="$toast.success('Saved!')"&gt;Notify&lt;/button&gt;
-  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copy the coupon&lt;/button&gt;
-  &lt;button @click="$refs.search.focus()"&gt;Focus&lt;/button&gt;
-  &lt;input v-ref="search" placeholder="I am the one getting the focus"&gt;
-  &lt;p&gt;Screen width: { $screen.width }px · Online: { $network.online }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{}"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$toast.success('Saved!')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Notify</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$clipboard.copy('PROMO10')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Copy the coupon</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$refs.search.focus()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Focus</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-ref</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"search"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> placeholder</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"I am the one getting the focus"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Screen width: { $screen.width }px · Online: { $network.online }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <h2 id="contexto">Context</h2>
@@ -142,9 +147,9 @@
 
 <h2 id="proprias">Writing your own</h2>
 
-<pre data-lang="js"><code>V.magic('$user', () =&gt; loggedUser);
-V.magic('$format', () =&gt; (value) =&gt; V.formatCurrency(value));
-V.magic('$height', (scope) =&gt; scope.el.offsetHeight);</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">magic</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'$user'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> loggedUser</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">magic</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'$format'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">formatCurrency</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">magic</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'$height'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">scope</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> scope</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">offsetHeight</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p>
   The getter receives the active scope, so a magic can depend on where it was used. The dollar sign
@@ -157,6 +162,6 @@ V.magic('$height', (scope) =&gt; scope.el.offsetHeight);</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

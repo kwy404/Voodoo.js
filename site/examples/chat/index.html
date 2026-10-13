@@ -161,7 +161,7 @@
   .ch-item.is-ativa { background: color-mix(in srgb, var(--v-primary) 16%, transparent); }
 
   .ch-avatar-caixa { position: relative; flex: none; }
-  .ch-avatar { font-size: 20px; }
+  .ch-avatar { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
   .ch-ponto {
     position: absolute;
     right: -1px;
@@ -425,7 +425,7 @@
     <aside class="ch-lateral">
       <div class="ch-lateral-topo">
         <span class="ch-marca">
-          <span class="ch-marca-icone" aria-hidden="true">💬</span>
+          <span class="ch-marca-icone" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></span>
           Voodoo Chat
         </span>
         <span class="v-badge v-badge--accent v-badge--solid" v-show="totalNaoLidas > 0">{ totalNaoLidas }</span>
@@ -433,14 +433,14 @@
         <button type="button" class="v-btn v-btn--ghost v-btn--sm v-btn--icon"
                 v-click="alternarTema"
                 :aria-label="temaEscuro ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'">
-          <span aria-hidden="true">{ temaEscuro ? '☀️' : '🌙' }</span>
+          <span aria-hidden="true">{ temaEscuro ? '☼' : '☾' }</span>
         </button>
       </div>
 
       <div class="ch-busca">
         <label class="v-sr-only" for="ch-busca-campo">Buscar conversas</label>
         <div class="ch-busca-campo">
-          <span class="ch-busca-icone" aria-hidden="true">🔍</span>
+          <span class="ch-busca-icone" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></span>
           <input id="ch-busca-campo" class="v-input" type="search" autocomplete="off"
                  placeholder="Buscar conversas" v-model="busca">
           <button type="button" class="ch-busca-limpar" v-show="busca.length > 0"
@@ -531,16 +531,16 @@
           <button type="button" class="v-btn v-btn--ghost v-btn--icon"
                   v-click="alternarEmojis"
                   :aria-expanded="emojisAberto ? 'true' : 'false'"
-                  aria-label="Abrir o seletor de emojis">
-            <span aria-hidden="true">😊</span>
+                  aria-label="Abrir o seletor de emoticons">
+            <span aria-hidden="true">:)</span>
           </button>
 
           <div class="ch-emoji-painel" v-show="emojisAberto" v-transition="scale">
-            <p class="ch-emoji-titulo">Emojis usados com frequencia</p>
+            <p class="ch-emoji-titulo">Emoticons usados com frequencia</p>
             <div class="ch-emoji-grade">
               <button type="button" class="ch-emoji-botao"
                       v-for="e in emojis" :key="e"
-                      v-click="inserirEmoji(e)" :aria-label="'Inserir o emoji ' + e">
+                      v-click="inserirEmoji(e)" :aria-label="'Inserir o emoticon ' + e">
                 <span aria-hidden="true">{ e }</span>
               </button>
             </div>
@@ -581,22 +581,22 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       id: 'ana',
       nome: 'Ana Beatriz',
-      avatar: '👩🏻‍💻',
+      avatar: 'AB',
       online: true,
       naoLidas: 0,
       digitando: false,
       horario: '09:41',
       resumo: 'Manda o link do repositorio depois',
       repertorio: [
-        'Boa, ja anotei aqui 👍',
+        'Boa, ja anotei aqui',
         'Perfeito, vou olhar ainda hoje.',
-        'Manda o link do repositorio depois 🙂',
+        'Manda o link do repositorio depois',
         'Concordo, fica bem mais simples assim.',
         'Consigo revisar de tarde, pode ser?',
-        'Show, deixa comigo entao 🚀'
+        'Show, deixa comigo entao'
       ],
       mensagens: [
-        msg('contato', 'Bom dia! Conseguiu terminar a tela de listagem? 🙂', '09:32', 'lido'),
+        msg('contato', 'Bom dia! Conseguiu terminar a tela de listagem?', '09:32', 'lido'),
         msg('eu', 'Bom dia! Terminei sim, faltou so o estado vazio.', '09:36', 'lido'),
         msg('contato', 'Manda o link do repositorio depois', '09:41', 'lido')
       ]
@@ -604,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       id: 'carlos',
       nome: 'Carlos Menezes',
-      avatar: '🧔🏽',
+      avatar: 'CM',
       online: true,
       naoLidas: 2,
       digitando: false,
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
       resumo: 'A reuniao mudou para as 15h',
       repertorio: [
         'Combinado, te aviso quando confirmar.',
-        'A sala grande ja esta reservada ✅',
+        'A sala grande ja esta reservada',
         'Vou levar os numeros do trimestre.',
         'Beleza, marquei na agenda.',
         'Prefere chamada de video ou presencial?'
@@ -625,42 +625,42 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       id: 'juliana',
       nome: 'Juliana Prado',
-      avatar: '👩🏽‍🎨',
+      avatar: 'JP',
       online: false,
       naoLidas: 0,
       digitando: false,
       horario: '08:55',
-      resumo: 'Adorei a paleta nova 💜',
+      resumo: 'Adorei a paleta nova',
       repertorio: [
-        'Adorei a paleta nova 💜',
+        'Adorei a paleta nova',
         'Vou ajustar o espacamento dos cartoes.',
-        'Ficou bem mais legivel no tema escuro 🌙',
+        'Ficou bem mais legivel no tema escuro',
         'Te mando o arquivo do design ate amanha.',
         'Posso testar com um contraste maior?'
       ],
       mensagens: [
         msg('eu', 'Subi a versao com os tokens de cor novos.', '08:47', 'lido'),
-        msg('contato', 'Adorei a paleta nova 💜', '08:55', 'lido')
+        msg('contato', 'Adorei a paleta nova', '08:55', 'lido')
       ]
     },
     {
       id: 'time',
       nome: 'Time de Produto',
-      avatar: '🛠️',
+      avatar: 'TP',
       online: true,
       naoLidas: 5,
       digitando: false,
       horario: '08:30',
       resumo: 'Rafael: fecho a sprint hoje',
       repertorio: [
-        'Rafael: fecho a sprint hoje ✅',
+        'Rafael: fecho a sprint hoje',
         'Marina: subi a correcao em producao.',
         'Rafael: alguem revisa o meu pull request?',
-        'Marina: a metrica de retencao subiu 4% 📈',
+        'Marina: a metrica de retencao subiu 4%',
         'Rafael: bora alinhar as 16h?'
       ],
       mensagens: [
-        msg('contato', 'Marina: pessoal, o teste A entrou no ar 🎉', '08:12', 'lido'),
+        msg('contato', 'Marina: pessoal, o teste A entrou no ar', '08:12', 'lido'),
         msg('eu', 'Boa! Vou acompanhar os numeros durante o dia.', '08:20', 'lido'),
         msg('contato', 'Rafael: fecho a sprint hoje', '08:30', 'lido')
       ]
@@ -668,14 +668,14 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       id: 'suporte',
       nome: 'Suporte Voodoo',
-      avatar: '🎧',
+      avatar: 'SV',
       online: false,
       naoLidas: 0,
       digitando: false,
       horario: 'Ontem',
       resumo: 'Seu chamado foi encerrado',
       repertorio: [
-        'Registrei o seu pedido, obrigado! 🙏',
+        'Registrei o seu pedido, obrigado!',
         'Seu chamado foi encerrado com sucesso.',
         'Precisando de algo mais, e so chamar.',
         'Vou encaminhar para o time responsavel.'
@@ -688,15 +688,15 @@ document.addEventListener('DOMContentLoaded', function () {
     {
       id: 'familia',
       nome: 'Familia',
-      avatar: '🏡',
+      avatar: 'FA',
       online: true,
       naoLidas: 1,
       digitando: false,
       horario: 'Ontem',
       resumo: 'Mae: almoco no domingo?',
       repertorio: [
-        'Mae: almoco no domingo? 🍲',
-        'Pai: comprei o pao na volta 🥖',
+        'Mae: almoco no domingo?',
+        'Pai: comprei o pao na volta',
         'Mae: leva o bolo de fuba, todo mundo gosta.',
         'Pai: chegamos por volta do meio dia.'
       ],
@@ -707,10 +707,8 @@ document.addEventListener('DOMContentLoaded', function () {
   ];
 
   var EMOJIS = [
-    '😀', '😁', '😂', '🥰', '😍', '😅', '🤔', '😎',
-    '😴', '🤯', '🥳', '😭', '👍', '👏', '🙏', '💪',
-    '🔥', '✨', '💜', '❤️', '🎉', '🚀', '☕', '🍕',
-    '✅', '📌', '📈', '🐛', '💡', '🌙', '☀️', '🎧'
+    ':)', ':D', ';)', ':P', '<3', '+1', 'o/', '\\o/',
+    'xD', ':O', '^^', 'B)', ':(', ':/', 'ok!', 'gg'
   ];
 
   V.component('chat-app', {
@@ -874,27 +872,26 @@ document.addEventListener('DOMContentLoaded', function () {
   if (app) app.classList.remove('is-cloaked');
 });
 </script>
+<!-- chrome:credit -->
 <footer class="vd-credit">
-  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>
-  <nav class="vd-projects" aria-label="Conheça outros projetos de kwy404">
-    <span class="vd-projects__title">Conheça outros projetos de kwy404</span>
-    <a href="https://kwy404.github.io/monsoon/" title="CSS utilitário sem etapa de build e 116 componentes nativos"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
-    <a href="https://kwy404.github.io/breakhound/" title="Encontra bugs em qualquer biblioteca JavaScript automaticamente"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
-    <a href="https://kwy404.github.io/vueleap/" title="Migra do Vue 2 para o Vue 3 com um só comando"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
-    <a href="https://kwy404.github.io/graphemely/" title="Funções de string seguras para emoji"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
-    <a href="https://kwy404.github.io/numberparrot/" title="Lê números e valores monetários localizados"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
-    <a href="https://kwy404.github.io/edgegoat/" title="Entradas de teste para casos extremos"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
+  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). Interactive parts built with <a href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>. The site around it is built with <a href="https://kwy404.github.io/monsoon/">Monsoon</a>. <a href="../../examples/">All examples</a></p>
+  <nav class="vd-credit__projects" aria-label="More from kwy404">
+    <span>More from kwy404:</span>
+    <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step">Monsoon</a>
+    <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically">breakhound</a>
+    <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command">vueleap</a>
+    <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions">graphemely</a>
+    <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency">numberparrot</a>
+    <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs">edgegoat</a>
   </nav>
 </footer>
 <style>
-  .vd-credit { padding: 16px; text-align: center; font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
+  .vd-credit { padding: 16px; text-align: center; font: 13px/1.6 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
   .vd-credit a { color: inherit; }
-  .vd-credit .vd-projects { justify-content: center; margin-top: 8px; }
-  .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
-  .vd-projects__title { font-weight: 600; }
-  .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
-  .vd-projects a:hover { text-decoration: underline; }
-  .vd-projects img { width: 18px; height: 18px; flex: none; }
+  .vd-credit p { margin: 0; }
+  .vd-credit__projects { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 6px; }
+  .vd-credit__projects span { font-weight: 600; }
 </style>
+<!-- /chrome:credit -->
 </body>
 </html>

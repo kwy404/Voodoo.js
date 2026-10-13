@@ -10,12 +10,19 @@
 <meta name="description" content="The complete Voodoo.js documentation: a guide from start to finish, a reference for the directives, the V object and the built-in components, with examples that run on the page itself.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
 <article class="doc-artigo">
 
+<div class="doc-hero vd-aura">
+<div class="doc-hero__texto">
 <p class="doc-migalha">Voodoo.js 1.0.0</p>
 <h1>Documentation</h1>
 <p class="doc-resumo">
@@ -23,12 +30,24 @@
   the library binds each one to reactive state, and the screen updates on its own. No build
   step, no <code>eval</code>, no dependencies at all.
 </p>
+<button type="button" class="doc-hero__busca" data-abrir-busca aria-haspopup="dialog">
+  <svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-search"></use></svg>
+  <span>Search the documentation</span>
+  <kbd class="kbd kbd-sm">Ctrl K</kbd>
+</button>
+</div>
+<div class="doc-hero__arte" aria-hidden="true">
+<img class="when-light" src="../assets/art/light/spell-book.svg" width="360" height="270" alt="">
+<img class="when-dark" src="../assets/art/dark/spell-book.svg" width="360" height="270" alt="">
+<img class="doc-hero__vudu vd-float" src="../assets/brand/vudu/vudu-wave.svg" width="140" height="140" alt="">
+</div>
+</div>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ name: '' }"&gt;
-  &lt;input v-model="name" placeholder="Your name"&gt;
-  &lt;p v-show="name"&gt;Hello, { name }!&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ name: '' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> placeholder</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Your name"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-show</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Hello, { name }!</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -169,9 +188,12 @@
 <h2 id="mapa">The full map</h2>
 
 <p>
-  The menu on the left has everything. If you would rather search, the field at the top searches
-  every page at once — the shortcut is <kbd>Ctrl</kbd> + <kbd>K</kbd>, or just <kbd>/</kbd>.
+  Every page, by group. The menu on the left has the same list. If you would rather search, the
+  search at the top looks through every page at once: the shortcut is <kbd>Ctrl</kbd> +
+  <kbd>K</kbd>, or just <kbd>/</kbd>.
 </p>
+
+<div class="doc-mapa" data-mapa></div>
 
 <div class="doc-aviso doc-aviso--dica">
   <span class="doc-aviso__rotulo">Prefer to read it all at once</span>
@@ -184,6 +206,6 @@
 
 </article>
 
-<script src="assets/docs.js?v=d1986131"></script>
+<script src="assets/docs.js?v=cc525291"></script>
 </body>
 </html>

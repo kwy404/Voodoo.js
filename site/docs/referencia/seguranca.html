@@ -10,7 +10,12 @@
 <meta name="description" content="Why there is no eval, how to configure the Content Security Policy, what the library escapes on its own, the care v-html needs, CSRF, storage, uploads and the recommended headers.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/seguranca">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -55,8 +60,8 @@
   the CSS yourself:
 </p>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-no-styles defer&gt;&lt;/script&gt;
-&lt;link rel="stylesheet" href="/css/voodoo-ui.css"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-no-styles</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> rel</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"stylesheet"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/css/voodoo-ui.css"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <pre data-lang="txt"><code>Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'</code></pre>
 
@@ -96,18 +101,18 @@ parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  c
   rich text editor needs it, and there is no other honest way to solve that.
 </p>
 
-<pre data-lang="html"><code>&lt;!-- dangerous --&gt;
-&lt;div v-html="comentario.texto"&gt;&lt;/div&gt;
-
-&lt;!-- safe --&gt;
-&lt;div v-text="comentario.texto"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- dangerous --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-html</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"comentario.texto"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- safe --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"comentario.texto"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>When the HTML really is necessary, sanitize it first:</p>
 
-<pre data-lang="js"><code>import DOMPurify from 'dompurify';
-V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">import</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> DOMPurify</span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0"> from</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'dompurify'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">limpar</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">html</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> DOMPurify</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">sanitize</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">html</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
-<pre data-lang="html"><code>&lt;div v-html="limpar(artigo.corpo)"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-html</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"limpar(artigo.corpo)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--perigo">
   <span class="doc-aviso__rotulo">The detail that makes it worse</span>
@@ -139,7 +144,7 @@ V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
 
 <h2 id="csrf">CSRF</h2>
 
-<pre data-lang="html"><code>&lt;meta name="csrf-token" content="..."&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">meta</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"csrf-token"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> content</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"..."</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   Requests that write, <code>POST</code>, <code>PUT</code>, <code>PATCH</code>,
@@ -147,8 +152,8 @@ V.config.globals.limpar = (html) =&gt; DOMPurify.sanitize(html);</code></pre>
   <code>X-CSRF-TOKEN</code> header. Both names are configurable:
 </p>
 
-<pre data-lang="js"><code>V.http.defaults.csrfMeta = 'meu-token';
-V.http.defaults.csrfHeader = 'X-Meu-Token';</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">http</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">defaults</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">csrfMeta</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'meu-token'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">http</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">defaults</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">csrfHeader</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'X-Meu-Token'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span></code></pre>
 
 <p>
   Every request also carries <code>X-Requested-With: XMLHttpRequest</code>, which helps the server
@@ -170,7 +175,7 @@ V.http.defaults.csrfHeader = 'X-Meu-Token';</code></pre>
   use <code>V.session</code>, which dies with the tab, instead of <code>V.storage</code>.
 </p>
 
-<pre data-lang="js"><code>V.cookie.set('preferencia', 'escuro', { secure: true, sameSite: 'Strict' });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">cookie</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">set</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'preferencia'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'escuro'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">secure:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">sameSite:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Strict'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <p>
   Remember, too, that <code>v-sync</code> publishes the scope's state on a
@@ -194,10 +199,10 @@ V.http.defaults.csrfHeader = 'X-Meu-Token';</code></pre>
   you go with a CDN, pin the version and consider subresource integrity:
 </p>
 
-<pre data-lang="html"><code>&lt;script src="https://exemplo.cdn/voodoo.full.min.js"
-        integrity="sha384-..."
-        crossorigin="anonymous"
-        defer&gt;&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"https://exemplo.cdn/voodoo.full.min.js"</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">        integrity</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"sha384-..."</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">        crossorigin</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"anonymous"</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">        defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="cabecalhos">Recommended headers</h2>
 
@@ -217,6 +222,6 @@ Permissions-Policy: geolocation=(), microphone=(), camera=()</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

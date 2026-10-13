@@ -10,7 +10,12 @@
 <meta name="description" content="Every V.config option with its default value, the attributes the script tag accepts, the lifecycle events and the complete list of CSS tokens.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/configuracao">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -45,15 +50,15 @@
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-manual defer&gt;&lt;/script&gt;
-&lt;script defer&gt;
-  V.config.prefix = 'data-v-';
-  V.config.locale = 'en-US';
-  V.config.currency = 'USD';
-  V.config.globals.formatSlug = (text) =&gt; text.toLowerCase();
-  V.http.setBaseURL('https://api.example.com');
-  V.start();
-&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-manual</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">prefix</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'data-v-'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">locale</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'en-US'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">currency</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'USD'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">formatSlug</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">text</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> text</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">toLowerCase</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">http</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">setBaseURL</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'https://api.example.com'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
   <span class="doc-aviso__rotulo">When the setting has to come first</span>
@@ -87,12 +92,12 @@
 
 <h2 id="eventos">Lifecycle events</h2>
 
-<pre data-lang="js"><code>document.addEventListener('voodoo:ready', (e) =&gt; {
-  console.log('Voodoo', V.version, 'started on', e.detail.root);
-});
-
-document.addEventListener('voodoo:theme', (e) =&gt; console.log(e.detail.resolved));
-document.addEventListener('voodoo:palette', (e) =&gt; console.log(e.detail.colors));</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">addEventListener</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'voodoo:ready'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  console</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">log</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Voodoo'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">version</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'started on'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">detail</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">root</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">addEventListener</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'voodoo:theme'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> console</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">log</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">detail</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">resolved</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">addEventListener</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'voodoo:palette'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> console</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">log</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">detail</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">colors</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span></code></pre>
 
 <h2 id="tokens">CSS tokens</h2>
 
@@ -140,12 +145,12 @@ document.addEventListener('voodoo:palette', (e) =&gt; console.log(e.detail.color
 
 <h2 id="prefixo">A prefix for strict HTML</h2>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-prefix="data-v-" defer&gt;&lt;/script&gt;
-
-&lt;div data-v-data="{ n: 0 }"&gt;
-  &lt;button data-v-click="n++"&gt;Add&lt;/button&gt;
-  &lt;b data-v-text="n"&gt;&lt;/b&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-prefix</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"data-v-"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ n: 0 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-v-click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"n++"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Add</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">b</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"n"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">b</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The library always accepts <code>data-v-name</code>, even when the configured prefix is a
@@ -155,6 +160,6 @@ document.addEventListener('voodoo:palette', (e) =&gt; console.log(e.detail.color
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

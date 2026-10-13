@@ -10,186 +10,12 @@
 <meta name="description" content="The declarative UI pieces: toggle, accordion, dropdown menu, tooltip, tabs, drawer, modal, toasts, the command palette, scrolling, and drag and drop.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/interface">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -199,7 +25,7 @@ html:root {
 <h1>Modal, tabs, menu, drawer, drag and drop</h1>
 <p class="doc-resumo">
   Everything on this page works by writing HTML alone. Not one line of JavaScript is needed for a
-  dropdown menu, tabs, a side drawer, a tooltip, a command palette and the rest — and none of them
+  dropdown menu, tabs, a side drawer, a tooltip, a command palette and the rest, and none of them
   gives up accessibility to manage it.
 </p>
 
@@ -216,12 +42,12 @@ html:root {
 <h2 id="toggle">Show and hide</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-toggle="#details"&gt;See the details&lt;/button&gt;
-  &lt;div id="details" style="display:none"&gt;
-    This block appears and disappears, and the button gets aria-expanded by itself.
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-toggle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#details"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">See the details</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"details"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> style</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"display:none"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    This block appears and disappears, and the button gets aria-expanded by itself.</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -233,20 +59,20 @@ html:root {
 <h2 id="collapse">Accordion and panels</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-accordion v-accordion-single&gt;
-  &lt;div v-accordion-item="open"&gt;
-    &lt;h4&gt;Delivery&lt;/h4&gt;
-    &lt;div&gt;We ship within two business days.&lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div v-accordion-item&gt;
-    &lt;h4&gt;Returns&lt;/h4&gt;
-    &lt;div&gt;You have 30 days to return it.&lt;/div&gt;
-  &lt;/div&gt;
-  &lt;div v-accordion-item&gt;
-    &lt;h4&gt;Payment&lt;/h4&gt;
-    &lt;div&gt;Pix, bank slip and card in up to 12 instalments.&lt;/div&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-accordion</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-accordion-single</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-accordion-item</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"open"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Delivery</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">We ship within two business days.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-accordion-item</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Returns</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">You have 30 days to return it.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-accordion-item</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Payment</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Pix, bank slip and card in up to 12 instalments.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -260,25 +86,25 @@ html:root {
   <code>v-collapse-toggle</code>:
 </p>
 
-<pre data-lang="html"><code>&lt;button v-collapse-toggle="#faq-1"&gt;What is Voodoo?&lt;/button&gt;
-&lt;div id="faq-1" v-collapse&gt;
-  &lt;p&gt;The HTML-first JavaScript framework.&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-collapse-toggle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#faq-1"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">What is Voodoo?</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"faq-1"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-collapse</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">The HTML-first JavaScript framework.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="abas">Tabs</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-tabs&gt;
-  &lt;div role="tablist"&gt;
-    &lt;button v-tab="profile"&gt;Profile&lt;/button&gt;
-    &lt;button v-tab="security"&gt;Security&lt;/button&gt;
-    &lt;button v-tab="billing"&gt;Billing&lt;/button&gt;
-  &lt;/div&gt;
-
-  &lt;section v-tab-panel="profile"&gt;&lt;p&gt;Your name, photo and bio.&lt;/p&gt;&lt;/section&gt;
-  &lt;section v-tab-panel="security"&gt;&lt;p&gt;Password and two-step verification.&lt;/p&gt;&lt;/section&gt;
-  &lt;section v-tab-panel="billing"&gt;&lt;p&gt;Plan, card and invoices.&lt;/p&gt;&lt;/section&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tabs</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> role</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"tablist"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"profile"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Profile</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"security"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Security</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"billing"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Billing</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab-panel</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"profile"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Your name, photo and bio.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab-panel</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"security"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Password and two-step verification.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tab-panel</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"billing"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Plan, card and invoices.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -289,23 +115,23 @@ html:root {
 
 <p>To keep the chosen tab in the URL, without reloading:</p>
 
-<pre data-lang="html"><code>&lt;div v-tabs v-tabs-url="section"&gt;...&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tabs</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tabs-url</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"section"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="menus">Dropdown menu, popover and tooltip</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-dropdown="#actions"&gt;Actions&lt;/button&gt;
-  &lt;div id="actions" v-dropdown-menu&gt;
-    &lt;button&gt;Edit&lt;/button&gt;
-    &lt;button&gt;Duplicate&lt;/button&gt;
-    &lt;button&gt;Export&lt;/button&gt;
-  &lt;/div&gt;
-
-  &lt;button v-tooltip="Deletes the record for good" v-tooltip-position="right"&gt;
-    Delete
-  &lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-dropdown</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#actions"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Actions</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"actions"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-dropdown-menu</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Edit</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Duplicate</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Export</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tooltip</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Deletes the record for good"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-tooltip-position</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"right"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    Delete</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>In the menu, this happens on its own:</p>
@@ -328,16 +154,16 @@ html:root {
 <h2 id="gaveta">Side drawer</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-drawer="#side-menu"&gt;Open the menu&lt;/button&gt;
-
-  &lt;aside id="side-menu" v-drawer-content v-drawer-side="left"&gt;
-    &lt;h4&gt;Navigation&lt;/h4&gt;
-    &lt;p&gt;&lt;a href="#"&gt;Dashboard&lt;/a&gt;&lt;/p&gt;
-    &lt;p&gt;&lt;a href="#"&gt;Orders&lt;/a&gt;&lt;/p&gt;
-    &lt;button v-drawer-close&gt;Close&lt;/button&gt;
-  &lt;/aside&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-drawer</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#side-menu"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Open the menu</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">aside</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"side-menu"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-drawer-content</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-drawer-side</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"left"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Navigation</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Dashboard</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Orders</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-drawer-close</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Close</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">aside</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -350,15 +176,15 @@ html:root {
 <h2 id="modal">Modal</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-modal="#sign-in"&gt;Sign in&lt;/button&gt;
-
-  &lt;div id="sign-in" v-modal-content&gt;
-    &lt;h4&gt;Sign in&lt;/h4&gt;
-    &lt;p&gt;&lt;input placeholder="Email"&gt;&lt;/p&gt;
-    &lt;button v-modal-close&gt;Cancel&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-modal</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#sign-in"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Sign in</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"sign-in"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-modal-content</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Sign in</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h4</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> placeholder</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Email"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-modal-close</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Cancel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -369,32 +195,32 @@ html:root {
 
 <p>From JavaScript, with control over size, focus and the return value:</p>
 
-<pre data-lang="js"><code>const control = V.modal.open('#login', { size: 'sm' });
-await control.closed;      // resolves when the dialog has finished closing
-
-V.modal.close('#login');
-V.modal.closeAll();
-V.modal.isOpen('#login');</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> control</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">modal</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">open</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#login'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">size:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'sm'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> control</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">closed</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;      </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// resolves when the dialog has finished closing</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">modal</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">close</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#login'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">modal</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">closeAll</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">modal</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">isOpen</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#login'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <h2 id="dialogos">alert, confirm and prompt</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ answer: '' }"&gt;
-  &lt;div class="linha"&gt;
-    &lt;button @click="$alert('The order went through.', { icon: 'success' })"&gt;
-      Alert
-    &lt;/button&gt;
-    &lt;button @click="$confirm('Delete the order?', { danger: true })
-                      .then(ok =&gt; answer = ok ? 'deleted' : 'backed out')"&gt;
-      Confirm
-    &lt;/button&gt;
-    &lt;button @click="$prompt('What should we call you?', { required: true })
-                      .then(v =&gt; answer = v || 'cancelled')"&gt;
-      Prompt
-    &lt;/button&gt;
-  &lt;/div&gt;
-  &lt;p&gt;Answer: { answer || 'nothing yet' }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ answer: '' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$alert('The order went through.', { icon: 'success' })"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">      Alert</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$confirm('Delete the order?', { danger: true })</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">                      .then(ok => answer = ok ? 'deleted' : 'backed out')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">      Confirm</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$prompt('What should we call you?', { required: true })</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">                      .then(v => answer = v || 'cancelled')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">      Prompt</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Answer: { answer || 'nothing yet' }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -411,10 +237,10 @@ V.modal.isOpen('#login');</code></pre>
   capture phase, before any other listener.
 </p>
 
-<pre data-lang="html"><code>&lt;button v-confirm="Really delete?" v-click="remove()"&gt;Delete&lt;/button&gt;
-&lt;button v-confirm.danger="This action cannot be undone."
-        v-click="deleteAccount()"&gt;Delete the account&lt;/button&gt;
-&lt;a v-confirm="Sign out of your account?" href="/logout"&gt;Sign out&lt;/a&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-confirm</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Really delete?"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"remove()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Delete</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-confirm.danger</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"This action cannot be undone."</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">        v-click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"deleteAccount()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Delete the account</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-confirm</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Sign out of your account?"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/logout"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Sign out</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
   <span class="doc-aviso__rotulo">A known detail</span>
@@ -430,11 +256,11 @@ V.modal.isOpen('#login');</code></pre>
 <h2 id="avisos">Notifications</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div class="linha"&gt;
-  &lt;button @click="$toast.success('User saved!')"&gt;Success&lt;/button&gt;
-  &lt;button @click="$toast.error('Could not save')"&gt;Error&lt;/button&gt;
-  &lt;button @click="$toast.info('A new version is available')"&gt;Info&lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$toast.success('User saved!')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Success</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$toast.error('Could not save')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Error</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$toast.info('A new version is available')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Info</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -448,16 +274,16 @@ V.modal.isOpen('#login');</code></pre>
 <h2 id="paleta-de-comandos">Command palette</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ done: '' }"&gt;
-  &lt;button v-command="mod+k"&gt;Search the commands&lt;/button&gt;
-
-  &lt;button v-command-item="Go to the dashboard" v-command-hint="Ctrl+D"
-          @click="done = 'dashboard'"&gt;&lt;/button&gt;
-  &lt;button v-command-item="Create a new order" @click="done = 'order'"&gt;&lt;/button&gt;
-  &lt;button v-command-item="Toggle the theme" v-theme-toggle&gt;&lt;/button&gt;
-
-  &lt;p&gt;Last command: { done || 'none' }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ done: '' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-command</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"mod+k"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Search the commands</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-command-item</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Go to the dashboard"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-command-hint</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Ctrl+D"</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">          @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"done = 'dashboard'"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-command-item</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Create a new order"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"done = 'order'"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-command-item</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Toggle the theme"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Last command: { done || 'none' }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -468,21 +294,21 @@ V.modal.isOpen('#login');</code></pre>
 
 <h2 id="rolagem">Scrolling, focus and entering the viewport</h2>
 
-<pre data-lang="html"><code>&lt;a href="#pricing" v-scroll-to v-scroll-offset="80"&gt;Pricing&lt;/a&gt;
-&lt;button v-scroll-to="top"&gt;Back to the top&lt;/button&gt;
-
-&lt;nav v-scrollspy v-scrollspy-class="active" v-scroll-offset="80"&gt;
-  &lt;a href="#about"&gt;About&lt;/a&gt;
-  &lt;a href="#pricing"&gt;Pricing&lt;/a&gt;
-&lt;/nav&gt;
-
-&lt;header v-sticky="0"&gt;...&lt;/header&gt;
-
-&lt;input v-focus.select&gt;
-&lt;div v-focus-trap="modalOpen"&gt;...&lt;/div&gt;
-
-&lt;ul v-infinite-scroll="loadMore()" v-infinite-distance="400px"&gt;...&lt;/ul&gt;
-&lt;img v-lazy-src="/photos/large.jpg" alt="A beach"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#pricing"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scroll-to</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scroll-offset</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"80"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Pricing</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scroll-to</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"top"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Back to the top</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scrollspy</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scrollspy-class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"active"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-scroll-offset</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"80"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#about"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">About</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#pricing"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Pricing</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">header</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-sticky</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"0"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">header</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-focus.select</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-focus-trap</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"modalOpen"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-infinite-scroll</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"loadMore()"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-infinite-distance</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"400px"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">img</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-lazy-src</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/photos/large.jpg"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> alt</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"A beach"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   <code>v-scroll-to</code> respects <code>prefers-reduced-motion</code> and moves the focus to the
@@ -501,14 +327,14 @@ V.modal.isOpen('#login');</code></pre>
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ order: [] }"&gt;
-  &lt;ul v-sortable @voodoo:sorted="order = $detail.order"&gt;
-    &lt;li data-id="a"&gt;First&lt;/li&gt;
-    &lt;li data-id="b"&gt;Second&lt;/li&gt;
-    &lt;li data-id="c"&gt;Third&lt;/li&gt;
-  &lt;/ul&gt;
-  &lt;p&gt;Current order: { order.join(', ') || 'a, b, c' }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ order: [] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-sortable</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @voodoo:sorted</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"order = $detail.order"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"a"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">First</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"b"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Second</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"c"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Third</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Current order: { order.join(', ') || 'a, b, c' }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -520,11 +346,11 @@ V.modal.isOpen('#login');</code></pre>
 
 <p>For lists that trade items with each other, like a task board:</p>
 
-<pre data-lang="html"><code>&lt;div v-dnd-group="kanban"&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;To do&lt;/li&gt;&lt;/ul&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;Doing&lt;/li&gt;&lt;/ul&gt;
-  &lt;ul v-sortable&gt;&lt;li&gt;Done&lt;/li&gt;&lt;/ul&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-dnd-group</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"kanban"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-sortable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">To do</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-sortable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Doing</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-sortable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Done</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   A handle limits the drag to one part of the item: <code>v-sortable-handle=".handle"</code>, or
@@ -535,6 +361,6 @@ V.modal.isOpen('#login');</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

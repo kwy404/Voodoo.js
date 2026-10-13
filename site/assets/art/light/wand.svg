@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 220" role="img" aria-label="A wand leaving a trail of sparkles" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<title>A wand leaving a trail of sparkles</title>
+<path d="M58 194L176 92" stroke="#2A2440" stroke-width="9"/>
+<path d="M58 194L176 92" stroke="#FFFFFF" stroke-width="4"/>
+<path d="M150 114L176 92" stroke="#E58A1F" stroke-width="9"/>
+<path d="M74 180L84 171M92 165L100 158" stroke="#8C82AE" stroke-width="2"/>
+<circle cx="182" cy="86" r="7" fill="#FFF4E6" stroke="#E58A1F" stroke-width="2.5"/>
+<path d="M190 78C214 54 250 44 268 64C284 82 262 104 246 92C228 78 250 40 292 36C314 34 330 44 336 58" stroke="#6D3BF5" stroke-width="2.5" stroke-dasharray="2 8"/>
+<path d="M188 92C220 98 236 120 226 146" stroke="#9B7BFF" stroke-width="2" stroke-dasharray="1 7"/>
+<path d="M336 52C337.344 60.64 339.36 62.656 348 64C339.36 65.344 337.344 67.36 336 76C334.656 67.36 332.64 65.344 324 64C332.64 62.656 334.656 60.64 336 52Z" fill="none" stroke="#E58A1F" stroke-width="2" stroke-linejoin="round"/>
+<path d="M268 112C268.896 117.76 270.24 119.104 276 120C270.24 120.896 268.896 122.24 268 128C267.104 122.24 265.76 120.896 260 120C265.76 119.104 267.104 117.76 268 112Z" fill="none" stroke="#6D3BF5" stroke-width="2" stroke-linejoin="round"/>
+<path d="M214 33C214.784 38.04 215.96 39.216 221 40C215.96 40.784 214.784 41.96 214 47C213.216 41.96 212.04 40.784 207 40C212.04 39.216 213.216 38.04 214 33Z" fill="none" stroke="#9B7BFF" stroke-width="2" stroke-linejoin="round"/>
+<path d="M226 150C226.672 154.32 227.68 155.328 232 156C227.68 156.672 226.672 157.68 226 162C225.328 157.68 224.32 156.672 220 156C224.32 155.328 225.328 154.32 226 150Z" fill="none" stroke="#E58A1F" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="304" cy="92" r="2.5" fill="#E0367A"/>
+<circle cx="244" cy="30" r="2" fill="#E58A1F"/>
+<circle cx="196" cy="58" r="2" fill="#9B7BFF"/>
+<circle cx="300" cy="20" r="1.8" fill="#9B7BFF"/>
+</svg>

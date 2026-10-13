@@ -1,7 +1,13 @@
 /* ==========================================================================
    Voodoo.js documentation
-   Navigation, search, on-this-page index, syntax highlighting and live
-   examples. No external dependencies.
+   The shell around every page: header, sidebar, search dialog, on-this-page
+   index, code frames, live examples, previous and next, footer. Built on
+   Monsoon classes, with docs.css for the few things Monsoon cannot express.
+
+   Each page is a static file holding one <article class="doc-artigo">. This
+   script lifts the article out, empties the body and rebuilds the page around
+   it. Code samples arrive already coloured by Shiki (pre[data-shiki], see
+   scripts/highlight-site.mjs), so nothing here highlights code.
 
    The theme is the one the whole site shares with `V.theme`: the key
    `voodoo:theme` and the `data-theme` attribute, with `light`, `dark` and
@@ -14,14 +20,18 @@
 
   // ------------------------------------------------------------------------
   // 1. Page map. The single source of truth for the navigation.
-
+  //
   //    The ids are the file names on disk and stay in Portuguese; the titles
-  //    are what a reader sees, so they are English.
+  //    are what a reader sees, so they are English. scripts/docs-index.mjs
+  //    reads the id and titulo pairs below straight from this file, so keep
+  //    each page on one line, id first and titulo second.
   // ------------------------------------------------------------------------
 
   var NAVEGACAO = [
     {
       titulo: 'Getting started',
+      icone: 'wand',
+      resumo: 'What the library is, how to load it and the two ways of writing an app.',
       paginas: [
         { id: '', titulo: 'Documentation', curto: 'Home' },
         { id: 'guia/o-que-e', titulo: 'What Voodoo.js is and when to use it' },
@@ -31,6 +41,8 @@
     },
     {
       titulo: 'Fundamentals',
+      icone: 'book',
+      resumo: 'State, interpolation, conditions, lists, JSX, hooks and events.',
       paginas: [
         { id: 'guia/estado-e-escopo', titulo: 'State and scope with v-data' },
         { id: 'guia/mostrando-valores', titulo: 'Showing values on screen' },
@@ -45,6 +57,8 @@
     },
     {
       titulo: 'Data and forms',
+      icone: 'potion',
+      resumo: 'Talking to a server, validating forms and masking what people type.',
       paginas: [
         { id: 'guia/buscando-dados', titulo: 'Fetching data from a server' },
         { id: 'guia/formularios', titulo: 'Forms that validate and submit themselves' },
@@ -53,6 +67,8 @@
     },
     {
       titulo: 'Components and state',
+      icone: 'cauldron',
+      resumo: 'Your own components, the built-in ones and state shared across the page.',
       paginas: [
         { id: 'guia/componentes', titulo: 'Components: props, slots, events and lifecycle' },
         { id: 'guia/componentes-prontos', titulo: 'Built-in components' },
@@ -62,6 +78,8 @@
     },
     {
       titulo: 'Interface and effects',
+      icone: 'sparkle',
+      resumo: 'Dialogs, motion, sound, charts, routing, languages and themes.',
       paginas: [
         { id: 'guia/interface', titulo: 'Modal, tabs, menu, drawer, drag and drop' },
         { id: 'guia/animacoes', titulo: 'Animations' },
@@ -74,6 +92,8 @@
     },
     {
       titulo: 'Extending and debugging',
+      icone: 'crystal',
+      resumo: 'New directives and plugins, and the tools for seeing what happens.',
       paginas: [
         { id: 'guia/directives-e-plugins', titulo: 'Custom directives and plugins' },
         { id: 'guia/inspetor', titulo: 'The reactivity inspector' },
@@ -82,6 +102,8 @@
     },
     {
       titulo: 'Reference',
+      icone: 'scroll',
+      resumo: 'Everything that exists, without narrative: names, arguments and values.',
       paginas: [
         { id: 'referencia/directives', titulo: 'Directives by category' },
         { id: 'referencia/objeto-v', titulo: 'The V object' },
@@ -97,6 +119,8 @@
     },
     {
       titulo: 'Quality and migration',
+      icone: 'rune',
+      resumo: 'Security, performance, moving over from other libraries, and the FAQ.',
       paginas: [
         { id: 'referencia/seguranca', titulo: 'Security' },
         { id: 'referencia/desempenho', titulo: 'Performance' },
@@ -108,16 +132,17 @@
     }
   ];
 
-  // Flat list, used by the previous/next navigation.
+  // Flat list, used by the previous/next navigation, plus each page's group.
   var LINEAR = [];
   NAVEGACAO.forEach(function (grupo) {
     grupo.paginas.forEach(function (pagina) {
+      pagina.grupo = grupo;
       LINEAR.push(pagina);
     });
   });
 
   // ------------------------------------------------------------------------
-  // 2. Paths
+  // 2. Paths and the rest of the site
   // ------------------------------------------------------------------------
 
   var esteScript =
@@ -131,29 +156,38 @@
   var RUNTIME = new URL('../voodoo.full.min.js?v=c4c59afc', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
-  // the script URL rather than from location means the header links work the
-  // same from /docs/, /docs/guia/ and /docs/referencia/.
-  // .href, not .pathname. On a file:// URL, .pathname is an absolute path that
-  // starts with a slash ("/C:/Users/.../site/"), and a browser resolves an href
-  // like that from the filesystem root — so every link in the header pointed at
-  // nothing and the page looked broken when opened straight off disk. A full
-  // href works under both file:// and http://.
+  // the script URL rather than from location means the links work the same
+  // from /docs/, /docs/guia/ and /docs/referencia/. It is a full href, never a
+  // pathname: under file:// a pathname starts with "/C:/..." and a browser
+  // resolves that from the filesystem root.
   var SITE = new URL('../', RAIZ).href; // .../site/
+  var VERSAO = 'Voodoo.js 1.0.0';
 
-  // The rest of the site links back here, and now the documentation links out.
-  // Before this the docs were an island: nothing in the header led home, to the
-  // playground, to the components or to the examples.
-  var LINKS_DO_SITE = [
-    { href: SITE, texto: 'Home' },
-    { href: SITE + 'playground.html', texto: 'Playground' },
-    { href: SITE + 'components.html', texto: 'Components' },
-    { href: SITE + 'examples/', texto: 'Examples' }
+  // The four sections of the site, in header order. The same list as SECTIONS
+  // in scripts/site-chrome.mjs, which writes the static pages.
+  var LINKS = [
+    { id: 'docs', href: SITE + 'docs/', texto: 'Docs' },
+    { id: 'playground', href: SITE + 'playground.html', texto: 'Playground' },
+    { id: 'components', href: SITE + 'components.html', texto: 'Components' },
+    { id: 'examples', href: SITE + 'examples/', texto: 'Examples' }
   ];
 
-  // The same mark the landing page draws, inline and painted with currentColor
-  // so it follows the theme instead of needing a second file per theme.
-  var MARCA =
-    '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor"/></svg>';
+  var GITHUB = 'https://github.com/kwy404/Voodoo.js';
+  var NPM = 'https://www.npmjs.com/package/voodoojs';
+  var AUTOR_GITHUB = 'https://github.com/kwy404';
+  var AUTOR_LINKEDIN = 'https://www.linkedin.com/in/alexandre-silva-173687256/';
+
+  // The author's other projects, listed in every footer of the site.
+  var PROJETOS = [
+    ['monsoon', 'Monsoon', 'Utility-first CSS with no build step'],
+    ['breakhound', 'breakhound', 'Find bugs in any JavaScript library automatically'],
+    ['vueleap', 'vueleap', 'Migrate Vue 2 to Vue 3 with one command'],
+    ['graphemely', 'graphemely', 'Emoji safe string functions'],
+    ['numberparrot', 'numberparrot', 'Parse localized numbers and currency'],
+    ['edgegoat', 'edgegoat', 'Edge case test inputs']
+  ];
+
+  var MASCOTE = SITE + 'assets/brand/vudu/';
 
   /** A link to a documentation page, absolute enough to work from any depth. */
   function href(id) {
@@ -162,17 +196,13 @@
 
   /**
    * Which page is open, derived by comparing full URLs rather than paths.
-   *
-   * Comparing location.pathname against RAIZ.pathname looks equivalent and is
-   * not: under file:// both carry a drive letter and percent-encoding that do
-   * not always match byte for byte, so the highlight silently stopped working
-   * off disk. Comparing hrefs, with the query and hash stripped, is the same
-   * comparison without that trap.
+   * Under file:// both carry a drive letter and percent-encoding that do not
+   * always match byte for byte, so the comparison is on decoded hrefs with the
+   * query and hash stripped.
    */
   function idAtual() {
-    var base = RAIZ.href;
     var aqui = decodeURIComponent(location.href.split('#')[0].split('?')[0]);
-    var raiz = decodeURIComponent(base);
+    var raiz = decodeURIComponent(RAIZ.href);
     if (aqui.indexOf(raiz) !== 0) return '';
     return aqui
       .slice(raiz.length)
@@ -198,10 +228,6 @@
       .replace(/"/g, '&quot;');
   }
 
-  function tag(classe, texto) {
-    return '<span class="' + classe + '">' + esc(texto) + '</span>';
-  }
-
   function el(nome, atributos, filhos) {
     var node = document.createElement(nome);
     if (atributos) {
@@ -213,7 +239,7 @@
       });
     }
     (filhos || []).forEach(function (filho) {
-      node.appendChild(filho);
+      if (filho) node.appendChild(filho);
     });
     return node;
   }
@@ -225,20 +251,20 @@
       .replace(/[\u0300-\u036f]/g, '');
   }
 
-  var ICONES = {
-    menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
-    fechar:
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
-    sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
-    // A screen, for "follow the system".
-    sistema:
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
-    lua: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
-    lupa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
-    copiar:
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>',
-    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'
-  };
+  /** An icon from the site sprite. */
+  function icone(nome, classe) {
+    return (
+      '<svg class="vd-icon' + (classe ? ' ' + classe : '') + '" aria-hidden="true">' +
+      '<use href="' + SITE + 'assets/art/icons.svg#i-' + nome + '"></use></svg>'
+    );
+  }
+
+  function marca() {
+    return (
+      '<img src="' + MASCOTE + 'vudu-head.svg" width="32" height="32" alt="">' +
+      '<span>Voodoo<span class="text-primary">.js</span></span>'
+    );
+  }
 
   // ------------------------------------------------------------------------
   // 4. Theme
@@ -249,19 +275,13 @@
   //    governs until the reader picks a theme, an explicit choice then wins in
   //    both directions, and `system` hands the page back to the operating
   //    system. The button walks system, light, dark, the order of
-  //    `V.theme.cycle()`.
+  //    `V.theme.cycle()`, and carries the current choice as
+  //    `data-voodoo-theme-mode`, the attribute the library writes on
+  //    v-theme-toggle, so site.css shows the same icon as on every other page.
   //
-  //    The documentation used to keep a theme of its own: the key
-  //    `voodoo-docs-tema`, the attribute `data-tema`, the values `claro` and
-  //    `escuro`. A reader who picked dark on the landing page opened the
-  //    documentation in light, the choice made here never reached the other
-  //    pages, and the live examples, which run the library and so read
-  //    `voodoo:theme`, could disagree with the page around them. The old key is
-  //    moved across once.
-  //
-  //    Before that, this read `data-tema !== "claro" ? "escuro"`, so on a light
-  //    system with no saved choice it resolved to dark and wrote that to storage
-  //    on the very first load.
+  //    The documentation once kept a theme of its own under the key
+  //    `voodoo-docs-tema` (`claro`, `escuro`). A choice saved there is moved
+  //    across once.
   // ------------------------------------------------------------------------
 
   var CHAVE_TEMA = 'voodoo:theme';
@@ -271,7 +291,6 @@
   // The choice made on this page, for when storage cannot keep it.
   var escolhaDaPagina = null;
 
-  // Moves a choice saved under the documentation's old key to the shared one.
   function migrarTemaAntigo() {
     try {
       var antigo = localStorage.getItem(CHAVE_TEMA_ANTIGA);
@@ -347,7 +366,7 @@
       var proximo = MODOS[(MODOS.indexOf(modo) + 1) % MODOS.length];
       var rotulo =
         'Theme: ' + (modo === 'system' ? 'system (' + tema + ')' : modo) + '. Switch to ' + proximo;
-      botao.innerHTML = modo === 'system' ? ICONES.sistema : modo === 'light' ? ICONES.sol : ICONES.lua;
+      botao.setAttribute('data-voodoo-theme-mode', modo);
       botao.setAttribute('aria-label', rotulo);
       botao.setAttribute('title', rotulo);
     }
@@ -389,188 +408,64 @@
   }
 
   // ------------------------------------------------------------------------
-  // 5. Syntax highlighting
+  // 5. Code frames
+  //
+  //    Every <pre data-lang> goes into a VS Code style frame: a tab with the
+  //    file name and a copy button. The colours are already in the markup.
   // ------------------------------------------------------------------------
 
-  var PALAVRAS_JS =
-    /^(const|let|var|function|return|if|else|for|while|of|in|new|class|import|export|from|default|async|await|try|catch|finally|throw|typeof|instanceof|this|null|undefined|true|false|delete|void|switch|case|break|continue|do|extends|super|static)$/;
-
-  function realceHtml(fonte) {
-    var re = /<!--[\s\S]*?-->|<![a-zA-Z][^>]*>|<\/?[a-zA-Z][^>]*>|\{\{[\s\S]*?\}\}|\{[^{}<>\n]*\}/g;
-    var saida = '';
-    var ultimo = 0;
-    var achado;
-    while ((achado = re.exec(fonte)) !== null) {
-      saida += esc(fonte.slice(ultimo, achado.index));
-      var pedaco = achado[0];
-      if (pedaco.slice(0, 4) === '<!--') saida += tag('tk-comentario', pedaco);
-      else if (pedaco.slice(0, 2) === '<!') saida += tag('tk-tag', pedaco);
-      else if (pedaco.charAt(0) === '<') saida += realceTag(pedaco);
-      else saida += tag('tk-interp', pedaco);
-      ultimo = re.lastIndex;
-    }
-    return saida + esc(fonte.slice(ultimo));
-  }
-
-  function realceTag(fonte) {
-    var cabeca = /^(<\/?)([a-zA-Z][\w:.-]*)([\s\S]*)$/.exec(fonte);
-    if (!cabeca) return esc(fonte);
-    var saida = tag('tk-pontuacao', cabeca[1]) + tag('tk-tag', cabeca[2]);
-    var resto = cabeca[3];
-    var re = /"[^"]*"|'[^']*'|[@:.]?[A-Za-z_][\w:.-]*|\/?>|=|[\s\S]/g;
-    var peca;
-    while ((peca = re.exec(resto)) !== null) {
-      var texto = peca[0];
-      var inicial = texto.charAt(0);
-      if (inicial === '"' || inicial === "'") saida += realceValorAtributo(texto);
-      else if (texto === '>' || texto === '/>' || texto === '=') saida += tag('tk-pontuacao', texto);
-      else if (/^[A-Za-z@:._-]/.test(inicial)) {
-        if (/^(v-|@|:|\.)/.test(texto)) saida += tag('tk-directive', texto);
-        else saida += tag('tk-atributo', texto);
-      } else saida += esc(texto);
-    }
-    return saida;
-  }
-
-  function realceValorAtributo(texto) {
-    var aspas = texto.charAt(0);
-    var miolo = texto.slice(1, -1);
-    var partes = miolo.split(/(\$[A-Za-z_]\w*)/g);
-    var saida = tag('tk-texto', aspas);
-    partes.forEach(function (parte) {
-      if (!parte) return;
-      if (parte.charAt(0) === '$') saida += tag('tk-magia', parte);
-      else saida += tag('tk-texto', parte);
-    });
-    return saida + tag('tk-texto', aspas);
-  }
-
-  function realceJs(fonte) {
-    var re =
-      /\/\/[^\n]*|\/\*[\s\S]*?\*\/|`(?:\\[\s\S]|[^`\\])*`|'(?:\\[\s\S]|[^'\\\n])*'|"(?:\\[\s\S]|[^"\\\n])*"|\b\d[\w.]*\b|\$[A-Za-z_]\w*|\b[A-Za-z_$][\w$]*\b|[{}()[\];,]/g;
-    var saida = '';
-    var ultimo = 0;
-    var achado;
-    while ((achado = re.exec(fonte)) !== null) {
-      saida += esc(fonte.slice(ultimo, achado.index));
-      var texto = achado[0];
-      var inicial = texto.charAt(0);
-      if (texto.slice(0, 2) === '//' || texto.slice(0, 2) === '/*') saida += tag('tk-comentario', texto);
-      else if (inicial === '`' || inicial === "'" || inicial === '"') saida += tag('tk-texto', texto);
-      else if (/^\d/.test(texto)) saida += tag('tk-numero', texto);
-      else if (inicial === '$') saida += tag('tk-magia', texto);
-      else if (PALAVRAS_JS.test(texto)) saida += tag('tk-palavra', texto);
-      else if (/^[{}()[\];,]$/.test(texto)) saida += tag('tk-pontuacao', texto);
-      else if (fonte.slice(re.lastIndex).charAt(0) === '(') saida += tag('tk-funcao', texto);
-      else if (texto === 'V') saida += tag('tk-magia', texto);
-      else saida += esc(texto);
-      ultimo = re.lastIndex;
-    }
-    return saida + esc(fonte.slice(ultimo));
-  }
-
-  function realceCss(fonte) {
-    var re =
-      /\/\*[\s\S]*?\*\/|"[^"]*"|'[^']*'|@[\w-]+|--[\w-]+|#[0-9a-fA-F]{3,8}\b|\b\d+(?:\.\d+)?(?:px|rem|em|%|s|ms|vh|vw|fr|deg)?\b|[-\w]+(?=\s*:)|[{}();,:]/g;
-    var saida = '';
-    var ultimo = 0;
-    var achado;
-    while ((achado = re.exec(fonte)) !== null) {
-      saida += tag('tk-seletor', fonte.slice(ultimo, achado.index));
-      var texto = achado[0];
-      if (texto.slice(0, 2) === '/*') saida += tag('tk-comentario', texto);
-      else if (/^["']/.test(texto)) saida += tag('tk-texto', texto);
-      else if (/^[#\d]/.test(texto)) saida += tag('tk-numero', texto);
-      else if (/^[{}();,:]$/.test(texto)) saida += tag('tk-pontuacao', texto);
-      else if (texto.charAt(0) === '@' || texto.slice(0, 2) === '--') saida += tag('tk-magia', texto);
-      else saida += tag('tk-propriedade', texto);
-      ultimo = re.lastIndex;
-    }
-    return saida + tag('tk-seletor', fonte.slice(ultimo));
-  }
-
-  function realceBash(fonte) {
-    var re = /#[^\n]*|"[^"]*"|'[^']*'|(?:^|\n)\s*[\w./-]+|\s-{1,2}[\w-]+/g;
-    var saida = '';
-    var ultimo = 0;
-    var achado;
-    while ((achado = re.exec(fonte)) !== null) {
-      saida += esc(fonte.slice(ultimo, achado.index));
-      var texto = achado[0];
-      if (texto.trimStart().charAt(0) === '#') saida += tag('tk-comentario', texto);
-      else if (/^["']/.test(texto)) saida += tag('tk-texto', texto);
-      else if (/-{1,2}[\w-]+$/.test(texto)) saida += tag('tk-numero', texto);
-      else saida += tag('tk-funcao', texto);
-      ultimo = re.lastIndex;
-    }
-    return saida + esc(fonte.slice(ultimo));
-  }
-
-  function realcar(fonte, idioma) {
-    try {
-      if (idioma === 'html') return realceHtml(fonte);
-      if (idioma === 'js' || idioma === 'javascript' || idioma === 'ts') return realceJs(fonte);
-      if (idioma === 'css') return realceCss(fonte);
-      if (idioma === 'bash' || idioma === 'shell') return realceBash(fonte);
-    } catch (erro) {
-      /* qualquer falha cai no texto puro */
-    }
-    return esc(fonte);
-  }
-
-  var ROTULOS = {
-    html: 'html',
-    js: 'javascript',
-    javascript: 'javascript',
-    css: 'css',
-    bash: 'terminal',
-    shell: 'terminal',
-    txt: 'text'
+  var ARQUIVOS = {
+    html: ['example.html', 'file'],
+    js: ['script.js', 'file'],
+    javascript: ['script.js', 'file'],
+    ts: ['script.ts', 'file'],
+    css: ['styles.css', 'file'],
+    json: ['data.json', 'braces'],
+    bash: ['terminal', 'terminal'],
+    shell: ['terminal', 'terminal'],
+    txt: ['plain text', 'scroll'],
+    text: ['plain text', 'scroll']
   };
-
-  // ------------------------------------------------------------------------
-  // 6. Code blocks: label, highlighting and copy button
-  // ------------------------------------------------------------------------
 
   function prepararCodigo(raiz) {
     (raiz || document).querySelectorAll('pre[data-lang]').forEach(function (pre) {
-      if (pre.closest('.doc-bloco-codigo')) return;
+      if (pre.closest('.vframe')) return;
 
       var codigo = pre.querySelector('code') || pre;
       var fonte = codigo.textContent.replace(/^\n/, '').replace(/\s+$/, '');
       var idioma = pre.getAttribute('data-lang') || 'txt';
+      var arquivo = ARQUIVOS[idioma] || [idioma, 'file'];
 
-      codigo.innerHTML = realcar(fonte, idioma);
+      var moldura = el('div', { class: 'vframe' });
+      pre.parentNode.insertBefore(moldura, pre);
 
-      var caixa = el('div', { class: 'doc-bloco-codigo' });
-      pre.parentNode.insertBefore(caixa, pre);
-      caixa.appendChild(pre);
-
-      caixa.appendChild(
-        el('span', { class: 'doc-bloco-codigo__rotulo', texto: ROTULOS[idioma] || idioma })
-      );
-
+      var barra = el('div', {
+        class: 'vframe-bar',
+        html:
+          '<span class="vframe-dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
+          '<span class="vframe-tab" data-lang="' + esc(idioma) + '">' +
+          icone(arquivo[1]) + esc(arquivo[0]) + '</span>'
+      });
       var botao = el('button', {
         type: 'button',
-        class: 'doc-copiar',
+        class: 'vframe-copy',
         'aria-label': 'Copy the code',
-        html: ICONES.copiar + '<span>Copy</span>'
+        html: icone('copy') + '<span>Copy</span>'
       });
       botao.addEventListener('click', function () {
         copiar(fonte).then(function (deuCerto) {
-          botao.innerHTML = deuCerto
-            ? ICONES.ok + '<span>Copied</span>'
-            : ICONES.copiar + '<span>Failed</span>';
+          botao.innerHTML = deuCerto ? icone('check') + '<span>Copied</span>' : icone('copy') + '<span>Failed</span>';
           botao.setAttribute('data-estado', deuCerto ? 'ok' : 'erro');
           setTimeout(function () {
-            botao.innerHTML = ICONES.copiar + '<span>Copy</span>';
+            botao.innerHTML = icone('copy') + '<span>Copy</span>';
             botao.removeAttribute('data-estado');
           }, 1800);
         });
       });
-      caixa.appendChild(botao);
-      caixa.setAttribute('data-fonte', '');
-      caixa.__fonte = fonte;
+      barra.appendChild(botao);
+      moldura.appendChild(barra);
+      moldura.appendChild(pre);
+      moldura.__fonte = fonte;
     });
   }
 
@@ -605,52 +500,40 @@
   }
 
   // ------------------------------------------------------------------------
-  // 7. Live examples
+  // 6. Live examples
   // ------------------------------------------------------------------------
 
-  // The stage is a separate document, so it needs the design system in full.
-  // Three states in the same shape as docs.css, and then the library's own
-  // --v-* tokens pointed at those. Every colour below is a token: the previous
-  // version hardcoded a dark violet palette here, which is why a stage could
-  // not follow the page.
+  // The stage is a separate document, so it carries its own small stylesheet:
+  // two palettes matching the Monsoon surfaces of the page (purple seed), and
+  // the library's own --v-* tokens pointed at them.
+  //
+  // Keyed on `data-theme` alone, the attribute both writers use: the shell
+  // stamps it on the frame, carrying the page's theme in, and the library
+  // writes it when something inside the frame changes the theme, which is what
+  // the v-theme-toggle example on the theme page does. An explicit light
+  // choice has to beat a dark system as well, or the toggle only works in one
+  // direction.
+  var CLARO =
+    '--ink:#181721;--ink-soft:#5a586b;--ink-faint:#77758a;' +
+    '--bg:#fffeff;--bg-soft:#f4f4fd;--line:#dddceb;--fill:#eaeaf6;' +
+    '--accent:#6c35ec;--accent-soft:#efeafe;color-scheme:light';
+  var ESCURO =
+    '--ink:#f1f0ff;--ink-soft:#a9a8bd;--ink-faint:#8a889e;' +
+    '--bg:#16161a;--bg-soft:#1f1e25;--line:#35343f;--fill:#282831;' +
+    '--accent:#9e77ff;--accent-soft:#2a2340;color-scheme:dark';
+
   var TOKENS_IFRAME =
-    ':root{' +
-    '--ink:#16141c;--ink-soft:#57526a;--ink-faint:#8b8598;' +
-    '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
-    '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
-    'color-scheme:light}' +
-    // Keyed on `data-theme` alone, the attribute both writers use: the shell
-    // stamps it on the frame, carrying the page's theme in, and the library
-    // writes it when something inside the frame changes the theme, which is
-    // what the v-theme-toggle example on the theme page does. Keying on the
-    // shell's own attribute meant that button set one nothing listened to.
-    '@media (prefers-color-scheme:dark){' +
-    'html:root:not([data-theme="light"]){' +
-    '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
-    '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
-    '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
-    'color-scheme:dark}}' +
-    'html:root[data-theme="dark"]{' +
-    '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
-    '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
-    '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
-    'color-scheme:dark}' +
-    // An explicit light choice has to beat the system as well, or the toggle
-    // only works in one direction on a machine set to dark.
-    'html:root[data-theme="light"]{' +
-    '--ink:#16141c;--ink-soft:#57526a;--ink-faint:#8b8598;' +
-    '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
-    '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
-    'color-scheme:light}' +
+    ':root{' + CLARO + '}' +
+    '@media (prefers-color-scheme:dark){html:root:not([data-theme="light"]){' + ESCURO + '}}' +
+    'html:root[data-theme="dark"]{' + ESCURO + '}' +
+    'html:root[data-theme="light"]{' + CLARO + '}' +
     // The library injects :root{--v-surface:#fff;...} into this document's
     // <head> and only darkens it for prefers-color-scheme or [data-theme].
-    // Unmapped, a reader on a light system who chose the dark theme got white
-    // component surfaces on a dark stage. !important is
-    // required: V.palette() writes :root:not([data-theme="light"]), which
-    // outranks any plain selector, and html:root beats the plain :root the
-    // library appends later in source order.
-    // --v-surface-3 has no default at all — the progress track, the skeleton
-    // fill and the switch rail paint with it and render invisible unmapped.
+    // !important is required: V.palette() writes
+    // :root:not([data-theme="light"]), which outranks any plain selector, and
+    // html:root beats the plain :root the library appends later in source
+    // order. --v-surface-3 has no default at all: the progress track, the
+    // skeleton fill and the switch rail paint with it and vanish unmapped.
     'html:root{' +
     '--v-surface:var(--bg)!important;' +
     '--v-surface-2:var(--bg-soft)!important;' +
@@ -664,29 +547,26 @@
   var BASE_IFRAME =
     TOKENS_IFRAME +
     '*,*::before,*::after{box-sizing:border-box}' +
-    'body{margin:0;padding:16px;font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",' +
-    'Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}' +
     // Not transparent. The frame's text is painted with the frame's own --ink,
-    // and a transparent body puts it on the card's background instead of its
-    // own. When the two resolve different themes -- which they can, since the
-    // frame decides its theme from an attribute the shell stamps and the page
-    // decides its own -- the result is dark text on a dark card, invisible. A
-    // frame that paints its own surface cannot land in that state.
-
+    // and a transparent body would put it on the page's background instead. A
+    // frame that paints its own surface cannot end up as dark text on a dark
+    // card. And no height rule on the body, ever: ajustarAltura measures it.
+    'body{margin:0;padding:16px;font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",' +
+    'Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}' +
     '[v-cloak]{display:none!important}' +
     'h1,h2,h3,h4,p,ul,ol{margin:0 0 .6rem}' +
     'ul,ol{padding-left:1.2rem}' +
-    'button{font:inherit;padding:.4rem .8rem;border:1px solid var(--line);border-radius:7px;' +
+    'button{font:inherit;padding:.4rem .8rem;border:1px solid var(--line);border-radius:8px;' +
     'background:var(--bg-soft);color:var(--ink);cursor:pointer}' +
     'button:hover{border-color:var(--accent)}' +
     'input,select,textarea{font:inherit;padding:.4rem .6rem;border:1px solid var(--line);' +
-    'border-radius:7px;background:var(--bg);color:var(--ink);max-width:100%}' +
-    'input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}' +
+    'border-radius:8px;background:var(--bg);color:var(--ink);max-width:100%}' +
+    ':focus-visible{outline:2px solid var(--accent);outline-offset:2px}' +
     'input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}' +
     'label{display:inline-flex;align-items:center;gap:.4rem}' +
     'table{border-collapse:collapse;width:100%;font-size:.9rem}' +
     'th,td{padding:.35rem .5rem;border-bottom:1px solid var(--line);text-align:left}' +
-    'code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;font-size:.9em}' +
+    'code{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}' +
     'a{color:var(--accent)}' +
     '.linha{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.5rem}';
 
@@ -709,34 +589,59 @@
         : null;
 
     alvos.forEach(function (exemplo) {
-      var bloco = exemplo.querySelector('.doc-bloco-codigo');
-      if (!bloco) return;
+      var moldura = exemplo.querySelector('.vframe');
+      if (!moldura) return;
+      exemplo.classList.add('docs-example');
 
-      var fonte = bloco.__fonte || '';
-      exemplo.classList.add('doc-exemplo');
+      // A "live" badge in the code frame's own bar, before the copy button.
+      var barra = moldura.querySelector('.vframe-bar');
+      barra.insertBefore(
+        el('span', {
+          class: 'docs-live',
+          html: '<span class="docs-live-dot" aria-hidden="true"></span>Live'
+        }),
+        barra.querySelector('.vframe-copy')
+      );
 
-      var cabecalho = el('div', {
-        class: 'doc-exemplo__cabecalho',
-        html: 'Live example <b>&#9679;</b> really runs on this page'
+      var palco = el('div', { class: 'docs-stage' });
+      palco.__fonte = moldura.__fonte || '';
+
+      var repetir = el('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-xs gap-1',
+        html: icone('reset') + '<span>Run again</span>'
+      });
+      repetir.addEventListener('click', function () {
+        carregarPalco(palco);
       });
 
-      var corpo = el('div', { class: 'doc-exemplo__corpo' });
-      var colunaCodigo = el('div', { class: 'doc-exemplo__codigo' });
-      var palco = el('div', { class: 'doc-exemplo__palco' });
+      var faixa = el('div', {
+        class: 'docs-stage-bar',
+        html: icone('sparkle') + '<span><b>Result</b>, running on this page</span>'
+      });
+      faixa.appendChild(repetir);
 
-      exemplo.insertBefore(cabecalho, exemplo.firstChild);
-      exemplo.appendChild(corpo);
-      corpo.appendChild(colunaCodigo);
-      corpo.appendChild(palco);
-      colunaCodigo.appendChild(bloco);
+      exemplo.appendChild(faixa);
+      exemplo.appendChild(palco);
 
-      palco.__fonte = fonte;
       if (observador) observador.observe(palco);
       else carregarPalco(palco);
     });
   }
 
   function carregarPalco(palco) {
+    palco.classList.remove('is-ready');
+    palco.innerHTML = '';
+    palco.appendChild(
+      el('img', {
+        class: 'docs-loading',
+        src: MASCOTE + 'vudu-loading.svg',
+        width: '56',
+        height: '56',
+        alt: 'Loading the example'
+      })
+    );
+
     var quadro = el('iframe', {
       'data-palco': '',
       title: 'Example result',
@@ -744,7 +649,7 @@
     });
     palco.appendChild(quadro);
 
-    var documento =
+    quadro.srcdoc =
       '<!doctype html><html lang="en" data-theme="' +
       temaAtual() +
       '"><head><meta charset="utf-8">' +
@@ -759,10 +664,14 @@
       palco.__fonte +
       '<\/body><\/html>';
 
-    quadro.srcdoc = documento;
-
     quadro.addEventListener('load', function () {
       ajustarAltura(quadro);
+      // The library mounts just after load; reveal the result once it has,
+      // so the raw template never flashes.
+      setTimeout(function () {
+        ajustarAltura(quadro);
+        palco.classList.add('is-ready');
+      }, 90);
       try {
         var corpo = quadro.contentDocument.body;
         if ('ResizeObserver' in window) {
@@ -781,7 +690,7 @@
           }, 60);
         });
       } catch (erro) {
-        /* segue com a altura medida uma vez */
+        /* keep the height measured once */
       }
       setTimeout(function () {
         ajustarAltura(quadro);
@@ -792,27 +701,15 @@
   /**
    * Sizes the frame to its content.
    *
-   * Measure the body, never `documentElement`. That distinction is the whole
-   * bug: the frame is a grid item stretched by the code pane beside it, so the
-   * root element of the inner document fills whatever height the frame was
-   * last given, and `documentElement.scrollHeight` reports that height straight
-   * back. Taking `Math.max` of the two therefore read the previous
-   * measurement, added 8, and wrote a frame 8px taller than before. Every
-   * click, keystroke and resize observation ran it again, so an example that
-   * had not changed at all crept upward the whole time someone used it.
-   *
-   * Measured on the events page: a counter whose content is 108px sat in a
-   * frame rendered at 192px, and `documentElement.scrollHeight` said 192 while
-   * `body.scrollHeight` said 108. The body is content-driven because the
-   * stylesheet this file injects gives it `margin:0;padding:16px` and no
-   * height, so it cannot echo the frame. That is what makes it the right thing
-   * to measure, and it is why nothing here may add a height rule to the body.
-   *
-   * An earlier fix collapsed the frame to `0px` before measuring. It never
-   * worked: `.doc-exemplo__palco iframe` carries `min-height: 8rem`, and a
-   * stretched grid item ignores a height smaller than its row in any case. The
-   * frame stayed at its full rendered height throughout, so the collapse
-   * measured exactly what it was trying to avoid while looking like a fix.
+   * Measure the body, never `documentElement`. The root element of the inner
+   * document fills whatever height the frame was last given, so
+   * `documentElement.scrollHeight` reports that height straight back, and
+   * taking `Math.max` of the two read the previous measurement, added 8 and
+   * wrote a frame 8px taller than before, on every click, keystroke and resize
+   * observation. The body is content-driven because the stylesheet this file
+   * injects gives it `margin:0;padding:16px` and no height, so it cannot echo
+   * the frame. That is why nothing here may add a height rule to the body.
+   * scripts/check-frame-height.mjs extracts this function and pins it.
    */
   function ajustarAltura(quadro) {
     try {
@@ -831,181 +728,306 @@
   }
 
   // ------------------------------------------------------------------------
-  // 8. Header
+  // 7. Header, the same markup as header() in scripts/site-chrome.mjs, plus
+  //    the search trigger.
   // ------------------------------------------------------------------------
 
   function montarTopo() {
-    var topo = el('header', { class: 'doc-topo' });
+    var links = LINKS.map(function (link) {
+      return (
+        '<a class="navbar-link" href="' + link.href + '"' +
+        (link.id === 'docs' ? ' aria-current="page"' : '') + '>' + link.texto + '</a>'
+      );
+    }).join('');
 
-    var botaoMenu = el('button', {
-      type: 'button',
-      class: 'doc-botao-icone doc-topo__menu-btn',
-      id: 'doc-abrir-menu',
-      'aria-label': 'Open the navigation menu',
-      'aria-expanded': 'false',
-      'aria-controls': 'doc-menu',
-      html: ICONES.menu
-    });
-    topo.appendChild(botaoMenu);
-
-    var marca = el('a', {
-      class: 'doc-topo__marca',
-      href: href(''),
+    var topo = el('header', {
+      class: 'navbar navbar-sticky navbar-blur px-4 lg:px-8 docs-topbar',
       html:
-        MARCA +
-        '<span>Voodoo.js</span>' +
-        '<span class="doc-topo__etiqueta">Docs</span>'
+        '<div class="navbar-start">' +
+        '<a class="navbar-brand vd-brand" href="' + SITE + '">' + marca() + '</a>' +
+        '</div>' +
+        '<nav class="navbar-center navbar-nav" aria-label="Main">' + links + '</nav>' +
+        '<div class="navbar-end">' +
+        '<button type="button" class="btn btn-outline btn-sm gap-2 text-muted-foreground docs-search-btn" data-abrir-busca aria-haspopup="dialog" aria-label="Search the documentation, Ctrl plus K">' +
+        icone('search') + '<span class="docs-search-label">Search</span><kbd class="kbd kbd-xs">Ctrl K</kbd></button>' +
+        '<button type="button" class="btn btn-ghost btn-sm btn-square vd-theme" id="doc-tema" aria-label="Change theme: system, light or dark">' +
+        icone('monitor', 'vd-theme-system') + icone('sun', 'vd-theme-light') + icone('moon', 'vd-theme-dark') +
+        '</button>' +
+        '<a class="btn btn-ghost btn-sm btn-square hidden sm:inline-flex" href="' + GITHUB + '" aria-label="Voodoo.js on GitHub">' + icone('github') + '</a>' +
+        '<details class="navbar-mobile">' +
+        '<summary class="navbar-burger" aria-label="Menu"></summary>' +
+        '<nav class="navbar-mobile-panel" aria-label="Mobile">' + links +
+        '<a class="navbar-link" href="' + GITHUB + '">GitHub</a></nav>' +
+        '</details>' +
+        '</div>'
     });
-    topo.appendChild(marca);
 
-    topo.appendChild(montarNavegacaoDoSite());
-    topo.appendChild(el('div', { class: 'doc-topo__espaco' }));
-    topo.appendChild(montarBusca());
-
-    var acoes = el('div', { class: 'doc-topo__acoes' });
-    var tema = el('button', {
-      type: 'button',
-      class: 'doc-botao-icone',
-      id: 'doc-tema',
-      'aria-label': 'Switch theme'
-    });
-    tema.addEventListener('click', function () {
+    topo.querySelector('#doc-tema').addEventListener('click', function () {
       aplicarModo(MODOS[(MODOS.indexOf(modoAtual()) + 1) % MODOS.length]);
     });
-    acoes.appendChild(tema);
-
-    acoes.appendChild(
-      el('a', {
-        class: 'doc-botao-icone',
-        href: 'https://github.com/kwy404/Voodoo.js',
-        rel: 'noopener',
-        target: '_blank',
-        'aria-label': 'Repository on GitHub',
-        title: 'Repository on GitHub',
-        html:
-          '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>'
-      })
-    );
-    topo.appendChild(acoes);
-
-    botaoMenu.addEventListener('click', function () {
-      alternarMenu(true);
-    });
-
     return topo;
   }
 
-  function montarNavegacaoDoSite(classe, rotulo) {
-    var nav = el('nav', {
-      class: classe || 'doc-topo__site',
-      'aria-label': rotulo || 'Site'
+  // Below lg the sidebar is a drawer, opened from a slim bar under the header
+  // that also says where the reader is.
+  function montarSubbarra() {
+    var pagina = LINEAR[INDICE_ATUAL];
+    var barra = el('div', {
+      class: 'docs-subbar',
+      html:
+        '<button type="button" class="btn btn-ghost btn-sm gap-2" id="doc-abrir-menu" aria-expanded="false" aria-controls="doc-menu">' +
+        icone('menu') + '<span>Menu</span></button>' +
+        '<span class="docs-subbar-where">' +
+        (pagina
+          ? '<span>' + esc(pagina.grupo.titulo) + '</span>' + icone('arrow') + '<b>' + esc(pagina.curto || pagina.titulo) + '</b>'
+          : '<b>Documentation</b>') +
+        '</span>'
     });
-    LINKS_DO_SITE.forEach(function (link) {
-      nav.appendChild(el('a', { href: link.href, texto: link.texto }));
+    barra.querySelector('#doc-abrir-menu').addEventListener('click', function () {
+      alternarMenu(true);
     });
-    return nav;
+    return barra;
   }
 
   // ------------------------------------------------------------------------
-  // 9. Sidebar
+  // 8. Sidebar
   // ------------------------------------------------------------------------
 
   var vidro;
 
   function montarMenu() {
-    var menu = el('nav', {
-      class: 'doc-menu',
+    var menu = el('aside', {
+      class: 'sidebar docs-side',
       id: 'doc-menu',
-      'aria-label': 'Documentation pages'
+      'aria-label': 'Documentation'
     });
 
+    var cabeca = el('div', {
+      class: 'docs-side-head',
+      html: '<a class="navbar-brand vd-brand" href="' + SITE + '">' + marca() + '</a>'
+    });
     var fechar = el('button', {
       type: 'button',
-      class: 'doc-botao-icone doc-menu__fechar',
+      class: 'btn btn-ghost btn-sm btn-square',
       'aria-label': 'Close the menu',
-      html: ICONES.fechar
+      html: icone('close')
     });
     fechar.addEventListener('click', function () {
       alternarMenu(false);
     });
-    menu.appendChild(fechar);
+    cabeca.appendChild(fechar);
+    menu.appendChild(cabeca);
 
-    // Below 1080px the header has no room for the site links, so they ride
-    // along in the drawer. CSS decides which of the two copies is visible.
-    menu.appendChild(montarNavegacaoDoSite('doc-menu__site', 'Site, in the drawer'));
-
+    var nav = el('nav', { class: 'docs-side-nav', 'aria-label': 'Documentation pages' });
     var contador = 0;
     NAVEGACAO.forEach(function (grupo) {
-      var bloco = el('div', { class: 'doc-menu__grupo' });
-      bloco.appendChild(el('h2', { class: 'doc-menu__titulo', texto: grupo.titulo }));
-      var lista = el('ul', { class: 'doc-menu__lista' });
-
+      var secao = el('div', { class: 'sidebar-section' });
+      secao.appendChild(
+        el('p', { class: 'sidebar-title', html: icone(grupo.icone) + '<span>' + esc(grupo.titulo) + '</span>' })
+      );
       grupo.paginas.forEach(function (pagina) {
-        var item = el('li');
-        var atual = pagina.id === ATUAL;
         var numero = pagina.id.indexOf('guia/') === 0 ? ++contador : null;
-        var link = el('a', {
-          class: 'doc-menu__link',
-          href: href(pagina.id),
-          'aria-current': atual ? 'page' : null,
-          html:
-            (numero ? '<span class="doc-menu__numero">' + numero + '.</span> ' : '') +
-            esc(pagina.curto || pagina.titulo)
-        });
-        item.appendChild(link);
-        lista.appendChild(item);
+        secao.appendChild(
+          el('a', {
+            class: 'sidebar-item',
+            href: href(pagina.id),
+            'aria-current': pagina.id === ATUAL ? 'page' : null,
+            html:
+              (numero ? '<span class="docs-num" aria-hidden="true">' + (numero < 10 ? '0' : '') + numero + '</span>' : '') +
+              '<span class="sidebar-label">' + esc(pagina.curto || pagina.titulo) + '</span>'
+          })
+        );
       });
-
-      bloco.appendChild(lista);
-      menu.appendChild(bloco);
+      nav.appendChild(secao);
     });
+    menu.appendChild(nav);
 
+    menu.appendChild(
+      el('div', {
+        class: 'sidebar-footer',
+        html:
+          '<a class="sidebar-item" href="' + SITE + 'playground.html">' + icone('play') +
+          '<span class="sidebar-label">Open the playground</span></a>' +
+          '<a class="sidebar-item" href="' + GITHUB + '/releases">' + icone('candle') +
+          '<span class="sidebar-label">Release notes</span></a>'
+      })
+    );
     return menu;
   }
 
   function alternarMenu(abrir) {
     var menu = document.getElementById('doc-menu');
     var botao = document.getElementById('doc-abrir-menu');
-    if (!menu) return;
+    if (!menu || !botao) return;
+    var aberto = menu.hasAttribute('data-aberto');
+    if (abrir === aberto) return;
     if (abrir) {
-      menu.setAttribute('data-aberto', 'sim');
+      menu.setAttribute('data-aberto', '');
       botao.setAttribute('aria-expanded', 'true');
+      document.documentElement.classList.add('docs-locked');
       if (vidro) vidro.hidden = false;
-      var primeiro = menu.querySelector('.doc-menu__fechar');
-      if (primeiro) primeiro.focus();
+      var atual = menu.querySelector('[aria-current="page"]');
+      if (atual) atual.scrollIntoView({ block: 'center' });
+      var fechar = menu.querySelector('.docs-side-head button');
+      if (fechar) fechar.focus();
     } else {
       menu.removeAttribute('data-aberto');
       botao.setAttribute('aria-expanded', 'false');
+      document.documentElement.classList.remove('docs-locked');
       if (vidro) vidro.hidden = true;
+      botao.focus();
     }
+  }
+
+  // ------------------------------------------------------------------------
+  // 9. Article furniture: kicker, meta line, callouts, tables, keys, anchors
+  // ------------------------------------------------------------------------
+
+  var AVISOS = {
+    dica: ['callout-primary', 'sparkle'],
+    atencao: ['callout-warning', 'candle'],
+    perigo: ['callout-danger', 'pin'],
+    roadmap: ['callout-neutral', 'moonstar']
+  };
+
+  function vestirArtigo(artigo) {
+    artigo.classList.add('prose');
+
+    var migalha = artigo.querySelector('.doc-migalha');
+    if (migalha) migalha.classList.add('vd-kicker');
+
+    // Reading time and live examples, under the lead paragraph.
+    var resumo = artigo.querySelector('.doc-resumo');
+    if (resumo && ATUAL) {
+      var palavras = (artigo.textContent.match(/\S+/g) || []).length;
+      var minutos = Math.max(1, Math.round(palavras / 220));
+      var vivos = artigo.querySelectorAll('[data-exemplo]').length;
+      resumo.insertAdjacentElement(
+        'afterend',
+        el('p', {
+          class: 'docs-meta',
+          html:
+            '<span>' + icone('scroll') + minutos + ' min read</span>' +
+            (vivos
+              ? '<span>' + icone('sparkle') + vivos + ' live example' + (vivos > 1 ? 's' : '') + '</span>'
+              : '')
+        })
+      );
+    }
+
+    artigo.querySelectorAll('.doc-aviso').forEach(function (aviso) {
+      var tom = ['callout-info', 'crystal'];
+      Object.keys(AVISOS).forEach(function (tipo) {
+        if (aviso.classList.contains('doc-aviso--' + tipo)) tom = AVISOS[tipo];
+      });
+      aviso.classList.add('callout', tom[0]);
+      var rotulo = aviso.querySelector('.doc-aviso__rotulo');
+      if (rotulo) {
+        rotulo.classList.add('callout-title');
+        rotulo.insertAdjacentHTML('afterbegin', icone(tom[1]));
+      }
+    });
+
+    artigo.querySelectorAll('.doc-tabela').forEach(function (caixa) {
+      caixa.classList.add('table-wrap');
+      var tabela = caixa.querySelector('table');
+      if (tabela) tabela.classList.add('table', 'table-hover');
+    });
+
+    // Short identifiers stay on one line; long ones may still wrap.
+    artigo.querySelectorAll(':not(pre) > code').forEach(function (codigo) {
+      if (codigo.textContent.length <= 28) codigo.classList.add('docs-nowrap');
+    });
+
+    artigo.querySelectorAll('kbd').forEach(function (tecla) {
+      tecla.classList.add('kbd', 'kbd-sm');
+    });
+
+    artigo.querySelectorAll('.doc-cartao').forEach(function (cartao) {
+      cartao.insertAdjacentHTML('beforeend', icone('arrow', 'doc-cartao__seta'));
+    });
+  }
+
+  function ligarAncoras(artigo) {
+    artigo.querySelectorAll('h2[id], h3[id]').forEach(function (titulo) {
+      if (titulo.querySelector('.doc-ancora')) return;
+      titulo.appendChild(
+        el('a', {
+          class: 'doc-ancora',
+          href: '#' + titulo.id,
+          'aria-label': 'Direct link to the section ' + titulo.textContent.trim(),
+          texto: '#'
+        })
+      );
+    });
   }
 
   // ------------------------------------------------------------------------
   // 10. On this page
   // ------------------------------------------------------------------------
 
+  function listaDoIndice(titulos) {
+    var raiz = el('ul', { class: 'toc' });
+    var ultimoItem = null;
+    var sublista = null;
+    titulos.forEach(function (titulo) {
+      var link = el('a', {
+        href: '#' + titulo.id,
+        'data-para': titulo.id,
+        texto: titulo.textContent.replace(/#$/, '').trim()
+      });
+      var item = el('li', null, [link]);
+      if (titulo.tagName === 'H3' && ultimoItem) {
+        if (!sublista) {
+          sublista = el('ul');
+          ultimoItem.appendChild(sublista);
+        }
+        sublista.appendChild(item);
+      } else {
+        raiz.appendChild(item);
+        ultimoItem = item;
+        sublista = null;
+      }
+    });
+    return raiz;
+  }
+
   function montarIndice(artigo) {
-    var aside = el('aside', { class: 'doc-indice', 'aria-label': 'On this page' });
-    var titulos = artigo.querySelectorAll('h2[id], h3[id]');
+    var titulos = Array.prototype.slice.call(artigo.querySelectorAll('h2[id], h3[id]'));
+    var aside = el('aside', { class: 'docs-toc', 'aria-labelledby': 'doc-indice-titulo' });
     if (titulos.length < 2) return aside;
 
-    aside.appendChild(el('h2', { class: 'doc-indice__titulo', texto: 'On this page' }));
-    var lista = el('ul', { class: 'doc-indice__lista' });
+    aside.appendChild(el('p', { class: 'toc-title', id: 'doc-indice-titulo', texto: 'On this page' }));
+    aside.appendChild(listaDoIndice(titulos));
+    aside.appendChild(
+      el('a', {
+        class: 'docs-toc-top',
+        href: '#main',
+        html: icone('arrow') + 'Back to top'
+      })
+    );
+    aside.appendChild(
+      el('a', {
+        class: 'docs-toc-card',
+        href: SITE + 'playground.html',
+        html:
+          '<img src="' + MASCOTE + 'vudu-wave.svg" width="48" height="48" alt="">' +
+          '<span><b>Try it live</b>Every example runs in the playground too.</span>'
+      })
+    );
 
-    titulos.forEach(function (titulo) {
-      var item = el('li');
-      item.appendChild(
-        el('a', {
-          class: 'doc-indice__link' + (titulo.tagName === 'H3' ? ' doc-indice__link--n3' : ''),
-          href: '#' + titulo.id,
-          'data-para': titulo.id,
-          texto: titulo.textContent.replace(/#$/, '').trim()
-        })
-      );
-      lista.appendChild(item);
+    // Below xl the side index has no room, so the same list sits in a
+    // collapsible block at the top of the article.
+    var compacto = el('details', { class: 'docs-toc-inline' }, [
+      el('summary', { html: icone('scroll') + '<span>On this page</span>' }),
+      listaDoIndice(titulos)
+    ]);
+    compacto.addEventListener('click', function (evento) {
+      if (evento.target.closest('a')) compacto.open = false;
     });
+    var primeiro = titulos[0];
+    primeiro.parentNode.insertBefore(compacto, primeiro);
 
-    aside.appendChild(lista);
     ligarObservadorDeSecao(aside, titulos);
     return aside;
   }
@@ -1027,7 +1049,7 @@
         });
         if (!ativo) return;
 
-        aside.querySelectorAll('.doc-indice__link').forEach(function (link) {
+        aside.querySelectorAll('a[data-para]').forEach(function (link) {
           if (link.getAttribute('data-para') === ativo) link.setAttribute('aria-current', 'true');
           else link.removeAttribute('aria-current');
         });
@@ -1041,24 +1063,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // 11. Heading anchors
-  // ------------------------------------------------------------------------
-
-  function ligarAncoras(artigo) {
-    artigo.querySelectorAll('h2[id], h3[id]').forEach(function (titulo) {
-      if (titulo.querySelector('.doc-ancora')) return;
-      var ancora = el('a', {
-        class: 'doc-ancora',
-        href: '#' + titulo.id,
-        'aria-label': 'Direct link to the section ' + titulo.textContent.trim(),
-        texto: '#'
-      });
-      titulo.appendChild(ancora);
-    });
-  }
-
-  // ------------------------------------------------------------------------
-  // 12. Previous and next page
+  // 11. Previous and next page
   // ------------------------------------------------------------------------
 
   function montarPaginacao() {
@@ -1067,98 +1072,127 @@
     var proxima = LINEAR[INDICE_ATUAL + 1];
     if (!anterior && !proxima) return null;
 
-    var nav = el('nav', { class: 'doc-paginacao', 'aria-label': 'Neighbouring pages' });
-
-    if (anterior) {
+    var nav = el('nav', { class: 'docs-pager', 'aria-label': 'Neighbouring pages' });
+    [
+      [anterior, 'prev', 'Previous'],
+      [proxima, 'next', 'Next']
+    ].forEach(function (par) {
+      var pagina = par[0];
+      if (!pagina) return;
       nav.appendChild(
         el('a', {
-          class: 'doc-paginacao__link doc-paginacao__link--anterior',
-          href: href(anterior.id),
-          rel: 'prev',
+          class: 'card card-interactive docs-pager-link docs-pager-' + par[1],
+          href: href(pagina.id),
+          rel: par[1],
           html:
-            '<span class="doc-paginacao__rotulo">Previous</span>' +
-            '<span class="doc-paginacao__titulo">' +
-            esc(anterior.titulo) +
-            '</span>'
+            '<span class="docs-pager-label">' + icone('arrow') + par[2] + '</span>' +
+            '<span class="docs-pager-title">' + esc(pagina.titulo) + '</span>' +
+            '<span class="docs-pager-group">' + esc(pagina.grupo.titulo) + '</span>'
         })
       );
-    }
-
-    if (proxima) {
-      nav.appendChild(
-        el('a', {
-          class: 'doc-paginacao__link doc-paginacao__link--proxima',
-          href: href(proxima.id),
-          rel: 'next',
-          html:
-            '<span class="doc-paginacao__rotulo">Next</span>' +
-            '<span class="doc-paginacao__titulo">' +
-            esc(proxima.titulo) +
-            '</span>'
-        })
-      );
-    }
-
+    });
     return nav;
   }
 
-  // The author's other projects, listed in every footer of the site.
-  var OUTROS_PROJETOS = [
-    ['monsoon', 'Monsoon', 'Utility-first CSS with no build step and 116 native components'],
-    ['breakhound', 'breakhound', 'Find bugs in any JavaScript library automatically'],
-    ['vueleap', 'vueleap', 'Migrate Vue 2 to Vue 3 with one command'],
-    ['graphemely', 'graphemely', 'Emoji safe string functions'],
-    ['numberparrot', 'numberparrot', 'Parse localized numbers and currency'],
-    ['edgegoat', 'edgegoat', 'Edge case test inputs']
-  ];
-
-  function listaDeProjetos() {
-    return (
-      '<nav class="vd-projects" aria-label="More projects by kwy404">' +
-      '<span class="vd-projects__title">More projects by kwy404</span>' +
-      OUTROS_PROJETOS.map(function (p) {
-        return (
-          '<a href="https://kwy404.github.io/' + p[0] + '/" title="' + esc(p[2]) + '">' +
-          '<img src="https://cdn.jsdelivr.net/gh/kwy404/' + p[0] +
-          '@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">' +
-          esc(p[1]) +
-          '</a>'
-        );
-      }).join('') +
-      '</nav>'
-    );
-  }
+  // ------------------------------------------------------------------------
+  // 12. Footer, the same markup as footer() in scripts/site-chrome.mjs
+  // ------------------------------------------------------------------------
 
   function montarRodape() {
+    var p = SITE;
+    var projetos = PROJETOS.map(function (x) {
+      return (
+        '<li><a href="https://kwy404.github.io/' + x[0] + '/" title="' + esc(x[2]) + '">' +
+        '<img src="https://cdn.jsdelivr.net/gh/kwy404/' + x[0] +
+        '@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">' +
+        esc(x[1]) + '</a></li>'
+      );
+    }).join('');
+    var secoes = LINKS.map(function (link) {
+      return '<li><a href="' + link.href + '">' + link.texto + '</a></li>';
+    }).join('');
+
     return el('footer', {
-      class: 'doc-rodape',
+      class: 'footer px-4 lg:px-8',
       html:
-        '<p>Voodoo.js 1.0.0 &#183; documentation.</p>' +
-        '<p><a href="' +
-        SITE +
-        '">Home</a> &#183; ' +
-        '<a href="' +
-        SITE +
-        'examples/">Examples</a> &#183; ' +
-        '<a href="https://github.com/kwy404/Voodoo.js">Repository</a> &#183; ' +
-        // The latest release, not one pinned tag: this pointed at v0.5.0 for
-        // eight releases.
-        '<a href="https://github.com/kwy404/Voodoo.js/releases">Release notes</a> &#183; ' +
-        '<a href="' +
-        href('referencia/perguntas-frequentes') +
-        '">Frequently asked questions</a></p>' +
-        '<p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; ' +
-        '<a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>' +
-        listaDeProjetos()
+        '<div class="footer-grid md:grid-cols-4 mx-auto w-full max-w-7xl">' +
+        '<div class="footer-brand md:col-span-1">' +
+        '<a class="navbar-brand vd-brand text-foreground" href="' + p + '">' + marca() + '</a>' +
+        '<p>JSX in plain HTML. No build step, one script tag.</p>' +
+        '<div class="footer-social">' +
+        '<a href="' + GITHUB + '" aria-label="Voodoo.js on GitHub">' + icone('github') + '</a>' +
+        '<a href="' + NPM + '" aria-label="voodoojs on npm">' + icone('npm') + '</a>' +
+        '</div></div>' +
+        '<nav aria-label="Voodoo.js"><p class="footer-title">Voodoo.js</p><ul class="footer-links">' +
+        secoes +
+        '<li><a href="' + GITHUB + '">GitHub</a></li><li><a href="' + NPM + '">npm</a></li>' +
+        '</ul></nav>' +
+        '<nav aria-label="Learn"><p class="footer-title">Learn</p><ul class="footer-links">' +
+        '<li><a href="' + href('guia/instalacao') + '">Installation</a></li>' +
+        '<li><a href="' + href('guia/jsx') + '">JSX in plain HTML</a></li>' +
+        '<li><a href="' + href('referencia/directives') + '">Directives</a></li>' +
+        '<li><a href="' + href('referencia/migracao-vue') + '">Coming from Vue</a></li>' +
+        '<li><a href="' + href('referencia/perguntas-frequentes') + '">FAQ</a></li>' +
+        '</ul></nav>' +
+        '<nav aria-label="More from kwy404"><p class="footer-title">More from kwy404</p>' +
+        '<ul class="footer-links vd-projects">' + projetos + '</ul></nav>' +
+        '</div>' +
+        '<div class="footer-bottom mx-auto w-full max-w-7xl">' +
+        '<p>Made by <a class="font-medium text-foreground hover:underline" href="' + AUTOR_GITHUB + '" rel="me noopener">Alexandre Kohler</a> ' +
+        '(<a class="hover:underline" href="' + AUTOR_GITHUB + '" rel="me noopener">GitHub</a>, ' +
+        '<a class="hover:underline" href="' + AUTOR_LINKEDIN + '" rel="me noopener">LinkedIn</a>). MIT licensed. ' + VERSAO + '.</p>' +
+        '<p>Built with <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/monsoon/">Monsoon</a>. ' +
+        'Interactive parts built with <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>.</p>' +
+        '</div>'
     });
   }
 
   // ------------------------------------------------------------------------
-  // 13. Search
+  // 13. Documentation home: one card per group of NAVEGACAO
+  // ------------------------------------------------------------------------
+
+  function montarMapa(artigo) {
+    var alvo = artigo.querySelector('[data-mapa]');
+    if (!alvo) return;
+    NAVEGACAO.forEach(function (grupo) {
+      var paginas = grupo.paginas.filter(function (p) {
+        return p.id;
+      });
+      alvo.appendChild(
+        el('section', {
+          class: 'doc-mapa__grupo',
+          html:
+            '<div class="doc-mapa__cabeca"><span class="doc-mapa__icone">' + icone(grupo.icone) + '</span>' +
+            '<p class="doc-mapa__titulo">' + esc(grupo.titulo) + '</p>' +
+            '<span class="badge badge-soft badge-neutral badge-sm">' + paginas.length + '</span></div>' +
+            '<p class="doc-mapa__resumo">' + esc(grupo.resumo) + '</p>' +
+            '<ul>' +
+            paginas
+              .map(function (p) {
+                return '<li><a href="' + href(p.id) + '">' + esc(p.titulo) + '</a></li>';
+              })
+              .join('') +
+            '</ul>'
+        })
+      );
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // 14. Search, a command palette in a modal dialog
   // ------------------------------------------------------------------------
 
   var indiceBusca = null;
   var carregandoIndice = false;
+
+  var SUGESTOES = [
+    'guia/instalacao',
+    'guia/jsx',
+    'guia/eventos',
+    'referencia/directives',
+    'referencia/objeto-v',
+    'referencia/perguntas-frequentes'
+  ];
 
   function carregarIndice() {
     if (indiceBusca || carregandoIndice) return;
@@ -1180,46 +1214,33 @@
   }
 
   function montarBusca() {
-    var caixa = el('div', { class: 'doc-busca', role: 'search' });
-
-    caixa.appendChild(el('span', { class: 'doc-busca__lupa', html: ICONES.lupa }));
-
-    var campo = el('input', {
-      type: 'search',
-      id: 'doc-busca-campo',
-      class: 'doc-busca__campo',
-      placeholder: 'Search the documentation...',
-      autocomplete: 'off',
-      role: 'combobox',
-      'aria-expanded': 'false',
-      'aria-controls': 'doc-busca-resultados',
-      'aria-autocomplete': 'list',
-      'aria-label': 'Search the documentation'
+    var dialogo = el('dialog', {
+      class: 'modal modal-top docs-search',
+      id: 'doc-busca',
+      'aria-label': 'Search the documentation',
+      html:
+        '<div class="command-palette">' +
+        '<label class="command-palette-search">' +
+        '<input type="search" id="doc-busca-campo" class="command-palette-input" placeholder="Search the documentation" ' +
+        'autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="doc-busca-resultados" ' +
+        'aria-autocomplete="list" aria-label="Search the documentation">' +
+        '<kbd class="kbd kbd-xs">Esc</kbd></label>' +
+        '<div class="command-palette-list" id="doc-busca-resultados" role="listbox" aria-label="Search results"></div>' +
+        '<div class="command-palette-footer"><span><kbd>&#8593;</kbd><kbd>&#8595;</kbd> to move</span>' +
+        '<span><kbd>Enter</kbd> to open</span><span><kbd>Esc</kbd> to close</span>' +
+        '<span class="docs-search-count" aria-live="polite"></span></div>' +
+        '</div>'
     });
 
-    var resultados = el('ul', {
-      class: 'doc-busca__resultados',
-      id: 'doc-busca-resultados',
-      role: 'listbox',
-      'aria-label': 'Search results'
-    });
-    resultados.hidden = true;
+    var campo = dialogo.querySelector('input');
+    var lista = dialogo.querySelector('.command-palette-list');
 
-    caixa.appendChild(campo);
-    caixa.appendChild(resultados);
-
-    campo.addEventListener('focus', carregarIndice);
     campo.addEventListener('input', function () {
       buscar(campo.value);
     });
 
     campo.addEventListener('keydown', function (evento) {
-      var itens = resultados.querySelectorAll('.doc-busca__link');
-      if (evento.key === 'Escape') {
-        fecharBusca();
-        campo.blur();
-        return;
-      }
+      var itens = lista.querySelectorAll('.command-palette-item');
       if (!itens.length) return;
       var indice = -1;
       itens.forEach(function (item, i) {
@@ -1231,51 +1252,88 @@
       } else if (evento.key === 'ArrowUp') {
         evento.preventDefault();
         selecionar(itens, (indice - 1 + itens.length) % itens.length);
-      } else if (evento.key === 'Enter' && indice >= 0) {
+      } else if (evento.key === 'Enter') {
         evento.preventDefault();
-        itens[indice].click();
+        (itens[indice] || itens[0]).click();
       }
     });
 
-    document.addEventListener('click', function (evento) {
-      if (!caixa.contains(evento.target)) fecharBusca();
+    // A click on the dimmed area around the palette closes it, and so does
+    // following a result, which may only move to an anchor on this page.
+    dialogo.addEventListener('click', function (evento) {
+      if (evento.target === dialogo || evento.target.closest('a')) dialogo.close();
+    });
+    dialogo.addEventListener('close', function () {
+      var gatilho = document.querySelector('.docs-search-btn');
+      if (gatilho && !location.hash) gatilho.focus();
     });
 
-    return caixa;
+    return dialogo;
+  }
+
+  function abrirBusca() {
+    var dialogo = document.getElementById('doc-busca');
+    if (!dialogo) return;
+    carregarIndice();
+    var campo = document.getElementById('doc-busca-campo');
+    if (!dialogo.open) {
+      if (dialogo.showModal) dialogo.showModal();
+      else dialogo.setAttribute('open', '');
+    }
+    buscar(campo.value);
+    campo.focus();
+    campo.select();
   }
 
   function selecionar(itens, indice) {
+    var campo = document.getElementById('doc-busca-campo');
     itens.forEach(function (item, i) {
       if (i === indice) {
         item.setAttribute('aria-selected', 'true');
         item.scrollIntoView({ block: 'nearest' });
+        if (campo) campo.setAttribute('aria-activedescendant', item.id);
       } else {
         item.removeAttribute('aria-selected');
       }
     });
   }
 
-  function fecharBusca() {
-    var lista = document.getElementById('doc-busca-resultados');
-    var campo = document.getElementById('doc-busca-campo');
-    if (lista) lista.hidden = true;
-    if (campo) campo.setAttribute('aria-expanded', 'false');
+  function itemDeBusca(i, destino, titulo, caminho, trecho, nomeIcone) {
+    return (
+      '<a class="command-palette-item docs-hit" role="option" id="doc-hit-' + i + '" href="' + destino + '"' +
+      (i === 0 ? ' aria-selected="true"' : '') + '>' +
+      icone(nomeIcone) +
+      '<span class="docs-hit-text"><span class="docs-hit-title">' + titulo + '</span>' +
+      (caminho ? '<span class="docs-hit-path">' + caminho + '</span>' : '') +
+      (trecho ? '<span class="docs-hit-snippet">' + trecho + '</span>' : '') +
+      '</span>' + icone('arrow', 'docs-hit-go') + '</a>'
+    );
   }
 
   function buscar(termo) {
     var lista = document.getElementById('doc-busca-resultados');
-    var campo = document.getElementById('doc-busca-campo');
+    var contagem = document.querySelector('.docs-search-count');
     if (!lista) return;
-
     var limpo = semAcento(termo).trim();
+
     if (limpo.length < 2) {
-      fecharBusca();
-      lista.innerHTML = '';
+      lista.innerHTML =
+        '<p class="command-palette-heading">Popular pages</p>' +
+        SUGESTOES.map(function (id, i) {
+          var pagina = LINEAR.filter(function (p) {
+            return p.id === id;
+          })[0];
+          return itemDeBusca(i, href(id), esc(pagina.titulo), esc(pagina.grupo.titulo), '', pagina.grupo.icone);
+        }).join('');
+      if (contagem) contagem.textContent = '';
       return;
     }
 
-    carregarIndice();
-    if (!indiceBusca) return;
+    if (!indiceBusca) {
+      lista.innerHTML = '<p class="command-palette-empty">Opening the spell book...</p>';
+      carregarIndice();
+      return;
+    }
 
     var palavras = limpo.split(/\s+/);
     var achados = [];
@@ -1299,41 +1357,50 @@
     });
     achados = achados.slice(0, 12);
 
-    lista.innerHTML = '';
     if (!achados.length) {
-      lista.appendChild(
-        el('li', {
-          class: 'doc-busca__vazio',
-          texto: 'Nothing found for "' + termo.trim() + '".'
-        })
-      );
-    } else {
-      achados.forEach(function (achado) {
-        var item = achado.item;
-        var li = el('li', { role: 'presentation' });
-        li.appendChild(
-          el('a', {
-            class: 'doc-busca__link',
-            role: 'option',
-            href: href(item.p) + (item.a ? '#' + item.a : ''),
-            html:
-              '<span class="doc-busca__titulo">' +
-              destacar(item.s || item.t, palavras) +
-              '</span>' +
-              '<span class="doc-busca__caminho">' +
-              esc(item.t) +
-              '</span>' +
-              '<span class="doc-busca__trecho">' +
-              destacar(item.e, palavras) +
-              '</span>'
-          })
-        );
-        lista.appendChild(li);
-      });
+      lista.innerHTML =
+        '<div class="command-palette-empty docs-search-empty">' +
+        '<img src="' + MASCOTE + 'vudu-thinking.svg" width="88" height="88" alt="">' +
+        '<p><b>Nothing found for "' + esc(termo.trim()) + '".</b></p>' +
+        '<p>Try a directive such as <code>v-model</code>, or a plain word like "fetch" or "theme".</p>' +
+        '</div>';
+      if (contagem) contagem.textContent = 'No results';
+      return;
     }
 
-    lista.hidden = false;
-    if (campo) campo.setAttribute('aria-expanded', 'true');
+    // Grouped by page, the pages in the order of their best result.
+    var grupos = [];
+    var porPagina = {};
+    achados.forEach(function (achado) {
+      var chave = achado.item.p;
+      if (!porPagina[chave]) {
+        porPagina[chave] = { titulo: achado.item.t, itens: [] };
+        grupos.push(porPagina[chave]);
+      }
+      porPagina[chave].itens.push(achado.item);
+    });
+
+    var i = 0;
+    lista.innerHTML = grupos
+      .map(function (grupo) {
+        return (
+          '<p class="command-palette-heading">' + esc(grupo.titulo) + '</p>' +
+          grupo.itens
+            .map(function (item) {
+              return itemDeBusca(
+                i++,
+                href(item.p) + (item.a ? '#' + item.a : ''),
+                destacar(item.s || item.t, palavras),
+                '',
+                destacar(item.e, palavras),
+                item.a ? 'braces' : 'book'
+              );
+            })
+            .join('')
+        );
+      })
+      .join('');
+    if (contagem) contagem.textContent = achados.length + ' result' + (achados.length > 1 ? 's' : '');
   }
 
   function destacar(texto, palavras) {
@@ -1345,7 +1412,7 @@
       if (pos < 0) return;
       saida =
         saida.slice(0, pos) +
-        '<mark class="doc-busca__marca">' +
+        '<mark>' +
         saida.slice(pos, pos + palavra.length) +
         '</mark>' +
         saida.slice(pos + palavra.length);
@@ -1354,33 +1421,42 @@
   }
 
   // ------------------------------------------------------------------------
-  // 14. Keyboard shortcuts
+  // 15. Keyboard shortcuts
   // ------------------------------------------------------------------------
 
   function ligarAtalhos() {
     document.addEventListener('keydown', function (evento) {
-      var campo = document.getElementById('doc-busca-campo');
       var ativo = document.activeElement;
-      var digitando = !!ativo && /^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName);
+      var digitando = !!ativo && (/^(INPUT|TEXTAREA|SELECT)$/.test(ativo.tagName) || ativo.isContentEditable);
 
-      if ((evento.ctrlKey || evento.metaKey) && evento.key.toLowerCase() === 'k') {
+      if ((evento.ctrlKey || evento.metaKey) && evento.key && evento.key.toLowerCase() === 'k') {
         evento.preventDefault();
-        if (campo) campo.focus();
+        var dialogo = document.getElementById('doc-busca');
+        if (dialogo && dialogo.open) dialogo.close();
+        else abrirBusca();
         return;
       }
       if (evento.key === '/' && !digitando) {
         evento.preventDefault();
-        if (campo) campo.focus();
+        abrirBusca();
         return;
       }
       if (evento.key === 'Escape') {
         alternarMenu(false);
       }
     });
+
+    document.addEventListener('click', function (evento) {
+      var gatilho = evento.target.closest('[data-abrir-busca]');
+      if (gatilho) {
+        evento.preventDefault();
+        abrirBusca();
+      }
+    });
   }
 
   // ------------------------------------------------------------------------
-  // 15. Assembly
+  // 16. Assembly
   // ------------------------------------------------------------------------
 
   function iniciar() {
@@ -1388,51 +1464,60 @@
     if (!artigo) return;
 
     var pagina = LINEAR[INDICE_ATUAL];
-    var conteudo = el('main', { class: 'doc-conteudo', id: 'conteudo', tabindex: '-1' });
-    var layout = el('div', { class: 'doc-layout' });
 
     // Keep the article aside before emptying the body.
     artigo.parentNode.removeChild(artigo);
     document.body.innerHTML = '';
+    document.body.classList.add('docs-body');
+    if (pagina) document.body.setAttribute('data-pagina', pagina.id || 'inicio');
 
     document.body.appendChild(
-      el('a', { class: 'pular-para-conteudo', href: '#conteudo', texto: 'Skip to content' })
+      el('a', { class: 'vd-skip btn btn-primary btn-sm', href: '#main', texto: 'Skip to content' })
     );
     document.body.appendChild(montarTopo());
+    document.body.appendChild(montarSubbarra());
 
-    vidro = el('div', { class: 'doc-vidro' });
+    vidro = el('div', { class: 'docs-scrim' });
     vidro.hidden = true;
     vidro.addEventListener('click', function () {
       alternarMenu(false);
     });
-    document.body.appendChild(vidro);
 
-    layout.appendChild(montarMenu());
-    layout.appendChild(conteudo);
-    conteudo.appendChild(artigo);
-    document.body.appendChild(layout);
+    var coluna = el('div', { class: 'docs-column' }, [artigo]);
+    var grade = el('div', { class: 'docs-grid' }, [coluna]);
+    var principal = el('main', { class: 'docs-main', id: 'main', tabindex: '-1' }, [grade]);
+    var casca = el('div', { class: 'docs-shell' }, [montarMenu(), vidro, principal]);
+    document.body.appendChild(casca);
+    document.body.appendChild(montarRodape());
+    document.body.appendChild(montarBusca());
 
+    vestirArtigo(artigo);
+    montarMapa(artigo);
     prepararCodigo(artigo);
     montarExemplos(artigo);
+    grade.appendChild(montarIndice(artigo));
     ligarAncoras(artigo);
 
     var paginacao = montarPaginacao();
-    if (paginacao) conteudo.appendChild(paginacao);
-    conteudo.appendChild(montarRodape());
-
-    layout.appendChild(montarIndice(artigo));
+    if (paginacao) coluna.appendChild(paginacao);
 
     ligarTema();
     ligarAtalhos();
 
-    if (pagina) document.body.setAttribute('data-pagina', pagina.id || 'inicio');
+    // The current page in view inside the sidebar, which scrolls on its own.
+    var menu = document.getElementById('doc-menu');
+    var atual = menu && menu.querySelector('[aria-current="page"]');
+    if (atual && atual.offsetTop > menu.clientHeight * 0.6) {
+      menu.scrollTop = atual.offsetTop - menu.clientHeight / 3;
+    }
 
     // Scroll to the anchor now that the content is in place.
     if (location.hash) {
       var alvo = document.getElementById(decodeURIComponent(location.hash.slice(1)));
-      if (alvo) setTimeout(function () {
-        alvo.scrollIntoView();
-      }, 0);
+      if (alvo)
+        setTimeout(function () {
+          alvo.scrollIntoView();
+        }, 0);
     }
   }
 

@@ -10,186 +10,12 @@
 <meta name="description" content="Single-brace interpolation, v-text and v-html: the three ways of writing a value from state into the page, and the one difference between them that really matters.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/mostrando-valores">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -210,11 +36,11 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ user: { name: 'Ann' }, total: 1234.5 }"&gt;
-  &lt;p&gt;Welcome, { user.name }.&lt;/p&gt;
-  &lt;p&gt;Total: { total.toFixed(2) }&lt;/p&gt;
-  &lt;p&gt;{ total &gt; 1000 ? 'Large order' : 'Normal order' }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ user: { name: 'Ann' }, total: 1234.5 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Welcome, { user.name }.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Total: { total.toFixed(2) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ total > 1000 ? 'Large order' : 'Normal order' }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -224,7 +50,7 @@ html:root {
 </p>
 
 <p>
-  The expression can do arithmetic, call a method, compare and chain — it is the same subset of
+  The expression can do arithmetic, call a method, compare and chain. It is the same subset of
   JavaScript accepted in any attribute, described in the
   <a href="../referencia/objeto-v.html#expressoes">expression reference</a>.
 </p>
@@ -234,7 +60,7 @@ html:root {
 <p>
   Inside <code>&lt;pre&gt;</code>, <code>&lt;code&gt;</code>, <code>&lt;script&gt;</code>,
   <code>&lt;style&gt;</code> and <code>&lt;textarea&gt;</code> the sweep does not go in. That is how
-  you show code examples on a page without the library trying to evaluate the braces — exactly what
+  you show code examples on a page without the library trying to evaluate the braces, exactly what
   this documentation does.
 </p>
 
@@ -242,9 +68,9 @@ html:root {
   To turn the sweep off in any other subtree, there is <code>v-ignore</code>:
 </p>
 
-<pre data-lang="html"><code>&lt;div v-ignore&gt;
-  This block stays exactly as it is, braces and all: { not evaluated }
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-ignore</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  This block stays exactly as it is, braces and all: { not evaluated }</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
   <span class="doc-aviso__rotulo">An object inside the expression, and line breaks</span>
@@ -252,7 +78,7 @@ html:root {
     Both work: <code>{ $t('items', { n: total }) }</code> counts the braces and finds the right
     closing one, and a long expression can be broken over several lines. The test is parsing: what
     the library can read as an expression becomes a value, and what it cannot stays as text exactly
-    as you wrote it — a stretch of CSS pasted into the paragraph, for instance, comes through
+    as you wrote it: a stretch of CSS pasted into the paragraph, for instance, comes through
     untouched.
   </p>
 </div>
@@ -265,16 +91,16 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ user: { name: 'Ann' }, total: 1234.5 }"&gt;
-  &lt;p&gt;&lt;span v-text="user.name"&gt;&lt;/span&gt;&lt;/p&gt;
-  &lt;p&gt;&lt;span v-text="'Total: ' + total.toFixed(2)"&gt;&lt;/span&gt;&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ user: { name: 'Ann' }, total: 1234.5 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"user.name"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"'Total: ' + total.toFixed(2)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
   <code>v-text</code> writes <b>text</b>. If the value has a <code>&lt;b&gt;</code> inside, the word
   <code>&lt;b&gt;</code> shows up on screen, not bold type. Whatever content is written in the
-  element is replaced — which also makes it a placeholder, visible before the library starts.
+  element is replaced, which also makes it a placeholder, visible before the library starts.
 </p>
 
 <h2 id="v-html">v-html</h2>
@@ -284,10 +110,10 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ content: '&lt;b&gt;bold&lt;/b&gt; and &lt;i&gt;italic&lt;/i&gt;' }"&gt;
-  &lt;p v-html="content"&gt;&lt;/p&gt;
-  &lt;p v-text="content"&gt;&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ content: '</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">&#x3C;</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">b>bold</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">&#x3C;</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">/b> and </span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">&#x3C;</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">i>italic</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">&#x3C;</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">/i>' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-html</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"content"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"content"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -334,13 +160,13 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ price: 1234.5, when: '2026-08-29T10:30:00' }"&gt;
-  &lt;p&gt;Currency: { $c(price) }&lt;/p&gt;
-  &lt;p&gt;Currency in dollars: { $c(price, 'USD') }&lt;/p&gt;
-  &lt;p&gt;Number: { $n(price) }&lt;/p&gt;
-  &lt;p&gt;Date: { $d(when) }&lt;/p&gt;
-  &lt;p&gt;Relative time: { $rt(when) }&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ price: 1234.5, when: '2026-08-29T10:30:00' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Currency: { $c(price) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Currency in dollars: { $c(price, 'USD') }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Number: { $n(price) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Date: { $d(when) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Relative time: { $rt(when) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
@@ -362,6 +188,6 @@ html:root {
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

@@ -10,7 +10,12 @@
 <meta name="description" content="How the granular updates work without a Virtual DOM, the real size of the three files, the practices that pay off the most, and what the library already optimizes on its own.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/desempenho">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -25,11 +30,11 @@
 
 <h2 id="granular">How the granular updates work</h2>
 
-<pre data-lang="html"><code>&lt;div v-data="{ name: 'Ana', age: 30 }"&gt;
-  &lt;p v-text="name"&gt;&lt;/p&gt;          &lt;!-- effect 1, depends on "name" --&gt;
-  &lt;p v-text="age"&gt;&lt;/p&gt;           &lt;!-- effect 2, depends on "age" --&gt;
-  &lt;p&gt;{ name } is { age }&lt;/p&gt;     &lt;!-- effect 3, depends on both --&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ name: 'Ana', age: 30 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">          &#x3C;!-- effect 1, depends on "name" --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"age"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">           &#x3C;!-- effect 2, depends on "age" --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ name } is { age }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">     &#x3C;!-- effect 3, depends on both --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>When <code>name</code> changes:</p>
 
@@ -48,11 +53,11 @@
 
 <h3 id="lote">Batching and the microtask</h3>
 
-<pre data-lang="js"><code>state.a = 1;
-state.b = 2;
-state.c = 3;
-// the affected effects run once only, in the microtask
-await V.nextTick();</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">state</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">a</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">1</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">state</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">b</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">state</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">c</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">3</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// the affected effects run once only, in the microtask</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">nextTick</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span></code></pre>
 
 <p>
   Duplicate effects are deduplicated within the round. If an effect reruns too many times in the
@@ -90,8 +95,8 @@ await V.nextTick();</code></pre>
 
 <h3 id="show-if">Prefer v-show over v-if for frequent toggling</h3>
 
-<pre data-lang="html"><code>&lt;div v-show="activeTab === 'profile'"&gt;...&lt;/div&gt;   &lt;!-- toggles a lot --&gt;
-&lt;div v-if="user.admin"&gt;...&lt;/div&gt;                  &lt;!-- decides once --&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-show</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"activeTab === 'profile'"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">   &#x3C;!-- toggles a lot --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"user.admin"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">                  &#x3C;!-- decides once --></span></span></code></pre>
 
 <h3 id="expressoes">Keep the expressions short</h3>
 
@@ -100,18 +105,18 @@ await V.nextTick();</code></pre>
   better off in a component computed or in a scope function.
 </p>
 
-<pre data-lang="html"><code>&lt;!-- re-evaluates the whole list on every change --&gt;
-&lt;span&gt;{ orders.filter(o =&gt; o.paid).reduce((s, o) =&gt; s + o.total, 0) }&lt;/span&gt;
-
-&lt;!-- computes once and reuses it --&gt;
-&lt;span&gt;{ paidTotal }&lt;/span&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- re-evaluates the whole list on every change --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ orders.filter(o => o.paid).reduce((s, o) => s + o.total, 0) }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- computes once and reuses it --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ paidTotal }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="markraw">Mark what does not need to be reactive</h3>
 
-<pre data-lang="js"><code>V.data({
-  map: V.markRaw(new google.maps.Map(el)),
-  editor: V.markRaw(createEditor())
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  map:</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">markRaw</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">new</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> google</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">maps</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">Map</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">)),</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  editor:</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">markRaw</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">createEditor</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">())</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <p>
   Instances of outside libraries, DOM elements and large structures you replace whole gain nothing
@@ -120,10 +125,10 @@ await V.nextTick();</code></pre>
 
 <h3 id="debounce">Debounce, cache and load on demand</h3>
 
-<pre data-lang="html"><code>&lt;input v-model.debounce="search" v-debounce="300"&gt;
-&lt;div v-resource="countries: /api/countries" v-cache="1h"&gt;&lt;/div&gt;
-&lt;img v-lazy-src="/photos/large.jpg" alt=""&gt;
-&lt;section v-load-visible="/partials/testimonials.html"&gt;Loading...&lt;/section&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model.debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"search"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"300"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-resource</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"countries: /api/countries"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-cache</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"1h"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">img</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-lazy-src</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/photos/large.jpg"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> alt</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">""</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-load-visible</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/partials/testimonials.html"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Loading...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">section</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="listas">Prefer paginated lists</h3>
 
@@ -135,9 +140,9 @@ await V.nextTick();</code></pre>
 
 <h3 id="observador">Turn the observer off when you do not need it</h3>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-no-observer defer&gt;&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-no-observer</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
-<pre data-lang="js"><code>V.walk(newElement);  // initialize by hand when you need to</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">walk</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">newElement</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// initialize by hand when you need to</span></span></code></pre>
 
 <h3 id="bundle">Pick the right file</h3>
 
@@ -163,8 +168,8 @@ await V.nextTick();</code></pre>
 
 <h2 id="medindo">Measuring</h2>
 
-<pre data-lang="js"><code>V.config.devtools = true;   // warnings and named anchors
-V.xray();                   // performance tab, with effects per element</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">devtools</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// warnings and named anchors</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">xray</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();                   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// performance tab, with effects per element</span></span></code></pre>
 
 <p>
   On the inspector's performance tab, each element shows how many effects depend on it and how many
@@ -175,6 +180,6 @@ V.xray();                   // performance tab, with effects per element</code><
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

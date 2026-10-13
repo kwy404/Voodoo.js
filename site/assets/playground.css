@@ -1,0 +1,1004 @@
+/* ==========================================================================
+   The playground, dressed as the editor people already know.
+
+   The site header and footer come from Monsoon and site.css like every other
+   page. Between them sits a full height workbench in VS Code's own colours:
+   Light+ when the site is light, Dark+ when it is dark, the same palettes the
+   code frames on the rest of the site use. Somebody who writes code every day
+   recognises it at a glance, and that is the point: the page asks them to read
+   code, so it should look like the place they read code.
+
+   The status bar is Voodoo purple rather than VS Code's blue, because VS Code
+   colours that strip per workspace, so a branded one reads as "this
+   workspace" rather than "wrong shade".
+   ========================================================================== */
+
+:root,
+[data-theme] {
+  /* Light+ */
+  --ide-editor: #ffffff;
+  --ide-panel: #f3f3f3;
+  --ide-rail: #f8f8f8;
+  --ide-tab-idle: #ececec;
+  --ide-seam: #e5e5e5;
+  --ide-ink: #3b3b3b;
+  --ide-ink-strong: #1f1f1f;
+  --ide-ink-soft: #616161;
+  --ide-ink-faint: #8a8a8a;
+  --ide-gutter: #237893;
+  --ide-gutter-active: #0b216f;
+  --ide-hover: #e8e8e8;
+  --ide-active: color-mix(in oklab, var(--primary) 13%, #f3f3f3);
+  --ide-select: rgba(173, 214, 255, 0.6);
+  --ide-caret: #000000;
+  --ide-check-a: #f6f6f6;
+  --ide-check-b: #eeeeee;
+  --ide-scroll: rgba(100, 100, 100, 0.28);
+
+  /* Light+ token colours, the ones Shiki paints the site's code with. */
+  --tk-tag: #800000;
+  --tk-bracket: #800000;
+  --tk-attr: #e50000;
+  --tk-str: #0000ff;
+  --tk-com: #008000;
+  --tk-interp: #af00db;
+  --tk-punct: #000000;
+  --tk-text: #000000;
+
+  /* Where the splitter sits. Rewritten by the drag, restored on load. */
+  --split: 50%;
+  /* The header's height, measured by the script; this is the first guess. */
+  --pg-top: 4rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ide-editor: #1e1e1e;
+    --ide-panel: #252526;
+    --ide-rail: #2c2c2c;
+    --ide-tab-idle: #2d2d2d;
+    --ide-seam: #191919;
+    --ide-ink: #cccccc;
+    --ide-ink-strong: #ffffff;
+    --ide-ink-soft: #9d9d9d;
+    --ide-ink-faint: #7f8285;
+    --ide-gutter: #858585;
+    --ide-gutter-active: #c6c6c6;
+    --ide-hover: #2a2d2e;
+    --ide-active: #37373d;
+    --ide-select: rgba(38, 79, 120, 0.6);
+    --ide-caret: #aeafad;
+    --ide-check-a: #161616;
+    --ide-check-b: #1b1b1b;
+    --ide-scroll: rgba(121, 121, 121, 0.4);
+    --tk-tag: #569cd6;
+    --tk-bracket: #808080;
+    --tk-attr: #9cdcfe;
+    --tk-str: #ce9178;
+    --tk-com: #6a9955;
+    --tk-interp: #c586c0;
+    --tk-punct: #d4d4d4;
+    --tk-text: #d4d4d4;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ide-editor: #1e1e1e;
+  --ide-panel: #252526;
+  --ide-rail: #2c2c2c;
+  --ide-tab-idle: #2d2d2d;
+  --ide-seam: #191919;
+  --ide-ink: #cccccc;
+  --ide-ink-strong: #ffffff;
+  --ide-ink-soft: #9d9d9d;
+  --ide-ink-faint: #7f8285;
+  --ide-gutter: #858585;
+  --ide-gutter-active: #c6c6c6;
+  --ide-hover: #2a2d2e;
+  --ide-active: #37373d;
+  --ide-select: rgba(38, 79, 120, 0.6);
+  --ide-caret: #aeafad;
+  --ide-check-a: #161616;
+  --ide-check-b: #1b1b1b;
+  --ide-scroll: rgba(121, 121, 121, 0.4);
+  --tk-tag: #569cd6;
+  --tk-bracket: #808080;
+  --tk-attr: #9cdcfe;
+  --tk-str: #ce9178;
+  --tk-com: #6a9955;
+  --tk-interp: #c586c0;
+  --tk-punct: #d4d4d4;
+  --tk-text: #d4d4d4;
+}
+
+/* -------------------------------------------------------------- workbench */
+
+.pg {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: calc(100vh - var(--pg-top));
+  height: calc(100dvh - var(--pg-top));
+  min-height: 26rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--ide-editor);
+  color: var(--ide-ink);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* The toolbar: what this is, which example is open, and the three actions. */
+.pg-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  padding: 0.375rem 0.75rem 0.375rem 1rem;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.pg-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.pg-heading .vd-icon {
+  color: var(--primary);
+}
+
+.pg-heading h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pg-crumb {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
+
+.pg-crumb::before {
+  content: '/';
+  margin-right: 0.625rem;
+  color: var(--border);
+}
+
+.pg-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
+}
+
+.pg-actions .btn .vd-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pg-run kbd {
+  margin-left: 0.25rem;
+  padding: 0 0.3rem;
+  border-radius: var(--m-radius-xs);
+  background: color-mix(in oklab, var(--primary-foreground) 18%, transparent);
+  color: inherit;
+  font: 500 0.6875rem/1.25rem var(--font-sans);
+}
+
+/* The phone view switch. Hidden while all three panes fit side by side. */
+.pg-views {
+  display: none;
+}
+
+.pg-shell {
+  display: grid;
+  grid-template-columns: 3rem 16.5rem minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* --------------------------------------------------------- activity rail */
+
+.pg-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--ide-rail);
+  border-right: 1px solid var(--ide-seam);
+}
+
+.pg-rail a,
+.pg-rail button {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-left: 2px solid transparent;
+  color: var(--ide-ink-faint);
+  background: none;
+  cursor: pointer;
+}
+
+.pg-rail .vd-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.pg-rail a:hover,
+.pg-rail button:hover {
+  color: var(--ide-ink-strong);
+}
+
+.pg-rail button[aria-pressed='true'] {
+  color: var(--ide-ink-strong);
+  border-left-color: var(--primary);
+}
+
+.pg-rail a:focus-visible,
+.pg-rail button:focus-visible {
+  outline-offset: -3px;
+}
+
+.pg-spacer {
+  flex: 1;
+}
+
+/* -------------------------------------------------------------- explorer */
+
+.pg-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ide-panel);
+  border-right: 1px solid var(--ide-seam);
+}
+
+.pg-side-title {
+  margin: 0;
+  padding: 0.625rem 1.25rem 0.375rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ide-ink-soft);
+}
+
+/* The filter, VS Code's quick open moved into the explorer it filters. */
+.pg-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0.25rem 0.75rem 0.5rem;
+}
+
+.pg-filter .vd-icon {
+  position: absolute;
+  left: 0.5rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--ide-ink-faint);
+  pointer-events: none;
+}
+
+.pg-filter input {
+  width: 100%;
+  height: 1.75rem;
+  padding: 0 3.25rem 0 1.75rem;
+  border: 1px solid var(--ide-seam);
+  border-radius: var(--m-radius-sm);
+  background: var(--ide-editor);
+  color: var(--ide-ink);
+  font-size: 0.8125rem;
+}
+
+.pg-filter input::placeholder {
+  color: var(--ide-ink-faint);
+}
+
+.pg-filter input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.pg-filter input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.pg-filter kbd {
+  position: absolute;
+  right: 0.375rem;
+  padding: 0 0.3rem;
+  border-radius: var(--m-radius-xs);
+  background: var(--ide-tab-idle);
+  color: var(--ide-ink-faint);
+  font: 500 0.625rem/1rem var(--font-sans);
+  pointer-events: none;
+}
+
+#file-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 0.75rem;
+}
+
+#file-list::-webkit-scrollbar,
+.pg-stack textarea::-webkit-scrollbar,
+.pg-frame-wrap::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+#file-list::-webkit-scrollbar-thumb,
+.pg-stack textarea::-webkit-scrollbar-thumb,
+.pg-frame-wrap::-webkit-scrollbar-thumb {
+  background: var(--ide-scroll);
+}
+
+#file-list::-webkit-scrollbar-track,
+.pg-stack textarea::-webkit-scrollbar-track,
+.pg-stack textarea::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* A folder row: chevron, label, count. It collapses, because a tree whose
+   arrows do nothing is worse than no arrows. */
+.pg-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.25rem 0.75rem 0.25rem 0.375rem;
+  background: none;
+  color: var(--ide-ink);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pg-group:hover {
+  background: var(--ide-hover);
+}
+
+.pg-chev {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--ide-ink-soft);
+}
+
+.pg-chev::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-right: 1.4px solid currentColor;
+  border-bottom: 1.4px solid currentColor;
+  transform: translateY(-1px) rotate(45deg);
+  transition: transform 0.12s ease;
+}
+
+.pg-group[aria-expanded='false'] .pg-chev::before {
+  transform: translateX(-1px) rotate(-45deg);
+}
+
+.pg-count {
+  margin-left: auto;
+  padding: 0 0.375rem;
+  border-radius: var(--m-radius-full);
+  background: var(--ide-tab-idle);
+  color: var(--ide-ink-soft);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.pg-group[aria-expanded='false'] + .pg-items {
+  display: none;
+}
+
+.pg-file {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0.1875rem 0.75rem 0.1875rem 2.5rem;
+  background: none;
+  color: var(--ide-ink);
+  font-size: 0.8125rem;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* The file glyph, so the list reads as an explorer and not a menu. */
+.pg-file::before {
+  content: '';
+  position: absolute;
+  left: 1.375rem;
+  top: 50%;
+  width: 9px;
+  height: 11px;
+  margin-top: -6px;
+  border: 1px solid var(--ide-ink-faint);
+  border-top-right-radius: 3px;
+  background: linear-gradient(rgba(227, 121, 51, 0.35), rgba(227, 121, 51, 0.08));
+}
+
+.pg-file:hover {
+  background: var(--ide-hover);
+}
+
+.pg-file[aria-current='true'] {
+  background: var(--ide-active);
+  color: var(--ide-ink-strong);
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.pg-file[aria-current='true']::before {
+  border-color: #e37933;
+}
+
+.pg-file:focus-visible,
+.pg-group:focus-visible {
+  outline-offset: -2px;
+}
+
+.pg-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1.25rem;
+  color: var(--ide-ink-soft);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.pg-empty img {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+/* ---------------------------------------------------------- editor group */
+
+.pg-bench {
+  display: grid;
+  grid-template-columns: minmax(14rem, var(--split)) 6px minmax(14rem, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.pg-editor {
+  display: grid;
+  grid-template-rows: 2.25rem auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  background: var(--ide-editor);
+}
+
+.pg-tabs {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  background: var(--ide-tab-idle);
+  border-bottom: 1px solid var(--ide-seam);
+  user-select: none;
+}
+
+.pg-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.875rem;
+  margin-bottom: -1px;
+  background: var(--ide-editor);
+  border-top: 2px solid var(--primary);
+  border-right: 1px solid var(--ide-seam);
+  color: var(--ide-ink-strong);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.pg-tab .vd-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #e37933;
+}
+
+.pg-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ide-ink-soft);
+  visibility: hidden;
+}
+
+.pg-tab.is-dirty .pg-dot {
+  visibility: visible;
+}
+
+/* Breadcrumbs, the row VS Code puts under the tabs. The only place the
+   group name sits next to the file, so the picker and the buffer stay tied. */
+.pg-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  height: 1.625rem;
+  padding: 0 0.875rem;
+  color: var(--ide-ink-faint);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pg-sep {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-right: 1.2px solid currentColor;
+  border-bottom: 1.2px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.7;
+}
+
+.pg-desc {
+  min-width: 0;
+  margin-left: auto;
+  padding-left: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+}
+
+.pg-code {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pg-gutter {
+  padding: 0.5rem 0;
+  color: var(--ide-gutter);
+  font: 0.8125rem/1.6 var(--font-mono);
+  text-align: right;
+  overflow: hidden;
+  user-select: none;
+}
+
+.pg-gutter span {
+  display: block;
+  padding-right: 1.125rem;
+}
+
+.pg-gutter span.is-current {
+  color: var(--ide-gutter-active);
+}
+
+/* The editor is a transparent textarea sitting exactly on top of a coloured
+   <pre>. Both use identical metrics, so the caret and the selection land on
+   the glyphs the reader sees. Highlighting without an editor library, and
+   without eval, which the CSP forbids. */
+.pg-stack {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.pg-stack pre,
+.pg-stack textarea {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0.5rem 0.875rem 0.5rem 0;
+  border: 0;
+  border-radius: 0;
+  font: 0.8125rem/1.6 var(--font-mono);
+  tab-size: 2;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow: auto;
+
+  /* The caret is only in the right place while both layers lay text out
+     identically, character for character. Ligatures broke that: the
+     textarea formed `=>` into one glyph and the highlighted layer, where the
+     two characters sit in different spans, could not. Every arrow pushed the
+     rest of its line a few pixels off. Spelt out so neither layer can inherit
+     something the other does not. */
+  font-variant-ligatures: none;
+  font-feature-settings: normal;
+  font-kerning: none;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+}
+
+.pg-stack pre {
+  pointer-events: none;
+  color: var(--tk-text);
+  background: transparent;
+}
+
+/* `code { font-family: monospace }` in every browser's own stylesheet beats
+   inheritance, so the coloured spans were once drawn in a different
+   monospace from the textarea above them. Narrower per character, and by the
+   middle of a long class attribute the caret sat a dozen pixels away from
+   the character it pointed at. `font: inherit` closes that door. */
+.pg-stack pre code,
+.pg-stack pre span {
+  font: inherit;
+  font-variant-ligatures: inherit;
+  letter-spacing: inherit;
+}
+
+.pg-stack textarea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ide-caret);
+}
+
+/* Translucent on purpose: the textarea's own text is transparent, so a solid
+   selection colour would hide the highlighted code under it. */
+.pg-stack textarea::selection {
+  background: var(--ide-select);
+}
+
+.tk-tag {
+  color: var(--tk-tag);
+}
+.tk-bracket {
+  color: var(--tk-bracket);
+}
+.tk-attr {
+  color: var(--tk-attr);
+}
+.tk-str {
+  color: var(--tk-str);
+}
+/* Upright, not italic: italic glyphs are a different width, and one comment
+   would push the caret out of step for the rest of its line. */
+.tk-com {
+  color: var(--tk-com);
+}
+.tk-interp {
+  color: var(--tk-interp);
+}
+.tk-punct {
+  color: var(--tk-punct);
+}
+
+/* -------------------------------------------------------------- splitter */
+
+/* A one pixel seam, like the border between VS Code's editor groups, with a
+   six pixel handle around it that lights up as a sash when it is grabbed. */
+.pg-splitter {
+  position: relative;
+  background: var(--ide-panel);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.pg-splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: var(--ide-seam);
+}
+
+.pg-splitter::after {
+  content: '';
+  position: absolute;
+  inset: 0 1px;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+
+.pg-splitter:hover::after,
+.pg-splitter:focus-visible::after,
+.pg.is-dragging .pg-splitter::after {
+  background: var(--primary);
+}
+
+.pg-splitter:focus-visible {
+  outline: none;
+}
+
+/* An iframe eats pointer events, so a drag that crosses into the preview
+   would stop dead halfway. Pointer capture keeps the events coming, and this
+   makes sure nothing inside reacts to a cursor merely passing over. */
+.pg.is-dragging {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.pg.is-dragging iframe {
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------- preview */
+
+.pg-preview {
+  display: grid;
+  grid-template-rows: 2.25rem minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  background: var(--ide-panel);
+}
+
+.pg-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0 0.875rem;
+  background: var(--ide-tab-idle);
+  border-bottom: 1px solid var(--ide-seam);
+  color: var(--ide-ink-soft);
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.pg-live {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--success) 22%, transparent);
+}
+
+.pg[data-state='running'] .pg-live {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--amber) 25%, transparent);
+}
+
+.pg[data-state='error'] .pg-live {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger) 22%, transparent);
+}
+
+.pg-widths {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border-radius: var(--m-radius-sm);
+  background: color-mix(in oklab, var(--ide-ink) 8%, transparent);
+}
+
+.pg-widths button {
+  padding: 0.0625rem 0.5625rem;
+  border-radius: var(--m-radius-xs);
+  background: none;
+  color: var(--ide-ink-soft);
+  font-size: 0.6875rem;
+  cursor: pointer;
+}
+
+.pg-widths button:hover {
+  color: var(--ide-ink-strong);
+}
+
+.pg-widths button[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* The checkerboard reads as "nothing here" at the edges when the preview is
+   narrowed to a phone width, the way a design tool does. */
+.pg-frame-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  overflow: auto;
+  background-color: var(--ide-check-a);
+  background-image:
+    linear-gradient(45deg, var(--ide-check-b) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--ide-check-b) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--ide-check-b) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--ide-check-b) 75%);
+  background-size: 16px 16px;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+}
+
+#frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: var(--background);
+  transition: max-width 0.2s ease;
+}
+
+/* Vudu, hopping while a slow preview loads. It only appears when a run takes
+   longer than a blink, so typing does not make it flicker. */
+.pg-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.pg-loading img {
+  width: 6rem;
+  height: 6rem;
+}
+
+.pg[data-loading] .pg-loading {
+  display: flex;
+}
+
+/* ------------------------------------------------------------- statusbar */
+
+.pg-status {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: 1.5rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+}
+
+.pg-status > span,
+.pg-status-end > span {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.625rem;
+}
+
+.pg-status-brand {
+  background: color-mix(in oklab, black 18%, transparent);
+  font-weight: 600;
+}
+
+.pg-status-brand img {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pg-status-end {
+  display: flex;
+  align-items: stretch;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.pg-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.pg[data-state='error'] .pg-state {
+  background: var(--danger);
+  color: var(--danger-foreground);
+}
+
+.pg[data-state='error'] .pg-state-dot {
+  opacity: 1;
+}
+
+/* The explorer folds away from the rail, the way it does in the editor. */
+.pg.no-explorer .pg-shell {
+  grid-template-columns: 3rem minmax(0, 1fr);
+}
+
+.pg.no-explorer .pg-side {
+  display: none;
+}
+
+/* ---------------------------------------------------------- narrow screens
+
+   Below 1000px the three panes stop fitting side by side. One shows at a
+   time, picked with the switch in the toolbar: files, code or preview. */
+@media (max-width: 1000px) {
+  .pg-views {
+    display: inline-flex;
+  }
+  .pg-heading .pg-crumb {
+    display: none;
+  }
+  .pg-shell,
+  .pg.no-explorer .pg-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pg-rail,
+  .pg-side,
+  .pg.no-explorer .pg-side,
+  .pg-splitter,
+  .pg-preview,
+  .pg-editor {
+    display: none;
+  }
+  .pg-bench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pg[data-view='files'] .pg-side {
+    display: flex;
+    border-right: 0;
+  }
+  .pg[data-view='files'] .pg-bench {
+    display: none;
+  }
+  .pg[data-view='code'] .pg-editor,
+  .pg[data-view='preview'] .pg-preview {
+    display: grid;
+  }
+  .pg-desc {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .pg-toolbar {
+    gap: 0.5rem;
+    padding-inline: 0.75rem 0.5rem;
+  }
+  .pg-heading h1,
+  .pg-label,
+  .pg-run kbd,
+  .pg-filter kbd,
+  .pg-widths,
+  .pg .pg-hide-sm {
+    display: none;
+  }
+  .pg-views {
+    flex: 1;
+    min-width: 0;
+  }
+  .pg-views .segmented-item {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+  .pg-actions {
+    gap: 0.125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-chev::before,
+  .pg-splitter::after,
+  #frame {
+    transition: none;
+  }
+}

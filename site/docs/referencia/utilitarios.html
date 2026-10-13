@@ -10,7 +10,12 @@
 <meta name="description" content="The toolbox on the V object: identifiers, time, debounce and throttle, objects and arrays, text, currency, number and date formatters, and reading the environment.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/utilitarios">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -38,9 +43,9 @@
 </table>
 </div>
 
-<pre data-lang="js"><code>V.uid('field-');           // 'field-k3f9a2'
-V.parseDuration('1.5s');   // 1500
-V.parseDuration(null, 99); // 99</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">uid</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'field-'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'field-k3f9a2'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">parseDuration</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'1.5s'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 1500</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">parseDuration</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">null</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">99</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">); </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 99</span></span></code></pre>
 
 <p>
   <code>parseDuration</code> accepts <code>null</code> because the most common source is a
@@ -51,26 +56,26 @@ V.parseDuration(null, 99); // 99</code></pre>
 
 <h3 id="debounce">debounce and throttle</h3>
 
-<pre data-lang="js"><code>const search = V.debounce(loadProducts, 300);
-search('mu');
-search('mug');      // only this one runs
-search.cancel();    // drops the pending call
-search.flush();     // runs now, without waiting
-
-const saveNow = V.debounce(save, 1000, true);  // leading edge
-
-const track = V.throttle(measureScroll, 100);
-window.addEventListener('scroll', track, { passive: true });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> search</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">loadProducts</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">300</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">search</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'mu'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">search</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'mug'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);      </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// only this one runs</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">search</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">cancel</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();    </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// drops the pending call</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">search</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">flush</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();     </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// runs now, without waiting</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> saveNow</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">save</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">1000</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// leading edge</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> track</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">throttle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">measureScroll</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">100</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">window</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">addEventListener</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'scroll'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">track</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">passive:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <h3 id="once">once and memoize</h3>
 
-<pre data-lang="js"><code>const start = V.once(() =&gt; createConnection());
-start();
-start();  // returns the same connection
-
-const compute = V.memoize((a, b) =&gt; expensiveOperation(a, b));
-compute.cache.clear();
-const byId = V.memoize(load, (id) =&gt; String(id));  // key of your own</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> start</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">once</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(() </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> createConnection</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">());</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// returns the same connection</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> compute</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">memoize</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">((</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">a</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">b</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> expensiveOperation</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">a</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">b</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">compute</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">cache</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">clear</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> byId</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">memoize</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">load</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> String</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// key of your own</span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
   <span class="doc-aviso__rotulo">Careful with the name</span>
@@ -100,11 +105,11 @@ const byId = V.memoize(load, (id) =&gt; String(id));  // key of your own</code><
 </table>
 </div>
 
-<pre data-lang="js"><code>V.merge({ a: { b: 1 } }, { a: { c: 2 } });  // { a: { b: 1, c: 2 } }
-V.unique(points, (p) =&gt; p.x + ',' + p.y);
-V.sortBy(products, 'price', 'desc');
-V.get(data, 'list.0.name', 'no name');
-V.set(form, 'items.0.qty', 2);</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">merge</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">a:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">b:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 1</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">a:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">c:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } });  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// { a: { b: 1, c: 2 } }</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">unique</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">points</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">','</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">sortBy</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">products</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'price'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'desc'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">get</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'list.0.name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'no name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">set</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">form</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'items.0.qty'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p>
   Two details that avoid surprises: <code>merge</code> modifies the first object, pass
@@ -115,14 +120,14 @@ V.set(form, 'items.0.qty', 2);</code></pre>
 
 <h2 id="textos">Text</h2>
 
-<pre data-lang="js"><code>V.slugify('Crème Brûlée');         // 'creme-brulee'
-V.slugify('My Post', '_');         // 'my_post'
-V.truncate('A rather long text', 10);       // 'A rathe...'
-V.truncate('A rather long text', 10, '…');  // 'A rather…'
-V.capitalize('voodoo');            // 'Voodoo'
-V.titleCase('JAVASCRIPT feels');   // 'Javascript Feels'
-V.escapeHtml('&lt;b&gt;hi&lt;/b&gt;');         // '&amp;lt;b&amp;gt;hi&amp;lt;/b&amp;gt;'
-V.stripTags('&lt;b&gt;hi&lt;/b&gt;');          // 'hi'</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">slugify</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Crème Brûlée'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);         </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'creme-brulee'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">slugify</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'My Post'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'_'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);         </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'my_post'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">truncate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'A rather long text'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">10</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);       </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'A rathe...'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">truncate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'A rather long text'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">10</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'…'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'A rather…'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">capitalize</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'voodoo'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);            </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'Voodoo'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">titleCase</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'JAVASCRIPT feels'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'Javascript Feels'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">escapeHtml</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'&#x3C;b>hi&#x3C;/b>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);         </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '&#x26;lt;b&#x26;gt;hi&#x26;lt;/b&#x26;gt;'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">stripTags</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'&#x3C;b>hi&#x3C;/b>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);          </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'hi'</span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--perigo">
   <span class="doc-aviso__rotulo">stripTags is not a sanitizer</span>
@@ -138,10 +143,10 @@ V.stripTags('&lt;b&gt;hi&lt;/b&gt;');          // 'hi'</code></pre>
 
 <p>They all use the default locale and currency, both adjustable:</p>
 
-<pre data-lang="js"><code>V.setFormatDefaults('pt-BR', 'BRL');</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">setFormatDefaults</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'pt-BR'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'BRL'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p>
-  The bootstrap already sets this up from <code>V.config.locale</code> and
+  The startup code already sets this up from <code>V.config.locale</code> and
   <code>V.config.currency</code>.
 </p>
 
@@ -194,18 +199,18 @@ V.stripTags('&lt;b&gt;hi&lt;/b&gt;');          // 'hi'</code></pre>
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{}"&gt;
-  &lt;p&gt;Width: { $screen.width }px&lt;/p&gt;
-  &lt;p&gt;Is mobile: { $screen.mobile }&lt;/p&gt;
-  &lt;p&gt;Online: { $network.online }&lt;/p&gt;
-  &lt;p&gt;Touch: { $device.touch }&lt;/p&gt;
-  &lt;button @click="$clipboard.copy('PROMO10')"&gt;Copy coupon&lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{}"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Width: { $screen.width }px</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Is mobile: { $screen.mobile }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Online: { $network.online }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Touch: { $device.touch }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$clipboard.copy('PROMO10')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Copy coupon</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <h2 id="import">Importing directly</h2>
 
-<pre data-lang="js"><code>import { debounce, formatCurrency, slugify, once } from 'voodoojs/utils';</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">import</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">debounce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">formatCurrency</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">slugify</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">once</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">from</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'voodoojs/utils'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span></code></pre>
 
 <p>
   This entry point does not load the DOM runtime, so it works in Node as well, it is the way to
@@ -214,6 +219,6 @@ V.stripTags('&lt;b&gt;hi&lt;/b&gt;');          // 'hi'</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

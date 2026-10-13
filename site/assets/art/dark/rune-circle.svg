@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-label="A ring of runes around a pair of curly braces" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<title>A ring of runes around a pair of curly braces</title>
+<circle cx="150" cy="150" r="130" stroke="#EDE4D8" stroke-width="2.5"/>
+<circle cx="150" cy="150" r="92" stroke="#EDE4D8" stroke-width="2"/>
+<circle cx="150" cy="150" r="138" stroke="#8E86A8" stroke-width="1.5" stroke-dasharray="1 6"/>
+<path d="M146 33L154 45M154 33L150 39" transform="rotate(0 150 39)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M188 38.7V52.7M183 43.7L188 38.7L193 43.7" transform="rotate(20 188 45.7)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M216.3 59H226.3L216.3 71H226.3" transform="rotate(40 221.3 65)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M241.1 100.5L246.1 88.5L251.1 100.5M243.1 95.5H249.1" transform="rotate(60 246.1 94.5)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M254.3 124.69999999999999V136.7M254.3 130.7L264.3 124.69999999999999M254.3 130.7L264.3 136.7" transform="rotate(80 259.3 130.7)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M259.3 162.3L265.3 169.3L259.3 176.3L253.3 169.3Z" transform="rotate(100 259.3 169.3)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M242.1 199.5L250.1 211.5M250.1 199.5L246.1 205.5" transform="rotate(120 246.1 205.5)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M221.3 228V242M216.3 233L221.3 228L226.3 233" transform="rotate(140 221.3 235)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M183 248.3H193L183 260.3H193" transform="rotate(160 188 254.3)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M145 267L150 255L155 267M147 262H153" transform="rotate(180 150 261)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M107 248.3V260.3M107 254.3L117 248.3M107 254.3L117 260.3" transform="rotate(200 112 254.3)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M78.7 228L84.7 235L78.7 242L72.7 235Z" transform="rotate(220 78.7 235)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M49.9 199.5L57.9 211.5M57.9 199.5L53.9 205.5" transform="rotate(240 53.9 205.5)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M40.7 162.3V176.3M35.7 167.3L40.7 162.3L45.7 167.3" transform="rotate(260 40.7 169.3)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M35.7 124.69999999999999H45.7L35.7 136.7H45.7" transform="rotate(280 40.7 130.7)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M48.9 100.5L53.9 88.5L58.9 100.5M50.9 95.5H56.9" transform="rotate(300 53.9 94.5)" stroke="#FFB35C" stroke-width="2"/>
+<path d="M73.7 59V71M73.7 65L83.7 59M73.7 65L83.7 71" transform="rotate(320 78.7 65)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M112 38.7L118 45.7L112 52.7L106 45.7Z" transform="rotate(340 112 45.7)" stroke="#A68BFF" stroke-width="2"/>
+<path d="M150 58L229.7 196L70.3 196Z" stroke="#C3B1FF" stroke-width="1.5"/>
+<path d="M229.7 104L150 242L70.3 104Z" stroke="#C3B1FF" stroke-width="1.5"/>
+<circle cx="150" cy="150" r="52" fill="#1D1830" stroke="#A68BFF" stroke-width="2.5"/>
+<path d="M138 118C126 118 126 126 126 136V142C126 146 122 150 116 150C122 150 126 154 126 158V164C126 174 126 182 138 182" stroke="#A68BFF" stroke-width="5"/>
+<path d="M162 118C174 118 174 126 174 136V142C174 146 178 150 184 150C178 150 174 154 174 158V164C174 174 174 182 162 182" stroke="#A68BFF" stroke-width="5"/>
+<circle cx="150" cy="150" r="4" fill="#FFB35C"/>
+<circle cx="150" cy="58" r="3.2" fill="#FFB35C"/><circle cx="229.7" cy="104" r="3.2" fill="#FFB35C"/><circle cx="229.7" cy="196" r="3.2" fill="#FFB35C"/><circle cx="150" cy="242" r="3.2" fill="#FFB35C"/><circle cx="70.3" cy="196" r="3.2" fill="#FFB35C"/><circle cx="70.3" cy="104" r="3.2" fill="#FFB35C"/>
+<path d="M262 30C263.12 37.2 264.8 38.88 272 40C264.8 41.12 263.12 42.8 262 50C260.88 42.8 259.2 41.12 252 40C259.2 38.88 260.88 37.2 262 30Z" fill="none" stroke="#FFB35C" stroke-width="2" stroke-linejoin="round"/>
+<path d="M36 245C36.784 250.04 37.96 251.216 43 252C37.96 252.784 36.784 253.96 36 259C35.216 253.96 34.04 252.784 29 252C34.04 251.216 35.216 250.04 36 245Z" fill="none" stroke="#C3B1FF" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="46" cy="52" r="2.2" fill="#FF6FA6"/>
+</svg>

@@ -10,7 +10,12 @@
 <meta name="description" content="Chart reference: the eleven types and the data shape each one takes, every option, the v-chart-* attributes, the default colours and the JavaScript API.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/graficos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -47,26 +52,26 @@
 
 <h2 id="formatos">Data shapes</h2>
 
-<pre data-lang="js"><code>// loose numbers, with the labels separate
-{ type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Feb', 'Mar'] }
-
-// named points
-{ type: 'pie', data: [
-  { label: 'Organic', value: 48 },
-  { label: 'Paid', value: 32 }
-] }
-
-// named series
-{ type: 'line', labels: ['Jan', 'Feb', 'Mar'], data: [
-  { name: '2025', data: [10, 14, 12] },
-  { name: '2026', data: [16, 18, 25], color: '#FF3D8B' }
-] }
-
-// a scatter plot
-{ type: 'scatter', data: [{ x: 1, y: 4 }, { x: 2, y: 7 }] }
-
-// progress
-{ type: 'progress', data: 68, max: 100 }</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// loose numbers, with the labels separate</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'bar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">19</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">8</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">labels</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Jan'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Feb'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Mar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// named points</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'pie'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Organic'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 48</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Paid'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 32</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// named series</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'line'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">labels</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Jan'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Feb'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Mar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '2025'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">10</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">14</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] },</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '2026'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">16</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">18</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">25</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">color:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#FF3D8B'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// a scatter plot</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'scatter'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [{ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 1</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 4</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 7</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }] }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// progress</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'progress'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">68</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">max</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">100</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span></code></pre>
 
 <h2 id="opcoes">Options</h2>
 
@@ -125,10 +130,10 @@
 
 <h2 id="javascript">From JavaScript</h2>
 
-<pre data-lang="js"><code>const chart = V.renderChart(el, { type: 'area', data: [12, 19, 8], smooth: true });
-chart.update({ data: newData });
-chart.options;
-chart.destroy();</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">renderChart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">type:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'area'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">19</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">8</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">smooth:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">update</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> newData</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">options</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">destroy</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -154,6 +159,6 @@ chart.destroy();</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

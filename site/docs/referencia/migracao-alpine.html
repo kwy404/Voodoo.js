@@ -10,7 +10,12 @@
 <meta name="description" content="Converting x- to v- is almost mechanical: the complete equivalence table, modifiers, magic variables, stores, components, and what you gain and what you lose in the switch.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/migracao-alpine">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -93,45 +98,45 @@
 
 <h2 id="store">Store and global data</h2>
 
-<pre data-lang="js"><code>// Alpine
-Alpine.store('cart', { items: [], add(p) { this.items.push(p) } });
-
-// Voodoo.js
-V.store('cart', { items: [], add(p) { this.items.push(p) } });
-V.store('cart', { items: [] }, { persist: true });   // persistence at creation time</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Alpine</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Alpine</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">store</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cart'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [], </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">add</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">push</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) } });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Voodoo.js</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">store</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cart'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [], </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">add</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">push</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">p</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) } });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">store</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cart'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [] }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">persist:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// persistence at creation time</span></span></code></pre>
 
 <p>In the HTML, both use <code>$store.cart</code>.</p>
 
-<pre data-lang="js"><code>// Alpine: Alpine.data
-Alpine.data('dropdown', () =&gt; ({ open: false, toggle() { this.open = !this.open } }));
-
-// Voodoo.js: a component
-V.component('dropdown', {
-  state: () =&gt; ({ open: false }),
-  methods: { toggle() { this.open = !this.open } }
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Alpine: Alpine.data</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Alpine</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'dropdown'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> false</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">toggle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = !</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } }));</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Voodoo.js: a component</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'dropdown'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  state</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> false</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }),</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  methods:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">toggle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = !</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">open</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <h2 id="extensoes">Directives, magic variables and plugins</h2>
 
-<pre data-lang="js"><code>// Alpine
-Alpine.directive('highlight', (el, { expression }, { evaluate }) =&gt; {
-  el.style.background = evaluate(expression);
-});
-Alpine.magic('now', () =&gt; new Date());
-Alpine.plugin(myPlugin);
-
-// Voodoo.js
-V.directive('highlight', (el, binding) =&gt; { el.style.background = binding.value });
-V.magic('$now', () =&gt; new Date());
-V.use(myPlugin, { option: true });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Alpine</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Alpine</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">directive</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'highlight'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">expression</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">evaluate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">style</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">background</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">evaluate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">expression</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Alpine</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">magic</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'now'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> new</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> Date</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">());</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Alpine</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">plugin</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">myPlugin</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Voodoo.js</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">directive</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'highlight'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">binding</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">style</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">background</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">binding</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">magic</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'$now'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> new</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> Date</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">());</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">use</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">myPlugin</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">option:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <h2 id="inicializacao">Initialization</h2>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-manual&gt;&lt;/script&gt;
-&lt;script&gt;
-  V.component('x', { /* ... */ });
-  V.start();
-&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-manual</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'x'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">/* ... */</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">  V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">();</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   With the plain tag, <code>V.start()</code> is called on its own, use <code>data-manual</code>
@@ -143,11 +148,11 @@ V.use(myPlugin, { option: true });</code></pre>
 
 <h3 id="interpolacao">1. Interpolation with a single brace</h3>
 
-<pre data-lang="html"><code>&lt;!-- Alpine --&gt;
-&lt;span x-text="name"&gt;&lt;/span&gt;
-
-&lt;!-- Voodoo --&gt;
-&lt;span&gt;{ name }&lt;/span&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Alpine --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> x-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Voodoo --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ name }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="atributos">2. The attributes disappear from the HTML</h3>
 
@@ -159,11 +164,11 @@ V.use(myPlugin, { option: true });</code></pre>
 
 <h3 id="template">3. v-if does not need a template</h3>
 
-<pre data-lang="html"><code>&lt;!-- Alpine --&gt;
-&lt;template x-if="loggedIn"&gt;&lt;p&gt;Welcome&lt;/p&gt;&lt;/template&gt;
-
-&lt;!-- Voodoo --&gt;
-&lt;p v-if="loggedIn"&gt;Welcome&lt;/p&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Alpine --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">template</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> x-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"loggedIn"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Welcome</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">template</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Voodoo --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"loggedIn"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Welcome</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="ganha">What you gain in the switch</h2>
 
@@ -198,6 +203,6 @@ V.use(myPlugin, { option: true });</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

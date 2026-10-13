@@ -4,17 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- The visitor's theme has to be on the root before the first paint.
-         The library restores it too, but only once the bundle has run, and this
-         page loads the bundle deferred and with `data-manual`. Without this
-         block a reader on a dark machine who had chosen LIGHT got a dark page
-         for a moment on every load.
-
+    <!-- The visitor's theme has to be on the root before the first paint. The
+         library restores it too, but only once the deferred bundle has run.
          Reads the key the library writes (`voodoo:theme`: light, dark or
          system, raw or as JSON) and writes exactly what `V.theme.apply()`
-         writes, so the two agree. An unset key is left alone: that is the state
-         where the operating system decides. The same block is on every page of
-         the site. -->
+         writes, so the two agree. The same block is on every page. -->
     <script>
       (function () {
         try {
@@ -36,6 +30,7 @@
       name="description"
       content="Write JSX directly in a plain .html file and open it in the browser. Reactivity, components, HTTP, forms and a router in one script tag. No bundler, no JSX transform, no dependencies."
     />
+    <meta name="theme-color" content="#6d3bf5" />
 
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/" />
@@ -51,7 +46,7 @@
     <meta property="og:image" content="https://kwy404.github.io/Voodoo.js/assets/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Voodoo.js: JSX in plain HTML files. No build step, one script tag." />
+    <meta property="og:image:alt" content="Vudu, the Voodoo.js mascot, next to the words JSX in plain HTML. No build step." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Voodoo.js: JSX in plain HTML, no build step" />
     <meta name="twitter:description" content="Write JSX directly in a plain .html file and open it in the browser. Reactivity, components, HTTP, forms and a router in one script tag. No bundler, no JSX transform, no dependencies." />
@@ -65,1577 +60,630 @@
         "url": "https://kwy404.github.io/Voodoo.js/",
         "codeRepository": "https://github.com/kwy404/Voodoo.js",
         "programmingLanguage": ["JavaScript", "TypeScript", "HTML"],
+        "runtimePlatform": "Web browser",
         "license": "https://opensource.org/licenses/MIT",
-        "keywords": "JSX, HTML, no build step, reactivity, JavaScript framework"
+        "keywords": "JSX, HTML, no build step, reactivity, JavaScript framework",
+        "image": "https://kwy404.github.io/Voodoo.js/assets/og.png",
+        "author": {
+          "@type": "Person",
+          "name": "Alexandre Kohler",
+          "url": "https://github.com/kwy404",
+          "sameAs": ["https://github.com/kwy404", "https://www.linkedin.com/in/alexandre-silva-173687256/"]
+        }
       }
     </script>
 
-    <style>
-      /* ===================================================================
-         Design tokens.
-
-         Light is the default and the dark theme only redefines colour. The
-         previous version of this page shipped a dark violet gradient with six
-         decorative layers behind the hero; it read as a template rather than as
-         a document. One accent, flat surfaces, and type doing the work.
-         =================================================================== */
-      :root {
-        --ink: #16141c;
-        --ink-soft: #57526a;
-        --ink-faint: #8b8598;
-        --bg: #ffffff;
-        --bg-soft: #faf9fb;
-        --bg-code: #f6f5f8;
-        --line: #e7e4ec;
-        --accent: #5b2ee5;
-        --accent-soft: #f1ecfe;
-        --fill: #e9e6f0;
-        --accent-ink: #ffffff;
-
-        --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-          sans-serif;
-        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
-          monospace;
-
-        --wide: 1080px;
-        --radius: 10px;
-        color-scheme: light;
-      }
-
-      /* Three states, the same shape the library's own V.palette() writes, so the
-         page and the built-in UI can never disagree: the system preference wins
-         unless the visitor picked a theme, and an explicit choice wins over the
-         system in both directions. Before this the page was light no matter what
-         while the palette followed the OS, which is why the Ctrl+K panel came up
-         dark on a white page. */
-      @media (prefers-color-scheme: dark) {
-        html:root:not([data-theme='light']) {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --bg-code: #1d1a26;
-        --line: #2b2735;
-        --accent: #a688ff;
-        --accent-soft: #221c3a;
-        --fill: #2f2b3d;
-        --accent-ink: #16141c;
-        --v-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
-        color-scheme: dark;
-        }
-      }
-
-      html:root[data-theme='dark'] {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --bg-code: #1d1a26;
-        --line: #2b2735;
-        --accent: #a688ff;
-        --accent-soft: #221c3a;
-        --fill: #2f2b3d;
-        --accent-ink: #16141c;
-        --v-shadow: 0 12px 34px rgba(0, 0, 0, 0.55);
-        color-scheme: dark;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        html {
-          scroll-behavior: auto;
-        }
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: var(--font);
-        font-size: 16px;
-        line-height: 1.65;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      h1,
-      h2,
-      h3 {
-        line-height: 1.15;
-        margin: 0;
-        font-weight: 640;
-        letter-spacing: -0.02em;
-      }
-
-      p {
-        margin: 0;
-      }
-
-      a {
-        color: inherit;
-      }
-
-      code,
-      pre {
-        font-family: var(--mono);
-        font-size: 13.5px;
-      }
-
-      .wrap {
-        width: 100%;
-        max-width: var(--wide);
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-
-      /* The library styles its built-in UI (command palette, dialogs, toasts)
-         with its own --v-* tokens. Point them at this page's palette so the
-         Ctrl+K panel belongs to the site rather than to the default theme. */
-      /* html:root outranks the plain :root the library injects later in <head>,
-         which otherwise wins on source order and repaints the panel dark. */
-      html:root {
-        /* !important is the right tool here and not laziness: V.palette() writes
-           :root:not([data-theme="light"]), which outranks any plain selector we
-           can write, and it generates its own surface from the primary hue. We
-           want the library's UI to take this page's surfaces, not its own. */
-        --v-surface: var(--bg) !important;
-        --v-surface-2: var(--bg-soft) !important;
-        /* The progress track, the skeleton fill and the switch rail all paint
-           with --v-surface-3. Left unmapped it kept the library's own value and
-           vanished against this palette, so the components rendered but looked
-           like empty boxes. It needs a real step of contrast, not another
-           near-white. */
-        --v-surface-3: var(--fill) !important;
-        --v-border: var(--line) !important;
-        --v-text: var(--ink) !important;
-        --v-text-muted: var(--ink-faint) !important;
-        --v-primary: var(--accent) !important;
-        --v-radius: 11px;
-        --v-radius-sm: 8px;
-        --v-font-sans: var(--font);
-        --v-shadow: 0 12px 34px rgba(22, 20, 28, 0.14);
-      }
-
-      /* The palette lands on top of a sticky header, so it needs to outrank it. */
-      .v-command {
-        z-index: 200;
-      }
-
-      /* ---------------------------------------------------------------- nav */
-      .top {
-        position: sticky;
-        top: 0;
-        z-index: 50;
-        background: var(--bg);
-        border-bottom: 1px solid var(--line);
-      }
-
-      .top-in {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        height: 60px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        font-weight: 680;
-        font-size: 16.5px;
-        letter-spacing: -0.02em;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .brand-mark {
-        width: 24px;
-        height: 24px;
-        flex: none;
-      }
-
-      .top nav {
-        display: flex;
-        gap: 2px;
-        margin-left: 6px;
-        min-width: 0;
-        overflow-x: auto;
-        scrollbar-width: none;
-      }
-
-      .top nav a {
-        padding: 6px 10px;
-        border-radius: 7px;
-        font-size: 14.5px;
-        color: var(--ink-soft);
-        text-decoration: none;
-        /* Translated labels are longer than the English ones. Without this,
-           "Por quê" wrapped onto a second line and pushed the header out of
-           shape in Portuguese and Spanish. */
-        white-space: nowrap;
-      }
-
-      .top nav a:hover {
-        color: var(--ink);
-        background: var(--bg-soft);
-      }
-
-      .top-end {
-        margin-left: auto;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .search {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        height: 34px;
-        padding: 0 9px;
-        min-width: 190px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--bg-soft);
-        color: var(--ink-faint);
-        font: inherit;
-        font-size: 14px;
-        cursor: pointer;
-      }
-
-      .search:hover {
-        border-color: var(--ink-faint);
-        color: var(--ink-soft);
-      }
-
-      .search kbd {
-        margin-left: auto;
-        font-family: var(--font);
-        font-size: 11.5px;
-        padding: 1px 5px;
-        border: 1px solid var(--line);
-        border-radius: 4px;
-        background: var(--bg);
-      }
-
-      .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: transparent;
-        color: var(--ink-soft);
-        cursor: pointer;
-        padding: 0;
-      }
-
-      .icon-btn:hover {
-        color: var(--ink);
-        border-color: var(--ink-faint);
-      }
-
-      /* The theme button walks system, light and dark (v-theme-toggle.cycle) and
-         shows the current choice, which the library writes on it as
-         data-voodoo-theme-mode. Until it does (no script yet, or an older bundle)
-         the moon stands in, as it always did. */
-      .theme-icon {
-        display: none;
-      }
-
-      .theme-btn:not([data-voodoo-theme-mode]) .theme-icon--dark,
-      .theme-btn[data-voodoo-theme-mode='system'] .theme-icon--system,
-      .theme-btn[data-voodoo-theme-mode='light'] .theme-icon--light,
-      .theme-btn[data-voodoo-theme-mode='dark'] .theme-icon--dark {
-        display: block;
-      }
-
-      select.lang {
-        height: 34px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: transparent;
-        color: var(--ink-soft);
-        font: inherit;
-        font-size: 14px;
-        padding: 0 6px;
-        cursor: pointer;
-      }
-
-      .burger {
-        display: none;
-      }
-
-      /* -------------------------------------------------------------- hero */
-      /* The JSX line. Set apart from the lead above it because it is the one
-         claim on this page that no other library can make. */
-      .lead-jsx {
-        margin-top: 1rem;
-        padding: 0.9rem 1.1rem;
-        border-left: 3px solid var(--accent);
-        border-radius: 0 8px 8px 0;
-        background: color-mix(in srgb, var(--accent) 7%, transparent);
-        font-size: 1rem;
-      }
-      .lead-jsx code {
-        white-space: nowrap;
-      }
-
-      .hero {
-        padding: 84px 0 72px;
-      }
-
-      .hero-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
-        gap: 56px;
-        align-items: center;
-      }
-
-      h1 {
-        font-size: clamp(38px, 6vw, 62px);
-        letter-spacing: -0.035em;
-        font-weight: 700;
-      }
-
-      h1 .accent {
-        color: var(--accent);
-      }
-
-      .lead {
-        margin-top: 20px;
-        font-size: 18.5px;
-        color: var(--ink-soft);
-        max-width: 33em;
-      }
-
-      .cta {
-        margin-top: 30px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        height: 42px;
-        padding: 0 18px;
-        border-radius: 8px;
-        border: 1px solid var(--line);
-        font-size: 15px;
-        font-weight: 560;
-        text-decoration: none;
-        cursor: pointer;
-        background: transparent;
-        color: var(--ink);
-        font-family: inherit;
-      }
-
-      .btn-main {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--accent-ink);
-      }
-
-      .btn:hover {
-        border-color: var(--ink-faint);
-      }
-
-      .btn-main:hover {
-        opacity: 0.9;
-        border-color: var(--accent);
-      }
-
-      .install-line {
-        margin-top: 26px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        max-width: 100%;
-        padding: 11px 13px;
-        border: 1px solid var(--line);
-        border-radius: 9px;
-        background: var(--bg-soft);
-        overflow-x: auto;
-      }
-
-      .install-line code {
-        white-space: nowrap;
-        color: var(--ink-soft);
-      }
-
-      .copy {
-        margin-left: auto;
-        flex: none;
-        border: 0;
-        background: transparent;
-        color: var(--ink-faint);
-        cursor: pointer;
-        font: inherit;
-        font-size: 13px;
-        padding: 2px 6px;
-        border-radius: 5px;
-      }
-
-      .copy:hover {
-        color: var(--accent);
-        background: var(--accent-soft);
-      }
-
-      /* --------------------------------------------------------- live demo */
-      .demo {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--bg);
-      }
-
-      .demo-head {
-        padding: 9px 14px;
-        border-bottom: 1px solid var(--line);
-        background: var(--bg-soft);
-        font-size: 12px;
-        color: var(--ink-faint);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .live-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #16a34a;
-        flex: none;
-      }
-
-      .demo pre {
-        margin: 0;
-        padding: 16px;
-        overflow-x: auto;
-        background: var(--bg-code);
-        line-height: 1.6;
-      }
-
-      .demo-out {
-        padding: 20px 16px;
-        border-top: 1px solid var(--line);
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
-      }
-
-      .count {
-        font-size: 40px;
-        font-weight: 680;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.03em;
-        min-width: 1.6em;
-      }
-
-      .demo-btn {
-        width: 36px;
-        height: 36px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--bg);
-        color: var(--ink);
-        font-size: 17px;
-        cursor: pointer;
-        font-family: inherit;
-      }
-
-      .demo-btn:hover {
-        border-color: var(--accent);
-        color: var(--accent);
-      }
-
-      .demo-note {
-        width: 100%;
-        font-size: 13px;
-        color: var(--ink-faint);
-      }
-
-      /* ----------------------------------------------------------- section */
-      section {
-        padding: 74px 0;
-        border-top: 1px solid var(--line);
-      }
-
-      .eyebrow {
-        font-size: 12.5px;
-        font-weight: 620;
-        letter-spacing: 0.07em;
-        text-transform: uppercase;
-        color: var(--accent);
-      }
-
-      h2 {
-        font-size: 30px;
-        margin-top: 10px;
-        max-width: 20em;
-      }
-
-      .sub {
-        margin-top: 12px;
-        color: var(--ink-soft);
-        max-width: 40em;
-      }
-
-      .cols {
-        margin-top: 44px;
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 38px;
-      }
-
-      .cols h3 {
-        font-size: 17.5px;
-      }
-
-      .cols p {
-        margin-top: 9px;
-        color: var(--ink-soft);
-        font-size: 15px;
-      }
-
-      .two {
-        margin-top: 40px;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
-      }
-
-      .pane {
-        border: 1px solid var(--line);
-        border-radius: 11px;
-        overflow: hidden;
-      }
-
-      .pane-head {
-        padding: 9px 13px;
-        border-bottom: 1px solid var(--line);
-        background: var(--bg-soft);
-        font-size: 11.5px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--ink-faint);
-      }
-
-      .pane pre {
-        margin: 0;
-        padding: 15px;
-        overflow-x: auto;
-        background: var(--bg-code);
-        line-height: 1.6;
-      }
-
-      .pane-live {
-        padding: 15px;
-        border-top: 1px solid var(--line);
-      }
-
-      /* -------------------------------------------------------------- tabs */
-      .tabs {
-        margin-top: 34px;
-        display: flex;
-        gap: 4px;
-        border-bottom: 1px solid var(--line);
-        overflow-x: auto;
-      }
-
-      .tab {
-        border: 0;
-        background: transparent;
-        font: inherit;
-        font-size: 14.5px;
-        color: var(--ink-soft);
-        padding: 9px 14px;
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-        white-space: nowrap;
-      }
-
-      .tab[aria-selected='true'] {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-        font-weight: 580;
-      }
-
-      .tab-body {
-        margin-top: 20px;
-      }
-
-      .tab-body pre {
-        margin: 0;
-        padding: 16px;
-        background: var(--bg-code);
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        overflow-x: auto;
-        line-height: 1.6;
-      }
-
-      .metrics {
-        margin-top: 14px;
-        display: flex;
-        gap: 26px;
-        flex-wrap: wrap;
-        font-size: 14px;
-        color: var(--ink-soft);
-      }
-
-      .metrics b {
-        color: var(--ink);
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* ------------------------------------------------------------- table */
-      .table-scroll {
-        margin-top: 30px;
-        overflow-x: auto;
-        border: 1px solid var(--line);
-        border-radius: 11px;
-      }
-
-      table {
-        border-collapse: collapse;
-        width: 100%;
-        font-size: 14.5px;
-        min-width: 520px;
-      }
-
-      th,
-      td {
-        padding: 11px 16px;
-        text-align: right;
-        border-bottom: 1px solid var(--line);
-        white-space: nowrap;
-      }
-
-      th:first-child,
-      td:first-child {
-        text-align: left;
-      }
-
-      thead th {
-        font-size: 12px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--ink-faint);
-        font-weight: 600;
-        background: var(--bg-soft);
-      }
-
-      tbody tr:last-child td {
-        border-bottom: 0;
-      }
-
-      tr.mine td {
-        background: var(--accent-soft);
-        font-weight: 640;
-      }
-
-      td.num {
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* ------------------------------------------------------------ built */
-      .built {
-        background: var(--bg-soft);
-      }
-
-      .built-box {
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-        gap: 44px;
-        align-items: start;
-      }
-
-      .facts {
-        margin: 0;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px 26px;
-      }
-
-      .facts div {
-        border-left: 2px solid var(--accent);
-        padding-left: 13px;
-      }
-
-      .facts dt {
-        font-size: 22px;
-        font-weight: 680;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.02em;
-      }
-
-      .facts dd {
-        margin: 2px 0 0;
-        font-size: 13.5px;
-        color: var(--ink-soft);
-      }
-
-      /* ----------------------------------------------------------- footer */
-      footer {
-        border-top: 1px solid var(--line);
-        padding: 36px 0;
-        font-size: 14px;
-        color: var(--ink-soft);
-      }
-
-      .foot-in {
-        display: flex;
-        gap: 18px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      .foot-in a {
-        color: var(--ink-soft);
-      }
-
-      .foot-end {
-        margin-left: auto;
-      }
-
-      /* ------------------------------------------------- more projects */
-      .more-list {
-        list-style: none;
-        margin: 34px 0 0;
-        padding: 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-        gap: 14px;
-      }
-
-      .more-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        height: 100%;
-        padding: 14px 16px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        background: var(--bg-soft);
-        color: var(--ink);
-        text-decoration: none;
-      }
-
-      .more-card:hover {
-        border-color: var(--accent);
-      }
-
-      .more-card img {
-        flex: none;
-        width: 44px;
-        height: 44px;
-      }
-
-      .more-card b {
-        display: block;
-        font-weight: 640;
-      }
-
-      .more-card b + span {
-        display: block;
-        color: var(--ink-soft);
-        font-size: 14px;
-      }
-
-      .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
-      .vd-projects__title { font-weight: 600; }
-      .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
-      .vd-projects a:hover { text-decoration: underline; }
-      .vd-projects img { width: 18px; height: 18px; flex: none; }
-
-      .foot-projects {
-        margin-top: 18px;
-      }
-
-      .foot-projects a {
-        color: var(--ink-soft);
-      }
-
-      .skip {
-        position: absolute;
-        left: -9999px;
-      }
-
-      .skip:focus {
-        left: 12px;
-        top: 12px;
-        z-index: 100;
-        background: var(--bg);
-        padding: 9px 14px;
-        border: 1px solid var(--accent);
-        border-radius: 8px;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-      }
-
-      /* ------------------------------------------------------- responsive */
-      @media (max-width: 940px) {
-        .hero-grid {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 40px;
-        }
-        .built-box {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 30px;
-        }
-        .cols {
-          grid-template-columns: minmax(0, 1fr);
-          gap: 28px;
-        }
-      }
-
-      @media (max-width: 760px) {
-        .top nav,
-        .search span {
-          display: none;
-        }
-        .search {
-          min-width: 0;
-          width: 34px;
-          justify-content: center;
-          padding: 0;
-        }
-        .search kbd {
-          display: none;
-        }
-        .burger {
-          display: inline-flex;
-        }
-        .hero {
-          padding: 54px 0 48px;
-        }
-        section {
-          padding: 54px 0;
-        }
-        .two {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        h2 {
-          font-size: 25px;
-        }
-        .wrap {
-          padding: 0 18px;
-        }
-      }
-
-      @media (max-width: 460px) {
-        .facts {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        .btn {
-          width: 100%;
-          justify-content: center;
-        }
-      }
-
-      /* Menu revealed by the burger on small screens. */
-      .drawer {
-        display: none;
-        padding: 8px 0 16px;
-        border-top: 1px solid var(--line);
-      }
-
-      .drawer.open {
-        display: block;
-      }
-
-      .drawer a {
-        display: block;
-        padding: 9px 2px;
-        color: var(--ink-soft);
-        text-decoration: none;
-        font-size: 15px;
-      }
-
-      /* Syntax colouring, applied by hand to spans in the markup rather than by
-         a regex pass over generated HTML. The old page ran chained replaces over
-         their own output, so a `class` keyword rewrote the class attribute of
-         the spans an earlier pass had emitted, and the markup leaked on screen
-         as literal text. */
-      .t-tag {
-        color: #8250df;
-      }
-      .t-attr {
-        color: #0550ae;
-      }
-      .t-str {
-        color: #0a7b56;
-      }
-      .t-com {
-        color: var(--ink-faint);
-        font-style: italic;
-      }
-      .t-key {
-        color: #cf222e;
-      }
-      /* Both ways of being dark: the system preference and an explicit choice.
-         Only the second was here, so a visitor on a dark machine who never
-         touched the toggle read the light palette's blue attributes on the
-         dark code surface, at 2.2:1. */
-      @media (prefers-color-scheme: dark) {
-        html:root:not([data-theme='light']) .t-tag {
-          color: #d2a8ff;
-        }
-        html:root:not([data-theme='light']) .t-attr {
-          color: #79c0ff;
-        }
-        html:root:not([data-theme='light']) .t-str {
-          color: #7ee2b8;
-        }
-        html:root:not([data-theme='light']) .t-key {
-          color: #ff7b72;
-        }
-      }
-      html:root[data-theme='dark'] .t-tag {
-        color: #d2a8ff;
-      }
-      html:root[data-theme='dark'] .t-attr {
-        color: #79c0ff;
-      }
-      html:root[data-theme='dark'] .t-str {
-        color: #7ee2b8;
-      }
-      html:root[data-theme='dark'] .t-key {
-        color: #ff7b72;
-      }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css" />
+    <link rel="stylesheet" href="assets/site.css?v=daa5adda" />
+    <link rel="stylesheet" href="assets/home.css?v=e7012fc1" />
   </head>
 
   <body>
-    <a class="skip" href="#main" v-t="nav.skip">Skip to content</a>
-
-    <!-- The whole page is one Voodoo scope. Every tab, counter, copy button and
-         the Ctrl+K palette below is a directive on plain HTML: no build step ran
-         to produce this file, and there is no framework code of our own on the
-         page beyond the library tag at the bottom. -->
-    <div
-      v-data="{
-        menu: false,
-        via: 'voodoo',
-        n: 0,
-        clicks: 0,
-        copied: ''
-      }"
-    >
-      <header class="top">
-        <div class="wrap top-in">
-          <a class="brand" href="./">
-            <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-              <path
-                d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z"
-                fill="currentColor"
-              />
-            </svg>
-            Voodoo.js
-          </a>
-
-          <nav aria-label="Main">
-            <a href="#start" v-t="nav.start" v-command-item="">Get started</a>
-            <a href="#why" v-t="nav.why" v-command-item="">Why</a>
-            <a href="#compare" v-t="nav.compare" v-command-item="">Comparison</a>
-            <a href="docs/" v-t="nav.docs" v-command-item="">Docs</a>
-            <a href="playground.html" v-t="nav.playground" v-command-item="">Playground</a>
-            <a href="components.html" v-t="nav.components" v-command-item="">Components</a>
-            <a href="examples/" v-t="nav.examples" v-command-item="">Examples</a>
-          </nav>
-
-          <div class="top-end">
-            <button class="search" v-command="mod+k" v-t:aria-label="nav.searchAria" aria-label="Search, Ctrl plus K">
-              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-                <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-                <path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.6" />
-              </svg>
-              <span v-t="nav.search">Search</span>
-              <kbd>Ctrl K</kbd>
-            </button>
-
-            <select class="lang" v-t:aria-label="nav.language" aria-label="Language">
-              <option value="en">EN</option>
-              <option value="pt-BR">PT</option>
-              <option value="es">ES</option>
-              <option value="ko">KO</option>
-            </select>
-
-            <button class="icon-btn theme-btn" v-theme-toggle.cycle v-t:aria-label="nav.theme" aria-label="Change theme: system, light or dark"
-              v-command-item="">
-              <svg class="theme-icon theme-icon--system" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-                <rect x="1.5" y="2.5" width="13" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4" />
-                <path d="M5.5 14h5M8 11.5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-              </svg>
-              <svg class="theme-icon theme-icon--light" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-                <circle cx="8" cy="8" r="3" fill="currentColor" />
-                <path
-                  d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13"
-                  stroke="currentColor"
-                  stroke-width="1.4"
-                  stroke-linecap="round"
-                />
-              </svg>
-              <svg class="theme-icon theme-icon--dark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-                <path
-                  d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
-
-            <button
-              class="icon-btn burger"
-              @click="menu = !menu"
-              :aria-expanded="menu ? 'true' : 'false'"
-              v-t:aria-label="nav.menu"
-              aria-label="Menu"
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M1 4h14M1 8h14M1 12h14" stroke="currentColor" stroke-width="1.7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div class="wrap">
-          <div class="drawer" :class="{ open: menu }">
-            <a href="#start" @click="menu = false" v-t="nav.start">Get started</a>
-            <a href="#why" @click="menu = false" v-t="nav.why">Why</a>
-            <a href="#compare" @click="menu = false" v-t="nav.compare">Comparison</a>
-            <a href="docs/" @click="menu = false" v-t="nav.docs">Docs</a>
-            <a href="playground.html" @click="menu = false" v-t="nav.playground">Playground</a>
-            <a href="components.html" @click="menu = false" v-t="nav.components">Components</a>
-            <a href="examples/" @click="menu = false" v-t="nav.examples">Examples</a>
-            <a href="https://github.com/kwy404/Voodoo.js" @click="menu = false">GitHub</a>
-          </div>
-        </div>
-      </header>
+    <!-- The whole page is one Voodoo scope. The spell book, the presets, the
+         copy buttons, the language picker, the theme toggle and the Ctrl+K
+         palette are directives on plain HTML, running from the
+         voodoo.full.min.js that sits next to this file. -->
+    <div v-data="{ preset: 'counter', copied: '' }">
+<!-- chrome:header -->
+<a class="vd-skip btn btn-primary btn-sm" href="#main" v-t="nav.skip">Skip to content</a>
+<header class="navbar navbar-sticky navbar-blur px-4 lg:px-8">
+  <div class="navbar-start">
+    <a class="navbar-brand vd-brand" href="./">
+      <img src="assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+      <span>Voodoo<span class="text-primary">.js</span></span>
+    </a>
+  </div>
+  <nav class="navbar-center navbar-nav" aria-label="Main" v-t:aria-label="nav.main">
+      <a class="navbar-link" href="docs/" v-t="nav.docs">Docs</a>
+      <a class="navbar-link" href="playground.html" v-t="nav.playground">Playground</a>
+      <a class="navbar-link" href="components.html" v-t="nav.components">Components</a>
+      <a class="navbar-link" href="examples/" v-t="nav.examples">Examples</a>
+  </nav>
+  <div class="navbar-end">
+    <button type="button" class="btn btn-outline btn-sm hidden lg:inline-flex gap-2 text-muted-foreground" v-command="mod+k" aria-label="Search, Ctrl plus K" v-t:aria-label="nav.searchAria">
+      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-search"></use></svg>
+      <span v-t="nav.search">Search</span>
+      <kbd class="kbd kbd-xs">Ctrl K</kbd>
+    </button>
+    <select class="vd-lang" aria-label="Language" v-t:aria-label="nav.language">
+      <option value="en">EN</option>
+      <option value="pt-BR">PT</option>
+      <option value="es">ES</option>
+      <option value="ko">KO</option>
+    </select>
+    <button type="button" class="btn btn-ghost btn-sm btn-square vd-theme" v-theme-toggle.cycle aria-label="Change theme: system, light or dark" v-t:aria-label="nav.theme">
+      <svg class="vd-icon vd-theme-system" aria-hidden="true"><use href="assets/art/icons.svg#i-monitor"></use></svg>
+      <svg class="vd-icon vd-theme-light" aria-hidden="true"><use href="assets/art/icons.svg#i-sun"></use></svg>
+      <svg class="vd-icon vd-theme-dark" aria-hidden="true"><use href="assets/art/icons.svg#i-moon"></use></svg>
+    </button>
+    <a class="btn btn-ghost btn-sm btn-square hidden sm:inline-flex" href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-github"></use></svg></a>
+    <details class="navbar-mobile">
+      <summary class="navbar-burger" aria-label="Menu" v-t:aria-label="nav.menu"></summary>
+      <nav class="navbar-mobile-panel" aria-label="Mobile">
+      <a class="navbar-link" href="docs/" v-t="nav.docs">Docs</a>
+      <a class="navbar-link" href="playground.html" v-t="nav.playground">Playground</a>
+      <a class="navbar-link" href="components.html" v-t="nav.components">Components</a>
+      <a class="navbar-link" href="examples/" v-t="nav.examples">Examples</a>
+      <a class="navbar-link" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+      </nav>
+    </details>
+  </div>
+</header>
+<!-- /chrome:header -->
 
       <main id="main">
-        <!-- ============================================================ hero -->
-        <div class="hero">
-          <div class="wrap hero-grid">
-            <div>
-              <h1><span v-t="hero.titleA">The framework that</span> <span class="accent" v-t="hero.titleB">stays in your HTML</span></h1>
-
-              <p class="lead" v-t="hero.lead">
-                Reactivity, components, HTTP, forms and a UI kit, written as attributes on the
-                markup you already have. One script tag. No build step, no configuration, no
-                dependencies at runtime.
+        <!-- ======================================================== hero -->
+        <section class="vd-aura relative overflow-hidden" aria-labelledby="hero-title">
+          <div class="vd-runes absolute inset-0 -z-10" aria-hidden="true"></div>
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 pt-10 md:pt-14 pb-16 md:pb-20">
+            <div class="flex flex-col items-center text-center gap-5">
+              <a class="badge badge-soft badge-primary badge-pill gap-2 px-3 py-1" href="docs/guia/jsx.html" v-command-item="">
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-sparkle"></use></svg>
+                <span v-t="hero.badge">Voodoo.js 1.0.0: JSX in plain HTML</span>
+              </a>
+              <h1 id="hero-title" class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight max-w-5xl text-balance">
+                <span class="block" v-t="hero.t1">Write the spell in plain HTML.</span>
+                <span class="block vd-gradient-text" v-t="hero.t2">Watch it run.</span>
+              </h1>
+              <p class="text-lg text-muted-foreground max-w-2xl text-pretty" v-t="hero.lead">
+                JSX, reactive directives, components, HTTP and a router in one script tag. No bundler, no
+                JSX transform, no build step. Pick a spell, edit the file, and watch the result run right
+                next to it.
               </p>
-
-              <!-- The differentiator, stated where the eye lands rather than
-                   buried in the feature list further down. Every other way to
-                   write JSX needs a toolchain between the file you edit and the
-                   file the browser loads. -->
-              <p class="lead lead-jsx">
-                <strong>And JSX, in a plain .html file.</strong> No compiler, no bundler, no
-                transform. <code>{ fruits.map(f =&gt; (&lt;li&gt;{ f }&lt;/li&gt;)) }</code> written
-                straight into the markup, reactive, under a strict CSP.
-                <a href="playground.html#jsx-map">Try it in the playground</a>.
-              </p>
-
-              <div class="cta">
-                <a class="btn btn-main" href="#start" v-t="hero.ctaStart">Get started</a>
-                <a class="btn" href="examples/" v-t="hero.ctaExamples">See examples</a>
-                <a class="btn" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
-              </div>
-
-              <div class="install-line">
-                <code>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;</code>
-                <button
-                  class="copy"
-                  @click="copied = 'tag'; navigator.clipboard.writeText('<script src=\'https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js\' defer></script>')"
-                >
-                  <span v-show="copied !== 'tag'" v-t="hero.copy">Copy</span>
-                  <span v-show="copied === 'tag'" v-t="hero.copied">Copied</span>
-                </button>
-              </div>
             </div>
 
-            <!-- Not a screenshot. This counter is running in the page you are
-                 reading, from the same tag documented above. -->
-            <div class="demo">
-              <div class="demo-head">
-                <span class="live-dot"></span>
-                <span v-t="hero.liveHead">Running on this page, right now</span>
-              </div>
+            <!-- ============================================ the spell book -->
+            <div class="vd-book-wrap relative mt-24 lg:mt-12">
+              <img class="vd-vudu vd-float when-light" data-vudu src="assets/brand/vudu/vudu.svg" alt="" width="168" height="168" />
+              <img class="vd-vudu vd-float when-dark" data-vudu src="assets/brand/vudu/vudu-dark.svg" alt="" width="168" height="168" />
 
-              <pre v-ignore><code>&lt;<span class="t-tag">div</span> <span class="t-attr">v-data</span>=<span class="t-str">"{ n: 0 }"</span>&gt;
-  &lt;<span class="t-tag">output</span>&gt;{ n }&lt;/<span class="t-tag">output</span>&gt;
+              <div class="vd-book" v-spellbook="preset">
+                <div class="vd-book-bar">
+                  <div class="vd-spells" role="tablist" aria-label="Spells" v-t:aria-label="spell.label">
+                    <button type="button" role="tab" class="vd-spell" :aria-selected="preset === 'counter' ? 'true' : 'false'" @click="preset = 'counter'">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-sparkle"></use></svg><span v-t="spell.counter">Counter</span>
+                    </button>
+                    <button type="button" role="tab" class="vd-spell" :aria-selected="preset === 'todo' ? 'true' : 'false'" @click="preset = 'todo'">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-scroll"></use></svg><span v-t="spell.todo">Todo list</span>
+                    </button>
+                    <button type="button" role="tab" class="vd-spell" :aria-selected="preset === 'fetch' ? 'true' : 'false'" @click="preset = 'fetch'">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-crystal"></use></svg><span v-t="spell.fetch">Fetch</span>
+                    </button>
+                    <button type="button" role="tab" class="vd-spell" :aria-selected="preset === 'form' ? 'true' : 'false'" @click="preset = 'form'">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-potion"></use></svg><span v-t="spell.form">Form validation</span>
+                    </button>
+                    <button type="button" role="tab" class="vd-spell" :aria-selected="preset === 'theme' ? 'true' : 'false'" @click="preset = 'theme'">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-moonstar"></use></svg><span v-t="spell.theme">Theme toggle</span>
+                    </button>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn btn-ghost btn-sm" data-reset aria-label="Reset the spell" v-t:aria-label="spell.resetAria">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-reset"></use></svg><span class="hidden sm:inline" v-t="spell.reset">Reset</span>
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm vd-run" data-run title="Ctrl Enter">
+                      <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-wand"></use></svg><span v-t="spell.run">Cast</span>
+                    </button>
+                  </div>
+                </div>
 
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n--"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n++"</span>&gt;+&lt;/<span class="t-tag">button</span>&gt;
+                <div class="vd-pages">
+                  <div class="vd-page">
+                    <div class="vframe-bar">
+                      <span class="vframe-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                      <span class="vframe-tab" data-lang="html">
+                        <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-file"></use></svg><span data-file>counter.html</span>
+                      </span>
+                      <span class="vd-live ml-auto hidden sm:inline-flex" v-t="spell.live">Live: the result follows every keystroke</span>
+                    </div>
+                    <div class="vd-editor" v-ignore>
+                      <div class="vd-gutter" data-gutter aria-hidden="true"></div>
+                      <div class="vd-code">
+                        <pre class="vd-hl" data-hl aria-hidden="true"></pre>
+                        <textarea data-src spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="The spell: an HTML file you can edit"></textarea>
+                      </div>
+                    </div>
+                  </div>
 
-  &lt;<span class="t-tag">p</span>&gt;double: { n * 2 }&lt;/<span class="t-tag">p</span>&gt;
-&lt;/<span class="t-tag">div</span>&gt;</code></pre>
-
-              <div class="demo-out">
-                <output class="count" v-text="n">0</output>
-                <button class="demo-btn" @click="n--; clicks++" v-t:aria-label="hero.dec" aria-label="Decrease">−</button>
-                <button class="demo-btn" @click="n++; clicks++" v-t:aria-label="hero.inc" aria-label="Increase">+</button>
-                <button class="demo-btn" @click="n = 0; clicks++" aria-label="Reset" style="width: auto; padding: 0 12px; font-size: 14px">
-                  reset
-                </button>
-                <p class="demo-note">
-                  <span v-t="hero.double">double</span>: <span v-text="n * 2">0</span> ·
-                  <span v-text="clicks">0</span> <span v-t="hero.clicks">clicks so far</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============================================================= why -->
-        <section id="why">
-          <div class="wrap">
-            <p class="eyebrow" v-t="why.eyebrow">Why</p>
-            <h2 v-t="why.title">Three things it does differently</h2>
-
-            <div class="cols">
-              <div>
-                <h3 v-t="why.c1t">Nothing to compile</h3>
-                <p v-t="why.c1d">
-                  The script tag is the whole installation. No bundler, no transpiler, no config
-                  file, no JSX. Open the HTML file and it works, including from
-                  <code>file://</code>.
-                </p>
-              </div>
-              <div>
-                <h3 v-t="why.c2t">It cleans up after itself</h3>
-                <p v-t="why.c2d">
-                  Once a directive is installed, its attribute is read into memory and removed from
-                  the document. What ships to the page is ordinary HTML, with no framework residue
-                  in the inspector.
-                </p>
-              </div>
-              <div>
-                <h3 v-t="why.c3t">No eval, anywhere</h3>
-                <p v-t="why.c3d">
-                  Expressions run through a lexer, a Pratt parser and an interpreter, never
-                  <code>eval</code> or <code>new&nbsp;Function</code>. That is why it works under a
-                  strict CSP with no <code>unsafe-eval</code>, proven by a browser test.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ======================================================== cleanup -->
-        <section>
-          <div class="wrap">
-            <p class="eyebrow" v-t="dom.eyebrow">The DOM afterwards</p>
-            <h2 v-t="dom.title">Your markup does not become framework output</h2>
-            <p class="sub" v-t="dom.lead">
-              Inspect the paragraph below with your browser's dev tools. The attributes that made it
-              reactive are gone from the document; the binding is still live.
-            </p>
-
-            <div class="two">
-              <div class="pane">
-                <div class="pane-head" v-t="dom.write">What you write</div>
-                <pre><code>&lt;<span class="t-tag">p</span> <span class="t-attr">class</span>=<span class="t-str">"greeting"</span>
-   <span class="t-attr">v-data</span>=<span class="t-str">"{ name: 'Vudu' }"</span>
-   <span class="t-attr">v-text</span>=<span class="t-str">"'Hello, ' + name"</span>&gt;&lt;/<span class="t-tag">p</span>&gt;</code></pre>
-              </div>
-
-              <div class="pane">
-                <div class="pane-head" v-t="dom.stays">What stays in the DOM</div>
-                <pre><code>&lt;<span class="t-tag">p</span> <span class="t-attr">class</span>=<span class="t-str">"greeting"</span>&gt;Hello, Vudu&lt;/<span class="t-tag">p</span>&gt;</code></pre>
-                <div class="pane-live">
-                  <p class="greeting" v-data="{ name: 'Vudu' }" v-text="'Hello, ' + name"></p>
+                  <div class="vd-page vd-page-result">
+                    <div class="vframe-bar">
+                      <span class="vd-url">
+                        <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-globe"></use></svg><span data-url>counter.html</span>
+                      </span>
+                      <span class="vd-error ml-auto" data-error hidden>
+                        <img src="assets/brand/vudu/vudu-error.svg" alt="" width="22" height="22" /><span data-error-text></span>
+                      </span>
+                    </div>
+                    <div class="vd-stage" data-stage>
+                      <iframe data-frame title="The result of the spell" v-t:title="spell.frame"></iframe>
+                      <div class="vd-loading" data-loading>
+                        <img src="assets/brand/vudu/vudu-loading.svg" alt="" width="88" height="88" />
+                        <span v-t="spell.loading">Brewing the result</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div class="mt-8 flex flex-col lg:flex-row items-center justify-center gap-4">
+              <div class="vd-install">
+                <code v-ignore>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;</code>
+                <button type="button" class="vframe-copy" v-copy-from="#install-tag" @click="copied = 'tag'" aria-label="Copy the script tag" v-t:aria-label="hero.copyAria">
+                  <svg class="vd-icon" aria-hidden="true" v-show="copied !== 'tag'"><use href="assets/art/icons.svg#i-copy"></use></svg>
+                  <svg class="vd-icon" aria-hidden="true" v-show="copied === 'tag'"><use href="assets/art/icons.svg#i-check"></use></svg>
+                </button>
+                <span id="install-tag" hidden>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;</span>
+              </div>
+              <div class="flex flex-wrap justify-center gap-2">
+                <a class="btn btn-primary" href="docs/guia/instalacao.html" v-command-item="" v-t="hero.ctaStart">Get started</a>
+                <a class="btn btn-outline" href="playground.html" v-command-item="" v-t="hero.ctaPlayground">Open the full playground</a>
+              </div>
+            </div>
           </div>
         </section>
 
-        <!-- ======================================================= the same -->
-        <section id="compare">
-          <div class="wrap">
-            <p class="eyebrow" v-t="compare.eyebrow">Same counter</p>
-            <h2 v-t="compare.title">The same feature, four ways</h2>
-            <p class="sub" v-t="compare.lead">
-              A counter with two buttons, a derived value and a screen that keeps up. The result is
-              identical in all four. What changes is how much you write, and how much you install
-              before you start.
-            </p>
-
-            <div class="tabs" role="tablist" aria-label="Implementations">
-              <button class="tab" role="tab" :aria-selected="via === 'voodoo' ? 'true' : 'false'" @click="via = 'voodoo'">
-                Voodoo.js
-              </button>
-              <button class="tab" role="tab" :aria-selected="via === 'vanilla' ? 'true' : 'false'" @click="via = 'vanilla'">
-                Vanilla JS
-              </button>
-              <button class="tab" role="tab" :aria-selected="via === 'jquery' ? 'true' : 'false'" @click="via = 'jquery'">
-                jQuery
-              </button>
-              <button class="tab" role="tab" :aria-selected="via === 'vue' ? 'true' : 'false'" @click="via = 'vue'">
-                Vue
-              </button>
-            </div>
-
-            <div class="tab-body">
-              <div v-show="via === 'voodoo'">
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;
-
-&lt;<span class="t-tag">div</span> <span class="t-attr">v-data</span>=<span class="t-str">"{ n: 0 }"</span>&gt;
-  &lt;<span class="t-tag">output</span>&gt;{ n }&lt;/<span class="t-tag">output</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n--"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n++"</span>&gt;+&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">p</span>&gt;double: { n * 2 }&lt;/<span class="t-tag">p</span>&gt;
-&lt;/<span class="t-tag">div</span>&gt;</code></pre>
-                <p class="metrics">
-                  <span><b>7</b> lines</span><span><b>0</b> build steps</span
-                  ><span><b>0</b> dependencies</span>
+        <!-- =================================================== no build step -->
+        <section id="no-build" class="border-t border-border" aria-labelledby="no-build-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <div class="grid gap-10 lg:grid-cols-12 items-center">
+              <div class="lg:col-span-7">
+                <p class="vd-kicker" v-t="build.kicker">No build step</p>
+                <h2 id="no-build-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="build.title">The file you edit is the file the browser runs</h2>
+                <p class="mt-4 text-lg text-muted-foreground max-w-2xl text-pretty" v-t="build.lead">
+                  Every other way to write JSX puts a toolchain between your editor and the page. Voodoo reads
+                  the JSX at runtime, so there is nothing to install, configure or wait for. Open the file, even
+                  straight from your disk, and the spell is cast.
                 </p>
               </div>
-
-              <div v-show="via === 'vanilla'">
-                <pre v-ignore><code>&lt;<span class="t-tag">div</span>&gt;
-  &lt;<span class="t-tag">output</span> <span class="t-attr">id</span>=<span class="t-str">"out"</span>&gt;0&lt;/<span class="t-tag">output</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">id</span>=<span class="t-str">"dec"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">id</span>=<span class="t-str">"inc"</span>&gt;+&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">p</span> <span class="t-attr">id</span>=<span class="t-str">"dbl"</span>&gt;double: 0&lt;/<span class="t-tag">p</span>&gt;
-&lt;/<span class="t-tag">div</span>&gt;
-
-&lt;<span class="t-tag">script</span>&gt;
-  <span class="t-key">let</span> n = <span class="t-key">0</span>;
-  <span class="t-key">const</span> render = () =&gt; {
-    out.textContent = n;
-    dbl.textContent = <span class="t-str">'double: '</span> + n * <span class="t-key">2</span>;
-  };
-  inc.onclick = () =&gt; { n++; render(); };
-  dec.onclick = () =&gt; { n--; render(); };
-&lt;/<span class="t-tag">script</span>&gt;</code></pre>
-                <p class="metrics">
-                  <span><b>18</b> lines</span><span><b>0</b> build steps</span
-                  ><span>every update wired by hand</span>
-                </p>
-              </div>
-
-              <div v-show="via === 'jquery'">
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://code.jquery.com/jquery-3.7.1.min.js"</span>&gt;&lt;/<span class="t-tag">script</span>&gt;
-
-&lt;<span class="t-tag">div</span> <span class="t-attr">id</span>=<span class="t-str">"app"</span>&gt;
-  &lt;<span class="t-tag">output</span>&gt;0&lt;/<span class="t-tag">output</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">class</span>=<span class="t-str">"dec"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">class</span>=<span class="t-str">"inc"</span>&gt;+&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">p</span> <span class="t-attr">class</span>=<span class="t-str">"dbl"</span>&gt;double: 0&lt;/<span class="t-tag">p</span>&gt;
-&lt;/<span class="t-tag">div</span>&gt;
-
-&lt;<span class="t-tag">script</span>&gt;
-  <span class="t-key">let</span> n = <span class="t-key">0</span>;
-  <span class="t-key">function</span> render() {
-    $(<span class="t-str">'#app output'</span>).text(n);
-    $(<span class="t-str">'#app .dbl'</span>).text(<span class="t-str">'double: '</span> + n * <span class="t-key">2</span>);
-  }
-  $(<span class="t-str">'#app .inc'</span>).on(<span class="t-str">'click'</span>, () =&gt; { n++; render(); });
-  $(<span class="t-str">'#app .dec'</span>).on(<span class="t-str">'click'</span>, () =&gt; { n--; render(); });
-&lt;/<span class="t-tag">script</span>&gt;</code></pre>
-                <p class="metrics">
-                  <span><b>19</b> lines</span><span><b>1</b> dependency</span
-                  ><span>still re-renders by hand</span>
-                </p>
-              </div>
-
-              <div v-show="via === 'vue'">
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://unpkg.com/vue@3/dist/vue.global.js"</span>&gt;&lt;/<span class="t-tag">script</span>&gt;
-
-&lt;<span class="t-tag">div</span> <span class="t-attr">id</span>=<span class="t-str">"app"</span>&gt;
-  &lt;<span class="t-tag">output</span>&gt;{{ n }}&lt;/<span class="t-tag">output</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n--"</span>&gt;-&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">button</span> <span class="t-attr">@click</span>=<span class="t-str">"n++"</span>&gt;+&lt;/<span class="t-tag">button</span>&gt;
-  &lt;<span class="t-tag">p</span>&gt;double: {{ n * 2 }}&lt;/<span class="t-tag">p</span>&gt;
-&lt;/<span class="t-tag">div</span>&gt;
-
-&lt;<span class="t-tag">script</span>&gt;
-  Vue.createApp({
-    data: () =&gt; ({ n: <span class="t-key">0</span> })
-  }).mount(<span class="t-str">'#app'</span>);
-&lt;/<span class="t-tag">script</span>&gt;</code></pre>
-                <p class="metrics">
-                  <span><b>13</b> lines</span><span><b>1</b> dependency</span
-                  ><span>a mount call, and an app root</span>
-                </p>
+              <div class="lg:col-span-5 flex justify-center">
+                <img class="when-light w-full max-w-sm" src="assets/art/light/spell-book.svg" alt="An open spell book whose left page holds HTML with Voodoo directives" width="360" height="270" loading="lazy" />
+                <img class="when-dark w-full max-w-sm" src="assets/art/dark/spell-book.svg" alt="An open spell book whose left page holds HTML with Voodoo directives" width="360" height="270" loading="lazy" />
               </div>
             </div>
 
-            <p class="sub" style="margin-top: 26px" v-t="compare.closer">
-              Voodoo did not invent reactivity. It put reactivity back inside the HTML without
-              charging a build step for it.
-            </p>
-          </div>
-        </section>
+            <div class="mt-12 grid gap-6 lg:grid-cols-2">
+              <figure class="vframe">
+                <figcaption class="vframe-bar">
+                  <span class="vframe-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="vframe-tab" data-lang="bash"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-terminal"></use></svg><span v-t="build.ritual">The usual ritual</span></span>
+                </figcaption>
+<pre data-lang="bash" v-ignore class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955"># 1. scaffold a project</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> create</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> vite@latest</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> my-app</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> --</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> --template</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> react</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">cd</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> my-app</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955"># 2. install a few hundred packages</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> install</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955"># 3. a JSX transform, a bundler, a dev server</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> run</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> dev</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955"># 4. and before anyone can open it</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">npm</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> run</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> build</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955"># 5. deploy dist/, not the files you wrote</span></span></code></pre>
+              </figure>
+              <figure class="vframe">
+                <figcaption class="vframe-bar">
+                  <span class="vframe-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="vframe-tab" data-lang="html"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-file"></use></svg>index.html</span>
+                  <button type="button" class="vframe-copy" v-copy-from="#no-build-code" aria-label="Copy index.html"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-copy"></use></svg></button>
+                </figcaption>
+<pre data-lang="html" v-ignore class="shiki" data-shiki><code id="no-build-code"><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  const fruits = ['apple', 'pear', 'grape'];</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  {fruits.map((fruit) => (</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{fruit}</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  ))}</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">ul</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+              </figure>
+            </div>
 
-        <!-- ==================================================== benchmarks -->
-        <section>
-          <div class="wrap">
-            <p class="eyebrow" v-t="bench.eyebrow">Measured</p>
-            <h2 v-t="bench.title">How it performs against the others</h2>
-            <p class="sub" v-t="bench.lead">
-              Seven implementations of the same 1,000-row list, all bundled production and minified,
-              run back to back in one process against the same document. Median of 30 samples, in
-              milliseconds, lower is better. After each run every framework's DOM is compared with
-              the hand-written baseline, so anything producing different output is excluded rather
-              than credited with a fast time.
-            </p>
-
-            <div class="table-scroll">
-              <table>
+            <div class="mt-10 table-wrap rounded-xl border border-border">
+              <table class="table">
+                <caption class="sr-only" v-t="build.tableCaption">What it takes to render a JSX list</caption>
                 <thead>
-                  <tr>
-                    <th scope="col" v-t="bench.framework">Framework</th>
-                    <th scope="col" v-t="bench.create">Create 1k</th>
-                    <th scope="col" v-t="bench.update">Update 1 in 10</th>
-                    <th scope="col" v-t="bench.clear">Clear 1k</th>
-                  </tr>
+                  <tr><th scope="col" v-t="build.colTool">To render that list with</th><th scope="col" v-t="build.colTakes">What it takes</th></tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>vanilla JS</td>
-                    <td class="num">39.51</td>
-                    <td class="num">6.65</td>
-                    <td class="num">20.04</td>
-                  </tr>
-                  <tr>
-                    <td>Preact 10.29.8</td>
-                    <td class="num">71.03</td>
-                    <td class="num">2.73</td>
-                    <td class="num">30.68</td>
-                  </tr>
-                  <tr class="mine">
-                    <td>Voodoo.js 1.0.0</td>
-                    <td class="num">77.47</td>
-                    <td class="num">4.69</td>
-                    <td class="num">30.14</td>
-                  </tr>
-                  <tr>
-                    <td>Vue 3.5.42</td>
-                    <td class="num">78.72</td>
-                    <td class="num">14.29</td>
-                    <td class="num">32.84</td>
-                  </tr>
-                  <tr>
-                    <td>Solid 1.9.15</td>
-                    <td class="num">80.13</td>
-                    <td class="num">0.90</td>
-                    <td class="num">21.85</td>
-                  </tr>
-                  <tr>
-                    <td>React 19.2.8</td>
-                    <td class="num">81.22</td>
-                    <td class="num">4.65</td>
-                    <td class="num">33.55</td>
-                  </tr>
-                  <tr>
-                    <td>Alpine 3.17.1</td>
-                    <td class="num">157.06</td>
-                    <td class="num">111.29</td>
-                    <td class="num">32.76</td>
-                  </tr>
+                  <tr><td class="font-medium">React</td><td class="text-muted-foreground" v-t="build.react">npm install, a bundler, Babel or SWC, a build, a dev server</td></tr>
+                  <tr><td class="font-medium">Preact</td><td class="text-muted-foreground" v-t="build.preact">npm install, a bundler and a JSX transform, or htm, which is not JSX</td></tr>
+                  <tr><td class="font-medium">Solid</td><td class="text-muted-foreground" v-t="build.solid">npm install, a bundler and its own compiler</td></tr>
+                  <tr><td class="font-medium">Vue</td><td class="text-muted-foreground" v-t="build.vue">npm install, a bundler and a plugin, or hand-written render functions</td></tr>
+                  <tr><td class="font-medium">Svelte</td><td class="text-muted-foreground" v-t="build.svelte">npm install, a bundler and the Svelte compiler, and it is not JSX</td></tr>
+                  <tr class="bg-primary/10"><td class="font-semibold text-primary">Voodoo.js</td><td class="font-semibold" v-t="build.voodoo">One script tag</td></tr>
                 </tbody>
               </table>
             </div>
-
-            <p class="sub" style="margin-top: 22px" v-t="bench.honest">
-              Read honestly: on create Voodoo is third of seven, behind hand-written vanilla and
-              Preact, and vanilla still builds a list twice as fast as we do. On update we are now
-              faster than that hand-written baseline — 4.69 ms against 6.65 — and level with React,
-              though Solid and Preact are ahead and they get there with a compiler. The update
-              column is the noisiest of the three and should be read as a range rather than a
-              ranking. Voodoo is also by far the largest bundle in this table, and if size is your
-              main constraint, Alpine and Preact are the honest recommendation.
+            <p class="mt-4 text-sm text-muted-foreground max-w-3xl" v-t="build.honest">
+              The honest cost: a compiler turns JSX into DOM calls ahead of time and Voodoo reads it at
+              runtime, so a compiled framework wins on raw update speed and ships a smaller bundle. What you
+              get back is a file you can open, edit and send to someone, with no node_modules anywhere in the
+              story.
             </p>
           </div>
         </section>
 
-        <!-- ========================================================= start -->
-        <section id="start">
-          <div class="wrap">
-            <p class="eyebrow" v-t="start.eyebrow">Get started</p>
-            <h2 v-t="start.title">Two ways in, both about a minute</h2>
-
-            <div class="two">
-              <div class="pane">
-                <div class="pane-head" v-t="start.tag">A script tag</div>
-                <pre v-ignore><code>&lt;<span class="t-tag">script</span> <span class="t-attr">src</span>=<span class="t-str">"https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js"</span> <span class="t-attr">defer</span>&gt;&lt;/<span class="t-tag">script</span>&gt;</code></pre>
-                <div class="pane-live">
-                  <p style="font-size: 14.5px; color: var(--ink-soft); margin: 0" v-t="start.tagText">
-                    That is the entire installation. The library starts itself once the page is
-                    ready. Pinned to the <code>0.5</code> line, so patches arrive without an edit.
-                  </p>
-                </div>
+        <!-- ===================================================== directives -->
+        <section id="directives" class="border-t border-border bg-surface-2" aria-labelledby="directives-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <div class="grid gap-10 lg:grid-cols-12 items-center">
+              <div class="lg:col-span-5 flex justify-center order-last lg:order-first">
+                <img class="when-light w-full max-w-sm" src="assets/art/light/potions.svg" alt="Three potion bottles labelled v-data, v-model and v-for" width="360" height="270" loading="lazy" />
+                <img class="when-dark w-full max-w-sm" src="assets/art/dark/potions.svg" alt="Three potion bottles labelled v-data, v-model and v-for" width="360" height="270" loading="lazy" />
               </div>
-
-              <div class="pane">
-                <div class="pane-head">npm</div>
-                <pre v-ignore><code>npm install voodoojs</code></pre>
-                <div class="pane-live">
-                  <p style="font-size: 14.5px; color: var(--ink-soft); margin: 0" v-t="start.npmText">
-                    ESM and CJS with types, plus separate entry points such as
-                    <code>voodoojs/reactivity</code> and <code>voodoojs/http</code> when you want
-                    only a piece.
-                  </p>
-                </div>
+              <div class="lg:col-span-7">
+                <p class="vd-kicker" v-t="dir.kicker">Directives</p>
+                <h2 id="directives-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="dir.title">A grimoire of attributes</h2>
+                <p class="mt-4 text-lg text-muted-foreground max-w-2xl text-pretty" v-t="dir.lead">
+                  Behaviour is written where it belongs, on the element it changes. Once a directive is read,
+                  its attribute leaves the document, so what the browser keeps is ordinary HTML.
+                </p>
+                <p class="mt-5 flex flex-wrap gap-2">
+                  <span class="badge badge-primary badge-soft"><span v-text="directiveCount">95</span>&nbsp;<span v-t="dir.count">directives</span></span>
+                  <span class="badge badge-accent badge-soft" v-t="dir.noEval">No eval, strict CSP friendly</span>
+                </p>
               </div>
             </div>
 
-            <div class="cta" style="margin-top: 28px">
-              <a class="btn btn-main" href="docs/" v-t="start.docs">Read the docs</a>
-              <a class="btn" href="examples/" v-t="start.examples">Browse 13 examples</a>
-              <a class="btn" href="https://www.npmjs.com/package/voodoojs" v-t="start.npmLink">View on npm</a>
+            <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-data</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.data">Reactive state for an element and everything inside it.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ open: false }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname" v-ignore>{ expression }</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.interp">Any expression, or JSX, straight into the markup.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Hello, { user.name }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">@event</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.on">Events, with modifiers such as prevent, outside and debounce.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">form</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @submit.prevent</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"save()"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-model</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.model">Two-way binding for inputs, selects, checkboxes and components.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model.trim</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-for</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.for">Keyed lists, so a reorder moves nodes instead of rebuilding them.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">li</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-for</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"t in todos"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :key</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"t.id"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-if</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.if">Conditionals with v-else-if and v-else, or v-show to keep the node.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"error"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ error }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">:attr</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.bind">Bind any attribute, class or style to state.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"url"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ active }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-resource</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.resource">An HTTP request with its data, loading and error state.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-resource</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"users: /api/users"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+              <li class="vd-potion card card-bordered">
+                <div class="card-body gap-3">
+                  <h3 class="text-base font-semibold"><code class="vd-dname">v-validate</code></h3>
+                  <p class="text-sm text-muted-foreground" v-t="dir.validate">Forms that validate, mask and submit themselves.</p>
+<pre data-lang="html" class="shiki vd-mini" v-ignore data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-required</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-email</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
+                </div>
+              </li>
+            </ul>
+            <div class="mt-8 flex flex-wrap gap-2">
+              <a class="btn btn-outline" href="docs/referencia/directives.html" v-command-item="">
+                <span v-t="dir.all">Every directive, by category</span>
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-arrow"></use></svg>
+              </a>
             </div>
           </div>
         </section>
 
-
-        <!-- ==================================================== components -->
-        <section id="components">
-          <div class="wrap">
-            <p class="eyebrow" v-t="comp.eyebrow">In the box</p>
-            <h2 v-t="comp.title">Twenty-nine components you do not install</h2>
-            <p class="sub" v-t="comp.lead">
-              They are custom elements the library defines when it starts, so writing the tag is
-              the whole usage. Everything below is running here, on this page.
-            </p>
-
-            <div class="two" style="margin-top: 34px">
-              <div class="pane">
-                <div class="pane-head" v-t="dom.write">What you write</div>
-                <pre v-ignore><code>&lt;<span class="t-tag">v-button</span> <span class="t-attr">variant</span>=<span class="t-str">"primary"</span>&gt;Save&lt;/<span class="t-tag">v-button</span>&gt;
-&lt;<span class="t-tag">v-badge</span> <span class="t-attr">tone</span>=<span class="t-str">"success"</span>&gt;Active&lt;/<span class="t-tag">v-badge</span>&gt;
-&lt;<span class="t-tag">v-progress</span> <span class="t-attr">value</span>=<span class="t-str">"70"</span>&gt;&lt;/<span class="t-tag">v-progress</span>&gt;
-&lt;<span class="t-tag">v-rating</span> <span class="t-attr">value</span>=<span class="t-str">"4"</span>&gt;&lt;/<span class="t-tag">v-rating</span>&gt;</code></pre>
+        <!-- ===================================================== components -->
+        <section id="components" class="border-t border-border" aria-labelledby="components-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <div class="grid gap-10 lg:grid-cols-12 items-center">
+              <div class="lg:col-span-7">
+                <p class="vd-kicker" v-t="comp.kicker">Components</p>
+                <h2 id="components-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="comp.title">Components you write as tags, never install</h2>
+                <p class="mt-4 text-lg text-muted-foreground max-w-2xl text-pretty" v-t="comp.lead">
+                  The library defines them when it starts, so the tag is the whole usage. They work with v-model
+                  and the validation directives, and every one below is running on this page.
+                </p>
+                <p class="mt-5"><span class="badge badge-primary badge-soft"><span v-text="componentCount">29</span>&nbsp;<span v-t="comp.count">built-in components</span></span></p>
               </div>
+              <div class="lg:col-span-5 flex justify-center">
+                <img class="when-light w-full max-w-xs" src="assets/art/light/rune-circle.svg" alt="A ring of runes around a pair of curly braces" width="300" height="300" loading="lazy" />
+                <img class="when-dark w-full max-w-xs" src="assets/art/dark/rune-circle.svg" alt="A ring of runes around a pair of curly braces" width="300" height="300" loading="lazy" />
+              </div>
+            </div>
 
-              <div class="pane">
-                <div class="pane-head" v-t="comp.running">Running right here</div>
-                <div class="pane-live" style="display: flex; flex-direction: column; gap: 12px">
-                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
-                    <v-button variant="primary">Save</v-button>
-                    <v-badge tone="success">Active</v-badge>
-                  </div>
-                  <v-progress value="70"></v-progress>
+            <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="card card-bordered">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-button&gt;</code>
+                  <div class="flex flex-wrap gap-2"><v-button variant="primary">Save</v-button><v-button variant="ghost">Cancel</v-button></div>
+                </div>
+              </div>
+              <div class="card card-bordered">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-input&gt;</code>
+                  <v-input label="Email" type="email" placeholder="you@example.com"></v-input>
+                </div>
+              </div>
+              <div class="card card-bordered">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-switch&gt; &lt;v-checkbox&gt;</code>
+                  <v-switch label="Notifications"></v-switch>
+                  <v-checkbox label="Remember me"></v-checkbox>
+                </div>
+              </div>
+              <div class="card card-bordered">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-rating&gt; &lt;v-progress&gt;</code>
                   <v-rating value="4"></v-rating>
+                  <v-progress value="70"></v-progress>
+                </div>
+              </div>
+              <div class="card card-bordered sm:col-span-2">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-alert&gt; &lt;v-badge&gt; &lt;v-tag&gt;</code>
+                  <v-alert tone="info" title="Heads up">The library starts itself.</v-alert>
+                  <div class="flex flex-wrap gap-2"><v-badge tone="success">Active</v-badge><v-badge tone="danger">Overdue</v-badge><v-tag>design</v-tag><v-tag>frontend</v-tag></div>
+                </div>
+              </div>
+              <div class="card card-bordered sm:col-span-2" v-data="{ stages: ['Cart', 'Address', 'Payment'] }">
+                <div class="card-body gap-4">
+                  <code class="vd-tagname">&lt;v-steps&gt; &lt;v-stat&gt; &lt;v-avatar&gt;</code>
+                  <v-steps :items="stages" value="1"></v-steps>
+                  <div class="flex flex-wrap items-center gap-4"><v-avatar name="Ada Lovelace"></v-avatar><v-stat label="Revenue" value="12,480" trend="up"></v-stat></div>
                 </div>
               </div>
             </div>
-
-            <div class="cta" style="margin-top: 26px">
-              <a class="btn btn-main" href="components.html" v-t="comp.all">See all 29 components</a>
+            <div class="mt-8">
+              <a class="btn btn-outline" href="components.html" v-command-item="">
+                <span v-t="comp.all">See every component and its props</span>
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-arrow"></use></svg>
+              </a>
             </div>
           </div>
         </section>
 
-        <!-- ========================================================= built -->
-        <section class="built">
-          <div class="wrap built-box">
+        <!-- ======================================================= examples -->
+        <section id="examples" class="border-t border-border bg-surface-2" aria-labelledby="examples-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <p class="vd-kicker" v-t="ex.kicker">Examples</p>
+            <h2 id="examples-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="ex.title">Real apps, each one a single HTML file</h2>
+            <p class="mt-4 text-lg text-muted-foreground max-w-2xl text-pretty" v-t="ex.lead">
+              Not snippets. Open the folder, open the file, and it runs: games, a 3D world, a store, a realtime
+              chat and a dashboard, with no build step behind any of them.
+            </p>
+            <div class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a class="card card-bordered card-interactive" href="examples/todo/" v-command-item="Example: To-do list">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-scroll"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.todo">To-do list</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.todoD">Add, complete, filter and persist, surviving a reload.</p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive" href="examples/kanban/" v-command-item="Example: Kanban board">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-book"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.kanban">Kanban board</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.kanbanD">Drag cards between columns; the order is reactive state.</p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive" href="examples/ecommerce/" v-command-item="Example: Store">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-cauldron"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.store">Store</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.storeD">Catalogue, filters and a cart with totals derived from state.</p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive" href="examples/dashboard/" v-command-item="Example: Admin dashboard">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-gauge"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.dash">Admin dashboard</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.dashD">Charts, tables, filters and a date range from the built-in kit.</p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive" href="examples/jogos/tetris/" v-command-item="Example: Tetris">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-rune"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.tetris">Tetris</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.tetrisD">A full game loop with the board held in reactive state.</p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive" href="examples/mundo-aberto/" v-command-item="Example: 3D open world">
+                <div class="card-body gap-2">
+                  <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-crystal"></use></svg></span>
+                  <h3 class="card-title" v-t="ex.world">3D open world</h3>
+                  <p class="text-sm text-muted-foreground" v-t="ex.worldD">A drivable car with a heads-up display written as attributes.</p>
+                </div>
+              </a>
+            </div>
+            <div class="mt-8 flex flex-wrap items-center gap-4">
+              <a class="btn btn-primary" href="examples/" v-command-item="">
+                <span v-t="ex.all">Browse all thirteen examples</span>
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-arrow"></use></svg>
+              </a>
+              <span class="text-sm text-muted-foreground" v-t="ex.more">Also a CRUD app, a Pokedex, two chats, Breakout, shaders and a devtools inspector.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================================================== benchmarks -->
+        <section id="benchmarks" class="border-t border-border" aria-labelledby="bench-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <div class="grid gap-12 lg:grid-cols-12">
+              <div class="lg:col-span-5">
+                <p class="vd-kicker" v-t="bench.kicker">Measured</p>
+                <h2 id="bench-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="bench.title">Quick where it counts, honest where it is not</h2>
+                <p class="mt-4 text-muted-foreground text-pretty" v-t="bench.lead">
+                  Seven implementations of the same 1,000 row list, all bundled for production, run back to back
+                  against the same document. Median of 30 samples in milliseconds, lower is better. A framework
+                  whose DOM differs from the hand-written baseline is excluded rather than timed.
+                </p>
+                <div class="mt-6 grid grid-cols-2 gap-3">
+                  <div class="rounded-xl border border-border bg-surface p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground" v-t="bench.update">Update 1 in 10</p>
+                    <p class="mt-1 text-2xl font-bold vd-display">4.69 <span class="text-sm font-medium text-muted-foreground">ms</span></p>
+                    <p class="text-xs text-muted-foreground" v-t="bench.updateNote">ahead of hand-written vanilla, at 6.65</p>
+                  </div>
+                  <div class="rounded-xl border border-border bg-surface p-4">
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground" v-t="bench.clear">Clear 1,000 rows</p>
+                    <p class="mt-1 text-2xl font-bold vd-display">30.14 <span class="text-sm font-medium text-muted-foreground">ms</span></p>
+                    <p class="text-xs text-muted-foreground" v-t="bench.clearNote">level with Preact, Vue and React</p>
+                  </div>
+                </div>
+              </div>
+              <div class="lg:col-span-7">
+                <figure class="rounded-2xl border border-border bg-surface p-5 md:p-6">
+                  <figcaption class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span class="font-semibold" v-t="bench.create">Create 1,000 rows</span>
+                    <span class="text-muted-foreground" v-t="bench.unit">ms, lower is better</span>
+                  </figcaption>
+                  <ol class="mt-5 space-y-3 vd-bars">
+                    <li><span class="vd-bar-name">vanilla JS</span><span class="vd-bar"><i style="width: 25.2%"></i></span><span class="vd-bar-val">39.51</span></li>
+                    <li><span class="vd-bar-name">Preact 10.29.8</span><span class="vd-bar"><i style="width: 45.2%"></i></span><span class="vd-bar-val">71.03</span></li>
+                    <li class="vd-bar-me"><span class="vd-bar-name">Voodoo.js 1.0.0</span><span class="vd-bar"><i style="width: 49.3%"></i></span><span class="vd-bar-val">77.47</span></li>
+                    <li><span class="vd-bar-name">Vue 3.5.42</span><span class="vd-bar"><i style="width: 50.1%"></i></span><span class="vd-bar-val">78.72</span></li>
+                    <li><span class="vd-bar-name">Solid 1.9.15</span><span class="vd-bar"><i style="width: 51%"></i></span><span class="vd-bar-val">80.13</span></li>
+                    <li><span class="vd-bar-name">React 19.2.8</span><span class="vd-bar"><i style="width: 51.7%"></i></span><span class="vd-bar-val">81.22</span></li>
+                    <li><span class="vd-bar-name">Alpine 3.17.1</span><span class="vd-bar"><i style="width: 100%"></i></span><span class="vd-bar-val">157.06</span></li>
+                  </ol>
+                </figure>
+                <p class="mt-4 text-sm text-muted-foreground text-pretty" v-t="bench.honest">
+                  Read honestly: on create Voodoo is third of seven, and vanilla still builds the list twice as
+                  fast. Solid and Preact update faster, with a compiler. Voodoo is also the largest bundle here,
+                  so if size is your main constraint, Alpine and Preact are the honest recommendation.
+                </p>
+                <a class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline" href="https://github.com/kwy404/Voodoo.js/tree/main/benchmarks">
+                  <span v-t="bench.method">The method, the raw numbers and how to run it yourself</span>
+                  <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-external"></use></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========================================================== cast -->
+        <section class="border-t border-border vd-aura" aria-labelledby="cast-title">
+          <div class="mx-auto max-w-6xl px-4 lg:px-8 py-20 md:py-24 grid gap-10 md:grid-cols-2 items-center">
             <div>
-              <p class="eyebrow" v-t="built.eyebrow">Dogfood</p>
-              <h2 v-t="built.title">This site is built with Voodoo.js</h2>
-              <p class="sub" v-t="built.lead">
-                Not a marketing line. The page you are reading has no build step and no framework
-                code of its own. The tabs above, the counter in the hero, the language picker, the
-                theme toggle, the mobile menu and the Ctrl+K palette are all directives on this
-                HTML, running from the same
-                <code>voodoo.full.min.js</code> the install section hands you.
+              <h2 id="cast-title" class="text-3xl md:text-4xl font-bold tracking-tight text-balance" v-t="cast.title">Cast your first spell in a minute</h2>
+              <p class="mt-4 text-lg text-muted-foreground text-pretty" v-t="cast.lead">
+                One script tag, or npm install voodoojs when you have a bundler anyway. This site is built with
+                it, with no build step and no framework code of its own: view the source.
               </p>
-              <p class="sub" style="margin-top: 14px" v-t="built.lead2">
-                View source, or press Ctrl+K and pick "View this page's source". If the framework
-                could not carry a real site, you would find out here first.
-              </p>
+              <div class="mt-6 flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="docs/" v-command-item="" v-t="cast.docs">Read the docs</a>
+                <a class="btn btn-outline" href="https://www.npmjs.com/package/voodoojs">npm</a>
+                <a class="btn btn-outline" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+              </div>
             </div>
-
-            <dl class="facts">
-              <div>
-                <dt>1,490</dt>
-                <dd v-t="built.f1">unit tests, plus 44 in real Chromium</dd>
-              </div>
-              <div>
-                <dt>0</dt>
-                <dd v-t="built.f2">runtime dependencies</dd>
-              </div>
-              <div>
-                <dt>46 KB</dt>
-                <dd v-t="built.f3">core build, gzipped</dd>
-              </div>
-              <div>
-                <dt>0</dt>
-                <dd v-t="built.f4">build steps, here or in your project</dd>
-              </div>
-            </dl>
+            <div class="flex justify-center">
+              <img class="when-light w-full max-w-sm" src="assets/art/light/wand.svg" alt="A wand leaving a trail of sparkles" width="360" height="220" loading="lazy" />
+              <img class="when-dark w-full max-w-sm" src="assets/art/dark/wand.svg" alt="A wand leaving a trail of sparkles" width="360" height="220" loading="lazy" />
+            </div>
           </div>
         </section>
-        <!-- ======================================================= more -->
-        <section class="more" aria-labelledby="more-title">
-          <div class="wrap">
-            <p class="eyebrow" v-t="more.eyebrow">From the same author</p>
-            <h2 id="more-title" v-t="more.title">More projects by kwy404</h2>
-            <ul class="more-list">
+
+        <!-- ========================================================== more -->
+        <section id="more" class="border-t border-border bg-surface-2" aria-labelledby="more-title">
+          <div class="mx-auto max-w-7xl px-4 lg:px-8 py-20 md:py-24">
+            <p class="vd-kicker" v-t="more.kicker">From the same author</p>
+            <h2 id="more-title" class="mt-3 text-3xl md:text-4xl font-bold tracking-tight" v-t="more.title">More projects by kwy404</h2>
+            <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <li>
-                <a class="more-card" href="https://kwy404.github.io/monsoon/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>Monsoon</b><span v-t="more.monsoon">Utility-first CSS with no build step and 116 native components</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/monsoon/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">Monsoon</b><span class="text-sm text-muted-foreground" v-t="more.monsoon">Utility-first CSS with no build step and 167 components</span></span>
+                  </div>
                 </a>
               </li>
               <li>
-                <a class="more-card" href="https://kwy404.github.io/breakhound/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>breakhound</b><span v-t="more.breakhound">Find bugs in any JavaScript library automatically</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/breakhound/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">breakhound</b><span class="text-sm text-muted-foreground" v-t="more.breakhound">Find bugs in any JavaScript library automatically</span></span>
+                  </div>
                 </a>
               </li>
               <li>
-                <a class="more-card" href="https://kwy404.github.io/vueleap/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>vueleap</b><span v-t="more.vueleap">Migrate Vue 2 to Vue 3 with one command</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/vueleap/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">vueleap</b><span class="text-sm text-muted-foreground" v-t="more.vueleap">Migrate Vue 2 to Vue 3 with one command</span></span>
+                  </div>
                 </a>
               </li>
               <li>
-                <a class="more-card" href="https://kwy404.github.io/graphemely/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>graphemely</b><span v-t="more.graphemely">Emoji safe string functions</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/graphemely/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">graphemely</b><span class="text-sm text-muted-foreground" v-t="more.graphemely">Emoji safe string functions</span></span>
+                  </div>
                 </a>
               </li>
               <li>
-                <a class="more-card" href="https://kwy404.github.io/numberparrot/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>numberparrot</b><span v-t="more.numberparrot">Parse localized numbers and currency</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/numberparrot/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">numberparrot</b><span class="text-sm text-muted-foreground" v-t="more.numberparrot">Parse localized numbers and currency</span></span>
+                  </div>
                 </a>
               </li>
               <li>
-                <a class="more-card" href="https://kwy404.github.io/edgegoat/">
-                  <img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="44" height="44" loading="lazy" decoding="async" />
-                  <span><b>edgegoat</b><span v-t="more.edgegoat">Edge case test inputs</span></span>
+                <a class="card card-bordered card-interactive h-full" href="https://kwy404.github.io/edgegoat/">
+                  <div class="card-body flex-row items-center gap-4">
+                    <img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="52" height="52" loading="lazy" decoding="async" />
+                    <span><b class="block">edgegoat</b><span class="text-sm text-muted-foreground" v-t="more.edgegoat">Edge case test inputs</span></span>
+                  </div>
                 </a>
               </li>
             </ul>
@@ -1643,39 +691,68 @@
         </section>
       </main>
 
-      <footer>
-        <div class="wrap foot-in">
-          <span v-t="foot.mit">MIT licensed</span>
-          <a href="https://github.com/kwy404/Voodoo.js" v-command-item="">GitHub</a>
-          <a href="https://www.npmjs.com/package/voodoojs" v-command-item="">npm</a>
-          <a href="docs/" v-t="nav.docs">Docs</a>
-          <a href="playground.html" v-t="nav.playground">Playground</a>
-          <a href="components.html" v-t="nav.components">Components</a>
-          <a href="examples/" v-t="nav.examples">Examples</a>
-          <span><span v-t="foot.madeBy">Made by</span> <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></span>
-          <span class="foot-end" v-t="foot.builtWith">Built with Voodoo.js 1.0.0</span>
-        </div>
-        <nav class="vd-projects wrap foot-projects" aria-label="More projects by kwy404" v-t:aria-label="more.title">
-          <span class="vd-projects__title" v-t="more.title">More projects by kwy404</span>
-          <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step and 116 native components"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
-          <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
-          <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
-          <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
-          <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
-          <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
-        </nav>
-      </footer>
-
+<!-- chrome:footer -->
+<footer class="footer px-0">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 lg:px-8">
+  <div class="footer-grid md:grid-cols-4">
+    <div class="footer-brand md:col-span-1">
+      <a class="navbar-brand vd-brand text-foreground" href="./">
+        <img src="assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+        <span>Voodoo<span class="text-primary">.js</span></span>
+      </a>
+      <p v-t="foot.tagline">JSX in plain HTML. No build step, one script tag.</p>
+      <div class="footer-social">
+        <a href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-github"></use></svg></a>
+        <a href="https://www.npmjs.com/package/voodoojs" aria-label="voodoojs on npm"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-npm"></use></svg></a>
+      </div>
+    </div>
+    <nav aria-label="Voodoo.js">
+      <p class="footer-title">Voodoo.js</p>
+      <ul class="footer-links">
+        <li><a href="docs/" v-t="nav.docs">Docs</a></li>
+        <li><a href="playground.html" v-t="nav.playground">Playground</a></li>
+        <li><a href="components.html" v-t="nav.components">Components</a></li>
+        <li><a href="examples/" v-t="nav.examples">Examples</a></li>
+        <li><a href="https://github.com/kwy404/Voodoo.js">GitHub</a></li>
+        <li><a href="https://www.npmjs.com/package/voodoojs">npm</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Learn" v-t:aria-label="foot.learn">
+      <p class="footer-title" v-t="foot.learn">Learn</p>
+      <ul class="footer-links">
+        <li><a href="docs/guia/instalacao.html" v-t="foot.install">Installation</a></li>
+        <li><a href="docs/guia/jsx.html" v-t="foot.jsx">JSX in plain HTML</a></li>
+        <li><a href="docs/referencia/directives.html" v-t="foot.directives">Directives</a></li>
+        <li><a href="docs/referencia/migracao-vue.html" v-t="foot.migrate">Coming from Vue</a></li>
+        <li><a href="docs/referencia/perguntas-frequentes.html" v-t="foot.faq">FAQ</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="More from kwy404" v-t:aria-label="foot.more">
+      <p class="footer-title" v-t="foot.more">More from kwy404</p>
+      <ul class="footer-links vd-projects">
+          <li><a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">Monsoon</a></li>
+          <li><a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">breakhound</a></li>
+          <li><a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">vueleap</a></li>
+          <li><a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">graphemely</a></li>
+          <li><a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">numberparrot</a></li>
+          <li><a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">edgegoat</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <p><span v-t="foot.madeBy">Made by</span> <a class="font-medium text-foreground hover:underline" href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a class="hover:underline" href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a class="hover:underline" href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). <span v-t="foot.mit">MIT licensed.</span> Voodoo.js 1.0.0.</p>
+    <p><span v-t="foot.builtWith">Built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/monsoon/">Monsoon</a>. <span v-t="foot.interactive">Interactive parts built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>.</p>
+  </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
     </div>
 
-    <!-- data-manual: the dictionary must be configured before the first render,
-         otherwise the page flashes untranslated keys. assets/i18n.js calls
-         V.start() once it has registered the four languages. -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js"
-      data-manual
-      defer
-    ></script>
-    <script src="assets/i18n.js?v=a4f24879" defer></script>
+    <!-- data-manual: the dictionaries and the spell book directive must be
+         registered before the first render, otherwise the page flashes
+         untranslated keys. assets/i18n.js runs last and calls V.start(). -->
+    <script src="voodoo.full.min.js" data-manual defer></script>
+    <script src="assets/home.js?v=0886cffc" defer></script>
+    <script src="assets/i18n.js?v=149c24b4" defer></script>
   </body>
 </html>

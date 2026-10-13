@@ -475,27 +475,26 @@ document.addEventListener('DOMContentLoaded', function () {
   V.start();
 });
 </script>
+<!-- chrome:credit -->
 <footer class="vd-credit">
-  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>
-  <nav class="vd-projects" aria-label="Conheça outros projetos de kwy404">
-    <span class="vd-projects__title">Conheça outros projetos de kwy404</span>
-    <a href="https://kwy404.github.io/monsoon/" title="CSS utilitário sem etapa de build e 116 componentes nativos"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
-    <a href="https://kwy404.github.io/breakhound/" title="Encontra bugs em qualquer biblioteca JavaScript automaticamente"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
-    <a href="https://kwy404.github.io/vueleap/" title="Migra do Vue 2 para o Vue 3 com um só comando"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
-    <a href="https://kwy404.github.io/graphemely/" title="Funções de string seguras para emoji"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
-    <a href="https://kwy404.github.io/numberparrot/" title="Lê números e valores monetários localizados"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
-    <a href="https://kwy404.github.io/edgegoat/" title="Entradas de teste para casos extremos"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
+  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). Interactive parts built with <a href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>. The site around it is built with <a href="https://kwy404.github.io/monsoon/">Monsoon</a>. <a href="../../examples/">All examples</a></p>
+  <nav class="vd-credit__projects" aria-label="More from kwy404">
+    <span>More from kwy404:</span>
+    <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step">Monsoon</a>
+    <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically">breakhound</a>
+    <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command">vueleap</a>
+    <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions">graphemely</a>
+    <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency">numberparrot</a>
+    <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs">edgegoat</a>
   </nav>
 </footer>
 <style>
-  .vd-credit { padding: 16px; text-align: center; font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
+  .vd-credit { padding: 16px; text-align: center; font: 13px/1.6 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
   .vd-credit a { color: inherit; }
-  .vd-credit .vd-projects { justify-content: center; margin-top: 8px; }
-  .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
-  .vd-projects__title { font-weight: 600; }
-  .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
-  .vd-projects a:hover { text-decoration: underline; }
-  .vd-projects img { width: 18px; height: 18px; flex: none; }
+  .vd-credit p { margin: 0; }
+  .vd-credit__projects { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 6px; }
+  .vd-credit__projects span { font-weight: 600; }
 </style>
+<!-- /chrome:credit -->
 </body>
 </html>

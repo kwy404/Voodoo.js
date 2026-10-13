@@ -991,7 +991,7 @@ Outras ferramentas open source do mesmo autor.
 
 | | Projeto | O que faz | npm | Documentação |
 | --- | --- | --- | --- | --- |
-| <img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="Monsoon mascot" width="48"> | **[Monsoon](https://github.com/kwy404/monsoon)** | CSS utilitário sem passo de build: um tema acessível inteiro a partir de uma cor `--seed`, 116 componentes nativos | [![npm](https://img.shields.io/npm/v/monsooncss.svg?label=&color=CB3837)](https://www.npmjs.com/package/monsooncss) | [site](https://kwy404.github.io/monsoon/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="Monsoon mascot" width="48"> | **[Monsoon](https://github.com/kwy404/monsoon)** | CSS utilitário sem passo de build: um tema acessível inteiro a partir de uma cor `--seed`, 167 componentes | [![npm](https://img.shields.io/npm/v/monsooncss.svg?label=&color=CB3837)](https://www.npmjs.com/package/monsooncss) | [site](https://kwy404.github.io/monsoon/) |
 | <img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="breakhound mascot" width="48"> | **[breakhound](https://github.com/kwy404/breakhound)** | Encontra bugs em qualquer biblioteca JavaScript automaticamente, sem precisar de testes | [![npm](https://img.shields.io/npm/v/breakhound.svg?label=&color=CB3837)](https://www.npmjs.com/package/breakhound) | [site](https://kwy404.github.io/breakhound/) |
 | <img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="vueleap mascot" width="48"> | **[vueleap](https://github.com/kwy404/vueleap)** | Migra Vue 2 para Vue 3 com um comando | [![npm](https://img.shields.io/npm/v/vueleap.svg?label=&color=CB3837)](https://www.npmjs.com/package/vueleap) | [site](https://kwy404.github.io/vueleap/) |
 | <img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="graphemely mascot" width="48"> | **[graphemely](https://github.com/kwy404/graphemely)** | Trunca, corta e conta strings com emoji com segurança | [![npm](https://img.shields.io/npm/v/%40kwy404%2Fgraphemely.svg?label=&color=CB3837)](https://www.npmjs.com/package/@kwy404/graphemely) | [site](https://kwy404.github.io/graphemely/) |
@@ -1001,6 +1001,8 @@ Outras ferramentas open source do mesmo autor.
 ## Autor
 
 Criado por **Alexandre Kohler** ([GitHub](https://github.com/kwy404) e [LinkedIn](https://www.linkedin.com/in/alexandre-silva-173687256/)).
+
+O [site](https://kwy404.github.io/Voodoo.js/) é feito com [Monsoon](https://kwy404.github.io/monsoon/), e as partes interativas são feitas com o próprio Voodoo.js.
 
 ## Licença
 

@@ -372,18 +372,18 @@ document.addEventListener('DOMContentLoaded', function () {
   var FRETE_GRATIS_A_PARTIR_DE = 399;
 
   var CATALOGO = [
-    { id: 1, nome: 'Fone sem fio Aurora', categoria: 'Eletronicos', precoCheio: 549, desconto: 20, nota: 5, avaliacoes: 412, icone: '🎧', cor: '#E8DEFF' },
-    { id: 2, nome: 'Teclado mecanico Runa', categoria: 'Eletronicos', precoCheio: 699, desconto: 0, nota: 5, avaliacoes: 187, icone: '⌨️', cor: '#DCE9FF' },
-    { id: 3, nome: 'Monitor 27 polegadas', categoria: 'Eletronicos', precoCheio: 1190, desconto: 10, nota: 4, avaliacoes: 96, icone: '🖥️', cor: '#E0F4FF' },
-    { id: 4, nome: 'Caneca de ceramica', categoria: 'Casa', precoCheio: 79, desconto: 0, nota: 4, avaliacoes: 233, icone: '☕', cor: '#FFE8D6' },
-    { id: 5, nome: 'Luminaria de mesa', categoria: 'Casa', precoCheio: 189, desconto: 15, nota: 5, avaliacoes: 154, icone: '💡', cor: '#FFF3D0' },
-    { id: 6, nome: 'Panela de ferro', categoria: 'Casa', precoCheio: 329, desconto: 0, nota: 5, avaliacoes: 88, icone: '🍲', cor: '#F1E4D4' },
-    { id: 7, nome: 'Tenis de corrida', categoria: 'Esporte', precoCheio: 459, desconto: 25, nota: 4, avaliacoes: 621, icone: '👟', cor: '#DDF6EA' },
-    { id: 8, nome: 'Mochila urbana', categoria: 'Esporte', precoCheio: 269, desconto: 0, nota: 4, avaliacoes: 143, icone: '🎒', cor: '#E6F0E0' },
-    { id: 9, nome: 'Garrafa termica', categoria: 'Esporte', precoCheio: 129, desconto: 10, nota: 5, avaliacoes: 302, icone: '🧴', cor: '#E3F7F3' },
-    { id: 10, nome: 'Livro de fotografia', categoria: 'Livros', precoCheio: 149, desconto: 0, nota: 5, avaliacoes: 71, icone: '📕', cor: '#FFE0E8' },
-    { id: 11, nome: 'Caderno pontilhado', categoria: 'Livros', precoCheio: 59, desconto: 0, nota: 4, avaliacoes: 190, icone: '📔', cor: '#FFEAF0' },
-    { id: 12, nome: 'Jogo de tabuleiro', categoria: 'Livros', precoCheio: 239, desconto: 15, nota: 5, avaliacoes: 118, icone: '🎲', cor: '#F0E4FF' }
+    { id: 1, nome: 'Fone sem fio Aurora', categoria: 'Eletronicos', precoCheio: 549, desconto: 20, nota: 5, avaliacoes: 412, icone: 'FA', cor: '#E8DEFF' },
+    { id: 2, nome: 'Teclado mecanico Runa', categoria: 'Eletronicos', precoCheio: 699, desconto: 0, nota: 5, avaliacoes: 187, icone: 'TR', cor: '#DCE9FF' },
+    { id: 3, nome: 'Monitor 27 polegadas', categoria: 'Eletronicos', precoCheio: 1190, desconto: 10, nota: 4, avaliacoes: 96, icone: 'MP', cor: '#E0F4FF' },
+    { id: 4, nome: 'Caneca de ceramica', categoria: 'Casa', precoCheio: 79, desconto: 0, nota: 4, avaliacoes: 233, icone: 'CC', cor: '#FFE8D6' },
+    { id: 5, nome: 'Luminaria de mesa', categoria: 'Casa', precoCheio: 189, desconto: 15, nota: 5, avaliacoes: 154, icone: 'LM', cor: '#FFF3D0' },
+    { id: 6, nome: 'Panela de ferro', categoria: 'Casa', precoCheio: 329, desconto: 0, nota: 5, avaliacoes: 88, icone: 'PF', cor: '#F1E4D4' },
+    { id: 7, nome: 'Tenis de corrida', categoria: 'Esporte', precoCheio: 459, desconto: 25, nota: 4, avaliacoes: 621, icone: 'TC', cor: '#DDF6EA' },
+    { id: 8, nome: 'Mochila urbana', categoria: 'Esporte', precoCheio: 269, desconto: 0, nota: 4, avaliacoes: 143, icone: 'MU', cor: '#E6F0E0' },
+    { id: 9, nome: 'Garrafa termica', categoria: 'Esporte', precoCheio: 129, desconto: 10, nota: 5, avaliacoes: 302, icone: 'GT', cor: '#E3F7F3' },
+    { id: 10, nome: 'Livro de fotografia', categoria: 'Livros', precoCheio: 149, desconto: 0, nota: 5, avaliacoes: 71, icone: 'LF', cor: '#FFE0E8' },
+    { id: 11, nome: 'Caderno pontilhado', categoria: 'Livros', precoCheio: 59, desconto: 0, nota: 4, avaliacoes: 190, icone: 'CP', cor: '#FFEAF0' },
+    { id: 12, nome: 'Jogo de tabuleiro', categoria: 'Livros', precoCheio: 239, desconto: 15, nota: 5, avaliacoes: 118, icone: 'JT', cor: '#F0E4FF' }
   ].map(function (p) {
     p.preco = Math.round(p.precoCheio * (1 - p.desconto / 100) * 100) / 100;
     return p;
@@ -623,27 +623,26 @@ document.addEventListener('DOMContentLoaded', function () {
   V.start();
 });
 </script>
+<!-- chrome:credit -->
 <footer class="vd-credit">
-  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>
-  <nav class="vd-projects" aria-label="Conheça outros projetos de kwy404">
-    <span class="vd-projects__title">Conheça outros projetos de kwy404</span>
-    <a href="https://kwy404.github.io/monsoon/" title="CSS utilitário sem etapa de build e 116 componentes nativos"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
-    <a href="https://kwy404.github.io/breakhound/" title="Encontra bugs em qualquer biblioteca JavaScript automaticamente"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
-    <a href="https://kwy404.github.io/vueleap/" title="Migra do Vue 2 para o Vue 3 com um só comando"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
-    <a href="https://kwy404.github.io/graphemely/" title="Funções de string seguras para emoji"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
-    <a href="https://kwy404.github.io/numberparrot/" title="Lê números e valores monetários localizados"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
-    <a href="https://kwy404.github.io/edgegoat/" title="Entradas de teste para casos extremos"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
+  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). Interactive parts built with <a href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>. The site around it is built with <a href="https://kwy404.github.io/monsoon/">Monsoon</a>. <a href="../../examples/">All examples</a></p>
+  <nav class="vd-credit__projects" aria-label="More from kwy404">
+    <span>More from kwy404:</span>
+    <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step">Monsoon</a>
+    <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically">breakhound</a>
+    <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command">vueleap</a>
+    <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions">graphemely</a>
+    <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency">numberparrot</a>
+    <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs">edgegoat</a>
   </nav>
 </footer>
 <style>
-  .vd-credit { padding: 16px; text-align: center; font: 13px/1.5 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
+  .vd-credit { padding: 16px; text-align: center; font: 13px/1.6 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
   .vd-credit a { color: inherit; }
-  .vd-credit .vd-projects { justify-content: center; margin-top: 8px; }
-  .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
-  .vd-projects__title { font-weight: 600; }
-  .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
-  .vd-projects a:hover { text-decoration: underline; }
-  .vd-projects img { width: 18px; height: 18px; flex: none; }
+  .vd-credit p { margin: 0; }
+  .vd-credit__projects { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 6px; }
+  .vd-credit__projects span { font-weight: 600; }
 </style>
+<!-- /chrome:credit -->
 </body>
 </html>

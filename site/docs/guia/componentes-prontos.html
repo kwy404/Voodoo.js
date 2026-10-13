@@ -10,186 +10,12 @@
 <meta name="description" content="The 29 components of the full build: how to write the tags, how the boolean props work, how they behave inside a form and how to change the whole palette.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/componentes-prontos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -214,21 +40,21 @@ html:root {
 <h2 id="usando">Using them</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ email: '' }"&gt;
-  &lt;VButton variant="primary" size="lg" icon="check"&gt;Save&lt;/VButton&gt;
-  &lt;VButton variant="ghost"&gt;Cancel&lt;/VButton&gt;
-  &lt;VBadge tone="success"&gt;Active&lt;/VBadge&gt;
-  &lt;VTag&gt;draft&lt;/VTag&gt;
-
-  &lt;VInput label="Email" type="email" icon="mail"
-          hint="We never share it" v-model="email"&gt;&lt;/VInput&gt;
-
-  &lt;VAlert tone="warning" title="Heads up" closable&gt;
-    The invoice is due in three days.
-  &lt;/VAlert&gt;
-
-  &lt;VStat label="Revenue" value="$128,400" delta="12.4" icon="chart"&gt;&lt;/VStat&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ email: '' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"primary"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> size</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"lg"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"check"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Save</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"ghost"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Cancel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> tone</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"success"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Active</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTag</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">draft</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTag</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"mail"</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">          hint</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"We never share it"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VAlert</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> tone</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"warning"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Heads up"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> closable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    The invoice is due in three days.</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VAlert</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Revenue"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$128,400"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> delta</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"12.4"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"chart"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -274,18 +100,18 @@ html:root {
 <h2 id="tabela">Table and pagination</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ orders: [
-  { name: 'Ann',   total: '$1,200' },
-  { name: 'Bob',   total: '$890' },
-  { name: 'Chris', total: '$2,310' }
-] }"&gt;
-  &lt;VTable columns="name:Customer, total:Total:right" :rows="orders" striped&gt;&lt;/VTable&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ orders: [</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { name: 'Ann',   total: '$1,200' },</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { name: 'Bob',   total: '$890' },</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { name: 'Chris', total: '$2,310' }</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTable</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> columns</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name:Customer, total:Total:right"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :rows</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"orders"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> striped</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
   The spelling of <code>columns</code> is <code>key:Title:alignment</code>, separated by commas.
-  The rows come from any reactive array — a
+  The rows come from any reactive array, a
   <a href="buscando-dados.html#v-resource"><code>v-resource</code></a> included, which gives you a
   table bound to the API with no assembly code at all.
 </p>
@@ -297,39 +123,39 @@ html:root {
   the server is what ordinary fields would send, because underneath they are ordinary fields.
 </p>
 
-<pre data-lang="html"><code>&lt;form v-submit="/api/signups" v-validate v-toast-success="Sign-up sent!"&gt;
-  &lt;VInput label="Name" name="name" required&gt;&lt;/VInput&gt;
-  &lt;VInput label="Email" name="email" type="email" required&gt;&lt;/VInput&gt;
-  &lt;VSelect label="Plan" name="plan" options="Monthly, Yearly" required&gt;&lt;/VSelect&gt;
-  &lt;VCheckbox name="terms" label="I accept the terms" required&gt;&lt;/VCheckbox&gt;
-  &lt;VButton type="submit" :loading="$form.loading"&gt;Send&lt;/VButton&gt;
-&lt;/form&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">form</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-submit</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/api/signups"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-validate</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-toast-success</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Sign-up sent!"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Name"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"name"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VInput</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Plan"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"plan"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> options</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Monthly, Yearly"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VCheckbox</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"terms"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"I accept the terms"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VCheckbox</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"submit"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :loading</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$form.loading"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Send</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">form</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="paleta">The palette</h2>
 
 <p>
   The scale of shades is generated from your colours, so changing the brand colour changes the
-  whole interface — buttons, fields, alerts, charts and the UI components of the essential build
-  along with it.
+  whole interface along with it: buttons, fields, alerts, charts and the UI components of the
+  essential build.
 </p>
 
-<pre data-lang="js"><code>V.palette({ primary: '#0F766E', accent: '#F59E0B', radius: '10px' });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">primary:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#0F766E'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">accent:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#F59E0B'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">radius:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '10px'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.config.globals.applyPalette = (colour) =&gt; V.palette({ primary: colour });
-  &lt;/script&gt;
-
-  &lt;div v-data="{ colour: '#0f766e' }"&gt;
-    &lt;div class="linha"&gt;
-      &lt;input type="color" v-model="colour"&gt;
-      &lt;button @click="applyPalette(colour)"&gt;Apply to the palette&lt;/button&gt;
-    &lt;/div&gt;
-    &lt;VButton variant="primary"&gt;A primary button&lt;/VButton&gt;
-    &lt;VBadge tone="primary"&gt;A badge&lt;/VBadge&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">applyPalette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">colour</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">palette</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">primary:</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> colour</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ colour: '#0f766e' }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">      &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"color"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"colour"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">      &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"applyPalette(colour)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Apply to the palette</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"primary"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">A primary button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> tone</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"primary"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">A badge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <div class="doc-aviso doc-aviso--atencao">
@@ -350,6 +176,6 @@ html:root {
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

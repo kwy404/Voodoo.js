@@ -54,6 +54,7 @@ function artigoDe(html) {
 function semTags(trecho) {
   return trecho
     .replace(/<pre[\s\S]*?<\/pre>/g, ' ')
+    .replace(/<button[\s\S]*?<\/button>/g, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')

@@ -10,186 +10,12 @@
 <meta name="description" content="A light and dark theme with no flash, and the palette that generates the whole scale in OKLCH from a handful of base colours, with contrast checked by the WCAG formula.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/tema-e-paleta">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -211,7 +37,7 @@ html:root {
   on the root element with the <code>data-theme</code> attribute:
 </p>
 
-<pre data-lang="html"><code>&lt;html data-theme="dark"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">html</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"dark"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   With <code>system</code>, or when the visitor has never chosen, the attribute is absent and the
@@ -220,11 +46,11 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;button v-theme-toggle&gt;Switch the theme&lt;/button&gt;
-  &lt;p v-show="$theme.resolved === 'dark'"&gt;You are on the dark theme.&lt;/p&gt;
-  &lt;p v-show="$theme.resolved === 'light'"&gt;You are on the light theme.&lt;/p&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Switch the theme</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-show</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$theme.resolved === 'dark'"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">You are on the dark theme.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-show</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$theme.resolved === 'light'"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">You are on the light theme.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -233,17 +59,17 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;!-- Walks system, light, dark and back to system. --&gt;
-  &lt;button v-theme-toggle.cycle&gt;Theme: { $theme.current }&lt;/button&gt;
-
-  &lt;!-- One button per state, pressed while it is the current choice. --&gt;
-  &lt;div class="linha"&gt;
-    &lt;button v-theme-toggle:system&gt;System&lt;/button&gt;
-    &lt;button v-theme-toggle:light&gt;Light&lt;/button&gt;
-    &lt;button v-theme-toggle:dark&gt;Dark&lt;/button&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">  &#x3C;!-- Walks system, light, dark and back to system. --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle.cycle</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Theme: { $theme.current }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">  &#x3C;!-- One button per state, pressed while it is the current choice. --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle:system</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">System</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle:light</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Light</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-theme-toggle:dark</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Dark</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -253,18 +79,18 @@ html:root {
   with the choice, <code>system</code> included, so your CSS can pick an icon:
 </p>
 
-<pre data-lang="css"><code>.theme-icon { display: none; }
-[data-voodoo-theme-mode="system"] .theme-icon--system,
-[data-voodoo-theme-mode="light"] .theme-icon--light,
-[data-voodoo-theme-mode="dark"] .theme-icon--dark { display: inline; }</code></pre>
+<pre data-lang="css" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#D7BA7D">.theme-icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">display</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#0451A5;--shiki-dark:#CE9178">none</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">; }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">data-voodoo-theme-mode</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">"system"</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] </span><span style="--shiki-light:#800000;--shiki-dark:#D7BA7D">.theme-icon--system</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">data-voodoo-theme-mode</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">"light"</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] </span><span style="--shiki-light:#800000;--shiki-dark:#D7BA7D">.theme-icon--light</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">data-voodoo-theme-mode</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">"dark"</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] </span><span style="--shiki-light:#800000;--shiki-dark:#D7BA7D">.theme-icon--dark</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">display</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#0451A5;--shiki-dark:#CE9178">inline</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">; }</span></span></code></pre>
 
-<pre data-lang="js"><code>V.theme.current;    // 'light', 'dark' or 'system'
-V.theme.resolved;   // 'light' or 'dark', with 'system' already resolved
-V.theme.chosen;     // true once the visitor picked one, 'system' included
-V.theme.set('dark');
-V.theme.set('system');
-V.theme.toggle();   // light and dark only; returns the theme it applied
-V.theme.cycle();    // system, light, dark; returns the new choice</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">current</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;    </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'light', 'dark' or 'system'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">resolved</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'light' or 'dark', with 'system' already resolved</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chosen</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;     </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// true once the visitor picked one, 'system' included</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">set</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'dark'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">set</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'system'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">toggle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// light and dark only; returns the theme it applied</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">theme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">cycle</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();    </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// system, light, dark; returns the new choice</span></span></code></pre>
 
 <p>
   The choice lives in <code>localStorage</code>, under the key <code>voodoo:theme</code>, as the
@@ -284,21 +110,21 @@ V.theme.cycle();    // system, light, dark; returns the new choice</code></pre>
   what <code>V.theme</code> writes, so the two never disagree:
 </p>
 
-<pre data-lang="html"><code>&lt;script&gt;
-  (function () {
-    try {
-      var t = localStorage.getItem('voodoo:theme');
-      if (t &amp;&amp; t.charAt(0) === '"') t = JSON.parse(t);
-      var r = document.documentElement;
-      if (t === 'light' || t === 'dark') {
-        r.setAttribute('data-theme', t);
-        r.style.colorScheme = t;
-      } else if (t === 'system') {
-        r.removeAttribute('data-theme');
-      }
-    } catch (e) {}
-  })();
-&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">  (</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">function</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> () {</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">    try</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">      var</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> localStorage</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">getItem</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'voodoo:theme'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">      if</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> &#x26;&#x26;</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> t</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">charAt</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">0</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">===</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '"'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> JSON</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">parse</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">      var</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> r</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> document</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">documentElement</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">      if</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ===</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'light'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ||</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ===</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'dark'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">        r</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">setAttribute</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'data-theme'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">        r</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">style</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">colorScheme</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> t</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">      } </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">else</span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0"> if</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">t</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ===</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'system'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">        r</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">removeAttribute</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'data-theme'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">      }</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    } </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">catch</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">e</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) {}</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">  })();</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
   <span class="doc-aviso__rotulo">Without JavaScript</span>
@@ -313,13 +139,13 @@ V.theme.cycle();    // system, light, dark; returns the new choice</code></pre>
 
 <h2 id="css">Writing CSS that follows the theme</h2>
 
-<pre data-lang="css"><code>.my-box {
-  background: var(--v-surface);
-  color: var(--v-text);
-  border: 1px solid var(--v-border);
-  border-radius: var(--v-radius);
-  box-shadow: var(--v-shadow);
-}</code></pre>
+<pre data-lang="css" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#D7BA7D">.my-box</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">  background</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">var</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">--v-surface</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">  color</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">var</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">--v-text</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">  border</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">1px</span><span style="--shiki-light:#0451A5;--shiki-dark:#CE9178"> solid</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> var</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">--v-border</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">  border-radius</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">var</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">--v-radius</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">  box-shadow</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">var</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE">--v-shadow</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">}</span></span></code></pre>
 
 <p>
   Because the variables already change with the theme, you do not have to write two versions of the
@@ -340,8 +166,8 @@ V.theme.cycle();    // system, light, dark; returns the new choice</code></pre>
   the real WCAG relative-luminance formula, so the result is always readable.
 </p>
 
-<pre data-lang="js"><code>V.palette({ primary: '#6D3BF5', accent: '#FF3D8B', radius: '12px', font: 'Inter' });
-V.palette({ preset: 'oceano' });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">primary:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">accent:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#FF3D8B'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">radius:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '12px'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">font:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Inter'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">preset:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'oceano'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -376,26 +202,26 @@ V.palette({ preset: 'oceano' });</code></pre>
 <p>All of them have their contrast verified in both themes.</p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.data({ usePalette: (name) =&gt; V.palette.use(name) });
-  &lt;/script&gt;
-
-  &lt;div v-data="{ presets: ['violeta', 'oceano', 'floresta', 'poente', 'grafite'] }"&gt;
-    &lt;div class="linha"&gt;
-      &lt;button v-for="p in presets" @click="usePalette(p)"&gt;{ p }&lt;/button&gt;
-    &lt;/div&gt;
-    &lt;VButton variant="primary"&gt;A primary button&lt;/VButton&gt;
-    &lt;VBadge tone="success"&gt;Success&lt;/VBadge&gt;
-    &lt;VAlert tone="info" title="Notice"&gt;The whole palette changes at once.&lt;/VAlert&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">usePalette</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">use</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ presets: ['violeta', 'oceano', 'floresta', 'poente', 'grafite'] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">      &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-for</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"p in presets"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"usePalette(p)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ p }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"primary"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">A primary button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> tone</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"success"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Success</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBadge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VAlert</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> tone</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"info"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Notice"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">The whole palette changes at once.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VAlert</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
-<pre data-lang="js"><code>V.palette.use('floresta');   // changes only the preset, keeping radius and font
-V.palette.names;             // ['violeta', 'oceano', 'floresta', 'poente', 'grafite']
-V.palette.reset();           // goes back to the default and erases the saved choice
-V.palette.current;           // the palette in use, with all its scales</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">use</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'floresta'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// changes only the preset, keeping radius and font</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">names</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;             </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// ['violeta', 'oceano', 'floresta', 'poente', 'grafite']</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">reset</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// goes back to the default and erases the saved choice</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">current</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// the palette in use, with all its scales</span></span></code></pre>
 
 <h2 id="tokens">CSS tokens</h2>
 
@@ -431,11 +257,11 @@ V.palette.current;           // the palette in use, with all its scales</code></
 
 <h2 id="derivadas">Derived colours, and checking contrast</h2>
 
-<pre data-lang="js"><code>V.palette.scale('#6D3BF5')['700'];           // a dark shade of the scale
-V.palette.scale('#6D3BF5', true);            // the dark-theme scale
-V.palette.contrastText('#6D3BF5');           // '#fff' or '#000', whichever reads better
-V.palette.contrastRatio('#6D3BF5', '#fff');  // the WCAG ratio, from 1 to 21
-V.palette.luminance('#6D3BF5');              // relative luminance</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">scale</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">)[</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'700'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">];           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// a dark shade of the scale</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">scale</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);            </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// the dark-theme scale</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">contrastText</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '#fff' or '#000', whichever reads better</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">contrastRatio</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#fff'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);  </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// the WCAG ratio, from 1 to 21</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">palette</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">luminance</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#6D3BF5'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);              </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// relative luminance</span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--dica">
   <span class="doc-aviso__rotulo">Use it while developing</span>
@@ -448,17 +274,17 @@ V.palette.luminance('#6D3BF5');              // relative luminance</code></pre>
 
 <h2 id="desligando">Turning off the injected CSS</h2>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js?v=0.6.2" data-no-styles defer&gt;&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js?v=0.6.2"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-no-styles</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   No style is injected. The components go on working, but with no appearance, and writing the rules
-  for the <code>v-*</code> classes is up to you. If you use Tailwind, the more comfortable road is
-  usually the opposite: keep the injected CSS and point Tailwind's colours at the
+  for the <code>v-*</code> classes is up to you. If you use a utility CSS framework, the more comfortable road is
+  usually the opposite: keep the injected CSS and point the framework's colours at the
   <code>--v-*</code> variables, so that the two systems move together.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

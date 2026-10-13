@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-# Os mapas de origem sao grandes e nao interessam a busca.
+# Source maps are large and of no use to search engines.
 Disallow: /*.map$
 
 Sitemap: https://kwy404.github.io/Voodoo.js/sitemap.xml

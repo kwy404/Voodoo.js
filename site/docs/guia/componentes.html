@@ -10,186 +10,12 @@
 <meta name="description" content="Register a component once and use it as a tag: typed props, named slots, events with emit, computed values, methods, the lifecycle and what the instance offers.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/componentes">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -199,66 +25,66 @@ html:root {
 <h1>Components: props, slots, events and lifecycle</h1>
 <p class="doc-resumo">
   The same card shows up in five places on the page. Copying and pasting HTML does not scale.
-  Register it once, use it as a tag — and carry on with no build step, because the template is an
+  Register it once, use it as a tag, and carry on with no build step, because the template is an
   ordinary HTML string.
 </p>
 
 <h2 id="registrando">Registering</h2>
 
-<pre data-lang="js"><code>V.component('user-card', {
-  props: {
-    name: { type: 'string', default: 'no name' },
-    age: { type: 'number', default: 0 }
-  },
-  state(props) {
-    return { likes: 0 };
-  },
-  computed: {
-    summary() { return `${this.name}, ${this.age} years old`; }
-  },
-  methods: {
-    like() { this.likes++; this.emit('liked', this.likes); }
-  },
-  mounted() { console.log('mounted', this.name); },
-  template: `
-    &lt;article&gt;
-      &lt;h3&gt;{ summary }&lt;/h3&gt;
-      &lt;slot&gt;&lt;/slot&gt;
-      &lt;button @click="like()"&gt;Like ({ likes })&lt;/button&gt;
-    &lt;/article&gt;
-  `
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'user-card'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  props:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">    name:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">type:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'string'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">default:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'no name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">    age:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">type:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'number'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">default:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  state</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">props</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) {</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">    return</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">likes:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> };</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  computed:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">    summary</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">return</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> `</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">${</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">}</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">${</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">age</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">}</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> years old`</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">; }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  methods:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">    like</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">likes</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">++; </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">emit</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'liked'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">likes</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">); }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  mounted</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">console</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">log</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'mounted'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">); },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> `</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    &#x3C;article></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;h3>{ summary }&#x3C;/h3></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;slot>&#x3C;/slot></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;button @click="like()">Like ({ likes })&#x3C;/button></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    &#x3C;/article></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">  `</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <p>Three spellings use the same component:</p>
 
-<pre data-lang="html"><code>&lt;UserCard name="Ann" :age="annsAge" @liked="record($detail)"&gt;
-  &lt;p&gt;This content goes into the slot.&lt;/p&gt;
-&lt;/UserCard&gt;
-
-&lt;user-card name="Bea"&gt;&lt;/user-card&gt;
-&lt;div v-component="user-card" name="Chris"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">UserCard</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Ann"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :age</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"annsAge"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @liked</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"record($detail)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">This content goes into the slot.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">UserCard</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-card</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Bea"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-card</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"user-card"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Chris"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>And really working, with the registration and the use in the same block:</p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.component('simple-counter', {
-      props: { title: { type: 'string', default: 'Counter' } },
-      state: () =&gt; ({ n: 0 }),
-      computed: { double() { return this.n * 2 } },
-      methods: { add() { this.n++; this.emit('changed', this.n) } },
-      template: '&lt;p&gt;&lt;b&gt;{ title }&lt;/b&gt;: { n } (double { double }) ' +
-                '&lt;button @click="add()"&gt;+1&lt;/button&gt;&lt;/p&gt;'
-    });
-  &lt;/script&gt;
-
-  &lt;div v-data="{ last: 0 }"&gt;
-    &lt;simple-counter title="Visits" @changed="last = $detail"&gt;&lt;/simple-counter&gt;
-    &lt;simple-counter title="Clicks" @changed="last = $detail"&gt;&lt;/simple-counter&gt;
-    &lt;p&gt;The last value emitted was { last }.&lt;/p&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'simple-counter'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      props:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">title:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">type:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'string'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">default:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Counter'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> } },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">      state</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> }),</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      computed:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">double</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">return</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> *</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 2</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> } },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      methods:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">add</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">++</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">; </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">emit</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'changed'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) } },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>&#x3C;b>{ title }&#x3C;/b>: { n } (double { double }) '</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> +</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">                '&#x3C;button @click="add()">+1&#x3C;/button>&#x3C;/p>'</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ last: 0 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">simple-counter</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Visits"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @changed</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"last = $detail"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">simple-counter</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">simple-counter</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Clicks"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @changed</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"last = $detail"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">simple-counter</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">The last value emitted was { last }.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -274,8 +100,8 @@ html:root {
   <code>object</code> and <code>any</code>, and the attribute value is converted for you.
 </p>
 
-<pre data-lang="html"><code>&lt;card title="Revenue" total="1200" active&gt;&lt;/card&gt;
-&lt;card :title="panel.name" :total="panel.revenue" :active="panel.on"&gt;&lt;/card&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">card</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Revenue"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> total</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"1200"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> active</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">card</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">card</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :title</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"panel.name"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :total</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"panel.revenue"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :active</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"panel.on"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">card</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   All three of <code>user-name</code>, <code>username</code> and <code>userName</code> arrive as
@@ -284,43 +110,43 @@ html:root {
 
 <p>When the type does not matter, there is a short form:</p>
 
-<pre data-lang="js"><code>V.component('greeting', {
-  props: ['name', 'age'],
-  template: '&lt;p&gt;{ name } is { age } years old&lt;/p&gt;'
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'greeting'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  props:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'age'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">],</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>{ name } is { age } years old&#x3C;/p>'</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <h2 id="slots">Slots</h2>
 
-<pre data-lang="js"><code>V.component('panel', {
-  template: `
-    &lt;section&gt;
-      &lt;header&gt;&lt;slot name="header"&gt;&lt;h3&gt;No title&lt;/h3&gt;&lt;/slot&gt;&lt;/header&gt;
-      &lt;div&gt;&lt;slot&gt;&lt;/slot&gt;&lt;/div&gt;
-      &lt;footer&gt;&lt;slot name="footer"&gt;&lt;/slot&gt;&lt;/footer&gt;
-    &lt;/section&gt;
-  `
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'panel'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> `</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    &#x3C;section></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;header>&#x3C;slot name="header">&#x3C;h3>No title&#x3C;/h3>&#x3C;/slot>&#x3C;/header></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;div>&#x3C;slot>&#x3C;/slot>&#x3C;/div></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">      &#x3C;footer>&#x3C;slot name="footer">&#x3C;/slot>&#x3C;/footer></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    &#x3C;/section></span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">  `</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
-<pre data-lang="html"><code>&lt;panel&gt;
-  &lt;h3 slot="header"&gt;Report&lt;/h3&gt;
-  &lt;p&gt;This paragraph lands in the default slot.&lt;/p&gt;
-  &lt;button slot="footer"&gt;Close&lt;/button&gt;
-&lt;/panel&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">panel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h3</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> slot</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"header"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Report</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h3</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">This paragraph lands in the default slot.</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> slot</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"footer"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Close</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">panel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The content written inside a <code>&lt;slot&gt;</code> in the template is the default, used when
   nobody fills it. And the slot content is evaluated in the scope of <b>whoever wrote the
-  tag</b>, not the component's — so it sees the variables of the place it sits in, the way any
+  tag</b>, not the component's, so it sees the variables of the place it sits in, the way any
   ordinary HTML would.
 </p>
 
 <h2 id="eventos">Events</h2>
 
-<pre data-lang="js"><code>methods: {
-  confirm() { this.emit('confirmed', { id: this.id }); }
-}</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">methods</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: {</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  confirm</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">emit</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'confirmed'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">id:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }); }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">}</span></span></code></pre>
 
-<pre data-lang="html"><code>&lt;dialog-box @confirmed="record($detail)"&gt;&lt;/dialog-box&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">dialog-box</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @confirmed</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"record($detail)"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">dialog-box</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   <code>emit</code> fires a <code>CustomEvent</code> that bubbles up the tree, and whatever you
@@ -340,23 +166,23 @@ html:root {
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.component('a-clock', {
-      state: () =&gt; ({ now: new Date() }),
-      mounted() {
-        this.timer = setInterval(() =&gt; { this.now = new Date() }, 1000);
-      },
-      beforeUnmount() { clearInterval(this.timer) },
-      template: '&lt;time&gt;{ now.toLocaleTimeString() }&lt;/time&gt;'
-    });
-  &lt;/script&gt;
-
-  &lt;div v-data="{ on: true }"&gt;
-    &lt;button @click="on = !on"&gt;Switch on and off&lt;/button&gt;
-    &lt;p&gt;&lt;a-clock v-if="on"&gt;&lt;/a-clock&gt;&lt;/p&gt;
-  &lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'a-clock'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">      state</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">now:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> new</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> Date</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() }),</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">      mounted</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() {</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">        this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">timer</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> setInterval</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(() </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">now</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> new</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> Date</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() }, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">1000</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">      },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">      beforeUnmount</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">clearInterval</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">this</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">timer</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">) },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;time>{ now.toLocaleTimeString() }&#x3C;/time>'</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ on: true }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"on = !on"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Switch on and off</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a-clock</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"on"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a-clock</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -371,7 +197,7 @@ html:root {
   <p>
     By default a component does <b>not</b> see the <code>v-data</code> wrapping it, so that it does
     not depend on where it was placed. Everything it needs comes in as a prop. When you want the
-    opposite — usually for internal components of a single page — declare
+    opposite (usually for internal components of a single page), declare
     <code>inheritScope: true</code> in the definition.
   </p>
 </div>
@@ -380,33 +206,33 @@ html:root {
 
 <p>
   Passing the same prop down three levels gets old. <code>provide</code> hands a value to the whole
-  tree, and <code>inject</code> picks that value up at any depth — the names and the behaviour are
+  tree, and <code>inject</code> picks that value up at any depth. The names and the behaviour are
   Vue's.
 </p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.component('user-badge', {
-      inject: { user: { default: 'guest' }, plan: { default: 'Free' } },
-      template: '&lt;b&gt;{ user } — { plan } plan&lt;/b&gt;'
-    });
-
-    V.component('user-panel', {
-      provide: { user: 'Ann', plan: 'Pro' },
-      template: '&lt;section&gt;&lt;user-badge&gt;&lt;/user-badge&gt;&lt;/section&gt;'
-    });
-  &lt;/script&gt;
-
-  &lt;user-panel&gt;&lt;/user-panel&gt;
-
-  &lt;p&gt;Outside the panel, the default holds:&lt;/p&gt;
-  &lt;user-badge&gt;&lt;/user-badge&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'user-badge'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      inject:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">user:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">default:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'guest'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> }, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">plan:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">default:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Free'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> } },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;b>{ user }: { plan } plan&#x3C;/b>'</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'user-panel'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      provide:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">user:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Ann'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">plan:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Pro'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;section>&#x3C;user-badge>&#x3C;/user-badge>&#x3C;/section>'</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-panel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-panel</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Outside the panel, the default holds:</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-badge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">user-badge</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
-  <code>inject</code> accepts the short list of names — <code>inject: ['user']</code> — or the
+  <code>inject</code> accepts the short list of names, <code>inject: ['user']</code>, or the
   object with <code>from</code> and <code>default</code>, as above. The value enters the
   component's state, so the template uses it like any other variable. An application created with
   <code>createApp</code> provides too, through the options or through
@@ -445,18 +271,18 @@ html:root {
   it does not know yet. With <code>data-manual</code>, that is simple to guarantee:
 </p>
 
-<pre data-lang="html"><code>&lt;script src="voodoo.full.min.js" data-manual defer&gt;&lt;/script&gt;
-&lt;script src="components.js" defer&gt;&lt;/script&gt;
-&lt;script defer&gt;V.start();&lt;/script&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"voodoo.full.min.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> data-manual</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> src</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"components.js"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> defer</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">start</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">();</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   A component registered after that still works for HTML created from that moment on, because the
-  DOM observer stays active — but the tags that were already on the page do not go back on their
+  DOM observer stays active, but the tags that were already on the page do not go back on their
   own. In that case, call <code>V.refresh()</code>.
 </p>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

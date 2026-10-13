@@ -10,7 +10,12 @@
 <meta name="description" content="Mask reference: the ready-made ones, the tokens of the character pattern, the currency attributes, the V.mask object and how to register masks of your own.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/mascaras">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -88,14 +93,14 @@
 
 <h2 id="api">The V.mask object</h2>
 
-<pre data-lang="js"><code>V.mask('12345678901', 'cpf');        // '123.456.789-01'
-V.applyMask('1234', '99-99');        // '12-34'
-V.unmask('123.456.789-01');          // '12345678901'
-V.unmask('R$ 1.234,56', 'currency'); // '1234.56'
-
-V.mask.currency('123456');           // 'R$ 1.234,56'
-V.mask.currency('123456', { prefix: '', decimals: 0, thousands: ',' });
-V.mask.percent('1250');              // '12,50%'</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'12345678901'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cpf'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);        </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '123.456.789-01'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">applyMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'1234'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'99-99'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);        </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '12-34'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">unmask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'123.456.789-01'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);          </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '12345678901'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">unmask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'R$ 1.234,56'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'currency'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">); </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '1234.56'</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">currency</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'123456'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);           </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// 'R$ 1.234,56'</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">currency</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'123456'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">prefix:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> ''</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">decimals:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">thousands:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> ','</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">percent</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'1250'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);              </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// '12,50%'</span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -113,15 +118,15 @@ V.mask.percent('1250');              // '12,50%'</code></pre>
 
 <h2 id="registrando">Registering masks</h2>
 
-<pre data-lang="js"><code>V.registerMask('lawsuit', '9999999-99.9999.9.99.9999');
-V.registerMask('renavam', '99999999999');
-
-V.registerMask('taxId', (value) =&gt; {
-  const digits = value.replace(/\D/g, '');
-  return digits.length &lt;= 9
-    ? V.applyMask(digits, '999.999.999')
-    : V.applyMask(digits, '999.999.999.999');
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">registerMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'lawsuit'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'9999999-99.9999.9.99.9999'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">registerMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'renavam'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'99999999999'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">registerMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'taxId'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">  const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> digits</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">replace</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#811F3F;--shiki-dark:#D16969">/\D/</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">g</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">''</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">  return</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> digits</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">length</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> &#x3C;= </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">9</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    ? </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">applyMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">digits</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'999.999.999'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    : </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">applyMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">digits</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'999.999.999.999'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <div class="doc-aviso doc-aviso--atencao">
   <span class="doc-aviso__rotulo">Text fields only</span>
@@ -135,6 +140,6 @@ V.registerMask('taxId', (value) =&gt; {
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

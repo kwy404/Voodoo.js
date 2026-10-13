@@ -10,186 +10,12 @@
 <meta name="description" content="A single-page router with no dependencies: history and hash modes, patterns with parameters, guards, a reactive $route, v-router-view and v-link.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/roteador">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -211,64 +37,64 @@ html:root {
 
 <h2 id="configurando">Configuring</h2>
 
-<pre data-lang="js"><code>V.router({
-  mode: 'history',
-  base: '/',
-  routes: {
-    '/': { component: 'home', title: 'Home' },
-    '/users': { component: 'users', title: 'Users' },
-    '/users/:id': { component: 'user-detail' },
-    '/posts/:slug?': { view: '/partials/post.html' },
-    '/admin': { component: 'admin', meta: { requiresLogin: true } },
-    '/old': { redirect: '/new' },
-    '*': { component: 'not-found', title: 'Page not found' }
-  },
-  beforeEach(to, from) {
-    if (to.meta.requiresLogin &amp;&amp; !isSignedIn()) return '/login';
-    return true;
-  },
-  afterEach(to) {
-    console.log('arrived at', to.path);
-  }
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">router</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  mode:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'history'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  base:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '/'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  routes:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'home'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">title:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Home'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/users'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'users'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">title:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Users'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/users/:id'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'user-detail'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/posts/:slug?'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">view:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '/partials/post.html'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/admin'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'admin'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">meta:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">requiresLogin:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> } },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '/old'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">redirect:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '/new'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">    '*'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'not-found'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">title:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Page not found'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  beforeEach</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">to</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">from</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) {</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">    if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">to</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">meta</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">requiresLogin</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> &#x26;&#x26; !</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">isSignedIn</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">()) </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">return</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '/login'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">    return</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  },</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  afterEach</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">to</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">    console</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">log</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'arrived at'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">to</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">path</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
-<pre data-lang="html"><code>&lt;nav&gt;
-  &lt;a v-link href="/"&gt;Home&lt;/a&gt;
-  &lt;a v-link href="/users"&gt;Users&lt;/a&gt;
-&lt;/nav&gt;
-
-&lt;main v-router-view&gt;Loading...&lt;/main&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Home</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/users"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Users</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-router-view</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Loading...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>And working, in <code>hash</code> mode, which is what runs inside this frame:</p>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div&gt;
-  &lt;script&gt;
-    V.component('page-home', { template: '&lt;p&gt;You are at the home page.&lt;/p&gt;' });
-    V.component('page-about', { template: '&lt;p&gt;A page about the project.&lt;/p&gt;' });
-    V.component('page-item', {
-      template: '&lt;p&gt;Item number { $route.params.id }.&lt;/p&gt;'
-    });
-
-    V.router({
-      mode: 'hash',
-      routes: {
-        '/': { component: 'page-home', title: 'Home' },
-        '/about': { component: 'page-about' },
-        '/items/:id': { component: 'page-item' }
-      }
-    });
-  &lt;/script&gt;
-
-  &lt;nav class="linha"&gt;
-    &lt;a v-link href="#/"&gt;Home&lt;/a&gt;
-    &lt;a v-link href="#/about"&gt;About&lt;/a&gt;
-    &lt;a v-link href="#/items/42"&gt;Item 42&lt;/a&gt;
-  &lt;/nav&gt;
-
-  &lt;main v-router-view&gt;Loading...&lt;/main&gt;
-  &lt;small&gt;Current route: { $route.path }&lt;/small&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'page-home'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>You are at the home page.&#x3C;/p>'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'page-about'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>A page about the project.&#x3C;/p>'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'page-item'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>Item number { $route.params.id }.&#x3C;/p>'</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">    V</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">router</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">({</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      mode:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'hash'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">      routes:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">        '/'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'page-home'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">title:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Home'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">        '/about'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'page-about'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">        '/items/:id'</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">component:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'page-item'</span><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">      }</span></span>
+<span class="line"><span style="--shiki-light:#000000FF;--shiki-dark:#D4D4D4">    });</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">script</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> class</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"linha"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#/"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Home</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#/about"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">About</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#/items/42"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Item 42</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">nav</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-router-view</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Loading...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">small</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Current route: { $route.path }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">small</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <h2 id="opcoes">Options</h2>
@@ -328,9 +154,9 @@ html:root {
   itself.
 </p>
 
-<pre data-lang="html"><code>&lt;h1&gt;User { $route.params.id }&lt;/h1&gt;
-&lt;p v-show="$route.query.new"&gt;Freshly created account&lt;/p&gt;
-&lt;small&gt;{ $route.path } · { $route.name }&lt;/small&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h1</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">User { $route.params.id }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">h1</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-show</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"$route.query.new"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Freshly created account</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">small</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ $route.path } · { $route.name }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">small</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -352,23 +178,23 @@ html:root {
 
 <h2 id="router-view">v-router-view</h2>
 
-<pre data-lang="html"><code>&lt;main v-router-view&gt;Loading...&lt;/main&gt;
-&lt;main v-router-view.no-transition&gt;&lt;/main&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-router-view</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Loading...</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-router-view.no-transition</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">main</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   A route with <code>component</code> mounts the registered component. A route with
   <code>view</code> fetches the remote HTML and inserts it with the directives already bound,
-  keeping the result in cache. The element's original content comes back when no route matches —
+  keeping the result in cache. The element's original content comes back when no route matches,
   which is why it doubles as a loading state. The change uses the View Transitions API when the
   browser offers it.
 </p>
 
 <h2 id="link">v-link</h2>
 
-<pre data-lang="html"><code>&lt;a v-link href="/users"&gt;Users&lt;/a&gt;
-&lt;a v-link="'/users/' + user.id"&gt;Detail&lt;/a&gt;
-&lt;a v-link.replace href="/login"&gt;Sign in&lt;/a&gt;
-&lt;a v-link.no-scroll href="/list"&gt;No scrolling to the top&lt;/a&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/users"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Users</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"'/users/' + user.id"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Detail</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link.replace</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/login"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Sign in</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-link.no-scroll</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> href</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/list"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">No scrolling to the top</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">a</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   Clicks with <kbd>Ctrl</kbd>, <kbd>Command</kbd>, <kbd>Shift</kbd> or <kbd>Alt</kbd>, clicks with
@@ -388,6 +214,6 @@ html:root {
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

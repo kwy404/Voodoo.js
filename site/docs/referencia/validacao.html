@@ -10,7 +10,12 @@
 <meta name="description" content="Every validation rule by group, the native attributes that turn into rules, the default messages and their placeholders, asynchronous validation and how to write rules of your own.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/validacao">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -48,8 +53,8 @@
   <li>when it passes, the field gets <code>v-valid</code> and the message is removed.</li>
 </ul>
 
-<pre data-lang="html"><code>&lt;input name="email" v-required v-email v-error-target="#email-error"&gt;
-&lt;span id="email-error"&gt;&lt;/span&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-required</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-email</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-error-target</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#email-error"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email-error"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">span</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="presenca">Presence and format</h2>
 
@@ -110,9 +115,9 @@
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;input v-mask="date" v-date v-validate-before="today" v-label="Date of birth"&gt;
-&lt;input name="start" v-date&gt;
-&lt;input name="end" v-date v-validate-after="start"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"date"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-date</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-validate-before</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"today"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Date of birth"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"start"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-date</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"end"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-date</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-validate-after</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"start"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   <code>hoje</code>, <code>today</code>, <code>now</code> and <code>agora</code> are all accepted as
@@ -155,10 +160,10 @@
 
 <h2 id="nativos">Native attributes count too</h2>
 
-<pre data-lang="html"><code>&lt;input required minlength="3" maxlength="20" pattern="[a-z]+"&gt;
-&lt;input type="email" required&gt;
-&lt;input type="number" min="1" max="10"&gt;
-&lt;input type="url"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> minlength</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"3"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> maxlength</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"20"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> pattern</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"[a-z]+"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> required</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"number"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> min</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"1"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> max</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"10"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"url"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The library reads the standard HTML attributes and turns them into rules, which lets you adopt
@@ -167,7 +172,7 @@
 
 <h2 id="desligando">Turning a rule off</h2>
 
-<pre data-lang="html"><code>&lt;input name="cnpj" v-cnpj v-required="false"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"cnpj"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-cnpj</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-required</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"false"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The value is read from the original attribute, so the decision happens at render time and does not
@@ -177,11 +182,11 @@
 
 <h2 id="mensagens">Messages</h2>
 
-<pre data-lang="js"><code>Object.assign(V.messages, {
-  required: 'This field is required.',
-  email: 'Check the email you typed.',
-  minlength: 'Write at least {param} characters.'
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">Object</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">assign</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">messages</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  required:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'This field is required.'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  email:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Check the email you typed.'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  minlength:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Write at least {param} characters.'</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -215,8 +220,8 @@
 
 <h2 id="assincrona">Asynchronous validation</h2>
 
-<pre data-lang="html"><code>&lt;input name="email" type="email" v-required v-email v-validate-unique="/api/check-email"&gt;
-&lt;input name="nickname" v-validate-unique v-unique-url="/api/check-nickname"&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"email"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-required</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-email</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-validate-unique</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/api/check-email"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"nickname"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-validate-unique</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-unique-url</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"/api/check-nickname"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The library calls <code>GET /api/check-email?value=...&amp;field=email</code> and expects:
@@ -240,7 +245,7 @@
 
 <h2 id="proprias">Rules of your own</h2>
 
-<pre data-lang="js"><code>V.validator('even', (value) =&gt; Number(value) % 2 === 0, 'Enter an even number.');</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">validator</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'even'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA"> Number</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) % </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> === </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Enter an even number.'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p>
   The function receives <code>(value, parameter, element)</code> and can return <code>true</code> to
@@ -248,30 +253,30 @@
   a <code>Promise</code> of any of the three.
 </p>
 
-<pre data-lang="js"><code>V.validator('activeCnpj', async (value) =&gt; {
-  if (!value) return true;
-  const data = await V.http.get('/api/cnpj/' + V.unmask(value));
-  return data.active ? true : 'This CNPJ is inactive at the Receita.';
-});
-
-V.validator('afterField', (value, param, el) =&gt; {
-  const other = document.querySelector('[name="' + param + '"]');
-  return !other || value &gt; other.value || 'Must be after ' + other.value;
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">validator</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'activeCnpj'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">async</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">  if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> (!</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">return</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">  const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">http</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">get</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'/api/cnpj/'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">unmask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">  return</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">active</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ? </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> : </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'This CNPJ is inactive at the Receita.'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">validator</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'afterField'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">param</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">el</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">  const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> other</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">querySelector</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'[name="'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">param</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'"]'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">  return</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> !</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">other</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> || </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> > </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">other</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> || </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Must be after '</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">other</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">;</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <p>Registering a rule automatically creates the directive <code>v-validate-&lt;name&gt;</code>.</p>
 
 <h2 id="javascript">From JavaScript</h2>
 
-<pre data-lang="js"><code>const result = await V.validate(document.forms[0]);
-// { valid: true, errors: {} }
-
-const field = await V.validate(document.querySelector('#email'));
-// { valid: false, message: 'Enter a valid email.', rule: 'email' }
-
-V.showFieldError(input, 'A specific message');
-V.showFormErrors(form, { email: 'Already registered' });
-V.clearErrors(form);</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> result</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">validate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">forms</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">]);</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// { valid: true, errors: {} }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> field</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">await</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">validate</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">querySelector</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#email'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">));</span></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// { valid: false, message: 'Enter a valid email.', rule: 'email' }</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">showFieldError</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">input</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'A specific message'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">showFormErrors</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">form</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">email:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Already registered'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">clearErrors</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">form</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <p>
   <code>V.validateForm</code> is an alias of <code>V.validate</code> for forms. It is what you call
@@ -281,6 +286,6 @@ V.clearErrors(form);</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

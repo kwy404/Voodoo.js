@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>Voodoo.js — peça de lançamento</title>
+    <title>Voodoo.js: peça de lançamento</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
 
     <!--
@@ -347,16 +347,16 @@
               <span class="ln" style="opacity: 1"><span class="t-brace">{</span>produtos</span>
               <span class="ln" style="opacity: 1">  .<span class="t-fn">filter</span>(p =&gt; p.qtd &gt; <span class="t-str">0</span>)</span>
               <span class="ln" style="opacity: 1">  .<span class="t-fn">map</span>(p =&gt; (</span>
-              <span class="ln" style="opacity: 1">    <span class="t-tag">&lt;li&gt;</span><span class="t-brace">{</span>p.nome<span class="t-brace">}</span> — <span class="t-brace">{</span>p.qtd<span class="t-brace">}</span><span class="t-tag">&lt;/li&gt;</span></span>
+              <span class="ln" style="opacity: 1">    <span class="t-tag">&lt;li&gt;</span><span class="t-brace">{</span>p.nome<span class="t-brace">}</span>: <span class="t-brace">{</span>p.qtd<span class="t-brace">}</span><span class="t-tag">&lt;/li&gt;</span></span>
               <span class="ln" style="opacity: 1">  ))<span class="t-brace">}</span></span>
             </code>
           </div>
           <div class="result" style="animation: in 0.5s 26.4s both">
             <h4>resultado</h4>
             <ul>
-              <li style="animation: in 0.4s 27s both">Notebook — 5</li>
-              <li style="animation: in 0.4s 27.4s both">Mouse — 12</li>
-              <li style="animation: in 0.4s 27.8s both">Teclado — 7</li>
+              <li style="animation: in 0.4s 27s both">Notebook: 5</li>
+              <li style="animation: in 0.4s 27.4s both">Mouse: 12</li>
+              <li style="animation: in 0.4s 27.8s both">Teclado: 7</li>
             </ul>
           </div>
         </div>
@@ -424,5 +424,26 @@
         }, 66000);
       }
     </script>
-  </body>
+  <!-- chrome:credit -->
+<footer class="vd-credit">
+  <p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). Interactive parts built with <a href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>. The site around it is built with <a href="https://kwy404.github.io/monsoon/">Monsoon</a>. <a href="../examples/">All examples</a></p>
+  <nav class="vd-credit__projects" aria-label="More from kwy404">
+    <span>More from kwy404:</span>
+    <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step">Monsoon</a>
+    <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically">breakhound</a>
+    <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command">vueleap</a>
+    <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions">graphemely</a>
+    <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency">numberparrot</a>
+    <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs">edgegoat</a>
+  </nav>
+</footer>
+<style>
+  .vd-credit { padding: 16px; text-align: center; font: 13px/1.6 ui-sans-serif, system-ui, sans-serif; opacity: 0.85; }
+  .vd-credit a { color: inherit; }
+  .vd-credit p { margin: 0; }
+  .vd-credit__projects { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 6px; }
+  .vd-credit__projects span { font-weight: 600; }
+</style>
+<!-- /chrome:credit -->
+</body>
 </html>

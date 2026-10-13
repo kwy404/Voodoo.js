@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 270" role="img" aria-label="Three potion bottles labelled v-data, v-model and v-for" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<title>Three potion bottles labelled v-data, v-model and v-for</title>
+<path d="M24 236H336" stroke="#EDE4D8" stroke-width="2.5"/>
+<path d="M44 236V250M316 236V250" stroke="#8E86A8" stroke-width="2"/>
+<path d="M78 236C50 236 38 214 38 196C38 172 56 154 72 150V122H96V150C112 154 130 172 130 196C130 214 118 236 90 236Z" fill="#1D1830" stroke="#EDE4D8" stroke-width="2.5"/>
+<path d="M44 196C64 188 80 204 100 196C112 191 120 192 124 194C124 214 112 230 90 230H78C58 230 44 216 44 196Z" fill="#2A2148" stroke="#A68BFF" stroke-width="2"/>
+<rect x="68" y="108" width="32" height="16" rx="4" fill="#3A2A1C" stroke="#FFB35C" stroke-width="2"/>
+<rect x="53" y="162" width="62" height="20" rx="4" fill="#1D1830" stroke="#EDE4D8" stroke-width="2"/><text x="84" y="176" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#A68BFF">v-data</text>
+<circle cx="70" cy="210" r="3" fill="#C3B1FF"/>
+<circle cx="98" cy="216" r="2.2" fill="#C3B1FF"/>
+<path d="M166 236C156 236 152 230 152 222V128C152 118 160 112 170 108V86H194V108C204 112 212 118 212 128V222C212 230 208 236 198 236Z" fill="#1D1830" stroke="#EDE4D8" stroke-width="2.5"/>
+<path d="M158 160C172 152 188 168 206 160V222C206 226 202 230 198 230H166C162 230 158 226 158 222Z" fill="#3A2A1C" stroke="#FFB35C" stroke-width="2"/>
+<rect x="166" y="72" width="32" height="16" rx="4" fill="#2A2148" stroke="#A68BFF" stroke-width="2"/>
+<rect x="147" y="122" width="70" height="20" rx="4" fill="#1D1830" stroke="#EDE4D8" stroke-width="2"/><text x="182" y="136" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#A68BFF">v-model</text>
+<path d="M172 196L182 186L192 196M172 210L182 200L192 210" stroke="#FFB35C" stroke-width="2"/>
+<path d="M258 120H286V158L318 222C322 230 318 236 308 236H236C226 236 222 230 226 222L258 158Z" fill="#1D1830" stroke="#EDE4D8" stroke-width="2.5"/>
+<path d="M242 190C258 182 274 198 302 190L314 220C316 226 312 230 306 230H238C232 230 228 226 230 220Z" fill="#2A2148" stroke="#45E0B0" stroke-width="2"/>
+<rect x="256" y="106" width="32" height="16" rx="4" fill="#3A2A1C" stroke="#FFB35C" stroke-width="2"/>
+<rect x="244" y="158" width="56" height="20" rx="4" fill="#1D1830" stroke="#EDE4D8" stroke-width="2"/><text x="272" y="172" text-anchor="middle" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#A68BFF">v-for</text>
+<path d="M252 212H262M268 212H278M284 212H294" stroke="#45E0B0" stroke-width="2.5"/>
+<circle cx="84" cy="88" r="5" stroke="#C3B1FF" stroke-width="2"/>
+<circle cx="74" cy="66" r="3" stroke="#C3B1FF" stroke-width="1.8"/>
+<circle cx="182" cy="52" r="4" stroke="#FFB35C" stroke-width="2"/>
+<circle cx="276" cy="86" r="4" stroke="#45E0B0" stroke-width="2"/>
+<circle cx="286" cy="64" r="2.5" stroke="#45E0B0" stroke-width="1.6"/>
+<path d="M130 74C130.896 79.76 132.24 81.104 138 82C132.24 82.896 130.896 84.24 130 90C129.104 84.24 127.76 82.896 122 82C127.76 81.104 129.104 79.76 130 74Z" fill="none" stroke="#FFB35C" stroke-width="2" stroke-linejoin="round"/>
+<path d="M232 45C232.784 50.04 233.96 51.216 239 52C233.96 52.784 232.784 53.96 232 59C231.216 53.96 230.04 52.784 225 52C230.04 51.216 231.216 50.04 232 45Z" fill="none" stroke="#A68BFF" stroke-width="2" stroke-linejoin="round"/>
+<path d="M322 107C322.56 110.6 323.4 111.44 327 112C323.4 112.56 322.56 113.4 322 117C321.44 113.4 320.6 112.56 317 112C320.6 111.44 321.44 110.6 322 107Z" fill="none" stroke="#C3B1FF" stroke-width="1.8" stroke-linejoin="round"/>
+<circle cx="110" cy="112" r="2" fill="#FF6FA6"/>
+<circle cx="222" cy="92" r="1.8" fill="#FFB35C"/>
+</svg>

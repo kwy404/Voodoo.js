@@ -10,7 +10,12 @@
 <meta name="description" content="The syntax is familiar on purpose: equivalence tables for templates, components, reactivity, store, router and i18n, and an honest list of what cannot exist without compilation.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/migracao-vue">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -32,11 +37,11 @@
   Mounting has the same shape, and the same root component options:
 </p>
 
-<pre data-lang="js"><code>// Vue
-createApp({ data: () =&gt; ({ n: 0 }), template: '&lt;b&gt;{{ n }}&lt;/b&gt;' }).mount('#app');
-
-// Voodoo.js
-V.createApp({ data: () =&gt; ({ n: 0 }), template: '&lt;b&gt;{ n }&lt;/b&gt;' }).mount('#app');</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Vue</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">createApp</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }), </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;b>{{ n }}&#x3C;/b>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }).</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">mount</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#app'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Voodoo.js</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">createApp</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">data</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> () </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> ({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">n:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }), </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;b>{ n }&#x3C;/b>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }).</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">mount</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#app'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span></code></pre>
 
 <div class="doc-tabela">
 <table>
@@ -122,11 +127,11 @@ V.createApp({ data: () =&gt; ({ n: 0 }), template: '&lt;b&gt;{ n }&lt;/b&gt;' })
 </table>
 </div>
 
-<pre data-lang="js"><code>// Vue
-app.component('user-card', { props: ['name'], template: '&lt;p&gt;{{ name }}&lt;/p&gt;' });
-
-// Voodoo.js
-V.component('user-card', { props: ['name'], template: '&lt;p&gt;{ name }&lt;/p&gt;' });</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Vue</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">app</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'user-card'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">props:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>{{ name }}&#x3C;/p>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// Voodoo.js</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">component</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'user-card'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">props:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">template:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '&#x3C;p>{ name }&#x3C;/p>'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span></code></pre>
 
 <p>
   Both tag spellings work, as in Vue with compilation:
@@ -169,10 +174,10 @@ V.component('user-card', { props: ['name'], template: '&lt;p&gt;{ name }&lt;/p&g
 
 <p>Pinia getters become methods, because a <code>get</code> does not track changes:</p>
 
-<pre data-lang="js"><code>V.store('cart', {
-  items: [],
-  total() { return this.items.reduce((s, i) =&gt; s + i.price, 0) }
-});</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">store</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cart'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  items:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [],</span></span>
+<span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">  total</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">() { </span><span style="--shiki-light:#AF00DB;--shiki-dark:#C586C0">return</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> this</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">reduce</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">((</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">s</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">i</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> s</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> + </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">i</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">price</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">0</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span></code></pre>
 
 <h2 id="roteador">Router</h2>
 
@@ -204,11 +209,11 @@ V.component('user-card', { props: ['name'], template: '&lt;p&gt;{ name }&lt;/p&g
 
 <h2 id="transicoes">Transitions</h2>
 
-<pre data-lang="html"><code>&lt;!-- Vue --&gt;
-&lt;Transition name="fade"&gt;&lt;p v-if="visible"&gt;Hello&lt;/p&gt;&lt;/Transition&gt;
-
-&lt;!-- Voodoo.js --&gt;
-&lt;p v-if="visible" v-transition="fade"&gt;Hello&lt;/p&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Vue --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">Transition</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> name</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"fade"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"visible"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Hello</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">Transition</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#008000;--shiki-dark:#6A9955">&#x3C;!-- Voodoo.js --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-if</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"visible"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-transition</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"fade"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Hello</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">p</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>
   The classes follow the same pattern: <code>v-fade-enter-from</code>,
@@ -266,14 +271,14 @@ V.component('user-card', { props: ['name'], template: '&lt;p&gt;{ name }&lt;/p&g
   <code>v-ignore</code> so that Voodoo does not touch it:
 </p>
 
-<pre data-lang="html"><code>&lt;div id="app-vue" v-ignore&gt;&lt;/div&gt;
-
-&lt;div v-data="{ n: 0 }"&gt;
-  &lt;button @click="n++"&gt;{ n }&lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> id</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"app-vue"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-ignore</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ n: 0 }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"n++"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ n }</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

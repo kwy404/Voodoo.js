@@ -10,186 +10,12 @@
 <meta name="description" content="Charts in plain SVG, with no dependency: the eleven types, the accepted data shapes, the options, reactive data, and accessibility written from the numbers themselves.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/graficos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
-<style>
-/* ==========================================================================
-   The design system the rest of the site already uses — site/index.html,
-   site/components.html and site/playground.html. The guide carried a palette
-   of its own, which is why it read as a different product. One accent, flat
-   surfaces, no gradients and no glows.
-   ========================================================================== */
-
-:root {
-  --ink: #16141c;
-  --ink-soft: #57526a;
-  --ink-faint: #8b8598;
-  --bg: #ffffff;
-  --bg-soft: #faf9fb;
-  --bg-code: #f6f5f8;
-  --line: #e7e4ec;
-  --accent: #5b2ee5;
-  --accent-soft: #f1ecfe;
-  --fill: #e9e6f0;
-  --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-  color-scheme: light;
-}
-
-/* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. */
-@media (prefers-color-scheme: dark) {
-  html:root:not([data-theme="light"]) {
-    --ink: #f2f0f6;
-    --ink-soft: #b3adc2;
-    --ink-faint: #837d93;
-    --bg: #131118;
-    --bg-soft: #191722;
-    --bg-code: #1d1a26;
-    --line: #2b2735;
-    --accent: #a688ff;
-    --accent-soft: #221c3a;
-    --fill: #2f2b3d;
-    color-scheme: dark;
-  }
-}
-
-html:root[data-theme="dark"] {
-  --ink: #f2f0f6;
-  --ink-soft: #b3adc2;
-  --ink-faint: #837d93;
-  --bg: #131118;
-  --bg-soft: #191722;
-  --bg-code: #1d1a26;
-  --line: #2b2735;
-  --accent: #a688ff;
-  --accent-soft: #221c3a;
-  --fill: #2f2b3d;
-  color-scheme: dark;
-}
-
-/* The library paints its own UI — dialogs, toasts, the command palette, the
-   ready-made components — from --v-* tokens. Point them at this palette, or a
-   live example comes out in the library's own colours while the page is in
-   these: white panels on a dark page.
-   !important is required and not laziness: V.palette() writes
-   :root:not([data-theme="light"]), which outranks any plain selector, and
-   html:root beats the plain :root the library appends later in <head>.
-   --v-surface-3 has no default worth anything here — the progress track, the
-   skeleton fill and the switch rail paint with it and render invisible when it
-   is left unmapped. */
-html:root {
-  --v-surface: var(--bg) !important;
-  --v-surface-2: var(--bg-soft) !important;
-  --v-surface-3: var(--fill) !important;
-  --v-border: var(--line) !important;
-  --v-text: var(--ink) !important;
-  --v-text-muted: var(--ink-faint) !important;
-  --v-primary: var(--accent) !important;
-  --v-radius: 10px;
-  --v-radius-sm: 7px;
-  --v-font-sans: var(--font);
-}
-
-/* docs.css names its own tokens, and its own brand hues underneath them. Point
-   both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-theme=...]`,
-   which outranks a plain mapping. */
-html:root {
-  --fundo: var(--bg) !important;
-  --fundo-2: var(--bg-soft) !important;
-  --fundo-3: var(--fill) !important;
-  --superficie: var(--bg) !important;
-  --superficie-2: var(--bg-soft) !important;
-  --borda: var(--line) !important;
-  --borda-forte: var(--line) !important;
-  --texto: var(--ink) !important;
-  --texto-2: var(--ink-soft) !important;
-  --texto-3: var(--ink-faint) !important;
-  --acento: var(--accent) !important;
-  --acento-forte: var(--accent) !important;
-  --acento-fundo: var(--accent-soft) !important;
-  --realce-selecao: var(--accent-soft) !important;
-  --cod-fundo: var(--bg-code) !important;
-  --cod-texto: var(--ink) !important;
-  --fonte: var(--font) !important;
-  --fonte-mono: var(--mono) !important;
-  --raio: 10px !important;
-  --raio-p: 7px !important;
-
-  /* Flat surfaces. Every panel that leaned on a drop shadow already carries a
-     hairline border. */
-  --sombra: none !important;
-  --sombra-suave: none !important;
-
-  /* One accent. The five brand hues docs.css hardcodes for callout rules, the
-     blockquote bar and the card label all resolve here instead. */
-  --roxo: var(--accent) !important;
-  --roxo-claro: var(--accent) !important;
-  --magenta: var(--accent) !important;
-  --menta: var(--accent) !important;
-  --ambar: var(--ink-soft) !important;
-  --tinta: var(--ink) !important;
-  --creme: var(--bg) !important;
-}
-
-/* Syntax highlighting: ink plus the one accent, so a block reads on the light
-   --bg-code surface as well as on the dark one. */
-.tk-comentario { color: var(--ink-faint); font-style: italic; }
-.tk-tag,
-.tk-seletor { color: var(--accent); }
-.tk-directive,
-.tk-magia,
-.tk-interp { color: var(--accent); font-weight: 600; }
-.tk-atributo,
-.tk-propriedade,
-.tk-texto,
-.tk-numero { color: var(--ink-soft); }
-.tk-palavra,
-.tk-funcao { color: var(--ink); font-weight: 600; }
-.tk-pontuacao { color: var(--ink-faint); }
-
-/* The language label and the copy button are painted dark in docs.css, which
-   is unreadable once the code surface follows the theme. */
-.doc-bloco-codigo__rotulo { color: var(--ink-faint); }
-.doc-copiar {
-  border-color: var(--line);
-  background: var(--bg);
-  color: var(--ink-soft);
-}
-.doc-copiar:hover,
-.doc-copiar[data-estado="ok"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-/* Callouts, in the shape the rest of the site gives a note: a hairline box
-   with a single accent rule down the left. The label carries the meaning, so
-   nothing here needs a second or a third hue. */
-.doc-aviso {
-  border: 1px solid var(--line);
-  border-left: 2px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  background: var(--bg-soft);
-}
-.doc-aviso__rotulo { color: var(--accent); }
-.doc-aviso--roadmap { border-left-color: var(--line); }
-.doc-aviso--roadmap .doc-aviso__rotulo { color: var(--ink-faint); }
-
-.doc-cartao em,
-.doc-exemplo__cabecalho b { color: var(--accent); }
-.doc-cartao:hover { transform: none; border-color: var(--accent); }
-
-/* At 380px nothing may scroll the page sideways: wide code blocks and tables
-   scroll inside their own box. */
-.doc-artigo pre { overflow-x: auto; }
-.doc-artigo :not(pre) > code { word-break: break-word; }
-.doc-tabela { overflow-x: auto; }
-
-@media (max-width: 30rem) {
-  .doc-tabela table { min-width: 22rem; }
-  .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
-}
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -211,15 +37,15 @@ html:root {
 <h2 id="v-chart">v-chart</h2>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{
-  sales: [12, 19, 8, 25, 30, 22],
-  months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-}"&gt;
-  &lt;div v-chart="{ type: 'line', data: sales, labels: months, smooth: true }"&gt;&lt;/div&gt;
-  &lt;button @click="sales.push(Math.round(Math.random() * 40)); months.push('Jul')"&gt;
-    Add a month
-  &lt;/button&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  sales: [12, 19, 8, 25, 30, 22],</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">}"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ type: 'line', data: sales, labels: months, smooth: true }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> @click</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"sales.push(Math.round(Math.random() * 40)); months.push('Jul')"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">    Add a month</span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">button</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <p>
@@ -258,50 +84,50 @@ html:root {
 </div>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ kind: 'bar', values: [12, 19, 8, 25, 30] }"&gt;
-  &lt;select v-model="kind"&gt;
-    &lt;option&gt;line&lt;/option&gt;&lt;option&gt;area&lt;/option&gt;&lt;option&gt;bar&lt;/option&gt;
-    &lt;option&gt;column&lt;/option&gt;&lt;option&gt;pie&lt;/option&gt;&lt;option&gt;donut&lt;/option&gt;
-    &lt;option&gt;radar&lt;/option&gt;&lt;option&gt;sparkline&lt;/option&gt;
-  &lt;/select&gt;
-  &lt;div v-chart="{ type: kind, data: values, labels: ['A', 'B', 'C', 'D', 'E'] }"&gt;&lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ kind: 'bar', values: [12, 19, 8, 25, 30] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">select</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-model</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"kind"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">line</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">area</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">bar</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">column</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">pie</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">donut</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">    &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">radar</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">sparkline</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">option</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">select</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ type: kind, data: values, labels: ['A', 'B', 'C', 'D', 'E'] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <h2 id="formatos">Data shapes</h2>
 
 <p>Loose numbers, with the labels separate:</p>
 
-<pre data-lang="js"><code>{ type: 'bar', data: [12, 19, 8], labels: ['Jan', 'Feb', 'Mar'] }</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'bar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">19</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">8</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">labels</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Jan'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Feb'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Mar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span></code></pre>
 
 <p>Named points:</p>
 
-<pre data-lang="js"><code>{ type: 'pie', data: [
-  { label: 'Organic', value: 48 },
-  { label: 'Paid', value: 32 },
-  { label: 'Direct', value: 20 }
-] }</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'pie'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Organic'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 48</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Paid'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 32</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> },</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Direct'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 20</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span></code></pre>
 
 <p>Named series, for several lines or bars:</p>
 
-<pre data-lang="js"><code>{ type: 'line', labels: ['Jan', 'Feb', 'Mar'], data: [
-  { name: '2025', data: [10, 14, 12] },
-  { name: '2026', data: [16, 18, 25], color: '#FF3D8B' }
-] }</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'line'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">labels</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Jan'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Feb'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Mar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '2025'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">10</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">14</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] },</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">  { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">name:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '2026'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">16</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">18</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">25</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">], </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">color:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '#FF3D8B'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">] }</span></span></code></pre>
 
 <p>A scatter plot, with coordinates, and a single number for <code>progress</code>:</p>
 
-<pre data-lang="js"><code>{ type: 'scatter', data: [{ x: 1, y: 4 }, { x: 2, y: 7 }, { x: 3, y: 3 }] }
-{ type: 'progress', data: 68 }</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'scatter'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: [{ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 1</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 4</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 2</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 7</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">x:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 3</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">y:</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8"> 3</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }] }</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">{ </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'progress'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#000000;--shiki-dark:#C8C8C8">data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">: </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">68</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }</span></span></code></pre>
 
 <div data-exemplo>
-<pre data-lang="html"><code>&lt;div v-data="{ channels: [
-  { label: 'Organic', value: 48 },
-  { label: 'Paid', value: 32 },
-  { label: 'Direct', value: 20 }
-] }"&gt;
-  &lt;div v-chart="{ type: 'donut', data: channels, showValues: true }"&gt;&lt;/div&gt;
-&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-data</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ channels: [</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { label: 'Organic', value: 48 },</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { label: 'Paid', value: 32 },</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">  { label: 'Direct', value: 20 }</span></span>
+<span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">] }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ type: 'donut', data: channels, showValues: true }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 </div>
 
 <h2 id="opcoes">Options</h2>
@@ -331,9 +157,9 @@ html:root {
 
 <p>For static charts, the same settings fit in attributes:</p>
 
-<pre data-lang="html"><code>&lt;div v-chart="[12, 19, 8, 25]" v-chart-type="bar" v-chart-height="200"&gt;&lt;/div&gt;
-&lt;div v-chart="values" v-chart-format="currency" v-chart-colors="#6D3BF5,#2ED9A5"&gt;&lt;/div&gt;
-&lt;div v-chart="values" v-chart-grid="false" v-chart-legend="false"&gt;&lt;/div&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"[12, 19, 8, 25]"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"bar"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-height</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"200"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"values"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-format</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"currency"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-colors</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"#6D3BF5,#2ED9A5"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"values"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-grid</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"false"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart-legend</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"false"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="cores">Colours</h2>
 
@@ -344,20 +170,20 @@ html:root {
 <p>
   It lives in <code>V.chartColors</code> and in <code>V.charts.colors</code>. The grid, text and
   background colours come from the <code>--v-*</code> variables, so the chart follows the theme and
-  the configured palette — including when the visitor switches theme with the page open.
+  the configured palette, including when the visitor switches theme with the page open.
 </p>
 
 <h2 id="javascript">From JavaScript</h2>
 
-<pre data-lang="js"><code>const chart = V.renderChart(document.querySelector('#sales'), {
-  type: 'area',
-  data: [12, 19, 8, 25, 30],
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-  smooth: true
-});
-
-chart.update({ data: newData });
-chart.destroy();</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = </span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">renderChart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">document</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">querySelector</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#sales'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">), {</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  type:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'area'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">,</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  data:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">12</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">19</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">8</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">25</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#098658;--shiki-dark:#B5CEA8">30</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">],</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  labels:</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> [</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Jan'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Feb'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Mar'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Apr'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'May'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">],</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">  smooth:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">});</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">update</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">({ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">data:</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE"> newData</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> });</span></span>
+<span class="line"><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">destroy</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">();</span></span></code></pre>
 
 <p><code>V.chart</code> is an alias of <code>V.renderChart</code>.</p>
 
@@ -374,19 +200,19 @@ chart.destroy();</code></pre>
   <span class="doc-aviso__rotulo">Offer the numbers as well</span>
   <p>
     A well-written label helps, but it does not replace the data. For sets that matter, put a table
-    next to it — inside a <code>&lt;details&gt;</code>, if it takes up too much room.
+    next to it, inside a <code>&lt;details&gt;</code>, if it takes up too much room.
   </p>
 </div>
 
-<pre data-lang="html"><code>&lt;div v-chart="{ type: 'bar', data: sales, labels: months }"&gt;&lt;/div&gt;
-
-&lt;details&gt;
-  &lt;summary&gt;See the data as a table&lt;/summary&gt;
-  &lt;VTable columns="month:Month, value:Value:right" :rows="salesTable"&gt;&lt;/VTable&gt;
-&lt;/details&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-chart</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"{ type: 'bar', data: sales, labels: months }"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">div</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">details</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">summary</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">See the data as a table</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">summary</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTable</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> columns</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"month:Month, value:Value:right"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :rows</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"salesTable"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTable</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">details</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

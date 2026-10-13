@@ -4,11 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- The visitor's theme, before the first paint. The library restores it
-         too, but only once the deferred bundle has run, which is after the page
-         has been drawn once in the other theme. Same key and values as V.theme
-         (`voodoo:theme`: light, dark or system, raw or as JSON), so the two
-         never disagree. -->
+    <!-- The visitor's theme, before the first paint. Same key and values as
+         V.theme (voodoo:theme: light, dark or system, raw or as JSON). -->
     <script>
       (function () {
         try {
@@ -25,655 +22,353 @@
       })();
     </script>
 
-    <title>Examples — Voodoo.js</title>
-    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <title>Examples: Voodoo.js</title>
     <meta
       name="description"
       content="Thirteen working applications built with Voodoo.js: a Kanban board, a store, a real-time chat, two games, a 3D world and more. Every one is a single HTML file with no build step."
     />
+    <meta name="theme-color" content="#6d3bf5" />
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/examples/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Examples: Voodoo.js" />
+    <meta property="og:description" content="Thirteen working applications built with Voodoo.js, each one a single HTML file with no build step." />
+    <meta property="og:url" content="https://kwy404.github.io/Voodoo.js/examples/" />
+    <meta property="og:image" content="https://kwy404.github.io/Voodoo.js/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css" />
+    <link rel="stylesheet" href="../assets/site.css?v=daa5adda" />
     <style>
-      /* Same tokens as the landing page. Kept inline so an example folder can be
-         copied out of the repository and still look like itself. */
-      :root {
-        --ink: #16141c;
-        --ink-soft: #57526a;
-        --ink-faint: #8b8598;
-        --bg: #ffffff;
-        --bg-soft: #faf9fb;
-        --line: #e7e4ec;
-        --accent: #5b2ee5;
-        --accent-soft: #f1ecfe;
-        --fill: #e9e6f0;
-        --font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
-          sans-serif;
-        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-        color-scheme: light;
-      }
-
-      /* Three states, matching the rest of the site and the library's own
-         V.palette(): the system decides unless the visitor chose, and an
-         explicit choice wins either way. A page pinned light while the library
-         follows the OS puts dark widgets on white paper. */
-      @media (prefers-color-scheme: dark) {
-        html:root:not([data-theme='light']) {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --line: #2b2735;
-        --accent: #a688ff;
-        --accent-soft: #221c3a;
-        --fill: #2f2b3d;
-        color-scheme: dark;
-        }
-      }
-
-      html:root[data-theme='dark'] {
-        --ink: #f2f0f6;
-        --ink-soft: #b3adc2;
-        --ink-faint: #837d93;
-        --bg: #131118;
-        --bg-soft: #191722;
-        --line: #2b2735;
-        --accent: #a688ff;
-        --accent-soft: #221c3a;
-        --fill: #2f2b3d;
-        color-scheme: dark;
-      }
-
-      /* The library paints its built-in UI from these. */
-      html:root {
-        --v-surface: var(--bg) !important;
-        --v-surface-2: var(--bg-soft) !important;
-        /* The progress track, the skeleton fill and the switch rail all paint
-           with --v-surface-3. Left unmapped it kept the library's own value and
-           vanished against this palette, so the components rendered but looked
-           like empty boxes. It needs a real step of contrast, not another
-           near-white. */
-        --v-surface-3: var(--fill) !important;
-        --v-border: var(--line) !important;
-        --v-text: var(--ink) !important;
-        --v-text-muted: var(--ink-faint) !important;
-        --v-primary: var(--accent) !important;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--ink);
-        font-family: var(--font);
-        font-size: 16px;
-        line-height: 1.65;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      h1,
-      h2,
-      h3 {
-        margin: 0;
-        line-height: 1.15;
-        letter-spacing: -0.02em;
-        font-weight: 640;
-      }
-
-      p {
-        margin: 0;
-      }
-
-      a {
-        color: inherit;
-      }
-
-      .wrap {
-        width: 100%;
-        max-width: 1080px;
-        margin: 0 auto;
-        padding: 0 24px;
-      }
-
-      .top {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background: var(--bg);
-        border-bottom: 1px solid var(--line);
-      }
-
-      .top-in {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        height: 60px;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        font-weight: 680;
-        font-size: 16.5px;
-        letter-spacing: -0.02em;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .brand svg {
-        width: 24px;
-        height: 24px;
-        flex: none;
-      }
-
-      .top nav {
-        display: flex;
-        gap: 4px;
-        margin-left: 6px;
-      }
-
-      .top nav a {
-        padding: 6px 10px;
-        border-radius: 7px;
-        font-size: 14.5px;
-        color: var(--ink-soft);
-        text-decoration: none;
-        /* Translated labels are longer than the English ones. Without this,
-           "Por quê" wrapped onto a second line and pushed the header out of
-           shape in Portuguese and Spanish. */
-        white-space: nowrap;
-      }
-
-      .top nav a:hover,
-      .top nav a[aria-current='page'] {
-        color: var(--ink);
-        background: var(--bg-soft);
-      }
-
-      .top-end {
-        margin-left: auto;
-      }
-
-      .icon-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 34px;
-        height: 34px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: transparent;
-        color: var(--ink-soft);
-        cursor: pointer;
-      }
-
-      .icon-btn:hover {
-        color: var(--ink);
-        border-color: var(--ink-faint);
-      }
-
-      /* The theme button walks system, light and dark (v-theme-toggle.cycle) and
-         shows the current choice, which the library writes on it as
-         data-voodoo-theme-mode. Until it does (no script yet, or an older bundle)
-         the moon stands in, as it always did. */
-      .theme-icon {
-        display: none;
-      }
-
-      .theme-btn:not([data-voodoo-theme-mode]) .theme-icon--dark,
-      .theme-btn[data-voodoo-theme-mode='system'] .theme-icon--system,
-      .theme-btn[data-voodoo-theme-mode='light'] .theme-icon--light,
-      .theme-btn[data-voodoo-theme-mode='dark'] .theme-icon--dark {
-        display: block;
-      }
-
-      header.page {
-        padding: 62px 0 40px;
-      }
-
-      h1 {
-        font-size: clamp(32px, 5vw, 46px);
-        letter-spacing: -0.035em;
-        font-weight: 700;
-      }
-
-      .lead {
-        margin-top: 16px;
-        font-size: 18px;
-        color: var(--ink-soft);
-        max-width: 38em;
-      }
-
-      .note {
-        margin-top: 22px;
-        padding: 13px 16px;
-        border: 1px solid var(--line);
-        border-left: 2px solid var(--accent);
-        border-radius: 0 9px 9px 0;
-        background: var(--bg-soft);
-        font-size: 14.5px;
-        color: var(--ink-soft);
-        max-width: 62em;
-      }
-
-      .note code {
-        font-family: var(--mono);
-        font-size: 13px;
-      }
-
-      section {
-        padding: 34px 0 10px;
-      }
-
-      .sec-head {
-        display: flex;
-        align-items: baseline;
-        gap: 12px;
-        border-top: 1px solid var(--line);
-        padding-top: 30px;
-      }
-
-      h2 {
-        font-size: 20px;
-      }
-
-      .sec-head span {
-        font-size: 14px;
-        color: var(--ink-faint);
-      }
-
-      .grid {
-        margin-top: 22px;
+      .vd-glyph {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
-        gap: 16px;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: var(--m-radius-lg);
+        background: color-mix(in oklab, var(--primary) 12%, transparent);
+        color: var(--primary);
       }
-
-      .card {
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--line);
-        border-radius: 11px;
-        padding: 18px;
-        text-decoration: none;
-        background: var(--bg);
+      .vd-glyph .vd-icon {
+        width: 1.3rem;
+        height: 1.3rem;
       }
-
-      .card:hover {
-        border-color: var(--accent);
+      .vd-example .vd-icon {
+        transition: transform var(--m-duration) var(--m-ease);
       }
-
-      .card:hover h3 {
-        color: var(--accent);
+      .vd-example:hover .card-body > div > .vd-icon {
+        transform: translateX(3px);
+        color: var(--primary);
       }
-
-      .card h3 {
-        font-size: 16.5px;
-      }
-
-      .card p {
-        margin-top: 7px;
-        font-size: 14.5px;
-        color: var(--ink-soft);
-        flex: 1;
-      }
-
-      .tags {
-        margin-top: 14px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-
-      .tag {
-        font-family: var(--mono);
-        font-size: 11.5px;
-        padding: 2px 7px;
-        border-radius: 5px;
-        background: var(--bg-soft);
-        border: 1px solid var(--line);
-        color: var(--ink-faint);
-        white-space: nowrap;
-      }
-
-      .tag.build {
-        background: var(--accent-soft);
-        border-color: transparent;
-        color: var(--accent);
-      }
-
-      footer {
-        margin-top: 54px;
-        border-top: 1px solid var(--line);
-        padding: 30px 0;
-        font-size: 14px;
-        color: var(--ink-soft);
-      }
-
-      .foot-in {
-        display: flex;
-        gap: 18px;
-        flex-wrap: wrap;
-      }
-
-      .skip {
-        position: absolute;
-        left: -9999px;
-      }
-
-      .skip:focus {
-        left: 12px;
-        top: 12px;
-        z-index: 60;
-        background: var(--bg);
-        padding: 9px 14px;
-        border: 1px solid var(--accent);
-        border-radius: 8px;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-      }
-
-      @media (max-width: 700px) {
-        .top nav {
-          display: none;
-        }
-        header.page {
-          padding: 40px 0 28px;
-        }
-        .wrap {
-          padding: 0 18px;
-        }
-      }
-      .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
-      .vd-projects__title { font-weight: 600; }
-      .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
-      .vd-projects a:hover { text-decoration: underline; }
-      .vd-projects img { width: 18px; height: 18px; flex: none; }
     </style>
   </head>
 
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <div v-data>
+<!-- chrome:header -->
+<a class="vd-skip btn btn-primary btn-sm" href="#main">Skip to content</a>
+<header class="navbar navbar-sticky navbar-blur px-4 lg:px-8">
+  <div class="navbar-start">
+    <a class="navbar-brand vd-brand" href="../">
+      <img src="../assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+      <span>Voodoo<span class="text-primary">.js</span></span>
+    </a>
+  </div>
+  <nav class="navbar-center navbar-nav" aria-label="Main">
+      <a class="navbar-link" href="../docs/">Docs</a>
+      <a class="navbar-link" href="../playground.html">Playground</a>
+      <a class="navbar-link" href="../components.html">Components</a>
+      <a class="navbar-link" href="../examples/" aria-current="page">Examples</a>
+  </nav>
+  <div class="navbar-end">
+    <button type="button" class="btn btn-ghost btn-sm btn-square vd-theme" v-theme-toggle.cycle aria-label="Change theme: system, light or dark">
+      <svg class="vd-icon vd-theme-system" aria-hidden="true"><use href="../assets/art/icons.svg#i-monitor"></use></svg>
+      <svg class="vd-icon vd-theme-light" aria-hidden="true"><use href="../assets/art/icons.svg#i-sun"></use></svg>
+      <svg class="vd-icon vd-theme-dark" aria-hidden="true"><use href="../assets/art/icons.svg#i-moon"></use></svg>
+    </button>
+    <a class="btn btn-ghost btn-sm btn-square hidden sm:inline-flex" href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-github"></use></svg></a>
+    <details class="navbar-mobile">
+      <summary class="navbar-burger" aria-label="Menu"></summary>
+      <nav class="navbar-mobile-panel" aria-label="Mobile">
+      <a class="navbar-link" href="../docs/">Docs</a>
+      <a class="navbar-link" href="../playground.html">Playground</a>
+      <a class="navbar-link" href="../components.html">Components</a>
+      <a class="navbar-link" href="../examples/" aria-current="page">Examples</a>
+      <a class="navbar-link" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+      </nav>
+    </details>
+  </div>
+</header>
+<!-- /chrome:header -->
 
-    <div class="top">
-      <div class="wrap top-in">
-        <a class="brand" href="../">
-          <svg viewBox="0 0 32 32" aria-hidden="true">
-            <path d="M4 5h6.4l5.6 15.2L21.6 5H28L18.8 28h-5.6L4 5z" fill="currentColor" />
-          </svg>
-          Voodoo.js
-        </a>
+      <main id="main">
+        <section class="vd-aura relative overflow-hidden border-b border-border">
+          <div class="vd-runes absolute inset-0 -z-10" aria-hidden="true"></div>
+          <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-8">
+            <div class="lg:col-span-8">
+              <p class="vd-kicker">Examples</p>
+              <h1 class="mt-3 text-4xl font-bold tracking-tight text-balance md:text-5xl">Thirteen things built with it</h1>
+              <p class="mt-4 max-w-2xl text-lg text-muted-foreground text-pretty">
+                Not snippets. Each one is a working application: open the folder, open the HTML file,
+                and it runs. There is no build step behind any of them, and nothing to install.
+              </p>
+              <p class="mt-4 max-w-2xl text-sm text-muted-foreground text-pretty">
+                Every example loads the library from the same public CDN tag the documentation gives
+                you, <code class="font-mono text-foreground">cdn.jsdelivr.net/npm/voodoojs@1.0.0</code>. The source you
+                read is the source that runs, and you can copy a file out of here into your own project
+                without changing a line.
+              </p>
+            </div>
+            <div class="hidden justify-center lg:col-span-4 lg:flex">
+              <img class="when-light w-full max-w-xs" src="../assets/art/light/wand.svg" alt="A wand leaving a trail of sparkles" width="360" height="220" />
+              <img class="when-dark w-full max-w-xs" src="../assets/art/dark/wand.svg" alt="A wand leaving a trail of sparkles" width="360" height="220" />
+            </div>
+          </div>
+        </section>
 
-        <nav aria-label="Main">
-          <a href="../">Home</a>
-          <a href="../docs/">Docs</a>
-          <a href="./" aria-current="page">Examples</a>
-        </nav>
+        <div class="mx-auto max-w-7xl space-y-16 px-4 py-12 md:py-16 lg:px-8">
 
-        <div class="top-end">
-          <button class="icon-btn theme-btn" v-theme-toggle.cycle>
-            <svg class="theme-icon theme-icon--system" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-              <rect x="1.5" y="2.5" width="13" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4" />
-              <path d="M5.5 14h5M8 11.5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-            </svg>
-            <svg class="theme-icon theme-icon--light" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-              <circle cx="8" cy="8" r="3" fill="currentColor" />
-              <path
-                d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.05 3.05l1.13 1.13M11.82 11.82l1.13 1.13M3.05 12.95l1.13-1.13M11.82 4.18l1.13-1.13"
-                stroke="currentColor"
-                stroke-width="1.4"
-                stroke-linecap="round"
-              />
-            </svg>
-            <svg class="theme-icon theme-icon--dark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                d="M13 9.2A5.4 5.4 0 0 1 6.8 3c0-.5.07-1 .2-1.4A5.6 5.6 0 1 0 14.4 9c-.44.13-.9.2-1.4.2z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
+          <section id="applications" aria-labelledby="applications-title">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+              <h2 id="applications-title" class="text-2xl font-bold tracking-tight">Applications</h2>
+              <span class="text-sm text-muted-foreground">state, lists, forms, HTTP</span>
+            </div>
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a class="card card-bordered card-interactive vd-example" href="todo/" v-command-item="Example: To-do list">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-scroll"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">To-do list</h3>
+                  <p class="text-sm text-muted-foreground">The smallest complete application here. Add, complete, filter and persist, with the list surviving a reload.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">v-for</span><span class="badge badge-neutral badge-soft">v-model</span><span class="badge badge-neutral badge-soft">storage</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="crud/" v-command-item="Example: User CRUD">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-book"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">User CRUD</h3>
+                  <p class="text-sm text-muted-foreground">Create, read, update and delete against a REST endpoint, with validation and a loading state on every request.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">v-resource</span><span class="badge badge-neutral badge-soft">forms</span><span class="badge badge-neutral badge-soft">validation</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="kanban/" v-command-item="Example: Kanban board">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-pin"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Kanban board</h3>
+                  <p class="text-sm text-muted-foreground">Drag cards between columns. The order is reactive state, so nothing is stored in the DOM and a reload restores the board.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">drag and drop</span><span class="badge badge-neutral badge-soft">stores</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="ecommerce/" v-command-item="Example: Store">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-cauldron"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Store</h3>
+                  <p class="text-sm text-muted-foreground">Catalogue, filters, a cart that follows you between pages, and totals derived from state rather than recalculated by hand.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">computed</span><span class="badge badge-neutral badge-soft">stores</span><span class="badge badge-neutral badge-soft">masks</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="dashboard/" v-command-item="Example: Admin dashboard">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-gauge"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Admin dashboard</h3>
+                  <p class="text-sm text-muted-foreground">Charts, tables, filters and a date range, laid out with the bundled UI components and no stylesheet framework.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">charts</span><span class="badge badge-neutral badge-soft">UI kit</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="pokedex/" v-command-item="Example: Pokédex">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-crystal"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Pokédex</h3>
+                  <p class="text-sm text-muted-foreground">A real public API, paginated, searchable and cached, with skeleton states while requests are in flight.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">HTTP</span><span class="badge badge-neutral badge-soft">router</span></p>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <section id="real-time" aria-labelledby="real-time-title">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+              <h2 id="real-time-title" class="text-2xl font-bold tracking-tight">Real time</h2>
+              <span class="text-sm text-muted-foreground">WebSocket and Socket.IO</span>
+            </div>
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a class="card card-bordered card-interactive vd-example" href="chat/" v-command-item="Example: Chat">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-candle"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Chat</h3>
+                  <p class="text-sm text-muted-foreground">Rooms, presence and message history, written as attributes. Runs against a mock transport so it works with no server.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">v-socket</span><span class="badge badge-neutral badge-soft">v-room</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="chat-tempo-real/" v-command-item="Example: Chat, with a real server">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-moonstar"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Chat, with a real server</h3>
+                  <p class="text-sm text-muted-foreground">The same interface pointed at an actual WebSocket server, including reconnection with backoff and a queue for messages sent while offline.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">WebSocket</span><span class="badge badge-warning badge-soft">needs a server</span></p>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <section id="graphics-and-games" aria-labelledby="graphics-and-games-title">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+              <h2 id="graphics-and-games-title" class="text-2xl font-bold tracking-tight">Graphics and games</h2>
+              <span class="text-sm text-muted-foreground">canvas, WebGL, game loops</span>
+            </div>
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a class="card card-bordered card-interactive vd-example" href="jogos/tetris/" v-command-item="Example: Tetris">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-rune"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Tetris</h3>
+                  <p class="text-sm text-muted-foreground">A full game loop, keyboard input, collision and scoring, with the board held in reactive state and drawn from it.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">keyboard</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="jogos/breakout/" v-command-item="Example: Breakout">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-sparkle"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Breakout</h3>
+                  <p class="text-sm text-muted-foreground">Physics on a requestAnimationFrame loop, with the paddle bound to both pointer and keyboard.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">canvas</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="shaders/" v-command-item="Example: Shaders">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-potion"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">Shaders</h3>
+                  <p class="text-sm text-muted-foreground">GLSL fragment shaders driven by reactive uniforms: move a slider and the value reaches the GPU without a redraw call of your own.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">WebGL</span></p>
+                </div>
+              </a>
+              <a class="card card-bordered card-interactive vd-example" href="mundo-aberto/" v-command-item="Example: 3D open world">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-wand"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">3D open world</h3>
+                  <p class="text-sm text-muted-foreground">A drivable car, terrain, buildings and trees, with the heads-up display written as ordinary attributes over the canvas.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-neutral badge-soft">WebGL</span><span class="badge badge-neutral badge-soft">glTF</span></p>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <section id="tooling" aria-labelledby="tooling-title">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-3">
+              <h2 id="tooling-title" class="text-2xl font-bold tracking-tight">Tooling</h2>
+              <span class="text-sm text-muted-foreground">what ships with the library</span>
+            </div>
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a class="card card-bordered card-interactive vd-example" href="devtools/" v-command-item="Example: DevTools inspector">
+                <div class="card-body gap-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="vd-glyph"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-braces"></use></svg></span>
+                    <svg class="vd-icon text-muted-foreground" aria-hidden="true"><use href="../assets/art/icons.svg#i-arrow"></use></svg>
+                  </div>
+                  <h3 class="card-title">DevTools inspector</h3>
+                  <p class="text-sm text-muted-foreground">Add <code class="font-mono">devtools</code> to the script tag and press Ctrl+Shift+F2 to inspect scopes, directives and effects on a live page.</p>
+                  <p class="mt-auto flex flex-wrap gap-1 pt-1"><span class="badge badge-primary badge-soft">full build</span><span class="badge badge-neutral badge-soft">Ctrl+Shift+F2</span></p>
+                </div>
+              </a>
+            </div>
+          </section>
         </div>
+      </main>
+
+<!-- chrome:footer -->
+<footer class="footer px-0">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 lg:px-8">
+  <div class="footer-grid md:grid-cols-4">
+    <div class="footer-brand md:col-span-1">
+      <a class="navbar-brand vd-brand text-foreground" href="../">
+        <img src="../assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+        <span>Voodoo<span class="text-primary">.js</span></span>
+      </a>
+      <p>JSX in plain HTML. No build step, one script tag.</p>
+      <div class="footer-social">
+        <a href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-github"></use></svg></a>
+        <a href="https://www.npmjs.com/package/voodoojs" aria-label="voodoojs on npm"><svg class="vd-icon" aria-hidden="true"><use href="../assets/art/icons.svg#i-npm"></use></svg></a>
       </div>
     </div>
+    <nav aria-label="Voodoo.js">
+      <p class="footer-title">Voodoo.js</p>
+      <ul class="footer-links">
+        <li><a href="../docs/">Docs</a></li>
+        <li><a href="../playground.html">Playground</a></li>
+        <li><a href="../components.html">Components</a></li>
+        <li><a href="../examples/">Examples</a></li>
+        <li><a href="https://github.com/kwy404/Voodoo.js">GitHub</a></li>
+        <li><a href="https://www.npmjs.com/package/voodoojs">npm</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Learn">
+      <p class="footer-title">Learn</p>
+      <ul class="footer-links">
+        <li><a href="../docs/guia/instalacao.html">Installation</a></li>
+        <li><a href="../docs/guia/jsx.html">JSX in plain HTML</a></li>
+        <li><a href="../docs/referencia/directives.html">Directives</a></li>
+        <li><a href="../docs/referencia/migracao-vue.html">Coming from Vue</a></li>
+        <li><a href="../docs/referencia/perguntas-frequentes.html">FAQ</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="More from kwy404">
+      <p class="footer-title">More from kwy404</p>
+      <ul class="footer-links vd-projects">
+          <li><a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">Monsoon</a></li>
+          <li><a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">breakhound</a></li>
+          <li><a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">vueleap</a></li>
+          <li><a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">graphemely</a></li>
+          <li><a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">numberparrot</a></li>
+          <li><a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">edgegoat</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <p><span>Made by</span> <a class="font-medium text-foreground hover:underline" href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a class="hover:underline" href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a class="hover:underline" href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). <span>MIT licensed.</span> Voodoo.js 1.0.0.</p>
+    <p><span>Built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/monsoon/">Monsoon</a>. <span>Interactive parts built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>.</p>
+  </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
+    </div>
 
-    <main id="main">
-      <div class="wrap">
-        <header class="page">
-          <h1>Thirteen things built with it</h1>
-          <p class="lead">
-            Not snippets. Each one is a working application: open the folder, open the HTML file,
-            and it runs. There is no build step behind any of them, and nothing to install.
-          </p>
-          <p class="note">
-            Every example loads the library from the same public CDN tag the documentation gives
-            you: <code>cdn.jsdelivr.net/npm/voodoojs@1.0.0</code>. That means the source you read is
-            the source that runs, and you can copy a file out of here into your own project without
-            changing a line.
-          </p>
-        </header>
-
-        <section>
-          <div class="sec-head">
-            <h2>Applications</h2>
-            <span>state, lists, forms, HTTP</span>
-          </div>
-
-          <div class="grid">
-            <a class="card" href="todo/">
-              <h3>To-do list</h3>
-              <p>
-                The smallest complete application here. Add, complete, filter and persist, with the
-                list surviving a reload.
-              </p>
-              <div class="tags">
-                <span class="tag">v-for</span><span class="tag">v-model</span
-                ><span class="tag">storage</span>
-              </div>
-            </a>
-
-            <a class="card" href="crud/">
-              <h3>User CRUD</h3>
-              <p>
-                Create, read, update and delete against a REST endpoint, with validation and a
-                loading state on every request.
-              </p>
-              <div class="tags">
-                <span class="tag">v-resource</span><span class="tag">forms</span
-                ><span class="tag">validation</span>
-              </div>
-            </a>
-
-            <a class="card" href="kanban/">
-              <h3>Kanban board</h3>
-              <p>
-                Drag cards between columns. The order is reactive state, so nothing is stored in the
-                DOM and a reload restores the board.
-              </p>
-              <div class="tags">
-                <span class="tag">drag and drop</span><span class="tag">stores</span>
-              </div>
-            </a>
-
-            <a class="card" href="ecommerce/">
-              <h3>Store</h3>
-              <p>
-                Catalogue, filters, a cart that follows you between pages, and totals derived from
-                state rather than recalculated by hand.
-              </p>
-              <div class="tags">
-                <span class="tag">computed</span><span class="tag">stores</span
-                ><span class="tag">masks</span>
-              </div>
-            </a>
-
-            <a class="card" href="dashboard/">
-              <h3>Admin dashboard</h3>
-              <p>
-                Charts, tables, filters and a date range, laid out with the bundled UI components
-                rather than a CSS framework.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">charts</span
-                ><span class="tag">UI kit</span>
-              </div>
-            </a>
-
-            <a class="card" href="pokedex/">
-              <h3>Pokédex</h3>
-              <p>
-                A real public API, paginated, searchable and cached, with skeleton states while
-                requests are in flight.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">HTTP</span
-                ><span class="tag">router</span>
-              </div>
-            </a>
-          </div>
-        </section>
-
-        <section>
-          <div class="sec-head">
-            <h2>Real time</h2>
-            <span>WebSocket and Socket.IO</span>
-          </div>
-
-          <div class="grid">
-            <a class="card" href="chat/">
-              <h3>Chat</h3>
-              <p>
-                Rooms, presence and message history, written as attributes. Runs against a mock
-                transport so it works with no server.
-              </p>
-              <div class="tags">
-                <span class="tag">v-socket</span><span class="tag">v-room</span>
-              </div>
-            </a>
-
-            <a class="card" href="chat-tempo-real/">
-              <h3>Chat, with a real server</h3>
-              <p>
-                The same interface pointed at an actual WebSocket server, including reconnection
-                with backoff and a queue for messages sent while offline.
-              </p>
-              <div class="tags">
-                <span class="tag">WebSocket</span><span class="tag">needs a server</span>
-              </div>
-            </a>
-          </div>
-        </section>
-
-        <section>
-          <div class="sec-head">
-            <h2>Graphics and games</h2>
-            <span>canvas, WebGL, game loops</span>
-          </div>
-
-          <div class="grid">
-            <a class="card" href="jogos/tetris/">
-              <h3>Tetris</h3>
-              <p>
-                A full game loop, keyboard input, collision and scoring, with the board held in
-                reactive state and drawn from it.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">keyboard</span>
-              </div>
-            </a>
-
-            <a class="card" href="jogos/breakout/">
-              <h3>Breakout</h3>
-              <p>
-                Physics on a requestAnimationFrame loop, with the paddle bound to both pointer and
-                keyboard.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">canvas</span>
-              </div>
-            </a>
-
-            <a class="card" href="shaders/">
-              <h3>Shaders</h3>
-              <p>
-                GLSL fragment shaders driven by reactive uniforms: move a slider and the value
-                reaches the GPU without a redraw call of your own.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">WebGL</span>
-              </div>
-            </a>
-
-            <a class="card" href="mundo-aberto/">
-              <h3>3D open world</h3>
-              <p>
-                A drivable car, terrain, buildings and trees, with the heads-up display written as
-                ordinary attributes over the canvas.
-              </p>
-              <div class="tags">
-                <span class="tag">WebGL</span><span class="tag">glTF</span>
-              </div>
-            </a>
-          </div>
-        </section>
-
-        <section>
-          <div class="sec-head">
-            <h2>Tooling</h2>
-            <span>what ships with the library</span>
-          </div>
-
-          <div class="grid">
-            <a class="card" href="devtools/">
-              <h3>DevTools inspector</h3>
-              <p>
-                Add <code>devtools</code> to the script tag and press Ctrl+Shift+F2 to inspect
-                scopes, directives and effects on a live page.
-              </p>
-              <div class="tags">
-                <span class="tag build">full build</span><span class="tag">Ctrl+Shift+F2</span>
-              </div>
-            </a>
-          </div>
-        </section>
-      </div>
-    </main>
-
-    <footer>
-      <div class="wrap foot-in">
-        <span>MIT licensed</span>
-        <a href="../">Home</a>
-        <a href="../docs/">Docs</a>
-        <a href="https://github.com/kwy404/Voodoo.js">GitHub</a>
-        <a href="https://www.npmjs.com/package/voodoojs">npm</a>
-        <span>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></span>
-        <span style="margin-left: auto">Built with Voodoo.js 1.0.0</span>
-      </div>
-      <nav class="vd-projects wrap" style="margin-top: 16px" aria-label="More projects by kwy404">
-        <span class="vd-projects__title">More projects by kwy404</span>
-        <a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step and 116 native components"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
-        <a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
-        <a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
-        <a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
-        <a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
-        <a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
-      </nav>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+    <script src="../voodoo.full.min.js?v=c4c59afc" defer></script>
   </body>
 </html>

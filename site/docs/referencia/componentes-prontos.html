@@ -10,7 +10,12 @@
 <meta name="description" content="The 29 components of the full build, one by one, with every prop, the accepted values, the events emitted and the formats each list understands.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/componentes-prontos">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -55,9 +60,9 @@
   </li>
 </ul>
 
-<pre data-lang="html"><code>&lt;VSelect options="states"&gt;&lt;/VSelect&gt;       &lt;!-- variable from the v-data around it --&gt;
-&lt;VSelect options="SP, RJ, MG"&gt;&lt;/VSelect&gt;   &lt;!-- literal list --&gt;
-&lt;VSelect :options="loadedList"&gt;&lt;/VSelect&gt;  &lt;!-- reactive binding --&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> options</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"states"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">       &#x3C;!-- variable from the v-data around it --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> options</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"SP, RJ, MG"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">   &#x3C;!-- literal list --></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :options</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"loadedList"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VSelect</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">  &#x3C;!-- reactive binding --></span></span></code></pre>
 
 <h2 id="icones">Icons</h2>
 
@@ -87,9 +92,9 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;VButton variant="primary" icon="check"&gt;Confirm&lt;/VButton&gt;
-&lt;VButton variant="danger" size="sm" icon="trash"&gt;Delete&lt;/VButton&gt;
-&lt;VButton :loading="saving" block&gt;Save everything&lt;/VButton&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"primary"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"check"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Confirm</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> variant</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"danger"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> size</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"sm"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"trash"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Delete</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :loading</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"saving"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> block</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">Save everything</span><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VButton</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="viconbutton">VIconButton</h3>
 
@@ -185,9 +190,9 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;VField label="Date of birth" hint="Use the day/month/year format"&gt;
-  &lt;input type="text" v-mask="date"&gt;
-&lt;/VField&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VField</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Date of birth"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> hint</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Use the day/month/year format"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">  &#x3C;</span><span style="--shiki-light:#800000;--shiki-dark:#569CD6">input</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> type</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"text"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> v-mask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"date"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VField</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="vinput">VInput</h3>
 
@@ -245,8 +250,8 @@ menu  more  logout  card  chart  box  inbox</code></pre>
   Formats accepted in <code>options</code>:
 </p>
 
-<pre data-lang="js"><code>['SP', 'RJ', 'MG']
-[{ value: 'sp', label: 'São Paulo' }, { value: 'rj', label: 'Rio de Janeiro', disabled: true }]</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'SP'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'RJ'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'MG'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">]</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[{ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'sp'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'São Paulo'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }, { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">value:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'rj'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Rio de Janeiro'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">disabled:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }]</span></span></code></pre>
 
 <p>
   The alternative keys <code>id</code>, <code>key</code>, <code>text</code>, <code>name</code> and
@@ -376,8 +381,8 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;VStat label="Revenue" value="R$ 128.400" delta="12.4" icon="chart" hint="vs. last month"&gt;&lt;/VStat&gt;
-&lt;VStat label="Cancellations" value="18" delta="-6" inverted&gt;&lt;/VStat&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Revenue"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"R$ 128.400"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> delta</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"12.4"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> icon</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"chart"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> hint</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"vs. last month"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> label</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Cancellations"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> value</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"18"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> delta</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"-6"</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> inverted</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VStat</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h2 id="dados">Data and navigation</h2>
 
@@ -398,9 +403,9 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 
 <p>Emits <code>sort</code> with <code>{ key, direction }</code>. The columns accept three formats:</p>
 
-<pre data-lang="js"><code>['name', 'email']                                   // label derived from the key
-[{ key: 'name', label: 'Name', align: 'left', sortable: true }]
-'name:Name, total:Total:right'                      // key:label:alignment</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'email'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">]                                   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// label derived from the key</span></span>
+<span class="line"><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">[{ </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">key:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">label:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'Name'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">align:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'left'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">sortable:</span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6"> true</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> }]</span></span>
+<span class="line"><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'name:Name, total:Total:right'</span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">                      // key:label:alignment</span></span></code></pre>
 
 <p>Keys with a dot work: <code>customer.name</code>.</p>
 
@@ -435,8 +440,8 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 </table>
 </div>
 
-<pre data-lang="html"><code>&lt;VBreadcrumb items="Home:/, Products:/products, Detail"&gt;&lt;/VBreadcrumb&gt;
-&lt;VBreadcrumb :items="[{ label: 'Home', href: '/' }, { label: 'Profile' }]"&gt;&lt;/VBreadcrumb&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBreadcrumb</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Home:/, Products:/products, Detail"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBreadcrumb</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBreadcrumb</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"[{ label: 'Home', href: '/' }, { label: 'Profile' }]"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VBreadcrumb</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <p>The last item never turns into a link and gets <code>aria-current="page"</code>.</p>
 
@@ -461,8 +466,8 @@ menu  more  logout  card  chart  box  inbox</code></pre>
   fields by a vertical bar: <code>title | description | time | tone</code>.
 </p>
 
-<pre data-lang="html"><code>&lt;VTimeline items="Order created|We received your order|10:02; Being picked||10:40"&gt;&lt;/VTimeline&gt;
-&lt;VTimeline :items="[{ title: 'Shipped', description: 'On its way', time: 'yesterday', tone: 'success' }]"&gt;&lt;/VTimeline&gt;</code></pre>
+<pre data-lang="html" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTimeline</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"Order created|We received your order|10:02; Being picked||10:40"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTimeline</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span>
+<span class="line"><span style="--shiki-light:#800000;--shiki-dark:#808080">&#x3C;</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTimeline</span><span style="--shiki-light:#E50000;--shiki-dark:#9CDCFE"> :items</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">=</span><span style="--shiki-light:#0000FF;--shiki-dark:#CE9178">"[{ title: 'Shipped', description: 'On its way', time: 'yesterday', tone: 'success' }]"</span><span style="--shiki-light:#800000;--shiki-dark:#808080">>&#x3C;/</span><span style="--shiki-light:#CD3131;--shiki-dark:#F44747">VTimeline</span><span style="--shiki-light:#800000;--shiki-dark:#808080">></span></span></code></pre>
 
 <h3 id="vcodeblock">VCodeBlock</h3>
 
@@ -481,6 +486,6 @@ menu  more  logout  card  chart  box  inbox</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>

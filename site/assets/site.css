@@ -1,0 +1,490 @@
+/* ==========================================================================
+   Voodoo.js site layer, on top of Monsoon 0.2.0.
+
+   Monsoon is the base stylesheet: the reset, every layout and spacing
+   utility, the components (navbar, cards, badges, segmented controls, tables,
+   callouts, footer) and the theme, derived from one --seed colour. This file
+   keeps only what Monsoon cannot express on its own:
+
+     1. the Voodoo palette (purple seed, amber accent) and the display fonts;
+     2. swapping light and dark artwork with the site theme;
+     3. the VS Code style code frames and the Shiki Light+ and Dark+ colours;
+     4. the theme toggle icon, which follows an attribute the library writes;
+     5. the spell effects: sparkles, the floating mascot, the rune glow.
+
+   The theme contract is the one V.theme keeps: `voodoo:theme` in
+   localStorage, `data-theme` on <html> for an explicit choice, and the
+   operating system otherwise. Every dark rule below is written twice, for
+   [data-theme="dark"] and for a dark system with no explicit light choice.
+   ========================================================================== */
+
+:root,
+[data-theme] {
+  --seed: oklch(0.53 0.25 288);
+  /* Monsoon derives the accent as the seed's complement. Voodoo's accent is the
+     candle amber of the brand instead: the spark at the tip of the wand. */
+  --accent: oklch(0.8 0.15 68);
+  --amber: oklch(0.72 0.16 62);
+  --amber-soft: oklch(0.96 0.04 75);
+  --magenta: oklch(0.62 0.22 0);
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --vd-glow: oklch(0.53 0.25 288 / 0.16);
+  --vd-frame: #ffffff;
+  --vd-frame-bar: #f3f3f3;
+  --vd-frame-tab: #ffffff;
+  --vd-frame-line: #e5e5e5;
+  --vd-frame-ink: #333333;
+  --vd-frame-dim: #6e7681;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --amber: oklch(0.82 0.14 70);
+    --amber-soft: oklch(0.3 0.06 60);
+    --magenta: oklch(0.72 0.18 0);
+    --vd-glow: oklch(0.7 0.2 288 / 0.22);
+    --vd-frame: #1e1e1e;
+    --vd-frame-bar: #252526;
+    --vd-frame-tab: #1e1e1e;
+    --vd-frame-line: #333333;
+    --vd-frame-ink: #cccccc;
+    --vd-frame-dim: #8b949e;
+  }
+}
+
+:root[data-theme='dark'] {
+  --amber: oklch(0.82 0.14 70);
+  --amber-soft: oklch(0.3 0.06 60);
+  --magenta: oklch(0.72 0.18 0);
+  --vd-glow: oklch(0.7 0.2 288 / 0.22);
+  --vd-frame: #1e1e1e;
+  --vd-frame-bar: #252526;
+  --vd-frame-tab: #1e1e1e;
+  --vd-frame-line: #333333;
+  --vd-frame-ink: #cccccc;
+  --vd-frame-dim: #8b949e;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.vd-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+::selection {
+  background: oklch(0.53 0.25 288 / 0.25);
+}
+
+/* -------------------------------------------------------------------------
+   2. Artwork that follows the theme
+   ------------------------------------------------------------------------- */
+
+.when-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .when-dark {
+    display: revert;
+  }
+  :root:not([data-theme='light']) .when-light {
+    display: none;
+  }
+}
+
+:root[data-theme='dark'] .when-dark {
+  display: revert;
+}
+
+:root[data-theme='dark'] .when-light {
+  display: none;
+}
+
+.vd-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+/* The text "Voodoo.js" in the brand, with the extension in the seed colour. */
+.vd-brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.vd-brand img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.vd-gradient-text {
+  background: linear-gradient(100deg, var(--primary) 10%, var(--magenta) 55%, var(--amber) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Visible focus, everywhere, in the seed colour. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.vd-skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+}
+
+.vd-skip:focus {
+  top: 1rem;
+}
+
+/* -------------------------------------------------------------------------
+   3. Code frames, VS Code style, with Shiki Light+ and Dark+
+   ------------------------------------------------------------------------- */
+
+.vframe {
+  border: 1px solid var(--vd-frame-line);
+  border-radius: var(--m-radius-xl);
+  background: var(--vd-frame);
+  color: var(--vd-frame-ink);
+  overflow: hidden;
+  box-shadow: var(--m-shadow-sm);
+  min-width: 0;
+}
+
+.vframe-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding-inline: 0.75rem 0.375rem;
+  background: var(--vd-frame-bar);
+  border-bottom: 1px solid var(--vd-frame-line);
+  font-size: 0.75rem;
+}
+
+.vframe-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-right: 0.25rem;
+}
+
+.vframe-dots i {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+
+.vframe-dots i:nth-child(2) {
+  background: #febc2e;
+}
+
+.vframe-dots i:nth-child(3) {
+  background: #28c840;
+}
+
+.vframe-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.75rem;
+  margin-bottom: -1px;
+  background: var(--vd-frame-tab);
+  border-top: 2px solid var(--primary);
+  color: var(--vd-frame-ink);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.vframe-tab .vd-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: #e37933;
+}
+
+.vframe-tab[data-lang='js'] .vd-icon,
+.vframe-tab[data-lang='javascript'] .vd-icon {
+  color: #cbcb41;
+}
+
+.vframe-tab[data-lang='bash'] .vd-icon {
+  color: var(--vd-frame-dim);
+}
+
+.vframe-copy {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--m-radius-sm);
+  color: var(--vd-frame-dim);
+  font-size: 0.75rem;
+  cursor: pointer;
+  background: transparent;
+}
+
+.vframe-copy:hover {
+  color: var(--vd-frame-ink);
+  background: color-mix(in oklab, var(--vd-frame-ink) 10%, transparent);
+}
+
+.vframe pre,
+pre.shiki {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  tab-size: 2;
+  background: transparent;
+  /* Code is read character by character: no ligatures turning --> into an
+     arrow or >= into a single glyph. */
+  font-variant-ligatures: none;
+}
+
+.vframe pre code {
+  font-family: inherit;
+}
+
+code,
+kbd,
+pre,
+textarea {
+  font-variant-ligatures: none;
+}
+
+/* Shiki writes both themes into every token as custom properties and no colour
+   of its own (defaultColor: false), so the page decides which one shows. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .shiki,
+  :root:not([data-theme='light']) .shiki span {
+    color: var(--shiki-dark);
+  }
+}
+
+:root[data-theme='dark'] .shiki,
+:root[data-theme='dark'] .shiki span {
+  color: var(--shiki-dark);
+}
+
+/* -------------------------------------------------------------------------
+   4. The theme toggle: system, light, dark
+
+   v-theme-toggle.cycle writes the current choice on the button as
+   data-voodoo-theme-mode. Until it does, the system icon stands in.
+   ------------------------------------------------------------------------- */
+
+.vd-theme .vd-theme-light,
+.vd-theme .vd-theme-dark,
+.vd-theme[data-voodoo-theme-mode='light'] .vd-theme-system,
+.vd-theme[data-voodoo-theme-mode='dark'] .vd-theme-system {
+  display: none;
+}
+
+.vd-theme[data-voodoo-theme-mode='light'] .vd-theme-light,
+.vd-theme[data-voodoo-theme-mode='dark'] .vd-theme-dark {
+  display: block;
+}
+
+/* The language picker is a native select styled as a quiet button. */
+.vd-lang {
+  appearance: none;
+  height: var(--m-control-h-sm);
+  padding: 0 1.75rem 0 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-md);
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 0.5rem center / 0.75rem;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* -------------------------------------------------------------------------
+   5. Spell effects
+   ------------------------------------------------------------------------- */
+
+/* The mascot floats beside the spell book, bobbing a few pixels. */
+@keyframes vd-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+.vd-float {
+  animation: vd-float 5.5s ease-in-out infinite;
+}
+
+/* A sparkle spawned by a run. The script sets --dx, --dy and --s. */
+.vd-sparkle {
+  position: fixed;
+  z-index: 60;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  pointer-events: none;
+  color: var(--amber);
+  animation: vd-sparkle 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+.vd-sparkle:nth-child(3n) {
+  color: var(--primary);
+}
+
+.vd-sparkle:nth-child(4n) {
+  color: var(--magenta);
+}
+
+@keyframes vd-sparkle {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.2) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(var(--s, 1)) rotate(160deg);
+  }
+}
+
+/* The ring of light that crosses the result when a spell lands. */
+@keyframes vd-cast {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.8 0.15 68 / 0.6), var(--m-shadow-md);
+  }
+  100% {
+    box-shadow: 0 0 0 18px oklch(0.8 0.15 68 / 0), var(--m-shadow-md);
+  }
+}
+
+.vd-cast {
+  animation: vd-cast 700ms ease-out;
+}
+
+/* A soft arcane glow behind a section: purple from one corner, amber from the
+   other. Decorative only. */
+.vd-aura {
+  position: relative;
+  isolation: isolate;
+}
+
+.vd-aura::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 28rem at 12% -10%, var(--vd-glow), transparent 70%),
+    radial-gradient(40rem 24rem at 95% 10%, oklch(0.8 0.15 68 / 0.12), transparent 70%);
+}
+
+/* A dotted rune grid used as a quiet texture under the hero. */
+.vd-runes {
+  background-image: radial-gradient(color-mix(in oklab, var(--foreground) 14%, transparent) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 85%);
+}
+
+/* The arcane underline under section kickers: a line, a sparkle, a line. */
+.vd-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.vd-kicker::before {
+  content: '';
+  width: 1.5rem;
+  height: 1px;
+  background: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .vd-float,
+  .vd-cast,
+  .vd-sparkle {
+    animation: none !important;
+  }
+  .vd-sparkle {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Footer extras: the project list with each mascot.
+   ------------------------------------------------------------------------- */
+
+.vd-projects a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vd-projects img {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+/* -------------------------------------------------------------------------
+   The library's built-in UI
+   ------------------------------------------------------------------------- */
+
+/* The library's own components take their colours from --v-* tokens. Point
+   them at Monsoon's, so they follow the seed and the theme. !important is
+   needed: V.palette() writes these under selectors that outrank :root. */
+html:root {
+  --v-surface: var(--surface) !important;
+  --v-surface-2: var(--surface-2) !important;
+  --v-surface-3: var(--surface-3) !important;
+  --v-border: var(--border) !important;
+  --v-text: var(--foreground) !important;
+  --v-text-muted: var(--muted-foreground) !important;
+  --v-primary: var(--primary) !important;
+}

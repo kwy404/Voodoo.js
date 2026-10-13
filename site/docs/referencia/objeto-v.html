@@ -10,7 +10,12 @@
 <meta name="description" content="Reference for the V object by area: core, reactivity, state, components, expressions, chainable DOM, HTTP, forms, interface, storage, environment and the modules in the full build.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/objeto-v">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
+<link rel="stylesheet" href="../../assets/site.css?v=daa5adda">
+<link rel="stylesheet" href="../assets/docs.css?v=b6184ccd">
 </head>
 <body>
 
@@ -23,8 +28,8 @@
   <b>full</b> only exists in <code>voodoo.full.min.js</code>.
 </p>
 
-<pre data-lang="js"><code>V('#list .item').addClass('active');   // chainable collection
-V.toast.success('Done');               // services</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'#list .item'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">).</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">addClass</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'active'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);   </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// chainable collection</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">toast</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">success</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'Done'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);               </span><span style="--shiki-light:#008000;--shiki-dark:#6A9955">// services</span></span></code></pre>
 
 <p><code>window.Voodoo</code> is the same object.</p>
 
@@ -163,8 +168,8 @@ parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  c
   To let through what is yours:
 </p>
 
-<pre data-lang="js"><code>V.config.globals.formatCPF = (v) =&gt; V.applyMask(v, 'cpf');
-V.config.globals.APP = { version: '2.1', environment: 'production' };</code></pre>
+<pre data-lang="js" class="shiki" data-shiki><code><span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">formatCPF</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = (</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">v</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#0000FF;--shiki-dark:#569CD6">=></span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF"> V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#795E26;--shiki-dark:#DCDCAA">applyMask</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">v</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178">'cpf'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">);</span></span>
+<span class="line"><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">V</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">config</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">globals</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#0070C1;--shiki-dark:#4FC1FF">APP</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> = { </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">version:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> '2.1'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#001080;--shiki-dark:#9CDCFE">environment:</span><span style="--shiki-light:#A31515;--shiki-dark:#CE9178"> 'production'</span><span style="--shiki-light:#000000;--shiki-dark:#D4D4D4"> };</span></span></code></pre>
 
 <h2 id="dom">Chainable DOM</h2>
 
@@ -311,6 +316,6 @@ V.config.globals.APP = { version: '2.1', environment: 'production' };</code></pr
 
 </article>
 
-<script src="../assets/docs.js?v=d1986131"></script>
+<script src="../assets/docs.js?v=cc525291"></script>
 </body>
 </html>
