@@ -1,14 +1,14 @@
-import { http, HttpError, request } from './chunk-OIH4BR2H.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, url, closestDirective, watchTheme, magic, storage, readAttr, hasAttr, componentAliases, Scope, session, cookie, cache, theme, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-2EFUHAQG.js';
-import { ref, reactive, handleError, toRaw, track, ITERATE_KEY, arrayVersion, nextTick, queuePostFlush, warn, watch, mutationsSince, EffectScope, computed, effect, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-FMDHZ5GI.js';
-import { warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp, warnDuplicateKey } from './chunk-IBIZ6OUI.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-2LGAXVD7.js';
-import { injectStyle, ensureTokens } from './chunk-MV73OSCS.js';
-import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-TEVCUTTC.js';
-import { __publicField } from './chunk-IJQ2PFXU.js';
+import { http, HttpError, request } from './chunk-LKL4O7ZD.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, url, closestDirective, watchTheme, magic, storage, readAttr, hasAttr, componentAliases, Scope, session, cookie, cache, theme, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-5KUKRKGS.js';
+import { ref, reactive, handleError, toRaw, track, ITERATE_KEY, arrayVersion, nextTick, queuePostFlush, warn, watch, mutationsSince, EffectScope, computed, effect, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-HFGBXDJZ.js';
+import { warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp, warnDuplicateKey } from './chunk-IHL3M2A2.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-22SCIQQX.js';
+import { injectStyle, ensureTokens } from './chunk-Z7IHVPPQ.js';
+import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-WM5AQ4SD.js';
+import { __publicField } from './chunk-I7ECQM6Y.js';
 
 /**
- * Voodoo.js v0.13.0
+ * Voodoo.js v1.0.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */
@@ -2869,7 +2869,7 @@ var jsonStylesInjected = false;
 function injectJSONStyles() {
   if (jsonStylesInjected) return;
   jsonStylesInjected = true;
-  void import('./style-E22XVZ33.js').then(({ injectStyle: injectStyle2 }) => {
+  void import('./style-3BM5MPHQ.js').then(({ injectStyle: injectStyle2 }) => {
     injectStyle2(
       "json-render",
       `
@@ -3157,7 +3157,7 @@ function data(values) {
   Object.defineProperties(rootScope.data, Object.getOwnPropertyDescriptors(values));
   return rootScope.data;
 }
-var version2 = "0.13.0";
+var version2 = "1.0.0";
 var core = {
   // Utilities first: Voodoo's own names can override.
   ...utils_exports,
@@ -10516,5 +10516,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, clearErrors, clipboard, confirm, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, setAppHost, showFieldError, showFormErrors, slideDown, slideUp, sound, store, storeNames, toast, unmask, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-5RQSNQDQ.js.map
-//# sourceMappingURL=chunk-5RQSNQDQ.js.map
+//# sourceMappingURL=chunk-RE54OOJN.js.map
+//# sourceMappingURL=chunk-RE54OOJN.js.map

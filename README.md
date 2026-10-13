@@ -49,7 +49,7 @@ Save this as `index.html` and open it. There is no build step, no bundler, no co
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -116,10 +116,10 @@ You do not need React, Vue, a bundler or Node.js to use Voodoo. Pick one:
 **CDN, nothing to install**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
 ```
 
-That is the whole installation; the library starts itself once the page is ready. [unpkg](https://unpkg.com/voodoojs@0.13.0/dist/voodoo.full.min.js) serves the same file. The tag names an exact version, so what you load never changes under you.
+That is the whole installation; the library starts itself once the page is ready. [unpkg](https://unpkg.com/voodoojs@1.0.0/dist/voodoo.full.min.js) serves the same file. The tag names an exact version, so what you load never changes under you.
 
 **npm, for a bundler or a server-rendered app**
 
@@ -140,7 +140,7 @@ import { debounce } from 'voodoojs/utils'
 **Vendor the file, or build it yourself**, for pages that must not reach a third-party host or for an air-gapped network:
 
 ```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js
 # or build from source; the bundles land in packages/voodoojs/dist/
 git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install && npm run build
@@ -150,9 +150,9 @@ cd Voodoo.js && npm install && npm run build
 
 | File | Contents | JSX in HTML | Gzip |
 | --- | --- | --- | ---: |
-| `voodoo.core.min.js` | **Minimal.** Reactivity, expressions, directives, components, DOM, requests | No | about 51 KB |
-| `voodoo.min.js` | **Essential.** Adds forms, validation, masks, UI, drag and drop, theme toggle | No | about 88 KB |
-| `voodoo.full.min.js` | **Full.** Adds JSX, charts, motion, router, i18n, devtools, ready-made components | **Yes** | about 136 KB |
+| `voodoo.core.min.js` | 147.92 KB | 51.04 KB | 44.46 KB |
+| `voodoo.min.js` | 272.30 KB | 88.29 KB | 74.72 KB |
+| `voodoo.full.min.js` | 451.65 KB | 137.08 KB | 114.04 KB |
 
 JSX lives only in the full build. With the minimal or essential build, a JSX page shows its source as plain text. Realtime (`V.socket`) and WebGPU (`V.gpu`) ship as separate entries, `dist/socket.js` and `dist/gpu.js`, and are in none of the browser bundles. Sizes move between releases: see the badge above, [`benchmarks/reports/bundle.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/bundle.md), `npm run size` or `npx voodoojs-cli info`.
 
@@ -577,7 +577,7 @@ Save this page, open it, click the buttons a few times, then press the keys and 
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
   <div v-data="{ count: 0, items: ['a', 'b'] }">
@@ -773,13 +773,13 @@ Voodoo is the largest bundle in that chart and there is no way to read it otherw
 
 Both charts are true at once. If bundle size is your binding constraint, Alpine and Preact remain the honest recommendation, and `voodoo.core.min.js` is there for pages that want the directives and nothing else.
 
-Measured on the 0.13.0 builds committed to `main` (KiB):
+Measured on the 1.0.0 builds committed to `main` (KiB):
 
 | Build | Minified | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 146.86 KB | 50.72 KB | 44.15 KB |
-| `voodoo.min.js` | 270.70 KB | 87.83 KB | 74.29 KB |
-| `voodoo.full.min.js` | 447.94 KB | 136.27 KB | 113.24 KB |
+| `voodoo.core.min.js` | 147.92 KB | 51.04 KB | 44.46 KB |
+| `voodoo.min.js` | 272.30 KB | 88.29 KB | 74.72 KB |
+| `voodoo.full.min.js` | 451.65 KB | 137.08 KB | 114.04 KB |
 
 Run them yourself with `npm run size`; the harness and the exact versions under test live in [`benchmarks/`](https://github.com/kwy404/Voodoo.js/tree/main/benchmarks).
 
