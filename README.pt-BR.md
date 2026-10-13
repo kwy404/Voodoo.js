@@ -1,37 +1,49 @@
 <div align="center">
 
-<img src="brand/logo/voodoo-logo.svg#gh-light-mode-only" alt="Voodoo.js" width="380">
-<img src="brand/logo/voodoo-logo-dark.svg#gh-dark-mode-only" alt="Voodoo.js" width="380">
+<a href="https://kwy404.github.io/Voodoo.js/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/brand/mascot-v2/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/brand/mascot-v2/banner.svg">
+    <img src="https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/brand/mascot-v2/banner.svg" alt="Voodoo.js: JSX em HTML puro, sem passo de build" width="760">
+  </picture>
+</a>
 
-### JSX rodando direto de um arquivo `.html`.
+### JSX em HTML puro. Sem passo de build.
 
-**Escreva JSX. Salve o arquivo. Abra no navegador. Não existe nada no meio.**
+**Escreva JSX num arquivo `.html`, abra no navegador e pronto. HTML reativo, componentes, HTTP, formulários e roteador em uma tag de script.**
 
 Sem bundler · Sem transform de JSX · Sem dependências em tempo de execução · Sem configuração
 
 [![CI](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml/badge.svg)](https://github.com/kwy404/Voodoo.js/actions/workflows/ci.yml)
-[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-FFB35C.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6.svg)](#typescript)
 [![npm](https://img.shields.io/npm/v/voodoojs.svg?label=npm&color=CB3837)](https://www.npmjs.com/package/voodoojs)
-[![downloads](https://img.shields.io/npm/dm/voodoojs.svg?label=downloads&color=CB3837)](https://www.npmjs.com/package/voodoojs)
-[![voodoo.full.min.js](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.full.min.js?branch=main&label=voodoo.full.min.js)](packages/voodoojs/dist/voodoo.full.min.js)
+[![downloads por mês](https://img.shields.io/npm/dm/voodoojs.svg?label=downloads&color=CB3837)](https://www.npmjs.com/package/voodoojs)
+[![downloads no total](https://img.shields.io/npm/dt/voodoojs.svg?label=total&color=CB3837)](https://www.npmjs.com/package/voodoojs)
+[![tamanho do bundle](https://img.shields.io/github/size/kwy404/Voodoo.js/packages%2Fvoodoojs%2Fdist%2Fvoodoo.full.min.js?branch=main&label=voodoo.full.min.js)](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/bundle.md)
+[![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-FFB35C.svg)](https://github.com/kwy404/Voodoo.js/blob/main/LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-completo-3178C6.svg)](#typescript)
 
-<img src="brand/mascot/vudu-wave.svg" alt="Vudu, o mascote da Voodoo.js" width="120">
+**[Site](https://kwy404.github.io/Voodoo.js/) · [Playground](https://kwy404.github.io/Voodoo.js/playground.html) · [Componentes](https://kwy404.github.io/Voodoo.js/components.html) · [Exemplos](https://kwy404.github.io/Voodoo.js/examples/) · [Documentação](https://kwy404.github.io/Voodoo.js/docs/) · [English](https://github.com/kwy404/Voodoo.js/blob/main/README.md)**
 
-*JavaScript feels like magic.*
-
-**[Site](https://kwy404.github.io/Voodoo.js/) · [Playground](https://kwy404.github.io/Voodoo.js/playground.html) · [Componentes](https://kwy404.github.io/Voodoo.js/components.html) · [Exemplos](https://kwy404.github.io/Voodoo.js/examples/) · [Documentação](https://kwy404.github.io/Voodoo.js/docs/)**
-
-Tudo acima roda no navegador, e foi feito com a própria Voodoo.js.
-
-[JSX em HTML puro](#jsx-em-html-puro) · [Instalação](#instalação) · [Início rápido](#início-rápido) · [Benchmarks](#desempenho) · [Contribuir](#contribuindo) · [English](README.md)
+<sub>Tudo acima roda no navegador e foi feito com a própria Voodoo.js. *JavaScript feels like magic.*</sub>
 
 </div>
 
-## JSX em HTML puro
+## Sumário
 
-Salve como `index.html` e abra. Não tem passo de build, não tem bundler, não tem
-compilador e não tem transform de JSX.
+- [O exemplo de 10 segundos](#o-exemplo-de-10-segundos)
+- [Por que a Voodoo](#por-que-a-voodoo)
+- [Instalação](#instalação)
+- [Início rápido](#início-rápido)
+- Conceitos principais: [JSX em HTML](#jsx-em-html) · [Directives](#directives) · [Reatividade](#reatividade) · [Componentes](#componentes) · [HTTP](#http) · [Formulários e validação](#formulários-e-validação) · [Stores, roteador e aplicações completas](#stores-roteador-e-aplicações-completas) · [Tema e modo escuro](#tema-e-modo-escuro) · [TypeScript](#typescript)
+- [O que vem na caixa](#o-que-vem-na-caixa)
+- [CLI](#cli) · [DevTools](#devtools)
+- [Desempenho](#desempenho) · [Comparação](#comparação) · [Quando usar a Voodoo](#quando-usar-a-voodoo)
+- [Exemplos](#exemplos) · [Documentação](#documentação) · [Arquitetura](#arquitetura)
+- [Roadmap](#roadmap) · [Contribuindo](#contribuindo) · [Outros projetos](#conheça-outros-projetos-de-kwy404) · [Licença](#licença)
+
+## O exemplo de 10 segundos
+
+Salve como `index.html` e abra. Não tem passo de build, não tem bundler, não tem compilador e não tem transform de JSX.
 
 ```html
 <!doctype html>
@@ -58,32 +70,155 @@ compilador e não tem transform de JSX.
 </html>
 ```
 
-> O JSX fica no build completo, `voodoo.full.min.js`. Os builds menores, `voodoo.min.js` e
-> `voodoo.core.min.js`, não trazem o leitor de JSX, então com eles uma página como esta
-> mostra o código como texto. Para JSX, use o build completo.
+Prefere atributos a JSX? O mesmo runtime lê os dois, e eles convivem na mesma página:
 
-Esse é o diferencial. Qualquer outro jeito de escrever JSX precisa de uma
-ferramenta entre o arquivo que você edita e o arquivo que o navegador carrega.
-Aqui *é* o arquivo que o navegador carrega.
+```html
+<div v-data="{ contador: 0 }">
+  <button @click="contador--">-</button>
+  <strong>{ contador }</strong>
+  <button @click="contador++">+</button>
+</div>
+```
+
+**[Teste dez exemplos de JSX no playground](https://kwy404.github.io/Voodoo.js/playground.html)**
+
+## Por que a Voodoo
+
+Qualquer outro jeito de escrever JSX precisa de uma ferramenta entre o arquivo que você edita e o arquivo que o navegador carrega. Com a Voodoo, o arquivo que você edita *é* o arquivo que o navegador carrega.
 
 | Para renderizar a lista acima | O que é preciso |
 | --- | --- |
 | React | npm install, um bundler, Babel ou SWC, um build, um dev server |
-| Preact | npm install, um bundler, um transform de JSX — ou `htm`, que não é JSX |
+| Preact | npm install, um bundler, um transform de JSX, ou `htm`, que não é JSX |
 | Solid | npm install, um bundler, o compilador próprio; JSX não é opcional |
-| Vue | npm install, um bundler, `@vitejs/plugin-vue` — ou render functions na mão |
-| Svelte | npm install, um bundler, o compilador do Svelte — e não é JSX |
+| Vue | npm install, um bundler, `@vitejs/plugin-vue`, ou render functions na mão |
+| Svelte | npm install, um bundler, o compilador do Svelte, e não é JSX |
 | **Voodoo.js** | **uma tag `<script>`** |
 
-O custo honesto, dito logo de cara: essas ferramentas compilam o JSX para
-chamadas diretas de DOM antes de rodar, e a Voodoo lê o JSX em tempo de
-execução. Um compilador vence um interpretador em throughput de atualização, e
-sempre vai vencer — os [benchmarks](#desempenho) abaixo mostram exatamente onde
-e por quanto. O que você recebe em troca é um arquivo que dá para abrir, editar
-e mandar para alguém sem que exista um `node_modules` em lugar nenhum da
-história.
+- **JSX sem ferramenta nenhuma.** `{items.map(i => <li>{i}</li>)}` renderiza a partir de um `.html` aberto direto do disco.
+- **HTML primeiro.** A página que você já tem é a aplicação. O comportamento fica ao lado da marcação a que pertence: um arquivo, não três.
+- **Reatividade granular.** `reactive`, `ref`, `computed` e `effect` sobre Proxy. Uma escrita reexecuta apenas os efeitos que leram aquele valor, e eles atualizam o nó real do DOM que é deles. Não existe Virtual DOM.
+- **Sem eval, compatível com CSP.** As expressões passam por um lexer de verdade, um parser Pratt e um interpretador de AST. Sem `eval`, sem `new Function`, por isso a Voodoo roda sob uma Content Security Policy sem `unsafe-eval`.
+- **Zero dependências em tempo de execução.** Os bundles de navegador não carregam nada além da própria Voodoo.
+- **Melhoria progressiva.** A Voodoo enriquece os elementos que você marca e deixa o resto da página em paz, então entra em bases de código existentes sem reescrita.
+- **Tudo incluído.** Reatividade, componentes, roteador, HTTP, formulários, validação, máscaras, interface, arrastar e soltar, animação, gráficos, i18n e stores vêm num arquivo só, e não em doze pacotes.
+- **TypeScript.** O código inteiro é TypeScript e todo ponto de entrada publica declarações.
+- **Ferramentas opcionais.** Existe uma [CLI](#cli) para criar projetos e builds sob medida. Você nunca é obrigado a usar.
 
-Condicionais devolvem elementos como no JSX, e de um jeito que o JSX não tem:
+**O custo honesto, dito logo de cara.** Essas ferramentas compilam o JSX para chamadas diretas de DOM antes de rodar, e a Voodoo lê o JSX em tempo de execução. Um compilador vence um interpretador em throughput de atualização, e os [benchmarks](#desempenho) mostram exatamente onde e por quanto. A Voodoo também é o maior bundle da sua tabela de comparação. O que você recebe em troca é um arquivo que dá para abrir, editar e mandar para alguém sem que exista um `node_modules` em lugar nenhum da história.
+
+Isto não é um "matador de React". É um ponto de partida diferente para um tipo de projeto diferente: painéis administrativos gerados no servidor, sites de conteúdo, protótipos, páginas legadas e qualquer coisa em que acrescentar um bundler custa mais do que o problema que você está resolvendo.
+
+## Instalação
+
+Você não precisa de React, Vue, bundler nem Node.js para usar a Voodoo. Escolha um caminho:
+
+**CDN, nada para instalar**
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
+```
+
+Essa é a instalação inteira; a biblioteca se inicia sozinha quando a página fica pronta. O [unpkg](https://unpkg.com/voodoojs@0.13.0/dist/voodoo.full.min.js) serve o mesmo arquivo. A tag fixa uma versão exata, então o que você carrega nunca muda sem você saber.
+
+**npm, para um bundler ou uma aplicação renderizada no servidor**
+
+```bash
+npm install voodoojs
+```
+
+```js
+import V from 'voodoojs'
+V.start()
+
+// ou importe só o que precisa: pontos de entrada separados, ESM e CJS, com tipos
+import { reactive, computed } from 'voodoojs/reactivity'
+import { http } from 'voodoojs/http'
+import { debounce } from 'voodoojs/utils'
+```
+
+**Copiar o arquivo, ou compilar você mesmo**, para páginas que não podem acessar um host de terceiros ou para uma rede isolada:
+
+```bash
+curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js
+# ou compile a partir do código; os bundles ficam em packages/voodoojs/dist/
+git clone https://github.com/kwy404/Voodoo.js.git
+cd Voodoo.js && npm install && npm run build
+```
+
+**Qual build?**
+
+| Arquivo | Conteúdo | JSX em HTML | Gzip |
+| --- | --- | --- | ---: |
+| `voodoo.core.min.js` | **Mínimo.** Reatividade, expressões, directives, componentes, DOM, requisições | Não | cerca de 51 KB |
+| `voodoo.min.js` | **Essencial.** Acrescenta formulários, validação, máscaras, interface, arrastar e soltar, troca de tema | Não | cerca de 88 KB |
+| `voodoo.full.min.js` | **Completo.** Acrescenta JSX, gráficos, animação, roteador, i18n, devtools, componentes prontos | **Sim** | cerca de 136 KB |
+
+O JSX existe só no build completo. Com o mínimo ou o essencial, uma página com JSX mostra o código como texto. Tempo real (`V.socket`) e WebGPU (`V.gpu`) têm entradas próprias, `dist/socket.js` e `dist/gpu.js`, e não vêm em nenhum bundle de navegador. Os tamanhos mudam entre versões: veja o badge acima, o [`benchmarks/reports/bundle.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/bundle.md), `npm run size` ou `npx voodoojs-cli info`.
+
+## Início rápido
+
+**Estado, eventos e two-way binding.** A interpolação usa chaves simples, `{ expressão }`. `{{ expressão }}` também é aceito, para quem vem do Vue.
+
+```html
+<div v-data="{ nome: 'Mundo', email: '' }">
+  <p>Olá, { nome }!</p>
+  <button @click="nome = 'Voodoo'">Trocar</button>
+
+  <input v-model="email" type="email">
+  <p v-show="email">Você digitou: { email }</p>
+</div>
+```
+
+**Condicionais, listas, classes e estilos.**
+
+```html
+<div v-data="{ status: 'pronto', itens: ['um', 'dois'], largura: 60 }">
+  <p v-if="status === 'carregando'">Carregando...</p>
+  <p v-else-if="status === 'erro'">Algo deu errado.</p>
+  <p v-else>Pronto.</p>
+
+  <li v-for="(item, indice) in itens" :key="indice">{ indice + 1 }. { item }</li>
+
+  <span :class="{ 'is-active': status === 'pronto' }" :style="{ width: largura + '%' }"></span>
+</div>
+```
+
+**A mesma ideia, fazendo trabalho de verdade.** Estado reativo, uma requisição HTTP ao vivo, um formulário validado e um toast, ainda em uma tag de script:
+
+```html
+<div v-data="{ }">
+
+  <!-- Uma requisição com estado próprio de carregamento, erro e dados, declarada no HTML -->
+  <div v-resource="usuarios: /api/usuarios">
+    <p v-if="usuarios.loading">Carregando...</p>
+    <p v-else-if="usuarios.error">{ usuarios.error.message }</p>
+    <ul v-else>
+      <li v-for="u in usuarios.data" :key="u.id">{ u.nome }</li>
+    </ul>
+    <button @click="usuarios.reload()">Atualizar</button>
+  </div>
+
+  <!-- Um formulário que valida, envia por AJAX e devolve o resultado -->
+  <form v-submit="/api/usuarios" v-method="POST" v-validate
+        v-toast-success="Usuário criado" v-reset-success>
+    <input name="nome" v-required>
+    <input name="email" type="email" v-required v-email>
+    <button type="submit" :disabled="$form.loading">
+      { $form.loading ? 'Salvando...' : 'Salvar' }
+    </button>
+  </form>
+
+</div>
+```
+
+Essa é a aplicação inteira. Não existe um `app.js` ao lado fazendo a ligação. Próximos passos: [introdução](https://github.com/kwy404/Voodoo.js/blob/main/docs/introducao.md) e [início rápido passo a passo](https://github.com/kwy404/Voodoo.js/blob/main/docs/inicio-rapido.md).
+
+## Conceitos principais
+
+### JSX em HTML
+
+Uma região é reativa: ela é um efeito, então `itens.push(...)` re-renderiza a lista, e tudo compõe com o resto (`v-data`, `@click`, `v-model`, stores). Condicionais devolvem elementos como no JSX, e também de um jeito que o JSX não oferece, um `if / else if / else` de verdade devolvendo elementos:
 
 ```html
 <p>{logado ? <b>Bem-vindo de volta</b> : <b>Faça login</b>}</p>
@@ -96,11 +231,7 @@ Condicionais devolvem elementos como no JSX, e de um jeito que o JSX não tem:
 </p>
 ```
 
-Um `if / else if / else` de verdade devolvendo elementos é coisa que o próprio
-JSX não oferece.
-
-Callbacks têm corpo de verdade, então ramificar por item se escreve como em
-qualquer outro lugar:
+Callbacks têm corpo de verdade, então ramificar por item se escreve como em qualquer outro lugar:
 
 ```html
 <ul>
@@ -117,31 +248,9 @@ qualquer outro lugar:
 </ul>
 ```
 
-E é reativo. Uma região é um efeito, então `itens.push(...)` re-renderiza a
-lista, e tudo compõe com o resto: `v-data`, `@click`, `v-model`, stores.
+**As duas regras que mantêm isso fora do seu caminho.** Uma região só é reivindicada quando existe um **elemento** dentro das chaves: `{ contador }` sozinho é interpolação comum, e um `{` solto na prosa nunca fecha. E `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` e `noscript` nunca são varridos, então uma página cheia de código de exemplo continua sendo uma página cheia de código de exemplo.
 
-### Como isso é possível
-
-O navegador já parseou a página, e o que sobra dá para recuperar. Para a lista
-acima o DOM são três irmãos: o texto `{frutas.map((fruta) => (`, o elemento
-`<li>{fruta}</li>`, e o texto `))}`. O elemento não é um estrago a contornar, é
-o template. Juntar o texto de volta com um marcador onde o elemento estava
-reconstrói a expressão exatamente como foi digitada, e ela passa pelo mesmo
-lexer, parser e interpretador de qualquer outra expressão. Nada é compilado e
-nada é avaliado como string, então continua funcionando sob uma Content Security
-Policy estrita.
-
-### As duas regras que mantêm isso fora do seu caminho
-
-Uma região só é reivindicada quando existe um **elemento** dentro das chaves.
-`{ contador }` sozinho é interpolação comum, e um `{` solto na prosa nunca
-fecha.
-
-E `script`, `style`, `pre`, `code`, `samp`, `kbd`, `textarea`, `template` e
-`noscript` nunca são varridos, então uma página cheia de código de exemplo
-continua sendo uma página cheia de código de exemplo.
-
-### Não existe `style={{ ... }}`. Use o bind do atributo
+**Não existe `style={{ ... }}`. Use o bind do atributo.**
 
 ```html
 <div :style="{ backgroundColor: cor }">    <!-- é assim -->
@@ -150,126 +259,41 @@ continua sendo uma página cheia de código de exemplo.
 <div style={{ backgroundColor: cor }}>     <!-- não faz nada -->
 ```
 
-Uma versão anterior deste arquivo marcava a linha do meio como funcionando. Ela
-não funciona: um atributo `style` comum nunca é tratado como expressão, porque
-só atributos `v-*`, `:` e `@` são lidos. As chaves sobrevivem literalmente como
-uma declaração CSS sem sentido e o elemento aparece sem estilo. Com dois-pontos
-na frente, o bind normal faz exatamente o que se queria.
+Um atributo `style` comum nunca é tratado como expressão, porque só atributos `v-*`, `:` e `@` são lidos; uma versão anterior deste arquivo marcava, por engano, a linha do meio como funcionando. As chaves sobrevivem literalmente como uma declaração CSS sem sentido e o elemento aparece sem estilo. A última linha falha por dois motivos, e o segundo vale para qualquer atributo: um valor sem aspas termina no primeiro espaço, então o navegador o transforma em seis atributos separados antes de qualquer script rodar, passando os nomes para minúsculo no caminho. Ponha aspas nos valores.
 
-A última linha falha por dois motivos, e o segundo vale para qualquer atributo:
-valor sem aspas termina no primeiro espaço, então o navegador o transforma em
-seis atributos separados antes de qualquer script rodar, passando os nomes para
-minúsculo no caminho. Ponha aspas nos valores.
+<details>
+<summary><b>Como isso é possível</b></summary>
 
-**[Teste os dez exemplos no playground](https://kwy404.github.io/Voodoo.js/playground.html)**
+O navegador já parseou a página, e o que sobra dá para recuperar. Para a lista do exemplo de 10 segundos o DOM são três irmãos: o texto `{frutas.map((fruta) => (`, o elemento `<li>{fruta}</li>`, e o texto `))}`. O elemento não é um estrago a contornar, é o template. Juntar o texto de volta com um marcador onde o elemento estava reconstrói a expressão exatamente como foi digitada, e ela passa pelo mesmo lexer, parser e interpretador de qualquer outra expressão. Nada é compilado e nada é avaliado como string, então continua funcionando sob uma Content Security Policy estrita.
 
----
+</details>
 
-## A versão de 30 segundos
+Guia completo: [JSX no site](https://kwy404.github.io/Voodoo.js/docs/guia/jsx.html).
 
-Salve este arquivo. Abra no navegador. Funciona.
+### Directives
 
-```html
-<script src="voodoo.full.min.js" defer></script>
+Atributos são ligados ao estado reativo, e quando esse estado muda apenas os nós do DOM que dependem dele são atualizados. As que você vai usar primeiro:
 
-<div v-data="{ contador: 0 }">
-  <button @click="contador--">-</button>
-  <strong>{ contador }</strong>
-  <button @click="contador++">+</button>
-</div>
-```
+| Directive | O que faz |
+| --- | --- |
+| `v-data` | Declara estado reativo para um elemento e seus filhos |
+| `{ expr }`, `v-text`, `v-html` | Interpolação de texto, conteúdo de texto, HTML confiável |
+| `v-if`, `v-else-if`, `v-else`, `v-show` | Renderização condicional e visibilidade |
+| `v-for` com `:key` | Listas com chave |
+| `:attr` (`v-bind`), `v-class`, `v-style` | Bind de atributo, classe e estilo |
+| `@evento` (`v-on`) | Eventos, com modificadores e filtros de tecla |
+| `v-model` | Two-way binding para inputs, selects e checkboxes |
+| `v-ref`, `v-init`, `v-effect`, `v-watch` | Referências a elementos e efeitos colaterais |
+| `v-component`, `v-teleport`, `v-transition` | Componentes, portais e transições de entrada e saída |
+| `v-cloak`, `v-once`, `v-pre`, `v-ignore` | Controle de renderização |
+| `v-get`, `v-post`, `v-resource`, `v-load` | [HTTP](#http) declarativo |
+| `v-submit`, `v-validate`, `v-mask` | [Formulários e validação](#formulários-e-validação) |
 
-Sem bundler, sem passo de build, sem arquivo de configuração, sem JSX. Só HTML que pensa.
+Depois que uma directive é instalada, o atributo é lido para a memória e removido do documento, então a página termina como HTML comum (desligue com `V.config.cleanAttributes = false`). A lista completa, com todos os modificadores: [referência de directives](https://github.com/kwy404/Voodoo.js/blob/main/docs/directives.md).
 
-### A mesma ideia, fazendo trabalho de verdade
+### Reatividade
 
-Estado reativo, uma requisição HTTP ao vivo, um formulário validado e uma notificação — ainda em
-uma tag de script, ainda sem passo de build:
-
-```html
-<div v-data="{ }">
-
-  <!-- Uma requisição com estado próprio de carregamento, erro e dados, declarada no HTML -->
-  <div v-resource="usuarios: /api/usuarios">
-    <p v-if="usuarios.loading">Carregando…</p>
-    <p v-else-if="usuarios.error">{ usuarios.error.message }</p>
-    <ul v-else>
-      <li v-for="u in usuarios.data" :key="u.id">{ u.nome }</li>
-    </ul>
-    <button @click="usuarios.reload()">Atualizar</button>
-  </div>
-
-  <!-- Um formulário que valida, envia por AJAX e devolve o resultado -->
-  <form v-submit="/api/usuarios" v-method="POST" v-validate
-        v-toast-success="Usuário criado" v-reset-success>
-    <input name="nome" v-required>
-    <input name="email" type="email" v-required v-email>
-    <button type="submit" :disabled="$form.loading">
-      { $form.loading ? 'Salvando…' : 'Salvar' }
-    </button>
-  </form>
-
-</div>
-```
-
-Essa é a aplicação inteira. Não existe um `app.js` ao lado fazendo a ligação.
-
-## O que é a Voodoo?
-
-React e Vue começam pelo JavaScript: você descreve a interface em uma linguagem de componentes, e o
-HTML é o que o framework produz no final.
-
-**A Voodoo começa pelo HTML.** A página que você já tem *é* a aplicação. Você acrescenta atributos a
-ela, cada atributo é ligado ao estado reativo, e quando esse estado muda apenas os nós do DOM que
-dependem dele são atualizados — nada mais é tocado, e não existe Virtual DOM no meio do caminho.
-
-Quando o HTML não basta, a API `V` está ali: `V.reactive`, `V.component`, `V.http`, `V.store`,
-`V.router` e uma coleção de DOM encadeável através de `V('#seletor')`. Se preferir, dá para
-escrever a aplicação inteira em JavaScript com `V.createApp().mount('#app')`. É o mesmo runtime, e
-os dois modos convivem livremente na mesma página.
-
-Isto não é um "matador de React". É um ponto de partida diferente para um tipo de projeto
-diferente: painéis administrativos gerados no servidor, sites de conteúdo, protótipos, páginas
-legadas e qualquer coisa em que montar um pipeline de build custa mais do que o problema que você
-está resolvendo.
-
-## Por que a Voodoo?
-
-- **JSX sem ferramenta nenhuma.** `{items.map(i => <li>{i}</li>)}` renderiza a partir de um
-  `.html` aberto direto do disco. Sem bundler, sem transform, sem build.
-- **HTML-first.** O comportamento fica ao lado da marcação a que pertence. Um arquivo, não três.
-- **Reatividade granular.** `reactive` / `ref` / `computed` / `effect` sobre Proxy. Uma escrita
-  reexecuta apenas os efeitos que de fato leram aquele valor.
-- **Sem passo de build obrigatório.** Uma tag `<script>` já é a instalação completa. O build existe
-  quando você quiser, nunca por obrigação.
-- **Zero dependências em tempo de execução.** Os bundles de navegador não carregam nada além da
-  própria Voodoo.
-- **Atualização direta do DOM.** Sem Virtual DOM: cada effect escreve no nó que é dele. Listas
-  são o único lugar onde um diff é inevitável, e o `v-for` usa a mutação que você fez — `push`,
-  `splice`, `shift` — para tocar só nas linhas que mudaram. Veja [desempenho](#desempenho).
-- **Parser de expressões seguro.** As expressões dos atributos passam por um lexer de verdade, um
-  parser Pratt e um interpretador de AST. Sem `eval`, sem `new Function` — por isso a Voodoo roda
-  sob uma Content Security Policy sem `unsafe-eval`.
-- **Melhoria progressiva.** A Voodoo nunca toma conta da página: ela enriquece os elementos que
-  você marca e deixa o resto em paz, então entra em bases de código existentes sem reescrita.
-- **Tudo incluído.** Reatividade, componentes, roteador, HTTP, formulários, validação, máscaras,
-  interface, arrastar e soltar, animação, gráficos, i18n e stores vêm na caixa — e não em doze
-  pacotes.
-- **TypeScript.** O código inteiro é TypeScript e todo ponto de entrada publica declarações.
-- **Ferramentas opcionais.** Existe uma CLI para criar projetos e builds sob medida. Você nunca é
-  obrigado a usar.
-
-## Duas formas de escrever
-
-**Modo 1 — HTML.** Estado declarado onde ele é usado:
-
-```html
-<div v-data="{ contador: 0 }">
-  <button @click="contador++">Cliques: { contador }</button>
-</div>
-```
-
-**Modo 2 — JavaScript.** O mesmo motor de reatividade, guiado pelo seu código:
+O mesmo motor de reatividade está disponível no JavaScript:
 
 ```js
 const estado = V.reactive({ contador: 0 })
@@ -277,150 +301,11 @@ V.effect(() => { document.title = `Cliques: ${estado.contador}` })
 estado.contador++
 ```
 
-## Tudo incluído
+`reactive`, `ref`, `computed`, `effect`, `watch`, `watchEffect`, `nextTick`, `effectScope` e `flushSync` são todos exportados. Guia: [reatividade](https://github.com/kwy404/Voodoo.js/blob/main/docs/reatividade.md).
 
-Cada linha abaixo faz parte do runtime publicado.
+### Componentes
 
-| Pilar | O que você tem |
-| --- | --- |
-| **Reatividade** | `reactive`, `ref`, `computed`, `effect`, `watch`, `watchEffect`, `nextTick`, `effectScope`, `flushSync` |
-| **Expressões** | Lexer + parser Pratt + interpretador de AST próprios. Sem `eval`, compatível com CSP |
-| **Directives** | Texto, condicionais, listas, ligação, classes, estilos, eventos, refs, transições e mais |
-| **Componentes** | Props, estado, computados, métodos, watchers, template, estilo próprio, slots nomeados, `provide`/`inject`, ciclo de vida |
-| **Modo aplicação** | `V.createApp({…}).mount('#app')` com `use`, `provide`, componentes locais e `unmount` |
-| **DOM** | Coleção encadeável via `V('#seletor')`, mais utilitários de transição |
-| **HTTP** | Interceptors, timeout, retry exponencial, cache, CSRF, progresso de upload, SSE, stream NDJSON, fila offline |
-| **Requisições declarativas** | `v-get`/`v-post`/`v-put`/`v-patch`/`v-delete`, `v-resource`, `v-load`, `v-load-visible`, `v-search`, polling |
-| **Formulários** | Envio por AJAX, serialização, upload, dropzone, autosave, aviso ao sair, estado reativo `$form` |
-| **Validação e máscaras** | Conjunto completo de regras, regras assíncronas, regras e mensagens próprias, máscaras de entrada |
-| **Stores** | `V.store(nome, def, { persist })` e a mágica `$store`, com persistência opcional no `localStorage` |
-| **Armazenamento** | `storage`, `session`, `cookie`, `cache`, `url`, `theme` |
-| **Interface** | Toast, modal, alert, confirm, prompt, dialog, paleta de comandos, mais directives de abas, dropdown, tooltip, gaveta, popover e acordeão |
-| **Arrastar e soltar** | `v-draggable`, `v-droppable`, `v-sortable`, grupos, suporte a teclado |
-| **Roteador** | Modos history e hash, params, query, guards, restauração de rolagem, cache de view, `v-link`, `v-router-view`, rotas dinâmicas |
-| **i18n** | Mensagens por idioma, `V.t`, `v-t`, pluralização, troca de idioma em tempo de execução |
-| **Animação** | Física de mola, stagger, `inView`, progresso de rolagem, presets |
-| **Gráficos** | Desenhados em SVG puro, sem dependência de biblioteca de gráficos |
-| **Tempo real** | `V.socket` com WebSocket nativo e protocolo Socket.IO, salas publicas e privadas, reconexao com espera progressiva, heartbeat e fila de envio. Declarativo com `v-socket`, `v-room` e `v-on-socket:` |
-| **GPU** | `V.gpu` sobre WebGPU com reflexao de WGSL, e a directive `v-shader`. Sem WebGPU, cai no conteudo alternativo do canvas |
-| **Devtools** | Inspetor de reatividade `V.xray` e um barramento de eventos |
-| **CLI** | `voodoojs-cli`: `init`, `build --modules=…`, `add`, `info` |
-
-## Instalação
-
-**Uma tag script, e nada para instalar**
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
-```
-
-Essa é a instalação inteira. A biblioteca começa sozinha assim que a página fica pronta. O
-[unpkg](https://unpkg.com/voodoojs@0.13.0/dist/voodoo.full.min.js) serve o mesmo arquivo, se você preferir.
-
-A tag acima nomeia uma versão exata, então o que você carrega não muda sozinho e a página diz qual
-build é. Use a linha `0.11` se preferir que as correções de patch cheguem sem edição. É o build
-COMPLETO, que é o que tem JSX; tire o `.full` para o essencial, 84 KB gzip contra 132, se você não
-precisar.
-
-**npm**
-
-```bash
-npm install voodoojs
-```
-
-```js
-import V from 'voodoojs'
-V.start()
-
-// ou importe só o que precisa — pontos de entrada separados, em ESM e CJS, com tipos
-import { reactive, computed } from 'voodoojs/reactivity'
-import { http } from 'voodoojs/http'
-import { debounce } from 'voodoojs/utils'
-```
-
-**Hospedar o arquivo, ou compilar você mesmo**
-
-Para páginas que não podem depender de um host de terceiros, ou uma rede isolada:
-
-```bash
-curl -O https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js
-# ou compile a partir do código
-git clone https://github.com/kwy404/Voodoo.js.git
-cd Voodoo.js && npm install && npm run build   # os bundles saem em packages/voodoojs/dist/
-```
-
-```html
-<script src="voodoo.full.min.js" defer></script>
-```
-
-**CLI**
-
-```bash
-npx voodoojs-cli init minha-pagina                     # cria um projeto pronto para abrir
-npx voodoojs-cli build --modules=core,directives,http  # bundle sob medida, só com o que você usa
-npx voodoojs-cli add card                              # copia um componente para o seu projeto
-npx voodoojs-cli info                                  # lista os módulos e o tamanho de cada um
-```
-
-**Qual bundle escolher?**
-
-| Arquivo | O que vem dentro | JSX no HTML |
-| --- | --- | --- |
-| `voodoo.core.min.js` | Build mínimo: reatividade, expressões, directives, componentes, DOM, requisições | Não |
-| `voodoo.min.js` | **Build essencial.** Soma formulários, validação, máscaras, interface, arrastar e soltar | Não |
-| `voodoo.full.min.js` | Tudo: JSX, gráficos, animação, roteador, i18n, devtools, componentes prontos | **Sim** |
-
-Os tamanhos são dinâmicos — veja o badge acima, ou rode `npm run size` / `npx voodoojs-cli info`.
-
-## Início rápido
-
-**Estado, eventos e ligação de dois sentidos.** A interpolação usa chave simples:
-`{ expressão }`. `{{ expressão }}` também é aceita, para quem vem do Vue.
-
-```html
-<div v-data="{ nome: 'Mundo', email: '' }">
-  <p>Olá, { nome }!</p>
-  <button @click="nome = 'Voodoo'">Trocar</button>
-
-  <input v-model="email" type="email">
-  <p v-show="email">Você digitou: { email }</p>
-</div>
-```
-
-**Condicionais, listas, classes e estilos.**
-
-```html
-<div v-data="{ status: 'pronto', itens: ['um', 'dois'], largura: 60 }">
-  <p v-if="status === 'carregando'">Carregando…</p>
-  <p v-else-if="status === 'erro'">Alguma coisa deu errado.</p>
-  <p v-else>Pronto.</p>
-
-  <li v-for="(item, i) in itens" :key="i">{ i + 1 }. { item }</li>
-
-  <span :class="{ 'ativo': status === 'pronto' }" :style="{ width: largura + '%' }"></span>
-</div>
-```
-
-**HTTP sem escrever fetch, e um componente.**
-
-```html
-<button v-get="/api/estatisticas" v-target="#painel" v-swap="innerHTML">Carregar</button>
-<div id="painel"></div>
-
-<script>
-  V.component('cartao-usuario', {
-    props: { nome: { type: 'string', default: 'Anônimo' } },
-    template: `<div class="cartao"><strong v-text="nome"></strong></div>`
-  })
-</script>
-
-<cartao-usuario nome="Ada"></cartao-usuario>
-```
-
-## Componentes
-
-Um componente é um escopo com estado, métodos, computados, watchers, props, slots e ciclo de vida,
-montado sobre um elemento. Sem passo de compilação, sem formato de arquivo único.
+Um componente é um escopo com estado, métodos, valores computados, watchers, props, slots e hooks de ciclo de vida, montado sobre um elemento. Sem passo de compilação, sem formato de componente de arquivo único.
 
 ```js
 V.component('contador', {
@@ -428,33 +313,26 @@ V.component('contador', {
     inicio: { type: 'number', default: 0 },
     rotulo: { type: 'string', required: true }
   },
-
-  state(props) { return { valor: props.inicio } },
-
-  computed: { dobro() { return this.valor * 2 } },
-
+  state(props) { return { total: props.inicio } },
+  computed: { dobro() { return this.total * 2 } },
   methods: {
-    somar() {
-      this.valor++
-      this.emit('mudou', this.valor)   // um CustomEvent de verdade, que sobe pela árvore
+    incrementar() {
+      this.total++
+      this.emit('mudou', this.total)   // um CustomEvent de verdade, que borbulha
     }
   },
-
-  watch: { valor(v) { console.log('agora', v) } },
-
+  watch: { total(valor) { console.log('agora', valor) } },
   template: `
-    <button @click="somar()">{ rotulo }: { valor }</button>
+    <button @click="incrementar()">{ rotulo }: { total }</button>
     <small>dobro: { dobro }</small>
     <slot name="rodape"></slot>
   `,
-
   style: `.contador { font-weight: 600 }`,
-
-  mounted() { /* o elemento já está no DOM */ }
+  mounted() { /* o elemento está no DOM */ }
 })
 ```
 
-Três formas equivalentes de usar, e ouvir o que ele emite é um listener comum:
+Três formas equivalentes de usar, e ouvir o que ele emite é um listener de evento comum:
 
 ```html
 <div v-component="contador" rotulo="Cliques"></div>
@@ -462,13 +340,12 @@ Três formas equivalentes de usar, e ouvir o que ele emite é um listener comum:
 <Contador rotulo="Cliques"></Contador>
 ```
 
-Atributos estáticos viram props de texto, convertidas para o `type` declarado. Atributos escritos
-com `:` são ligações reativas avaliadas no escopo do pai, e o conteúdo dos slots também; slots
-nomeados casam por `slot="nome"`. Dentro da instância você ainda tem `$el`, `$props`, `$refs`,
-`$parent`, `$name`, `$emit`, `$watch` e `$nextTick`, mais `provide` / `inject` para injeção de
-dependência.
+<details>
+<summary><b>Props, slots, recursos da instância e modo aplicação</b></summary>
 
-**Modo aplicação** — se preferir descrever tudo em JavaScript:
+Atributos estáticos viram props de texto, convertidas para o `type` declarado. Atributos escritos com `:` são binds reativos avaliados no escopo do pai, e o conteúdo dos slots também; slots nomeados são casados com `slot="nome"`. Dentro de uma instância você também tem `$el`, `$props`, `$refs`, `$parent`, `$name`, `$emit`, `$watch` e `$nextTick`, além de `provide` / `inject` para injeção de dependência.
+
+**Modo aplicação**, se você preferir descrever a aplicação inteira em JavaScript:
 
 ```js
 V.createApp({
@@ -479,12 +356,17 @@ V.createApp({
 }).mount('#app')
 ```
 
-O `mount` aceita um alvo que ainda não existe — ele espera, então não há corrida com o carregamento
-da página. O `unmount` devolve o HTML original do container em vez de deixá-lo vazio.
+O `mount` aceita um alvo que ainda não existe: ele espera, então não existe corrida com o carregamento da página. O `unmount` devolve o HTML original do contêiner em vez de deixá-lo vazio. O modo aplicação também tem `use`, `provide` e componentes locais.
 
-## HTTP
+O build completo traz 29 componentes prontos que não precisam de registro, então escrever a tag é todo o uso: `<v-button>`, `<v-input>`, `<v-table>` e outros, na [galeria de componentes](https://kwy404.github.io/Voodoo.js/components.html).
 
-**Declarativo.** Ligue uma requisição a um elemento e diga para onde vai a resposta:
+</details>
+
+Guia: [componentes](https://github.com/kwy404/Voodoo.js/blob/main/docs/componentes.md).
+
+### HTTP
+
+**Declarativo.** Associe uma requisição a um elemento e diga para onde vai a resposta:
 
 ```html
 <button v-get="/api/relatorio" v-target="#saida" v-swap="innerHTML">Carregar</button>
@@ -498,15 +380,7 @@ da página. O `unmount` devolve o HTML original do container em vez de deixá-lo
 <input v-search="/api/busca" v-param="q" v-debounce="300ms" v-target="#resultados">
 ```
 
-A URL pode ser um literal (`/api/usuarios`) ou uma expressão (`'/api/usuarios/' + id`). Os
-atributos de apoio incluem `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-body`, `v-params`,
-`v-headers`, `v-cache`, `v-retry`, `v-timeout`, `v-json-path`, `v-template`, `v-offline-queue`,
-`v-redirect`, `v-scroll-to`, `v-toast-success`, `v-toast-error`, `v-on-success`, `v-on-error` e
-`v-on-complete`.
-
-O `v-resource` é a versão que entrega o estado da requisição como dado reativo em vez de trocar
-HTML. Ele expõe `data`, `loading`, `error`, `loaded`, `reload()` e `set()` — veja a demonstração no
-começo deste arquivo.
+A URL pode ser literal (`/api/usuarios`) ou uma expressão (`'/api/usuarios/' + id`). O `v-resource` entrega o estado da requisição como dado reativo em vez de trocar HTML: `data`, `loading`, `error`, `loaded`, `reload()` e `set()`.
 
 **Programático.**
 
@@ -520,18 +394,27 @@ const res = await V.http.request({ url: '/api/usuarios', retry: 2, timeout: 5000
 // Upload com progresso real
 await V.http.upload('/api/arquivos', formData, { onProgress: (pct) => console.log(pct + '%') })
 
-// Server-Sent Events e stream NDJSON
-V.http.sse('/api/eventos', { message: (dados) => console.log(dados) })
+// Server-Sent Events e streaming NDJSON
+V.http.sse('/api/eventos', { message: (dado) => console.log(dado) })
 await V.http.stream('/api/tokens', (linha) => console.log(linha))
 ```
 
-Padrões, interceptors, URL base, cabeçalho de CSRF e cache ficam em `V.http.defaults` e
-`V.http.interceptors`.
+<details>
+<summary><b>Todos os atributos de requisição e opções do cliente</b></summary>
 
-## Formulários
+Directives de requisição: `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete`, `v-resource`, `v-load`, `v-load-visible`, `v-search`, além de polling.
 
-Enviar, validar, mostrar o carregamento e reportar o resultado — tudo declarado no próprio
-formulário:
+Atributos de apoio: `v-target`, `v-swap`, `v-trigger`, `v-poll`, `v-body`, `v-params`, `v-headers`, `v-cache`, `v-retry`, `v-timeout`, `v-json-path`, `v-template`, `v-offline-queue`, `v-redirect`, `v-scroll-to`, `v-toast-success`, `v-toast-error`, `v-on-success`, `v-on-error`, `v-on-complete`.
+
+O cliente tem interceptors, timeout, retry exponencial, cache, CSRF, progresso de upload, SSE, streaming NDJSON e fila offline. Padrões, interceptors, URL base, cabeçalho CSRF e cache ficam em `V.http.defaults` e `V.http.interceptors`.
+
+</details>
+
+Guia: [HTTP](https://github.com/kwy404/Voodoo.js/blob/main/docs/http.md).
+
+### Formulários e validação
+
+Enviar, validar, mostrar carregamento e informar o resultado, tudo declarado no próprio formulário:
 
 ```html
 <form v-submit="/api/contato" v-method="POST" v-validate
@@ -545,44 +428,149 @@ formulário:
   <p v-if="$form.errors.email">{ $form.errors.email }</p>
 
   <button type="submit" :disabled="$form.loading">
-    { $form.loading ? 'Enviando…' : 'Enviar' }
+    { $form.loading ? 'Enviando...' : 'Enviar' }
   </button>
 </form>
 ```
 
-`$form` é reativo e carrega `loading`, `saving`, `success`, `errors`, `message`, `data`, `status`,
-`dirty` e `progress`. O conjunto de regras cobre o esperado — `required`, `email`, `url`, `number`,
-`min`, `max`, `minlength`, `maxlength`, `between`, `match`, `regex`, `date`, `same`, `different`,
-`in`, `strongpassword`, `cpf`, `cnpj`, `cep` e mais — além de regras assíncronas e das suas
-próprias, via `V.validator()`.
+O `$form` é reativo e traz `loading`, `saving`, `success`, `errors`, `message`, `data`, `status`, `dirty` e `progress`. As regras cobrem `required`, `email`, `url`, `number`, `min`, `max`, `minlength`, `maxlength`, `between`, `match`, `regex`, `date`, `same`, `different`, `in`, `strongpassword` e outras, além de regras assíncronas e regras suas via `V.validator()`. Formulários também fazem serialização, upload, dropzone, autosave e aviso ao sair da página. Guias: [formulários](https://github.com/kwy404/Voodoo.js/blob/main/docs/formularios.md), [validação](https://github.com/kwy404/Voodoo.js/blob/main/docs/validacao.md), [máscaras](https://github.com/kwy404/Voodoo.js/blob/main/docs/mascaras.md).
 
-## Construindo aplicações completas
+### Stores, roteador e aplicações completas
 
-A Voodoo cresce além de uma página sem mudar o modelo.
+A Voodoo cresce além de uma página só sem mudar o modelo.
 
-- **Componentes** — registre uma vez, use como tag em qualquer lugar da página.
-- **Stores** — `V.store('carrinho', { itens: [] }, { persist: true })`, lido em qualquer lugar como
-  `$store.carrinho`.
-- **Roteador** — `V.router({ mode: 'history', routes: { '/usuarios/:id': { component: 'pagina-usuario' } } })`,
-  com guards, params, comportamento de rolagem, `v-link` e `v-router-view`.
-- **Plugins** — `V.use(plugin)` ou `app.use(plugin)` para registrar directives, componentes e
-  serviços.
-- **Carregamento sob demanda** — `v-load-visible` e rotas com `view` buscam o HTML só quando ele é
-  necessário.
-- **i18n** — `V.i18n({ locale: 'pt-BR', messages })`, depois `v-t` na marcação e `V.t()` no código.
+- **Stores.** `V.store('carrinho', { itens: [] }, { persist: true })`, lido em qualquer lugar como `$store.carrinho`, com persistência opcional em `localStorage`. Guia: [estado e stores](https://github.com/kwy404/Voodoo.js/blob/main/docs/estado-e-stores.md).
+- **Roteador.** `V.router({ mode: 'history', routes: { '/usuarios/:id': { component: 'pagina-usuario' } } })`, com modos history e hash, parâmetros, query, guards, restauração de rolagem, cache de views, rotas dinâmicas, `v-link` e `v-router-view`. Guia: [roteador](https://github.com/kwy404/Voodoo.js/blob/main/docs/roteador.md).
+- **Plugins.** `V.use(plugin)` ou `app.use(plugin)` registra directives, componentes e serviços. Guia: [plugins](https://github.com/kwy404/Voodoo.js/blob/main/docs/plugins.md).
+- **Carregamento sob demanda.** `v-load-visible` e registros `view` nas rotas buscam HTML só quando ele é necessário.
+- **i18n.** `V.i18n({ locale: 'pt-BR', messages })`, depois `v-t` na marcação e `V.t()` no código. Guia: [idiomas](https://github.com/kwy404/Voodoo.js/blob/main/docs/idiomas.md).
 
-Cada um deles tem o seu guia em [`docs/`](docs/).
+### Tema e modo escuro
+
+O tema tem três estados: `system` (segue o sistema operacional), `light` e `dark`. Enquanto o visitante não escolhe, a Voodoo deixa a página exatamente como você escreveu: sem atributo `data-theme`, sem `color-scheme`, nada repintado.
+
+```html
+<button v-theme-toggle>Trocar tema</button>               <!-- claro e escuro -->
+<button v-theme-toggle.cycle>Tema</button>                <!-- system, light, dark, system... -->
+<button v-theme-toggle:system>Automático</button>         <!-- um botão por opção, pressionado enquanto é a atual -->
+
+<button @click="$theme.set('dark')">Escuro</button>
+<p>Escolha: { $theme.current }, na tela: { $theme.resolved }</p>
+```
+
+```js
+V.theme.set('system' | 'light' | 'dark') // guarda a escolha; 'system' volta a seguir o sistema
+V.theme.current    // 'system', 'light' ou 'dark'
+V.theme.resolved   // 'light' ou 'dark', o que está de fato na tela
+V.theme.toggle()   // light <-> dark
+V.theme.cycle()    // system -> light -> dark -> system
+V.theme.chosen     // true depois que o visitante escolheu
+```
+
+Uma escolha escreve `data-theme` no `<html>` (e o remove de novo para `system`), define `color-scheme`, é salva no `localStorage` na chave `voodoo:theme` (lida de volta esteja ela gravada crua, `dark`, ou como JSON, `"dark"`), acompanha mudanças do sistema enquanto está em `system`, sincroniza entre abas e dispara o evento `voodoo:theme` no `document`. Os botões de troca recebem `aria-pressed`, `data-voodoo-theme` e `data-voodoo-theme-mode` para os seus ícones. O `v-theme-toggle` está nos builds essencial e completo; o `$theme` está em todos.
+
+**Sem piscar o tema errado.** Coloque isto no `<head>`, antes da tag de script da Voodoo, e escreva as cores dos dois temas:
+
+```html
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('voodoo:theme');
+      if (t && t.charAt(0) === '"') t = JSON.parse(t);
+      var r = document.documentElement;
+      if (t === 'light' || t === 'dark') {
+        r.setAttribute('data-theme', t);
+        r.style.colorScheme = t;
+      }
+    } catch (e) {}
+  })();
+</script>
+<style>
+  :root { --bg: #fff; --text: #14111f; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #14111f; --text: #f4f1fb; }
+  }
+  :root[data-theme="dark"] { --bg: #14111f; --text: #f4f1fb; }
+</style>
+```
+
+O `npx voodoojs-cli init` gera uma página com tudo isso pronto. O `V.palette()` gera uma escala completa de cores, e a versão escura, a partir de poucas cores base. Guia: [tema e paleta](https://github.com/kwy404/Voodoo.js/blob/main/docs/tema-e-paleta.md).
+
+### TypeScript
+
+O código inteiro é TypeScript, e todo ponto de entrada publica declarações `.d.ts`.
+
+```ts
+import V, { reactive, computed, type HttpResponse } from 'voodoojs'
+
+const estado = reactive({ contador: 0 })
+const dobro = computed(() => estado.contador * 2)
+```
+
+Guia (em inglês): [TypeScript](https://github.com/kwy404/Voodoo.js/blob/main/docs/en/typescript.md).
+
+## O que vem na caixa
+
+Cada linha abaixo faz parte do runtime publicado.
+
+<details>
+<summary><b>A tabela completa</b> (reatividade, expressões, directives, componentes, HTTP, formulários, stores, interface, roteador, i18n, animação, gráficos, tempo real, GPU, devtools, CLI)</summary>
+
+| Pilar | O que você ganha |
+| --- | --- |
+| **Reatividade** | `reactive`, `ref`, `computed`, `effect`, `watch`, `watchEffect`, `nextTick`, `effectScope`, `flushSync` |
+| **Expressões** | Lexer + parser Pratt + interpretador de AST próprios. Sem `eval`, compatível com CSP |
+| **Directives** | Texto, condicionais, listas, bind, classes, estilos, eventos, refs, transições e mais |
+| **Componentes** | Props, estado, computed, métodos, watchers, template, estilo com escopo, slots nomeados, `provide`/`inject`, ciclo de vida |
+| **Modo aplicação** | `V.createApp({...}).mount('#app')` com `use`, `provide`, componentes locais e `unmount` |
+| **DOM** | Coleção encadeável via `V('#seletor')`, mais utilitários de transição |
+| **HTTP** | Interceptors, timeout, retry exponencial, cache, CSRF, progresso de upload, SSE, streaming NDJSON, fila offline |
+| **Requisições declarativas** | `v-get`/`v-post`/`v-put`/`v-patch`/`v-delete`, `v-resource`, `v-load`, `v-load-visible`, `v-search`, polling |
+| **Formulários** | Envio AJAX, serialização, upload, dropzone, autosave, aviso ao sair, estado reativo `$form` |
+| **Validação e máscaras** | Conjunto completo de regras, regras assíncronas, regras e mensagens próprias, máscaras de input |
+| **Stores** | `V.store(nome, def, { persist })` e a magia `$store`, com persistência opcional em `localStorage` |
+| **Armazenamento** | `storage`, `session`, `cookie`, `cache`, `url`, `theme` |
+| **Interface** | Toast, modal, alert, confirm, prompt, dialog, paleta de comandos, mais directives para abas, dropdowns, tooltips, drawers, popovers e accordions |
+| **Arrastar e soltar** | `v-draggable`, `v-droppable`, `v-sortable`, grupos, suporte a teclado |
+| **Roteador** | Modos history e hash, parâmetros, query, guards, restauração de rolagem, cache de views, `v-link`, `v-router-view`, rotas dinâmicas |
+| **i18n** | Mensagens por idioma, `V.t`, `v-t`, pluralização, troca de idioma em tempo de execução |
+| **Animação** | Física de mola, stagger, `inView`, progresso de rolagem, presets |
+| **Gráficos** | Renderizados como SVG puro, sem dependência de biblioteca de gráficos |
+| **Tempo real** | `V.socket` sobre WebSocket nativo e o protocolo do Socket.IO, salas públicas e privadas, reconexão com backoff, heartbeat e fila de envio. Declarativo via `v-socket`, `v-room` e `v-on-socket:` |
+| **GPU** | `V.gpu` sobre WebGPU com reflexão de WGSL, mais a directive `v-shader`. Sem WebGPU, cai para o conteúdo do canvas |
+| **Devtools** | Inspetor de reatividade `V.xray` e um barramento de eventos |
+| **CLI** | `voodoojs-cli`: `init`, `build --modules=...`, `add`, `info` |
+
+</details>
+
+Quando o HTML não basta, a API `V` está ali: `V.reactive`, `V.component`, `V.http`, `V.store`, `V.router` e uma coleção de DOM encadeável através de `V('#seletor')`. Referência: [API](https://github.com/kwy404/Voodoo.js/blob/main/docs/api.md).
+
+## CLI
+
+```bash
+npx voodoojs-cli init minha-pagina                     # cria uma página pronta para abrir
+npx voodoojs-cli build --modules=core,directives,http  # bundle sob medida, só com o que você usa
+npx voodoojs-cli add card                              # copia um componente para o seu projeto
+npx voodoojs-cli info                                  # lista os módulos e seus tamanhos
+npx voodoojs-cli --version                             # mostra a versão
+```
+
+O `add` traz 7 componentes que viram código seu depois de copiados: `accordion`, `card`, `drawer`, `dropdown`, `modal`, `tabs` e `theme-toggle`. O `build` compila a partir do código TypeScript, e o `voodoojs` publica a pasta `src/` no npm, então o `build` funciona a partir de um `npm install` comum e também dentro de um clone. O pacote é `voodoojs-cli`, não `voodoo`, que é um pacote sem relação no npm; instalado num projeto, os mesmos comandos também rodam como `npx voodoo ...`. Todos os comandos e opções: [`packages/cli/README.md`](https://github.com/kwy404/Voodoo.js/blob/main/packages/cli/README.md).
 
 ## DevTools
 
-O build completo traz o `xray`, um inspetor visual de reatividade: ele mostra a árvore de escopos,
-o estado ao vivo, quais efeitos estão rodando, e os registros de eventos e de rede.
+O build completo traz o `xray`, um inspetor visual de reatividade: a árvore de escopos, o estado ao vivo, quais efeitos estão rodando e os logs de eventos e de rede. **Aperte `Ctrl+Shift+F2`.** Essa é a configuração inteira: carregue o build completo e o atalho já está ouvindo, tenha você pedido devtools ou não.
 
-**Aperte `Ctrl+Shift+F2`.** É toda a configuração. Carregue o build completo e o atalho já está
-escutando, tendo você pedido devtools ou não.
+```js
+V.xray()        // alterna o painel
+V.xray(true)    // abre
+V.xray(false)   // fecha
+```
 
-Uma página completa. Salve, abra, clique algumas vezes no botão, aperte as teclas e veja o
-`count` mudar no painel enquanto o botão pisca a cada escrita.
+<details>
+<summary><b>Uma página para testar, trocar o atalho, avisos detalhados</b></summary>
+
+Salve esta página, abra, clique nos botões algumas vezes, depois aperte as teclas e veja `contador` mudar no painel enquanto o botão pisca a cada escrita.
 
 ```html
 <!doctype html>
@@ -592,29 +580,18 @@ Uma página completa. Salve, abra, clique algumas vezes no botão, aperte as tec
   <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
-  <div v-data="{ count: 0, items: ['a', 'b'] }">
-    <button @click="count++">cliquei { count } vezes</button>
-    <button @click="items.push('c')">adicionar item</button>
-    <ul><li v-for="i in items">{ i }</li></ul>
+  <div v-data="{ contador: 0, itens: ['a', 'b'] }">
+    <button @click="contador++">cliquei { contador } vezes</button>
+    <button @click="itens.push('c')">acrescentar um item</button>
+    <ul><li v-for="i in itens">{ i }</li></ul>
   </div>
 </body>
 </html>
 ```
 
-Tem que ser o `voodoo.full.min.js`. O inspetor não está nos builds core e essencial, e esses dois
-avisam no console em vez de falhar em silêncio.
+Precisa ser o `voodoo.full.min.js`. O inspetor não está nos builds mínimo e essencial, e eles escrevem uma linha no console dizendo isso em vez de falhar em silêncio.
 
-### Abrindo por código
-
-```js
-V.xray()        // alterna o painel
-V.xray(true)    // abre
-V.xray(false)   // fecha
-```
-
-### Trocando ou removendo o atalho
-
-Nenhuma combinação está livre em toda máquina, então esta é configurável:
+**Trocando ou removendo o atalho.** Nenhuma combinação de teclas está livre em todas as máquinas, então esta é configurável:
 
 ```html
 <script src="voodoo.full.min.js" data-xray-shortcut="alt+shift+d" defer></script>
@@ -626,432 +603,305 @@ V.config.xrayShortcut = 'ctrl+shift+f9';
 V.config.xrayShortcut = false;
 ```
 
-A última parte nomeia a tecla **física**, então o atalho se comporta igual em qualquer layout de
-teclado. `Ctrl+Shift+F2` é o terceiro default: o `Ctrl+Shift+X` fecha a aba no Opera, e o
-`Alt+Shift+V` é o alternador de layout de teclado do Windows, que pega as teclas antes da página
-ver. `Ctrl+Alt` está fora pelo mesmo motivo, sendo AltGr no ABNT2 e na maioria dos layouts
-europeus.
+A última parte nomeia a tecla **física**, então o atalho se comporta igual em qualquer layout de teclado. `Ctrl+Shift+F2` é o terceiro padrão: `Ctrl+Shift+X` fecha a aba no Opera, e `Alt+Shift+V` é o alternador de layout de teclado do Windows, que pega as teclas antes de a página vê-las. `Ctrl+Alt` não serve pelo mesmo tipo de motivo, por ser o AltGr nos layouts brasileiro e na maioria dos europeus.
 
-### Os avisos detalhados são outra coisa
-
-O `data-devtools` é uma chave diferente. Ele liga os avisos detalhados no console e monta o widget
-na tela; não é necessário para o atalho.
+**Os avisos detalhados são outra coisa.** O `data-devtools` liga avisos detalhados no console e monta o widget na tela; ele não é necessário para o atalho.
 
 ```html
 <script src="voodoo.full.min.js" data-devtools defer></script>
 ```
 
-## Arquitetura
+</details>
 
-```
-  atributos HTML ─▶  Walker + MutationObserver      acha os atributos v-*, monta os escopos
-                            │
-  expressões     ─▶  Lexer → parser Pratt → interpretador de AST   sem eval, sem new Function
-                            │
-                     Reatividade: alvos em Proxy + efeitos   leituras rastreadas, escritas na fila
-                            │
-                     Directives atualizam os nós reais do DOM   sem Virtual DOM, sem diff
-
-  Por cima: componentes · stores · roteador · HTTP · formulários · interface · i18n · animação · gráficos
-```
-
-A versão longa, com as fronteiras de cada módulo e o modelo de escopos, está em
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+Guia: [devtools](https://github.com/kwy404/Voodoo.js/blob/main/docs/devtools.md).
 
 ## Desempenho
 
-Os benchmarks são reproduzíveis: versões de dependência fixadas, builds de produção, metodologia
-publicada e ambiente registrado. O relatório completo — incluindo os casos em que a Voodoo *perde*
-— está em [`benchmarks/README.md`](benchmarks/README.md), com a metodologia, o ambiente e como
-reproduzir cada medição.
+Os benchmarks são reproduzíveis: versões de dependências fixadas, builds de produção, metodologia publicada e ambiente registrado. JavaScript puro é o teto, e a Voodoo cobra um custo real pela produtividade que entrega. O objetivo destes números é mostrar o tamanho desse custo, não fingir que ele é zero. O relatório completo, incluindo os casos em que a Voodoo perde: [`benchmarks/README.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/README.md).
 
-O JavaScript puro é o teto aqui, e a Voodoo cobra um custo real pela produtividade que entrega. A
-função destes números é mostrar o tamanho desse custo, não fingir que ele é zero.
+**Contra outros frameworks.** Sete implementações da mesma lista de 1.000 linhas, todas em build de produção minificado, rodando uma depois da outra no mesmo processo contra o mesmo documento jsdom. Depois de cada cenário o DOM de cada framework é comparado com a versão em JavaScript puro escrita à mão, e qualquer um que produza saída diferente é excluído em vez de ganhar crédito por um tempo rápido. Mediana de 30 amostras, em milissegundos, menor é melhor:
 
-### Listas: quanto custa uma mudança, de verdade
-
-Um `v-for` é um único effect sobre uma coleção inteira, e por isso é o único lugar da Voodoo onde
-existe um diff. Quando a coleção muda, o effect roda de novo e alguma coisa precisa descobrir o que
-isso significa para `n` linhas.
-
-Até a 0.13 essa decisão custava o mesmo, tivesse acontecido o que tivesse. A `:key` de cada linha
-passava pelo interpretador de expressões, o `normalizeSource` alocava um objeto por linha, três
-estruturas de hash do tamanho da lista eram montadas e jogadas fora, e uma passada de posicionamento
-lia uma propriedade do DOM para cada linha. Ler as linhas através do proxy reativo ainda inscrevia a
-lista em todos os `n` índices e na propriedade que a chave tocava em todos os `n` itens, então cada
-re-renderização primeiro removia o effect desses conjuntos de dependência e o colocava de volta —
-cerca de `4n` operações de hash antes de o reconciliador ter olhado para qualquer coisa. Remover uma
-linha de dez mil fazia tudo isso para concluir que 9.999 linhas não tinham saído do lugar.
-
-A 0.13 parte de outra pergunta: **o que já se sabe?**
-
-`push`, `pop`, `shift`, `unshift` e `splice` são interceptados onde acontecem. Agora rodam contra o
-array cru — um `splice` no meio não dispara mais um trap de proxy e uma notificação de dependência
-por elemento que ele desloca — e registram o que fizeram. Quando a lista re-renderiza, ela lê esse
-registro em vez de redescobrir. `rows.splice(5000, 1)` em dez mil linhas diz que saiu exatamente uma
-linha, no índice 5000, e nada mais é examinado.
-
-Quando não há registro para ler — um array novo foi atribuído — a região que mudou é encontrada
-comparando chaves das duas pontas para dentro, com a expressão da chave compilada uma vez para uma
-leitura de propriedade em vez de interpretada por linha. Isso custa uma leitura de propriedade por
-linha e **não dá para ficar mais barato**: para saber que a linha 9.999 não mudou é preciso olhar
-para a linha 9.999. Nenhum fingerprint, hash de bloco ou rolling hash evita isso, porque calcular o
-fingerprint da lista nova significa ler todas as chaves dela antes.
-
-![Reconciliação de listas: antes e depois](docs/media/reconcile-before-after.svg)
-
-| caso | antes | depois | ganho | chaves avaliadas | alocações |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| criar 1.000 linhas | 81.5 ms | 84.4 ms | — | 1,000 → 1,000 | 1,010 → 0 |
-| criar 10.000 linhas | 809 ms | 809 ms | — | 10,000 → 10,000 | 10,010 → 0 |
-| criar 50.000 linhas | 4049 ms | 3840 ms | — | 50,000 → 50,000 | 50,010 → 0 |
-| acrescentar 1 em 10.000 — array novo | 40.9 ms | 11.6 ms | **3.5x** | 20,001 → 20,001 | 20,011 → 0 |
-| push de 1 em 10.000 — no lugar | 34.2 ms | 1.94 ms | **17.6x** | 20,001 → 1 | 20,011 → 0 |
-| acrescentar 5.000 a 5.000 | 470 ms | 418 ms | **1.1x** | 15,000 → 15,000 | 15,010 → 0 |
-| inserir 1 no início de 10.000 — array novo | 38.6 ms | 8.40 ms | **4.6x** | 20,001 → 20,003 | 20,011 → 0 |
-| unshift de 1 em 10.000 — no lugar | 56.0 ms | 0.297 ms | **188.7x** | 20,001 → 1 | 20,011 → 0 |
-| inserir 5.000 no início de 5.000 | 530 ms | 412 ms | **1.3x** | 15,000 → 15,002 | 15,010 → 0 |
-| remover a primeira de 10.000 — array novo | 40.9 ms | 9.28 ms | **4.4x** | 19,999 → 20,001 | 20,009 → 0 |
-| remover a do meio de 10.000 — array novo | 41.7 ms | 10.2 ms | **4.1x** | 19,999 → 20,001 | 20,009 → 0 |
-| remover a última de 10.000 — array novo | 39.4 ms | 11.2 ms | **3.5x** | 19,999 → 19,999 | 20,009 → 0 |
-| splice da linha do meio de 10.000 — no lugar | 45.3 ms | 0.853 ms | **53.1x** | 19,999 → 1 | 20,009 → 0 |
-| shift da primeira de 10.000 — no lugar | 61.6 ms | 0.096 ms | **641.1x** | 19,999 → 1 | 20,009 → 0 |
-| pop da última de 10.000 — no lugar | 37.5 ms | 1.51 ms | **24.8x** | 19,999 → 1 | 20,009 → 0 |
-| inserir 1 no meio de 10.000 — array novo | 42.5 ms | 10.7 ms | **4.0x** | 20,001 → 20,003 | 20,011 → 0 |
-| splice de 1 no meio de 10.000 — no lugar | 48.6 ms | 0.684 ms | **71.0x** | 20,001 → 1 | 20,011 → 0 |
-| trocar 1 de 10.000 por outra chave | 40.1 ms | 11.7 ms | **3.4x** | 20,000 → 20,006 | 20,010 → 6 |
-| mudar 1 rótulo em 10.000 | 0.116 ms | 0.111 ms | — | 0 → 0 | 0 → 0 |
-| reatribuir um array idêntico de 10.000 | 52.4 ms | 9.57 ms | **5.5x** | 10,000 → 10,000 | 10,005 → 0 |
-| trocar 2 linhas de lugar em 10.000 | 9585 ms | 16.6 ms | **575.9x** | 20,000 → 20,004 | 20,010 → 6 |
-| inverter 10.000 linhas | 3989 ms | 4130 ms | — | 20,000 → 20,004 | 20,010 → 6 |
-| embaralhar 10.000 linhas | 7890 ms | 7690 ms | — | 20,000 → 20,004 | 20,010 → 6 |
-| limpar uma lista de 10.000 | 144 ms | 134 ms | — | 10,000 → 10,000 | 10,010 → 0 |
-
-O tempo é o sintoma; os contadores são a causa. O reconciliador conta o que faz — linhas visitadas,
-chaves avaliadas, escritas que passaram por um proxy reativo, nós criados, removidos e movidos — e o
-benchmark coleta isso em uma segunda passada com os cronômetros desligados, para que a instrumentação
-nunca entre em um número medido.
-
-![Quantas vezes a chave de uma linha foi calculada, por edição](docs/media/reconcile-work.svg)
-
-As duas famílias merecem ser lidas separadamente, porque têm pisos diferentes. Uma lista mutada no
-lugar recebe uma resposta que não depende do tamanho dela; uma lista substituída inteira paga uma
-leitura de chave por linha, por mais esperto que seja o algoritmo. Mesma edição, mesmo DOM,
-informação diferente disponível.
-
-![O custo de uma edição contra o tamanho da lista](docs/media/reconcile-scaling.svg)
-
-Qual caminho uma edição toma não é algo que um teste de correção mostre — um caminho rápido que cai
-para o lento em silêncio passa em todos eles. Então isso também é contado, inclusive nos formatos em
-que o caminho rápido não se aplica:
-
-![Qual caminho cada edição tomou](docs/media/reconcile-paths.svg)
-
-E o que chega ao DOM. Um reconciliador que reaproveita todos os elementos ainda pode ser lento se
-arrastar todos eles pela lista até o lugar certo; uma passada de maior subsequência crescente sobre
-as linhas sobreviventes decide quais podem ficar onde estão, e ela só roda quando linhas realmente
-se cruzaram, então nenhuma inserção, remoção ou append paga por ela.
-
-![Nós criados, removidos e movidos por edição](docs/media/reconcile-dom-ops.svg)
-
-**Quanto custa cada caminho.** `n` é o tamanho da lista, `k` as linhas que a edição tocou, `r` o
-tamanho da região que mudou.
-
-| Caminho | Quando | Custo |
-| --- | --- | --- |
-| mutação, inserção ou remoção | `push` / `pop` / `shift` / `unshift` / `splice` em lista com chave | O(k) |
-| mutação, em lote | várias mutações no mesmo tick | O(r), r = a faixa que elas cobrem juntas |
-| varredura, depois inserir ou remover | array novo, uma edição localizada | O(n) leituras de chave + O(k) de trabalho |
-| varredura, depois reordenar | array novo, linhas se cruzaram | O(n) leituras de chave + O(r log r) |
-| sem chave, qualquer mudança | sem `:key` | O(n) — a posição *é* a identidade, então toda linha depois da edição mudou de verdade |
-| `reverse` / `sort` no lugar | nenhuma faixa descreve o resultado | O(n) + O(n log n) |
-
-O maior número daquela tabela não é ganho algorítmico nenhum — é um bug que os contadores acharam.
-Trocar duas linhas de lugar em dez mil levava **9.585 ms**, e o motivo eram 19.994 movimentos de DOM:
-a passada de posicionamento antiga percorria a lista de trás para frente, e a primeira linha que não
-batia fazia todas as seguintes falharem no mesmo teste, então uma troca de duas linhas arrastava a
-lista inteira junto. Agora move 2 linhas e leva 16,6 ms.
-
-**Onde não ajuda, dito sem rodeio.**
-
-*Inverter e embaralhar não mudaram* — 3.989 ms contra 4.130 ms, e 7.890 contra 7.690. Os dois já
-moviam perto do mínimo: inverter uma lista exige mover todas as linhas menos uma, seja qual for o
-diff, e o que o cronômetro mede ali é `insertBefore` dentro de um pai com dez mil filhos, não o
-reconciliador. Um algoritmo melhor não economiza trabalho que o DOM faz questão de fazer.
-
-*Criar uma lista não mudou* pelo mesmo motivo. O `create 50.000` é o custo de inserir 50.000 nós; o
-reconciliador é erro de arredondamento do lado disso.
-
-*Duas edições em pontas opostas custam o que comparar custa.* A região que mudou é uma faixa
-contígua única, então dar `push` em uma linha e `shift` em outra — o formato de um log rolante —
-produz uma faixa que cobre tudo entre elas. Correto, e não mais rápido que a varredura. Quebrar isso
-em várias regiões disjuntas resolveria; não está implementado, porque é complexidade real para um
-formato que nenhum destes benchmarks mede.
-
-*Listas sem `:key` identificam linhas pela posição*, então remover a primeira muda de verdade todas
-as seguintes e não há o que pular.
-
-O método completo, os contadores e como reproduzir qualquer coisa disso estão em
-[`benchmarks/README.md`](benchmarks/README.md); o algoritmo e suas invariantes, em
-[`ARCHITECTURE.md`](ARCHITECTURE.md#5-list-reconciliation).
-
-### Desmontar uma lista
-
-O `v-if` e o `v-for` tiram o elemento do documento e passam a
-usá-lo como o modelo que clonam. A limpeza desse elemento — o escopo de efeito que segurava o
-modelo, cada bloco renderizado e cada nó dentro deles — estava indexada por ele, e o `destroy()` só
-percorre filhos vivos. Depois de destacado, nada mais o alcançava: o escopo nunca parava e segurava
-tudo que a lista já tinha renderizado.
-
-![Desmontagem do v-for: antes e depois](docs/media/vfor-teardown.svg)
-
-O número antigo crescia com a lista, porque era proporcional ao que tinha sido renderizado: 394 KB
-retidos por montagem com 50 linhas, 750 KB com 100, 1,5 MB com 200. O novo não cresce, e o que
-sobra é ruído, não retenção. O benchmark de memória do próprio projeto não conseguia terminar antes
-disso — estourava um heap de 3,8 GB e derrubava o resto do suite junto — e o caso de alternância do
-`v-if` caiu de 5.683 ms para 3.079 ms quando o lixo parou de se acumular, ou seja, o vazamento
-custava tempo além de memória.
-
-Medido no Node 24 com jsdom, cinquenta ciclos de montar e destruir por tamanho, com coleta forçada
-entre as amostras, em uma máquina só. Leia como a forma da mudança, e não como número absoluto: o
-seu navegador não é o jsdom. Reproduza com `node --expose-gc scripts/measure-teardown.mjs`, que
-constrói as duas versões, mede e devolve o fonte ao estado original.
-
-Uma ressalva honesta da mesma medição: a *criação* da lista nesse tamanho é dominada pelo próprio
-DOM. Inserir 4.000 nós sem framework nenhum levou mais tempo no jsdom do que a renderização inteira
-da Voodoo, então os números de criação dizem mais sobre o ambiente do que sobre o framework.
-
-### Contra outros frameworks
-
-Sete implementações da mesma lista de 1.000 linhas,
-todas empacotadas em produção e minificadas, rodando em sequência no mesmo processo contra o
-mesmo documento jsdom. Depois de cada cenário o DOM de cada framework é reduzido à lista de
-textos dos `<li>` e comparado com o vanilla escrito à mão: quem produzir saída diferente é
-excluído, e não creditado com um tempo rápido.
-
-![Comparação entre frameworks](docs/media/framework-comparison.svg)
-
-Mediana de 30 amostras, em milissegundos, menor é melhor. Voodoo.js em negrito:
-
-| | criar 1k | atualizar 1 em 10 | limpar 1k | minificado |
+| | criar 1k | atualizar 1 a cada 10 | limpar 1k | minificado |
 | --- | ---: | ---: | ---: | ---: |
-| vanilla JS | 39,51 | 6,65 | 20,04 | 0,6 KB |
-| Preact 10.29.8 | 71,03 | 2,73 | 30,68 | 10,7 KB |
-| **Voodoo.js** | **77,47** | **4,69** | **30,14** | **435,2 KB** |
-| Vue 3.5.42 | 78,72 | 14,29 | 32,84 | 62,5 KB |
-| Solid 1.9.15 | 80,13 | 0,90 | 21,85 | 16,7 KB |
-| React 19.2.8 | 81,22 | 4,65 | 33,55 | 189,3 KB |
-| Alpine 3.17.1 | 157,06 | 111,29 | 32,76 | 55,2 KB |
+| JS puro | 39.51 | 6.65 | 20.04 | 0.6 KB |
+| Preact 10.29.8 | 71.03 | 2.73 | 30.68 | 10.7 KB |
+| **Voodoo.js** | **77.47** | **4.69** | **30.14** | **435.2 KB** |
+| Vue 3.5.42 | 78.72 | 14.29 | 32.84 | 62.5 KB |
+| Solid 1.9.15 | 80.13 | 0.90 | 21.85 | 16.7 KB |
+| React 19.2.8 | 81.22 | 4.65 | 33.55 | 189.3 KB |
+| Alpine 3.17.1 | 157.06 | 111.29 | 32.76 | 55.2 KB |
 
-Leia a diferença antes da ordem. Na criação, Preact, Voodoo e Vue terminam a **7,7 ms uma da
-outra** numa lista de mil linhas, e Solid e React ficam pouco atrás; é um pelotão de cinco que a
-coluna de classificação não consegue expressar. O vanilla escrito à mão ainda monta a lista quase
-duas vezes mais rápido que qualquer framework aqui, e esse é o teto honesto.
+- **Criar:** Preact, Voodoo e Vue terminam a até 7,7 ms um do outro, com Solid e React logo atrás. O JS puro escrito à mão ainda monta a lista quase duas vezes mais rápido que qualquer framework daqui, e esse é o teto honesto.
+- **Atualizar:** a Voodoo atualiza uma linha a cada dez mais rápido que a versão em JS puro (4,69 ms contra 6,65) e empatada com o React (4,65, dentro do ruído). Fica cerca de 24x à frente do Alpine, que também é HTML primeiro e também interpreta expressões em tempo de execução. Solid (0,90 ms) e Preact (2,73 ms) vencem, os dois com compilador, que é a troca que a Voodoo recusa fazer.
+- **Limpar:** Voodoo, Preact, Alpine e Vue ficam dentro de 2,7 ms; JS puro e Solid vencem com folga.
+- **Tamanho:** a Voodoo é de longe o maior bundle desta tabela. Se tamanho é a sua principal restrição, Alpine e Preact são a recomendação honesta, e o `voodoo.core.min.js` existe para páginas que querem as directives e nada mais.
+- **Ruído:** o coeficiente de variação na atualização chegou a 50% para a Voodoo e 134% para o Preact nesta rodada. Leia os números como um pelotão, não como um placar. O jsdom não tem layout nem pintura, então leia como forma relativa e não como verdade absoluta.
 
-Na limpeza vale o mesmo para o meio do pelotão: Voodoo, Preact, Alpine e Vue ficam dentro de
-2,7 ms. Vanilla e Solid ganham essa com folga.
+**Listas na 0.13.** `push`, `pop`, `shift`, `unshift` e `splice` num `v-for` com chave agora custam O(k) para as k linhas que tocam, em vez de O(n) para a lista inteira: `shift` em 10.000 linhas foi de 61,6 ms para 0,096 ms, e trocar 2 linhas de lugar foi de 9.585 ms para 16,6 ms. Um vazamento de memória ao desmontar o `v-for` também foi corrigido. Método, estatísticas e adaptadores por framework: [`benchmarks/reports/comparison.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/comparison.md). Algoritmo e invariantes: [`ARCHITECTURE.md`](https://github.com/kwy404/Voodoo.js/blob/main/ARCHITECTURE.md#5-list-reconciliation).
 
-A atualização é onde a 0.13 mudou o desenho. A Voodoo agora atualiza uma linha em cada dez **mais
-rápido que a linha de base escrita à mão em vanilla** — 4,69 ms contra 6,65 — e empatada com o
-React em 4,65, o que está dentro do ruído. Fica cerca de **24x à frente do Alpine**, e essa é a
-comparação que carrega significado: o Alpine também é HTML-first e também interpreta as expressões
-em tempo de execução em vez de compilá-las. O Solid ainda ganha com folga, em 0,90 ms, e o Preact
-em 2,73 — os dois chegam lá com um compilador, que é a troca que a Voodoo se recusa a fazer.
+<details>
+<summary><b>Gráficos: comparação entre frameworks e tamanho contra velocidade</b></summary>
 
-Estes números são ruidosos e o relatório diz isso: o coeficiente de variação na atualização chegou
-a 50% para a Voodoo e 134% para o Preact nesta execução. Leia como pelotão, não como pódio.
+![Comparação entre frameworks](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/framework-comparison.svg)
 
-**De onde veio o ganho.** Um harness pareado carregou os dois builds no mesmo processo e intercalou
-as amostras, alternando a ordem a cada rodada, para que a variação de 20% a 40% da máquina entre
-execuções se cancele. Um A/B nulo, com código idêntico dos dois lados, mediu +-0,5 ms, que é o piso
-de ruído que tudo abaixo supera:
+Velocidade e tamanho são duas colunas da mesma decisão. Postos um contra o outro, a troca que cada projeto fez vira o formato do desenho:
+
+![O que cada projeto cobra, e o que entrega](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/size-vs-speed.svg)
+
+**De onde veio o ganho da 0.13.** Um harness pareado carregou os dois builds no mesmo processo e intercalou as amostras, alternando a ordem a cada rodada, então a variação de 20 a 40% da máquina entre execuções se cancela. Um A/B nulo de fontes idênticas mediu +-0,5 ms, que é o piso de ruído que tudo abaixo supera:
 
 | | antes | depois | |
 | --- | ---: | ---: | --- |
-| criar 1k | 129,98 ms | **82,98 ms** | **-36,2%**, venceu 45 de 45 rodadas |
-| limpar 1k | 28,14 ms | **15,59 ms** | **-44,6%**, venceu 38 de 45 |
-| atualizar | 2,60 ms | 2,71 ms | sem mudança mensurável |
+| criar 1k | 129.98 ms | **82.98 ms** | **-36,2%**, venceu 45 de 45 rodadas |
+| limpar 1k | 28.14 ms | **15.59 ms** | **-44,6%**, venceu 38 de 45 |
+| atualizar | 2.60 ms | 2.71 ms | nenhuma mudança mensurável |
 
-Quatro mudanças respondem por quase tudo: ler `getAttributeNames()` em vez de indexar a coleção viva
-`attributes`, o `v-for` remover o atributo de chave do template da linha para que cada cópia pare de
-analisar um atributo só para não fazer nada com ele, campos de classe declarados em vez de emitidos
-como chamadas de `Object.defineProperty` sob `useDefineForClassFields`, e montar o escopo de efeito
-de uma directive apenas quando alguma coisa realmente precisa dele.
+Quatro mudanças respondem por quase tudo: ler `getAttributeNames()` em vez de indexar a coleção viva `attributes`, o `v-for` tirar o atributo de chave do template da linha para que cada clone pare de parsear um atributo só para ignorá-lo, campos de classe declarados em vez de emitidos como chamadas a `Object.defineProperty` sob `useDefineForClassFields`, e criar o escopo de efeitos de uma directive só quando algo de fato precisa dele.
 
-Outras seis otimizações "óbvias" foram medidas e **revertidas** por caírem dentro do piso de ruído.
-Elas estão listadas em [`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md) junto
-com as que funcionaram, porque a lista do que não ajudou vale tanto para a próxima pessoa quanto a
-lista do que ajudou.
+Outras seis otimizações "óbvias" foram medidas e **revertidas** porque ficaram dentro do piso de ruído. Elas estão listadas em [`benchmarks/reports/comparison.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/comparison.md) junto com as que funcionaram, porque uma lista do que não ajudou vale tanto para a próxima pessoa quanto a lista do que ajudou.
 
-Velocidade e tamanho são duas colunas da mesma decisão, e uma tabela é um instrumento ruim para
-segurar as duas ao mesmo tempo. Postas uma contra a outra, a troca que cada projeto fez é o formato
-do desenho:
+</details>
 
-![Quanto cada projeto cobra, e o que entrega](docs/media/size-vs-speed.svg)
+<details>
+<summary><b>Listas: quanto custa uma mudança, de verdade</b> (o reconciliador da 0.13, todos os casos medidos)</summary>
 
-Vale dizer com todas as letras: **a Voodoo é de longe o maior bundle desta tabela.** Se tamanho é
-a sua principal restrição, Alpine e Preact são a recomendação honesta. O método, os adaptadores de
-cada framework e as estatísticas completas estão em
-[`benchmarks/reports/comparison.md`](benchmarks/reports/comparison.md); o jsdom não tem layout nem
-pintura, então leia isto como formato relativo, e não como verdade absoluta.
+Um `v-for` é um único efeito sobre uma coleção inteira, então é o único lugar da Voodoo onde existe diff. Quando a coleção muda o efeito roda de novo, e alguém precisa descobrir o que isso significa para `n` linhas.
 
-### Tamanho dos bundles
+Até a 0.13 essa decisão custava o mesmo, acontecesse o que acontecesse. A `:key` de cada linha passava pelo interpretador de expressões, o `normalizeSource` alocava um objeto por linha, três estruturas de hash do tamanho da lista eram montadas e jogadas fora, e uma passada de posicionamento lia uma propriedade do DOM para cada linha. Ler as linhas através do proxy reativo também inscrevia a lista em todos os `n` índices e em qualquer propriedade que a chave tocasse em todos os `n` itens, então cada nova renderização primeiro tirava o efeito desses conjuntos de dependência e o colocava de volta: cerca de `4n` operações de hash antes de o reconciliador olhar para qualquer coisa. Remover uma linha de dez mil fazia tudo isso para concluir que 9.999 linhas não tinham saído do lugar.
 
-![Tamanho dos bundles entre frameworks](docs/media/bundle-sizes.svg)
+A 0.13 parte de outra pergunta: **o que já se sabe?**
 
-A Voodoo é o maior bundle daquele gráfico e não há como ler de outro jeito. O que o número de
-tamanho não consegue dizer é que os projetos não estão entregando a mesma coisa: roteador,
-cliente HTTP, formulários, validação, máscaras, kit de interface, gráficos, i18n, stores,
-animação e drag-and-drop estão neste arquivo, e na maioria dos outros são pacotes que você
-acrescenta depois.
+`push`, `pop`, `shift`, `unshift` e `splice` são interceptados onde acontecem. Agora eles rodam sobre o array cru (um `splice` no meio não dispara mais uma armadilha do proxy e uma notificação de dependência por elemento que ele desloca) e registram o que fizeram. Quando a lista renderiza de novo, ela lê esse registro em vez de redescobri-lo. `linhas.splice(5000, 1)` em dez mil linhas diz exatamente que uma linha saiu, no índice 5000, e nada mais é examinado.
 
-![O que vem junto com o download](docs/media/batteries.svg)
+Quando não há registro para ler (um array novo foi atribuído) a região alterada é encontrada comparando chaves das duas pontas para dentro, com a expressão da chave compilada uma vez para uma leitura de propriedade em vez de interpretada a cada linha. Isso custa uma leitura de propriedade por linha e **não tem como ficar mais barato**: para saber que a linha 9.999 não mudou é preciso olhar para a linha 9.999. Nenhuma impressão digital, hash de bloco ou hash rolante evita isso, porque calcular a impressão digital da lista nova significa ler todas as chaves dela primeiro.
 
-Os dois gráficos são verdade ao mesmo tempo. Se tamanho de bundle é a sua restrição decisiva,
-Alpine e Preact continuam sendo a recomendação honesta, e o `voodoo.core.min.js`, com 48 KB em
-gzip, existe para páginas que querem as directives e mais nada.
+![Reconciliação de listas: antes e depois](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/reconcile-before-after.svg)
 
-Medido sobre os builds versionados:
+| caso | antes | depois | ganho | chaves avaliadas | alocações |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| criar 1.000 linhas | 81.5 ms | 84.4 ms | n/a | 1,000 → 1,000 | 1,010 → 0 |
+| criar 10.000 linhas | 809 ms | 809 ms | n/a | 10,000 → 10,000 | 10,010 → 0 |
+| criar 50.000 linhas | 4049 ms | 3840 ms | n/a | 50,000 → 50,000 | 50,010 → 0 |
+| acrescentar 1 a 10.000, array novo | 40.9 ms | 11.6 ms | **3.5x** | 20,001 → 20,001 | 20,011 → 0 |
+| push de 1 em 10.000, no lugar | 34.2 ms | 1.94 ms | **17.6x** | 20,001 → 1 | 20,011 → 0 |
+| acrescentar 5.000 a 5.000 | 470 ms | 418 ms | **1.1x** | 15,000 → 15,000 | 15,010 → 0 |
+| inserir 1 no começo de 10.000, array novo | 38.6 ms | 8.40 ms | **4.6x** | 20,001 → 20,003 | 20,011 → 0 |
+| unshift de 1 em 10.000, no lugar | 56.0 ms | 0.297 ms | **188.7x** | 20,001 → 1 | 20,011 → 0 |
+| inserir 5.000 no começo de 5.000 | 530 ms | 412 ms | **1.3x** | 15,000 → 15,002 | 15,010 → 0 |
+| remover a primeira de 10.000, array novo | 40.9 ms | 9.28 ms | **4.4x** | 19,999 → 20,001 | 20,009 → 0 |
+| remover a do meio de 10.000, array novo | 41.7 ms | 10.2 ms | **4.1x** | 19,999 → 20,001 | 20,009 → 0 |
+| remover a última de 10.000, array novo | 39.4 ms | 11.2 ms | **3.5x** | 19,999 → 19,999 | 20,009 → 0 |
+| splice tirando a do meio de 10.000, no lugar | 45.3 ms | 0.853 ms | **53.1x** | 19,999 → 1 | 20,009 → 0 |
+| shift da primeira de 10.000, no lugar | 61.6 ms | 0.096 ms | **641.1x** | 19,999 → 1 | 20,009 → 0 |
+| pop da última de 10.000, no lugar | 37.5 ms | 1.51 ms | **24.8x** | 19,999 → 1 | 20,009 → 0 |
+| inserir 1 no meio de 10.000, array novo | 42.5 ms | 10.7 ms | **4.0x** | 20,001 → 20,003 | 20,011 → 0 |
+| splice inserindo 1 no meio de 10.000, no lugar | 48.6 ms | 0.684 ms | **71.0x** | 20,001 → 1 | 20,011 → 0 |
+| substituir 1 de 10.000 por uma chave nova | 40.1 ms | 11.7 ms | **3.4x** | 20,000 → 20,006 | 20,010 → 6 |
+| mudar 1 rótulo em 10.000 | 0.116 ms | 0.111 ms | n/a | 0 → 0 | 0 → 0 |
+| reatribuir um array idêntico de 10.000 linhas | 52.4 ms | 9.57 ms | **5.5x** | 10,000 → 10,000 | 10,005 → 0 |
+| trocar 2 linhas de lugar em 10.000 | 9585 ms | 16.6 ms | **575.9x** | 20,000 → 20,004 | 20,010 → 6 |
+| inverter 10.000 linhas | 3989 ms | 4130 ms | n/a | 20,000 → 20,004 | 20,010 → 6 |
+| embaralhar 10.000 linhas | 7890 ms | 7690 ms | n/a | 20,000 → 20,004 | 20,010 → 6 |
+| limpar uma lista de 10.000 linhas | 144 ms | 134 ms | n/a | 10,000 → 10,000 | 10,010 → 0 |
+
+O tempo é o sintoma; os contadores são a causa. O reconciliador conta o que faz (linhas visitadas, chaves avaliadas, escritas enviadas por um proxy reativo, nós criados, removidos e movidos) e o benchmark coleta isso numa segunda passada com os cronômetros desligados, então a instrumentação nunca cai dentro de um número medido.
+
+![Quantas vezes a chave de uma linha foi calculada, por edição](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/reconcile-work.svg)
+
+Vale ler as duas famílias separadas, porque elas têm pisos diferentes. Uma lista alterada no lugar recebe uma resposta que não depende do tamanho dela; uma lista trocada inteira paga uma leitura de chave por linha, por mais esperto que seja o algoritmo. Mesma edição, mesmo DOM, informação diferente disponível.
+
+![O custo de uma edição contra o tamanho da lista](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/reconcile-scaling.svg)
+
+Qual caminho uma edição toma não é algo que um teste de corretude mostre: um caminho rápido que cai em silêncio para o lento continua passando em todos eles. Então isso também é contado, incluindo os formatos em que o caminho rápido não se aplica:
+
+![Qual caminho cada edição tomou](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/reconcile-paths.svg)
+
+E o que chega ao DOM. Um reconciliador que reaproveita todos os elementos ainda pode ser lento se arrastar todos eles pela lista para chegar lá; uma passada de maior subsequência crescente sobre as linhas que sobreviveram decide quais podem ficar onde estão, e ela só roda quando linhas de fato se cruzaram, então nenhuma inserção, remoção ou acréscimo no fim paga por ela.
+
+![Nós criados, removidos e movidos por edição](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/reconcile-dom-ops.svg)
+
+**Quanto custa cada caminho.** `n` é o tamanho da lista, `k` as linhas que a edição tocou, `r` o tamanho da região alterada.
+
+| Caminho | Quando | Custo |
+| --- | --- | --- |
+| mutação, inserir ou remover | `push` / `pop` / `shift` / `unshift` / `splice` numa lista com chave | O(k) |
+| mutação, em lote | várias mutações no mesmo tick | O(r), r = o intervalo que elas cobrem juntas |
+| varredura, depois inserir ou remover | um array novo, uma edição localizada | O(n) leituras de chave + O(k) de trabalho |
+| varredura, depois reordenar | um array novo, linhas cruzadas | O(n) leituras de chave + O(r log r) |
+| sem chave, qualquer mudança | sem `:key` | O(n): a posição *é* a identidade, então toda linha depois da edição mudou de verdade |
+| `reverse` / `sort` no lugar | nenhum intervalo descreve o resultado | O(n) + O(n log n) |
+
+O maior número daquela tabela não é uma vitória de algoritmo: é um bug que os contadores acharam. Trocar duas linhas de lugar em dez mil levava **9.585 ms**, e o motivo eram 19.994 movimentações no DOM: a passada de posicionamento antiga percorria a lista de trás para a frente, e a primeira linha fora do lugar fazia todas as linhas depois dela falharem na mesma verificação, então trocar duas linhas arrastava a lista inteira junto. Agora ela move 2 linhas e leva 16,6 ms.
+
+**Onde não ajuda, dito com todas as letras.**
+
+*Inverter e embaralhar não mudaram*: 3.989 ms contra 4.130 ms, e 7.890 contra 7.690. Os dois já moviam perto do mínimo: inverter uma lista exige mover todas as linhas menos uma, seja qual for o jeito de calcular o diff, e o que o relógio mede ali é o `insertBefore` num pai com dez mil filhos, não o reconciliador. Um algoritmo melhor não economiza trabalho que o DOM insiste em fazer.
+
+*Criar uma lista não mudou* pelo mesmo motivo. `criar 50.000` é o custo de inserir 50.000 nós; o reconciliador é um erro de arredondamento ao lado disso.
+
+*Duas edições em pontas opostas custam o que comparar custa.* A região alterada é um intervalo contínuo, então acrescentar uma linha no fim e tirar outra do começo (o formato de um log rolante) produz um intervalo que cobre tudo entre as duas. Correto, e não mais rápido que a varredura. Dividir em várias regiões disjuntas resolveria esse caso; isso não foi implementado, porque é complexidade real para um formato que nenhum destes benchmarks mediu.
+
+*Listas sem `:key` identificam linhas pela posição*, então remover a primeira linha muda de verdade todas as linhas depois dela e não há nada para pular.
+
+O método completo, os contadores e como reproduzir qualquer parte disso estão em [`benchmarks/README.md`](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/README.md#the-reconciliation-suite); o algoritmo e seus invariantes estão em [`ARCHITECTURE.md`](https://github.com/kwy404/Voodoo.js/blob/main/ARCHITECTURE.md#5-list-reconciliation).
+
+</details>
+
+<details>
+<summary><b>Desmontar uma lista</b> (o vazamento de memória do v-for corrigido na 0.13)</summary>
+
+O `v-if` e o `v-for` tiram o próprio elemento do documento e o guardam como molde para clonar. A limpeza desse elemento (o escopo de efeitos que segura o template, cada bloco renderizado e cada nó dentro deles) era indexada por esse elemento, e o `destroy()` só percorre filhos vivos. Depois de destacado, nada mais o alcançava. O escopo nunca era parado e segurava tudo o que a lista já tinha renderizado.
+
+![Desmontagem do v-for: antes e depois](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/vfor-teardown.svg)
+
+O número antigo crescia com a lista, porque era proporcional ao que tinha sido renderizado: 394 KB retidos por montagem com 50 linhas, 750 KB com 100, 1,5 MB com 200. O novo não cresce, e o que sobra é ruído e não retenção. O próprio benchmark de memória do projeto não conseguia terminar antes disso (esgotava um heap de 3,8 GB e derrubava o resto da suíte junto) e o caso de alternar `v-if` caiu de 5.683 ms para 3.079 ms quando o lixo parou de se acumular, então o vazamento custava tempo além de memória.
+
+Medido no Node 24 com jsdom, cinquenta ciclos de montar e destruir por tamanho, com o heap forçado entre amostras, numa máquina só. Trate como o formato da mudança, não como número absoluto: o seu navegador não é o jsdom. Reproduza com `node --expose-gc scripts/measure-teardown.mjs`, que compila as duas versões, mede e devolve o código ao lugar.
+
+Uma ressalva honesta da mesma rodada: a *criação* de listas nesse tamanho é dominada pelo próprio DOM. Inserir 4.000 nós sem framework nenhum levou mais tempo no jsdom do que a renderização inteira da Voodoo, então os números de criação dizem mais sobre o ambiente do que sobre o framework.
+
+</details>
+
+<details>
+<summary><b>Tamanho dos bundles</b></summary>
+
+![Tamanho dos bundles entre frameworks](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/bundle-sizes.svg)
+
+A Voodoo é o maior bundle desse gráfico e não há como ler de outro jeito. O que o número de tamanho não consegue dizer é que os projetos não entregam a mesma coisa: roteador, cliente HTTP, formulários, validação, máscaras, kit de interface, gráficos, i18n, stores, animação e arrastar e soltar estão neste arquivo, e na maioria dos outros são pacotes que você acrescenta depois.
+
+![O que chega junto com o download](https://cdn.jsdelivr.net/gh/kwy404/Voodoo.js@main/docs/media/batteries.svg)
+
+Os dois gráficos são verdade ao mesmo tempo. Se tamanho de bundle é a sua restrição principal, Alpine e Preact continuam sendo a recomendação honesta, e o `voodoo.core.min.js` existe para páginas que querem as directives e nada mais.
+
+Medido nos builds 0.13.0 publicados na `main` (KiB):
 
 | Build | Minificado | Gzip | Brotli |
 | --- | --- | --- | --- |
-| `voodoo.core.min.js` | 141.20 KB | 48.28 KB | 42.04 KB |
-| `voodoo.min.js` | 265.00 KB | 85.26 KB | 72.12 KB |
-| `voodoo.full.min.js` | 442.18 KB | 133.66 KB | 111.09 KB |
+| `voodoo.core.min.js` | 146.86 KB | 50.72 KB | 44.15 KB |
+| `voodoo.min.js` | 270.70 KB | 87.83 KB | 74.29 KB |
+| `voodoo.full.min.js` | 447.94 KB | 136.27 KB | 113.24 KB |
 
-Rode você mesmo: o arcabouço de medição e as versões exatas testadas estão em
-[`benchmarks/`](benchmarks/).
+Rode você mesmo com `npm run size`; o harness e as versões exatas testadas ficam em [`benchmarks/`](https://github.com/kwy404/Voodoo.js/tree/main/benchmarks).
+
+</details>
 
 ## Comparação
 
-Uma comparação honesta. Toda ferramenta aqui é boa naquilo para que foi desenhada.
+Uma comparação honesta. Cada ferramenta aqui é boa naquilo para que foi feita.
 
 | | Voodoo.js | Alpine.js | HTMX | Vue 3 | React | jQuery |
 | --- | --- | --- | --- | --- | --- | --- |
 | Ponto de partida | HTML | HTML | HTML | JavaScript | JavaScript | JavaScript |
-| Roda por uma tag de CDN | nativo | nativo | nativo | nativo | nativo | nativo |
-| Passo de build | possível | possível | possível | recomendado | recomendado | possível |
-| JSX sem passo de build | nativo | — | — | — | — | — |
+| Roda de uma tag de CDN | sim | sim | sim | sim | sim | sim |
+| Passo de build | opcional | opcional | opcional | recomendado | recomendado | opcional |
+| JSX sem passo de build | **sim** | não | não | não | não | não |
 | Renderização | DOM direto | DOM direto | HTML do servidor | Virtual DOM | Virtual DOM | manual |
-| Estado reativo | nativo | nativo | — | nativo | nativo | — |
-| Componentes | nativo | via pacote do ecossistema | — | nativo | nativo | — |
-| Cliente HTTP | nativo | via pacote do ecossistema | nativo | via pacote do ecossistema | via pacote do ecossistema | nativo |
-| Formulários + validação | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Roteador | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Interface (toast, modal, abas) | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Gráficos / i18n | nativo | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema | via pacote do ecossistema |
-| Renderização no servidor | — | — | nativo (quem renderiza é o servidor) | nativo | nativo | — |
+| Estado reativo | embutido | embutido | não | embutido | embutido | não |
+| Componentes | embutido | pacote do ecossistema | não | embutido | embutido | não |
+| Cliente HTTP | embutido | pacote do ecossistema | embutido | pacote do ecossistema | pacote do ecossistema | embutido |
+| Formulários + validação | embutido | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema |
+| Roteador | embutido | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema |
+| Interface (toast, modal, abas) | embutido | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema |
+| Gráficos / i18n | embutido | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema | pacote do ecossistema |
+| Renderização no servidor | não | não | nativo (o servidor renderiza) | embutido | embutido | não |
 | Tamanho do ecossistema | jovem | crescendo | crescendo | grande | muito grande | muito grande |
 
-A diferença real é filosófica. O **HTMX** diz que o HTML é do servidor e o navegador apenas o
-encaixa. O **Alpine** dá ao HTML uma pitada de estado reativo e para por aí, de propósito. **Vue e
-React** pedem que você descreva a interface em JavaScript e geram o HTML. A **Voodoo** mantém o
-HTML como fonte da verdade *e* entrega a caixa de ferramentas completa — assim você raramente
-precisa sair dele, e a API `V` espera pelos momentos em que precisar.
+A diferença de verdade é de filosofia. O **HTMX** diz que o servidor é dono do HTML e o navegador só troca os pedaços. O **Alpine** dá ao HTML uma pitada de estado reativo e para por ali de propósito. **Vue e React** pedem que você descreva a interface em JavaScript e geram o HTML. A **Voodoo** mantém o HTML como fonte da verdade *e* dá a ele a caixa de ferramentas completa, então você raramente precisa sair dele, e a API `V` está esperando os momentos em que precisar. Vindo de outra biblioteca: tabelas de migração do [jQuery](https://github.com/kwy404/Voodoo.js/blob/main/docs/migrando-do-jquery.md), do [Alpine](https://github.com/kwy404/Voodoo.js/blob/main/docs/migrando-do-alpine.md) e do [Vue](https://github.com/kwy404/Voodoo.js/blob/main/docs/migrando-do-vue.md).
 
 ## Quando usar a Voodoo
 
-Encaixa bem em: painéis administrativos gerados no servidor (Laravel, Rails, Django, Spring, PHP
-puro); sites de conteúdo e landing pages que precisam de comportamento sem um pipeline de
-front-end; protótipos, em que abrir um arquivo vale mais do que qualquer arquitetura; times
-pequenos que não querem manter um build só para mostrar uma tabela; páginas legadas, em que a
-Voodoo convive com o código existente porque nunca toma conta do documento; e aplicações de página
-única completas, com componentes, stores e roteador.
+Bons encaixes: painéis administrativos renderizados no servidor (Laravel, Rails, Django, Spring, PHP puro); sites de conteúdo e landing pages que precisam de comportamento sem um pipeline de front-end; protótipos, em que abrir um arquivo vence qualquer arquitetura; equipes pequenas que não querem manter um build só para renderizar uma tabela; páginas legadas, em que a Voodoo convive com o código existente porque nunca toma conta do documento; e aplicações de página única completas, com componentes, stores e o roteador.
 
-### Limitações atuais
+**Limitações atuais**, ditas com todas as letras para nada te surpreender depois:
 
-Ditas com clareza, para que nada surpreenda depois:
-
-- **Sem renderização no servidor nem hidratação.** A Voodoo roda no navegador. Os módulos puros
-  (reatividade, HTTP, utilitários) funcionam em Node, mas não existe hidratação.
-- **Sem alvo nativo em celular.** Não existe equivalente ao React Native.
-- **Ecossistema jovem.** Menos plugins de terceiros, integrações e respostas na internet do que os
-  frameworks estabelecidos. Essa distância é real e leva tempo para diminuir.
-- **Integrações de terceiros limitadas.** Bibliotecas de componentes e ferramentas feitas para
-  React ou Vue não vêm junto.
-- **Sem tipagem estática dentro dos templates.** As expressões dos atributos são texto; os erros
-  aparecem em tempo de execução, não de compilação.
-- **Sem virtualização de listas.** O `v-for` reaproveita elementos por chave, mas listas muito
-  grandes ainda renderizam todas as linhas.
-
-## Documentação
-
-A documentação existe em dois idiomas: português em [`docs/`](docs/) (completa) e inglês em
-[`docs/en/`](docs/en/).
-
-| Onde | O quê |
-| --- | --- |
-| [`docs/`](docs/) | Índice do guia completo e da referência |
-| [`docs/introducao.md`](docs/introducao.md) | O que é, para quem serve, quando não usar |
-| [`docs/instalacao.md`](docs/instalacao.md) | Bundles, CDN, npm, configuração pela tag script |
-| [`docs/inicio-rapido.md`](docs/inicio-rapido.md) | Do arquivo vazio ao primeiro app |
-| [`docs/directives.md`](docs/directives.md) | Referência completa de directives |
-| [`docs/api.md`](docs/api.md) | Referência completa da API `V` |
-| [`site/`](site/) | Código do site de documentação |
+- **Sem renderização no servidor nem hidratação.** A Voodoo roda no navegador. Os módulos puros (reatividade, HTTP, utilitários) funcionam no Node, mas não existe uma história de hidratação.
+- **Sem alvo mobile nativo.** Não existe um equivalente ao React Native.
+- **Ecossistema jovem.** Menos plugins de terceiros, integrações e respostas na internet do que os frameworks estabelecidos. Essa diferença é real e leva tempo para fechar.
+- **Integrações de terceiros limitadas.** Bibliotecas de componentes e ferramentas feitas para React ou Vue não servem aqui.
+- **Sem tipagem estática dentro dos templates.** Expressões de atributo são strings; erros aparecem em tempo de execução, não de compilação.
+- **Sem virtualização de listas.** O `v-for` reaproveita elementos pela chave, mas listas muito grandes ainda renderizam todas as linhas.
 
 ## Exemplos
 
-Cada exemplo é um único arquivo HTML que você pode abrir direto no navegador. Comece por
-[`examples/index.html`](site/examples/index.html), ou sirva o repositório inteiro e navegue por eles:
+Cada exemplo é um único arquivo HTML que você abre direto no navegador. Veja [ao vivo](https://kwy404.github.io/Voodoo.js/examples/), comece por [`site/examples/index.html`](https://github.com/kwy404/Voodoo.js/blob/main/site/examples/index.html), ou sirva o repositório inteiro:
 
 ```bash
 npm run build && npm run serve
 # depois abra http://localhost:5173/examples/
 ```
 
-O mesmo servidor também hospeda o site da documentação e o playground ao vivo em
-[`site/index.html`](site/index.html) (`http://localhost:5173/site/#playground`), onde dá para editar
-marcação Voodoo e ver rodando na hora.
+O mesmo servidor hospeda o site da documentação e o playground ao vivo em [`site/index.html`](https://github.com/kwy404/Voodoo.js/blob/main/site/index.html) (`http://localhost:5173/site/#playground`), onde você edita marcação Voodoo e vê rodar na hora.
 
-**Aplicações**
-
-| Exemplo | O que mostra |
-| --- | --- |
-| [Tarefas](site/examples/todo/) | Estado, listas, edição no lugar, filtros, reordenação |
-| [CRUD](site/examples/crud/) | Um componente, formulários, validação, máscaras, toasts, atualização otimista |
-| [Painel](site/examples/dashboard/) | Gráficos, valores computados reativos, atualização periódica |
-| [Kanban](site/examples/kanban/) | Arrastar e soltar entre colunas, estado persistido |
-| [Chat](site/examples/chat/) | Atualização ao vivo, comportamento de rolagem, composição de mensagem |
-| [Chat em tempo real](site/examples/chat-tempo-real/) | `v-socket` e `v-room` sobre WebSocket de verdade, salas públicas, mensagem privada, presença e volta automática às salas depois de reconectar. Vem com um servidor de teste sem dependência |
-| [E-commerce](site/examples/ecommerce/) | Catálogo, filtros, store do carrinho, fluxo de compra |
-| [Pokédex](site/examples/pokedex/) | Consumo de API real, busca, paginação, carregamento sob demanda |
-| [DevTools](site/examples/devtools/) | Ligar o inspetor por um único atributo na tag do script |
-
-**Gráficos e jogos**
-
-Eles existem para provar um ponto: a interface inteira é Voodoo declarativo, e o canvas cuida só do
-que realmente precisa de canvas.
+<details>
+<summary><b>Aplicações</b> (tarefas, CRUD, dashboard, kanban, chat, chat em tempo real, e-commerce, Pokédex, DevTools)</summary>
 
 | Exemplo | O que mostra |
 | --- | --- |
-| [Mundo aberto 3D](site/examples/mundo-aberto/) | Uma cidade gerada por código em WebGL2 puro, sem biblioteca nenhuma. Ciclo de dia e noite, sombras, névoa, minimapa e velocímetro, com o HUD e os controles ao vivo escritos como marcação Voodoo comum |
-| [Breakout](site/examples/jogos/breakout/) | Cinco níveis, cápsulas de poder que caem, combo, vidas, recorde persistido e som. Jogável por teclado e por toque |
-| [Tetris](site/examples/jogos/tetris/) | Saco de sete peças, peça fantasma, guardar peça, wall kick. O tabuleiro é canvas; a fila de próximas é uma grade de spans feita por `v-for` aninhado |
-| [Shaders](site/examples/shaders/) | Quatro cenas de raymarching em WebGL2 — Mandelbulb, túnel infinito, metaballs e oceano — com o painel de controle inteiro gerado por `v-for` sobre os uniforms de cada cena, e `v-model` ligado direto na GPU |
+| [Tarefas](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/todo) | Estado, listas, edição no lugar, filtros, reordenação |
+| [CRUD](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/crud) | Um componente, formulários, validação, máscaras, toasts, atualizações otimistas |
+| [Dashboard](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/dashboard) | Gráficos, valores computados reativos, atualização periódica |
+| [Kanban](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/kanban) | Arrastar e soltar entre colunas, estado persistido |
+| [Chat](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/chat) | Atualizações ao vivo, comportamento de rolagem, composição de mensagens |
+| [Chat em tempo real](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/chat-tempo-real) | `v-socket` e `v-room` sobre um WebSocket de verdade, salas públicas, mensagens privadas, presença e reentrada automática depois de reconectar. Vem com um servidor de teste sem dependências |
+| [E-commerce](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/ecommerce) | Catálogo, filtros, store de carrinho, fluxo de checkout |
+| [Pokédex](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/pokedex) | Consumo de API real, busca, paginação, carregamento sob demanda |
+| [DevTools](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/devtools) | Ligar o inspetor a partir de um único atributo no script |
 
-## Ecossistema
+</details>
+
+<details>
+<summary><b>Gráficos e jogos</b> (mundo aberto 3D, Breakout, Tetris, shaders)</summary>
+
+Estes existem para provar um ponto: a interface inteira é Voodoo declarativa, e o canvas só cuida do que precisa de verdade de um canvas.
+
+| Exemplo | O que mostra |
+| --- | --- |
+| [Mundo aberto 3D](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/mundo-aberto) | Uma cidade gerada proceduralmente em WebGL2 puro, sem bibliotecas. Ciclo dia e noite, sombras, neblina, minimapa e velocímetro, com o HUD e os controles ao vivo escritos como marcação Voodoo comum |
+| [Breakout](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/jogos/breakout) | Cinco fases, power-ups caindo, contador de combo, vidas, recorde persistido e som. Jogável com teclado e toque |
+| [Tetris](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/jogos/tetris) | Sorteio em sacos de sete, peça fantasma, hold, wall kicks. O tabuleiro é canvas; a fila de próximas peças é uma grade de spans montada com `v-for` aninhado |
+| [Shaders](https://github.com/kwy404/Voodoo.js/tree/main/site/examples/shaders) | Quatro cenas de raymarching em WebGL2 (Mandelbulb, túnel infinito, metaballs e um oceano) com o painel de controle inteiro gerado por `v-for` sobre os uniforms de cada cena, e `v-model` ligado direto na GPU |
+
+</details>
+
+## Documentação
+
+O site em **[kwy404.github.io/Voodoo.js/docs](https://kwy404.github.io/Voodoo.js/docs/)** tem o guia, a referência da API e exemplos que rodam. No repositório, o guia completo fica em [`docs/`](https://github.com/kwy404/Voodoo.js/tree/main/docs) e uma trilha em inglês em [`docs/en/`](https://github.com/kwy404/Voodoo.js/tree/main/docs/en).
+
+| Onde | O quê |
+| --- | --- |
+| [`docs/README.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/README.md) | Índice do guia completo e da referência |
+| [`docs/introducao.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/introducao.md) | O que é, para quem é, quando não usar |
+| [`docs/instalacao.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/instalacao.md) | Builds, CDN, npm, configuração pela tag de script |
+| [`docs/inicio-rapido.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/inicio-rapido.md) | De um arquivo vazio a uma aplicação funcionando |
+| [`docs/directives.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/directives.md) | Referência completa das directives |
+| [`docs/api.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/api.md) | Referência completa da API `V` |
+| [`docs/perguntas-frequentes.md`](https://github.com/kwy404/Voodoo.js/blob/main/docs/perguntas-frequentes.md) | Perguntas frequentes |
+| [`site/`](https://github.com/kwy404/Voodoo.js/tree/main/site) | Código do site da documentação |
+
+## Arquitetura
+
+```
+  atributos HTML  ─▶  Walker + MutationObserver     acha atributos v-*, monta escopos
+                             │
+  expressões      ─▶  Lexer → parser Pratt → interpretador de AST    sem eval, sem new Function
+                             │
+                      Reatividade: alvos Proxy + efeitos         leituras rastreadas, escritas em fila
+                             │
+                      Directives atualizam os nós reais do DOM   sem Virtual DOM, sem passada de diff
+
+  Por cima: componentes · stores · roteador · HTTP · formulários · interface · i18n · animação · gráficos
+```
+
+A versão longa, com as fronteiras entre módulos e o modelo de escopos, está em [`ARCHITECTURE.md`](https://github.com/kwy404/Voodoo.js/blob/main/ARCHITECTURE.md).
 
 | Pacote | Para que serve |
 | --- | --- |
-| [`voodoojs`](packages/voodoojs/) | O framework: runtime, directives, componentes, HTTP, formulários, interface, roteador, i18n |
-| [`voodoojs-cli`](packages/cli/) | Criação de projetos, builds sob medida, cópia de componentes, informação de módulos |
-
-## TypeScript
-
-O código inteiro é TypeScript, e todo ponto de entrada publica declarações `.d.ts`.
-
-```ts
-import V, { reactive, computed, type HttpResponse } from 'voodoojs'
-
-const estado = reactive({ contador: 0 })
-const dobro = computed(() => estado.contador * 2)
-```
+| [`voodoojs`](https://github.com/kwy404/Voodoo.js/tree/main/packages/voodoojs) | O framework: runtime, directives, componentes, HTTP, formulários, interface, roteador, i18n |
+| [`voodoojs-cli`](https://github.com/kwy404/Voodoo.js/tree/main/packages/cli) | Criação de projetos, builds sob medida, cópia de componentes, informações dos módulos |
 
 ## Roadmap
 
-O foco de curto prazo é a documentação em inglês, mais exemplos, uma superfície maior de plugins e
-a publicação no npm. O plano acompanhado fica em [`ROADMAP.md`](ROADMAP.md); o que já foi entregue
-está registrado no [`CHANGELOG.md`](CHANGELOG.md).
+O foco de curto prazo é documentação em inglês, mais exemplos e uma superfície maior para plugins. O plano acompanhado fica em [`ROADMAP.md`](https://github.com/kwy404/Voodoo.js/blob/main/ROADMAP.md); as mudanças publicadas ficam em [`CHANGELOG.md`](https://github.com/kwy404/Voodoo.js/blob/main/CHANGELOG.md).
 
 ## Contribuindo
 
@@ -1060,67 +910,51 @@ git clone https://github.com/kwy404/Voodoo.js.git
 cd Voodoo.js && npm install
 ```
 
-Um monorepo com npm workspaces: [`packages/voodoojs`](packages/voodoojs/) é o framework,
-[`packages/cli`](packages/cli/) é a CLI, mais [`docs/`](docs/), [`site/`](site/) e
-[`examples/`](site/examples/).
+Um monorepo com npm workspaces: [`packages/voodoojs`](https://github.com/kwy404/Voodoo.js/tree/main/packages/voodoojs) é o framework, [`packages/cli`](https://github.com/kwy404/Voodoo.js/tree/main/packages/cli) é a CLI, além de [`docs/`](https://github.com/kwy404/Voodoo.js/tree/main/docs), [`site/`](https://github.com/kwy404/Voodoo.js/tree/main/site) e [`site/examples/`](https://github.com/kwy404/Voodoo.js/tree/main/site/examples).
 
 | Comando | O que faz |
 | --- | --- |
 | `npm test` | Roda a suíte inteira uma vez (vitest + jsdom) |
-| `npm run test:watch` | A mesma suíte, reexecutando enquanto você edita |
-| `npm run coverage` | Rodada de testes com relatório de cobertura |
+| `npm run test:watch` | A mesma suíte, rodando de novo a cada edição |
+| `npm run coverage` | Testes com relatório de cobertura |
 | `npm run typecheck` | `tsc --noEmit` sobre o pacote do framework |
-| `npm run build` | Gera todos os bundles do `voodoojs` e do `voodoojs-cli` |
-| `npm run size` | Informa o tamanho de cada bundle gerado |
+| `npm run build` | Gera todos os bundles de `voodoojs` e `voodoojs-cli` |
+| `npm run size` | Mostra o tamanho de cada bundle gerado |
 | `npm run serve` | Servidor estático local para os exemplos e o site |
-| `npm run format` | Prettier sobre o repositório |
+| `npm run format` | Prettier no repositório |
 
-Novos scripts entram com o tempo — o `package.json` da raiz é a lista definitiva.
+Novos scripts aparecem com o tempo; o `package.json` da raiz é a lista oficial.
 
-**O ciclo.** Crie um branch a partir da `main`, faça a mudança, rode `npm test` e
-`npm run typecheck` antes de abrir o PR, e escreva as mensagens de commit no estilo
-[Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `docs:`). O CI
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) roda typecheck, testes, build e a
-checagem de tamanho dos bundles no Node 20 e no 22.
+**O ciclo.** Crie uma branch a partir da `main`, faça a mudança, rode `npm test` e `npm run typecheck` antes de abrir o PR, e escreva as mensagens de commit no estilo [Conventional Commits](https://www.conventionalcommits.org/) (`fix:`, `feat:`, `docs:`). A CI ([`.github/workflows/ci.yml`](https://github.com/kwy404/Voodoo.js/blob/main/.github/workflows/ci.yml)) roda typecheck, testes, build e a verificação de tamanho do bundle no Node 20 e 22.
 
-**Onde mexer.** Bug no runtime → `src/runtime/`. Reatividade → `src/reactivity/`. Expressões →
-`src/parser/`. Directive nova → `src/directives/`. Componente de interface → `src/ui/`.
-Documentação → `docs/` e `site/docs/`.
+**Onde as coisas ficam.** Bug de runtime: `src/runtime/`. Reatividade: `src/reactivity/`. Parser de expressões: `src/parser/`. Directive nova: `src/directives/`. Componente de interface: `src/ui/`. Documentação: `docs/` e `site/docs/`.
 
-### Como acrescentar uma directive
+**A regra de ouro: toda correção de bug vem com um teste de regressão.** Se quebrou uma vez pode quebrar de novo, e o teste é o que impede.
 
-As directives internas são registradas com `defineDirective(nome, setup, { priority, terminal })`,
-de `src/runtime/registry.ts`, no arquivo correspondente dentro de `src/directives/`. A função
-`setup` recebe um `DirectiveContext` com `el`, `scope`, `expression`, `arg`, `modifiers`,
-`evaluate()`, `effect()`, `cleanup()` e `walk()`. O `priority` define a ordem de execução (maior
-roda primeiro, veja a tabela `PRIORITY`); `terminal: true` impede o walker de descer nos filhos,
-como fazem o `v-for` e o `v-if`.
+<details>
+<summary><b>Como acrescentar uma directive e um teste</b></summary>
+
+Directives internas são registradas com `defineDirective(nome, setup, { priority, terminal })` de `src/runtime/registry.ts`, no arquivo correspondente em `src/directives/`. A função `setup` recebe um `DirectiveContext` com `el`, `scope`, `expression`, `arg`, `modifiers`, `evaluate()`, `effect()`, `cleanup()` e `walk()`. `priority` ordena a execução (maior primeiro, veja a tabela `PRIORITY`); `terminal: true` impede o walker de descer para os filhos, como fazem o `v-for` e o `v-if`.
 
 ```ts
 import { defineDirective } from '../runtime/registry';
 
-// <p v-shout="mensagem">  →  mostra o valor em caixa alta
-defineDirective('shout', ({ el, effect, evaluate, cleanup }) => {
+// <p v-grito="mensagem">  renderiza o valor em caixa alta
+defineDirective('grito', ({ el, effect, evaluate, cleanup }) => {
   effect(() => {
     el.textContent = String(evaluate() ?? '').toUpperCase();
   });
 
-  // Sempre libere o que você prendeu: listeners, timers, observers.
+  // Sempre libere o que você pendura: listeners, timers, observers.
   const aoClicar = () => el.classList.toggle('alto');
   el.addEventListener('click', aoClicar);
   cleanup(() => el.removeEventListener('click', aoClicar));
 });
 ```
 
-Essa é a API interna. A pública é `V.directive(nome, hooks)`, que embrulha o mesmo mecanismo em
-hooks de ciclo de vida no estilo do Vue (`created`, `mounted`, `updated`, `unmounted`) e entrega a
-cada hook um `binding` com o `value` já avaliado, `oldValue`, `arg` e `modifiers`. Use
-`V.directive` no código da aplicação; use `defineDirective` dentro do framework.
+Essa é a API interna. A pública é `V.directive(nome, hooks)`, que envolve o mesmo mecanismo em hooks de ciclo de vida no estilo do Vue (`created`, `mounted`, `updated`, `unmounted`) e dá a cada hook um `binding` com o `value` avaliado, `oldValue`, `arg` e `modifiers`. Use `V.directive` no código da aplicação; use `defineDirective` dentro do framework.
 
-### Como acrescentar um teste
-
-Os testes ficam em [`packages/voodoojs/test/`](packages/voodoojs/test/) como `*.test.ts`, e rodam
-em vitest com jsdom. Um teste de directive monta o HTML, percorre com um escopo e verifica o DOM:
+Os testes ficam em [`packages/voodoojs/test/`](https://github.com/kwy404/Voodoo.js/tree/main/packages/voodoojs/test) como `*.test.ts`, e rodam no vitest com jsdom. Um teste de directive monta HTML, percorre com um escopo e verifica o DOM:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -1129,15 +963,15 @@ import { Scope } from '../src/runtime/scope';
 import { walk } from '../src/runtime/walker';
 import '../src/core';
 
-describe('v-shout', () => {
-  it('mostra o valor em caixa alta', async () => {
-    const dados = reactive({ mensagem: 'ola' });
+describe('v-grito', () => {
+  it('renderiza o valor em caixa alta', async () => {
+    const dados = reactive({ mensagem: 'olá' });
     const raiz = document.createElement('div');
-    raiz.innerHTML = '<p v-shout="mensagem"></p>';
+    raiz.innerHTML = '<p v-grito="mensagem"></p>';
     document.body.appendChild(raiz);
     walk(raiz, new Scope(dados));
 
-    expect(raiz.textContent).toBe('OLA');
+    expect(raiz.textContent).toBe('OLÁ');
 
     dados.mensagem = 'tchau';
     await nextTick();
@@ -1147,21 +981,36 @@ describe('v-shout', () => {
 });
 ```
 
-**A regra de ouro: toda correção de bug entra junto com um teste de regressão.** Se quebrou uma
-vez pode quebrar de novo, e o teste é o que impede.
+</details>
 
-O detalhe completo está no [`CONTRIBUTING.md`](CONTRIBUTING.md), e todo mundo deve seguir o
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Os detalhes completos estão em [`CONTRIBUTING.md`](https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md) ([como acrescentar uma directive](https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md#how-to-add-a-directive), [como acrescentar um teste](https://github.com/kwy404/Voodoo.js/blob/main/CONTRIBUTING.md#how-to-add-a-test)), e todo mundo deve seguir o [`CODE_OF_CONDUCT.md`](https://github.com/kwy404/Voodoo.js/blob/main/CODE_OF_CONDUCT.md).
+
+## Conheça outros projetos de kwy404
+
+Outras ferramentas open source do mesmo autor.
+
+| | Projeto | O que faz | npm | Documentação |
+| --- | --- | --- | --- | --- |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="Monsoon mascot" width="48"> | **[Monsoon](https://github.com/kwy404/monsoon)** | CSS utilitário sem passo de build: um tema acessível inteiro a partir de uma cor `--seed`, 116 componentes nativos | [![npm](https://img.shields.io/npm/v/monsooncss.svg?label=&color=CB3837)](https://www.npmjs.com/package/monsooncss) | [site](https://kwy404.github.io/monsoon/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="breakhound mascot" width="48"> | **[breakhound](https://github.com/kwy404/breakhound)** | Encontra bugs em qualquer biblioteca JavaScript automaticamente, sem precisar de testes | [![npm](https://img.shields.io/npm/v/breakhound.svg?label=&color=CB3837)](https://www.npmjs.com/package/breakhound) | [site](https://kwy404.github.io/breakhound/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="vueleap mascot" width="48"> | **[vueleap](https://github.com/kwy404/vueleap)** | Migra Vue 2 para Vue 3 com um comando | [![npm](https://img.shields.io/npm/v/vueleap.svg?label=&color=CB3837)](https://www.npmjs.com/package/vueleap) | [site](https://kwy404.github.io/vueleap/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="graphemely mascot" width="48"> | **[graphemely](https://github.com/kwy404/graphemely)** | Trunca, corta e conta strings com emoji com segurança | [![npm](https://img.shields.io/npm/v/%40kwy404%2Fgraphemely.svg?label=&color=CB3837)](https://www.npmjs.com/package/@kwy404/graphemely) | [site](https://kwy404.github.io/graphemely/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="numberparrot mascot" width="48"> | **[numberparrot](https://github.com/kwy404/numberparrot)** | Lê números e valores monetários localizados em qualquer idioma | [![npm](https://img.shields.io/npm/v/numberparrot.svg?label=&color=CB3837)](https://www.npmjs.com/package/numberparrot) | [site](https://kwy404.github.io/numberparrot/) |
+| <img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="edgegoat mascot" width="48"> | **[edgegoat](https://github.com/kwy404/edgegoat)** | Entradas de teste para casos extremos em JavaScript | [![npm](https://img.shields.io/npm/v/edgegoat.svg?label=&color=CB3837)](https://www.npmjs.com/package/edgegoat) | [site](https://kwy404.github.io/edgegoat/) |
+
+## Autor
+
+Criado por **Alexandre Kohler** ([GitHub](https://github.com/kwy404) e [LinkedIn](https://www.linkedin.com/in/alexandre-silva-173687256/)).
 
 ## Licença
 
-[MIT](LICENSE) © contribuidores da Voodoo.js.
+[MIT](https://github.com/kwy404/Voodoo.js/blob/main/LICENSE) © contribuidores da Voodoo.js.
 
 ---
 
 <div align="center">
 
-**Prefer to read in English?** → [README.md](README.md)
+**Prefer English?** [README.md](https://github.com/kwy404/Voodoo.js/blob/main/README.md)
 
 <sub>JavaScript feels like magic.</sub>
 
