@@ -7,6 +7,78 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-13
+
+The first stable release. The public API is now covered by semantic versioning:
+breaking changes only in a new major version.
+
+### Changed
+
+- **The theme has three states.** `V.theme.set('system')` hands the page back to the
+  operating system and follows it while the page is open. `V.theme.cycle()` walks system,
+  light and dark. `v-theme-toggle` still switches light and dark by default;
+  `v-theme-toggle.cycle` walks the three states, and `v-theme-toggle:light`, `:dark` and
+  `:system` pick one and are pressed while it holds.
+- **`v-theme-toggle` writes `data-voodoo-theme` and `data-voodoo-theme-mode`** instead of
+  `data-v-theme`, which attribute cleanup removed as soon as the button mounted.
+- **A bound boolean on a `data-*` attribute is written as `"true"`, and on an `aria-*`
+  attribute as `"true"` or `"false"`.** It used to be `""` for true and removed for false.
+- **Plugins receive the public `V`**, from both `V.use()` and `createApp().use()`.
+- **`start()` restores the saved theme** on pages built from the ES modules.
+- **The package publishes `src/`** next to `dist/`, so `voodoojs-cli build` can compile it.
+- **The documentation describes an inline `<head>` snippet** that applies the saved theme
+  before the first paint, and every page of the site now carries it.
+- **`voodoojs-cli init` follows the release and the theme.** The page loads the full build
+  of the CLI's own version, read from its `package.json`, and comes with light and dark
+  colors, a `v-theme-toggle` button and the `<head>` snippet.
+- **`voodoojs-cli info` works with the published package**, showing the size of the three
+  bundles, and finds `voodoojs` from any subfolder of a project.
+- The CLI checks the Node version before loading anything, and esbuild moves to 0.27, past
+  the dev server advisory in 0.24.
+- **Vudu has a new look**: a purple felt doll with directive pins and a `{ }` charm, with
+  poses, banners and social images in `brand/mascot-v2/`.
+- **The READMEs were rewritten** around JSX in plain HTML, with absolute links so they also
+  render on npm.
+
+### Fixed
+
+- A stored theme that was not `light`, `dark` or `system` was reported and written into
+  `data-theme`; it is ignored, and `set()` refuses unknown names.
+- A theme chosen where storage could be read but not written lost to the stale value.
+- `v-theme-toggle` kept describing the theme the system had left on a page where nobody
+  chose one, and never updated its own `aria-label` after the first render.
+- A theme chosen in another tab or in a same-origin frame did not reach the page.
+- `theme.init()` attached its listeners again on every call; Safari before 14 now gets the
+  `addListener` fallback.
+- The devtools widget and the x-ray panel ignored an explicit page theme; the widget's
+  count text had 2.9:1 contrast in dark mode.
+- Built-in components never showed their error, disabled, striped, dense, block,
+  indeterminate or rating states; card padding, tag padding and the divider line ignored
+  their false states.
+- `v-copy` announced "Copied!" for a failed copy after one success.
+- `v-submit` applied `data-base-url` twice (`/api/api/users`), and applied the API base to
+  redirects.
+- `v-history-debounce` was ignored in the `data-v-` spelling and under a custom prefix.
+- `@click="method"` ran with `this` set to the element's own scope instead of the scope or
+  object that owns the method.
+- `V.socket` and `V.gpu` were never linked onto the global `V`.
+- **`voodoojs-cli add` copies components.** It looked for a templates folder that never
+  existed. The CLI now ships `accordion`, `card`, `drawer`, `dropdown`, `modal`, `tabs`
+  and `theme-toggle`, and refuses to overwrite a file without `--force`.
+- **`voodoojs-cli build` no longer writes into `node_modules/voodoojs`**, and custom
+  bundles start the page the way the published builds do (saved theme, `data-manual`,
+  callable `V`, `window.Voodoo` is the library). The `ui` module includes dialogs and the
+  palette, `forms` includes validation and masks, and JSX is available as the `jsx` module.
+- **CLI errors exit with code 1 on stderr**, `build` without `--modules` outside a terminal
+  says what to pass instead of hanging, `--version` and `-v` print the version,
+  `init --help` shows help, `--out dist/app.js` keeps its value, `init` does not overwrite
+  an existing project without `--force`, and the bin always has an LF shebang.
+- Site: one theme key and attribute on every page, documentation included; no flash of the
+  wrong theme on load; dark syntax colours on the landing page for system dark; the
+  components gallery rendered progress and skeleton at zero width; the real-time chat
+  server served the wrong tree, so its documented URL answered 404.
+- Documentation: dozens of examples and signatures corrected against the code.
+
 ## [0.13.0] - 2026-09-04
 
 ### Changed
