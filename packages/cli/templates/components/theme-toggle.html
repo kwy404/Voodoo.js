@@ -1,0 +1,34 @@
+<!--
+  Theme toggle: switches between light and dark and remembers the choice in
+  localStorage under "voodoo:theme". The button gets aria-pressed and a
+  data-v-theme attribute with the theme in use.
+
+  To avoid a flash of the wrong theme on load, put this script in <head>,
+  before the Voodoo.js script tag:
+
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('voodoo:theme');
+        try { saved = JSON.parse(saved); } catch (e) {}
+        var root = document.documentElement;
+        if (saved === 'light' || saved === 'dark') {
+          root.setAttribute('data-theme', saved);
+          root.style.colorScheme = saved;
+        } else if (saved === 'system') {
+          root.removeAttribute('data-theme');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  Then write your colors for both themes:
+
+  :root { --bg: #fff; --text: #14111f; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #14111f; --text: #f4f1fb; }
+  }
+  :root[data-theme="dark"] { --bg: #14111f; --text: #f4f1fb; }
+-->
+<button v-theme-toggle>Toggle theme</button>
+<span v-text="$theme.resolved === 'dark' ? 'Dark theme' : 'Light theme'"></span>

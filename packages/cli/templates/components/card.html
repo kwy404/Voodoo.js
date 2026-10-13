@@ -1,0 +1,26 @@
+<!--
+  Card: a surface with a title, text and actions.
+  Plain HTML and CSS; the counter shows how state lives inside it.
+  Colors come from the Voodoo.js theme tokens, with fallbacks, so the card
+  follows light and dark mode.
+-->
+<style>
+  .card {
+    max-width: 22rem;
+    padding: 1.25rem;
+    border: 1px solid var(--v-border, #e6e0f0);
+    border-radius: var(--v-radius, 12px);
+    background: var(--v-surface, Canvas);
+    color: var(--v-text, CanvasText);
+    box-shadow: var(--v-shadow, 0 10px 30px rgba(20, 17, 31, .14));
+  }
+  .card h3 { margin: 0 0 .5rem; }
+  .card p { margin: 0 0 1rem; color: var(--v-text-muted, GrayText); }
+  .card button { font: inherit; padding: .4rem .9rem; border-radius: var(--v-radius-sm, 8px); border: 1px solid var(--v-border, #e6e0f0); background: transparent; color: inherit; cursor: pointer; }
+</style>
+
+<article class="card" v-data="{ likes: 0 }">
+  <h3>Card title</h3>
+  <p>A short description of what this card is about.</p>
+  <button @click="likes++">Like ({ likes })</button>
+</article>

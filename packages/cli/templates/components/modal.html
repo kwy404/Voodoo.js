@@ -1,0 +1,12 @@
+<!--
+  Modal: a dialog with trapped focus, Escape to close and a backdrop.
+  The block marked v-modal-content stays hidden until the button opens it.
+  From JavaScript: V.modal.open('#example-modal'), V.modal.close('#example-modal').
+-->
+<button v-modal="#example-modal">Open the dialog</button>
+
+<div id="example-modal" v-modal-content>
+  <h2>Dialog title</h2>
+  <p>Anything goes here: text, a form, a list.</p>
+  <button v-modal-close>Close</button>
+</div>

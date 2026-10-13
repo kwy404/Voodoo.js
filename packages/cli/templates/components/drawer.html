@@ -1,0 +1,14 @@
+<!--
+  Drawer: a side panel with a backdrop, scroll lock and trapped focus.
+  v-drawer-side accepts left, right (the default), top and bottom.
+-->
+<button v-drawer="#example-drawer">Open the menu</button>
+
+<aside id="example-drawer" v-drawer-content v-drawer-side="left">
+  <button v-drawer-close>Close</button>
+  <nav>
+    <p><a href="#">Home</a></p>
+    <p><a href="#">Projects</a></p>
+    <p><a href="#">Settings</a></p>
+  </nav>
+</aside>

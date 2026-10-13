@@ -9,13 +9,15 @@
   },
   "files": [
     "bin",
+    "lib",
+    "templates",
     "README.md"
   ],
   "scripts": {
     "build": "node -e \"console.log('The CLI is plain JavaScript, no build needed.')\""
   },
   "dependencies": {
-    "esbuild": "^0.24.0"
+    "esbuild": "^0.27.7"
   },
   "engines": {
     "node": ">=18"

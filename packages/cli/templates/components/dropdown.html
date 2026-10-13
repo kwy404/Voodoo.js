@@ -1,0 +1,16 @@
+<!--
+  Dropdown: up and down arrows move through the items, Escape closes and
+  returns focus to the button, and the menu flips when it does not fit.
+  v-dropdown-position="top" prefers opening upwards.
+-->
+<div v-data="{ last: 'nothing yet' }">
+  <button v-dropdown="#example-actions">Actions</button>
+
+  <div id="example-actions" v-dropdown-menu>
+    <button @click="last = 'Edit'">Edit</button>
+    <button @click="last = 'Duplicate'">Duplicate</button>
+    <button @click="last = 'Delete'">Delete</button>
+  </div>
+
+  <p>Chosen: { last }</p>
+</div>

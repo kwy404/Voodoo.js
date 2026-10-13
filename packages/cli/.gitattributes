@@ -1,0 +1,5 @@
+# The bin runs through a shebang, and a CRLF checkout turns its first line into
+# "#!/usr/bin/env node" followed by a carriage return, which Linux and macOS
+# cannot execute. The repository has no root .gitattributes and is checked out
+# with core.autocrlf=true on Windows, so this folder pins LF for what ships.
+* text=auto eol=lf

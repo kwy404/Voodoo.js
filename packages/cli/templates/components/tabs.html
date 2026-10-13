@@ -1,0 +1,23 @@
+<!--
+  Tabs: arrow keys move between tabs, Home and End go to the ends, and the
+  active tab gets the v-active class. Add v-tabs-url="tab" to the outer element
+  to keep the chosen tab in the address bar.
+-->
+<style>
+  .tabs [role="tablist"] { display: flex; gap: .25rem; border-bottom: 1px solid var(--v-border, #e6e0f0); }
+  .tabs [role="tab"] { font: inherit; padding: .5rem 1rem; border: 0; border-bottom: 2px solid transparent; background: transparent; color: inherit; cursor: pointer; }
+  .tabs [role="tab"].v-active { border-bottom-color: var(--v-primary, #6d3bf5); }
+  .tabs section { padding: 1rem 0; }
+</style>
+
+<div class="tabs" v-tabs>
+  <div role="tablist">
+    <button v-tab="profile">Profile</button>
+    <button v-tab="security">Security</button>
+    <button v-tab="billing">Billing</button>
+  </div>
+
+  <section v-tab-panel="profile">Profile settings.</section>
+  <section v-tab-panel="security">Password and sessions.</section>
+  <section v-tab-panel="billing">Plan and invoices.</section>
+</div>

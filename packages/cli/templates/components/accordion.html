@@ -1,0 +1,21 @@
+<!--
+  Accordion: each item has a header (first child) and a panel (last child).
+  v-accordion-single keeps one item open at a time; v-accordion-item="open"
+  starts that item open.
+-->
+<div v-accordion v-accordion-single>
+  <div v-accordion-item="open">
+    <h3>Shipping</h3>
+    <div>We ship within two business days.</div>
+  </div>
+
+  <div v-accordion-item>
+    <h3>Returns</h3>
+    <div>You have 30 days to return an item.</div>
+  </div>
+
+  <div v-accordion-item>
+    <h3>Support</h3>
+    <div>Write to us any day of the week.</div>
+  </div>
+</div>
