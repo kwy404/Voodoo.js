@@ -289,7 +289,7 @@ const CSS = `
 .v-card-body:empty{display:none}
 .v-card-foot{padding:0 18px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .v-card-foot:empty{display:none}
-.v-card[data-padded="false"] .v-card-body{padding:0}
+.v-card:not([data-padded="true"]) .v-card-body{padding:0}
 
 /* ------------------------------------------------------------------- form */
 .v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
@@ -441,7 +441,7 @@ const CSS = `
 .v-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans);font-size:12.5px;
   font-weight:600;line-height:1;padding:5px 6px 5px 10px;border-radius:var(--v-radius-sm);
   border:1px solid transparent;vertical-align:middle}
-.v-tag[data-closable="false"]{padding-right:10px}
+.v-tag:not([data-closable="true"]){padding-right:10px}
 .v-tag-close{appearance:none;background:none;border:0;cursor:pointer;color:inherit;opacity:.65;
   display:grid;place-items:center;width:18px;height:18px;border-radius:var(--v-radius-full);font-size:12px}
 .v-tag-close:hover{opacity:1;background:rgba(0,0,0,.08)}
@@ -522,7 +522,7 @@ const CSS = `
 .v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
   font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
 .v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
-.v-divider[data-label="false"]::after{display:none}
+.v-divider:not([data-label="true"])::after{display:none}
 .v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
 .v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
 

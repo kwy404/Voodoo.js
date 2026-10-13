@@ -1,6 +1,6 @@
 import { socketSupported, createSocket, socket } from './chunk-4IJE5BWY.js';
 export { ENGINE, SIO, createSocket, decodeEngine, decodeSocketIo, encodeSocketIo, engineURL, resolveSocketURL, socket, socketSupported } from './chunk-4IJE5BWY.js';
-import { evaluateIn, readAttr } from './chunk-JBUNTP7F.js';
+import { evaluateIn, readAttr } from './chunk-2EFUHAQG.js';
 import { reactive } from './chunk-FMDHZ5GI.js';
 import { warnAlias } from './chunk-IBIZ6OUI.js';
 import { parseDuration } from './chunk-2LGAXVD7.js';
@@ -230,7 +230,9 @@ var voodooSocket = {
   }
 };
 var target = globalThis.V;
-if (target && typeof target === "object" && !target.socket) target.socket = socket;
+if (target && (typeof target === "object" || typeof target === "function") && !target.socket) {
+  target.socket = socket;
+}
 var plugin_default = voodooSocket;
 
 export { plugin_default as default, voodooSocket };

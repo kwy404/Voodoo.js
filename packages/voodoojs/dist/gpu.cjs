@@ -1976,7 +1976,9 @@ var voodooGpu = {
   }
 };
 var target2 = globalThis.V;
-if (target2 && typeof target2 === "object" && !target2.gpu) target2.gpu = gpu;
+if (target2 && (typeof target2 === "object" || typeof target2 === "function") && !target2.gpu) {
+  target2.gpu = gpu;
+}
 var plugin_default = voodooGpu;
 
 exports.classifyShaderSource = classifyShaderSource;

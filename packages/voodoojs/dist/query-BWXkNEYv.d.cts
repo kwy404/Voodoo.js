@@ -1,6 +1,6 @@
-import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.js';
-import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.js';
-import { parseDuration, DebouncedFunction, FormatOptions } from './utils.js';
+import { HttpMethod, HttpDefaults, request, RequestInterceptor, ResponseInterceptor, ErrorInterceptor, clearCache, flushOfflineQueue, HttpError } from './http.cjs';
+import { reactive, ref, shallowRef, computed, effect, watch, watchEffect, nextTick, toRaw, markRaw, unref, stop, effectScope, EffectScope, flushSync } from './reactivity.cjs';
+import { parseDuration, DebouncedFunction, FormatOptions } from './utils.cjs';
 
 /**
  * @module parser/lexer
@@ -588,17 +588,27 @@ declare const theme: {
     readonly current: ThemeName;
     /** Theme effectively applied, resolving `system`. */
     readonly resolved: "light" | "dark";
+    /**
+     * Picks a theme and remembers it: `light`, `dark`, or `system` to follow the
+     * operating system again, including its changes while the page is open.
+     */
     set(value: ThemeName): void;
+    /** Switches between light and dark, whatever the current one came from. */
     toggle(): "light" | "dark";
+    /** Walks the three states in turn: system, light, dark, and back to system. */
+    cycle(): ThemeName;
     /** `true` once the visitor has actually picked a theme. */
     readonly chosen: boolean;
     /** Writes `data-theme` on the root element and notifies the page. */
     apply(): void;
     /**
-     * Applies the saved theme as soon as the page loads.
+     * Applies the saved theme as soon as the page loads, and keeps following it.
      *
-     * Does nothing when the visitor never chose one, which is the common case on
-     * a page that simply included the script.
+     * Does nothing to the document when the visitor never chose one, which is
+     * the common case on a page that simply included the script. Safe to call
+     * more than once: the listeners are attached the first time only. Before
+     * that, every call added another set, and a page that called it next to the
+     * bootstrap ran each theme change twice.
      */
     init(): void;
 };
@@ -1290,6 +1300,7 @@ declare const core: {
         readonly resolved: "light" | "dark";
         set(value: ThemeName): void;
         toggle(): "light" | "dark";
+        cycle(): ThemeName;
         readonly chosen: boolean;
         apply(): void;
         init(): void;

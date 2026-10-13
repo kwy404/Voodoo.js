@@ -30,7 +30,24 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, resolve } from 'node:path';
 
 const porta = Number(process.argv[2] || 5174);
-const raiz = resolve('.');
+const repo = resolve('.');
+// The same tree `scripts/serve.mjs` serves: `site/` as the root, with
+// `/packages` and `/brand` mounted from the repository. This used to serve the
+// repository root, so the demo lived at /site/examples/chat-tempo-real/, the
+// URL printed above answered 404, and from the real address the page's own
+// import of ../../packages/voodoojs/dist/index.js resolved to nothing.
+const raiz = join(repo, 'site');
+const MONTAGENS = { '/packages': join(repo, 'packages'), '/brand': join(repo, 'brand') };
+
+/** The folder a request path is served from, and the path inside it. */
+function resolverPedido(pathname) {
+  for (const [prefixo, alvo] of Object.entries(MONTAGENS)) {
+    if (pathname === prefixo || pathname.startsWith(prefixo + '/')) {
+      return { base: alvo, resto: pathname.slice(prefixo.length) || '/' };
+    }
+  }
+  return { base: raiz, resto: pathname };
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -248,8 +265,9 @@ function tratarMensagem(cliente, texto) {
 const servidor = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://localhost:${porta}`);
-    let caminho = join(raiz, normalize(decodeURIComponent(url.pathname)));
-    if (!caminho.startsWith(raiz)) {
+    const { base, resto } = resolverPedido(decodeURIComponent(url.pathname));
+    let caminho = join(base, normalize(resto));
+    if (!caminho.startsWith(base)) {
       res.writeHead(403).end('Outside root');
       return;
     }

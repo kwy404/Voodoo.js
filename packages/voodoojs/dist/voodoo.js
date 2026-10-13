@@ -2614,6 +2614,307 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     );
   }
 
+  // src/storage/index.ts
+  init_reactivity();
+  function createStorage(getStore, prefix = "") {
+    const full = (key) => prefix + key;
+    return {
+      get(key, fallback) {
+        var _a2;
+        try {
+          const raw = (_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key));
+          if (raw === null || raw === void 0) return fallback;
+          try {
+            return JSON.parse(raw);
+          } catch (e) {
+            return raw;
+          }
+        } catch (e) {
+          return fallback;
+        }
+      },
+      set(key, value) {
+        var _a2;
+        try {
+          (_a2 = getStore()) == null ? void 0 : _a2.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
+          return true;
+        } catch (e) {
+          return false;
+        }
+      },
+      remove(key) {
+        var _a2;
+        try {
+          (_a2 = getStore()) == null ? void 0 : _a2.removeItem(full(key));
+        } catch (e) {
+        }
+      },
+      clear() {
+        try {
+          const store2 = getStore();
+          if (!store2) return;
+          if (!prefix) {
+            store2.clear();
+            return;
+          }
+          for (const key of Object.keys(store2)) {
+            if (key.startsWith(prefix)) store2.removeItem(key);
+          }
+        } catch (e) {
+        }
+      },
+      has(key) {
+        var _a2;
+        try {
+          return ((_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key))) !== null;
+        } catch (e) {
+          return false;
+        }
+      },
+      keys() {
+        try {
+          const store2 = getStore();
+          if (!store2) return [];
+          return Object.keys(store2).filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+        } catch (e) {
+          return [];
+        }
+      }
+    };
+  }
+  var storage = createStorage(
+    () => typeof localStorage !== "undefined" ? localStorage : void 0
+  );
+  var session = createStorage(
+    () => typeof sessionStorage !== "undefined" ? sessionStorage : void 0
+  );
+  var cookie = {
+    get(name) {
+      if (typeof document === "undefined") return void 0;
+      const target = `${encodeURIComponent(name)}=`;
+      for (const part of document.cookie.split("; ")) {
+        if (part.startsWith(target)) return decodeURIComponent(part.slice(target.length));
+      }
+      return void 0;
+    },
+    set(name, value, options = {}) {
+      var _a2, _b;
+      if (typeof document === "undefined") return;
+      let text = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+      if (options.expires !== void 0) {
+        const date = typeof options.expires === "number" ? new Date(Date.now() + options.expires * 864e5) : options.expires;
+        text += `; expires=${date.toUTCString()}`;
+      }
+      text += `; path=${(_a2 = options.path) != null ? _a2 : "/"}`;
+      if (options.domain) text += `; domain=${options.domain}`;
+      if (options.secure) text += "; secure";
+      text += `; samesite=${(_b = options.sameSite) != null ? _b : "Lax"}`;
+      document.cookie = text;
+    },
+    remove(name, options = {}) {
+      this.set(name, "", { ...options, expires: -1 });
+    },
+    has(name) {
+      return this.get(name) !== void 0;
+    }
+  };
+  var url = {
+    /** Reads a parameter from the current URL. */
+    get(key, fallback) {
+      var _a2;
+      if (typeof location === "undefined") return fallback;
+      return (_a2 = new URLSearchParams(location.search).get(key)) != null ? _a2 : fallback;
+    },
+    /** Reads all parameters as an object. */
+    all() {
+      if (typeof location === "undefined") return {};
+      return Object.fromEntries(new URLSearchParams(location.search));
+    },
+    /** Writes a parameter without reloading the page. */
+    set(key, value, replace = true) {
+      if (typeof location === "undefined") return;
+      const next = new URL(location.href);
+      if (value === null || value === "") next.searchParams.delete(key);
+      else next.searchParams.set(key, String(value));
+      history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
+    },
+    remove(key, replace = true) {
+      this.set(key, null, replace);
+    },
+    /** Applies multiple parameters at once. */
+    merge(params, replace = true) {
+      if (typeof location === "undefined") return;
+      const next = new URL(location.href);
+      for (const [key, value] of Object.entries(params)) {
+        if (value === null || value === "") next.searchParams.delete(key);
+        else next.searchParams.set(key, String(value));
+      }
+      history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
+    }
+  };
+  var memoryCache = /* @__PURE__ */ new Map();
+  var cache2 = {
+    /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
+    set(key, value, ttl = 0) {
+      memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
+      return value;
+    },
+    get(key, fallback) {
+      const entry = memoryCache.get(key);
+      if (!entry) return fallback;
+      if (entry.expires < Date.now()) {
+        memoryCache.delete(key);
+        return fallback;
+      }
+      return entry.value;
+    },
+    has(key) {
+      return this.get(key) !== void 0;
+    },
+    remove(key) {
+      memoryCache.delete(key);
+    },
+    clear() {
+      memoryCache.clear();
+    },
+    /** Executes the function only when the value is not in cache. */
+    async remember(key, ttl, factory) {
+      const hit = this.get(key);
+      if (hit !== void 0) return hit;
+      const value = await factory();
+      this.set(key, value, ttl);
+      return value;
+    },
+    get size() {
+      return memoryCache.size;
+    }
+  };
+  var THEME_KEY = "voodoo:theme";
+  var THEME_MODES = ["system", "light", "dark"];
+  function asTheme(value) {
+    const name = typeof value === "string" ? value.trim().toLowerCase() : value;
+    return THEME_MODES.includes(name) ? name : null;
+  }
+  function storedTheme() {
+    return asTheme(storage.get(THEME_KEY));
+  }
+  var picked = null;
+  var listening = false;
+  var revision = ref(0);
+  function notifyTheme() {
+    revision.value++;
+    if (typeof document === "undefined") return;
+    document.dispatchEvent(
+      new CustomEvent("voodoo:theme", { detail: { theme: theme.current, resolved: theme.resolved } })
+    );
+  }
+  var theme = {
+    /** Theme chosen by the user, or `system` when never set. */
+    get current() {
+      var _a2;
+      void revision.value;
+      return (_a2 = picked != null ? picked : storedTheme()) != null ? _a2 : "system";
+    },
+    /** Theme effectively applied, resolving `system`. */
+    get resolved() {
+      const value = this.current;
+      if (value !== "system") return value;
+      if (typeof document !== "undefined") {
+        const authored = document.documentElement.getAttribute("data-theme");
+        if (authored === "light" || authored === "dark") return authored;
+      }
+      if (typeof matchMedia === "undefined") return "light";
+      return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    },
+    /**
+     * Picks a theme and remembers it: `light`, `dark`, or `system` to follow the
+     * operating system again, including its changes while the page is open.
+     */
+    set(value) {
+      const next = asTheme(value);
+      if (!next) {
+        warn(`theme.set() expects 'light', 'dark' or 'system', got ${String(value)}.`);
+        return;
+      }
+      picked = next;
+      storage.set(THEME_KEY, next);
+      revision.value++;
+      this.apply();
+    },
+    /** Switches between light and dark, whatever the current one came from. */
+    toggle() {
+      const next = this.resolved === "dark" ? "light" : "dark";
+      this.set(next);
+      return next;
+    },
+    /** Walks the three states in turn: system, light, dark, and back to system. */
+    cycle() {
+      const next = THEME_MODES[(THEME_MODES.indexOf(this.current) + 1) % THEME_MODES.length];
+      this.set(next);
+      return next;
+    },
+    /** `true` once the visitor has actually picked a theme. */
+    get chosen() {
+      void revision.value;
+      return picked !== null || storedTheme() !== null;
+    },
+    /** Writes `data-theme` on the root element and notifies the page. */
+    apply() {
+      if (typeof document === "undefined") return;
+      if (!this.chosen) return;
+      const value = this.current;
+      const root = document.documentElement;
+      if (value === "system") root.removeAttribute("data-theme");
+      else root.setAttribute("data-theme", value);
+      root.style.colorScheme = this.resolved;
+      notifyTheme();
+    },
+    /**
+     * Applies the saved theme as soon as the page loads, and keeps following it.
+     *
+     * Does nothing to the document when the visitor never chose one, which is
+     * the common case on a page that simply included the script. Safe to call
+     * more than once: the listeners are attached the first time only. Before
+     * that, every call added another set, and a page that called it next to the
+     * bootstrap ran each theme change twice.
+     */
+    init() {
+      var _a2;
+      if (typeof document === "undefined") return;
+      this.apply();
+      if (listening) return;
+      listening = true;
+      if (typeof MutationObserver !== "undefined") {
+        new MutationObserver(() => {
+          revision.value++;
+        }).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["data-theme"]
+        });
+      }
+      if (typeof addEventListener !== "undefined") {
+        addEventListener("storage", (event) => {
+          if (event.key !== THEME_KEY && event.key !== null) return;
+          picked = storedTheme();
+          if (picked) this.apply();
+          else notifyTheme();
+        });
+      }
+      if (typeof matchMedia === "undefined") return;
+      const query2 = matchMedia("(prefers-color-scheme: dark)");
+      const onSystemChange = () => {
+        if (this.current !== "system") return;
+        if (this.chosen) this.apply();
+        else notifyTheme();
+      };
+      if (query2.addEventListener) query2.addEventListener("change", onSystemChange);
+      else (_a2 = query2.addListener) == null ? void 0 : _a2.call(query2, onSystemChange);
+    }
+  };
+  function watchTheme() {
+    if (!listening) theme.init();
+  }
+
   // src/runtime/walker.ts
   var nodeScopes = /* @__PURE__ */ new WeakMap();
   var nodeCleanups = /* @__PURE__ */ new WeakMap();
@@ -3228,6 +3529,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     runPhase(target, true);
     if (!started) {
       started = true;
+      watchTheme();
       if (config.autoDiscover) observeDOM(target);
       document.dispatchEvent(new CustomEvent("voodoo:ready", { detail: { root: target } }));
     }
@@ -3871,6 +4173,9 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   var objectV = null;
   function setAppHost(V2) {
     objectV = V2;
+  }
+  function appHost() {
+    return objectV;
   }
   function globalThis_V() {
     return objectV;
@@ -5056,255 +5361,6 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     }
   );
 
-  // src/storage/index.ts
-  init_reactivity();
-  function createStorage(getStore, prefix = "") {
-    const full = (key) => prefix + key;
-    return {
-      get(key, fallback) {
-        var _a2;
-        try {
-          const raw = (_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key));
-          if (raw === null || raw === void 0) return fallback;
-          try {
-            return JSON.parse(raw);
-          } catch (e) {
-            return raw;
-          }
-        } catch (e) {
-          return fallback;
-        }
-      },
-      set(key, value) {
-        var _a2;
-        try {
-          (_a2 = getStore()) == null ? void 0 : _a2.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
-          return true;
-        } catch (e) {
-          return false;
-        }
-      },
-      remove(key) {
-        var _a2;
-        try {
-          (_a2 = getStore()) == null ? void 0 : _a2.removeItem(full(key));
-        } catch (e) {
-        }
-      },
-      clear() {
-        try {
-          const store2 = getStore();
-          if (!store2) return;
-          if (!prefix) {
-            store2.clear();
-            return;
-          }
-          for (const key of Object.keys(store2)) {
-            if (key.startsWith(prefix)) store2.removeItem(key);
-          }
-        } catch (e) {
-        }
-      },
-      has(key) {
-        var _a2;
-        try {
-          return ((_a2 = getStore()) == null ? void 0 : _a2.getItem(full(key))) !== null;
-        } catch (e) {
-          return false;
-        }
-      },
-      keys() {
-        try {
-          const store2 = getStore();
-          if (!store2) return [];
-          return Object.keys(store2).filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
-        } catch (e) {
-          return [];
-        }
-      }
-    };
-  }
-  var storage = createStorage(
-    () => typeof localStorage !== "undefined" ? localStorage : void 0
-  );
-  var session = createStorage(
-    () => typeof sessionStorage !== "undefined" ? sessionStorage : void 0
-  );
-  var cookie = {
-    get(name) {
-      if (typeof document === "undefined") return void 0;
-      const target = `${encodeURIComponent(name)}=`;
-      for (const part of document.cookie.split("; ")) {
-        if (part.startsWith(target)) return decodeURIComponent(part.slice(target.length));
-      }
-      return void 0;
-    },
-    set(name, value, options = {}) {
-      var _a2, _b;
-      if (typeof document === "undefined") return;
-      let text = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
-      if (options.expires !== void 0) {
-        const date = typeof options.expires === "number" ? new Date(Date.now() + options.expires * 864e5) : options.expires;
-        text += `; expires=${date.toUTCString()}`;
-      }
-      text += `; path=${(_a2 = options.path) != null ? _a2 : "/"}`;
-      if (options.domain) text += `; domain=${options.domain}`;
-      if (options.secure) text += "; secure";
-      text += `; samesite=${(_b = options.sameSite) != null ? _b : "Lax"}`;
-      document.cookie = text;
-    },
-    remove(name, options = {}) {
-      this.set(name, "", { ...options, expires: -1 });
-    },
-    has(name) {
-      return this.get(name) !== void 0;
-    }
-  };
-  var url = {
-    /** Reads a parameter from the current URL. */
-    get(key, fallback) {
-      var _a2;
-      if (typeof location === "undefined") return fallback;
-      return (_a2 = new URLSearchParams(location.search).get(key)) != null ? _a2 : fallback;
-    },
-    /** Reads all parameters as an object. */
-    all() {
-      if (typeof location === "undefined") return {};
-      return Object.fromEntries(new URLSearchParams(location.search));
-    },
-    /** Writes a parameter without reloading the page. */
-    set(key, value, replace = true) {
-      if (typeof location === "undefined") return;
-      const next = new URL(location.href);
-      if (value === null || value === "") next.searchParams.delete(key);
-      else next.searchParams.set(key, String(value));
-      history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
-    },
-    remove(key, replace = true) {
-      this.set(key, null, replace);
-    },
-    /** Applies multiple parameters at once. */
-    merge(params, replace = true) {
-      if (typeof location === "undefined") return;
-      const next = new URL(location.href);
-      for (const [key, value] of Object.entries(params)) {
-        if (value === null || value === "") next.searchParams.delete(key);
-        else next.searchParams.set(key, String(value));
-      }
-      history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
-    }
-  };
-  var memoryCache = /* @__PURE__ */ new Map();
-  var cache2 = {
-    /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
-    set(key, value, ttl = 0) {
-      memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
-      return value;
-    },
-    get(key, fallback) {
-      const entry = memoryCache.get(key);
-      if (!entry) return fallback;
-      if (entry.expires < Date.now()) {
-        memoryCache.delete(key);
-        return fallback;
-      }
-      return entry.value;
-    },
-    has(key) {
-      return this.get(key) !== void 0;
-    },
-    remove(key) {
-      memoryCache.delete(key);
-    },
-    clear() {
-      memoryCache.clear();
-    },
-    /** Executes the function only when the value is not in cache. */
-    async remember(key, ttl, factory) {
-      const hit = this.get(key);
-      if (hit !== void 0) return hit;
-      const value = await factory();
-      this.set(key, value, ttl);
-      return value;
-    },
-    get size() {
-      return memoryCache.size;
-    }
-  };
-  var THEME_KEY = "voodoo:theme";
-  var picked = null;
-  var revision = ref(0);
-  var theme = {
-    /** Theme chosen by the user, or `system` when never set. */
-    get current() {
-      var _a2, _b;
-      void revision.value;
-      return (_b = (_a2 = storage.get(THEME_KEY)) != null ? _a2 : picked) != null ? _b : "system";
-    },
-    /** Theme effectively applied, resolving `system`. */
-    get resolved() {
-      const value = this.current;
-      if (value !== "system") return value;
-      if (typeof document !== "undefined") {
-        const authored = document.documentElement.getAttribute("data-theme");
-        if (authored === "light" || authored === "dark") return authored;
-      }
-      if (typeof matchMedia === "undefined") return "light";
-      return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    },
-    set(value) {
-      picked = value;
-      storage.set(THEME_KEY, value);
-      revision.value++;
-      this.apply();
-    },
-    toggle() {
-      const next = this.resolved === "dark" ? "light" : "dark";
-      this.set(next);
-      return next;
-    },
-    /** `true` once the visitor has actually picked a theme. */
-    get chosen() {
-      return picked !== null || storage.get(THEME_KEY) != null;
-    },
-    /** Writes `data-theme` on the root element and notifies the page. */
-    apply() {
-      if (typeof document === "undefined") return;
-      if (!this.chosen) return;
-      const value = this.current;
-      const root = document.documentElement;
-      if (value === "system") root.removeAttribute("data-theme");
-      else root.setAttribute("data-theme", value);
-      root.style.colorScheme = this.resolved;
-      document.dispatchEvent(
-        new CustomEvent("voodoo:theme", { detail: { theme: value, resolved: this.resolved } })
-      );
-    },
-    /**
-     * Applies the saved theme as soon as the page loads.
-     *
-     * Does nothing when the visitor never chose one, which is the common case on
-     * a page that simply included the script.
-     */
-    init() {
-      if (typeof document === "undefined") return;
-      this.apply();
-      if (typeof MutationObserver !== "undefined") {
-        new MutationObserver(() => {
-          revision.value++;
-        }).observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["data-theme"]
-        });
-      }
-      if (typeof matchMedia === "undefined") return;
-      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-        revision.value++;
-        if (this.current === "system") this.apply();
-      });
-    }
-  };
-
   // src/runtime/magics.ts
   var screen = reactive({
     width: 0,
@@ -5408,7 +5464,10 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     magic("$cookie", () => cookie);
     magic("$cache", () => cache2);
     magic("$url", () => url);
-    magic("$theme", () => theme);
+    magic("$theme", () => {
+      watchTheme();
+      return theme;
+    });
     magic("$device", () => device);
     magic("$screen", () => screen);
     magic("$network", () => network);
@@ -6573,7 +6632,12 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       el.value = value == null ? "" : value;
       return;
     }
+    if (typeof value === "boolean" && name.startsWith("aria-")) {
+      el.setAttribute(name, String(value));
+      return;
+    }
     if (value == null || value === false) el.removeAttribute(name);
+    else if (value === true && name.startsWith("data-")) el.setAttribute(name, "true");
     else el.setAttribute(name, value === true ? "" : String(value));
   }
   var baseClasses = /* @__PURE__ */ new WeakMap();
@@ -6670,6 +6734,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   };
   var SYSTEM_MODIFIERS = ["ctrl", "shift", "alt", "meta"];
   function runHandler(expression, scope, event, el) {
+    var _a2;
     const payload = event.detail;
     const isEmit = event.__voodoo === true;
     const local = scope.child({
@@ -6682,7 +6747,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       const node = parse(expression);
       const value = evaluate(node, local);
       if (typeof value === "function" && (node.t === "id" || node.t === "member")) {
-        value.call(scope.data, isEmit ? payload : event);
+        const self = node.t === "member" ? evaluate(node.o, local) : (_a2 = local.lookup(node.n)) != null ? _a2 : scope.data;
+        value.call(self, isEmit ? payload : event);
       }
     } catch (err) {
       handleError(err, `event ${event.type} ("${expression}")`);
@@ -7716,7 +7782,8 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     emit,
     // Plugins
     use(plugin, options) {
-      usePlugin(core, plugin, options);
+      var _a2;
+      usePlugin((_a2 = appHost()) != null ? _a2 : core, plugin, options);
     },
     /** Defines error handling for the entire application. */
     onError(handler) {
@@ -9459,7 +9526,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
 .v-lazy-failed{opacity:1;filter:grayscale(1)}
 
 .v-copied,.v-copy-failed{position:relative}
-.v-copied::after,.v-copy-failed::after{content:attr(data-v-copy-label);position:absolute;left:50%;
+.v-copied::after,.v-copy-failed::after{content:attr(data-voodoo-copy-label);position:absolute;left:50%;
   bottom:calc(100% + 6px);transform:translateX(-50%);padding:5px 8px;border-radius:6px;white-space:nowrap;
   pointer-events:none;color:#0B1F1A;background:var(--v-success,#2ED9A5);
   font:600 11px/1 var(--v-font-sans,system-ui,sans-serif)}
@@ -10474,29 +10541,40 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     cleanup(() => el.removeEventListener("click", onClick));
   });
   defineOption("drawer-side");
-  defineDirective("theme-toggle", ({ el, cleanup }) => {
+  defineDirective("theme-toggle", ({ el, arg, modifiers, effect: effect2, cleanup }) => {
+    watchTheme();
     makeInteractive(el, cleanup);
+    const mode = arg === "light" || arg === "dark" || arg === "system" ? arg : null;
+    const cycle = !mode && !!modifiers.cycle;
+    const labelled = el.hasAttribute("aria-label");
     const sync = () => {
-      const dark = theme.resolved === "dark";
-      el.setAttribute("aria-pressed", String(dark));
-      el.dataset.vTheme = theme.resolved;
-      if (!el.hasAttribute("aria-label")) {
-        el.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+      const current2 = theme.current;
+      const resolved = theme.resolved;
+      let label;
+      el.dataset.voodooTheme = resolved;
+      el.dataset.voodooThemeMode = current2;
+      if (mode) {
+        el.setAttribute("aria-pressed", String(current2 === mode));
+        label = `Use the ${mode} theme`;
+      } else if (cycle) {
+        el.removeAttribute("aria-pressed");
+        label = `Theme: ${current2}. Change theme`;
+      } else {
+        el.setAttribute("aria-pressed", String(resolved === "dark"));
+        label = resolved === "dark" ? "Switch to light theme" : "Switch to dark theme";
       }
+      if (!labelled) el.setAttribute("aria-label", label);
     };
     const onClick = (event) => {
       event.preventDefault();
-      theme.toggle();
+      if (mode) theme.set(mode);
+      else if (cycle) theme.cycle();
+      else theme.toggle();
       sync();
     };
-    const onThemeChange = () => sync();
-    sync();
+    effect2(sync);
     el.addEventListener("click", onClick);
-    document.addEventListener("voodoo:theme", onThemeChange);
-    cleanup(() => {
-      el.removeEventListener("click", onClick);
-      document.removeEventListener("voodoo:theme", onThemeChange);
-    });
+    cleanup(() => el.removeEventListener("click", onClick));
   });
   defineDirective(
     "focus",
@@ -10828,7 +10906,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   function flashCopied(el, ok) {
     ensureUi();
     const label = readOption(el, "copy-label") || (ok ? "Copied!" : "Could not copy");
-    el.dataset.vCopyLabel = label;
+    el.dataset.voodooCopyLabel = label;
     el.classList.add(ok ? "v-copied" : "v-copy-failed");
     announce(label);
     setTimeout(() => el.classList.remove("v-copied", "v-copy-failed"), 1600);
@@ -12364,7 +12442,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
   function emit2(el, name, detail) {
     el.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
   }
-  function resolveUrl(raw, scope) {
+  function resolveUrl(raw, scope, forRequest = true) {
     let url2 = raw.trim();
     if (url2.includes("{")) {
       url2 = url2.replace(/\{([^{}]+)\}/g, (whole, expression) => {
@@ -12372,7 +12450,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
         return value == null ? whole : String(value);
       });
     }
-    const base = config.baseURL;
+    const base = forRequest && !http.defaults.baseURL ? config.baseURL : "";
     if (base && !/^[a-z][a-z0-9+.-]*:\/\//i.test(url2) && !url2.startsWith("//")) {
       url2 = `${base.replace(/\/$/, "")}/${url2.replace(/^\//, "")}`;
     }
@@ -12533,7 +12611,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
     if (redirect !== null && typeof window !== "undefined") {
       const fromServer = data2 && typeof data2 === "object" ? (_a2 = data2.redirect) != null ? _a2 : data2.url : null;
       const local = ctx.scope.child({ $data: data2, $form: state });
-      const url2 = redirect ? resolveUrl(redirect, local) : String(fromServer != null ? fromServer : "");
+      const url2 = redirect ? resolveUrl(redirect, local, false) : String(fromServer != null ? fromServer : "");
       if (url2) window.location.assign(url2);
     }
   }
@@ -13049,10 +13127,13 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
     }
     return null;
   }
+  function historyDelay(el) {
+    var _a2;
+    return parseDuration((_a2 = attrOf(el, "history-debounce")) != null ? _a2 : void 0, 300);
+  }
   defineDirective(
     "history",
     ({ el, scope, expression, cleanup }) => {
-      var _a2;
       const limit = Number(expression) || 50;
       const snapshots = [
         JSON.parse(JSON.stringify(serializable(scope.data)))
@@ -13105,7 +13186,7 @@ form.v-loading [type="submit"],form.v-loading button[disabled]{opacity:.6}
         if (snapshots.length > limit) snapshots.shift();
         position = snapshots.length - 1;
         sync();
-      }, parseDuration((_a2 = el.getAttribute("v-history-debounce")) != null ? _a2 : void 0, 300));
+      }, historyDelay(el));
       const stopWatching = watch(scope.data, () => record2(), { deep: true });
       controllers.set(el, controller);
       scope.set("$history", controller);
@@ -14223,7 +14304,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
   function reducedMotion() {
     return typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
-  var listening = false;
+  var listening2 = false;
   function onKeydown(event) {
     const entry = top();
     if (!entry) return;
@@ -14261,14 +14342,14 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     ((_a2 = items[0]) != null ? _a2 : entry.handle.panel).focus();
   }
   function startListening() {
-    if (listening) return;
-    listening = true;
+    if (listening2) return;
+    listening2 = true;
     document.addEventListener("keydown", onKeydown, true);
     document.addEventListener("focusin", onFocusIn, true);
   }
   function stopListening() {
-    if (!listening) return;
-    listening = false;
+    if (!listening2) return;
+    listening2 = false;
     document.removeEventListener("keydown", onKeydown, true);
     document.removeEventListener("focusin", onFocusIn, true);
   }
@@ -15157,6 +15238,7 @@ textarea.v-dialog-input{min-height:96px;resize:vertical}
     sound,
     magic
   });
+  setAppHost(V);
   var essential_default = V;
 
   // src/bootstrap.ts

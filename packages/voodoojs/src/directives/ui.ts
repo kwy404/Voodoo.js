@@ -20,7 +20,7 @@ import { defineDirective, PRIORITY } from '../runtime/registry';
 import type { Scope } from '../runtime/scope';
 import { ensureTokens, injectStyle } from '../dom/style';
 import { fadeIn, fadeOut, slideDown, slideUp } from '../dom/transition';
-import { theme, url } from '../storage';
+import { theme, url, watchTheme } from '../storage';
 import { device, escapeHtml, parseDuration, throttle, uid } from '../utils';
 import {
   announce,
@@ -113,7 +113,7 @@ const UI_CSS = `
 .v-lazy-failed{opacity:1;filter:grayscale(1)}
 
 .v-copied,.v-copy-failed{position:relative}
-.v-copied::after,.v-copy-failed::after{content:attr(data-v-copy-label);position:absolute;left:50%;
+.v-copied::after,.v-copy-failed::after{content:attr(data-voodoo-copy-label);position:absolute;left:50%;
   bottom:calc(100% + 6px);transform:translateX(-50%);padding:5px 8px;border-radius:6px;white-space:nowrap;
   pointer-events:none;color:#0B1F1A;background:var(--v-success,#2ED9A5);
   font:600 11px/1 var(--v-font-sans,system-ui,sans-serif)}
@@ -1531,32 +1531,67 @@ defineOption('drawer-side');
 // v-theme-toggle
 // ---------------------------------------------------------------------------
 
-defineDirective('theme-toggle', ({ el, cleanup }) => {
+/**
+ * Three shapes, one directive:
+ *
+ * - `v-theme-toggle` switches between light and dark, as it always has;
+ * - `v-theme-toggle.cycle` walks system, light, dark and back to system;
+ * - `v-theme-toggle:light`, `:dark` or `:system` picks that one, for a group of
+ *   buttons, and is pressed while it is the current choice.
+ *
+ * The button carries `data-voodoo-theme` (the theme on screen) and
+ * `data-voodoo-theme-mode` (the choice, `system` included) for the stylesheet
+ * to pick an icon from, since the `v-*` attribute itself is gone once
+ * processed. It used to write `data-v-theme`, which is the valid-HTML spelling
+ * of a `v-theme` directive: attribute cleanup stripped it as soon as the button
+ * mounted, so no stylesheet ever saw it before the first click.
+ */
+defineDirective('theme-toggle', ({ el, arg, modifiers, effect, cleanup }) => {
+  watchTheme();
   makeInteractive(el, cleanup);
 
+  const mode = arg === 'light' || arg === 'dark' || arg === 'system' ? arg : null;
+  const cycle = !mode && !!modifiers.cycle;
+  // Read once, before this directive writes a label of its own. Checking on
+  // every sync found the label written by the first one, so the button kept
+  // offering "Switch to dark theme" after it had switched to dark.
+  const labelled = el.hasAttribute('aria-label');
+
   const sync = (): void => {
-    const dark = theme.resolved === 'dark';
-    el.setAttribute('aria-pressed', String(dark));
-    el.dataset.vTheme = theme.resolved;
-    if (!el.hasAttribute('aria-label')) {
-      el.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    const current = theme.current;
+    const resolved = theme.resolved;
+    let label: string;
+    el.dataset.voodooTheme = resolved;
+    el.dataset.voodooThemeMode = current;
+    if (mode) {
+      el.setAttribute('aria-pressed', String(current === mode));
+      label = `Use the ${mode} theme`;
+    } else if (cycle) {
+      // Three states are not a pressed and an unpressed one.
+      el.removeAttribute('aria-pressed');
+      label = `Theme: ${current}. Change theme`;
+    } else {
+      el.setAttribute('aria-pressed', String(resolved === 'dark'));
+      label = resolved === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
     }
+    if (!labelled) el.setAttribute('aria-label', label);
   };
 
   const onClick = (event: Event): void => {
     event.preventDefault();
-    theme.toggle();
+    if (mode) theme.set(mode);
+    else if (cycle) theme.cycle();
+    else theme.toggle();
     sync();
   };
-  const onThemeChange = (): void => sync();
 
-  sync();
+  // An effect rather than the `voodoo:theme` event: the event only fired for a
+  // change made through `apply()`, so the button went stale when the system
+  // theme changed under a page nobody had configured, when another tab picked a
+  // theme, or when something else wrote `data-theme` on the root.
+  effect(sync);
   el.addEventListener('click', onClick);
-  document.addEventListener('voodoo:theme', onThemeChange);
-  cleanup(() => {
-    el.removeEventListener('click', onClick);
-    document.removeEventListener('voodoo:theme', onThemeChange);
-  });
+  cleanup(() => el.removeEventListener('click', onClick));
 });
 
 // ---------------------------------------------------------------------------
@@ -1992,7 +2027,10 @@ async function copyText(text: string): Promise<boolean> {
 function flashCopied(el: HTMLElement, ok: boolean): void {
   ensureUi();
   const label = readOption(el, 'copy-label') || (ok ? 'Copied!' : 'Could not copy');
-  el.dataset.vCopyLabel = label;
+  // Not `data-v-copy-label`: `data-v-` is the valid-HTML spelling of `v-`, so
+  // the label written for one copy was read back as the author's own
+  // `v-copy-label` on the next, and a copy that failed announced "Copied!".
+  el.dataset.voodooCopyLabel = label;
   el.classList.add(ok ? 'v-copied' : 'v-copy-failed');
   announce(label);
   setTimeout(() => el.classList.remove('v-copied', 'v-copy-failed'), 1600);

@@ -251,10 +251,17 @@ export function createApp(options: AppOptions = {}): App {
   return app;
 }
 
-/** The `V` object, published by `core.ts`. Avoids circular import. */
+/**
+ * The `V` that plugins are handed: the public object the entry point builds,
+ * once it has published it, and the bare core until then. Avoids a circular
+ * import.
+ */
 let objectV: any = null;
 export function setAppHost(V: any): void {
   objectV = V;
+}
+export function appHost(): any {
+  return objectV;
 }
 function globalThis_V(): any {
   return objectV;

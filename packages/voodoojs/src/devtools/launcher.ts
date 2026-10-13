@@ -83,21 +83,28 @@ const WIDGET_CSS = `
   -webkit-font-smoothing:antialiased;
   touch-action:none;
 }
+/* The widget follows the page: the system preference unless the page carries
+   an explicit data-theme, as V.theme writes it. It used to read the
+   system alone, so a visitor who picked light on a dark machine got a dark
+   widget on a light page, and the other way round. */
 @media (prefers-color-scheme: dark){
-  .v-devtools-widget:not([data-theme="light"]){
+  :root:not([data-theme="light"]) .v-devtools-widget:not([data-theme="light"]){
     --vw-bg:#1C1830;
     --vw-text:#F4F1FB;
     --vw-muted:#A9A2C4;
     --vw-border:#332C50;
     --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+    --vw-accent-ink:#B9A2FF;
   }
 }
+:root[data-theme="dark"] .v-devtools-widget:not([data-theme="light"]),
 .v-devtools-widget[data-theme="dark"]{
   --vw-bg:#1C1830;
   --vw-text:#F4F1FB;
   --vw-muted:#A9A2C4;
   --vw-border:#332C50;
   --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+  --vw-accent-ink:#B9A2FF;
 }
 .v-devtools-widget *,.v-devtools-widget *::before,.v-devtools-widget *::after{
   box-sizing:border-box;
@@ -152,7 +159,8 @@ const WIDGET_CSS = `
   padding:2px 6px;
   border-radius:999px;
   background:rgba(109,59,245,.12);
-  color:var(--vw-accent);
+  /* The brand violet on the dark surface measured 2.9:1. */
+  color:var(--vw-accent-ink,var(--vw-accent));
   font-variant-numeric:tabular-nums;
   font-weight:600;
   white-space:nowrap;

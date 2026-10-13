@@ -1,5 +1,5 @@
 import { http, HttpError, request } from './chunk-OIH4BR2H.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, closestDirective, magic, readAttr, hasAttr, componentAliases, Scope, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-JBUNTP7F.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, url, closestDirective, watchTheme, magic, storage, readAttr, hasAttr, componentAliases, Scope, session, cookie, cache, theme, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-2EFUHAQG.js';
 import { ref, reactive, handleError, toRaw, track, ITERATE_KEY, arrayVersion, nextTick, queuePostFlush, warn, watch, mutationsSince, EffectScope, computed, effect, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-FMDHZ5GI.js';
 import { warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp, warnDuplicateKey } from './chunk-IBIZ6OUI.js';
 import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-2LGAXVD7.js';
@@ -611,6 +611,9 @@ var objectV = null;
 function setAppHost(V) {
   objectV = V;
 }
+function appHost() {
+  return objectV;
+}
 function globalThis_V() {
   return objectV;
 }
@@ -946,247 +949,6 @@ var toast = Object.assign(
   }
 );
 
-// src/storage/index.ts
-function createStorage(getStore, prefix = "") {
-  const full = (key) => prefix + key;
-  return {
-    get(key, fallback) {
-      try {
-        const raw = getStore()?.getItem(full(key));
-        if (raw === null || raw === void 0) return fallback;
-        try {
-          return JSON.parse(raw);
-        } catch {
-          return raw;
-        }
-      } catch {
-        return fallback;
-      }
-    },
-    set(key, value) {
-      try {
-        getStore()?.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    remove(key) {
-      try {
-        getStore()?.removeItem(full(key));
-      } catch {
-      }
-    },
-    clear() {
-      try {
-        const store2 = getStore();
-        if (!store2) return;
-        if (!prefix) {
-          store2.clear();
-          return;
-        }
-        for (const key of Object.keys(store2)) {
-          if (key.startsWith(prefix)) store2.removeItem(key);
-        }
-      } catch {
-      }
-    },
-    has(key) {
-      try {
-        return getStore()?.getItem(full(key)) !== null;
-      } catch {
-        return false;
-      }
-    },
-    keys() {
-      try {
-        const store2 = getStore();
-        if (!store2) return [];
-        return Object.keys(store2).filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
-      } catch {
-        return [];
-      }
-    }
-  };
-}
-var storage = createStorage(
-  () => typeof localStorage !== "undefined" ? localStorage : void 0
-);
-var session = createStorage(
-  () => typeof sessionStorage !== "undefined" ? sessionStorage : void 0
-);
-var cookie = {
-  get(name) {
-    if (typeof document === "undefined") return void 0;
-    const target = `${encodeURIComponent(name)}=`;
-    for (const part of document.cookie.split("; ")) {
-      if (part.startsWith(target)) return decodeURIComponent(part.slice(target.length));
-    }
-    return void 0;
-  },
-  set(name, value, options = {}) {
-    if (typeof document === "undefined") return;
-    let text = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
-    if (options.expires !== void 0) {
-      const date = typeof options.expires === "number" ? new Date(Date.now() + options.expires * 864e5) : options.expires;
-      text += `; expires=${date.toUTCString()}`;
-    }
-    text += `; path=${options.path ?? "/"}`;
-    if (options.domain) text += `; domain=${options.domain}`;
-    if (options.secure) text += "; secure";
-    text += `; samesite=${options.sameSite ?? "Lax"}`;
-    document.cookie = text;
-  },
-  remove(name, options = {}) {
-    this.set(name, "", { ...options, expires: -1 });
-  },
-  has(name) {
-    return this.get(name) !== void 0;
-  }
-};
-var url = {
-  /** Reads a parameter from the current URL. */
-  get(key, fallback) {
-    if (typeof location === "undefined") return fallback;
-    return new URLSearchParams(location.search).get(key) ?? fallback;
-  },
-  /** Reads all parameters as an object. */
-  all() {
-    if (typeof location === "undefined") return {};
-    return Object.fromEntries(new URLSearchParams(location.search));
-  },
-  /** Writes a parameter without reloading the page. */
-  set(key, value, replace = true) {
-    if (typeof location === "undefined") return;
-    const next = new URL(location.href);
-    if (value === null || value === "") next.searchParams.delete(key);
-    else next.searchParams.set(key, String(value));
-    history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
-  },
-  remove(key, replace = true) {
-    this.set(key, null, replace);
-  },
-  /** Applies multiple parameters at once. */
-  merge(params, replace = true) {
-    if (typeof location === "undefined") return;
-    const next = new URL(location.href);
-    for (const [key, value] of Object.entries(params)) {
-      if (value === null || value === "") next.searchParams.delete(key);
-      else next.searchParams.set(key, String(value));
-    }
-    history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
-  }
-};
-var memoryCache = /* @__PURE__ */ new Map();
-var cache = {
-  /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
-  set(key, value, ttl = 0) {
-    memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
-    return value;
-  },
-  get(key, fallback) {
-    const entry = memoryCache.get(key);
-    if (!entry) return fallback;
-    if (entry.expires < Date.now()) {
-      memoryCache.delete(key);
-      return fallback;
-    }
-    return entry.value;
-  },
-  has(key) {
-    return this.get(key) !== void 0;
-  },
-  remove(key) {
-    memoryCache.delete(key);
-  },
-  clear() {
-    memoryCache.clear();
-  },
-  /** Executes the function only when the value is not in cache. */
-  async remember(key, ttl, factory) {
-    const hit = this.get(key);
-    if (hit !== void 0) return hit;
-    const value = await factory();
-    this.set(key, value, ttl);
-    return value;
-  },
-  get size() {
-    return memoryCache.size;
-  }
-};
-var THEME_KEY = "voodoo:theme";
-var picked = null;
-var revision = ref(0);
-var theme = {
-  /** Theme chosen by the user, or `system` when never set. */
-  get current() {
-    void revision.value;
-    return storage.get(THEME_KEY) ?? picked ?? "system";
-  },
-  /** Theme effectively applied, resolving `system`. */
-  get resolved() {
-    const value = this.current;
-    if (value !== "system") return value;
-    if (typeof document !== "undefined") {
-      const authored = document.documentElement.getAttribute("data-theme");
-      if (authored === "light" || authored === "dark") return authored;
-    }
-    if (typeof matchMedia === "undefined") return "light";
-    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  },
-  set(value) {
-    picked = value;
-    storage.set(THEME_KEY, value);
-    revision.value++;
-    this.apply();
-  },
-  toggle() {
-    const next = this.resolved === "dark" ? "light" : "dark";
-    this.set(next);
-    return next;
-  },
-  /** `true` once the visitor has actually picked a theme. */
-  get chosen() {
-    return picked !== null || storage.get(THEME_KEY) != null;
-  },
-  /** Writes `data-theme` on the root element and notifies the page. */
-  apply() {
-    if (typeof document === "undefined") return;
-    if (!this.chosen) return;
-    const value = this.current;
-    const root = document.documentElement;
-    if (value === "system") root.removeAttribute("data-theme");
-    else root.setAttribute("data-theme", value);
-    root.style.colorScheme = this.resolved;
-    document.dispatchEvent(
-      new CustomEvent("voodoo:theme", { detail: { theme: value, resolved: this.resolved } })
-    );
-  },
-  /**
-   * Applies the saved theme as soon as the page loads.
-   *
-   * Does nothing when the visitor never chose one, which is the common case on
-   * a page that simply included the script.
-   */
-  init() {
-    if (typeof document === "undefined") return;
-    this.apply();
-    if (typeof MutationObserver !== "undefined") {
-      new MutationObserver(() => {
-        revision.value++;
-      }).observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["data-theme"]
-      });
-    }
-    if (typeof matchMedia === "undefined") return;
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-      revision.value++;
-      if (this.current === "system") this.apply();
-    });
-  }
-};
-
 // src/runtime/magics.ts
 var screen = reactive({
   width: 0,
@@ -1281,7 +1043,10 @@ function installMagics() {
   magic("$cookie", () => cookie);
   magic("$cache", () => cache);
   magic("$url", () => url);
-  magic("$theme", () => theme);
+  magic("$theme", () => {
+    watchTheme();
+    return theme;
+  });
   magic("$device", () => device);
   magic("$screen", () => screen);
   magic("$network", () => network);
@@ -2360,7 +2125,12 @@ function applyBinding(el, name, value, asProp = false, allowDangerous = false) {
     el.value = value == null ? "" : value;
     return;
   }
+  if (typeof value === "boolean" && name.startsWith("aria-")) {
+    el.setAttribute(name, String(value));
+    return;
+  }
   if (value == null || value === false) el.removeAttribute(name);
+  else if (value === true && name.startsWith("data-")) el.setAttribute(name, "true");
   else el.setAttribute(name, value === true ? "" : String(value));
 }
 var baseClasses = /* @__PURE__ */ new WeakMap();
@@ -2468,7 +2238,8 @@ function runHandler(expression, scope, event, el) {
     const node = parse(expression);
     const value = evaluate(node, local);
     if (typeof value === "function" && (node.t === "id" || node.t === "member")) {
-      value.call(scope.data, isEmit ? payload : event);
+      const self = node.t === "member" ? evaluate(node.o, local) : local.lookup(node.n) ?? scope.data;
+      value.call(self, isEmit ? payload : event);
     }
   } catch (err) {
     handleError(err, `event ${event.type} ("${expression}")`);
@@ -3478,7 +3249,7 @@ var core = {
   emit,
   // Plugins
   use(plugin, options) {
-    usePlugin(core, plugin, options);
+    usePlugin(appHost() ?? core, plugin, options);
   },
   /** Defines error handling for the entire application. */
   onError(handler) {
@@ -5187,7 +4958,7 @@ var UI_CSS = `
 .v-lazy-failed{opacity:1;filter:grayscale(1)}
 
 .v-copied,.v-copy-failed{position:relative}
-.v-copied::after,.v-copy-failed::after{content:attr(data-v-copy-label);position:absolute;left:50%;
+.v-copied::after,.v-copy-failed::after{content:attr(data-voodoo-copy-label);position:absolute;left:50%;
   bottom:calc(100% + 6px);transform:translateX(-50%);padding:5px 8px;border-radius:6px;white-space:nowrap;
   pointer-events:none;color:#0B1F1A;background:var(--v-success,#2ED9A5);
   font:600 11px/1 var(--v-font-sans,system-ui,sans-serif)}
@@ -6190,29 +5961,40 @@ defineDirective("drawer-close", ({ el, expression, cleanup }) => {
   cleanup(() => el.removeEventListener("click", onClick));
 });
 defineOption("drawer-side");
-defineDirective("theme-toggle", ({ el, cleanup }) => {
+defineDirective("theme-toggle", ({ el, arg, modifiers, effect: effect2, cleanup }) => {
+  watchTheme();
   makeInteractive(el, cleanup);
+  const mode = arg === "light" || arg === "dark" || arg === "system" ? arg : null;
+  const cycle = !mode && !!modifiers.cycle;
+  const labelled = el.hasAttribute("aria-label");
   const sync = () => {
-    const dark = theme.resolved === "dark";
-    el.setAttribute("aria-pressed", String(dark));
-    el.dataset.vTheme = theme.resolved;
-    if (!el.hasAttribute("aria-label")) {
-      el.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+    const current2 = theme.current;
+    const resolved = theme.resolved;
+    let label;
+    el.dataset.voodooTheme = resolved;
+    el.dataset.voodooThemeMode = current2;
+    if (mode) {
+      el.setAttribute("aria-pressed", String(current2 === mode));
+      label = `Use the ${mode} theme`;
+    } else if (cycle) {
+      el.removeAttribute("aria-pressed");
+      label = `Theme: ${current2}. Change theme`;
+    } else {
+      el.setAttribute("aria-pressed", String(resolved === "dark"));
+      label = resolved === "dark" ? "Switch to light theme" : "Switch to dark theme";
     }
+    if (!labelled) el.setAttribute("aria-label", label);
   };
   const onClick = (event) => {
     event.preventDefault();
-    theme.toggle();
+    if (mode) theme.set(mode);
+    else if (cycle) theme.cycle();
+    else theme.toggle();
     sync();
   };
-  const onThemeChange = () => sync();
-  sync();
+  effect2(sync);
   el.addEventListener("click", onClick);
-  document.addEventListener("voodoo:theme", onThemeChange);
-  cleanup(() => {
-    el.removeEventListener("click", onClick);
-    document.removeEventListener("voodoo:theme", onThemeChange);
-  });
+  cleanup(() => el.removeEventListener("click", onClick));
 });
 defineDirective(
   "focus",
@@ -6533,7 +6315,7 @@ async function copyText(text) {
 function flashCopied(el, ok) {
   ensureUi();
   const label = readOption(el, "copy-label") || (ok ? "Copied!" : "Could not copy");
-  el.dataset.vCopyLabel = label;
+  el.dataset.voodooCopyLabel = label;
   el.classList.add(ok ? "v-copied" : "v-copy-failed");
   announce(label);
   setTimeout(() => el.classList.remove("v-copied", "v-copy-failed"), 1600);
@@ -8039,7 +7821,7 @@ function ensureStyles2() {
 function emit2(el, name, detail) {
   el.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
 }
-function resolveUrl(raw, scope) {
+function resolveUrl(raw, scope, forRequest = true) {
   let url2 = raw.trim();
   if (url2.includes("{")) {
     url2 = url2.replace(/\{([^{}]+)\}/g, (whole, expression) => {
@@ -8047,7 +7829,7 @@ function resolveUrl(raw, scope) {
       return value == null ? whole : String(value);
     });
   }
-  const base = config.baseURL;
+  const base = forRequest && !http.defaults.baseURL ? config.baseURL : "";
   if (base && !/^[a-z][a-z0-9+.-]*:\/\//i.test(url2) && !url2.startsWith("//")) {
     url2 = `${base.replace(/\/$/, "")}/${url2.replace(/^\//, "")}`;
   }
@@ -8205,7 +7987,7 @@ function handleSuccess(ctx, data2, status) {
   if (redirect !== null && typeof window !== "undefined") {
     const fromServer = data2 && typeof data2 === "object" ? data2.redirect ?? data2.url : null;
     const local = ctx.scope.child({ $data: data2, $form: state });
-    const url2 = redirect ? resolveUrl(redirect, local) : String(fromServer ?? "");
+    const url2 = redirect ? resolveUrl(redirect, local, false) : String(fromServer ?? "");
     if (url2) window.location.assign(url2);
   }
 }
@@ -8710,6 +8492,9 @@ function findController(el) {
   }
   return null;
 }
+function historyDelay(el) {
+  return parseDuration(attrOf(el, "history-debounce") ?? void 0, 300);
+}
 defineDirective(
   "history",
   ({ el, scope, expression, cleanup }) => {
@@ -8765,7 +8550,7 @@ defineDirective(
       if (snapshots.length > limit) snapshots.shift();
       position = snapshots.length - 1;
       sync();
-    }, parseDuration(el.getAttribute("v-history-debounce") ?? void 0, 300));
+    }, historyDelay(el));
     const stopWatching = watch(scope.data, () => record(), { deep: true });
     controllers.set(el, controller);
     scope.set("$history", controller);
@@ -10730,6 +10515,6 @@ defineDirective(
   { priority: PRIORITY.MODEL + 5 }
 );
 
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, session, showFieldError, showFormErrors, slideDown, slideUp, sound, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-H2NGDLMD.js.map
-//# sourceMappingURL=chunk-H2NGDLMD.js.map
+export { VoodooCollection, alert, allStores, applyMask, clearErrors, clipboard, confirm, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, setAppHost, showFieldError, showFormErrors, slideDown, slideUp, sound, store, storeNames, toast, unmask, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
+//# sourceMappingURL=chunk-5RQSNQDQ.js.map
+//# sourceMappingURL=chunk-5RQSNQDQ.js.map

@@ -19,6 +19,7 @@ import { defineDirective, PRIORITY } from '../runtime/registry';
 import { magic } from '../runtime/scope';
 import { storage } from '../storage';
 import { debounce, parseDuration } from '../utils';
+import { attrOf } from './shared';
 
 /** Removes functions and non-serializable values before saving. */
 function serializable(source: Record<string, unknown>): Record<string, unknown> {
@@ -162,6 +163,18 @@ function findController(el: HTMLElement): HistoryController | null {
   return null;
 }
 
+/**
+ * The wait before a change becomes an undo step, from `v-history-debounce`.
+ *
+ * Read through the attribute cache, with the configured prefix and the
+ * `data-v-` spelling. A literal `el.getAttribute('v-history-debounce')` found
+ * nothing once attribute cleanup had run, nothing under another prefix, and
+ * nothing for `data-v-history-debounce`, so the option was always 300ms.
+ */
+function historyDelay(el: Element): number {
+  return parseDuration(attrOf(el, 'history-debounce') ?? undefined, 300);
+}
+
 defineDirective(
   'history',
   ({ el, scope, expression, cleanup }) => {
@@ -223,7 +236,7 @@ defineDirective(
       if (snapshots.length > limit) snapshots.shift();
       position = snapshots.length - 1;
       sync();
-    }, parseDuration(el.getAttribute('v-history-debounce') ?? undefined, 300));
+    }, historyDelay(el));
 
     const stopWatching = watch(scope.data, () => record(), { deep: true });
 

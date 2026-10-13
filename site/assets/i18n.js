@@ -30,7 +30,7 @@
         search: 'Search',
         searchAria: 'Search, Ctrl plus K',
         language: 'Language',
-        theme: 'Toggle dark mode',
+        theme: 'Change theme: system, light or dark',
         menu: 'Menu',
         skip: 'Skip to content',
       },
@@ -140,7 +140,7 @@
         lead2:
           'View source, or press Ctrl+K and pick "View this page\'s source". If the framework could ' +
           'not carry a real site, you would find out here first.',
-        f1: 'unit tests, plus 44 in real Chromium',
+        f1: 'unit tests, plus 59 in real Chromium',
         f2: 'runtime dependencies',
         f3: 'core build, gzipped',
         f4: 'build steps, here or in your project',
@@ -153,7 +153,17 @@
         running: 'Running right here',
         all: 'See all 29 components',
       },
-      foot: { mit: 'MIT licensed', builtWith: 'Built with Voodoo.js 0.13.0' },
+      more: {
+        eyebrow: 'From the same author',
+        title: 'More projects by kwy404',
+        monsoon: 'Utility-first CSS with no build step and 116 native components',
+        breakhound: 'Find bugs in any JavaScript library automatically',
+        vueleap: 'Migrate Vue 2 to Vue 3 with one command',
+        graphemely: 'Emoji safe string functions',
+        numberparrot: 'Parse localized numbers and currency',
+        edgegoat: 'Edge case test inputs',
+      },
+      foot: { mit: 'MIT licensed', madeBy: 'Made by', builtWith: 'Built with Voodoo.js 0.13.0' },
     },
 
     'pt-BR': {
@@ -169,7 +179,7 @@
         search: 'Buscar',
         searchAria: 'Buscar, Ctrl mais K',
         language: 'Idioma',
-        theme: 'Alternar modo escuro',
+        theme: 'Mudar tema: sistema, claro ou escuro',
         menu: 'Menu',
         skip: 'Pular para o conteúdo',
       },
@@ -282,7 +292,7 @@
         lead2:
           'Veja o código-fonte, ou aperte Ctrl+K e escolha "Ver o código desta página". Se o ' +
           'framework não aguentasse um site de verdade, você descobriria aqui primeiro.',
-        f1: 'testes unitários, mais 44 no Chromium real',
+        f1: 'testes unitários, mais 59 no Chromium real',
         f2: 'dependências em tempo de execução',
         f3: 'build principal, com gzip',
         f4: 'passos de build, aqui ou no seu projeto',
@@ -295,7 +305,17 @@
         running: 'Rodando aqui mesmo',
         all: 'Ver os 29 componentes',
       },
-      foot: { mit: 'Licença MIT', builtWith: 'Feito com Voodoo.js 0.13.0' },
+      more: {
+        eyebrow: 'Do mesmo autor',
+        title: 'Conheça outros projetos de kwy404',
+        monsoon: 'CSS utilitário sem etapa de build e 116 componentes nativos',
+        breakhound: 'Encontra bugs em qualquer biblioteca JavaScript automaticamente',
+        vueleap: 'Migra do Vue 2 para o Vue 3 com um só comando',
+        graphemely: 'Funções de string seguras para emoji',
+        numberparrot: 'Lê números e valores monetários localizados',
+        edgegoat: 'Entradas de teste para casos extremos',
+      },
+      foot: { mit: 'Licença MIT', madeBy: 'Feito por', builtWith: 'Feito com Voodoo.js 0.13.0' },
     },
 
     es: {
@@ -311,7 +331,7 @@
         search: 'Buscar',
         searchAria: 'Buscar, Ctrl más K',
         language: 'Idioma',
-        theme: 'Alternar modo oscuro',
+        theme: 'Cambiar tema: sistema, claro u oscuro',
         menu: 'Menú',
         skip: 'Saltar al contenido',
       },
@@ -426,7 +446,7 @@
         lead2:
           'Mira el código fuente, o pulsa Ctrl+K y elige "Ver el código de esta página". Si el ' +
           'framework no aguantara un sitio real, te enterarías aquí primero.',
-        f1: 'pruebas unitarias, más 44 en Chromium real',
+        f1: 'pruebas unitarias, más 59 en Chromium real',
         f2: 'dependencias en tiempo de ejecución',
         f3: 'build principal, con gzip',
         f4: 'pasos de compilación, aquí o en tu proyecto',
@@ -439,7 +459,17 @@
         running: 'Funcionando aquí mismo',
         all: 'Ver los 29 componentes',
       },
-      foot: { mit: 'Licencia MIT', builtWith: 'Hecho con Voodoo.js 0.13.0' },
+      more: {
+        eyebrow: 'Del mismo autor',
+        title: 'Más proyectos de kwy404',
+        monsoon: 'CSS utility-first sin paso de build y 116 componentes nativos',
+        breakhound: 'Encuentra bugs en cualquier biblioteca JavaScript automáticamente',
+        vueleap: 'Migra de Vue 2 a Vue 3 con un solo comando',
+        graphemely: 'Funciones de cadena seguras para emoji',
+        numberparrot: 'Interpreta números y monedas localizados',
+        edgegoat: 'Entradas de prueba para casos límite',
+      },
+      foot: { mit: 'Licencia MIT', madeBy: 'Hecho por', builtWith: 'Hecho con Voodoo.js 0.13.0' },
     },
 
     ko: {
@@ -455,7 +485,7 @@
         search: '검색',
         searchAria: '검색, Ctrl 더하기 K',
         language: '언어',
-        theme: '다크 모드 전환',
+        theme: '테마 변경: 시스템, 라이트, 다크',
         menu: '메뉴',
         skip: '본문으로 건너뛰기',
       },
@@ -565,7 +595,7 @@
         lead2:
           '소스를 보거나, Ctrl+K를 눌러 "이 페이지의 소스 보기"를 선택하세요. 프레임워크가 실제 ' +
           '사이트를 감당하지 못한다면, 여기에서 가장 먼저 드러날 것입니다.',
-        f1: '개의 단위 테스트, 그리고 실제 Chromium에서 44개',
+        f1: '개의 단위 테스트, 그리고 실제 Chromium에서 59개',
         f2: '개의 런타임 의존성',
         f3: '코어 빌드, gzip 기준',
         f4: '개의 빌드 단계, 여기서도 당신의 프로젝트에서도',
@@ -578,7 +608,17 @@
         running: '바로 여기서 실행 중',
         all: '29개 컴포넌트 모두 보기',
       },
-      foot: { mit: 'MIT 라이선스', builtWith: 'Voodoo.js 0.13.0으로 제작' },
+      more: {
+        eyebrow: '같은 제작자',
+        title: 'kwy404의 다른 프로젝트',
+        monsoon: '빌드 없는 유틸리티 우선 CSS와 116개의 네이티브 컴포넌트',
+        breakhound: '모든 JavaScript 라이브러리의 버그를 자동으로 찾기',
+        vueleap: '명령 하나로 Vue 2에서 Vue 3로 마이그레이션',
+        graphemely: '이모지에 안전한 문자열 함수',
+        numberparrot: '현지화된 숫자와 통화 파싱',
+        edgegoat: '엣지 케이스 테스트 입력',
+      },
+      foot: { mit: 'MIT 라이선스', madeBy: '만든 사람', builtWith: 'Voodoo.js 0.13.0으로 제작' },
     },
   };
 

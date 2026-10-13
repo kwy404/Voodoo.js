@@ -151,8 +151,10 @@ const XRAY_CSS = `
   color:var(--vx-text);
   -webkit-font-smoothing:antialiased;
 }
+/* On "auto" the panel follows the page, explicit data-theme included, not
+   only the system: a light page on a dark machine got a dark panel. */
 @media (prefers-color-scheme: dark){
-  .v-xray-root:not([data-v-xray-theme="light"]){
+  :root:not([data-theme="light"]) .v-xray-root:not([data-v-xray-theme="light"]){
     --vx-bg:#1C1830;
     --vx-bg-2:#14111F;
     --vx-text:#F4F1FB;
@@ -161,6 +163,7 @@ const XRAY_CSS = `
     --vx-shadow:0 12px 40px rgba(0,0,0,.55);
   }
 }
+:root[data-theme="dark"] .v-xray-root:not([data-v-xray-theme="light"]),
 .v-xray-root[data-v-xray-theme="dark"]{
   --vx-bg:#1C1830;
   --vx-bg-2:#14111F;

@@ -298,8 +298,16 @@ function emit(el: Element, name: string, detail: Record<string, unknown>): void 
   el.dispatchEvent(new CustomEvent(name, { detail, bubbles: true }));
 }
 
-/** Resolves `/api/users/{ user.id }` in current scope and applies `baseURL`. */
-function resolveUrl(raw: string, scope: Scope): string {
+/**
+ * Resolves `/api/users/{ user.id }` in current scope and, for a request,
+ * applies `baseURL`.
+ *
+ * Only when the HTTP client will not apply one itself. The script-tag bootstrap
+ * hands `data-base-url` to both `config.baseURL` and `http.setBaseURL()`, and
+ * prefixing here as well sent `/users` to `/api/api/users`. A redirect is a
+ * page, not an endpoint, so it never gets the API base at all.
+ */
+function resolveUrl(raw: string, scope: Scope, forRequest = true): string {
   let url = raw.trim();
   if (url.includes('{')) {
     url = url.replace(/\{([^{}]+)\}/g, (whole, expression: string) => {
@@ -307,7 +315,7 @@ function resolveUrl(raw: string, scope: Scope): string {
       return value == null ? whole : String(value);
     });
   }
-  const base = config.baseURL;
+  const base = forRequest && !http.defaults.baseURL ? config.baseURL : '';
   if (base && !/^[a-z][a-z0-9+.-]*:\/\//i.test(url) && !url.startsWith('//')) {
     url = `${base.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
   }
@@ -512,7 +520,7 @@ function handleSuccess(ctx: RequestContext, data: unknown, status: number): void
         ? ((data as Record<string, unknown>).redirect ?? (data as Record<string, unknown>).url)
         : null;
     const local = ctx.scope.child({ $data: data, $form: state });
-    const url = redirect ? resolveUrl(redirect, local) : String(fromServer ?? '');
+    const url = redirect ? resolveUrl(redirect, local, false) : String(fromServer ?? '');
     if (url) window.location.assign(url);
   }
 }

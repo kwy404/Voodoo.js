@@ -105,6 +105,7 @@
   "files": [
     "dist",
     "!dist/**/*.map",
+    "src",
     "README.md"
   ],
   "scripts": {

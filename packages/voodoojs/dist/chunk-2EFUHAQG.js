@@ -1,4 +1,4 @@
-import { reactive, handleError, EffectScope, effect } from './chunk-FMDHZ5GI.js';
+import { reactive, ref, warn, handleError, EffectScope, effect } from './chunk-FMDHZ5GI.js';
 import { inDevelopment, warnInvalidExpression, warnUnknownDirective } from './chunk-IBIZ6OUI.js';
 import { config, directives, components } from './chunk-TEVCUTTC.js';
 import { __publicField } from './chunk-IJQ2PFXU.js';
@@ -1559,6 +1559,298 @@ var Scope = class _Scope {
 };
 var rootScope = new Scope(reactive({}));
 
+// src/storage/index.ts
+function createStorage(getStore, prefix = "") {
+  const full = (key) => prefix + key;
+  return {
+    get(key, fallback) {
+      try {
+        const raw = getStore()?.getItem(full(key));
+        if (raw === null || raw === void 0) return fallback;
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return raw;
+        }
+      } catch {
+        return fallback;
+      }
+    },
+    set(key, value) {
+      try {
+        getStore()?.setItem(full(key), typeof value === "string" ? value : JSON.stringify(value));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    remove(key) {
+      try {
+        getStore()?.removeItem(full(key));
+      } catch {
+      }
+    },
+    clear() {
+      try {
+        const store = getStore();
+        if (!store) return;
+        if (!prefix) {
+          store.clear();
+          return;
+        }
+        for (const key of Object.keys(store)) {
+          if (key.startsWith(prefix)) store.removeItem(key);
+        }
+      } catch {
+      }
+    },
+    has(key) {
+      try {
+        return getStore()?.getItem(full(key)) !== null;
+      } catch {
+        return false;
+      }
+    },
+    keys() {
+      try {
+        const store = getStore();
+        if (!store) return [];
+        return Object.keys(store).filter((k) => k.startsWith(prefix)).map((k) => k.slice(prefix.length));
+      } catch {
+        return [];
+      }
+    }
+  };
+}
+var storage = createStorage(
+  () => typeof localStorage !== "undefined" ? localStorage : void 0
+);
+var session = createStorage(
+  () => typeof sessionStorage !== "undefined" ? sessionStorage : void 0
+);
+var cookie = {
+  get(name) {
+    if (typeof document === "undefined") return void 0;
+    const target = `${encodeURIComponent(name)}=`;
+    for (const part of document.cookie.split("; ")) {
+      if (part.startsWith(target)) return decodeURIComponent(part.slice(target.length));
+    }
+    return void 0;
+  },
+  set(name, value, options = {}) {
+    if (typeof document === "undefined") return;
+    let text = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+    if (options.expires !== void 0) {
+      const date = typeof options.expires === "number" ? new Date(Date.now() + options.expires * 864e5) : options.expires;
+      text += `; expires=${date.toUTCString()}`;
+    }
+    text += `; path=${options.path ?? "/"}`;
+    if (options.domain) text += `; domain=${options.domain}`;
+    if (options.secure) text += "; secure";
+    text += `; samesite=${options.sameSite ?? "Lax"}`;
+    document.cookie = text;
+  },
+  remove(name, options = {}) {
+    this.set(name, "", { ...options, expires: -1 });
+  },
+  has(name) {
+    return this.get(name) !== void 0;
+  }
+};
+var url = {
+  /** Reads a parameter from the current URL. */
+  get(key, fallback) {
+    if (typeof location === "undefined") return fallback;
+    return new URLSearchParams(location.search).get(key) ?? fallback;
+  },
+  /** Reads all parameters as an object. */
+  all() {
+    if (typeof location === "undefined") return {};
+    return Object.fromEntries(new URLSearchParams(location.search));
+  },
+  /** Writes a parameter without reloading the page. */
+  set(key, value, replace = true) {
+    if (typeof location === "undefined") return;
+    const next = new URL(location.href);
+    if (value === null || value === "") next.searchParams.delete(key);
+    else next.searchParams.set(key, String(value));
+    history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
+  },
+  remove(key, replace = true) {
+    this.set(key, null, replace);
+  },
+  /** Applies multiple parameters at once. */
+  merge(params, replace = true) {
+    if (typeof location === "undefined") return;
+    const next = new URL(location.href);
+    for (const [key, value] of Object.entries(params)) {
+      if (value === null || value === "") next.searchParams.delete(key);
+      else next.searchParams.set(key, String(value));
+    }
+    history[replace ? "replaceState" : "pushState"]({}, "", next.toString());
+  }
+};
+var memoryCache = /* @__PURE__ */ new Map();
+var cache2 = {
+  /** Stores a value. `ttl` in milliseconds, `0` means no expiration. */
+  set(key, value, ttl = 0) {
+    memoryCache.set(key, { value, expires: ttl > 0 ? Date.now() + ttl : Infinity });
+    return value;
+  },
+  get(key, fallback) {
+    const entry = memoryCache.get(key);
+    if (!entry) return fallback;
+    if (entry.expires < Date.now()) {
+      memoryCache.delete(key);
+      return fallback;
+    }
+    return entry.value;
+  },
+  has(key) {
+    return this.get(key) !== void 0;
+  },
+  remove(key) {
+    memoryCache.delete(key);
+  },
+  clear() {
+    memoryCache.clear();
+  },
+  /** Executes the function only when the value is not in cache. */
+  async remember(key, ttl, factory) {
+    const hit = this.get(key);
+    if (hit !== void 0) return hit;
+    const value = await factory();
+    this.set(key, value, ttl);
+    return value;
+  },
+  get size() {
+    return memoryCache.size;
+  }
+};
+var THEME_KEY = "voodoo:theme";
+var THEME_MODES = ["system", "light", "dark"];
+function asTheme(value) {
+  const name = typeof value === "string" ? value.trim().toLowerCase() : value;
+  return THEME_MODES.includes(name) ? name : null;
+}
+function storedTheme() {
+  return asTheme(storage.get(THEME_KEY));
+}
+var picked = null;
+var listening = false;
+var revision = ref(0);
+function notifyTheme() {
+  revision.value++;
+  if (typeof document === "undefined") return;
+  document.dispatchEvent(
+    new CustomEvent("voodoo:theme", { detail: { theme: theme.current, resolved: theme.resolved } })
+  );
+}
+var theme = {
+  /** Theme chosen by the user, or `system` when never set. */
+  get current() {
+    void revision.value;
+    return picked ?? storedTheme() ?? "system";
+  },
+  /** Theme effectively applied, resolving `system`. */
+  get resolved() {
+    const value = this.current;
+    if (value !== "system") return value;
+    if (typeof document !== "undefined") {
+      const authored = document.documentElement.getAttribute("data-theme");
+      if (authored === "light" || authored === "dark") return authored;
+    }
+    if (typeof matchMedia === "undefined") return "light";
+    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  },
+  /**
+   * Picks a theme and remembers it: `light`, `dark`, or `system` to follow the
+   * operating system again, including its changes while the page is open.
+   */
+  set(value) {
+    const next = asTheme(value);
+    if (!next) {
+      warn(`theme.set() expects 'light', 'dark' or 'system', got ${String(value)}.`);
+      return;
+    }
+    picked = next;
+    storage.set(THEME_KEY, next);
+    revision.value++;
+    this.apply();
+  },
+  /** Switches between light and dark, whatever the current one came from. */
+  toggle() {
+    const next = this.resolved === "dark" ? "light" : "dark";
+    this.set(next);
+    return next;
+  },
+  /** Walks the three states in turn: system, light, dark, and back to system. */
+  cycle() {
+    const next = THEME_MODES[(THEME_MODES.indexOf(this.current) + 1) % THEME_MODES.length];
+    this.set(next);
+    return next;
+  },
+  /** `true` once the visitor has actually picked a theme. */
+  get chosen() {
+    void revision.value;
+    return picked !== null || storedTheme() !== null;
+  },
+  /** Writes `data-theme` on the root element and notifies the page. */
+  apply() {
+    if (typeof document === "undefined") return;
+    if (!this.chosen) return;
+    const value = this.current;
+    const root = document.documentElement;
+    if (value === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", value);
+    root.style.colorScheme = this.resolved;
+    notifyTheme();
+  },
+  /**
+   * Applies the saved theme as soon as the page loads, and keeps following it.
+   *
+   * Does nothing to the document when the visitor never chose one, which is
+   * the common case on a page that simply included the script. Safe to call
+   * more than once: the listeners are attached the first time only. Before
+   * that, every call added another set, and a page that called it next to the
+   * bootstrap ran each theme change twice.
+   */
+  init() {
+    if (typeof document === "undefined") return;
+    this.apply();
+    if (listening) return;
+    listening = true;
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver(() => {
+        revision.value++;
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["data-theme"]
+      });
+    }
+    if (typeof addEventListener !== "undefined") {
+      addEventListener("storage", (event) => {
+        if (event.key !== THEME_KEY && event.key !== null) return;
+        picked = storedTheme();
+        if (picked) this.apply();
+        else notifyTheme();
+      });
+    }
+    if (typeof matchMedia === "undefined") return;
+    const query = matchMedia("(prefers-color-scheme: dark)");
+    const onSystemChange = () => {
+      if (this.current !== "system") return;
+      if (this.chosen) this.apply();
+      else notifyTheme();
+    };
+    if (query.addEventListener) query.addEventListener("change", onSystemChange);
+    else query.addListener?.(onSystemChange);
+  }
+};
+function watchTheme() {
+  if (!listening) theme.init();
+}
+
 // src/runtime/walker.ts
 var nodeScopes = /* @__PURE__ */ new WeakMap();
 var nodeCleanups = /* @__PURE__ */ new WeakMap();
@@ -1679,9 +1971,9 @@ function parseAttributeUncached(name, value) {
 }
 function collectDirectives(el) {
   const out = [];
-  const cache2 = attributeCache.get(el);
-  if (cache2 && cache2.size) {
-    for (const [name, value] of cache2) {
+  const cache3 = attributeCache.get(el);
+  if (cache3 && cache3.size) {
+    for (const [name, value] of cache3) {
       const parsed = parseAttribute(name, value);
       if (parsed) {
         out.push(parsed);
@@ -1813,8 +2105,8 @@ function restoreAttributes(el) {
   }
 }
 function hadDirectives(el) {
-  const cache2 = attributeCache.get(el);
-  if (cache2 && cache2.size) return true;
+  const cache3 = attributeCache.get(el);
+  if (cache3 && cache3.size) return true;
   return hasDirectives(el);
 }
 function hasDirectives(el) {
@@ -2178,6 +2470,7 @@ function start(root) {
   runPhase(target, true);
   if (!started) {
     started = true;
+    watchTheme();
     if (config.autoDiscover) observeDOM(target);
     document.dispatchEvent(new CustomEvent("voodoo:ready", { detail: { root: target } }));
   }
@@ -2213,6 +2506,6 @@ function refresh(root) {
   walk(root ?? document.body, root ? findScope(root.parentNode) : rootScope);
 }
 
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, closestDirective, collectDirectives, componentAliases, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, setComponentMounter, start, stopObserving, stringify, tokenize, unwrap, walk };
-//# sourceMappingURL=chunk-JBUNTP7F.js.map
-//# sourceMappingURL=chunk-JBUNTP7F.js.map
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, cache2 as cache, clearParseCache, closestDirective, collectDirectives, componentAliases, cookie, currentHookHost, destroy, evaluate, evaluateIn, findScope, getEffectScopes, getScope, hadDirectives, hasAttr, hasDirective, hasDirectives, hook, hooks, isInitialized, magic, magics, markInitialized, markNodeScope, markSkipChildren, onStart, originalAttributes, parse, parseAttribute, queryDirective, readAttr, refresh, removeQuietly, restoreAttributes, rootScope, session, setComponentMounter, start, stopObserving, storage, stringify, theme, tokenize, unwrap, url, walk, watchTheme };
+//# sourceMappingURL=chunk-2EFUHAQG.js.map
+//# sourceMappingURL=chunk-2EFUHAQG.js.map

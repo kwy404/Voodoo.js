@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voodoo browser test: the theme</title>
+<!-- The no-flash snippet the documentation asks every page to carry. -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('voodoo:theme');
+      if (t && t.charAt(0) === '"') t = JSON.parse(t);
+      var r = document.documentElement;
+      if (t === 'light' || t === 'dark') {
+        r.setAttribute('data-theme', t);
+        r.style.colorScheme = t;
+      } else if (t === 'system') {
+        r.removeAttribute('data-theme');
+      }
+    } catch (e) {}
+    // What the root carried before the library had run at all.
+    window.__firstTheme = document.documentElement.getAttribute('data-theme');
+  })();
+</script>
+<style>
+  /* The shape the documentation recommends: dark for the system preference
+     unless the page says light, and dark for an explicit choice. */
+  :root { --bg: rgb(255, 255, 255); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: rgb(0, 0, 0); }
+  }
+  :root[data-theme="dark"] { --bg: rgb(0, 0, 0); }
+  body { margin: 0; background: var(--bg); }
+</style>
+</head>
+<body>
+  <main id="app" v-data="{}">
+    <button id="toggle" v-theme-toggle>toggle</button>
+    <button id="cycle" v-theme-toggle.cycle>cycle</button>
+    <button id="pick-system" v-theme-toggle:system>system</button>
+    <button id="pick-dark" v-theme-toggle:dark>dark</button>
+    <p id="resolved">{ $theme.resolved }</p>
+  </main>
+
+  <script src="/dist/voodoo.min.js" defer></script>
+</body>
+</html>

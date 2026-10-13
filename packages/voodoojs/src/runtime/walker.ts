@@ -28,6 +28,7 @@ import {
   inDevelopment,
 } from './avisos';
 import { Scope, rootScope } from './scope';
+import { watchTheme } from '../storage';
 
 // ---------------------------------------------------------------------------
 // State per node
@@ -1257,6 +1258,11 @@ export function start(root?: Element | Document): void {
 
   if (!started) {
     started = true;
+    // The script-tag bootstrap restores the visitor's theme before this runs. A
+    // page that imports the modules and calls `start()` itself never got it:
+    // the saved choice stayed in storage and the page opened in the other
+    // theme. Writes nothing unless the visitor actually picked one.
+    watchTheme();
     if (config.autoDiscover) observeDOM(target);
     document.dispatchEvent(new CustomEvent('voodoo:ready', { detail: { root: target } }));
   }

@@ -3,12 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The visitor's theme, before the first paint. Same key and values as
+     V.theme, so every page of the site agrees; see guia/tema-e-paleta. -->
+<script>(function(){try{var t=localStorage.getItem('voodoo:theme');if(t&&t.charAt(0)==='"')t=JSON.parse(t);var r=document.documentElement;if(t==='light'||t==='dark'){r.setAttribute('data-theme',t);r.style.colorScheme=t}else if(t==='system')r.removeAttribute('data-theme')}catch(e){}})();</script>
 <title>Migrating from Alpine · Voodoo.js documentation</title>
 <meta name="description" content="Converting x- to v- is almost mechanical: the complete equivalence table, modifiers, magic variables, stores, components, and what you gain and what you lose in the switch.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/referencia/migracao-alpine">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
-<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
+<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
 </head>
 <body>
 
@@ -196,6 +198,6 @@ V.use(myPlugin, { option: true });</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=210599e9"></script>
+<script src="../assets/docs.js?v=196f5fa7"></script>
 </body>
 </html>

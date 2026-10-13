@@ -3057,7 +3057,9 @@ var voodooSocket = {
   }
 };
 var target = globalThis.V;
-if (target && typeof target === "object" && !target.socket) target.socket = socket;
+if (target && (typeof target === "object" || typeof target === "function") && !target.socket) {
+  target.socket = socket;
+}
 var plugin_default = voodooSocket;
 
 exports.ENGINE = ENGINE;

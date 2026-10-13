@@ -6,7 +6,7 @@
  * with full quota, or outside the browser, calls do not throw.
  */
 
-import { ref } from '../reactivity';
+import { ref, warn } from '../reactivity';
 
 export interface StorageAdapter {
   get<T = unknown>(key: string, fallback?: T): T | undefined;
@@ -250,6 +250,29 @@ export type ThemeName = 'light' | 'dark' | 'system';
 
 const THEME_KEY = 'voodoo:theme';
 
+/** The three states, in the order `cycle()` walks them. */
+const THEME_MODES: readonly ThemeName[] = ['system', 'light', 'dark'];
+
+/**
+ * A theme name, or `null` for anything else.
+ *
+ * The stored value arrives through `storage.get()`, which parses JSON first, so
+ * both spellings of the key reach here as the same string: `dark` written raw
+ * by `set()`, and `"dark"` written as JSON by older builds or by hand. Anything
+ * that is not one of the three names used to come straight back out of
+ * `current`: a stale `auto` or a typo was reported as the theme, and `apply()`
+ * wrote it into `data-theme`, where no stylesheet matched it.
+ */
+function asTheme(value: unknown): ThemeName | null {
+  const name = typeof value === 'string' ? value.trim().toLowerCase() : value;
+  return THEME_MODES.includes(name as ThemeName) ? (name as ThemeName) : null;
+}
+
+/** What is stored under the key, when it is a theme name. */
+function storedTheme(): ThemeName | null {
+  return asTheme(storage.get(THEME_KEY));
+}
+
 /**
  * The choice made during this page's life, independent of whether it could be
  * written down.
@@ -262,6 +285,9 @@ const THEME_KEY = 'voodoo:theme';
  * Persistence is a convenience; the visitor pressing the button is the decision.
  */
 let picked: ThemeName | null = null;
+
+/** Listeners are attached once per page, however many times `init()` runs. */
+let listening = false;
 
 /**
  * Bumped whenever the applied theme changes, so that effects reading the theme
@@ -276,11 +302,23 @@ let picked: ThemeName | null = null;
  */
 const revision = ref(0);
 
+/** Tells the page the theme may have changed, without writing anything. */
+function notifyTheme(): void {
+  revision.value++;
+  if (typeof document === 'undefined') return;
+  document.dispatchEvent(
+    new CustomEvent('voodoo:theme', { detail: { theme: theme.current, resolved: theme.resolved } })
+  );
+}
+
 export const theme = {
   /** Theme chosen by the user, or `system` when never set. */
   get current(): ThemeName {
     void revision.value;
-    return (storage.get<ThemeName>(THEME_KEY) ?? picked ?? 'system') as ThemeName;
+    // This page's own decision first. Reading storage first meant that a choice
+    // which could not be written, where reading still works (a full quota), lost
+    // to the stale value already there, and the toggle looked dead.
+    return picked ?? storedTheme() ?? 'system';
   },
 
   /** Theme effectively applied, resolving `system`. */
@@ -303,22 +341,40 @@ export const theme = {
     return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   },
 
+  /**
+   * Picks a theme and remembers it: `light`, `dark`, or `system` to follow the
+   * operating system again, including its changes while the page is open.
+   */
   set(value: ThemeName): void {
-    picked = value;
-    storage.set(THEME_KEY, value);
+    const next = asTheme(value);
+    if (!next) {
+      warn(`theme.set() expects 'light', 'dark' or 'system', got ${String(value)}.`);
+      return;
+    }
+    picked = next;
+    storage.set(THEME_KEY, next);
     revision.value++;
     this.apply();
   },
 
+  /** Switches between light and dark, whatever the current one came from. */
   toggle(): 'light' | 'dark' {
     const next = this.resolved === 'dark' ? 'light' : 'dark';
     this.set(next);
     return next;
   },
 
+  /** Walks the three states in turn: system, light, dark, and back to system. */
+  cycle(): ThemeName {
+    const next = THEME_MODES[(THEME_MODES.indexOf(this.current) + 1) % THEME_MODES.length];
+    this.set(next);
+    return next;
+  },
+
   /** `true` once the visitor has actually picked a theme. */
   get chosen(): boolean {
-    return picked !== null || storage.get<ThemeName>(THEME_KEY) != null;
+    void revision.value;
+    return picked !== null || storedTheme() !== null;
   },
 
   /** Writes `data-theme` on the root element and notifies the page. */
@@ -340,27 +396,24 @@ export const theme = {
     if (value === 'system') root.removeAttribute('data-theme');
     else root.setAttribute('data-theme', value);
     root.style.colorScheme = this.resolved;
-    document.dispatchEvent(
-      new CustomEvent('voodoo:theme', { detail: { theme: value, resolved: this.resolved } })
-    );
+    notifyTheme();
   },
 
   /**
-   * Applies the saved theme as soon as the page loads.
+   * Applies the saved theme as soon as the page loads, and keeps following it.
    *
-   * Does nothing when the visitor never chose one, which is the common case on
-   * a page that simply included the script.
+   * Does nothing to the document when the visitor never chose one, which is
+   * the common case on a page that simply included the script. Safe to call
+   * more than once: the listeners are attached the first time only. Before
+   * that, every call added another set, and a page that called it next to the
+   * bootstrap ran each theme change twice.
    */
   init(): void {
     if (typeof document === 'undefined') return;
     this.apply();
+    if (listening) return;
+    listening = true;
 
-    // `matchMedia?.()` reads as a guard and is not one: optional chaining only
-    // protects against a null or undefined VALUE, never against an identifier
-    // that was never declared. Where the global is absent -- jsdom, older
-    // webviews, some embedded browsers -- the bare name threw a ReferenceError
-    // and took the whole of init() down with it. `typeof` is the only check
-    // that answers for an undeclared name.
     // Someone else may set `data-theme` on the root: a documentation shell
     // pushing its theme into an example frame, a server-rendered page, a
     // no-flash inline script. `resolved` reads that attribute, so a change to
@@ -375,10 +428,50 @@ export const theme = {
       });
     }
 
+    // Another tab, or a same-origin frame such as a live example, changed the
+    // choice. Without this the page kept the old theme until it was reloaded,
+    // and the next press of its toggle wrote over the newer choice.
+    if (typeof addEventListener !== 'undefined') {
+      addEventListener('storage', (event: StorageEvent) => {
+        if (event.key !== THEME_KEY && event.key !== null) return;
+        picked = storedTheme();
+        if (picked) this.apply();
+        else notifyTheme();
+      });
+    }
+
+    // `matchMedia?.()` reads as a guard and is not one: optional chaining only
+    // protects against a null or undefined VALUE, never against an identifier
+    // that was never declared. Where the global is absent -- jsdom, older
+    // webviews, some embedded browsers -- the bare name threw a ReferenceError
+    // and took the whole of init() down with it. `typeof` is the only check
+    // that answers for an undeclared name.
     if (typeof matchMedia === 'undefined') return;
-    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      revision.value++;
-      if (this.current === 'system') this.apply();
-    });
+    const query = matchMedia('(prefers-color-scheme: dark)');
+    const onSystemChange = (): void => {
+      if (this.current !== 'system') return;
+      // A visitor who chose `system` gets `color-scheme` rewritten; one who
+      // never chose gets only the notification, so `v-theme-toggle` and
+      // `$theme.resolved` stop describing the theme the system just left.
+      // That used to be skipped entirely, and the button kept offering
+      // "Switch to dark theme" on a page that had already gone dark.
+      if (this.chosen) this.apply();
+      else notifyTheme();
+    };
+    // Safari before 14 has only the older `addListener`.
+    if (query.addEventListener) query.addEventListener('change', onSystemChange);
+    else query.addListener?.(onSystemChange);
   },
 };
+
+/**
+ * Starts following the theme, once, for code that reads or changes it.
+ *
+ * Only the script-tag bootstrap called `init()`. A page built from the ES
+ * modules got `v-theme-toggle` and `$theme` without it: the saved choice was
+ * never put back on reload, and neither a system change nor another tab ever
+ * reached the button. Not part of the public API.
+ */
+export function watchTheme(): void {
+  if (!listening) theme.init();
+}

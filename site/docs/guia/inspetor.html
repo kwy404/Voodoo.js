@@ -3,11 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The visitor's theme, before the first paint. Same key and values as
+     V.theme, so every page of the site agrees; see guia/tema-e-paleta. -->
+<script>(function(){try{var t=localStorage.getItem('voodoo:theme');if(t&&t.charAt(0)==='"')t=JSON.parse(t);var r=document.documentElement;if(t==='light'||t==='dark'){r.setAttribute('data-theme',t);r.style.colorScheme=t}else if(t==='system')r.removeAttribute('data-theme')}catch(e){}})();</script>
 <title>The reactivity inspector · Voodoo.js documentation</title>
 <meta name="description" content="The xray inspector runs inside the page itself: it shows scopes, components, stores, events, network and performance, and flashes an element whenever an effect writes into it.">
 <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/docs/guia/inspetor">
 <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../assets/docs.css?v=e34e2f7b">
+<link rel="stylesheet" href="../assets/docs.css?v=c2fd91fc">
 <style>
 /* ==========================================================================
    The design system the rest of the site already uses — site/index.html,
@@ -33,11 +36,9 @@
 }
 
 /* Three states: the system preference wins unless the reader picked a theme,
-   and an explicit choice wins over the system in both directions. The values
-   are `claro` and `escuro` because `data-tema` is the contract docs.js already
-   reads and writes. */
+   and an explicit choice wins over the system in both directions. */
 @media (prefers-color-scheme: dark) {
-  html:root:not([data-tema="claro"]) {
+  html:root:not([data-theme="light"]) {
     --ink: #f2f0f6;
     --ink-soft: #b3adc2;
     --ink-faint: #837d93;
@@ -52,7 +53,7 @@
   }
 }
 
-html:root[data-tema="escuro"] {
+html:root[data-theme="dark"] {
   --ink: #f2f0f6;
   --ink-soft: #b3adc2;
   --ink-faint: #837d93;
@@ -91,7 +92,7 @@ html:root {
 
 /* docs.css names its own tokens, and its own brand hues underneath them. Point
    both at the palette above so the shell, the article and the examples agree.
-   !important here too: docs.css redefines these under `:root[data-tema=...]`,
+   !important here too: docs.css redefines these under `:root[data-theme=...]`,
    which outranks a plain mapping. */
 html:root {
   --fundo: var(--bg) !important;
@@ -189,7 +190,6 @@ html:root {
   .doc-cartoes { grid-template-columns: minmax(0, 1fr); }
 }
 </style>
-<script>(function(){try{if(localStorage.getItem('voodoo-docs-tema')==='claro')document.documentElement.setAttribute('data-tema','claro')}catch(e){}})();</script>
 </head>
 <body>
 
@@ -345,6 +345,6 @@ off();</code></pre>
 
 </article>
 
-<script src="../assets/docs.js?v=210599e9"></script>
+<script src="../assets/docs.js?v=196f5fa7"></script>
 </body>
 </html>

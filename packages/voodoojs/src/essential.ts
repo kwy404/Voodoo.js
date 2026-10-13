@@ -11,7 +11,7 @@
  * `npx voodoojs-cli build`.
  */
 
-import { core } from './core';
+import { core, publishV } from './core';
 import { query, ready, VoodooCollection, fromHtml } from './dom/query';
 import { magic } from './runtime/scope';
 
@@ -75,6 +75,9 @@ Object.assign(V, core, {
   sound,
   magic,
 });
+
+// Plugins and `createApp().use()` receive this object, not the bare core.
+publishV(V);
 
 export default V;
 export { V };

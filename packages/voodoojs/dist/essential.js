@@ -1,6 +1,6 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query } from './chunk-H2NGDLMD.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, setAppHost } from './chunk-5RQSNQDQ.js';
 import './chunk-OIH4BR2H.js';
-import { magic } from './chunk-JBUNTP7F.js';
+import { magic } from './chunk-2EFUHAQG.js';
 import './chunk-FMDHZ5GI.js';
 import './chunk-IBIZ6OUI.js';
 import './chunk-2LGAXVD7.js';
@@ -44,6 +44,7 @@ Object.assign(V, core, {
   sound,
   magic
 });
+setAppHost(V);
 var essential_default = V;
 
 export { V, essential_default as default };

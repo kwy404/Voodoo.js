@@ -1,12 +1,12 @@
-import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, viewTransition, defineComponent, storage, ensurePalette, instances, storeNames, allStores } from './chunk-H2NGDLMD.js';
-export { VoodooCollection, alert, allStores, applyMask, cache, clearErrors, clipboard, confirm, cookie, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, session, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, storage, store, storeNames, theme, toast, unmask, url, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady } from './chunk-H2NGDLMD.js';
+import { core, sound, hotkey, palette, registerMask, unmask, applyMask, masks, mask, clearErrors, showFieldError, showFormErrors, messages, serializeForm, validate, validator, dialog, prompt, confirm, alert, modal, VoodooCollection, fromHtml, ready2, query, setAppHost, viewTransition, defineComponent, ensurePalette, instances, storeNames, allStores } from './chunk-5RQSNQDQ.js';
+export { VoodooCollection, alert, allStores, applyMask, clearErrors, clipboard, confirm, createApp, createResource, defineComponent, dialog, ready as documentReady, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, modal, mountComponent, network, palette, prompt, query, ready2 as ready, registerMask, removeStore, createResource as resource, screen, serializeForm, showFormErrors, slideDown, slideUp, sound, efeitos as soundEffects, store, storeNames, toast, unmask, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady } from './chunk-5RQSNQDQ.js';
 export { gpu, reflectWgsl } from './chunk-GE4JWATC.js';
 import { http } from './chunk-OIH4BR2H.js';
 export { HttpError, http, request } from './chunk-OIH4BR2H.js';
 import { devtoolsBus } from './chunk-4IJE5BWY.js';
 export { createSocket, devtoolsBus, socket, socketSupported } from './chunk-4IJE5BWY.js';
-import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-JBUNTP7F.js';
-export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, clearParseCache, destroy, evaluate, findScope, getScope, hook, hooks, magic, magics, parse, refresh, rootScope, start, stringify, tokenize, walk } from './chunk-JBUNTP7F.js';
+import { magic, markSkipChildren, onStart, rootScope, findScope, destroy, readAttr, evaluate, parse, Scope, getScope, storage, walk, unwrap, addCleanup, hadDirectives, collectDirectives, getEffectScopes, evaluateIn } from './chunk-2EFUHAQG.js';
+export { Scope, VoodooRuntimeError, VoodooSyntaxError, addCleanup, allowedGlobals, cache, clearParseCache, cookie, destroy, evaluate, findScope, getScope, hook, hooks, magic, magics, parse, refresh, rootScope, session, start, storage, stringify, theme, tokenize, url, walk } from './chunk-2EFUHAQG.js';
 import { reactive, warn, handleError, effect, queuePostFlush, nextTick } from './chunk-FMDHZ5GI.js';
 export { EffectScope, computed, effect, effectScope, flushSync, isReactive, markRaw, nextTick, reactive, ref, shallowRef, stop, toRaw, unref, watch, watchEffect } from './chunk-FMDHZ5GI.js';
 import { warnAlias } from './chunk-IBIZ6OUI.js';
@@ -3286,7 +3286,7 @@ var CSS2 = `
 .v-card-body:empty{display:none}
 .v-card-foot{padding:0 18px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .v-card-foot:empty{display:none}
-.v-card[data-padded="false"] .v-card-body{padding:0}
+.v-card:not([data-padded="true"]) .v-card-body{padding:0}
 
 /* ------------------------------------------------------------------- form */
 .v-field{display:flex;flex-direction:column;gap:6px;font-family:var(--v-font-sans);min-width:0}
@@ -3438,7 +3438,7 @@ var CSS2 = `
 .v-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--v-font-sans);font-size:12.5px;
   font-weight:600;line-height:1;padding:5px 6px 5px 10px;border-radius:var(--v-radius-sm);
   border:1px solid transparent;vertical-align:middle}
-.v-tag[data-closable="false"]{padding-right:10px}
+.v-tag:not([data-closable="true"]){padding-right:10px}
 .v-tag-close{appearance:none;background:none;border:0;cursor:pointer;color:inherit;opacity:.65;
   display:grid;place-items:center;width:18px;height:18px;border-radius:var(--v-radius-full);font-size:12px}
 .v-tag-close:hover{opacity:1;background:rgba(0,0,0,.08)}
@@ -3519,7 +3519,7 @@ var CSS2 = `
 .v-divider{display:flex;align-items:center;gap:12px;color:var(--v-text-soft);
   font-family:var(--v-font-sans);font-size:12.5px;font-weight:600;margin:16px 0}
 .v-divider::before,.v-divider::after{content:"";flex:1;height:1px;background:var(--v-border)}
-.v-divider[data-label="false"]::after{display:none}
+.v-divider:not([data-label="true"])::after{display:none}
 .v-divider[data-vertical="true"]{flex-direction:column;margin:0 16px;align-self:stretch;height:auto}
 .v-divider[data-vertical="true"]::before,.v-divider[data-vertical="true"]::after{width:1px;height:auto;flex:1}
 
@@ -5327,8 +5327,10 @@ var XRAY_CSS = `
   color:var(--vx-text);
   -webkit-font-smoothing:antialiased;
 }
+/* On "auto" the panel follows the page, explicit data-theme included, not
+   only the system: a light page on a dark machine got a dark panel. */
 @media (prefers-color-scheme: dark){
-  .v-xray-root:not([data-v-xray-theme="light"]){
+  :root:not([data-theme="light"]) .v-xray-root:not([data-v-xray-theme="light"]){
     --vx-bg:#1C1830;
     --vx-bg-2:#14111F;
     --vx-text:#F4F1FB;
@@ -5337,6 +5339,7 @@ var XRAY_CSS = `
     --vx-shadow:0 12px 40px rgba(0,0,0,.55);
   }
 }
+:root[data-theme="dark"] .v-xray-root:not([data-v-xray-theme="light"]),
 .v-xray-root[data-v-xray-theme="dark"]{
   --vx-bg:#1C1830;
   --vx-bg-2:#14111F;
@@ -6859,21 +6862,28 @@ var WIDGET_CSS = `
   -webkit-font-smoothing:antialiased;
   touch-action:none;
 }
+/* The widget follows the page: the system preference unless the page carries
+   an explicit data-theme, as V.theme writes it. It used to read the
+   system alone, so a visitor who picked light on a dark machine got a dark
+   widget on a light page, and the other way round. */
 @media (prefers-color-scheme: dark){
-  .v-devtools-widget:not([data-theme="light"]){
+  :root:not([data-theme="light"]) .v-devtools-widget:not([data-theme="light"]){
     --vw-bg:#1C1830;
     --vw-text:#F4F1FB;
     --vw-muted:#A9A2C4;
     --vw-border:#332C50;
     --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+    --vw-accent-ink:#B9A2FF;
   }
 }
+:root[data-theme="dark"] .v-devtools-widget:not([data-theme="light"]),
 .v-devtools-widget[data-theme="dark"]{
   --vw-bg:#1C1830;
   --vw-text:#F4F1FB;
   --vw-muted:#A9A2C4;
   --vw-border:#332C50;
   --vw-shadow:0 8px 28px rgba(0,0,0,.55);
+  --vw-accent-ink:#B9A2FF;
 }
 .v-devtools-widget *,.v-devtools-widget *::before,.v-devtools-widget *::after{
   box-sizing:border-box;
@@ -6928,7 +6938,8 @@ var WIDGET_CSS = `
   padding:2px 6px;
   border-radius:999px;
   background:rgba(109,59,245,.12);
-  color:var(--vw-accent);
+  /* The brand violet on the dark surface measured 2.9:1. */
+  color:var(--vw-accent-ink,var(--vw-accent));
   font-variant-numeric:tabular-nums;
   font-weight:600;
   white-space:nowrap;
@@ -7261,6 +7272,7 @@ Object.assign(V, core, {
   devtools: devtoolsBus,
   magic
 });
+setAppHost(V);
 var src_default = V;
 
 export { V, activateJsx, animate, applyRegions, charts, src_default as default, devtoolsWidget, disableXray, easings, enableXray, extractJsx, getLocale, i18n, inView, isDevtoolsWidgetMounted, isXrayEnabled, jsx, motionPresets, mountDevtoolsWidget, navigate, readDeclarationBlock, renderChart, route, router, scrollProgress, setLocale, spring, stagger, t, unmountDevtoolsWidget, xray };

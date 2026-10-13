@@ -3,9 +3,10 @@
    Navigation, search, on-this-page index, syntax highlighting and live
    examples. No external dependencies.
 
-   The theme attribute is `data-tema`, with the values `claro` and `escuro`.
-   That name is the existing contract across all 44 documentation pages, so it
-   stays in Portuguese while everything a reader sees is English.
+   The theme is the one the whole site shares with `V.theme`: the key
+   `voodoo:theme` and the `data-theme` attribute, with `light`, `dark` and
+   `system`. Identifiers stay in Portuguese while everything a reader sees is
+   English.
    ========================================================================== */
 
 (function () {
@@ -127,7 +128,7 @@
     })();
 
   var RAIZ = new URL('../', esteScript.src); // .../site/docs/
-  var RUNTIME = new URL('../voodoo.full.min.js?v=b1c927b0', RAIZ).href; // .../site/voodoo.full.min.js
+  var RUNTIME = new URL('../voodoo.full.min.js?v=f132f5b7', RAIZ).href; // .../site/voodoo.full.min.js
 
   // One level above the documentation is the site itself. Resolving it from
   // the script URL rather than from location means the header links work the
@@ -229,6 +230,9 @@
     fechar:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     sol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
+    // A screen, for "follow the system".
+    sistema:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
     lua: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>',
     lupa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
     copiar:
@@ -239,76 +243,120 @@
   // ------------------------------------------------------------------------
   // 4. Theme
   //
-  //    Three states, the same shape the stylesheet uses: the system preference
-  //    governs until the reader picks a theme, and an explicit choice then wins
-  //    in both directions.
+  //    The same key, values and attribute as `V.theme`, as on every other page
+  //    of the site: `voodoo:theme` holding `light`, `dark` or `system`, and
+  //    `data-theme` on the root for an explicit choice. The system preference
+  //    governs until the reader picks a theme, an explicit choice then wins in
+  //    both directions, and `system` hands the page back to the operating
+  //    system. The button walks system, light, dark, the order of
+  //    `V.theme.cycle()`.
   //
-  //    This used to read `data-tema !== "claro" ? "escuro"`, so on a light
-  //    system with no saved choice it resolved to dark, pinned data-tema
-  //    ="escuro" on the document and wrote that to storage on the very first
-  //    load. The page went dark, the reader never asked for it, and the live
-  //    example inside the iframe went dark with it while the library's own
-  //    palette stayed on the light defaults it picks from prefers-color-scheme
-  //    — a white result pane on a dark page.
+  //    The documentation used to keep a theme of its own: the key
+  //    `voodoo-docs-tema`, the attribute `data-tema`, the values `claro` and
+  //    `escuro`. A reader who picked dark on the landing page opened the
+  //    documentation in light, the choice made here never reached the other
+  //    pages, and the live examples, which run the library and so read
+  //    `voodoo:theme`, could disagree with the page around them. The old key is
+  //    moved across once.
+  //
+  //    Before that, this read `data-tema !== "claro" ? "escuro"`, so on a light
+  //    system with no saved choice it resolved to dark and wrote that to storage
+  //    on the very first load.
   // ------------------------------------------------------------------------
 
-  var CHAVE_TEMA = 'voodoo-docs-tema';
+  var CHAVE_TEMA = 'voodoo:theme';
+  var CHAVE_TEMA_ANTIGA = 'voodoo-docs-tema';
+  var MODOS = ['system', 'light', 'dark'];
 
+  // The choice made on this page, for when storage cannot keep it.
+  var escolhaDaPagina = null;
+
+  // Moves a choice saved under the documentation's old key to the shared one.
+  function migrarTemaAntigo() {
+    try {
+      var antigo = localStorage.getItem(CHAVE_TEMA_ANTIGA);
+      if (antigo === null) return;
+      localStorage.removeItem(CHAVE_TEMA_ANTIGA);
+      var valor = antigo === 'claro' ? 'light' : antigo === 'escuro' ? 'dark' : null;
+      if (valor && localStorage.getItem(CHAVE_TEMA) === null) localStorage.setItem(CHAVE_TEMA, valor);
+    } catch (erro) {
+      /* private mode */
+    }
+  }
+
+  // The saved choice, or null. Reads the JSON spelling as well, as the library
+  // does, so `"dark"` written by an older build is still dark here.
   function temaSalvo() {
     try {
       var valor = localStorage.getItem(CHAVE_TEMA);
-      return valor === 'claro' || valor === 'escuro' ? valor : null;
+      if (valor && valor.charAt(0) === '"') valor = JSON.parse(valor);
+      return MODOS.indexOf(valor) > -1 ? valor : null;
     } catch (erro) {
       return null; /* private mode */
     }
   }
 
+  function modoAtual() {
+    return escolhaDaPagina || temaSalvo() || 'system';
+  }
+
   function temaDoSistema() {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'escuro'
-      : 'claro';
+      ? 'dark'
+      : 'light';
   }
 
-  // The theme actually painted right now: the explicit attribute if the page
-  // carries one, then the reader's saved choice, then the system.
+  // The theme actually painted right now, `light` or `dark`.
   function temaAtual() {
-    var marcado = document.documentElement.getAttribute('data-tema');
-    if (marcado === 'claro' || marcado === 'escuro') return marcado;
-    return temaSalvo() || temaDoSistema();
+    var modo = modoAtual();
+    return modo === 'system' ? temaDoSistema() : modo;
   }
 
-  // Sets the attribute and remembers the choice. Only the toggle calls this.
-  function aplicarTema(tema) {
-    document.documentElement.setAttribute('data-tema', tema);
+  // Writes the choice on the root exactly as `V.theme.apply()` and the inline
+  // script in <head> do: the attribute for an explicit theme, none for system.
+  function pintarModo() {
+    var raiz = document.documentElement;
+    var modo = modoAtual();
+    if (modo === 'system') {
+      raiz.removeAttribute('data-theme');
+      raiz.style.colorScheme = '';
+    } else {
+      raiz.setAttribute('data-theme', modo);
+      raiz.style.colorScheme = modo;
+    }
+  }
+
+  // Remembers the choice and paints it. Only the toggle calls this.
+  function aplicarModo(modo) {
+    escolhaDaPagina = modo;
     try {
-      localStorage.setItem(CHAVE_TEMA, tema);
+      localStorage.setItem(CHAVE_TEMA, modo);
     } catch (erro) {
       /* private mode, carry on without persisting */
     }
+    pintarModo();
     sincronizarTema();
   }
 
-  // Repaints everything that depends on the theme without touching the
-  // document attribute, so a reader who never chose keeps following the system.
+  // Repaints everything that depends on the theme: the button and the frames.
   function sincronizarTema() {
+    var modo = modoAtual();
     var tema = temaAtual();
     var botao = document.getElementById('doc-tema');
     if (botao) {
-      var claro = tema === 'claro';
-      var rotulo = claro ? 'Switch to dark theme' : 'Switch to light theme';
-      botao.innerHTML = claro ? ICONES.lua : ICONES.sol;
+      var proximo = MODOS[(MODOS.indexOf(modo) + 1) % MODOS.length];
+      var rotulo =
+        'Theme: ' + (modo === 'system' ? 'system (' + tema + ')' : modo) + '. Switch to ' + proximo;
+      botao.innerHTML = modo === 'system' ? ICONES.sistema : modo === 'light' ? ICONES.sol : ICONES.lua;
       botao.setAttribute('aria-label', rotulo);
       botao.setAttribute('title', rotulo);
     }
     document.querySelectorAll('iframe[data-palco]').forEach(function (quadro) {
       try {
-        var raiz = quadro.contentDocument.documentElement;
-        raiz.setAttribute('data-tema', tema);
-        // Also in the library's own spelling. An example that asks Voodoo what
-        // theme it is on, like the one on the theme page, reads `data-theme`
-        // and would otherwise answer from the operating system and contradict
-        // the page around it: light shell, example announcing dark.
-        raiz.setAttribute('data-theme', tema === 'claro' ? 'light' : 'dark');
+        // An example that asks Voodoo what theme it is on, like the one on the
+        // theme page, reads `data-theme`, and would otherwise answer from the
+        // operating system and contradict the page around it.
+        quadro.contentDocument.documentElement.setAttribute('data-theme', tema);
       } catch (erro) {
         /* still loading */
       }
@@ -316,20 +364,26 @@
   }
 
   function ligarTema() {
-    // A saved choice is the reader's own explicit decision, so pin it on the
-    // document. Without a saved choice nothing is written and the stylesheet's
-    // prefers-color-scheme block governs.
-    var salvo = temaSalvo();
-    if (salvo) document.documentElement.setAttribute('data-tema', salvo);
+    migrarTemaAntigo();
+    pintarModo();
 
     if (window.matchMedia) {
       var consulta = window.matchMedia('(prefers-color-scheme: dark)');
       var aoMudar = function () {
-        if (!document.documentElement.hasAttribute('data-tema')) sincronizarTema();
+        if (modoAtual() === 'system') sincronizarTema();
       };
       if (consulta.addEventListener) consulta.addEventListener('change', aoMudar);
       else if (consulta.addListener) consulta.addListener(aoMudar);
     }
+
+    // Another tab, or a live example on this page (its frame shares the
+    // storage), changed the choice.
+    window.addEventListener('storage', function (evento) {
+      if (evento.key !== CHAVE_TEMA && evento.key !== null) return;
+      escolhaDaPagina = null;
+      pintarModo();
+      sincronizarTema();
+    });
 
     sincronizarTema();
   }
@@ -565,21 +619,18 @@
     '--bg:#ffffff;--bg-soft:#faf9fb;--bg-code:#f6f5f8;--line:#e7e4ec;' +
     '--accent:#5b2ee5;--accent-soft:#f1ecfe;--fill:#e9e6f0;' +
     'color-scheme:light}' +
-    // Two attributes, because two things write the theme in here.
-    //
-    // The shell stamps `data-tema` on the frame when it builds it, carrying the
-    // page's theme in. The library writes `data-theme` when something inside
-    // the frame changes it — which is exactly what the v-theme-toggle example
-    // on the theme page does. Keying only on `data-tema` meant that button set
-    // an attribute nothing listened to: it flipped the state, the text said the
-    // theme had changed, and not one colour moved.
+    // Keyed on `data-theme` alone, the attribute both writers use: the shell
+    // stamps it on the frame, carrying the page's theme in, and the library
+    // writes it when something inside the frame changes the theme, which is
+    // what the v-theme-toggle example on the theme page does. Keying on the
+    // shell's own attribute meant that button set one nothing listened to.
     '@media (prefers-color-scheme:dark){' +
-    'html:root:not([data-tema="claro"]):not([data-theme="light"]){' +
+    'html:root:not([data-theme="light"]){' +
     '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
     '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
     '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
     'color-scheme:dark}}' +
-    'html:root[data-tema="escuro"],html:root[data-theme="dark"]{' +
+    'html:root[data-theme="dark"]{' +
     '--ink:#f2f0f6;--ink-soft:#b3adc2;--ink-faint:#837d93;' +
     '--bg:#131118;--bg-soft:#191722;--bg-code:#1d1a26;--line:#2b2735;' +
     '--accent:#a688ff;--accent-soft:#221c3a;--fill:#2f2b3d;' +
@@ -593,8 +644,8 @@
     'color-scheme:light}' +
     // The library injects :root{--v-surface:#fff;...} into this document's
     // <head> and only darkens it for prefers-color-scheme or [data-theme].
-    // It never sees data-tema, so a reader on a light system who chose the
-    // dark theme got white component surfaces on a dark stage. !important is
+    // Unmapped, a reader on a light system who chose the dark theme got white
+    // component surfaces on a dark stage. !important is
     // required: V.palette() writes :root:not([data-theme="light"]), which
     // outranks any plain selector, and html:root beats the plain :root the
     // library appends later in source order.
@@ -694,10 +745,8 @@
     palco.appendChild(quadro);
 
     var documento =
-      '<!doctype html><html lang="en" data-tema="' +
+      '<!doctype html><html lang="en" data-theme="' +
       temaAtual() +
-      '" data-theme="' +
-      (temaAtual() === 'claro' ? 'light' : 'dark') +
       '"><head><meta charset="utf-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<style>' +
@@ -821,7 +870,7 @@
       'aria-label': 'Switch theme'
     });
     tema.addEventListener('click', function () {
-      aplicarTema(temaAtual() === 'claro' ? 'escuro' : 'claro');
+      aplicarModo(MODOS[(MODOS.indexOf(modoAtual()) + 1) % MODOS.length]);
     });
     acoes.appendChild(tema);
 
@@ -1053,6 +1102,33 @@
     return nav;
   }
 
+  // The author's other projects, listed in every footer of the site.
+  var OUTROS_PROJETOS = [
+    ['monsoon', 'Monsoon', 'Utility-first CSS with no build step and 116 native components'],
+    ['breakhound', 'breakhound', 'Find bugs in any JavaScript library automatically'],
+    ['vueleap', 'vueleap', 'Migrate Vue 2 to Vue 3 with one command'],
+    ['graphemely', 'graphemely', 'Emoji safe string functions'],
+    ['numberparrot', 'numberparrot', 'Parse localized numbers and currency'],
+    ['edgegoat', 'edgegoat', 'Edge case test inputs']
+  ];
+
+  function listaDeProjetos() {
+    return (
+      '<nav class="vd-projects" aria-label="More projects by kwy404">' +
+      '<span class="vd-projects__title">More projects by kwy404</span>' +
+      OUTROS_PROJETOS.map(function (p) {
+        return (
+          '<a href="https://kwy404.github.io/' + p[0] + '/" title="' + esc(p[2]) + '">' +
+          '<img src="https://cdn.jsdelivr.net/gh/kwy404/' + p[0] +
+          '@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">' +
+          esc(p[1]) +
+          '</a>'
+        );
+      }).join('') +
+      '</nav>'
+    );
+  }
+
   function montarRodape() {
     return el('footer', {
       class: 'doc-rodape',
@@ -1065,10 +1141,15 @@
         SITE +
         'examples/">Examples</a> &#183; ' +
         '<a href="https://github.com/kwy404/Voodoo.js">Repository</a> &#183; ' +
-        '<a href="https://github.com/kwy404/Voodoo.js/releases/tag/v0.5.0">Release notes</a> &#183; ' +
+        // The latest release, not one pinned tag: this pointed at v0.5.0 for
+        // eight releases.
+        '<a href="https://github.com/kwy404/Voodoo.js/releases">Release notes</a> &#183; ' +
         '<a href="' +
         href('referencia/perguntas-frequentes') +
-        '">Frequently asked questions</a></p>'
+        '">Frequently asked questions</a></p>' +
+        '<p>Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; ' +
+        '<a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>' +
+        listaDeProjetos()
     });
   }
 

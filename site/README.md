@@ -227,12 +227,29 @@ To add a language:
 
 ## Theme
 
-Dark is the brand's default theme. A script inlined in the `<head>` records and
-applies the choice before the first paint, so the page never flashes in the
-wrong theme. The header toggle uses `V.theme`, which keeps the preference in
-`localStorage`, under the `voodoo:theme` key.
+Every page shares one theme, the one `V.theme` keeps: the `voodoo:theme` key in
+`localStorage`, holding `light`, `dark` or `system`, and `data-theme` on
+`<html>` for an explicit choice. With no choice, or with `system`, the
+stylesheets follow `prefers-color-scheme`, including when it changes while the
+page is open.
 
-The preview frames inherit the page theme.
+- Each page carries the same inline script at the top of `<head>`, which puts
+  the saved choice on the root before the first paint, so nothing flashes in the
+  wrong theme. Keep it identical everywhere; the documentation pages carry a
+  one-line copy of it.
+- The header buttons on the landing page, the components page and the examples
+  index are `v-theme-toggle.cycle`: system, light, dark. The icon comes from
+  `data-voodoo-theme-mode`, which the library writes on the button.
+- The documentation shell (`docs/assets/docs.js`) is not built on the library
+  and implements the same contract by hand. It moved a choice saved under its
+  old key, `voodoo-docs-tema`, across once.
+- The live examples and the playground preview run in same-origin frames, so
+  they read the same key, and a theme changed inside one reaches the page around
+  it through the `storage` event.
+- Every stylesheet writes its dark theme twice: under
+  `@media (prefers-color-scheme: dark)` for `:root:not([data-theme="light"])`,
+  and for `:root[data-theme="dark"]`. A rule written only for the second never
+  applies to a visitor on a dark machine who has not touched the toggle.
 
 ---
 

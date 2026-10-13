@@ -1,26 +1,33 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Voodoo.js Design System</title>
-<meta name="description" content="Design system oficial do Voodoo.js. Tokens, componentes e utilitarios em CSS puro, sem dependencias.">
 
+<!-- The visitor's theme, before the first paint. The library restores it
+     too, but only once the deferred bundle has run, which is after the page
+     has been drawn once in the other theme. Same key and values as V.theme
+     (`voodoo:theme`: light, dark or system, raw or as JSON), so the two
+     never disagree. -->
 <script>
-  /* Aplica o tema antes da primeira pintura para evitar piscada de cor.
-     Todo acesso ao localStorage fica dentro de try/catch porque o
-     navegador pode bloquear armazenamento em janela anonima. */
   (function () {
-    var escolha = null;
-    try { escolha = localStorage.getItem("voodoo-theme"); } catch (e) { escolha = null; }
-    if (escolha !== "light" && escolha !== "dark") {
-      escolha = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    document.documentElement.setAttribute("data-theme", escolha);
+    try {
+      var t = localStorage.getItem('voodoo:theme');
+      if (t && t.charAt(0) === '"') t = JSON.parse(t);
+      var r = document.documentElement;
+      if (t === 'light' || t === 'dark') {
+        r.setAttribute('data-theme', t);
+        r.style.colorScheme = t;
+      } else if (t === 'system') {
+        r.removeAttribute('data-theme');
+      }
+    } catch (e) {}
   })();
 </script>
+<title>Voodoo.js Design System</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="description" content="Design system oficial do Voodoo.js. Tokens, componentes e utilitarios em CSS puro, sem dependencias.">
+
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1790,6 +1797,23 @@ cast("#app", () =&gt; `
         <strong>Voodoo.js Design System</strong>, versao 1.0. CSS puro, sem
         dependencias e sem etapa de build.
       </p>
+      <p class="v-text-xs v-mb-2">Made by <a href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> &#183; <a href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a></p>
+      <nav class="vd-projects v-mb-2" aria-label="Conheça outros projetos de kwy404">
+        <span class="vd-projects__title">Conheça outros projetos de kwy404</span>
+        <a href="https://kwy404.github.io/monsoon/" title="CSS utilitário sem etapa de build e 116 componentes nativos"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">Monsoon</a>
+        <a href="https://kwy404.github.io/breakhound/" title="Encontra bugs em qualquer biblioteca JavaScript automaticamente"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">breakhound</a>
+        <a href="https://kwy404.github.io/vueleap/" title="Migra do Vue 2 para o Vue 3 com um só comando"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">vueleap</a>
+        <a href="https://kwy404.github.io/graphemely/" title="Funções de string seguras para emoji"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">graphemely</a>
+        <a href="https://kwy404.github.io/numberparrot/" title="Lê números e valores monetários localizados"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">numberparrot</a>
+        <a href="https://kwy404.github.io/edgegoat/" title="Entradas de teste para casos extremos"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="18" height="18" loading="lazy" decoding="async">edgegoat</a>
+      </nav>
+      <style>
+        .vd-projects { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13px; line-height: 1.5; }
+        .vd-projects__title { font-weight: 600; }
+        .vd-projects a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+        .vd-projects a:hover { text-decoration: underline; }
+        .vd-projects img { width: 18px; height: 18px; flex: none; }
+      </style>
       <p class="v-text-xs v-text-subtle">
         Arquivos: tokens.css, reset.css, components.css, utilities.css e o
         pacote unico voodoo-ui.css. A documentacao completa esta no README.md.
@@ -1873,34 +1897,88 @@ cast("#app", () =&gt; `
 
   /* --------------------------------------------------------------------
      1. ALTERNADOR DE TEMA
-     Grava a escolha no localStorage dentro de try/catch e escreve
-     data-theme no elemento html.
+     The same key and values as V.theme and every other page of the site:
+     `voodoo:theme`, holding light, dark or system. This page used to keep
+     its own key, `voodoo-theme`, and pinned the system preference onto
+     data-theme at load, so a choice made anywhere else never reached it
+     and a system change while it was open was ignored. The old key is
+     moved across once.
      -------------------------------------------------------------------- */
+  var CHAVE_TEMA = "voodoo:theme";
   var botaoTema = document.getElementById("alternador-tema");
   var iconeTema = document.getElementById("icone-tema");
   var rotuloTema = document.getElementById("rotulo-tema");
+  var consultaEscura = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
 
-  function pintarBotaoTema(tema) {
+  function temaSalvo() {
+    try {
+      var t = localStorage.getItem(CHAVE_TEMA);
+      var antigo = localStorage.getItem("voodoo-theme");
+      if (antigo !== null) {
+        localStorage.removeItem("voodoo-theme");
+        if (t === null && (antigo === "light" || antigo === "dark")) {
+          localStorage.setItem(CHAVE_TEMA, antigo);
+          t = antigo;
+        }
+      }
+      if (t && t.charAt(0) === '"') t = JSON.parse(t);
+      return t === "light" || t === "dark" || t === "system" ? t : null;
+    } catch (e) {
+      return null; /* storage blocked */
+    }
+  }
+
+  /* The theme on screen: the explicit attribute, or the system. */
+  function temaVisivel() {
+    var t = raiz.getAttribute("data-theme");
+    if (t === "light" || t === "dark") return t;
+    return consultaEscura && consultaEscura.matches ? "dark" : "light";
+  }
+
+  function pintarBotaoTema() {
+    var tema = temaVisivel();
     var vaiParaEscuro = tema !== "dark";
     if (iconeTema) iconeTema.innerHTML = vaiParaEscuro ? "&#9789;" : "&#9788;";
     if (rotuloTema) rotuloTema.textContent = vaiParaEscuro ? "Escuro" : "Claro";
     if (botaoTema) botaoTema.setAttribute("aria-pressed", tema === "dark" ? "true" : "false");
-  }
-
-  function aplicarTema(tema) {
-    raiz.setAttribute("data-theme", tema);
-    try { localStorage.setItem("voodoo-theme", tema); } catch (e) { /* armazenamento bloqueado */ }
-    pintarBotaoTema(tema);
     mostrarValoresDosTokens();
   }
 
-  pintarBotaoTema(raiz.getAttribute("data-theme") || "light");
+  function pintarEscolha(tema) {
+    if (tema === "light" || tema === "dark") {
+      raiz.setAttribute("data-theme", tema);
+      raiz.style.colorScheme = tema;
+    } else if (tema === "system") {
+      raiz.removeAttribute("data-theme");
+      raiz.style.colorScheme = "";
+    }
+    pintarBotaoTema();
+  }
+
+  function aplicarTema(tema) {
+    try { localStorage.setItem(CHAVE_TEMA, tema); } catch (e) { /* storage blocked */ }
+    pintarEscolha(tema);
+  }
+
+  pintarEscolha(temaSalvo());
 
   if (botaoTema) {
     botaoTema.addEventListener("click", function () {
-      aplicarTema(raiz.getAttribute("data-theme") === "dark" ? "light" : "dark");
+      aplicarTema(temaVisivel() === "dark" ? "light" : "dark");
     });
   }
+
+  if (consultaEscura) {
+    var aoMudarSistema = function () {
+      if (!raiz.hasAttribute("data-theme")) pintarBotaoTema();
+    };
+    if (consultaEscura.addEventListener) consultaEscura.addEventListener("change", aoMudarSistema);
+    else if (consultaEscura.addListener) consultaEscura.addListener(aoMudarSistema);
+  }
+
+  window.addEventListener("storage", function (evento) {
+    if (evento.key === CHAVE_TEMA || evento.key === null) pintarEscolha(temaSalvo() || "system");
+  });
 
   /* --------------------------------------------------------------------
      2. VALORES DOS TOKENS NAS AMOSTRAS DE COR

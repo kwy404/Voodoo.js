@@ -7,9 +7,9 @@
    palette on a near-black canvas, which is why it read as a different
    product from the rest of the site.
 
-   Token names are English. The theme attribute stays `data-tema`, with the
-   values `claro` and `escuro`, because that is the contract docs.js already
-   implements across all 44 pages.
+   Token names are English. The theme is the one the whole site shares with
+   `V.theme`: `data-theme` on the root, `light` or `dark` for an explicit
+   choice and no attribute for the system preference.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -60,7 +60,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  html:root:not([data-tema="claro"]) {
+  html:root:not([data-theme="light"]) {
     --ink: #f2f0f6;
     --ink-soft: #b3adc2;
     --ink-faint: #837d93;
@@ -84,7 +84,7 @@
   }
 }
 
-html:root[data-tema="escuro"] {
+html:root[data-theme="dark"] {
   --ink: #f2f0f6;
   --ink-soft: #b3adc2;
   --ink-faint: #837d93;
@@ -1435,4 +1435,31 @@ h3:hover .doc-ancora,
   .doc-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The author's other projects, at the foot of every page. */
+.vd-projects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vd-projects__title {
+  font-weight: 600;
+}
+
+.vd-projects a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vd-projects img {
+  width: 18px;
+  height: 18px;
+  flex: none;
 }

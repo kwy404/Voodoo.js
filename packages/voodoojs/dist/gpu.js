@@ -1,7 +1,7 @@
 import { supported, clock, shared, gpu, surface, effect, frameLoop, frame } from './chunk-GE4JWATC.js';
 export { clock, compute, describeWgslType, destroy, effect, findEntry, flattenValue, frame, frameLoop, gpu, inferStruct, init, packStruct, reflectBindings, reflectEntries, reflectStructs, reflectWgsl, resetShared, shared, splitTopLevel, stripWgslComments, supported, surface, target, uniforms, writeField, writeStruct } from './chunk-GE4JWATC.js';
 import { http } from './chunk-OIH4BR2H.js';
-import { originalAttributes, destroy } from './chunk-JBUNTP7F.js';
+import { originalAttributes, destroy } from './chunk-2EFUHAQG.js';
 import { handleError } from './chunk-FMDHZ5GI.js';
 import { warn, describeElement } from './chunk-IBIZ6OUI.js';
 import './chunk-2LGAXVD7.js';
@@ -265,7 +265,9 @@ var voodooGpu = {
   }
 };
 var target2 = globalThis.V;
-if (target2 && typeof target2 === "object" && !target2.gpu) target2.gpu = gpu;
+if (target2 && (typeof target2 === "object" || typeof target2 === "function") && !target2.gpu) {
+  target2.gpu = gpu;
+}
 var plugin_default = voodooGpu;
 
 export { classifyShaderSource, plugin_default as default, resolveShaderSource, voodooGpu };

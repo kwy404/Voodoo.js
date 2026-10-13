@@ -63,7 +63,7 @@ import {
   walk,
 } from './runtime/walker';
 import { defineComponent, instances, mountComponent, setScopeMarker } from './runtime/component';
-import { createApp, setAppHost, setDirectiveRegistrar, type App } from './runtime/app';
+import { appHost, createApp, setAppHost, setDirectiveRegistrar, type App } from './runtime/app';
 import { whenElement, whenReady } from './runtime/boot';
 import { installMagics, clipboard, network, screen } from './runtime/magics';
 import { installHooks } from './hooks';
@@ -359,7 +359,10 @@ export const core = {
 
   // Plugins
   use(plugin: VoodooPlugin | ((V: any) => void), options?: Record<string, unknown>): void {
-    usePlugin(core, plugin, options);
+    // The public `V`, not this object. Handed the core, a plugin found no
+    // `V.modal`, `V.router`, `V.i18n` or `V.renderChart` (the entry point adds
+    // those on top), and whatever it set, `V.api` say, never reached the global.
+    usePlugin(appHost() ?? core, plugin, options);
   },
 
   /** Defines error handling for the entire application. */
@@ -381,6 +384,9 @@ export const core = {
 setAppHost(core);
 
 export type Core = typeof core;
+
+/** Called by each entry point once its public `V` is complete. */
+export { setAppHost as publishV };
 export type {
   App,
   ComponentDefinition,

@@ -1129,7 +1129,21 @@ export function applyBinding(
     return;
   }
 
+  // ARIA states are the strings "true" and "false", and an absent one means
+  // something else again: no `aria-expanded` says the control does not expand
+  // at all. A bound boolean used to become "" for true and vanish for false.
+  if (typeof value === 'boolean' && name.startsWith('aria-')) {
+    el.setAttribute(name, String(value));
+    return;
+  }
+
   if (value == null || value === false) el.removeAttribute(name);
+  // A `data-*` attribute is read back as text, by stylesheets and by
+  // `dataset`, so true is written as "true". It used to be "", and every
+  // `[data-error="true"]`, `[data-disabled="true"]`, `[data-on="true"]` rule of
+  // the ready-made components never matched: fields never showed their error
+  // state, ratings never filled a star, tables were never striped.
+  else if (value === true && name.startsWith('data-')) el.setAttribute(name, 'true');
   else el.setAttribute(name, value === true ? '' : String(value));
 }
 
@@ -1264,7 +1278,14 @@ export function runHandler(expression: string, scope: Scope, event: Event, el: H
     const value = evaluate(node, local);
     // `v-click="save"` calls the found function.
     if (typeof value === 'function' && (node.t === 'id' || node.t === 'member')) {
-      value.call(scope.data, isEmit ? payload : event);
+      // `this` is what it would be in `save()`: the object the method was read
+      // from, or the scope that owns the name. It used to be this element's own
+      // scope, so a method defined with `V.data` and clicked from inside a
+      // nested `v-data` ran `this.count++` against a scope without `count`
+      // and created a local NaN there.
+      const self =
+        node.t === 'member' ? evaluate(node.o, local) : (local.lookup(node.n) ?? scope.data);
+      value.call(self, isEmit ? payload : event);
     }
   } catch (err) {
     handleError(err, `event ${event.type} ("${expression}")`);

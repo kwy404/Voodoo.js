@@ -17,7 +17,7 @@ import { magic, type Scope } from './scope';
 import { allStores } from '../store';
 import { http } from '../http';
 import { toast } from '../ui/toast';
-import { cache, cookie, session, storage, theme, url } from '../storage';
+import { cache, cookie, session, storage, theme, url, watchTheme } from '../storage';
 import { device } from '../utils';
 import { evaluateIn } from './walker';
 
@@ -145,7 +145,10 @@ export function installMagics(): void {
   magic('$cookie', () => cookie);
   magic('$cache', () => cache);
   magic('$url', () => url);
-  magic('$theme', () => theme);
+  magic('$theme', () => {
+    watchTheme();
+    return theme;
+  });
   magic('$device', () => device);
 
   // Reactive environment.

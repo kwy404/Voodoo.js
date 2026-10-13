@@ -44,6 +44,10 @@ export const voodooGpu = {
 // When the global object already exists, linking `V.gpu` alone avoids one more
 // configuration step for those who just want to use the directive.
 const target = (globalThis as Record<string, any>).V;
-if (target && typeof target === 'object' && !target.gpu) target.gpu = gpu;
+// The global `V` is a function with properties, `V('.item')` being a query, so
+// checking for an object alone never matched it and `V.gpu` was never linked.
+if (target && (typeof target === 'object' || typeof target === 'function') && !target.gpu) {
+  target.gpu = gpu;
+}
 
 export default voodooGpu;
