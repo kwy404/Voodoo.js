@@ -1,6 +1,6 @@
 {
   "name": "voodoojs",
-  "version": "0.13.0",
+  "version": "1.0.0",
   "description": "Write JSX directly in a plain .html file and open it in the browser. No build step, no bundler, no JSX transform. Reactivity, components, HTTP, forms, validation and a router in one script tag, with zero runtime dependencies.",
   "keywords": [
     "jsx",

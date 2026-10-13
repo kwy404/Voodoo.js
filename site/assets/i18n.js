@@ -163,7 +163,7 @@
         numberparrot: 'Parse localized numbers and currency',
         edgegoat: 'Edge case test inputs',
       },
-      foot: { mit: 'MIT licensed', madeBy: 'Made by', builtWith: 'Built with Voodoo.js 0.13.0' },
+      foot: { mit: 'MIT licensed', madeBy: 'Made by', builtWith: 'Built with Voodoo.js 1.0.0' },
     },
 
     'pt-BR': {
@@ -315,7 +315,7 @@
         numberparrot: 'Lê números e valores monetários localizados',
         edgegoat: 'Entradas de teste para casos extremos',
       },
-      foot: { mit: 'Licença MIT', madeBy: 'Feito por', builtWith: 'Feito com Voodoo.js 0.13.0' },
+      foot: { mit: 'Licença MIT', madeBy: 'Feito por', builtWith: 'Feito com Voodoo.js 1.0.0' },
     },
 
     es: {
@@ -469,7 +469,7 @@
         numberparrot: 'Interpreta números y monedas localizados',
         edgegoat: 'Entradas de prueba para casos límite',
       },
-      foot: { mit: 'Licencia MIT', madeBy: 'Hecho por', builtWith: 'Hecho con Voodoo.js 0.13.0' },
+      foot: { mit: 'Licencia MIT', madeBy: 'Hecho por', builtWith: 'Hecho con Voodoo.js 1.0.0' },
     },
 
     ko: {
@@ -618,7 +618,7 @@
         numberparrot: '현지화된 숫자와 통화 파싱',
         edgegoat: '엣지 케이스 테스트 입력',
       },
-      foot: { mit: 'MIT 라이선스', madeBy: '만든 사람', builtWith: 'Voodoo.js 0.13.0으로 제작' },
+      foot: { mit: 'MIT 라이선스', madeBy: '만든 사람', builtWith: 'Voodoo.js 1.0.0으로 제작' },
     },
   };
 

@@ -1133,7 +1133,7 @@
     return el('footer', {
       class: 'doc-rodape',
       html:
-        '<p>Voodoo.js 0.13.0 &#183; documentation.</p>' +
+        '<p>Voodoo.js 1.0.0 &#183; documentation.</p>' +
         '<p><a href="' +
         SITE +
         '">Home</a> &#183; ' +
