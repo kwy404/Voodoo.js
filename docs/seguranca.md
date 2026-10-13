@@ -48,7 +48,11 @@ scope, the search falls to a closed list of globals:
 ```
 Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console
+setTimeout  setInterval  clearTimeout  clearInterval  requestAnimationFrame  cancelAnimationFrame
 ```
+
+The browser builds also add `V` and `Voodoo`. The timers only accept a function, never a string
+of code.
 
 Everything outside that list returns `undefined`:
 

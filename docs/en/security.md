@@ -34,10 +34,13 @@ closed allowlist of globals. **There is no fall-through to `window`, `globalThis
 
 The allowlist is `Math`, `JSON`, `Date`, `Number`, `String`, `Boolean`, `Array`, `Object`,
 `Intl`, `RegExp`, `Promise`, `parseInt`, `parseFloat`, `isNaN`, `isFinite`,
-`encodeURIComponent`, `decodeURIComponent` and `console`.
+`encodeURIComponent`, `decodeURIComponent`, `console`, `setTimeout`, `setInterval`,
+`clearTimeout`, `clearInterval`, `requestAnimationFrame` and `cancelAnimationFrame`, plus `V` and
+`Voodoo` in the browser builds. `setTimeout` and `setInterval` refuse a string and only accept a
+function, so they cannot compile code.
 
 Not on it: `window`, `globalThis`, `document`, `fetch`, `XMLHttpRequest`, `localStorage`,
-`eval`, `Function`, `setTimeout`, `navigator`, `location`, `history`.
+`eval`, `Function`, `navigator`, `location`, `history`.
 
 ### The prototype chain is blocked
 
@@ -188,9 +191,8 @@ state.safeBio = DOMPurify.sanitize(await loadBio());
 <div v-html="safeBio"></div>
 ```
 
-> Do not try to do this with a getter on the object you pass to `V.data`. `V.data` uses
-> `Object.assign`, which **invokes** getters and stores their result, so the value would be
-> computed once and frozen. Use a component `computed`, or `V.computed`.
+> A getter on the object you pass to `V.data` also works here: `V.data` copies property
+> descriptors, so `get safeBio() { ... }` stays a getter and re-runs on each read.
 
 If you only need text, do not use `v-html` at all:
 
@@ -213,7 +215,7 @@ control.
 | Component `template`                | Yours, written at registration time. Never build one from user input. |
 | `V.fromHtml(html)`                  | Same as `v-html` |
 | `V(sel).html(value)`                | Same as `v-html` |
-| HTTP directives with `v-as="html"`  | Trusted as far as your server is |
+| HTTP directives receiving HTML      | Trusted as far as your server is |
 | `v-resource` with an HTML template  | Same |
 | Router routes using `view:`         | Same |
 | Toast, modal, alert options that accept HTML | Pass user content as text |

@@ -61,8 +61,8 @@ DOM only runs in the browser. There is no server-side rendering.
 
 ### Does the library have dependencies?
 
-None at runtime. In development there are `tsup`, `typescript`, `vitest`, `jsdom`, and
-`prettier`.
+None at runtime. In development there are `tsup`, `typescript`, `vitest`, `@vitest/coverage-v8`,
+`jsdom`, `@playwright/test`, and `prettier`.
 
 ## Everyday use
 
@@ -119,7 +119,7 @@ Both are terminal, so one takes control and the other doesn't run. Put `v-if` in
 
 ### How do I write a multi-line function in an attribute?
 
-Don't. The parser accepts expressions, not blocks. Put the logic in a method:
+Don't. Attribute expressions should stay short, so put the logic in a method:
 
 ```js
 V.data({ clear() { this.items = []; this.total = 0; } });
@@ -201,7 +201,7 @@ touch it.
 The core works in jsdom. The project pattern is to mount a snippet, walk, and verify:
 
 ```js
-import { walk } from 'voodoojs';
+import V from 'voodoojs';
 
 document.body.innerHTML = '<div v-data="{ n: 0 }"><b v-text="n"></b></div>';
 V.start();
@@ -242,31 +242,16 @@ pasted. Pass via props, or turn on `inheritScope: true` in the definition.
 Also expected behavior, and same as Vue: slot content belongs to the parent's scope. Scoped slots
 don't exist.
 
-### Translation disappears when switching language
-
-If you used `v-t-params`, values are only read on first render. Use reactive interpolation:
-
-```html
-<span>{ $t('items', { n: total }) }</span>
-```
-
 ### Confirmation appears twice
 
-This happens when `v-confirm` is on the same element as `v-get`, `v-post`, `v-put`, `v-patch`,
-`v-delete`, or `v-submit`: both layers read the same attribute. Leave the prompt in one place:
+This happens when `v-confirm` is on the same element as `v-submit`: the guard asks, then the
+submission asks again with the browser's `confirm`. Put `v-confirm` on the submit button, or leave
+the prompt in one place:
 
 ```html
 <button v-confirm="Delete?" v-click="$http.delete('/api/x').then(() => list.reload())">
   Delete
 </button>
-```
-
-### Chart goes back to line when data changes
-
-`v-chart-*` attributes are read on mount. With reactive data, declare everything in the object:
-
-```html
-<div v-chart="{ type: 'bar', data: sales }"></div>
 ```
 
 ## Project

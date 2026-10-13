@@ -83,8 +83,8 @@ Without argument, translates the element's content. With argument, writes to the
 <span v-t="hello" v-t-params="{ name: user.name }"></span>
 ```
 
-> A honest warning: `v-t-params` is read only on first render. If the text needs to follow
-> language changes or value changes, use interpolation with `$t`, which is fully reactive.
+`v-t-params` is read inside the same effect as `v-t`, so the text follows both language changes
+and value changes.
 
 ## Pluralization
 

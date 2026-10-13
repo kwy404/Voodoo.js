@@ -195,7 +195,7 @@ See [Forms](formularios.md), [Validation](validacao.md), and [Masks](mascaras.md
 | `V.hotkey(combo, handler, options?)` | Global keyboard shortcut |
 | `V.palette(options?)` | Applies the palette |
 | `V.palette.use/reset/scale/contrastText/contrastRatio/luminance/convert` | |
-| `V.theme.current/resolved/set/toggle/apply/init` | Light and dark theme |
+| `V.theme.current/resolved/chosen/set/toggle/cycle/apply/init` | Theme: `light`, `dark` or `system` |
 | `V.injectStyle(id, css)` | Injects CSS once |
 | `V.ensureTokens()` | Ensures `--v-*` variables |
 
@@ -340,7 +340,7 @@ Available in any expression, without declaring anything.
 | `$modal`, `$dialog`, `$alert`, `$confirm`, `$prompt` | Dialogs |
 | `$storage`, `$session`, `$cookie`, `$cache`, `$url` | Storage |
 | `$clipboard` | Copy and read clipboard |
-| `$theme` | Light and dark theme |
+| `$theme` | Theme: `light`, `dark` or `system` |
 | `$form` | Nearest form state |
 | `$history` | Undo/redo controller, when there's `v-history` above |
 

@@ -19,7 +19,7 @@ Virtual DOM and want to know what to do with that information.
 
 The most important rule on this page.
 
-`v-for` without `:key` uses `__index_0`, `__index_1` and so on as the key
+`v-for` without `:key` uses the position (`0`, `1` and so on) as the key
 (`directives/core.ts`). The block at position zero is always reused for the item at
 position zero, whatever it is.
 
@@ -304,7 +304,7 @@ V.refresh(list);
 **Limit the observed root.** If Voodoo only governs part of the page, say so:
 
 ```html
-<script src="voodoo.full.min.js" data-manual defer></script>
+<script src="voodoo.full.min.js" data-manual></script>
 <script>
   V.config.root = document.querySelector('#app');
   V.start();
@@ -393,7 +393,7 @@ calls `clear()`. An application that exceeds that number keeps re-analyzing expr
 periodically. Two thousand distinct expressions is a lot, but if you generate HTML
 dynamically it's good to know. `V.clearParseCache()` clears by hand, and exists for tests.
 
-The same applies to interpolation memoization (`expressionValid` in `runtime/walker.ts`), which
+The same applies to interpolation memoization (`validExpressions` and `looksLikeExpression` in `runtime/walker.ts`), which
 stores "is this text between braces an expression?" by text. This has no limit, and grows
 with the number of distinct text fragments between braces on the page.
 
@@ -456,14 +456,14 @@ on it. When this feeds a search, it's one request per keystroke.
 <input v-model="search">
 
 <!-- One write every 300ms of silence -->
-<input v-model.debounce=300 v-search="/api/search">
+<input v-model.debounce="search" v-debounce="300">
 
 <!-- Writes only when leaving the field -->
 <input v-model.lazy="search">
 ```
 
-`v-model` accepts `.debounce=<ms>`, `.lazy`, `.trim` and `.number`
-(`directives/core.ts`). `.lazy` switches the event from `input` to `change`.
+`v-model` accepts `.debounce` (with the time in `v-debounce`, 250 ms by default), `.lazy`,
+`.trim` and `.number` (`directives/core.ts`). `.lazy` switches the event from `input` to `change`.
 
 For a search field that triggers requests, `v-search` already has its own debounce and
 `v-min-length`, and cancels the previous request.

@@ -184,7 +184,7 @@ V.router.resolve('/x').matched;              // padrão casado, ou null
 ```js
 V.router.addRoute('/relatorios/:tipo', { component: 'relatorio' });
 V.router.removeRoute('/relatorios/:tipo');
-V.router.patterns;   // padrões registrados
+V.router.patterns(); // padrões registrados
 V.router.ready;      // true depois de configurado
 V.router.stop();     // desliga o roteador
 V.router.clearViewCache();

@@ -237,10 +237,11 @@ During the request the element also receives `aria-busy="true"`.
 | `v-redirect` | Navigates to the URL after success |
 | `v-scroll-to` | Smoothly scrolls to the selector after success |
 
-> **Warning about `v-confirm` with a request.** Currently the question is asked twice when
-> `v-confirm` is on the same element as `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete` or
-> `v-submit`: once by the confirmation guard, which intercepts the click, and once by the request
-> itself. Until this is fixed, ask for confirmation in only one place:
+> **Warning about `v-confirm` with `v-submit`.** On `v-get`, `v-post`, `v-put`, `v-patch` and
+> `v-delete` the question is asked once. On a form with `v-submit` it is still asked twice: once by
+> the confirmation guard, which intercepts the click, and once by the submission itself, with the
+> browser's `confirm`. Until this is fixed, put `v-confirm` on the submit button instead of the
+> form, or ask for confirmation in only one place:
 >
 > ```html
 > <!-- confirmation by guard, request by expression -->
@@ -330,6 +331,11 @@ resposta.raw;     // o Response original
 | `retry` | Extra attempts on network failure and 5xx. The wait doubles each round. **Only works alone on `GET`, `HEAD` and `OPTIONS`** |
 | `retryUnsafe` | Enables retry on `POST`, `PATCH`, `PUT` and `DELETE`. Read the warning below before turning it on |
 | `retryDelay` | Initial wait between attempts. Default 500 ms |
+| `cache` | Cache milliseconds. GET only |
+| `signal` | `AbortSignal` to cancel |
+| `credentials` | Default `same-origin` |
+| `responseType` | `auto`, `json`, `text`, `blob`, `arrayBuffer`, `formData` |
+| `offlineQueue` | Stores the request when offline and resends when back online |
 
 ### Why retry doesn't repeat `POST` alone
 
@@ -357,11 +363,6 @@ The second form is correct when the operation really matters. The key must be th
 attempts and the server must recognize it — without it, it doesn't protect anything.
 
 In development, asking for `retry` on an unsafe method without either one generates a console warning.
-| `cache` | Cache milliseconds. GET only |
-| `signal` | `AbortSignal` to cancel |
-| `credentials` | Default `same-origin` |
-| `responseType` | `auto`, `json`, `text`, `blob`, `arrayBuffer`, `formData` |
-| `offlineQueue` | Stores the request when offline and resends when back online |
 
 ```js
 const dados = await V.http.get('/api/produtos', {

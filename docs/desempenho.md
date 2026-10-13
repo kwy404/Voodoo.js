@@ -44,8 +44,8 @@ run, the scheduler notices the loop and stops with a warning, instead of freezin
 
 | File | Raw | gzip | brotli |
 | --- | --- | --- | --- |
-| `voodoo.min.js` | about 235 KB | about 75 KB | about 64 KB |
-| `voodoo.full.min.js` | about 399 KB | about 120 KB | about 100 KB |
+| `voodoo.min.js` | about 270 KB | about 88 KB | about 74 KB |
+| `voodoo.full.min.js` | about 450 KB | about 136 KB | about 113 KB |
 
 The numbers change with each release. The `npm run size` script measures the actual files and fails when
 any exceeds the declared target, so size regressions are caught in CI.
@@ -61,8 +61,11 @@ import { http } from 'voodoojs/http';
 For a custom browser bundle, with only the modules you use:
 
 ```bash
-npx voodoojs-cli build
+npx voodoojs-cli build --modules=core,directives,http
 ```
+
+Run `npx voodoojs-cli info` first to see what each module costs. The options are in the
+[CLI README](../packages/cli/README.md#build).
 
 ## Best practices
 
@@ -213,7 +216,7 @@ In the inspector's performance tab, each element shows how many effects depend o
 times each re-executed. A high number in a small place usually means too many expressions in one
 block.
 
-To measure size in your own project:
+To measure the bundle sizes, from the root of the Voodoo.js repository:
 
 ```bash
 npm run size

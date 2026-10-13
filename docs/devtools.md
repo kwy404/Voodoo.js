@@ -60,12 +60,16 @@ V.xray(true);    // force on
 V.xray(false);   // force off
 ```
 
-The `Ctrl+Shift+F2` shortcut is installed on first call. To have the shortcut available from the
-start, without turning anything on:
+The `Ctrl+Shift+F2` shortcut toggles it. A page that loads the full build installs the shortcut as
+soon as it starts. A page that starts itself (`data-manual`, or an import in a bundler) gets it on
+the first call to `V.xray()`, or right away with:
 
 ```js
 V.enableXrayShortcut();
 ```
+
+To pick another combination, use `data-xray-shortcut="alt+shift+d"` on the script tag or
+`V.config.xrayShortcut`. The value `false` installs no shortcut at all.
 
 ## What it shows
 
@@ -92,10 +96,10 @@ highlights it and scrolls the page to it.
 The module doesn't register anything when imported. No listeners, no styles, and no timers exist
 before the first call, so it's tree-shakeable and costs nothing while nobody turns it on. Still, in
 production the safest path is to serve the essential build, or build a custom one without the
-`devtools` module:
+`devtools` module (leave `devtools` out of `--modules`):
 
 ```bash
-npx voodoojs-cli build
+npx voodoojs-cli build --modules=core,directives,dom,http,ui
 ```
 
 ## How effect counting is done

@@ -254,13 +254,14 @@ Every field on `V.config`:
 | `autoDiscover`    | `true`               | Watch the DOM and initialize inserted elements. |
 | `root`            | `null`               | Root element to observe. Defaults to `document.body`. |
 | `devtools`        | `false`              | Enable detailed development warnings. |
-| `baseURL`         | `''`                 | Base URL for attribute-driven requests. |
+| `baseURL`         | `''`                 | Base URL for form directive requests. For `V.http` and `v-get`, use `data-base-url` or `V.http.setBaseURL()`. |
 | `globals`         | `{}`                 | Extra values reachable from expressions. |
 | `locale`          | `navigator.language` | Used by date, number and currency formatting. |
 | `currency`        | `'BRL'`              | Default currency. |
 | `injectStyles`    | `true`               | Inject UI component CSS at runtime. |
 | `cleanAttributes` | `true`               | Remove `v-*` attributes from the DOM once processed. |
 | `sanitizeUrls`    | `true`               | Refuse `javascript:` and similar schemes in navigable attributes. |
+| `xrayShortcut`    | `'ctrl+shift+f2'`    | Shortcut that opens the `xray` inspector in the full build. `false` installs none. |
 
 ### From the script tag
 
@@ -286,10 +287,11 @@ Every field on `V.config`:
 
 ### From JavaScript
 
-Anything that must be set before the page is walked needs `data-manual`:
+Anything that must be set before the page is walked needs `data-manual`. Leave `defer` off this
+tag, so `V` already exists when the inline script below runs:
 
 ```html
-<script src="voodoo.full.min.js" data-manual defer></script>
+<script src="voodoo.full.min.js" data-manual></script>
 <script>
   V.config.prefix = 'data-v-';
   V.config.root = document.querySelector('#app');

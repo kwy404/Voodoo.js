@@ -147,9 +147,8 @@ constants are in `V.PRIORITY`. The default is `PRIORITY.DEFAULT`, which is `0`.
 `raw: true` delivers the expression text without evaluation, for directives that receive a selector
 or name instead of a value.
 
-**Limitation:** `V.directive` does not pass `terminal` to `defineDirective`. A plugin cannot
-declare a directive that assumes the entire subtree, like `v-if` and `v-for` do.
-See section 7.
+`terminal: true` is passed on to `defineDirective` too, so a plugin can declare a directive that
+takes over the entire subtree, like `v-if` and `v-for` do.
 
 ### Component
 
@@ -540,7 +539,6 @@ complete when these gaps close. All are in [ROADMAP.md](../ROADMAP.md).
 | **Deduplication by identity, not by `name`.** | Two copies of the same plugin from different paths both install and register the same name twice. |
 | **The `name` field is not used.** | Can't list what's installed or detect name conflicts. |
 | **No version checking.** | A plugin written for a future version installs silently and fails later, far from the cause. |
-| **`V.directive` doesn't pass `terminal`.** | A plugin can't create a structural directive like `v-if` and `v-for`. |
 | **Overwriting an existing name doesn't warn.** | A plugin can replace `v-text` without anyone noticing. |
 | **`app.use()` installs in the global `V`.** | No per-application registration. Two apps on the same page share everything. |
 | **`install` doesn't receive context.** | The plugin doesn't know if it was installed via `V.use` or `app.use`, or which app. |

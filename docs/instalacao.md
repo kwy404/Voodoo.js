@@ -35,7 +35,7 @@ Pin the version in production so a new release never changes your page without w
 
 | | `voodoo.min.js` | `voodoo.full.min.js` |
 | --- | --- | --- |
-| Approximate size | 75 KB gzip | 120 KB gzip |
+| Approximate size | 88 KB gzip | 136 KB gzip |
 | Reactivity, directives, components | yes | yes |
 | Chainable DOM (`V('#app')`) | yes | yes |
 | Declarative HTTP and `V.http` | yes | yes |
@@ -154,12 +154,14 @@ All `V.config` options:
 | `autoDiscover` | `true` | Watches the DOM and initializes elements created later |
 | `root` | `null` | Observed root. No value means `document.body` |
 | `devtools` | `false` | Detailed console warnings and named anchor comments |
-| `baseURL` | `''` | Base URL for declarative requests |
+| `baseURL` | `''` | Base URL for form directive requests (`v-submit` and friends). For `V.http` and `v-get`, use `data-base-url` or `V.http.setBaseURL()` |
 | `globals` | `{}` | Extra values released inside expressions |
 | `locale` | browser language | Locale of formatters |
-| `currency` | `'USD'` | Default currency for formatters |
+| `currency` | `'BRL'` | Default currency for formatters |
 | `injectStyles` | `true` | Injects interface component CSS |
 | `cleanAttributes` | `true` | Removes `v-*` attributes from HTML after processing |
+| `sanitizeUrls` | `true` | Rejects `javascript:`, `vbscript:` and `data:text/html` in `href`, `src`, `action` and `formaction` |
+| `xrayShortcut` | `'ctrl+shift+f2'` | Shortcut that opens the `xray` inspector in the full build. `false` installs none |
 
 ## Valid prefix for strict HTML
 
@@ -209,14 +211,21 @@ own file ensures the rule exists before the first frame.
 
 ## CLI
 
-The `voodoojs-cli` package builds custom bundles with only the modules you use:
+The `voodoojs-cli` package creates projects, copies components and builds custom bundles with
+only the modules you use:
 
 ```bash
-npx voodoojs-cli init            # creates a new project ready to use
-npx voodoojs-cli build           # builds a bundle choosing modules one by one
-npx voodoojs-cli add card        # copies a component into your project
-npx voodoojs-cli info            # shows what's installed and the size of each module
+npx voodoojs-cli init my-page                          # creates a new project ready to use
+npx voodoojs-cli build --modules=core,directives,jsx   # builds a bundle with only those modules
+npx voodoojs-cli add card                              # copies a component into ./components
+npx voodoojs-cli info                                  # shows what's installed and the size of each module
+npx voodoojs-cli --version                             # prints the version
 ```
+
+The project `init` writes loads the full build of the same version as the CLI, so no version needs
+to be edited by hand. `build` compiles from the library source, so it needs a copy of `voodoojs`
+that includes `src/`, such as a clone of the repository. See the
+[CLI README](../packages/cli/README.md) for every option.
 
 ---
 

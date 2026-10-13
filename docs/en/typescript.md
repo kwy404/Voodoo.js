@@ -61,7 +61,7 @@ state.items.push('a');
 `ref` and `computed`:
 
 ```ts
-import type { Ref, ComputedRef } from 'voodoojs';
+import type { Ref, ComputedRef } from 'voodoojs/reactivity';
 
 const count: Ref<number> = V.ref(0);
 const double: ComputedRef<number> = V.computed(() => count.value * 2);
@@ -233,8 +233,8 @@ try {
   await V.http.post<User>('/api/users', payload);
 } catch (err) {
   if (err instanceof V.HttpError) {
-    const body = err.data as { errors?: Record<string, string> };
-    if (body.errors) V.showFormErrors(form, body.errors);
+    const body = err.response?.data as { errors?: Record<string, string> } | undefined;
+    if (body?.errors) V.showFormErrors(form, body.errors);
   }
 }
 ```

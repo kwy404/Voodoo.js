@@ -44,7 +44,7 @@ You can write the whole action:
 
 ```html
 <button v-click="counter++">+1</button>
-<button v-click="items.push(new); new = ''">Add</button>
+<button v-click="items.push(draft); draft = ''">Add</button>
 ```
 
 Or just the name of a function, which is called with the event:

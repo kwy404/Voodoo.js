@@ -20,8 +20,8 @@ npm run build
 ## Running
 
 ```bash
-git clone https://github.com/voodoojs/voodoo.git
-cd voodoo
+git clone https://github.com/kwy404/Voodoo.js.git
+cd Voodoo.js
 npm install
 ```
 
@@ -91,13 +91,15 @@ packages/voodoojs/src/
   bootstrap.ts            script tag config reading and startup
 ```
 
-`packages/cli` brings the command line: `voodoo init`, `build`, `add` and `info`.
+`packages/cli` brings the command line: `voodoo init`, `build`, `add` and `info`. Its code is in
+`packages/cli/lib/cli.mjs`, the components `add` copies are in `packages/cli/templates/components/`,
+and its tests are in `packages/cli/test/`.
 
 ## Repository style rules
 
 These rules apply to all code and all documentation:
 
-- **Brazilian Portuguese** in comments and documentation;
+- **English** in comments and documentation;
 - **never use em dash.** Not `—` nor `–`. Use comma, colon or period;
 - **strict TypeScript**, no implicit `any`, with JSDoc on exported functions;
 - **zero runtime external dependencies**;
@@ -146,7 +148,7 @@ in [Plugins](plugins.md).
 ## Tests
 
 Tests live in `packages/voodoojs/test`, run with Vitest in jsdom environment, and are written in
-Portuguese.
+English.
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -200,13 +202,16 @@ An example that doesn't run is worse than no example.
 
 ## Commits
 
-Short message, in imperative, in Portuguese:
+[Conventional Commits](https://www.conventionalcommits.org/), in English, subject in imperative mood,
+lowercase, no trailing period:
 
 ```
-Adiciona v-clipboard-read para ler a area de transferencia
-Corrige v-for que perdia foco ao reordenar sem chave
-Documenta os modificadores de v-model
+feat(directives): add v-clipboard-read to read the clipboard
+fix(directives): keep focus when v-for reorders without a key
+docs(directives): document the v-model modifiers
 ```
+
+Types and scopes are listed in [CONTRIBUTING.md](../CONTRIBUTING.md#commit-convention).
 
 Don't use em dash in the message.
 

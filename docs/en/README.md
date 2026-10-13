@@ -20,15 +20,15 @@ That page is a complete application. There is nothing else to install.
 
 ## About this section
 
-**The complete documentation is in Portuguese**, in [`docs/`](../) and on the
-documentation site. It covers all 30 guides, including migration guides, the full directive
-reference, charts, animation, drag and drop, internationalization and the devtools.
+**The complete documentation is in [`docs/`](../)** and on the documentation site. It covers
+every guide, including migration guides, the full directive reference, charts, animation, drag
+and drop, internationalization and the devtools.
 
 This English section is a deliberately focused subset: the guides you need to build a real
-application, written directly against the source rather than translated from the Portuguese.
+application, written directly against the source.
 It is not a mirror of `docs/`, and it does not try to be.
 
-If you read Portuguese, read [`docs/README.md`](../README.md) instead. It has more.
+For anything not covered here, read [`docs/README.md`](../README.md). It has more.
 
 ---
 
@@ -89,9 +89,9 @@ These live at the repository root and are written in English.
 
 ---
 
-## Portuguese documentation
+## Complete documentation
 
-The complete reference, in `docs/`:
+The complete reference, in `docs/` (the file names are in Portuguese):
 
 **Getting started:** [introducao](../introducao.md) ·
 [instalacao](../instalacao.md) · [inicio-rapido](../inicio-rapido.md)

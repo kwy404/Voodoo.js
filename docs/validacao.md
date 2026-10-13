@@ -170,7 +170,7 @@ For a rule that toggles in real time, write your own rule that consults the stat
 
 ```js
 V.validator('cnpjWhenCompany', (value) => {
-  if (V.scope.type !== 'company') return true;
+  if (V.scope.data.type !== 'company') return true;
   return value.trim() !== '' || 'Provide the company CNPJ.';
 });
 ```

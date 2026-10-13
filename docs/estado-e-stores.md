@@ -50,16 +50,17 @@ A key that doesn't exist anywhere is created in the local scope.
 
 ### Functions in scope
 
-Put functions right in `v-data` for cleaner expressions:
+A function written inside the `v-data` literal has no `this`, so it cannot reach the other keys
+of the same object (`{ items: [], add(text) { this.items.push(text) } }` fails when `add` runs).
+Short actions fit in the expression itself:
 
 ```html
-<div v-data="{ items: [], add(text) { this.items.push(text) } }">
-  <button v-click="add('new')">Add</button>
+<div v-data="{ items: [] }">
+  <button v-click="items.push('new')">Add</button>
 </div>
 ```
 
-The parser doesn't accept `function`, so declare the function in a `<script>` and put it in the
-root scope:
+For real functions, declare them in a `<script>` and put them in the root scope:
 
 ```js
 V.data({
@@ -123,8 +124,8 @@ V.store('cart', {
 ```
 
 Methods declared in the store receive `this` pointing to the store itself. For derived values,
-use a method like the `total()` above: properties with `get` are resolved once at creation
-and don't track changes.
+use a method like the `total()` above, or a getter (`get total() { ... }`): getters stay getters,
+are recomputed on each read and track their dependencies.
 
 ### Persistence
 

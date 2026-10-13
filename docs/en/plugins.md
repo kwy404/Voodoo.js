@@ -337,7 +337,7 @@ The full list of gaps, and a proposal for closing them, is in
 
 ## Next
 
-- [docs/plugin-spec.md](../plugin-spec.md) (Portuguese) - the formal specification
+- [docs/plugin-spec.md](../plugin-spec.md) - the formal specification
 - [CONVENTIONS.md](../../CONVENTIONS.md) - naming rules and the deprecation policy
 - [Directives](directives.md)
 - [Security](security.md) - what a plugin can compromise

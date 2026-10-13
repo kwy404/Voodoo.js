@@ -166,7 +166,7 @@ Registration options:
 | `terminal` | Prevents the walker from descending into children, like `v-for` and `v-if` |
 
 Priorities available in `V.PRIORITY`: `IGNORE` (100), `FOR` (90), `IF` (80), `DATA` (70),
-`COMPONENT` (65), `REF` (60), `MODEL` (40), `BIND` (30), `DEFAULT` (0), `INIT` (-10),
+`COMPONENT` (65), `REF` (60), `BIND` (45), `MODEL` (40), `DEFAULT` (0), `INIT` (-10),
 `TRANSITION` (-20).
 
 The registered name does not include the prefix: `defineDirective('toggle', ...)` responds to `v-toggle`.
@@ -251,10 +251,13 @@ V.use((V) => {
 <button v-click="$http.get('/api/x')">Direct</button>
 ```
 
-To call `V.api` within HTML, expose it as global:
+To call `V.api` within HTML, expose it as global from inside the plugin, where `V.api` exists:
 
 ```js
-V.config.globals.api = V.api;
+V.use((V) => {
+  V.api = { /* ... */ };
+  V.config.globals.api = V.api;
+});
 ```
 
 ```html

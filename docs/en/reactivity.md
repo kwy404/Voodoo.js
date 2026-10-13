@@ -70,7 +70,7 @@ Those values are stored and read normally; they just do not track.
 ```js
 V.markRaw(bigThirdPartyInstance);   // never proxy this
 V.toRaw(state);                      // the original object behind a proxy
-V.isReactive(state);                 // true
+isReactive(state);                   // true, named export: import { isReactive } from 'voodoojs'
 ```
 
 Calling `reactive()` twice on the same object returns the same proxy.
@@ -170,7 +170,7 @@ Assigning to a computed with no setter logs a warning and does nothing.
 
 **Use `computed` for anything the template reads.** A `watch` that assigns to state is
 almost always a `computed` in disguise, and it costs more. See
-[performance](../performance.md) (Portuguese).
+[performance](../performance.md).
 
 ---
 
@@ -332,7 +332,7 @@ scope.stop();   // stops both, and any child scope
 ```js
 scope.run(() => {
   const socket = new WebSocket(url);
-  V.getActiveScope().onDispose(() => socket.close());
+  scope.onDispose(() => socket.close());
 });
 ```
 
@@ -407,4 +407,4 @@ Deno with no adaptation.
 - [State](state.md) - scopes, stores, and how reactivity reaches the HTML
 - [Directives](directives.md) - what actually creates the effects
 - [Components](components.md)
-- [performance](../performance.md) (Portuguese) - the practical guide
+- [performance](../performance.md) - the practical guide

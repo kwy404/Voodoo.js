@@ -88,7 +88,9 @@ track.cancel();
 Executes once and memoizes the return.
 
 ```js
-const start = V.once(() => createConnection());
+import { once } from 'voodoojs/utils';
+
+const start = once(() => createConnection());
 start();
 start();  // returns the same connection
 ```

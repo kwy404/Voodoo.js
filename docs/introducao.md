@@ -11,7 +11,7 @@ reactive state, and the screen updates automatically.
 </div>
 ```
 
-There's no compilation step, no config file, no JSX. You open the HTML in the browser and it works.
+There's no compilation step and no config file. You open the HTML in the browser and it works.
 
 ## What comes in the box
 
@@ -87,8 +87,8 @@ again, and each effect writes only to the node it created.
 
 | Item | Value |
 | --- | --- |
-| Essential bundle (`voodoo.min.js`) | about 75 KB gzip |
-| Full bundle (`voodoo.full.min.js`) | about 120 KB gzip |
+| Essential bundle (`voodoo.min.js`) | about 88 KB gzip |
+| Full bundle (`voodoo.full.min.js`) | about 136 KB gzip |
 | Runtime dependencies | zero |
 | Use of `eval` or `new Function` | none |
 | Automated tests | more than 190, all passing |
@@ -115,17 +115,11 @@ documentation thinking they have already been delivered.
   a date picker or visual file manager.
 - **Generated types for templates.** Attribute expressions have no static type checking.
 
-Four known details that need fixing, worth remembering meanwhile:
+One known detail that needs fixing, worth remembering meanwhile:
 
-- `v-confirm` on the same element as `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete`, or
-  `v-submit` asks twice. Use `v-confirm` with `v-click`, or ask for confirmation with
-  `$confirm(...)` inside the expression itself.
-- `v-t-params` is only read on first render. After switching language, prefer reactive
-  interpolation `{ $t('items', { n: total }) }`.
-- `v-chart-type` and other `v-chart-*` attributes work for static charts. When data is reactive,
-  declare everything in the object: `v-chart="{ type: 'bar', data: sales }"`.
-- Extra text for `v-confirm` (`v-confirm-title` and such) only works with
-  `V.config.cleanAttributes = false`.
+- `v-confirm` on the same element as `v-submit` asks twice: the dialog first, then the browser's
+  own `confirm`. Put `v-confirm` on the submit button instead of the form, or ask for confirmation
+  with `$confirm(...)` inside the expression itself.
 
 ---
 

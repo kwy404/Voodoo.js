@@ -19,7 +19,7 @@ palette changes the entire interface instantly in both themes. See [Theme and pa
 
 **Boolean props accept three forms.** The empty attribute (`loading`), the text form (`loading="true"`)
 and reactive binding (`:loading="salvando"`). Values accepted as true: empty attribute,
-`true`, `1`, `sim`, `yes`.
+`true`, `1`, `yes`.
 
 **Lists accept three formats.** A variable name from the surrounding scope, a comma-separated literal list,
 or reactive binding:

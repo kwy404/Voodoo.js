@@ -167,25 +167,28 @@ What happens automatically:
 
 ## Step 8: components
 
-Components are better in a script block, because they involve real logic.
+Components are better in a script block, because they involve real logic. The library tag from step 1
+has `defer`, so it runs after the HTML is parsed: wait for `DOMContentLoaded` before touching `V`.
 
 ```html
 <script>
-  V.component('counter', {
-    props: { start: { type: 'number', default: 0 } },
-    state(props) {
-      return { value: props.start };
-    },
-    computed: {
-      double() { return this.value * 2; },
-    },
-    methods: {
-      add() { this.value++; this.emit('changed', this.value); },
-    },
-    template: `
-      <button v-click="add">Add</button>
-      <span>{ value } (double: { double })</span>
-    `,
+  document.addEventListener('DOMContentLoaded', () => {
+    V.component('counter', {
+      props: { start: { type: 'number', default: 0 } },
+      state(props) {
+        return { value: props.start };
+      },
+      computed: {
+        double() { return this.value * 2; },
+      },
+      methods: {
+        add() { this.value++; this.emit('changed', this.value); },
+      },
+      template: `
+        <button v-click="add">Add</button>
+        <span>{ value } (double: { double })</span>
+      `,
+    });
   });
 </script>
 

@@ -434,4 +434,4 @@ The full build also ships `V.xray`, a reactivity inspector overlay.
 - [State](state.md)
 - [Directives](directives.md)
 - [Plugins](plugins.md)
-- [application-structure](../application-structure.md) (Portuguese) - organizing a larger app
+- [application-structure](../application-structure.md) - organizing a larger app

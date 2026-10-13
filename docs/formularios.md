@@ -284,7 +284,7 @@ The state returns to clean after a successful submission or a `reset`.
 <div v-data="{ form: { name: '', email: '' } }">
   <input v-model.trim="form.name">
   <input v-model.trim="form.email">
-  <pre>{ form }</pre>
+  <pre v-text="form"></pre>
   <button v-click="$http.post('/api/x', form)">Send manually</button>
 </div>
 ```

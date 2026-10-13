@@ -285,10 +285,10 @@ capture phase, before any other listener.
 <a v-confirm="Sair da sua conta?" href="/logout">Sair</a>
 ```
 
-> Don't combine `v-confirm` with `v-get`, `v-post`, `v-put`, `v-patch`, `v-delete`, or `v-submit` on
-> the same element: the question appears twice because those directives also read the same
-> attribute. Prefer `v-click` with `$http`, like in the example above, or ask for confirmation with
-> `$confirm(...)` inside the expression itself.
+> Don't combine `v-confirm` with `v-submit` on the same element: the question appears twice,
+> because the submission also reads the attribute and asks again with the browser's `confirm`. Put
+> `v-confirm` on the submit button, or ask for confirmation with `$confirm(...)` inside the
+> expression itself. With `v-get`, `v-post`, `v-put`, `v-patch` and `v-delete` it is asked once.
 
 ## Notifications
 
@@ -461,11 +461,15 @@ with Shift. The `voodoo:resized` event carries `{ width, height }`.
 ## Theme
 
 ```html
-<button v-theme-toggle>Toggle theme</button>
+<button v-theme-toggle>Toggle theme</button>          <!-- light and dark -->
+<button v-theme-toggle.cycle>Theme</button>            <!-- system, light, dark -->
+<button v-theme-toggle:system>Follow the system</button> <!-- picks one state -->
 ```
 
-The button receives `aria-pressed`, `aria-label`, and `data-v-theme` with the current theme. See
-[Theme and palette](tema-e-paleta.md).
+The button receives `aria-pressed` (not with `.cycle`), an `aria-label` that keeps up unless you
+wrote one, `data-voodoo-theme` with the theme on screen and `data-voodoo-theme-mode` with the
+choice. See [Theme and palette](tema-e-paleta.md), which also has the inline `<head>` snippet that
+prevents a flash of the wrong theme on load.
 
 ## Inactivity and connection
 

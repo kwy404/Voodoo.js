@@ -69,18 +69,19 @@ there for the module to hang on:
 > (`dist/socket.js`) are different runtimes: directives registered by the module don't appear in
 > the IIFE registry. On a page, you either use both in ESM (`dist/index.js` + `dist/socket.js`,
 > which share chunks), or you use `V.socket` from the IIFE without directives. The demo in
-> [`examples/chat-realtime/`](../site/examples/chat-tempo-real/) shows the ESM path working.
+> [`examples/chat-tempo-real/`](../site/examples/chat-tempo-real/) shows the ESM path working.
 
 ## Complete demo
 
-`examples/chat-realtime/` is a real chat — public room, private message, presence and reconnect —
-talking to `scripts/chat-server.mjs`, a WebSocket server with no dependencies (RFC 6455 is
+`examples/chat-tempo-real/` is a real chat (public room, private message, presence and reconnect)
+talking to `scripts/chat-servidor.mjs`, a WebSocket server with no dependencies (RFC 6455 is
 written by hand there):
 
 ```bash
 npm run build --workspace=voodoojs
-node scripts/chat-server.mjs
-# open http://localhost:5174/examples/chat-realtime/ in two tabs
+node scripts/chat-servidor.mjs   # WebSocket on port 5174, the address the demo connects to
+npm run serve                    # in another terminal: the site on port 5173
+# open http://localhost:5173/examples/chat-tempo-real/ in two tabs
 ```
 
 ---

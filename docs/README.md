@@ -42,7 +42,9 @@ This folder is the complete documentation. If you have never used the library, s
 
 ## Full build
 
-The resources below come only in `voodoo.full.min.js` or a custom build.
+The resources below come only in `voodoo.full.min.js` or a custom build. WebSocket and GPU are
+the exception: each has its own entry (`dist/socket.js` and `dist/gpu.js`) and comes in none of the
+browser bundles.
 
 | Guide | What you learn |
 | --- | --- |

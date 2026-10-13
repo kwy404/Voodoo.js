@@ -2,7 +2,7 @@
 
 A directive is a behaviour attached to an element by an attribute. This guide covers the
 attribute grammar and every directive in the core and essential builds. The full build adds
-more, documented in the Portuguese [directives reference](../directives.md).
+more, documented in the complete [directives reference](../directives.md).
 
 ---
 
@@ -18,11 +18,15 @@ more, documented in the Portuguese [directives reference](../directives.md).
 | `.value="text"`               | `bind`    | `value`  | `{ prop: true }`     |
 | `data-v-text="name"`          | `text`    | -        | `{}`                 |
 
-A modifier can carry a value with `=`:
+A modifier can carry a value with `=`, as in `.debounce=300`. That only survives when the
+attribute is created from JavaScript (`setAttribute`): in hand-written HTML, `=` ends the
+attribute name, so `<input v-model.debounce=300>` reaches the library as the attribute
+`v-model.debounce` with the value `300`. In HTML, use the plain modifier, plus the companion
+attribute where one exists:
 
 ```html
-<input v-model.debounce=300>
-<button @click.throttle=1s>Save</button>
+<input v-model.debounce="search" v-debounce="300">
+<button @click.throttle="save()">Save</button>
 ```
 
 The `v-` prefix comes from `V.config.prefix`. `data-v-` is always accepted regardless of the
@@ -41,8 +45,8 @@ When one element carries several directives, they run in descending priority ord
 | `DATA`       | 70    | `v-data`, `v-teleport`, `v-resource`              |
 | `COMPONENT`  | 65    | `v-component`                                     |
 | `REF`        | 60    | `v-ref`                                           |
+| `BIND`       | 45    | `v-bind`, option attributes                       |
 | `MODEL`      | 40    | `v-model`                                         |
-| `BIND`       | 30    | `v-bind`, option attributes                       |
 | `DEFAULT`    | 0     | everything else, including your own directives    |
 | `INIT`       | -10   | `v-init`                                          |
 | `TRANSITION` | -20   | inert marker attributes                           |
@@ -211,7 +215,8 @@ Classes written in the original `class` attribute are preserved across updates.
 <div :style="[base, override]"></div>
 ```
 
-Numeric values get `px` where appropriate. Custom properties work: `{ '--brand': color }`.
+Values are written as they are, with no unit added, so include it: `{ top: y + 'px' }`.
+Custom properties work: `{ '--brand': color }`.
 
 ---
 
@@ -271,7 +276,7 @@ Built on top of native events:
 | -------------- | ---------- |
 | `@hold`        | The pointer is held down. Duration via modifier: `@hold.1s`, default 800ms. |
 | `@outside`     | A click lands outside the element. |
-| `@visible`     | The element enters the viewport. Modifiers: `.threshold=0.5`, `.margin=100px`, `.repeat`. |
+| `@visible`     | The element enters the viewport. Modifiers: `.repeat`, and `.threshold=0.5`, `.margin=100px` from JavaScript only (see above). |
 | `@swipeleft` `@swiperight` `@swipeup` `@swipedown` | A pointer drag exceeds 40px in that direction. |
 
 `@visible` falls back to firing immediately when `IntersectionObserver` is missing.
@@ -289,7 +294,7 @@ Built on top of native events:
 | `.window`     | Listen on `window` |
 | `.document`   | Listen on `document` |
 | `.outside`    | Listen on `document`, ignore events inside the element |
-| `.debounce`   | Debounce. `.debounce=300` or `.debounce=1s`; default 250ms |
+| `.debounce`   | Debounce, default 250ms. `.debounce=300` or `.debounce=1s` only from JavaScript (see above) |
 | `.throttle`   | Throttle, same value syntax |
 
 ### Key modifiers
@@ -344,7 +349,7 @@ Modifiers:
 | `.lazy`      | Update on `change` instead of `input` |
 | `.number`    | Coerce to a number; automatic for `number` and `range` |
 | `.trim`      | Trim whitespace |
-| `.debounce`  | `.debounce=300`, default 250ms |
+| `.debounce`  | Default 250ms. Set the time with `v-debounce` |
 | `.single`    | File inputs: store one `File` rather than a `FileList` |
 
 `v-debounce` on the same element is also read as a fallback source for the debounce value.
@@ -507,8 +512,8 @@ Covered in [HTTP](http.md). Summary:
 
 with option attributes `v-target` `v-swap` `v-trigger` `v-poll` `v-params` `v-body`
 `v-headers` `v-cache` `v-retry` `v-timeout` `v-as` `v-json-path` `v-template`
-`v-offline-queue` `v-min-length` `v-scroll-to` `v-manual` `v-debounce` `v-throttle`
-`v-indicator`.
+`v-offline-queue` `v-min-length` `v-scroll-to` `v-manual` `v-debounce` `v-loading`
+`v-loading-class` `v-disable-loading`.
 
 ## Form directives
 
@@ -528,16 +533,24 @@ Covered in [State](state.md). Summary:
 
 ## UI directives
 
-Essential build. Documented in the Portuguese [interface guide](../interface.md).
+Essential build. Documented in the [interface guide](../interface.md).
 
 `v-modal` `v-modal-close` `v-drawer` `v-offcanvas` `v-tabs` `v-accordion` `v-collapse`
 `v-dropdown` `v-dropdown-menu` `v-popover` `v-tooltip` `v-command` `v-toggle` `v-copy`
 `v-share` `v-print` `v-download` `v-fullscreen` `v-focus` `v-focus-trap` `v-escape`
 `v-click-outside` `v-hotkey` `v-sticky` `v-scrollspy` `v-scroll-to` `v-infinite-scroll`
 `v-lazy-src` `v-lazy-bg` `v-skeleton` `v-visible` `v-idle` `v-online` `v-offline`
-`v-theme-toggle` `v-typewriter` `v-count` `v-parallax` `v-resizable`
+`v-theme-toggle` `v-resizable`
 
-and drag-and-drop: `v-draggable` `v-droppable` `v-sortable` `v-dnd-group` `v-flip`.
+and drag-and-drop: `v-draggable` `v-droppable` `v-sortable` `v-dnd-group`.
+
+`v-theme-toggle` switches between light and dark; `v-theme-toggle.cycle` walks system, light and
+dark; `v-theme-toggle:light`, `:dark` and `:system` pick one state. The button carries
+`data-voodoo-theme` and `data-voodoo-theme-mode` for styling. See
+[Theme and palette](../tema-e-paleta.md) for the inline `<head>` snippet that avoids a flash.
+
+`v-typewriter`, `v-count`, `v-parallax` and `v-flip` belong to the animation module, so they
+only exist in the full build.
 
 Across the whole full build, a static scan of the source finds 222 distinct attribute names
 registered, plus one `v-validate-<rule>` alias per registered validation rule.

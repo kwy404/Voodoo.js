@@ -7,37 +7,106 @@ Voodoo.js has two complementary systems: the **theme**, which alternates between
 
 # Light and dark theme
 
-The theme is applied to the root element with the `data-theme` attribute:
+Three states: `light`, `dark` and `system`, which follows the operating system, including when it
+changes while the page is open. An explicit choice is applied to the root element with the
+`data-theme` attribute:
 
 ```html
 <html data-theme="dark">
 ```
 
-When the user has never chosen, the attribute doesn't exist and the system preference is used, read via
-`prefers-color-scheme`.
+With `system`, or when the visitor has never chosen, the attribute doesn't exist and the system
+preference is used, read via `prefers-color-scheme`. A page nobody configured is never written to:
+including the script does not repaint your site.
 
 ## In HTML
 
 ```html
+<!-- Switches between light and dark, as it always has. -->
 <button v-theme-toggle>Toggle theme</button>
+
+<!-- Walks system, light, dark and back to system. -->
+<button v-theme-toggle.cycle>Theme</button>
+
+<!-- One button per state, pressed while it is the current choice. -->
+<button v-theme-toggle:system>System</button>
+<button v-theme-toggle:light>Light</button>
+<button v-theme-toggle:dark>Dark</button>
 ```
 
-The button receives `aria-pressed`, a descriptive `aria-label`, and `data-v-theme` with the current theme.
+The button receives:
+
+- `aria-pressed` (except with `.cycle`, which has three states rather than two);
+- a descriptive `aria-label`, kept up to date, unless you wrote one yourself;
+- `data-voodoo-theme`, the theme on screen (`light` or `dark`);
+- `data-voodoo-theme-mode`, the choice (`system`, `light` or `dark`), so CSS can pick an icon.
+
+```css
+.theme-icon { display: none; }
+[data-voodoo-theme-mode="system"] .theme-icon--system,
+[data-voodoo-theme-mode="light"] .theme-icon--light,
+[data-voodoo-theme-mode="dark"] .theme-icon--dark { display: inline; }
+```
+
+Before 1.0 the button wrote `data-v-theme`. That is the valid-HTML spelling of a `v-theme`
+directive, so attribute cleanup removed it as soon as the button mounted; use the two attributes
+above instead.
 
 ## Via JavaScript
 
 ```js
 V.theme.current;    // 'light', 'dark', or 'system'
 V.theme.resolved;   // 'light' or 'dark', resolving 'system'
+V.theme.chosen;     // true once the visitor picked one, 'system' included
 V.theme.set('dark');
 V.theme.set('system');
-V.theme.toggle();   // returns the applied theme
+V.theme.toggle();   // light and dark only; returns the applied theme
+V.theme.cycle();    // system, light, dark; returns the new choice
 V.theme.apply();    // reapplies the current theme
-V.theme.init();     // applies the saved one and starts tracking the system
+V.theme.init();     // applies the saved one and starts following the system and other tabs
 ```
 
-The choice is saved in `localStorage` under the key `voodoo:theme` and is applied automatically by
-browser builds before the first render, which prevents white flash.
+`set()` ignores anything other than the three names, with a warning. The choice is saved in
+`localStorage` under the key `voodoo:theme` as the plain string `light`, `dark` or `system`; the
+JSON spelling `"dark"` written by older builds is read too. A change made in another tab, or in a
+same-origin frame, reaches the page without a reload. `init()` runs on its own: the script-tag
+build calls it when it loads, and a page built from the ES modules gets it from `start()`,
+`v-theme-toggle` or `$theme`. Calling it more than once is safe.
+
+## No flash on load
+
+The library restores the choice as soon as it runs, but a script loaded with `defer` runs after
+the first paint, so a visitor who chose dark on a light system would see the page open light and
+then switch. Put this in the `<head>`, before any stylesheet. It reads the same key and writes
+exactly what `V.theme` writes, so the two never disagree:
+
+```html
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem('voodoo:theme');
+      if (t && t.charAt(0) === '"') t = JSON.parse(t);
+      var r = document.documentElement;
+      if (t === 'light' || t === 'dark') {
+        r.setAttribute('data-theme', t);
+        r.style.colorScheme = t;
+      } else if (t === 'system') {
+        r.removeAttribute('data-theme');
+      }
+    } catch (e) {}
+  })();
+</script>
+```
+
+A server-rendered page can emit the same block. Without JavaScript, or before the script arrives,
+the page follows the visitor's system as long as the CSS writes the dark theme for both cases:
+
+```css
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { /* dark tokens */ }
+}
+:root[data-theme="dark"] { /* dark tokens */ }
+```
 
 ## Reacting to changes
 
@@ -46,6 +115,8 @@ document.addEventListener('voodoo:theme', (e) => {
   console.log(e.detail.theme, e.detail.resolved);
 });
 ```
+
+The event fires for every change, including a system change on a page where nobody chose a theme.
 
 ```html
 <div v-show="$theme.resolved === 'dark'">You are in dark theme</div>

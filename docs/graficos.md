@@ -26,10 +26,9 @@ The value can be the full options object, or just the data:
 </div>
 ```
 
-> Always prefer the object form when data is reactive. The `v-chart-*` attributes are
-> read on mount and work well for static charts, but the type declared in them doesn't survive
-> the first data update. With `v-chart="{ type: 'bar', data: vendas }"` everything stays
-> correct with each redraw.
+> The `v-chart-*` attributes are read again on every redraw, so `v-chart="vendas"` with
+> `v-chart-type="bar"` keeps its type when the data changes. The object form,
+> `v-chart="{ type: 'bar', data: vendas }"`, is equivalent.
 
 The chart is reactive: changing a number in the array redraws it, because the effect walks the
 entire structure and subscribes to each value.
@@ -131,7 +130,7 @@ entire structure and subscribes to each value.
 
 ## v-chart-* attributes
 
-For static charts, adjustments fit in attributes:
+Adjustments also fit in attributes:
 
 ```html
 <div v-chart="[12, 19, 8, 25]" v-chart-type="bar" v-chart-height="200"></div>

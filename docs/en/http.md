@@ -67,12 +67,15 @@ V.http.setToken('abc123', 'Token');           // Authorization: Token abc123
 V.http.setToken(null);                        // removes it
 ```
 
-`V.config.baseURL` and the `data-base-url` script attribute both set the base URL at boot.
+The `data-base-url` script attribute sets both `V.config.baseURL` and the `V.http` base URL at
+boot. Assigning `V.config.baseURL` from JavaScript afterwards does not reach `V.http`: it is only
+read by the form directives (`v-submit` and friends). Use `V.http.setBaseURL()` for the client
+and the request directives.
 
 ### CSRF
 
 If the page has `<meta name="csrf-token" content="...">`, the token is sent automatically as
-`X-CSRF-TOKEN` on every request, including uploads. It is not sent if the caller already set
+`X-CSRF-TOKEN` on every request except `GET` and `HEAD`, including uploads. It is not sent if the caller already set
 that header. Both names are configurable through `V.http.defaults`.
 
 ---
@@ -87,7 +90,7 @@ try {
 } catch (err) {
   if (err instanceof V.HttpError) {
     err.status;    // HTTP status
-    err.data;      // parsed error body
+    err.response?.data;  // parsed error body
     err.message;
   }
 }
@@ -190,7 +193,7 @@ Cached entries are held in memory for the page lifetime. Nothing is persisted.
 
 ## Offline queue
 
-Failed mutating requests can be queued and replayed:
+Mutating requests made while the browser is offline can be queued and replayed:
 
 ```js
 await V.http.flushOfflineQueue();   // returns how many were sent
@@ -273,19 +276,18 @@ These configure the request directives on the same element, or on the enclosing 
 | `v-cache`          | Cache duration |
 | `v-retry`          | Retry count |
 | `v-timeout`        | Timeout |
-| `v-as`             | Response handling: `json`, `text`, `html` |
+| `v-as`             | Scope variable that receives the response instead of the DOM |
 | `v-json-path`      | Path into the JSON response |
 | `v-template`       | Template used to render the response |
-| `v-offline-queue`  | Queue the request when it fails |
+| `v-offline-queue`  | Queue the request when the browser is offline, and resend it later |
 | `v-min-length`     | Minimum input length before `v-search` fires |
 | `v-scroll-to`      | Scroll to a selector after the swap |
 | `v-manual`         | Do not fire automatically |
 | `v-debounce`       | Debounce the trigger |
-| `v-throttle`       | Throttle the trigger |
-| `v-indicator`      | Selector shown while the request is in flight |
+| `v-loading`        | Selector shown while the request is in flight |
 
-> `v-as="html"` inserts the server response as markup. That is trusted exactly as far as
-> your server is. See [Security](security.md).
+> An HTML response is inserted as markup and walked for directives. That is trusted exactly as
+> far as your server is. See [Security](security.md).
 
 ### Events
 
@@ -322,7 +324,7 @@ V.http.interceptors.error.use((error) => {
 ```
 
 Put this in a module and call it once at startup. See
-[application-structure](../application-structure.md) (Portuguese).
+[application-structure](../application-structure.md).
 
 ---
 

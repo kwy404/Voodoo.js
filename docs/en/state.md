@@ -68,13 +68,13 @@ The expression is evaluated once, in the parent scope, and the result is made re
 The expression grammar is a subset of JavaScript. Object literals support `key: value`,
 shorthand `{ count }`, computed keys `{ [expr]: value }` and spread `{ ...other }`.
 
-**Method shorthand and getters are syntax errors:**
+**Method shorthand and getters parse, but have no `this`:**
 
 ```html
-<!-- Syntax error: method shorthand is not in the grammar -->
+<!-- Fails when called: `this` is undefined inside the method -->
 <div v-data="{ n: 0, double() { return this.n * 2 } }">
 
-<!-- Syntax error: getters are not in the grammar -->
+<!-- Fails when read: `this` is undefined inside the getter -->
 <div v-data="{ items: [], get count() { return this.items.length } }">
 ```
 
@@ -193,11 +193,9 @@ From HTML:
 <p v-show="!$store.cart.items.length">Your cart is empty</p>
 ```
 
-> **Do not use getters in a store definition.** `V.store` copies the definition with an
-> object spread before making it reactive, and a spread **invokes** a getter and stores its
-> result. A `get total()` therefore becomes a static number frozen at definition time, not
-> a live derived value. Use a method, as above, or a `V.computed` outside the store. This
-> is a known limitation, not intended behaviour.
+> **Getters work.** `V.store` copies the definition by property descriptor, so
+> `get total() { ... }` stays a getter: it is recomputed on each read and tracks what it
+> reads. Getter values are not persisted; they recompute from the saved data.
 
 From JavaScript:
 
@@ -207,7 +205,7 @@ V.store('cart').items;        // same object
 ```
 
 Functions declared in the definition are bound to the store, so `this.items` works inside a
-method. Getters do not survive; see the warning above.
+method. Getters stay live; see the note above.
 
 ### API
 
@@ -386,4 +384,4 @@ are read-only unless the returned value exposes its own `set`.
 - [Reactivity](reactivity.md) - the primitives underneath
 - [Components](components.md)
 - [Directives](directives.md)
-- [application-structure](../application-structure.md) (Portuguese)
+- [application-structure](../application-structure.md)

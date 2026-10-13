@@ -188,7 +188,7 @@ removing a DOM node stops all effects on that node, with no leaks.
 ```js
 V.toRaw(state);           // returns the original object behind the proxy
 V.markRaw(googleMap);   // this object never becomes a proxy
-V.isReactive(state);      // true
+isReactive(state);        // true, named export: import { isReactive } from 'voodoojs'
 ```
 
 `markRaw` is the way to store instances of external libraries, DOM elements, or anything that

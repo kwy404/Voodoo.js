@@ -31,9 +31,9 @@ A small app: a to-do list with counter, saved in the browser.
   <script src="https://cdn.jsdelivr.net/npm/voodoojs@0.13.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
-  <main v-data="{ new: '', tasks: [] }" v-persist="tasks">
-    <form @submit.prevent="tasks.push({ id: Date.now(), text: new, done: false }); new = ''">
-      <input v-model="new" placeholder="What needs to be done?" required>
+  <main v-data="{ draft: '', tasks: [] }" v-persist="tasks">
+    <form @submit.prevent="tasks.push({ id: Date.now(), text: draft, done: false }); draft = ''">
+      <input v-model="draft" placeholder="What needs to be done?" required>
       <button>Add</button>
     </form>
 
@@ -183,7 +183,7 @@ import { registerStores } from './stores/index.js';
 import { installPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 
-V.config.baseURL = '/api';
+V.http.setBaseURL('/api');
 V.config.locale = 'en';
 
 installPlugins();

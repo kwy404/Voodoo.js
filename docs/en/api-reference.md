@@ -55,6 +55,7 @@ V.toast.success('Hi')  // service
 | `injectStyles` | `boolean` | `true` |
 | `cleanAttributes` | `boolean` | `true` |
 | `sanitizeUrls` | `boolean` | `true` |
+| `xrayShortcut` | `string \| false` | `'ctrl+shift+f2'` |
 
 ---
 
@@ -115,8 +116,8 @@ See [State](state.md).
 | `V.PRIORITY` | priority constants | internal | core |
 | `V.createApp` | `(options?) => App` | experimental | core |
 
-`V.directive` does not forward `terminal` to the underlying registration, so a third-party
-directive cannot take over a subtree the way `v-if` does.
+`V.directive` forwards `priority` and `terminal` to the underlying registration, so a
+third-party directive can take over a subtree the way `v-if` does.
 
 See [Components](components.md) and [Plugins](plugins.md).
 
@@ -204,7 +205,7 @@ See [HTTP](http.md).
 | `V.cookie` | `get` `set` `remove` `has` | stable | core |
 | `V.cache` | in-memory cache with expiry | stable | core |
 | `V.url` | `get` `all` `set` `remove` `merge` | stable | core |
-| `V.theme` | light/dark theme control, `init()` | stable | core |
+| `V.theme` | theme control: `light`, `dark` or `system`; `set()`, `toggle()`, `cycle()`, `chosen`, `init()` | stable | core |
 
 ---
 
@@ -293,7 +294,7 @@ Essential build and above.
 | `V.mask` | `(value, pattern) => string`, plus `.apply` `.unmask` `.register` `.currency` `.percent` `.presets` | stable |
 | `V.masks` | `Map<string, MaskPattern>` | internal |
 | `V.applyMask` | `(value, mask) => string` | stable |
-| `V.unmask` | `(value) => string` | stable |
+| `V.unmask` | `(value, pattern?) => string` | stable |
 | `V.registerMask` | `(name, patternOrFn) => void` | stable |
 
 See [Forms](forms.md).
@@ -314,7 +315,7 @@ Essential build and above.
 | `V.confirm` | `(message, options?) => Promise<boolean>` | stable |
 | `V.prompt` | `(message, options?) => Promise<string \| null>` | stable |
 | `V.dialog` | lower-level dialog API | experimental |
-| `V.palette` | command and colour palette | experimental |
+| `V.palette` | colour palette generator | experimental |
 | `V.hotkey` | `(combo, handler) => () => void` | stable |
 | `V.sound` | sound effects | experimental |
 
@@ -335,7 +336,7 @@ A `ToastHandle` exposes `close()` and `update(options)`.
 | `V.setLocale` `V.getLocale` | Locale control | experimental |
 | `V.renderChart` | `(el, options) => ChartInstance` | experimental |
 | `V.chart` | **alias of `V.renderChart`** | deprecated |
-| `V.charts` | Chart instance registry | internal |
+| `V.charts` | `{ render, format, colors }` | internal |
 | `V.chartColors` | Default palette | stable |
 | `V.animate` | `(target, keyframes, options?)` | experimental |
 | `V.spring` `V.stagger` `V.inView` `V.scrollProgress` | Motion helpers | experimental |
@@ -403,9 +404,11 @@ Available in every expression. Full list in [State](state.md).
 
 Exported from `voodoojs`:
 
-`Voodoo` `App` `AppOptions` `ComponentDefinition` `PropDefinition` `DirectiveHooks`
-`DirectiveBinding` `VoodooPlugin` `VoodooConfig` `Ref` `ComputedRef` `Scope`
-`HttpResponse` `RequestConfig` `HttpMethod`
+`Voodoo` `App` `AppOptions` `ComponentDefinition` `DirectiveHooks` `DirectiveBinding`
+`VoodooPlugin` `VoodooConfig` `Scope` `HttpResponse` `RequestConfig` `HttpMethod`
+`Resource` `ResourceOptions`
+
+`Ref` and `ComputedRef` come from `voodoojs/reactivity`.
 
 See [TypeScript](typescript.md).
 
@@ -423,4 +426,4 @@ alias per registered validation rule.
 
 - [CONVENTIONS.md](../../CONVENTIONS.md) - naming rules, tiers, and the known inconsistencies
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) - how the pieces fit
-- [docs/api.md](../api.md) - the complete Portuguese reference
+- [docs/api.md](../api.md) - the complete reference

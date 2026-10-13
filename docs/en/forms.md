@@ -105,7 +105,7 @@ Beyond the directive shorthands above, the rule registry also knows `decimal`, `
 `alphanumeric`, `between`, `after`, `before`, `same`, `different`, `in`, `notin`,
 `creditcard` and `unique`. Each has a default message keyed by the same name.
 
-Default messages ship in Brazilian Portuguese. Override them:
+Default messages ship in English. Override them:
 
 ```js
 Object.assign(V.messages, {
@@ -261,18 +261,19 @@ Programmatically, see `V.http.upload` in [HTTP](http.md).
 Saves the form as the user types, debounced.
 
 ```html
-<form v-autosave="/api/draft" v-debounce="1s">
+<form v-autosave="/api/draft" v-autosave-delay="1s">
   <textarea name="body"></textarea>
 </form>
 ```
 
 ### `v-loading`
 
-Marks an element as the loading indicator for the request on its form.
+Points at the element shown only while the form's request is in flight. The target starts
+hidden.
 
 ```html
-<form v-submit="/api/users">
-  <span v-loading>Saving...</span>
+<form v-submit="/api/users" v-loading="#saving">
+  <span id="saving">Saving...</span>
 </form>
 ```
 

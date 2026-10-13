@@ -86,26 +86,30 @@ list.map(n => n * 2).join('-')
 list.reduce((total, n) => total + n, 0)
 ```
 
-**Arrow functions**
+**Functions**
 
-Only expression form, with single body:
+Arrow functions, with expression or block body, and `function` expressions. A block body accepts
+`if`, `else` and `return`, and parameters accept defaults and destructuring:
 
 ```js
 n => n * 2
 (a, b) => a + b
+({ name, age = 0 }) => name + ' ' + age
+n => { if (n > 10) { return 'big' } return 'small' }
+function (n) { return n + 1 }
 ```
 
-They see the outer scope, as you'd expect.
+They see the outer scope, as you'd expect. `new` and `delete` also work: `new Date(0)`,
+`delete user.name`.
 
 ## What is not accepted
 
 By design decision, not for lack of time:
 
-- `function`, `class`, `new`, `delete`;
+- `class`;
 - `import`, `await`, `async`;
 - `for`, `while`, `do`, `try`, `switch`;
-- destructuring in parameters and assignments;
-- arrow function body in block form (`n => { ... }`).
+- destructuring in assignments (`[a, b] = list`).
 
 The idea is simple: attribute expressions should be short. Larger logic lives in a component
 method, in a function in the scope, or in a `<script>` block.
@@ -161,7 +165,11 @@ Identifiers not in any scope are looked up in a closed list:
 ```
 Math  JSON  Date  Number  String  Boolean  Array  Object  Intl  RegExp  Promise
 parseInt  parseFloat  isNaN  isFinite  encodeURIComponent  decodeURIComponent  console
+setTimeout  setInterval  clearTimeout  clearInterval  requestAnimationFrame  cancelAnimationFrame
 ```
+
+The browser builds also add `V` and `Voodoo`. `setTimeout` and `setInterval` only accept a
+function, never a string of code.
 
 Everything outside that list returns `undefined`:
 

@@ -34,7 +34,7 @@ On the same element the order is fixed and doesn't depend on how you wrote the a
 1. `v-ignore` and `v-pre` cancel everything in that subtree;
 2. terminal directives (`v-for`, `v-if`, `v-else-if`, `v-else`) take control;
 3. `v-data` and `v-component` create the scope used by the rest;
-4. the rest run by decreasing priority: `v-ref`, `v-mask`, `v-model`, `v-bind`, the rest,
+4. the rest run by decreasing priority: `v-ref`, `v-bind` and `v-mask`, `v-model`, the rest,
    `v-init`, and finally transition classes;
 5. children are traversed with the resulting scope.
 
@@ -340,8 +340,12 @@ Stores the element in `$refs`.
 Runs the expression whenever any dependency read by it changes.
 
 ```html
-<div v-effect="document.title = 'Cart (' + items.length + ')'"></div>
+<div v-effect="total = items.reduce((sum, item) => sum + item.price, 0)"></div>
 ```
+
+`document` and `window` are not reachable from expressions (see
+[Expressions](expressoes.md#allowed-globals)), so an effect that touches the page title belongs in a
+method or in `V.effect()`.
 
 ## v-watch
 

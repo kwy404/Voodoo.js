@@ -64,7 +64,7 @@ This changes what's possible. It's worth reading the limitations section before 
 | `this.$parent` | igual |
 | `this.$nextTick()` | igual |
 | `this.$watch(fonte, cb)` | `this.$watch('expressao', cb)` |
-| `provide` e `inject` | não existem. Use um store |
+| `provide` e `inject` | same, as `provide` and `inject` options |
 | `<slot>`, `<slot name="x">` | iguais |
 | `mounted`, `updated`, `beforeUnmount`, `unmounted` | iguais |
 | `created`, `beforeCreate` | apenas `beforeMount` |
@@ -183,19 +183,18 @@ As classes seguem o mesmo padrão: `v-fade-enter-from`, `v-fade-enter-active`, `
 Voodoo.js interprets the page's HTML. Without compilation, some Vue things can't exist:
 
 - **single-file components** (`.vue`), which depend on a compiler;
-- **JSX and render functions**;
+- **render functions** (JSX written inside the HTML does exist, in the full build);
 - **`setup()` and Composition API** inside components;
 - **`<script setup>`**;
 - **server-side rendering with hydration**;
 - **scoped slots**, which pass data from child to parent content;
-- **`provide` and `inject`**, replaced by stores;
 - **`<KeepAlive>` and `<Suspense>`**;
 - **`v-memo`** and compiler optimizations in general;
 - **automatic ref unwrapping in templates**;
 - **type checking in templates**.
 
-Expressions also accept a subset of JavaScript: no `function`, `class`, `new`,
-`delete`, `await`, loops and destructuring. See [Expressions](expressoes.md).
+Expressions also accept a subset of JavaScript: no `class`, `await`, loops and destructuring
+assignment. See [Expressions](expressoes.md).
 
 ## What you gain
 

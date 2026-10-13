@@ -330,4 +330,4 @@ If you cannot configure the server, use `mode: 'hash'`.
 
 - [Components](components.md)
 - [HTTP](http.md)
-- [application-structure](../application-structure.md) (Portuguese) - organizing pages and routes
+- [application-structure](../application-structure.md) - organizing pages and routes
