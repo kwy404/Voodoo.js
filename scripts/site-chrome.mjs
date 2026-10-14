@@ -31,6 +31,11 @@ export const PROJECTS = [
   { name: 'graphemely', url: 'https://kwy404.github.io/graphemely/', repo: 'graphemely', blurb: 'Emoji safe string functions' },
   { name: 'numberparrot', url: 'https://kwy404.github.io/numberparrot/', repo: 'numberparrot', blurb: 'Parse localized numbers and currency' },
   { name: 'edgegoat', url: 'https://kwy404.github.io/edgegoat/', repo: 'edgegoat', blurb: 'Edge case test inputs' },
+  { name: 'cookieowl', url: 'https://kwy404.github.io/cookieowl/', repo: 'cookieowl', blurb: 'Cookie consent banner for LGPD and GDPR' },
+  { name: 'installkite', url: 'https://kwy404.github.io/installkite/', repo: 'installkite', blurb: 'Make any website installable and offline capable' },
+  { name: 'a11ymedic', url: 'https://kwy404.github.io/a11ymedic/', repo: 'a11ymedic', blurb: 'Accessibility checker that gives the exact fix' },
+  { name: 'fontsketch', url: 'https://kwy404.github.io/fontsketch/', repo: 'fontsketch', blurb: 'Turn your handwriting into a font' },
+  { name: 'kastor', url: 'https://kwy404.github.io/kastor/', repo: 'kastor', blurb: 'The TypeScript ORM for almost every database' },
 ];
 
 export const GITHUB = 'https://github.com/kwy404/Voodoo.js';

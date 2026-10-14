@@ -184,7 +184,12 @@
     ['vueleap', 'vueleap', 'Migrate Vue 2 to Vue 3 with one command'],
     ['graphemely', 'graphemely', 'Emoji safe string functions'],
     ['numberparrot', 'numberparrot', 'Parse localized numbers and currency'],
-    ['edgegoat', 'edgegoat', 'Edge case test inputs']
+    ['edgegoat', 'edgegoat', 'Edge case test inputs'],
+    ['cookieowl', 'cookieowl', 'Cookie consent banner for LGPD and GDPR'],
+    ['installkite', 'installkite', 'Make any website installable and offline capable'],
+    ['a11ymedic', 'a11ymedic', 'Accessibility checker that gives the exact fix'],
+    ['fontsketch', 'fontsketch', 'Turn your handwriting into a font'],
+    ['kastor', 'kastor', 'The TypeScript ORM for almost every database']
   ];
 
   var MASCOTE = SITE + 'assets/brand/vudu/';
