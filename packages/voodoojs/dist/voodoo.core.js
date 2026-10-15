@@ -1288,6 +1288,15 @@ ${pointer}`);
     "**": 12
   };
   var ASSIGN_OPS = /* @__PURE__ */ new Set(["=", "+=", "-=", "*=", "/=", "%=", "**=", "&&=", "||=", "??="]);
+  function isAssignable(node) {
+    if (node.t === "id") return true;
+    if (node.t !== "member") return false;
+    for (let link = node; link.t === "member" || link.t === "call"; ) {
+      if (link.opt) return false;
+      link = link.t === "member" ? link.o : link.callee;
+    }
+    return true;
+  }
   var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "~", "typeof", "void", "delete"]);
   var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null), {
     true: true,
@@ -1439,7 +1448,7 @@ ${pointer}`);
       const left = this.parseConditional();
       const t = this.peek();
       if (t.type === "punct" && ASSIGN_OPS.has(t.value)) {
-        if (left.t !== "id" && left.t !== "member") {
+        if (!isAssignable(left)) {
           throw new VoodooSyntaxError("Invalid assignment target", this.source, t.start);
         }
         this.next();
@@ -1618,11 +1627,25 @@ ${pointer}`);
       if (t.type === "punct" && (t.value === "++" || t.value === "--")) {
         this.next();
         const arg = this.parseUnary();
+        if (!isAssignable(arg)) {
+          throw new VoodooSyntaxError(
+            "Invalid left-hand side expression in prefix operation",
+            this.source,
+            t.start
+          );
+        }
         return { t: "update", op: t.value, a: arg, prefix: true };
       }
       let expr = this.parseCallMember();
       const post = this.peek();
       if (post.type === "punct" && (post.value === "++" || post.value === "--")) {
+        if (!isAssignable(expr)) {
+          throw new VoodooSyntaxError(
+            "Invalid left-hand side expression in postfix operation",
+            this.source,
+            post.start
+          );
+        }
         this.next();
         expr = { t: "update", op: post.value, a: expr, prefix: false };
       }

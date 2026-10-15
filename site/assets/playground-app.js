@@ -21,7 +21,7 @@
    * server. There is nothing left to keep in sync.
    */
   var SCRIPT_URL = document.currentScript.src;
-  var RUNTIME = new URL('../voodoo.full.min.js?v=c917278b', SCRIPT_URL).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=97d27e22', SCRIPT_URL).href;
   var VUDU_ERROR = new URL('brand/vudu/vudu-error.svg', SCRIPT_URL).href;
   var VUDU_THINKING = new URL('brand/vudu/vudu-thinking.svg', SCRIPT_URL).href;
 

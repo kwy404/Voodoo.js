@@ -1288,6 +1288,15 @@ ${pointer}`);
     "**": 12
   };
   var ASSIGN_OPS = /* @__PURE__ */ new Set(["=", "+=", "-=", "*=", "/=", "%=", "**=", "&&=", "||=", "??="]);
+  function isAssignable(node) {
+    if (node.t === "id") return true;
+    if (node.t !== "member") return false;
+    for (let link = node; link.t === "member" || link.t === "call"; ) {
+      if (link.opt) return false;
+      link = link.t === "member" ? link.o : link.callee;
+    }
+    return true;
+  }
   var UNARY_OPS = /* @__PURE__ */ new Set(["!", "-", "+", "~", "typeof", "void", "delete"]);
   var LITERALS = /* @__PURE__ */ Object.assign(/* @__PURE__ */ Object.create(null), {
     true: true,
@@ -1439,7 +1448,7 @@ ${pointer}`);
       const left = this.parseConditional();
       const t2 = this.peek();
       if (t2.type === "punct" && ASSIGN_OPS.has(t2.value)) {
-        if (left.t !== "id" && left.t !== "member") {
+        if (!isAssignable(left)) {
           throw new VoodooSyntaxError("Invalid assignment target", this.source, t2.start);
         }
         this.next();
@@ -1618,11 +1627,25 @@ ${pointer}`);
       if (t2.type === "punct" && (t2.value === "++" || t2.value === "--")) {
         this.next();
         const arg = this.parseUnary();
+        if (!isAssignable(arg)) {
+          throw new VoodooSyntaxError(
+            "Invalid left-hand side expression in prefix operation",
+            this.source,
+            t2.start
+          );
+        }
         return { t: "update", op: t2.value, a: arg, prefix: true };
       }
       let expr = this.parseCallMember();
       const post = this.peek();
       if (post.type === "punct" && (post.value === "++" || post.value === "--")) {
+        if (!isAssignable(expr)) {
+          throw new VoodooSyntaxError(
+            "Invalid left-hand side expression in postfix operation",
+            this.source,
+            post.start
+          );
+        }
         this.next();
         expr = { t: "update", op: post.value, a: expr, prefix: false };
       }
@@ -12952,12 +12975,14 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
       });
       if (!options.silent) {
         showFieldError(el, message);
+        erroredFields.add(el);
         emitFieldResult(el, { valid: false, message, rule: rule.name });
       }
       return { valid: false, message, rule: rule.name };
     }
     if (!options.silent) {
       clearFieldError(el, !empty);
+      erroredFields.delete(el);
       emitFieldResult(el, { valid: true });
     }
     return { valid: true };
@@ -13133,9 +13158,7 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
   var boundFields = /* @__PURE__ */ new WeakSet();
   var erroredFields = /* @__PURE__ */ new WeakSet();
   async function runFieldValidation(el) {
-    const result = await validateField(el);
-    if (result.valid) erroredFields.delete(el);
-    else erroredFields.add(el);
+    await validateField(el);
   }
   function bindFieldValidation(el, cleanup) {
     if (!isFormField(el)) {
@@ -13186,12 +13209,59 @@ Suggestion: attribute expressions accept a single value. If the logic spans more
     form.addEventListener("focusout", onFocusOut);
     form.addEventListener("input", onInput);
     form.addEventListener("change", onFocusOut);
+    const guarded = form.tagName === "FORM" && !hasDirectiveAttr(form, "submit");
+    if (guarded) form.addEventListener("submit", onSubmitGuard, true);
     cleanup(() => {
       validatedForms.delete(form);
       form.removeEventListener("focusout", onFocusOut);
       form.removeEventListener("input", onInput);
       form.removeEventListener("change", onFocusOut);
+      if (guarded) form.removeEventListener("submit", onSubmitGuard, true);
     });
+  }
+  var approvedSubmits = /* @__PURE__ */ new WeakSet();
+  function onSubmitGuard(event) {
+    var _a2;
+    const form = event.currentTarget;
+    if (approvedSubmits.has(form)) {
+      approvedSubmits.delete(form);
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const submitter = (_a2 = event.submitter) != null ? _a2 : null;
+    void validateForm(form).then((result) => {
+      if (!form.isConnected) return;
+      if (!result.valid) {
+        focusFirstError(form);
+        form.dispatchEvent(
+          new CustomEvent("voodoo:invalid", { bubbles: true, detail: { errors: result.errors, form } })
+        );
+        return;
+      }
+      setTimeout(() => {
+        if (!form.isConnected) return;
+        approvedSubmits.add(form);
+        try {
+          resubmit(form, submitter);
+        } finally {
+          approvedSubmits.delete(form);
+        }
+      }, 0);
+    });
+  }
+  function resubmit(form, submitter) {
+    if (typeof form.requestSubmit === "function") {
+      try {
+        form.requestSubmit(submitter && submitter.isConnected ? submitter : void 0);
+        return;
+      } catch (e) {
+      }
+      form.requestSubmit();
+      return;
+    }
+    const again = new Event("submit", { bubbles: true, cancelable: true });
+    if (form.dispatchEvent(again)) form.submit();
   }
   defineDirective("validate", ({ el, cleanup }) => {
     if (el.tagName === "FORM" || el.hasAttribute(`${config.prefix}submit`)) {

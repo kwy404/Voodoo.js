@@ -1,10 +1,10 @@
+import { injectStyle, ensureTokens } from './chunk-Z7IHVPPQ.js';
 import { http, HttpError, request } from './chunk-LKL4O7ZD.js';
-import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, url, closestDirective, watchTheme, magic, storage, readAttr, hasAttr, componentAliases, Scope, session, cookie, cache, theme, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-5KUKRKGS.js';
+import { stringify, markInitialized, markSkipChildren, destroy, walk, removeQuietly, evaluateIn, addCleanup, markNodeScope, setComponentMounter, url, closestDirective, watchTheme, magic, storage, readAttr, hasAttr, componentAliases, Scope, session, cookie, cache, theme, hook, queryDirective, parse, evaluate, parseAttribute, originalAttributes, hasDirective, currentHookHost, findScope, VoodooRuntimeError, VoodooSyntaxError, allowedGlobals, clearParseCache, tokenize, getScope, stopObserving, refresh, start, magics, rootScope, isInitialized, restoreAttributes, hasDirectives } from './chunk-USL65OFD.js';
 import { ref, reactive, handleError, toRaw, track, ITERATE_KEY, arrayVersion, nextTick, queuePostFlush, warn, watch, mutationsSince, EffectScope, computed, effect, markRaw, stop, flushSync, effectScope, unref, watchEffect, shallowRef, setErrorHandler } from './chunk-HFGBXDJZ.js';
 import { warn as warn$1, describeElement, warnUnknownComponent, warnAlias, warnRequiredProp, warnDuplicateKey } from './chunk-IHL3M2A2.js';
-import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-22SCIQQX.js';
-import { injectStyle, ensureTokens } from './chunk-Z7IHVPPQ.js';
 import { defineDirective, config, PRIORITY, directives, normalizeComponentName, components, usePlugin } from './chunk-WM5AQ4SD.js';
+import { parseDuration, debounce, utils_exports, throttle, uid, device, escapeHtml } from './chunk-22SCIQQX.js';
 import { __publicField } from './chunk-I7ECQM6Y.js';
 
 /**
@@ -7377,12 +7377,14 @@ async function validateField(el, options = {}) {
     });
     if (!options.silent) {
       showFieldError(el, message);
+      erroredFields.add(el);
       emitFieldResult(el, { valid: false, message, rule: rule.name });
     }
     return { valid: false, message, rule: rule.name };
   }
   if (!options.silent) {
     clearFieldError(el, !empty);
+    erroredFields.delete(el);
     emitFieldResult(el, { valid: true });
   }
   return { valid: true };
@@ -7556,9 +7558,7 @@ function serializeForm(form, options = {}) {
 var boundFields = /* @__PURE__ */ new WeakSet();
 var erroredFields = /* @__PURE__ */ new WeakSet();
 async function runFieldValidation(el) {
-  const result = await validateField(el);
-  if (result.valid) erroredFields.delete(el);
-  else erroredFields.add(el);
+  await validateField(el);
 }
 function bindFieldValidation(el, cleanup) {
   if (!isFormField(el)) {
@@ -7609,12 +7609,58 @@ function setupFormValidation(form, cleanup) {
   form.addEventListener("focusout", onFocusOut);
   form.addEventListener("input", onInput);
   form.addEventListener("change", onFocusOut);
+  const guarded = form.tagName === "FORM" && !hasDirectiveAttr(form, "submit");
+  if (guarded) form.addEventListener("submit", onSubmitGuard, true);
   cleanup(() => {
     validatedForms.delete(form);
     form.removeEventListener("focusout", onFocusOut);
     form.removeEventListener("input", onInput);
     form.removeEventListener("change", onFocusOut);
+    if (guarded) form.removeEventListener("submit", onSubmitGuard, true);
   });
+}
+var approvedSubmits = /* @__PURE__ */ new WeakSet();
+function onSubmitGuard(event) {
+  const form = event.currentTarget;
+  if (approvedSubmits.has(form)) {
+    approvedSubmits.delete(form);
+    return;
+  }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const submitter = event.submitter ?? null;
+  void validateForm(form).then((result) => {
+    if (!form.isConnected) return;
+    if (!result.valid) {
+      focusFirstError(form);
+      form.dispatchEvent(
+        new CustomEvent("voodoo:invalid", { bubbles: true, detail: { errors: result.errors, form } })
+      );
+      return;
+    }
+    setTimeout(() => {
+      if (!form.isConnected) return;
+      approvedSubmits.add(form);
+      try {
+        resubmit(form, submitter);
+      } finally {
+        approvedSubmits.delete(form);
+      }
+    }, 0);
+  });
+}
+function resubmit(form, submitter) {
+  if (typeof form.requestSubmit === "function") {
+    try {
+      form.requestSubmit(submitter && submitter.isConnected ? submitter : void 0);
+      return;
+    } catch {
+    }
+    form.requestSubmit();
+    return;
+  }
+  const again = new Event("submit", { bubbles: true, cancelable: true });
+  if (form.dispatchEvent(again)) form.submit();
 }
 defineDirective("validate", ({ el, cleanup }) => {
   if (el.tagName === "FORM" || el.hasAttribute(`${config.prefix}submit`)) {
@@ -10516,5 +10562,5 @@ defineDirective(
 );
 
 export { VoodooCollection, alert, allStores, applyMask, clearErrors, clipboard, confirm, core, createApp, createResource, defineComponent, dialog, efeitos, ensurePalette, enter, fadeIn, fadeOut, fromHtml, hotkey, installHooks, instances, leave, mask, masks, messages, modal, mountComponent, network, palette, prompt, query, ready, ready2, registerMask, removeStore, screen, serializeForm, setAppHost, showFieldError, showFormErrors, slideDown, slideUp, sound, store, storeNames, toast, unmask, useContext, useEffect, useMemo, useRef, useState, validate, validator, viewTransition, whenElement, whenReady };
-//# sourceMappingURL=chunk-RE54OOJN.js.map
-//# sourceMappingURL=chunk-RE54OOJN.js.map
+//# sourceMappingURL=chunk-JVHUSDSR.js.map
+//# sourceMappingURL=chunk-JVHUSDSR.js.map
