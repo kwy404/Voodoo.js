@@ -21,7 +21,7 @@
    * server. There is nothing left to keep in sync.
    */
   var SCRIPT_URL = document.currentScript.src;
-  var RUNTIME = new URL('../voodoo.full.min.js?v=c4c59afc', SCRIPT_URL).href;
+  var RUNTIME = new URL('../voodoo.full.min.js?v=c917278b', SCRIPT_URL).href;
   var VUDU_ERROR = new URL('brand/vudu/vudu-error.svg', SCRIPT_URL).href;
   var VUDU_THINKING = new URL('brand/vudu/vudu-thinking.svg', SCRIPT_URL).href;
 
@@ -48,6 +48,7 @@
    */
   var examples = (function () {
     var sources = [
+      window.VOODOO_PLAYGROUND_STARTERS,
       window.VOODOO_PLAYGROUND_EXAMPLES,
       window.VOODOO_PLAYGROUND_EXAMPLES_JSX,
       window.VOODOO_PLAYGROUND_EXAMPLES_SHOWCASE,
@@ -85,12 +86,25 @@
   var splitter = document.getElementById('splitter');
   var bench = splitter && splitter.parentNode;
   var shareLabel = document.getElementById('share-label');
+  var starters = document.querySelector('.pg-starters');
+
+  /** Lights the starter button for the open example, if it is one. */
+  function markStarter(id) {
+    if (!starters) return;
+    var all = starters.querySelectorAll('button[data-start]');
+    for (var i = 0; i < all.length; i++) {
+      all[i].setAttribute('aria-pressed', all[i].getAttribute('data-start') === id ? 'true' : 'false');
+    }
+  }
 
   var current = null;
   var timer = null;
 
   var GROUP_LABEL = {
-    // First on purpose. It is the thing this library has that the others do
+    // The five starters: a counter, a todo list, a form, a request and a
+    // blank page. Opened first, so the first thing on screen is short.
+    start: 'Start here',
+    // Next on purpose. It is the thing this library has that the others do
     // not, so it is the first thing somebody opening the playground sees.
     jsx: 'JSX in plain HTML',
     hooks: 'Hooks',
@@ -598,6 +612,13 @@
     );
   }
 
+  /** What the preview shows for an empty file, instead of a blank frame. */
+  var EMPTY =
+    '<div class="pg-empty-frame" style="display:grid;place-items:center;min-height:90vh;padding:24px;' +
+    'text-align:center;color:var(--muted-foreground);font:15px/1.5 var(--font-sans)">' +
+    '<div><img src="' + VUDU_THINKING + '" alt="" width="88" height="88" style="margin:0 auto 8px">' +
+    '<p style="margin:0">The file is empty. Write some HTML on the left, or pick a starter above.</p></div></div>';
+
   var BOOT =
     'if(window.V&&V.start){try{V.start()}catch(e){__pgError(e&&e.message?e.message:e)}}' +
     'else{__pgError("The Voodoo.js bundle did not load.")}';
@@ -637,7 +658,7 @@
       OPEN + ' src="' + RUNTIME + '" data-manual>' + CLOSE +
       OPEN + ' src="' + MONSOON_JS + '">' + CLOSE +
       '</head><body>' +
-      code.value +
+      (code.value.trim() ? code.value : EMPTY) +
       OPEN + '>' + BOOT + CLOSE +
       '</body></html>';
   }
@@ -669,6 +690,49 @@
     filetab.classList.toggle('is-dirty', dirty);
   }
 
+  /**
+   * Edits survive a reload. Each example keeps the last code typed into it,
+   * so closing the tab by accident costs nothing, and Reset is how to go back
+   * to the original. Only the most recent few are kept.
+   */
+  var DRAFTS_KEY = 'voodoo.playground.drafts';
+  var DRAFTS_MAX = 20;
+
+  function readDrafts() {
+    try {
+      var all = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}');
+      return all && typeof all === 'object' ? all : {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function writeDraft(id, text) {
+    var all = readDrafts();
+    delete all[id];
+    if (text !== null) all[id] = text;
+    var ids = Object.keys(all);
+    // Insertion order is age order: drop the oldest beyond the limit.
+    while (ids.length > DRAFTS_MAX) delete all[ids.shift()];
+    try {
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(all));
+    } catch (err) {
+      /* private mode, or storage full: edits just do not persist */
+    }
+  }
+
+  var draftTimer = null;
+
+  function saveDraft() {
+    if (!current) return;
+    var ex = current;
+    var text = code.value;
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(function () {
+      writeDraft(ex.id, text === ex.code.join('\n') ? null : text);
+    }, 300);
+  }
+
   function showMeta(title, group, desc, id) {
     descEl.textContent = desc;
     descEl.title = desc;
@@ -677,14 +741,15 @@
     breadcrumb.textContent = group;
   }
 
-  function load(ex, keepHash) {
+  function load(ex, keepHash, fresh) {
     current = ex;
-    code.value = ex.code.join('\n');
+    var draft = fresh ? null : readDrafts()[ex.id];
+    code.value = typeof draft === 'string' ? draft : ex.code.join('\n');
     code.scrollTop = 0;
     code.scrollLeft = 0;
     code.setSelectionRange(0, 0);
     showMeta(ex.title, GROUP_LABEL[ex.group] || ex.group, ex.desc, ex.id);
-    markDirty(false);
+    markDirty(typeof draft === 'string');
     repaint();
     drawGutter();
     run();
@@ -699,6 +764,7 @@
       }
     }
     if (!keepHash) history.replaceState(null, '', '#' + ex.id);
+    markStarter(ex.id);
   }
 
   /** Keeps the open example visible in the explorer without moving the page. */
@@ -784,7 +850,10 @@
   }
 
   function reset() {
-    if (current) load(current);
+    if (!current) return;
+    clearTimeout(draftTimer);
+    writeDraft(current.id, null);
+    load(current, false, true);
   }
 
   // ------------------------------------------------------------------ wiring
@@ -808,6 +877,7 @@
 
   code.addEventListener('input', function () {
     markDirty(true);
+    saveDraft();
     repaint();
     drawGutter();
     scheduleRun();
@@ -849,6 +919,18 @@
   code.addEventListener('scroll', syncScroll);
 
   document.getElementById('btn-run').addEventListener('click', run);
+
+  // The starter buttons in the toolbar: one click to a working example.
+  if (starters) {
+    starters.addEventListener('click', function (event) {
+      var btn = event.target.closest('button[data-start]');
+      if (!btn) return;
+      var ex = byId(btn.getAttribute('data-start'));
+      if (!ex) return;
+      load(ex);
+      if (isNarrow()) setView('code');
+    });
+  }
   document.getElementById('btn-reset').addEventListener('click', reset);
   document.getElementById('btn-share').addEventListener('click', share);
 

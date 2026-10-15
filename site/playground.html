@@ -8,7 +8,7 @@
     <title>Playground: Voodoo.js</title>
     <meta
       name="description"
-      content="Write Voodoo.js in the browser and watch it run. A hundred and twenty examples, an editor and a live preview, with no build step anywhere in the loop."
+      content="Write Voodoo.js in the browser and see the result as you type. Start from a counter, a todo list, a form or a request."
     />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/playground.html" />
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css">
     <link rel="stylesheet" href="assets/site.css?v=daa5adda">
-    <link rel="stylesheet" href="assets/playground.css?v=89f84da0">
+    <link rel="stylesheet" href="assets/playground.css?v=a4d9d643">
   </head>
 
   <body>
@@ -73,6 +73,15 @@
           <span class="pg-crumb" id="toolbar-title"></span>
         </div>
 
+        <div class="pg-starters" role="group" aria-label="Start from a ready example">
+          <span class="pg-starters-label">Start from</span>
+          <button type="button" data-start="start-counter" aria-pressed="false">Counter</button>
+          <button type="button" data-start="start-todo" aria-pressed="false">Todo list</button>
+          <button type="button" data-start="start-form" aria-pressed="false">Form</button>
+          <button type="button" data-start="start-fetch" aria-pressed="false">Fetch</button>
+          <button type="button" data-start="start-blank" aria-pressed="false">Blank</button>
+        </div>
+
         <div class="segmented segmented-sm pg-views" role="radiogroup" aria-label="Show">
           <label class="segmented-item"><input type="radio" name="pg-view" value="files"> Files</label>
           <label class="segmented-item"><input type="radio" name="pg-view" value="code" checked> Code</label>
@@ -114,6 +123,9 @@
             <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-reset"></use></svg>
           </button>
           <span class="pg-spacer"></span>
+          <a href="learn.html" title="Learn Voodoo in 10 minutes" aria-label="Learn Voodoo in 10 minutes">
+            <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-wand"></use></svg>
+          </a>
           <a href="docs/" title="Documentation" aria-label="Documentation">
             <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-book"></use></svg>
           </a>
@@ -293,10 +305,11 @@
       independently and each is already long; the app joins whichever are
       present, so any one of them can be dropped without the page noticing.
     -->
+    <script src="assets/playground-starters.js?v=60f8e674"></script>
     <script src="assets/playground-examples.js?v=1738ad87"></script>
     <script src="assets/playground-examples-jsx.js?v=dc8ec301"></script>
     <script src="assets/playground-examples-showcase.js?v=172e9dc2"></script>
-    <script src="assets/playground-app.js?v=9c9e5a74"></script>
+    <script src="assets/playground-app.js?v=646e1780"></script>
     <script src="voodoo.full.min.js" defer></script>
   </body>
 </html>

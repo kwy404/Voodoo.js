@@ -192,6 +192,59 @@
   font: 500 0.6875rem/1.25rem var(--font-sans);
 }
 
+/* The starters: one click to a counter, a todo list, a form, a request or a
+   blank page. Shown while the toolbar has room for them. */
+.pg-starters {
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  margin-left: 0.5rem;
+  padding: 0.1875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-full);
+  background: var(--surface);
+}
+
+@media (min-width: 1180px) {
+  .pg-starters {
+    display: inline-flex;
+  }
+}
+
+.pg-starters-label {
+  padding: 0 0.5rem 0 0.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.pg-starters button {
+  height: 1.75rem;
+  padding: 0 0.75rem;
+  border-radius: var(--m-radius-full);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--m-duration-fast), color var(--m-duration-fast), transform var(--m-duration-fast);
+}
+
+.pg-starters button:hover {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.pg-starters button:active {
+  transform: scale(0.96);
+}
+
+.pg-starters button[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
 /* The phone view switch. Hidden while all three panes fit side by side. */
 .pg-views {
   display: none;
@@ -996,6 +1049,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .pg-starters button,
   .pg-chev::before,
   .pg-splitter::after,
   #frame {
