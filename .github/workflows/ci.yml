@@ -116,3 +116,8 @@ jobs:
       # tested and published. Every test passed the entire time.
       - name: Check the site serves the bundles that were just built
         run: npm run check:site
+
+      # V.t falls back to English, so a key missing from one language never
+      # fails on its own: the page just mixes two languages.
+      - name: Check the site dictionaries are complete in every language
+        run: npm run check:i18n

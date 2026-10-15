@@ -62,19 +62,10 @@
         kicker: 'No build step',
         title: 'The file you edit is the file the browser runs',
         lead:
-          'Every other way to write JSX puts a toolchain between your editor and the page. Voodoo reads the ' +
+          'JSX usually needs a toolchain between your editor and the page. Voodoo reads the ' +
           'JSX at runtime, so there is nothing to install, configure or wait for. Open the file, even straight ' +
           'from your disk, and the spell is cast.',
         ritual: 'The usual ritual',
-        tableCaption: 'What it takes to render a JSX list',
-        colTool: 'To render that list with',
-        colTakes: 'What it takes',
-        react: 'npm install, a bundler, Babel or SWC, a build, a dev server',
-        preact: 'npm install, a bundler and a JSX transform, or htm, which is not JSX',
-        solid: 'npm install, a bundler and its own compiler',
-        vue: 'npm install, a bundler and a plugin, or hand-written render functions',
-        svelte: 'npm install, a bundler and the Svelte compiler, and it is not JSX',
-        voodoo: 'One script tag',
         honest:
           'The honest cost: a compiler turns JSX into DOM calls ahead of time and Voodoo reads it at runtime, ' +
           'so a compiled framework wins on raw update speed and ships a smaller bundle. What you get back is a ' +
@@ -232,19 +223,10 @@
         kicker: 'Sem etapa de build',
         title: 'O arquivo que você edita é o arquivo que o navegador executa',
         lead:
-          'Todas as outras formas de escrever JSX colocam um conjunto de ferramentas entre o seu editor e a ' +
+          'Escrever JSX costuma exigir um conjunto de ferramentas entre o seu editor e a ' +
           'página. O Voodoo lê o JSX em tempo de execução, então não há nada para instalar, configurar ou ' +
           'esperar. Abra o arquivo, até direto do disco, e o feitiço está lançado.',
         ritual: 'O ritual de sempre',
-        tableCaption: 'O que é preciso para renderizar uma lista em JSX',
-        colTool: 'Para renderizar essa lista com',
-        colTakes: 'O que é preciso',
-        react: 'npm install, um bundler, Babel ou SWC, um build, um servidor de desenvolvimento',
-        preact: 'npm install, um bundler e uma transformação de JSX, ou htm, que não é JSX',
-        solid: 'npm install, um bundler e o compilador próprio',
-        vue: 'npm install, um bundler e um plugin, ou funções de render escritas à mão',
-        svelte: 'npm install, um bundler e o compilador do Svelte, e não é JSX',
-        voodoo: 'Uma tag script',
         honest:
           'O custo, dito com honestidade: um compilador transforma JSX em chamadas ao DOM antes da hora e o ' +
           'Voodoo lê em tempo de execução, então um framework compilado ganha em velocidade bruta de atualização ' +
@@ -404,19 +386,10 @@
         kicker: 'Sin paso de compilación',
         title: 'El archivo que editas es el archivo que ejecuta el navegador',
         lead:
-          'Cualquier otra forma de escribir JSX pone una cadena de herramientas entre tu editor y la página. ' +
+          'Escribir JSX suele exigir una cadena de herramientas entre tu editor y la página. ' +
           'Voodoo lee el JSX en tiempo de ejecución, así que no hay nada que instalar, configurar ni esperar. ' +
           'Abre el archivo, incluso directamente desde tu disco, y el hechizo está lanzado.',
         ritual: 'El ritual de siempre',
-        tableCaption: 'Lo que hace falta para renderizar una lista en JSX',
-        colTool: 'Para renderizar esa lista con',
-        colTakes: 'Lo que hace falta',
-        react: 'npm install, un bundler, Babel o SWC, una compilación, un servidor de desarrollo',
-        preact: 'npm install, un bundler y una transformación de JSX, o htm, que no es JSX',
-        solid: 'npm install, un bundler y su propio compilador',
-        vue: 'npm install, un bundler y un plugin, o funciones de render escritas a mano',
-        svelte: 'npm install, un bundler y el compilador de Svelte, y no es JSX',
-        voodoo: 'Una etiqueta script',
         honest:
           'El costo, dicho con honestidad: un compilador convierte JSX en llamadas al DOM por adelantado y ' +
           'Voodoo lo lee en tiempo de ejecución, así que un framework compilado gana en velocidad bruta de ' +
@@ -575,18 +548,9 @@
         kicker: '빌드 단계 없음',
         title: '편집하는 파일이 곧 브라우저가 실행하는 파일',
         lead:
-          'JSX를 쓰는 다른 모든 방법은 에디터와 페이지 사이에 도구 체인을 둡니다. Voodoo는 JSX를 런타임에 ' +
+          'JSX를 쓰려면 보통 에디터와 페이지 사이에 도구 체인이 필요합니다. Voodoo는 JSX를 런타임에 ' +
           '읽기 때문에 설치하거나 설정하거나 기다릴 것이 없습니다. 디스크에서 바로 파일을 열어도 주문이 시전됩니다.',
         ritual: '늘 하던 의식',
-        tableCaption: 'JSX 목록 하나를 렌더링하는 데 필요한 것',
-        colTool: '이 목록을 렌더링할 때',
-        colTakes: '필요한 것',
-        react: 'npm install, 번들러, Babel 또는 SWC, 빌드, 개발 서버',
-        preact: 'npm install, 번들러와 JSX 변환, 또는 JSX가 아닌 htm',
-        solid: 'npm install, 번들러와 전용 컴파일러',
-        vue: 'npm install, 번들러와 플러그인, 또는 직접 작성한 render 함수',
-        svelte: 'npm install, 번들러와 Svelte 컴파일러, 그리고 JSX가 아님',
-        voodoo: '스크립트 태그 하나',
         honest:
           '솔직한 비용: 컴파일러는 JSX를 미리 DOM 호출로 바꾸고 Voodoo는 런타임에 읽기 때문에, 컴파일되는 ' +
           '프레임워크가 순수 업데이트 속도에서 이기고 번들도 더 작습니다. 대신 여러분은 열고, 고치고, 누군가에게 ' +
