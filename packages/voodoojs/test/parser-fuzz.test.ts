@@ -291,13 +291,21 @@ describe('invalid escapes in string are syntax error, not RangeError', () => {
   });
 
   // Fuzz generated `++null` (two `+` stuck together) and showed that the parser
-  // accepts increment on literal: the AST comes out and only the interpreter
-  // complains with VoodooRuntimeError. JavaScript rejects this at parse time,
-  // and the parser already rejects `1 = 2` with "Invalid assignment target".
-  // Missing the same check in `++`/`--`. Didn't touch it now because it changes
-  // when the error occurs (parsing vs evaluation) and the interpreter is being
-  // edited in parallel; the current error is still typed, so no raw error leak.
-  it.todo('++ and -- on literal should be rejected at parse time');
+  // accepted increment on a literal: the AST came out and only the interpreter
+  // complained. JavaScript rejects these at parse time, and so does this parser
+  // now, with the same check `=` uses. Optional chains are refused as write
+  // targets for the same reason JavaScript refuses them.
+  for (const source of ['++null', '++1', '1++', '--"a"', 'f()++', '++f()', 'a?.b++', '++a?.b.c', 'a?.b = 1', 'a?.[0].c += 2', 'f().x?.y = 1']) {
+    it(`rejects ${source} at parse time`, () => {
+      expect(() => parse(source)).toThrow(VoodooSyntaxError);
+    });
+  }
+
+  for (const source of ['a++', '--a', '(a)++', '++(a)', 'a.b++', 'a[0]--', 'f().x++', 'a?.b.c', 'f()?.x', 'a.b.c = 1', 'f(a?.b).c = 1']) {
+    it(`still accepts ${source}`, () => {
+      expect(() => parse(source)).not.toThrow();
+    });
+  }
 
   it('valid escapes continue working', () => {
     expect(parse('"\\u0041"')).toEqual({ t: 'lit', v: 'A' });

@@ -7,6 +7,19 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`v-validate` on a form without `v-submit` let invalid data through.** It switches the
+  browser's own check off, and nothing took its place: `@submit` ran with empty required
+  fields and a plain form posted them. The submit now waits for validation, shows the
+  messages, focuses the first wrong field and fires `voodoo:invalid`; a valid form submits
+  as before.
+- A field that failed on submit kept its message while the value was corrected, until it
+  lost focus. It now checks again on every keystroke, as it does after a blur.
+- `++1`, `f()++` and writes through an optional chain (`a?.b = 1`, `a?.b++`) parsed and
+  only failed when run. They are syntax errors now, as in JavaScript, reported where the
+  expression is written.
+
 ## [1.0.0] - 2026-10-13
 
 The first stable release. The public API is now covered by semantic versioning:

@@ -94,6 +94,25 @@ const BINARY_PRECEDENCE: Record<string, number> = {
 };
 
 const ASSIGN_OPS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '**=', '&&=', '||=', '??=']);
+
+/**
+ * Whether a node can be written to by `=`, `+=`, `++` and the rest.
+ *
+ * A name or a property, as in JavaScript, and never through an optional chain:
+ * `a?.b = 1` and `a?.b.c++` are syntax errors there, because the write would
+ * have nowhere to go when `a` is missing. `++` and `--` used to accept any
+ * operand at all, so `++1` and `f()++` parsed and only failed when evaluated.
+ */
+function isAssignable(node: Node): boolean {
+  if (node.t === 'id') return true;
+  if (node.t !== 'member') return false;
+  for (let link: Node = node; link.t === 'member' || link.t === 'call'; ) {
+    if (link.opt) return false;
+    link = link.t === 'member' ? link.o : link.callee;
+  }
+  return true;
+}
+
 /**
  * One parameter of an arrow function or an object method.
  *
@@ -335,7 +354,7 @@ class Parser {
     const left = this.parseConditional();
     const t = this.peek();
     if (t.type === 'punct' && ASSIGN_OPS.has(t.value)) {
-      if (left.t !== 'id' && left.t !== 'member') {
+      if (!isAssignable(left)) {
         throw new VoodooSyntaxError('Invalid assignment target', this.source, t.start);
       }
       this.next();
@@ -545,6 +564,13 @@ class Parser {
     if (t.type === 'punct' && (t.value === '++' || t.value === '--')) {
       this.next();
       const arg = this.parseUnary();
+      if (!isAssignable(arg)) {
+        throw new VoodooSyntaxError(
+          'Invalid left-hand side expression in prefix operation',
+          this.source,
+          t.start
+        );
+      }
       return { t: 'update', op: t.value, a: arg, prefix: true };
     }
 
@@ -552,6 +578,13 @@ class Parser {
 
     const post = this.peek();
     if (post.type === 'punct' && (post.value === '++' || post.value === '--')) {
+      if (!isAssignable(expr)) {
+        throw new VoodooSyntaxError(
+          'Invalid left-hand side expression in postfix operation',
+          this.source,
+          post.start
+        );
+      }
       this.next();
       expr = { t: 'update', op: post.value, a: expr, prefix: false };
     }
