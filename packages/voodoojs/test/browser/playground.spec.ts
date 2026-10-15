@@ -9,7 +9,6 @@
 
 import { test, expect } from './harness';
 import type { FrameLocator, Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 
 declare global {
   interface Window {
@@ -246,8 +245,12 @@ test.describe('errors and themes', () => {
 });
 
 test('the bundle defaults to the CDN build of its own version', async ({ page }) => {
-  const { version } = JSON.parse(readFileSync('packages/voodoojs/package.json', 'utf8'));
   await page.goto('/fixtures/playground.html');
-  const runtime = await page.evaluate(() => (window.VoodooPlayground as any).CDN_RUNTIME as string);
+  const [runtime, banner] = await page.evaluate(async () => [
+    (window.VoodooPlayground as unknown as { CDN_RUNTIME: string }).CDN_RUNTIME,
+    await fetch('/dist/voodoo.playground.min.js').then((r) => r.text()),
+  ]);
+  // The banner carries the version the build was stamped with.
+  const version = /Voodoo\.js v(\d+\.\d+\.\d+)/.exec(banner)![1];
   expect(runtime).toBe(`https://cdn.jsdelivr.net/npm/voodoojs@${version}/dist/voodoo.full.min.js`);
 });
