@@ -93,8 +93,8 @@ describe('previewDocument', () => {
 
 describe('defaultRuntime', () => {
   it('uses the full build next to the playground script', () => {
-    expect(defaultRuntime('https://cdn.example/npm/voodoojs@9.9.9/dist/voodoo.playground.min.js')).toBe(
-      'https://cdn.example/npm/voodoojs@9.9.9/dist/voodoo.full.min.js'
+    expect(defaultRuntime('https://cdn.example/lib/9.9.9/voodoo.playground.min.js')).toBe(
+      'https://cdn.example/lib/9.9.9/voodoo.full.min.js'
     );
     expect(defaultRuntime('/site/voodoo.playground.js?v=abc')).toBe('/site/voodoo.full.min.js');
   });
