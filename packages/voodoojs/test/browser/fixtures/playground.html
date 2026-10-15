@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Embeddable playground</title>
+    <style>
+      body {
+        font: 14px system-ui, sans-serif;
+        margin: 0;
+        padding: 16px;
+      }
+      #stage {
+        width: 520px;
+        height: 420px;
+        border: 1px solid #ccc;
+      }
+    </style>
+    <!--
+      Loaded from /dist, so the runner's default runtime is the full build next
+      to it, the same file a CDN copy would pick.
+    -->
+    <script src="/dist/voodoo.playground.min.js"></script>
+  </head>
+  <body>
+    <div id="stage"></div>
+
+    <script>
+      window.secret = 'only the page knows this';
+      window.log = { errors: [], ready: [] };
+      window.runner = VoodooPlayground.createRunner('#stage', {
+        onError: function (message) {
+          window.log.errors.push(message);
+        },
+        onReady: function (errors) {
+          window.log.ready.push(errors);
+        },
+      });
+    </script>
+  </body>
+</html>

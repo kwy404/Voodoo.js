@@ -1,4 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'tsup';
+
+/**
+ * The version being built, for the playground's default runtime URL. Read from
+ * package.json rather than stamped, so a published file always names its own
+ * release.
+ */
+const version: string = JSON.parse(readFileSync('package.json', 'utf8')).version;
+const define = { __VOODOO_VERSION__: JSON.stringify(version) };
 
 const banner = `/**
  * Voodoo.js v1.0.0
@@ -28,6 +37,8 @@ export default defineConfig([
       // it took the file from 127.58 to 134.22 KB gzip, with a ceiling of 133.
       // Separate entry instead of inflated metadata.
       socket: 'src/socket/plugin.ts',
+      // The embeddable runner. It never loads the library itself; the frame does.
+      playground: 'src/playground/index.ts',
     },
     format: ['esm', 'cjs'],
     dts: true,
@@ -36,6 +47,31 @@ export default defineConfig([
     treeshake: true,
     target: 'es2020',
     banner: { js: banner },
+    define,
+  },
+
+  // The runner for a script tag, as window.VoodooPlayground. Small and separate,
+  // so no page pays for it unless it embeds an example.
+  {
+    entry: { 'voodoo.playground': 'src/playground/index.ts' },
+    format: ['iife'],
+    globalName: 'VoodooPlayground',
+    outExtension: () => ({ js: '.js' }),
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    define,
+  },
+  {
+    entry: { 'voodoo.playground.min': 'src/playground/index.ts' },
+    format: ['iife'],
+    globalName: 'VoodooPlayground',
+    outExtension: () => ({ js: '.js' }),
+    minify: true,
+    sourcemap: true,
+    target: 'es2018',
+    banner: { js: banner },
+    define,
   },
 
   // Minimal build: reactivity, directives, components, DOM and requests.

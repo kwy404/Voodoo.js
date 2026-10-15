@@ -111,10 +111,17 @@ const DIST = 'packages/voodoojs/dist';
  * the 0.12.0 entry gives: a budget with none is a tripwire that fires on the
  * next correct fix.
  */
+/**
+ * The embeddable playground runner joined in October 2026 at 4.62 KB. Half of
+ * that is the four example presets and the frame's default stylesheet, which
+ * is what it is for. It loads no library code of its own, so anything that
+ * pushes it past 5 KB is something leaking in by import.
+ */
 const BUDGET = {
   'voodoo.core.min.js': 52,
   'voodoo.min.js': 89,
   'voodoo.full.min.js': 138,
+  'voodoo.playground.min.js': 5,
 };
 
 function kb(bytes) {

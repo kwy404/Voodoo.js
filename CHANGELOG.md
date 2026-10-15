@@ -7,7 +7,19 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
+### Added
+
+- **An embeddable playground runner**, `voodoojs/playground` and
+  `dist/voodoo.playground.min.js` (`window.VoodooPlayground`, 4.6 KB gzipped).
+  `createRunner('#demo', { preset: 'todo' })` runs Voodoo.js code in an
+  `<iframe sandbox>` without `allow-same-origin`, so the code cannot read or change the
+  page that embeds it; a sandbox that would allow it is refused. Errors reach the page
+  through `onError` and show inside the frame, `setTheme()` switches light and dark
+  without a rerun, and the frame loads the full build next to the script, or the CDN
+  build of the same version. `previewDocument()` returns the document for pages that
+  manage their own frame.
+- **Four ready examples**: `counter`, `todo`, `form` and `fetch`, as `presets` in
+  `voodoojs/playground`, each with its empty, error and loading states where it has them.
 
 - **`v-validate` on a form without `v-submit` let invalid data through.** It switches the
   browser's own check off, and nothing took its place: `@submit` ran with empty required

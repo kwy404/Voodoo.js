@@ -84,6 +84,11 @@
       "import": "./dist/socket.js",
       "require": "./dist/socket.cjs"
     },
+    "./playground": {
+      "types": "./dist/playground.d.ts",
+      "import": "./dist/playground.js",
+      "require": "./dist/playground.cjs"
+    },
     "./dist/*": "./dist/*",
     "./package.json": "./package.json"
   },
