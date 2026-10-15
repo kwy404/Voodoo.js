@@ -20,7 +20,8 @@ beside it and sparkles when a spell is cast.
 ```
 site/
   index.html               home: the spell book, then the sections
-  playground.html          the full playground, with the example library
+  learn.html               the 10 minute lesson: eight steps that check themselves
+  playground.html          the full playground: five starters and the example library
   components.html          the built-in components (generated, see below)
   404.html                 the page GitHub Pages serves for a missing path
   favicon.svg              Vudu v2
@@ -31,6 +32,9 @@ site/
                            Shiki colours, theme toggle icons, spell effects
     home.css, home.js      the home page and its v-spellbook directive
     i18n.js                the home page dictionaries (en, pt-BR, es, ko)
+    learn*.js, learn.css   the lesson, its text in four languages and its styles
+    seasons.js             the special dates; seasons-fx.js draws their particles
+    seasons/<id>/          Vudu in costume, the hero garland and four icons per date
     playground*.js/.css    the playground and its examples
     art/                   icons.svg (sprite) and light/dark illustrations
     brand/vudu/            the mascot, copied from brand/mascot-v2
@@ -119,6 +123,20 @@ The home page ships in English (the default), Brazilian Portuguese, Spanish and 
 - The choice persists in `localStorage` under `voodoo:locale`, and `lang` on `<html>` follows it.
 
 ---
+
+## Special dates
+
+`assets/seasons.js` picks a season from the visitor's local date and sets `data-season` on `<html>`:
+New Year (Dec 30 to Jan 2), Carnival (the Saturday before Ash Wednesday through Ash Wednesday),
+Easter (Good Friday to Sunday), Valentine's Day (Feb 14, and June 12 in Brazilian Portuguese), Festa
+Junina or Midsummer (June 13 to 29), Halloween (Oct 24 to 31) and Christmas (Dec 18 to 26). Easter is
+computed, never typed in.
+
+- On the home page and the lesson Vudu wears a costume; every page with a hero gets a garland, three
+  icons and, unless reduced motion is on, a light particle canvas that pauses off screen.
+- A chip at the bottom right turns the season off, remembered per season in `localStorage`.
+- `?season=halloween` previews a season, `?season=off` hides it.
+- The art comes from `node scripts/site-seasons-art.mjs`, and `npm run test:seasons` tests the dates.
 
 ## Theme
 

@@ -528,6 +528,8 @@
 
     function cheer() {
       if (!vudu) return;
+      // On a special date Vudu wears a costume (assets/seasons.js); keep it on.
+      if (document.documentElement.hasAttribute('data-season')) return replay(vudu, 'vd-hop');
       vudu.src = 'assets/brand/vudu/vudu-happy.svg';
       replay(vudu, 'vd-hop');
       clearTimeout(cheer.timer);

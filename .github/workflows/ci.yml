@@ -121,3 +121,8 @@ jobs:
       # fails on its own: the page just mixes two languages.
       - name: Check the site dictionaries are complete in every language
         run: npm run check:i18n
+
+      # The special dates: Easter, every window boundary, the pt-BR dates and
+      # the ?season= overrides, against the script the site ships.
+      - name: Check the special dates
+        run: npm run test:seasons

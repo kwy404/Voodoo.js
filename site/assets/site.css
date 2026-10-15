@@ -488,3 +488,163 @@ html:root {
   --v-text-muted: var(--muted-foreground) !important;
   --v-primary: var(--primary) !important;
 }
+
+/* -------------------------------------------------------------------------
+   Special dates. assets/seasons.js sets data-season on <html>; everything
+   below is decoration, aria-hidden, and skipped for reduced motion.
+   ------------------------------------------------------------------------- */
+
+:root[data-season] {
+  --season: var(--primary);
+}
+:root[data-season='halloween'] { --season: oklch(0.68 0.16 52); }
+:root[data-season='christmas'] { --season: oklch(0.58 0.17 25); }
+:root[data-season='carnival'] { --season: oklch(0.66 0.13 180); }
+:root[data-season='easter'] { --season: oklch(0.7 0.1 340); }
+:root[data-season='valentine'] { --season: oklch(0.62 0.19 10); }
+:root[data-season='junina'] { --season: oklch(0.72 0.15 60); }
+:root[data-season='newyear'] { --season: oklch(0.78 0.13 80); }
+
+/* The hero glow takes a little of the season's colour. */
+:root[data-season] .vd-aura::before {
+  background:
+    radial-gradient(60rem 28rem at 12% -10%, var(--vd-glow), transparent 70%),
+    radial-gradient(40rem 24rem at 95% 10%, color-mix(in oklab, var(--season) 22%, transparent), transparent 70%);
+}
+
+.vd-season-accent {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vd-season-strip {
+  vertical-align: top;
+  width: 100%;
+  min-width: 40rem;
+  height: auto;
+}
+
+.vd-season-icon {
+  position: absolute;
+  width: 2rem;
+  height: 2rem;
+  color: var(--season);
+  opacity: 0.55;
+  animation: vd-float 6s ease-in-out infinite;
+}
+
+.vd-season-icon-1 { left: 5%; top: 42%; }
+.vd-season-icon-2 { right: 6%; top: 30%; width: 2.4rem; height: 2.4rem; animation-delay: -2s; }
+.vd-season-icon-3 { left: 12%; bottom: 10%; width: 1.6rem; height: 1.6rem; animation-delay: -4s; }
+
+@media (max-width: 47.99rem) {
+  .vd-season-icon { width: 1.4rem; height: 1.4rem; opacity: 0.4; }
+  .vd-season-icon-2 { top: 18%; }
+}
+
+.vd-season-fx {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The chip: the season's name and an off switch, bottom right. */
+.vd-season-chip {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem 0.375rem 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--season, var(--primary)) 40%, var(--border));
+  border-radius: var(--m-radius-full);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--m-shadow-md);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  animation: vd-chip-in 500ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.vd-season-chip .vd-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--season, var(--primary));
+}
+
+.vd-season-switch {
+  position: relative;
+  width: 1.9rem;
+  height: 1.1rem;
+  border-radius: var(--m-radius-full);
+  background: var(--season, var(--primary));
+  transition: background-color 200ms;
+}
+
+.vd-season-switch i {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.95rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 200ms;
+}
+
+/* Turned off, it shrinks to its icon, out of the way, and can come back. */
+.vd-season-chip.is-off {
+  padding: 0.45rem;
+  opacity: 0.75;
+}
+
+.vd-season-chip.is-off .vd-season-name,
+.vd-season-chip.is-off .vd-season-switch {
+  display: none;
+}
+
+.vd-season-chip.is-off .vd-icon {
+  color: var(--muted-foreground);
+}
+
+.vd-season-chip:hover,
+.vd-season-chip:focus-visible {
+  opacity: 1;
+}
+
+@keyframes vd-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media print {
+  .vd-season-chip,
+  .vd-season-accent,
+  .vd-season-fx {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vd-season-icon,
+  .vd-season-chip {
+    animation: none;
+  }
+  .vd-season-switch,
+  .vd-season-switch i {
+    transition: none;
+  }
+}

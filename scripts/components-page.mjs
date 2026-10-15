@@ -355,6 +355,7 @@ const html = `<!doctype html>
         scroll-margin-top: 5.5rem;
       }
     </style>
+    <script src="assets/seasons.js" defer></script>
   </head>
 
   <body>

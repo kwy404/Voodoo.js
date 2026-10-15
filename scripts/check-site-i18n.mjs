@@ -87,6 +87,11 @@ const steps = [...learn.matchAll(/id: '(s\d+)'/g)].map((m) => m[1]);
 for (const id of steps) {
   for (const part of ['title', 'body', 'task', 'hint']) used.add(`site/assets/learn.js: learn.${id}.${part}`);
 }
+// The special dates chip asks for a name per season and three labels.
+const seasons = readFileSync('site/assets/seasons.js', 'utf8');
+const ids = JSON.parse(/var IDS = (\[[^\]]*\])/.exec(seasons)[1].replace(/'/g, '"'));
+for (const key of [...ids, 'mode', 'turnOn', 'turnOff']) used.add(`site/assets/seasons.js: season.${key}`);
+
 for (const entry of used) {
   const key = entry.slice(entry.indexOf(': ') + 2);
   if (!(key in english)) problems.push(`${entry} is not defined in English`);
