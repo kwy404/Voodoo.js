@@ -480,3 +480,61 @@
     gap: 0.5rem;
   }
 }
+
+/* ---------------------------------------------------- motion on scroll */
+
+/* Sections rise into place the first time they scroll into view. The class
+   that hides them is only added by home.js when IntersectionObserver exists
+   and the reader has not asked for reduced motion, so without JavaScript
+   everything is simply there. */
+.vd-reveal-on [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    transform 700ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.vd-reveal-on [data-reveal].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* The lesson button carries a soft shimmer, the one thing on the page that
+   says start here. */
+.vd-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.vd-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, oklch(1 0 0 / 0.35) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: vd-shimmer 3.6s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes vd-shimmer {
+  0%,
+  60% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vd-cta::after {
+    animation: none;
+    display: none;
+  }
+  .vd-reveal-on [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

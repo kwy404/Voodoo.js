@@ -394,6 +394,39 @@
     }
   });
 
+  // ------------------------------------------------------- scroll reveal
+
+  /**
+   * Sections marked data-reveal rise into place once, as they scroll in.
+   * Skipped entirely for reduced motion or without IntersectionObserver, and
+   * a section already on screen at load is shown at once.
+   */
+  (function reveal() {
+    if (reduced || !('IntersectionObserver' in window)) return;
+    var root = document.documentElement;
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-in');
+          io.unobserve(entry.target);
+        });
+      },
+      { rootMargin: '0px 0px -12% 0px' }
+    );
+    root.classList.add('vd-reveal-on');
+    document.querySelectorAll('[data-reveal]').forEach(function (el) {
+      io.observe(el);
+    });
+    // A jump to an anchor (#examples) should land on visible content.
+    window.addEventListener('hashchange', function () {
+      var target = location.hash && document.querySelector(location.hash);
+      if (target && target.hasAttribute('data-reveal')) target.classList.add('is-in');
+    });
+    var start = location.hash && document.querySelector(location.hash);
+    if (start && start.hasAttribute && start.hasAttribute('data-reveal')) start.classList.add('is-in');
+  })();
+
   // The counts come from the running library rather than from a number typed
   // here, so they cannot drift from the release.
   V.data({
