@@ -893,6 +893,10 @@ export async function validateField(
 
     if (!options.silent) {
       showFieldError(el, message);
+      // Remembered so the next keystroke checks again. Without it a field that
+      // failed on submit kept its message until it lost focus, however the
+      // value was corrected.
+      erroredFields.add(el);
       emitFieldResult(el, { valid: false, message, rule: rule.name });
     }
     return { valid: false, message, rule: rule.name };
@@ -900,6 +904,7 @@ export async function validateField(
 
   if (!options.silent) {
     clearFieldError(el, !empty);
+    erroredFields.delete(el);
     emitFieldResult(el, { valid: true });
   }
   return { valid: true };
@@ -1136,9 +1141,7 @@ const boundFields = new WeakSet<Element>();
 const erroredFields = new WeakSet<Element>();
 
 async function runFieldValidation(el: FormField): Promise<void> {
-  const result = await validateField(el);
-  if (result.valid) erroredFields.delete(el);
-  else erroredFields.add(el);
+  await validateField(el);
 }
 
 /**
@@ -1207,12 +1210,76 @@ function setupFormValidation(form: HTMLElement, cleanup: (fn: () => void) => voi
   form.addEventListener('input', onInput);
   form.addEventListener('change', onFocusOut);
 
+  // `v-submit` validates before it sends, so only a form without it needs the
+  // guard below.
+  const guarded = form.tagName === 'FORM' && !hasDirectiveAttr(form, 'submit');
+  if (guarded) form.addEventListener('submit', onSubmitGuard, true);
+
   cleanup(() => {
     validatedForms.delete(form);
     form.removeEventListener('focusout', onFocusOut);
     form.removeEventListener('input', onInput);
     form.removeEventListener('change', onFocusOut);
+    if (guarded) form.removeEventListener('submit', onSubmitGuard, true);
   });
+}
+
+/** Forms whose next submit event has already passed validation. */
+const approvedSubmits = new WeakSet<HTMLElement>();
+
+/**
+ * Holds a submit until the form is valid, then lets it through.
+ *
+ * `v-validate` sets `noValidate`, which switches the browser's own check off,
+ * and on a form without `v-submit` nothing took its place: the `@submit`
+ * handler ran with empty required fields, and a plain form posted them. This
+ * listens in the capture phase, so it sees the event before any handler on the
+ * form, stops it, validates (rules may be asynchronous) and submits again once
+ * everything passes. An invalid form shows its messages, focuses the first
+ * wrong field and fires `voodoo:invalid`, as `v-submit` does.
+ */
+function onSubmitGuard(event: Event): void {
+  const form = event.currentTarget as HTMLFormElement;
+  if (approvedSubmits.has(form)) {
+    approvedSubmits.delete(form);
+    return;
+  }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const submitter = (event as SubmitEvent).submitter ?? null;
+
+  void validateForm(form).then((result) => {
+    if (!form.isConnected) return;
+    if (!result.valid) {
+      focusFirstError(form);
+      form.dispatchEvent(
+        new CustomEvent('voodoo:invalid', { bubbles: true, detail: { errors: result.errors, form } })
+      );
+      return;
+    }
+    approvedSubmits.add(form);
+    try {
+      resubmit(form, submitter);
+    } finally {
+      approvedSubmits.delete(form);
+    }
+  });
+}
+
+/** Submits again as the user did, keeping the button they pressed when possible. */
+function resubmit(form: HTMLFormElement, submitter: HTMLElement | null): void {
+  if (typeof form.requestSubmit === 'function') {
+    try {
+      form.requestSubmit(submitter && submitter.isConnected ? submitter : undefined);
+      return;
+    } catch {
+      // A submitter that is no longer one of this form's submit buttons is refused.
+    }
+    form.requestSubmit();
+    return;
+  }
+  const again = new Event('submit', { bubbles: true, cancelable: true });
+  if (form.dispatchEvent(again)) form.submit();
 }
 
 // ---------------------------------------------------------------------------
