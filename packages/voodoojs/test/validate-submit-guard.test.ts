@@ -25,10 +25,12 @@ function mount(html: string, data: Record<string, unknown> = {}): HTMLElement {
   return root;
 }
 
-/** Validation is asynchronous: rules are awaited, then the submit is replayed. */
+/** Validation is asynchronous: rules are awaited, then the submit is replayed a task later. */
 async function settle(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  for (let i = 0; i < 4; i++) await nextTick();
+  for (let i = 0; i < 3; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+  }
 }
 
 const FORM = `

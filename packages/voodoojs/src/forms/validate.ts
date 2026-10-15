@@ -1257,12 +1257,19 @@ function onSubmitGuard(event: Event): void {
       );
       return;
     }
-    approvedSubmits.add(form);
-    try {
-      resubmit(form, submitter);
-    } finally {
-      approvedSubmits.delete(form);
-    }
+    // A task later, not straight away. When every rule is synchronous the
+    // promise settles in a microtask while the browser is still dispatching
+    // the original submit of a real click, and Chrome ignores a submit
+    // requested from inside its own submission, silently.
+    setTimeout(() => {
+      if (!form.isConnected) return;
+      approvedSubmits.add(form);
+      try {
+        resubmit(form, submitter);
+      } finally {
+        approvedSubmits.delete(form);
+      }
+    }, 0);
   });
 }
 
