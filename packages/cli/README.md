@@ -70,6 +70,9 @@ in `<head>` that applies the saved choice (`localStorage`, key `voodoo:theme`)
 before the first paint. `init` will not overwrite an existing `index.html` or
 `README.md` unless you pass `--force`.
 
+`npx voodoojs-cli init my-todos --example=todo` starts from a ready example instead of the
+welcome page: `counter`, `todo`, `form` or `fetch`.
+
 ## add
 
 ```bash

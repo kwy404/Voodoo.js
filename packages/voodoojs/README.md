@@ -112,6 +112,10 @@ For a `<script>` tag, pick a file from `dist/`:
 | `voodoo.min.js` | Essential | Minimal plus forms, validation, masks, UI (toast, modal, tabs, dropdowns, tooltips), drag and drop, theme toggle | No | about 88 KB |
 | `voodoo.full.min.js` | Full | Essential plus JSX, charts, motion, router, i18n, the `xray` devtools inspector and 29 ready-made components | **Yes** | about 136 KB |
 
+To embed a live, sandboxed example in any page, load `dist/voodoo.playground.min.js` and call
+`VoodooPlayground.createRunner('#demo', { preset: 'counter' })`. The code runs in an iframe without
+same-origin access, so it cannot touch the page.
+
 JSX lives only in the full build; with the other two a JSX page shows its source as plain text. Realtime and WebGPU are in none of the three: load `dist/socket.js` or `dist/gpu.js` separately. Sizes move between releases, see the [bundle report](https://github.com/kwy404/Voodoo.js/blob/main/benchmarks/reports/bundle.md).
 
 ## What you get
