@@ -154,6 +154,13 @@
                 JSX transform, no build step. Pick a spell, edit the file, and watch the result run right
                 next to it.
               </p>
+              <div class="mt-2 flex flex-wrap justify-center gap-2">
+                <a class="btn btn-primary vd-cta" href="learn.html" v-command-item="">
+                  <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-wand"></use></svg><span v-t="hero.ctaLearn">Learn it in 10 minutes</span>
+                </a>
+                <a class="btn btn-outline" href="docs/guia/instalacao.html" v-command-item="" v-t="hero.ctaStart">Get started</a>
+                <a class="btn btn-ghost" href="playground.html" v-command-item="" v-t="hero.ctaPlayground">Open the full playground</a>
+              </div>
             </div>
 
             <!-- ============================================ the spell book -->
@@ -237,13 +244,6 @@
                   <svg class="vd-icon" aria-hidden="true" v-show="copied === 'tag'"><use href="assets/art/icons.svg#i-check"></use></svg>
                 </button>
                 <span id="install-tag" hidden>&lt;script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer&gt;&lt;/script&gt;</span>
-              </div>
-              <div class="flex flex-wrap justify-center gap-2">
-                <a class="btn btn-primary vd-cta" href="learn.html" v-command-item="">
-                  <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-wand"></use></svg><span v-t="hero.ctaLearn">Learn it in 10 minutes</span>
-                </a>
-                <a class="btn btn-outline" href="docs/guia/instalacao.html" v-command-item="" v-t="hero.ctaStart">Get started</a>
-                <a class="btn btn-ghost" href="playground.html" v-command-item="" v-t="hero.ctaPlayground">Open the full playground</a>
               </div>
             </div>
           </div>
