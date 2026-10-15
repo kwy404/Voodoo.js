@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>(function(){try{var t=localStorage.getItem('voodoo:theme');if(t&&t.charAt(0)==='"')t=JSON.parse(t);var r=document.documentElement;if(t==='light'||t==='dark'){r.setAttribute('data-theme',t);r.style.colorScheme=t}else if(t==='system')r.removeAttribute('data-theme')}catch(e){}})();</script>
+
+    <title>Learn Voodoo.js in 10 minutes: an interactive lesson</title>
+    <meta
+      name="description"
+      content="Eight short steps in a live editor: state, braces, events, v-model, v-if, v-for, JSX in plain HTML and fetching data. Each step checks itself as you type. Nothing to install."
+    />
+    <meta name="theme-color" content="#6d3bf5" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href="https://kwy404.github.io/Voodoo.js/learn.html" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Learn Voodoo.js in 10 minutes" />
+    <meta property="og:description" content="Eight short steps in a live editor. Each step checks itself as you type. Nothing to install." />
+    <meta property="og:url" content="https://kwy404.github.io/Voodoo.js/learn.html" />
+    <meta property="og:site_name" content="Voodoo.js" />
+    <meta property="og:image" content="https://kwy404.github.io/Voodoo.js/assets/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LearningResource",
+        "name": "Learn Voodoo.js in 10 minutes",
+        "description": "An interactive lesson in eight steps: state, braces, events, v-model, v-if, v-for, JSX in plain HTML and fetching data.",
+        "url": "https://kwy404.github.io/Voodoo.js/learn.html",
+        "inLanguage": ["en", "pt-BR", "es", "ko"],
+        "timeRequired": "PT10M",
+        "learningResourceType": "Interactive tutorial",
+        "isAccessibleForFree": true,
+        "author": {
+          "@type": "Person",
+          "name": "Alexandre Kohler",
+          "url": "https://github.com/kwy404"
+        }
+      }
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monsooncss@0.2.0/dist/monsoon.min.css" />
+    <link rel="stylesheet" href="assets/site.css?v=daa5adda" />
+    <link rel="stylesheet" href="assets/learn.css?v=06c5f18b" />
+  </head>
+
+  <body>
+<!-- chrome:header -->
+<a class="vd-skip btn btn-primary btn-sm" href="#main" v-t="nav.skip">Skip to content</a>
+<header class="navbar navbar-sticky navbar-blur px-4 lg:px-8">
+  <div class="navbar-start">
+    <a class="navbar-brand vd-brand" href="./">
+      <img src="assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+      <span>Voodoo<span class="text-primary">.js</span></span>
+    </a>
+  </div>
+  <nav class="navbar-center navbar-nav" aria-label="Main" v-t:aria-label="nav.main">
+      <a class="navbar-link" href="learn.html" aria-current="page" v-t="nav.learn">Learn</a>
+      <a class="navbar-link" href="docs/" v-t="nav.docs">Docs</a>
+      <a class="navbar-link" href="playground.html" v-t="nav.playground">Playground</a>
+      <a class="navbar-link" href="components.html" v-t="nav.components">Components</a>
+      <a class="navbar-link" href="examples/" v-t="nav.examples">Examples</a>
+  </nav>
+  <div class="navbar-end">
+    <select class="vd-lang" aria-label="Language" v-t:aria-label="nav.language">
+      <option value="en">EN</option>
+      <option value="pt-BR">PT</option>
+      <option value="es">ES</option>
+      <option value="ko">KO</option>
+    </select>
+    <button type="button" class="btn btn-ghost btn-sm btn-square vd-theme" v-theme-toggle.cycle aria-label="Change theme: system, light or dark" v-t:aria-label="nav.theme">
+      <svg class="vd-icon vd-theme-system" aria-hidden="true"><use href="assets/art/icons.svg#i-monitor"></use></svg>
+      <svg class="vd-icon vd-theme-light" aria-hidden="true"><use href="assets/art/icons.svg#i-sun"></use></svg>
+      <svg class="vd-icon vd-theme-dark" aria-hidden="true"><use href="assets/art/icons.svg#i-moon"></use></svg>
+    </button>
+    <a class="btn btn-ghost btn-sm btn-square hidden sm:inline-flex" href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-github"></use></svg></a>
+    <details class="navbar-mobile">
+      <summary class="navbar-burger" aria-label="Menu" v-t:aria-label="nav.menu"></summary>
+      <nav class="navbar-mobile-panel" aria-label="Mobile">
+      <a class="navbar-link" href="learn.html" aria-current="page" v-t="nav.learn">Learn</a>
+      <a class="navbar-link" href="docs/" v-t="nav.docs">Docs</a>
+      <a class="navbar-link" href="playground.html" v-t="nav.playground">Playground</a>
+      <a class="navbar-link" href="components.html" v-t="nav.components">Components</a>
+      <a class="navbar-link" href="examples/" v-t="nav.examples">Examples</a>
+      <a class="navbar-link" href="https://github.com/kwy404/Voodoo.js">GitHub</a>
+      </nav>
+    </details>
+  </div>
+</header>
+<!-- /chrome:header -->
+
+    <main id="main">
+      <!-- ============================================================ intro -->
+      <section class="vd-aura relative overflow-hidden" aria-labelledby="learn-title">
+        <div class="vd-runes absolute inset-0 -z-10" aria-hidden="true"></div>
+        <div class="mx-auto max-w-7xl px-4 lg:px-8 pt-10 md:pt-12 pb-6">
+          <div class="ln-intro">
+            <div class="min-w-0">
+              <p class="vd-kicker" v-t="learn.kicker">Interactive lesson</p>
+              <h1 id="learn-title" class="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-balance" v-t="learn.title">Learn Voodoo in 10 minutes</h1>
+              <p class="mt-3 text-lg text-muted-foreground max-w-2xl text-pretty" v-t="learn.lead">
+                Eight short steps, each one a small task in a live editor. Type, watch the result change,
+                and the step checks itself. Nothing to install.
+              </p>
+              <ul class="ln-facts mt-4" role="list">
+                <li><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-candle"></use></svg><span v-t="learn.minutes">About 10 minutes</span></li>
+                <li><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-scroll"></use></svg><span v-t="learn.steps">8 short steps</span></li>
+                <li><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-pin"></use></svg><span v-t="learn.saved">Progress stays in this browser</span></li>
+              </ul>
+            </div>
+            <img class="ln-vudu vd-float" data-vudu src="assets/brand/vudu/vudu-wave.svg" alt="" width="140" height="140" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================== lesson -->
+      <!-- v-ignore: assets/learn.js owns everything in here, and the lesson
+           text is full of braces that are code, not expressions. -->
+      <section class="mx-auto max-w-7xl px-4 lg:px-8 pb-20" aria-label="Lesson" v-ignore>
+        <nav class="ln-track" aria-label="Lesson progress" data-track>
+          <div class="ln-bar" aria-hidden="true"><i data-fill></i></div>
+          <ol class="ln-dots" data-dots></ol>
+        </nav>
+
+        <div class="ln-lesson" data-lesson>
+          <article class="ln-card" data-card aria-live="polite">
+            <p class="ln-step" data-step-label>Step 1 of 8</p>
+            <h2 class="ln-title" data-title>Say hello</h2>
+            <div class="ln-body" data-body>
+              <p>A Voodoo page is plain HTML. <code>v-data</code> holds the state of a block, and anything in
+              braces, like <code>&#123; name &#125;</code>, is shown on the page and kept up to date.</p>
+            </div>
+
+            <div class="ln-task" data-task-box data-state="waiting">
+              <span class="ln-task-icon" aria-hidden="true">
+                <svg class="vd-icon ln-i-wait"><use href="assets/art/icons.svg#i-wand"></use></svg>
+                <svg class="vd-icon ln-i-done"><use href="assets/art/icons.svg#i-check"></use></svg>
+              </span>
+              <div class="min-w-0">
+                <p class="ln-task-label" data-task-label>Your turn</p>
+                <p class="ln-task-text" data-task>Change <code>'Vudu'</code> to your own name.</p>
+                <p class="ln-task-status" data-status role="status">Edit the code. The step checks itself as you type.</p>
+              </div>
+            </div>
+
+            <div class="ln-help">
+              <button type="button" class="btn btn-ghost btn-sm" data-hint-btn aria-expanded="false">
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-crystal"></use></svg><span data-hint-label>Show a hint</span>
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" data-answer>
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-sparkle"></use></svg><span data-answer-label>Show the answer</span>
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" data-reset>
+                <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-reset"></use></svg><span data-reset-label>Start this step again</span>
+              </button>
+            </div>
+            <div class="ln-hint" data-hint hidden></div>
+
+            <div class="ln-nav">
+              <button type="button" class="btn btn-outline" data-back>
+                <svg class="vd-icon ln-flip" aria-hidden="true"><use href="assets/art/icons.svg#i-arrow"></use></svg><span data-back-label>Back</span>
+              </button>
+              <button type="button" class="btn btn-ghost" data-next>
+                <span data-next-label>Skip</span><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-arrow"></use></svg>
+              </button>
+            </div>
+          </article>
+
+          <div class="ln-work">
+            <div class="ln-pane ln-pane-code">
+              <div class="vframe-bar">
+                <span class="vframe-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="vframe-tab" data-lang="html">
+                  <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-file"></use></svg><span data-file>hello.html</span>
+                </span>
+                <span class="ln-live ml-auto"><i aria-hidden="true"></i><span data-live>Live</span></span>
+              </div>
+              <div class="vd-editor ln-editor">
+                <div class="vd-gutter" data-gutter aria-hidden="true"></div>
+                <div class="vd-code">
+                  <pre class="vd-hl" data-hl aria-hidden="true"></pre>
+                  <textarea data-src spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="The code for this step, which you can edit"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="ln-pane ln-pane-result">
+              <div class="vframe-bar">
+                <span class="vd-url">
+                  <svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-globe"></use></svg><span data-url>hello.html</span>
+                </span>
+                <span class="vd-error ml-auto" data-error hidden>
+                  <img src="assets/brand/vudu/vudu-error.svg" alt="" width="22" height="22" /><span data-error-text></span>
+                </span>
+              </div>
+              <div class="ln-stage" data-stage>
+                <iframe data-frame title="The result of your code"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- The last screen, shown once every step has been seen. -->
+        <div class="ln-end" data-end hidden>
+          <img class="ln-end-vudu" src="assets/brand/vudu/vudu-happy.svg" alt="" width="150" height="150" />
+          <p class="vd-kicker" data-end-kicker>Lesson complete</p>
+          <h2 class="mt-3 text-3xl md:text-4xl font-bold tracking-tight" data-end-title>You know Voodoo</h2>
+          <p class="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto text-pretty" data-end-lead></p>
+          <p class="ln-score" data-end-score></p>
+          <ol class="ln-recap" data-recap></ol>
+          <p class="mt-8 text-sm font-semibold text-muted-foreground" data-end-next>What to try next</p>
+          <div class="mt-3 flex flex-wrap justify-center gap-2">
+            <a class="btn btn-primary" href="playground.html" data-end-play>Open the playground</a>
+            <a class="btn btn-outline" href="docs/" data-end-docs>Read the docs</a>
+            <a class="btn btn-outline" href="examples/" data-end-examples>See the examples</a>
+            <button type="button" class="btn btn-ghost" data-restart>Start over</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+<!-- chrome:footer -->
+<footer class="footer px-0">
+  <div class="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 lg:px-8">
+  <div class="footer-grid md:grid-cols-4">
+    <div class="footer-brand md:col-span-1">
+      <a class="navbar-brand vd-brand text-foreground" href="./">
+        <img src="assets/brand/vudu/vudu-head.svg" width="32" height="32" alt="">
+        <span>Voodoo<span class="text-primary">.js</span></span>
+      </a>
+      <p v-t="foot.tagline">JSX in plain HTML. No build step, one script tag.</p>
+      <div class="footer-social">
+        <a href="https://github.com/kwy404/Voodoo.js" aria-label="Voodoo.js on GitHub"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-github"></use></svg></a>
+        <a href="https://www.npmjs.com/package/voodoojs" aria-label="voodoojs on npm"><svg class="vd-icon" aria-hidden="true"><use href="assets/art/icons.svg#i-npm"></use></svg></a>
+      </div>
+    </div>
+    <nav aria-label="Voodoo.js">
+      <p class="footer-title">Voodoo.js</p>
+      <ul class="footer-links">
+        <li><a href="learn.html" v-t="nav.learn">Learn</a></li>
+        <li><a href="docs/" v-t="nav.docs">Docs</a></li>
+        <li><a href="playground.html" v-t="nav.playground">Playground</a></li>
+        <li><a href="components.html" v-t="nav.components">Components</a></li>
+        <li><a href="examples/" v-t="nav.examples">Examples</a></li>
+        <li><a href="https://github.com/kwy404/Voodoo.js">GitHub</a></li>
+        <li><a href="https://www.npmjs.com/package/voodoojs">npm</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="Learn" v-t:aria-label="foot.learn">
+      <p class="footer-title" v-t="foot.learn">Learn</p>
+      <ul class="footer-links">
+        <li><a href="docs/guia/instalacao.html" v-t="foot.install">Installation</a></li>
+        <li><a href="docs/guia/jsx.html" v-t="foot.jsx">JSX in plain HTML</a></li>
+        <li><a href="docs/referencia/directives.html" v-t="foot.directives">Directives</a></li>
+        <li><a href="docs/referencia/migracao-vue.html" v-t="foot.migrate">Coming from Vue</a></li>
+        <li><a href="docs/referencia/perguntas-frequentes.html" v-t="foot.faq">FAQ</a></li>
+      </ul>
+    </nav>
+    <nav aria-label="More from kwy404" v-t:aria-label="foot.more">
+      <p class="footer-title" v-t="foot.more">More from kwy404</p>
+      <ul class="footer-links vd-projects">
+          <li><a href="https://kwy404.github.io/monsoon/" title="Utility-first CSS with no build step"><img src="https://cdn.jsdelivr.net/gh/kwy404/monsoon@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">Monsoon</a></li>
+          <li><a href="https://kwy404.github.io/breakhound/" title="Find bugs in any JavaScript library automatically"><img src="https://cdn.jsdelivr.net/gh/kwy404/breakhound@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">breakhound</a></li>
+          <li><a href="https://kwy404.github.io/vueleap/" title="Migrate Vue 2 to Vue 3 with one command"><img src="https://cdn.jsdelivr.net/gh/kwy404/vueleap@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">vueleap</a></li>
+          <li><a href="https://kwy404.github.io/graphemely/" title="Emoji safe string functions"><img src="https://cdn.jsdelivr.net/gh/kwy404/graphemely@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">graphemely</a></li>
+          <li><a href="https://kwy404.github.io/numberparrot/" title="Parse localized numbers and currency"><img src="https://cdn.jsdelivr.net/gh/kwy404/numberparrot@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">numberparrot</a></li>
+          <li><a href="https://kwy404.github.io/edgegoat/" title="Edge case test inputs"><img src="https://cdn.jsdelivr.net/gh/kwy404/edgegoat@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">edgegoat</a></li>
+          <li><a href="https://kwy404.github.io/cookieowl/" title="Cookie consent banner for LGPD and GDPR"><img src="https://cdn.jsdelivr.net/gh/kwy404/cookieowl@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">cookieowl</a></li>
+          <li><a href="https://kwy404.github.io/installkite/" title="Make any website installable and offline capable"><img src="https://cdn.jsdelivr.net/gh/kwy404/installkite@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">installkite</a></li>
+          <li><a href="https://kwy404.github.io/a11ymedic/" title="Accessibility checker that gives the exact fix"><img src="https://cdn.jsdelivr.net/gh/kwy404/a11ymedic@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">a11ymedic</a></li>
+          <li><a href="https://kwy404.github.io/fontsketch/" title="Turn your handwriting into a font"><img src="https://cdn.jsdelivr.net/gh/kwy404/fontsketch@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">fontsketch</a></li>
+          <li><a href="https://kwy404.github.io/kastor/" title="The TypeScript ORM for almost every database"><img src="https://cdn.jsdelivr.net/gh/kwy404/kastor@main/assets/mascot.svg" alt="" width="20" height="20" loading="lazy" decoding="async">kastor</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="footer-bottom">
+    <p><span v-t="foot.madeBy">Made by</span> <a class="font-medium text-foreground hover:underline" href="https://github.com/kwy404" rel="me noopener">Alexandre Kohler</a> (<a class="hover:underline" href="https://github.com/kwy404" rel="me noopener">GitHub</a>, <a class="hover:underline" href="https://www.linkedin.com/in/alexandre-silva-173687256/" rel="me noopener">LinkedIn</a>). <span v-t="foot.mit">MIT licensed.</span> Voodoo.js 1.0.0.</p>
+    <p><span v-t="foot.builtWith">Built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/monsoon/">Monsoon</a>. <span v-t="foot.interactive">Interactive parts built with</span> <a class="font-medium text-foreground hover:underline" href="https://kwy404.github.io/Voodoo.js/">Voodoo.js</a>.</p>
+  </div>
+  </div>
+</footer>
+<!-- /chrome:footer -->
+
+    <!-- data-manual: the lesson text and the dictionaries are registered before
+         the first render. assets/i18n.js runs last and calls V.start(). -->
+    <script src="voodoo.full.min.js" data-manual defer></script>
+    <script src="assets/learn-i18n.js?v=2ca46c8c" defer></script>
+    <script src="assets/learn.js?v=799f4eff" defer></script>
+    <script src="assets/i18n.js?v=c0282889" defer></script>
+  </body>
+</html>

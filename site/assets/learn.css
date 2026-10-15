@@ -1,0 +1,725 @@
+/* ==========================================================================
+   The lesson page: the intro, the progress track, the lesson card, the
+   editor and result, and the closing screen. The editor reuses the spell
+   book classes from home.css (.vd-editor, .vd-code, .vd-hl) by name, so the
+   few rules it needs are repeated here rather than loading the whole file.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- intro */
+
+.ln-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.ln-vudu {
+  flex: none;
+  width: 8.75rem;
+  height: auto;
+  filter: drop-shadow(0 10px 18px oklch(0.3 0.2 288 / 0.25));
+}
+
+@media (max-width: 47.99rem) {
+  .ln-vudu {
+    width: 5rem;
+    align-self: flex-start;
+  }
+}
+
+.ln-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ln-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-full);
+  background: color-mix(in oklab, var(--surface) 80%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.ln-facts .vd-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--primary);
+}
+
+/* ------------------------------------------------------- progress track */
+
+.ln-track {
+  position: relative;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.ln-bar {
+  position: absolute;
+  left: 1.1rem;
+  right: 1.1rem;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: var(--m-radius-full);
+  background: color-mix(in oklab, var(--foreground) 9%, transparent);
+  overflow: hidden;
+}
+
+.ln-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--magenta), var(--amber));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 600ms var(--m-ease-spring, cubic-bezier(0.3, 1.3, 0.5, 1));
+}
+
+.ln-dots {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ln-dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 2px solid var(--border);
+  border-radius: var(--m-radius-full);
+  background: var(--surface);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 200ms, border-color 200ms, background-color 200ms, color 200ms;
+}
+
+.ln-dot:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border));
+}
+
+.ln-dot .vd-icon {
+  display: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.ln-dot.is-done {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.ln-dot.is-done span {
+  display: none;
+}
+
+.ln-dot.is-done .vd-icon {
+  display: block;
+}
+
+.ln-dot[aria-current='step'] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.ln-dot.is-done[aria-current='step'] {
+  color: var(--primary-foreground);
+}
+
+@media (max-width: 30rem) {
+  .ln-dot {
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* --------------------------------------------------------------- lesson */
+
+.ln-lesson {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  .ln-lesson {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+
+.ln-lesson[hidden],
+.ln-end[hidden] {
+  display: none;
+}
+
+.ln-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-2xl);
+  background: var(--surface);
+  box-shadow: var(--m-shadow-md);
+}
+
+@media (min-width: 64rem) {
+  .ln-card {
+    position: sticky;
+    top: 5rem;
+    min-height: 34rem;
+  }
+}
+
+.ln-step {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.ln-title {
+  margin-top: -0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.ln-body {
+  color: var(--muted-foreground);
+  line-height: 1.65;
+}
+
+.ln-card code,
+.ln-hint code {
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--m-radius-sm);
+  background: color-mix(in oklab, var(--primary) 11%, transparent);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+/* The task: waiting is a dashed outline, passed turns green and pops. */
+.ln-task {
+  display: flex;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1.5px dashed color-mix(in oklab, var(--primary) 45%, var(--border));
+  border-radius: var(--m-radius-xl);
+  background: color-mix(in oklab, var(--primary) 5%, var(--surface));
+  transition: background-color 300ms, border-color 300ms;
+}
+
+.ln-task-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--m-radius-full);
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  color: var(--primary);
+  transition: background-color 300ms, color 300ms;
+}
+
+.ln-task-icon .vd-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.ln-i-done,
+.ln-task[data-state='passed'] .ln-i-wait {
+  display: none;
+}
+
+.ln-task[data-state='passed'] .ln-i-done {
+  display: block;
+}
+
+.ln-task-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.ln-task-text {
+  margin-top: 0.15rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.ln-task-status {
+  margin-top: 0.4rem;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.ln-task[data-state='passed'] {
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--success) 55%, var(--border));
+  background: color-mix(in oklab, var(--success) 10%, var(--surface));
+}
+
+.ln-task[data-state='passed'] .ln-task-icon {
+  background: var(--success);
+  color: var(--success-foreground, #fff);
+}
+
+.ln-task[data-state='passed'] .ln-task-label,
+.ln-task[data-state='passed'] .ln-task-status {
+  color: color-mix(in oklab, var(--success) 80%, var(--foreground));
+}
+
+.ln-task[data-state='waiting'] .ln-task-icon {
+  animation: ln-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes ln-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 14%, transparent);
+  }
+}
+
+@keyframes ln-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ln-pop {
+  animation: ln-pop 420ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.ln-help {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: -0.25rem 0 0 -0.5rem;
+}
+
+.ln-help .vd-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.ln-hint {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--amber);
+  border-radius: var(--m-radius-md);
+  background: color-mix(in oklab, var(--amber) 10%, var(--surface));
+  font-size: 0.9rem;
+}
+
+.ln-hint code {
+  white-space: pre-wrap;
+}
+
+.ln-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.ln-flip {
+  transform: scaleX(-1);
+}
+
+.ln-next-ready .vd-icon {
+  animation: ln-nudge 1.2s ease-in-out infinite;
+}
+
+@keyframes ln-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+/* Each step slides in, so the change of step reads as movement forward. */
+@keyframes ln-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ln-enter {
+  animation: ln-enter 360ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@keyframes ln-flash {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.8 0.15 68 / 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 14px oklch(0.8 0.15 68 / 0);
+  }
+}
+
+.ln-flash {
+  animation: ln-flash 650ms ease-out;
+}
+
+/* ------------------------------------------------------- editor, result */
+
+.ln-work {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.ln-pane {
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-2xl);
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--m-shadow-md);
+}
+
+.ln-pane-code {
+  background: var(--vd-frame);
+  color: var(--vd-frame-ink);
+}
+
+.ln-pane .vframe-bar {
+  border-bottom: 1px solid var(--vd-frame-line);
+}
+
+.ln-pane-result .vframe-bar {
+  background: var(--surface-2);
+  border-bottom-color: var(--border);
+}
+
+.ln-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: center;
+  padding-right: 0.75rem;
+  color: var(--vd-frame-dim);
+  font-size: 0.75rem;
+}
+
+.ln-live i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--success);
+  animation: ln-breathe-dot 2s ease-in-out infinite;
+}
+
+@keyframes ln-breathe-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.vd-editor {
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  font-variant-ligatures: none;
+}
+
+.ln-editor {
+  height: 15rem;
+}
+
+.vd-gutter {
+  flex: none;
+  width: 2.75rem;
+  padding: 1rem 0.75rem 1rem 0;
+  overflow: hidden;
+  text-align: right;
+  color: var(--vd-frame-dim);
+  opacity: 0.7;
+  user-select: none;
+  white-space: pre;
+}
+
+.vd-code {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.vd-code .vd-hl,
+.vd-code textarea {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 1rem 1rem 1rem 0.25rem;
+  border: 0;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: 0;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  word-wrap: normal;
+}
+
+.vd-code .vd-hl {
+  pointer-events: none;
+  color: var(--vd-frame-ink);
+  overflow: hidden;
+}
+
+.vd-code textarea {
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--vd-frame-ink);
+  outline: none;
+}
+
+.vd-code textarea::selection {
+  background: color-mix(in oklab, var(--primary) 30%, transparent);
+  color: transparent;
+}
+
+.vd-editor:focus-within {
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--ring) 55%, transparent);
+}
+
+.tk-c { color: #008000; font-style: italic; }
+.tk-t { color: #800000; }
+.tk-a { color: #e50000; }
+.tk-s { color: #0000ff; }
+.tk-p { color: #800000; }
+.tk-k { color: #0000ff; }
+.tk-n { color: #098658; }
+.tk-b { color: #795e26; font-weight: 600; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .tk-c { color: #6a9955; }
+  :root:not([data-theme='light']) .tk-t { color: #569cd6; }
+  :root:not([data-theme='light']) .tk-a { color: #9cdcfe; }
+  :root:not([data-theme='light']) .tk-s { color: #ce9178; }
+  :root:not([data-theme='light']) .tk-p { color: #808080; }
+  :root:not([data-theme='light']) .tk-k { color: #569cd6; }
+  :root:not([data-theme='light']) .tk-n { color: #b5cea8; }
+  :root:not([data-theme='light']) .tk-b { color: #ffd700; }
+}
+
+:root[data-theme='dark'] .tk-c { color: #6a9955; }
+:root[data-theme='dark'] .tk-t { color: #569cd6; }
+:root[data-theme='dark'] .tk-a { color: #9cdcfe; }
+:root[data-theme='dark'] .tk-s { color: #ce9178; }
+:root[data-theme='dark'] .tk-p { color: #808080; }
+:root[data-theme='dark'] .tk-k { color: #569cd6; }
+:root[data-theme='dark'] .tk-n { color: #b5cea8; }
+:root[data-theme='dark'] .tk-b { color: #ffd700; }
+
+.vd-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: center;
+  min-width: 0;
+  margin-left: 0.75rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--m-radius-full);
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.vd-url .vd-icon {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.vd-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  align-self: center;
+  min-width: 0;
+  max-width: 60%;
+  padding-right: 0.75rem;
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.vd-error[hidden] {
+  display: none;
+}
+
+.vd-error span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ln-stage {
+  height: 15rem;
+  background: var(--background);
+}
+
+.ln-stage iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+/* ----------------------------------------------------------------- end */
+
+.ln-end {
+  max-width: 48rem;
+  margin: 1rem auto 0;
+  padding: 2.5rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-3xl);
+  background: var(--surface);
+  box-shadow: var(--m-shadow-lg);
+  text-align: center;
+}
+
+.ln-end-vudu {
+  width: 8rem;
+  height: auto;
+  margin: 0 auto 1rem;
+  animation: vd-float 5.5s ease-in-out infinite;
+}
+
+.ln-score {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.ln-recap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  text-align: left;
+}
+
+.ln-recap button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--m-radius-lg);
+  background: var(--surface);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: transform 200ms, border-color 200ms;
+}
+
+.ln-recap button:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+}
+
+.ln-recap .vd-icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+}
+
+.ln-recap .is-done .vd-icon {
+  color: var(--success);
+}
+
+.ln-end.ln-enter .ln-recap li {
+  animation: ln-enter 420ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 150ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-bar i,
+  .ln-dot,
+  .ln-recap button {
+    transition: none;
+  }
+  .ln-enter,
+  .ln-pop,
+  .ln-flash,
+  .ln-end-vudu,
+  .ln-live i,
+  .ln-next-ready .vd-icon,
+  .ln-task[data-state='waiting'] .ln-task-icon,
+  .ln-end.ln-enter .ln-recap li {
+    animation: none !important;
+  }
+}
+
+/* Vudu hops when a task is solved, the same hop as on the home page. */
+@keyframes vd-hop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(-22px) rotate(-8deg);
+  }
+  60% {
+    transform: translateY(0) rotate(5deg);
+  }
+}
+
+.ln-vudu.vd-hop {
+  animation: vd-hop 650ms cubic-bezier(0.3, 1.4, 0.6, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ln-vudu.vd-hop {
+    animation: none;
+  }
+}

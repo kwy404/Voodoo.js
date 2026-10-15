@@ -163,9 +163,10 @@
   var SITE = new URL('../', RAIZ).href; // .../site/
   var VERSAO = 'Voodoo.js 1.0.0';
 
-  // The four sections of the site, in header order. The same list as SECTIONS
-  // in scripts/site-chrome.mjs, which writes the static pages.
+  // The sections of the site, in header order. The same list as SECTIONS in
+  // scripts/site-chrome.mjs, which writes the static pages.
   var LINKS = [
+    { id: 'learn', href: SITE + 'learn.html', texto: 'Learn' },
     { id: 'docs', href: SITE + 'docs/', texto: 'Docs' },
     { id: 'playground', href: SITE + 'playground.html', texto: 'Playground' },
     { id: 'components', href: SITE + 'components.html', texto: 'Components' },
@@ -851,6 +852,8 @@
       el('div', {
         class: 'sidebar-footer',
         html:
+          '<a class="sidebar-item" href="' + SITE + 'learn.html">' + icone('wand') +
+          '<span class="sidebar-label">Learn it in 10 minutes</span></a>' +
           '<a class="sidebar-item" href="' + SITE + 'playground.html">' + icone('play') +
           '<span class="sidebar-label">Open the playground</span></a>' +
           '<a class="sidebar-item" href="' + GITHUB + '/releases">' + icone('candle') +

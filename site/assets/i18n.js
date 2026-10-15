@@ -21,6 +21,7 @@
       nav: {
         main: 'Main',
         docs: 'Docs',
+        learn: 'Learn',
         playground: 'Playground',
         components: 'Components',
         examples: 'Examples',
@@ -41,6 +42,7 @@
         copyAria: 'Copy the script tag',
         ctaStart: 'Get started',
         ctaPlayground: 'Open the full playground',
+        ctaLearn: 'Learn it in 10 minutes',
       },
       spell: {
         label: 'Spells',
@@ -188,6 +190,7 @@
       nav: {
         main: 'Principal',
         docs: 'Documentação',
+        learn: 'Aprenda',
         playground: 'Playground',
         components: 'Componentes',
         examples: 'Exemplos',
@@ -209,6 +212,7 @@
         copyAria: 'Copiar a tag script',
         ctaStart: 'Começar',
         ctaPlayground: 'Abrir o playground completo',
+        ctaLearn: 'Aprenda em 10 minutos',
       },
       spell: {
         label: 'Feitiços',
@@ -358,6 +362,7 @@
       nav: {
         main: 'Principal',
         docs: 'Documentación',
+        learn: 'Aprende',
         playground: 'Playground',
         components: 'Componentes',
         examples: 'Ejemplos',
@@ -379,6 +384,7 @@
         copyAria: 'Copiar la etiqueta script',
         ctaStart: 'Empezar',
         ctaPlayground: 'Abrir el playground completo',
+        ctaLearn: 'Apréndelo en 10 minutos',
       },
       spell: {
         label: 'Hechizos',
@@ -528,6 +534,7 @@
       nav: {
         main: '주 메뉴',
         docs: '문서',
+        learn: '배우기',
         playground: '플레이그라운드',
         components: '컴포넌트',
         examples: '예제',
@@ -548,6 +555,7 @@
         copyAria: '스크립트 태그 복사',
         ctaStart: '시작하기',
         ctaPlayground: '전체 플레이그라운드 열기',
+        ctaLearn: '10분 만에 배우기',
       },
       spell: {
         label: '주문',
@@ -690,6 +698,19 @@
       },
     },
   };
+
+  // A page with text of its own (the lesson) leaves it on
+  // window.VOODOO_PAGE_MESSAGES before this file runs. Its top-level sections
+  // join the shared dictionaries, so the header and footer stay in one place.
+  var extra = window.VOODOO_PAGE_MESSAGES;
+  if (extra) {
+    Object.keys(extra).forEach(function (locale) {
+      if (!messages[locale]) messages[locale] = {};
+      Object.keys(extra[locale]).forEach(function (section) {
+        messages[locale][section] = extra[locale][section];
+      });
+    });
+  }
 
   // English for everyone on the first visit. `detect` is off on purpose: the
   // site opens in English and the picker in the header is how you leave it.

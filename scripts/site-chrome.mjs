@@ -43,8 +43,9 @@ export const NPM = 'https://www.npmjs.com/package/voodoojs';
 export const AUTHOR_GITHUB = 'https://github.com/kwy404';
 export const AUTHOR_LINKEDIN = 'https://www.linkedin.com/in/alexandre-silva-173687256/';
 
-/** The four sections of the site, in header order. */
+/** The sections of the site, in header order. */
 export const SECTIONS = [
+  { id: 'learn', href: 'learn.html', label: 'Learn', key: 'nav.learn' },
   { id: 'docs', href: 'docs/', label: 'Docs', key: 'nav.docs' },
   { id: 'playground', href: 'playground.html', label: 'Playground', key: 'nav.playground' },
   { id: 'components', href: 'components.html', label: 'Components', key: 'nav.components' },
@@ -186,11 +187,21 @@ export function credit({ prefix: p = '' } = {}) {
 /** Pages with the full chrome, and the section each belongs to. */
 const PAGES = [
   { file: 'site/index.html', current: '', i18n: true, home: true },
+  { file: 'site/learn.html', current: 'learn', i18n: true, lang: true },
   { file: 'site/playground.html', current: 'playground' },
   { file: 'site/components.html', current: 'components' },
   { file: 'site/examples/index.html', current: 'examples' },
   { file: 'site/404.html', current: '' },
 ];
+
+/** The language picker, on every page that ships the dictionaries. */
+export const LANG_PICKER = `<select class="vd-lang" aria-label="Language" v-t:aria-label="nav.language">
+      <option value="en">EN</option>
+      <option value="pt-BR">PT</option>
+      <option value="es">ES</option>
+      <option value="ko">KO</option>
+    </select>
+    `;
 
 /** The search button and language picker that only the home page carries. */
 export const HOME_EXTRA = `<button type="button" class="btn btn-outline btn-sm hidden lg:inline-flex gap-2 text-muted-foreground" v-command="mod+k" aria-label="Search, Ctrl plus K" v-t:aria-label="nav.searchAria">
@@ -198,13 +209,7 @@ export const HOME_EXTRA = `<button type="button" class="btn btn-outline btn-sm h
       <span v-t="nav.search">Search</span>
       <kbd class="kbd kbd-xs">Ctrl K</kbd>
     </button>
-    <select class="vd-lang" aria-label="Language" v-t:aria-label="nav.language">
-      <option value="en">EN</option>
-      <option value="pt-BR">PT</option>
-      <option value="es">ES</option>
-      <option value="ko">KO</option>
-    </select>
-    `;
+    ${LANG_PICKER}`;
 
 function prefixFor(file) {
   const depth = relative('site', dirname(file)).split(/[\\/]/).filter(Boolean).length;
@@ -243,7 +248,7 @@ export function apply(check = false) {
     const prefix = prefixFor(page.file);
     visit(page.file, (text) => {
       let out = text;
-      out = replaceBlock(out, 'header', header({ prefix, current: page.current, i18n: page.i18n, extra: page.home ? HOME_EXTRA : '' })) ?? out;
+      out = replaceBlock(out, 'header', header({ prefix, current: page.current, i18n: page.i18n, extra: page.home ? HOME_EXTRA : page.lang ? LANG_PICKER : '' })) ?? out;
       out = replaceBlock(out, 'footer', footer({ prefix, i18n: page.i18n })) ?? out;
       return out;
     });
