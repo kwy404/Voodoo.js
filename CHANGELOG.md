@@ -20,6 +20,8 @@ adopts [Semantic Versioning](https://semver.org/).
   manage their own frame.
 - **Four ready examples**: `counter`, `todo`, `form` and `fetch`, as `presets` in
   `voodoojs/playground`, each with its empty, error and loading states where it has them.
+- **`voodoojs-cli init --example=<name>`** starts a project from one of those examples, in
+  the same page as before: the theme, the toggle and the pinned library stay.
 
 - **`v-validate` on a form without `v-submit` let invalid data through.** It switches the
   browser's own check off, and nothing took its place: `@submit` ran with empty required

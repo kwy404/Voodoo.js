@@ -20,12 +20,14 @@ import { JSDOM } from 'jsdom';
 import {
   CDN_URL,
   COMPONENTS_DIR,
+  EXAMPLES_DIR,
   MODULES,
   THEME_HEAD_SNIPPET,
   VERSION,
   buildEntrySource,
   findLibrary,
   listComponents,
+  listExamples,
   moduleFiles,
   parseArgs,
   projectHtml,
@@ -102,7 +104,7 @@ describe('what ships', () => {
     const output = execSync('npm pack --dry-run --json', { cwd: CLI_ROOT, encoding: 'utf8' });
     const files = JSON.parse(output.slice(output.indexOf('[')))[0].files.map((f: { path: string }) => f.path);
     expect(files).toEqual(
-      expect.arrayContaining(['bin/voodoo.mjs', 'lib/cli.mjs', 'lib/engine.mjs', 'templates/components/card.html', 'README.md'])
+      expect.arrayContaining(['bin/voodoo.mjs', 'lib/cli.mjs', 'lib/engine.mjs', 'templates/components/card.html', 'templates/examples/todo.html', 'README.md'])
     );
     expect(files.some((f: string) => f.startsWith('test/'))).toBe(false);
   }, 60_000);
@@ -206,6 +208,50 @@ describe('voodoo init', () => {
     const run = voodoo(['init', 'taken'], dir);
     expect(run.code).toBe(1);
     expect(run.stderr).toContain('not a folder');
+  });
+});
+
+describe('voodoo init --example', () => {
+  it('offers the four starters', () => {
+    expect(listExamples()).toEqual(['counter', 'fetch', 'form', 'todo']);
+    expect(voodoo(['--help']).stdout).toContain('--example=todo');
+  });
+
+  it('starts the page from the example, keeping the theme and the pinned library', () => {
+    const run = voodoo(['init', 'my todos', '--example=Todo']);
+    expect(run.code).toBe(0);
+
+    const html = readFileSync(join(sandbox, 'my todos', 'index.html'), 'utf8');
+    const main = html.slice(html.indexOf('<main>'), html.indexOf('</main>'));
+    expect(main).toContain('    <h2>Todo list</h2>');
+    expect(main).toContain('v-for="todo in todos"');
+    expect(main).not.toContain('Write your name');
+    expect(html).toContain(THEME_HEAD_SNIPPET);
+    expect(html).toContain(`<script src="${CDN_URL}" defer></script>`);
+    expect(readFileSync(join(sandbox, 'my todos', 'README.md'), 'utf8')).toContain('--example=todo');
+  });
+
+  it('names the examples when the one asked for does not exist, and writes nothing', () => {
+    const dir = fresh('bad-example');
+    const run = voodoo(['init', '.', '--example', 'chess'], dir);
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain('There is no example named "chess"');
+    expect(run.stderr).toContain('counter, fetch, form, todo');
+    expect(readdirSync(dir)).toEqual([]);
+  });
+
+  it('ships the same code as the library presets', async () => {
+    const { presets } = await import('../../voodoojs/src/playground/presets');
+    for (const preset of presets) {
+      const file = readFileSync(join(EXAMPLES_DIR, `${preset.id}.html`), 'utf8');
+      expect(file.split('\r\n').join('\n'), preset.id).toBe(preset.code);
+    }
+    expect(listExamples()).toEqual(presets.map((p) => p.id).sort());
+  });
+
+  it('keeps the welcome page when no example is given', () => {
+    expect(projectHtml()).toContain('Write your name');
+    expect(projectHtml('<p>hi</p>')).toContain('<main>\n\n    <p>hi</p>\n\n  </main>');
   });
 });
 

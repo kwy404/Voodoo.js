@@ -1,0 +1,10 @@
+<div v-data="{ count: 0 }">
+  <h2>Counter</h2>
+  <p><strong>{ count }</strong> { count === 1 ? 'click' : 'clicks' }</p>
+
+  <button @click="count--">Less</button>
+  <button @click="count++">More</button>
+  <button @click="count = 0" :disabled="count === 0">Reset</button>
+
+  <p v-show="count >= 10">Double digits. Keep going.</p>
+</div>

@@ -1,0 +1,20 @@
+<form v-validate v-data="{ name: '', email: '', sent: false }" @submit.prevent="sent = true">
+  <h2>Sign up</h2>
+
+  <p>
+    <label>Name<br>
+      <input name="name" v-model="name" v-required v-minlength="2">
+    </label>
+  </p>
+  <p>
+    <label>Email<br>
+      <input name="email" type="email" v-model="email" v-required v-email>
+    </label>
+  </p>
+
+  <button>Create account</button>
+
+  <p v-if="sent" role="status">
+    Welcome, { name }! Nothing was sent anywhere: this form only checks its fields.
+  </p>
+</form>

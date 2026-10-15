@@ -1,0 +1,15 @@
+<div v-resource="users: https://jsonplaceholder.typicode.com/users">
+  <h2>Users from an API</h2>
+  <button @click="users.reload()" :disabled="users.loading">
+    { users.loading ? 'Loading...' : 'Reload' }
+  </button>
+
+  <p v-if="users.error" role="alert">Could not load the users: { users.error.message }</p>
+  <p v-else-if="!users.loaded">Loading...</p>
+  <p v-else-if="users.data.length === 0">The API answered with no users.</p>
+  <ul v-else>
+    <li v-for="user in users.data" :key="user.id">
+      <strong>{ user.name }</strong>, { user.email }
+    </li>
+  </ul>
+</div>

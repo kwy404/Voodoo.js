@@ -38,6 +38,12 @@ export const CDN_URL = `https://cdn.jsdelivr.net/npm/voodoojs@${VERSION}/dist/vo
 /** Where `voodoo add` finds what it copies. Shipped inside this package. */
 export const COMPONENTS_DIR = join(packageRoot, 'templates', 'components');
 
+/**
+ * Where `voodoo init --example` finds its starters: the same four the library
+ * ships as `presets` in `voodoojs/playground`. A test keeps them identical.
+ */
+export const EXAMPLES_DIR = join(packageRoot, 'templates', 'examples');
+
 // ---------------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------------
@@ -259,7 +265,7 @@ function versionNote(library) {
  * `--name value`; `boolean` ones also accept `--no-name`.
  */
 const COMMAND_OPTIONS = {
-  init: { force: 'boolean' },
+  init: { force: 'boolean', example: 'string' },
   build: { modules: 'string', all: 'boolean', out: 'string', minify: 'boolean', format: 'string' },
   add: { force: 'boolean' },
   info: {},
@@ -358,6 +364,7 @@ function help() {
 ${c.bold}init and add options${c.reset}
 
   ${c.dim}--force${c.reset}                    overwrites files that already exist
+  ${c.dim}--example=todo${c.reset}             starts init from a ready example ${c.dim}(${listExamples().join(', ') || 'none'})${c.reset}
 
 ${c.bold}Build options${c.reset}
 
@@ -374,6 +381,7 @@ ${c.bold}Components${c.reset}
 ${c.bold}Examples${c.reset}
 
   ${c.dim}npx voodoojs-cli init my-page${c.reset}
+  ${c.dim}npx voodoojs-cli init my-todos --example=todo${c.reset}
   ${c.dim}npx voodoojs-cli build --modules=core,directives,jsx,http,toast${c.reset}
   ${c.dim}npx voodoojs-cli add card${c.reset}
 `);
@@ -410,8 +418,46 @@ export const THEME_HEAD_SNIPPET = `<script>
     })();
   </script>`;
 
-/** The page `voodoo init` writes. */
-export function projectHtml() {
+/** What `<main>` holds when no example is chosen. */
+const WELCOME = `  <main v-data="{ name: '', count: 0 }">
+
+    <input v-model="name" placeholder="Write your name">
+    <p>Hello, { name || 'stranger' }!</p>
+
+    <button @click="count--">less</button>
+    <strong>{ count }</strong>
+    <button @click="count++">more</button>
+
+    <p v-show="count > 5">You clicked a lot.</p>
+
+    <h2>Next steps</h2>
+    <ul>
+      {['Edit index.html', 'Save it', 'Reload the browser'].map((step) => (
+        <li>{step}</li>
+      ))}
+    </ul>
+    <p class="muted">That list is JSX, running in a plain HTML file.</p>
+
+  </main>`;
+
+/** Indents every line that has content, so a pasted example lines up. */
+function indent(text, spaces) {
+  const pad = ' '.repeat(spaces);
+  return text
+    .split('\n')
+    .map((line) => (line.trim() ? pad + line : ''))
+    .join('\n');
+}
+
+/**
+ * The page `voodoo init` writes. Given an example's code, the example fills
+ * `<main>` instead of the welcome content.
+ */
+export function projectHtml(example) {
+  const main =
+    example === undefined
+      ? WELCOME
+      : `  <main>\n\n${indent(String(example).replace(/\r\n/g, '\n').trim(), 4)}\n\n  </main>`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -462,9 +508,11 @@ export function projectHtml() {
       border-radius: .5rem;
       border: 1px solid var(--border);
     }
+    input[type="checkbox"] { padding: 0; accent-color: var(--accent); }
     button { cursor: pointer; }
-    button:hover { border-color: var(--accent); }
-    .muted { color: var(--muted); }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: .5; cursor: default; }
+    s, .muted { color: var(--muted); }
   </style>
 </head>
 <body>
@@ -474,37 +522,21 @@ export function projectHtml() {
     <button v-theme-toggle>Toggle theme</button>
   </header>
 
-  <main v-data="{ name: '', count: 0 }">
-
-    <input v-model="name" placeholder="Write your name">
-    <p>Hello, { name || 'stranger' }!</p>
-
-    <button @click="count--">less</button>
-    <strong>{ count }</strong>
-    <button @click="count++">more</button>
-
-    <p v-show="count > 5">You clicked a lot.</p>
-
-    <h2>Next steps</h2>
-    <ul>
-      {['Edit index.html', 'Save it', 'Reload the browser'].map((step) => (
-        <li>{step}</li>
-      ))}
-    </ul>
-    <p class="muted">That list is JSX, running in a plain HTML file.</p>
-
-  </main>
+${main}
 
 </body>
 </html>
 `;
 }
 
-function projectReadme() {
+function projectReadme(exampleId) {
+  const started = exampleId
+    ? `\nIt started from the \`${exampleId}\` example: \`npx voodoojs-cli init --example=${exampleId}\`.\n`
+    : '';
   return `# My app with Voodoo.js
 
 Open \`index.html\` in the browser. No build needed, nothing to install.
-
+${started}
 To serve it locally:
 
 \`\`\`bash
@@ -528,9 +560,22 @@ async function commandInit(folder, options) {
     throw new UsageError(`${displayPath(target)} already exists and is not a folder.`);
   }
 
+  let example;
+  let exampleId;
+  if (options.example !== undefined) {
+    const available = listExamples();
+    exampleId = String(options.example).trim().toLowerCase().replace(/\.html$/, '');
+    if (!available.includes(exampleId)) {
+      throw new UsageError(
+        `There is no example named "${options.example}".\nAvailable: ${available.join(', ')}`
+      );
+    }
+    example = await readFile(join(EXAMPLES_DIR, `${exampleId}.html`), 'utf8');
+  }
+
   const files = [
-    ['index.html', projectHtml()],
-    ['README.md', projectReadme()],
+    ['index.html', projectHtml(example)],
+    ['README.md', projectReadme(exampleId)],
   ];
   const existing = files.filter(([name]) => existsSync(join(target, name))).map(([name]) => name);
   if (existing.length && !options.force) {
@@ -554,6 +599,15 @@ async function commandInit(folder, options) {
 // ---------------------------------------------------------------------------
 // add
 // ---------------------------------------------------------------------------
+
+/** The examples `init --example` accepts, by id. */
+export function listExamples() {
+  if (!existsSync(EXAMPLES_DIR)) return [];
+  return readdirSync(EXAMPLES_DIR)
+    .filter((file) => file.endsWith('.html'))
+    .map((file) => file.replace(/\.html$/, ''))
+    .sort();
+}
 
 export function listComponents() {
   // Synchronous on purpose: the help text lists the components too.

@@ -1,0 +1,29 @@
+<div v-data="{
+  draft: '',
+  nextId: 3,
+  todos: [
+    { id: 1, text: 'Try the counter example', done: true },
+    { id: 2, text: 'Add a todo of your own', done: false }
+  ]
+}">
+  <h2>Todo list</h2>
+
+  <form @submit.prevent="if (draft.trim()) { todos.push({ id: nextId++, text: draft.trim(), done: false }); draft = '' }">
+    <input v-model="draft" placeholder="What needs doing?" aria-label="New todo">
+    <button>Add</button>
+  </form>
+
+  <ul>
+    <li v-for="todo in todos" :key="todo.id">
+      <label>
+        <input type="checkbox" v-model="todo.done">
+        <s v-if="todo.done">{ todo.text }</s>
+        <span v-else>{ todo.text }</span>
+      </label>
+      <button @click="todos.splice(todos.indexOf(todo), 1)">Remove</button>
+    </li>
+  </ul>
+
+  <p v-if="todos.length === 0">Nothing left to do. Add something above.</p>
+  <p v-else>{ todos.filter((t) => !t.done).length } of { todos.length } still open</p>
+</div>
