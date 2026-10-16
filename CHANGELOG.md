@@ -7,6 +7,8 @@ adopts [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-15
+
 ### Added
 
 - **An embeddable playground runner**, `voodoojs/playground` and
