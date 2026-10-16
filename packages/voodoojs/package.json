@@ -1,6 +1,6 @@
 {
   "name": "voodoojs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Write JSX in a plain HTML file and open it in the browser, with no build step.",
   "keywords": [
     "jsx",

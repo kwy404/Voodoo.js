@@ -150,7 +150,7 @@ var VoodooPlayground = (() => {
 
   // src/playground/index.ts
   var PINNED_RUNTIME = "https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js";
-  var CDN_RUNTIME = true ? PINNED_RUNTIME.replace(/@[\d.]+\//, `@${"1.0.0"}/`) : PINNED_RUNTIME;
+  var CDN_RUNTIME = true ? PINNED_RUNTIME.replace(/@[\d.]+\//, `@${"1.1.0"}/`) : PINNED_RUNTIME;
   var ownScript = typeof document !== "undefined" && document.currentScript ? document.currentScript.src || "" : "";
   function defaultRuntime(scriptUrl = ownScript) {
     const match = /^(.*\/)voodoo\.playground(?:\.min)?\.js(?:[?#].*)?$/.exec(scriptUrl);

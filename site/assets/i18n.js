@@ -33,7 +33,7 @@
         skip: 'Skip to content',
       },
       hero: {
-        badge: 'Voodoo.js 1.0.0: JSX in plain HTML',
+        badge: 'Voodoo.js 1.1.0: JSX in plain HTML',
         t1: 'Write the spell in plain HTML.',
         t2: 'Watch it run.',
         lead:
@@ -205,7 +205,7 @@
         skip: 'Pular para o conteúdo',
       },
       hero: {
-        badge: 'Voodoo.js 1.0.0: JSX em HTML puro',
+        badge: 'Voodoo.js 1.1.0: JSX em HTML puro',
         t1: 'Escreva o feitiço em HTML puro.',
         t2: 'Veja funcionar.',
         lead:
@@ -380,7 +380,7 @@
         skip: 'Saltar al contenido',
       },
       hero: {
-        badge: 'Voodoo.js 1.0.0: JSX en HTML puro',
+        badge: 'Voodoo.js 1.1.0: JSX en HTML puro',
         t1: 'Escribe el hechizo en HTML puro.',
         t2: 'Míralo funcionar.',
         lead:
@@ -555,7 +555,7 @@
         skip: '본문으로 건너뛰기',
       },
       hero: {
-        badge: 'Voodoo.js 1.0.0: 순수 HTML 안의 JSX',
+        badge: 'Voodoo.js 1.1.0: 순수 HTML 안의 JSX',
         t1: '순수 HTML로 주문을 쓰세요.',
         t2: '바로 실행됩니다.',
         lead:

@@ -32,7 +32,7 @@ Save this as `index.html` and open it. No bundler, no compiler, no JSX transform
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -61,7 +61,7 @@ JSX regions and `v-*` attributes are both reactive and mix freely in one page. E
 
 ## Install
 
-**CDN.** The tag above is the whole installation: the library starts itself once the page is ready. It names an exact version, so what you load never changes under you. [unpkg](https://unpkg.com/voodoojs@1.0.0/dist/voodoo.full.min.js) serves the same file. You do not need React, Vue, a bundler or Node.js.
+**CDN.** The tag above is the whole installation: the library starts itself once the page is ready. It names an exact version, so what you load never changes under you. [unpkg](https://unpkg.com/voodoojs@1.1.0/dist/voodoo.full.min.js) serves the same file. You do not need React, Vue, a bundler or Node.js.
 
 **npm.**
 

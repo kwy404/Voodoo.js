@@ -161,7 +161,7 @@
   // pathname: under file:// a pathname starts with "/C:/..." and a browser
   // resolves that from the filesystem root.
   var SITE = new URL('../', RAIZ).href; // .../site/
-  var VERSAO = 'Voodoo.js 1.0.0';
+  var VERSAO = 'Voodoo.js 1.1.0';
 
   // The sections of the site, in header order. The same list as SECTIONS in
   // scripts/site-chrome.mjs, which writes the static pages.

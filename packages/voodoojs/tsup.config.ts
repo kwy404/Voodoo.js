@@ -10,7 +10,7 @@ const version: string = JSON.parse(readFileSync('package.json', 'utf8')).version
 const define = { __VOODOO_VERSION__: JSON.stringify(version) };
 
 const banner = `/**
- * Voodoo.js v1.0.0
+ * Voodoo.js v1.1.0
  * JavaScript feels like magic.
  * (c) 2026 Voodoo.js contributors. MIT License.
  */`;
