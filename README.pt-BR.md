@@ -28,7 +28,7 @@ Salve como `index.html` e abra. Não há nada para instalar nem para compilar.
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -83,7 +83,7 @@ e páginas em que um passo de build custa mais do que entrega.
 **Por CDN:**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 A biblioteca começa sozinha quando a página fica pronta.

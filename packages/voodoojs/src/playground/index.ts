@@ -5,7 +5,7 @@
  *
  * ```html
  * <div id="demo" style="height: 320px"></div>
- * <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.playground.min.js"></script>
+ * <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.playground.min.js"></script>
  * <script>
  *   const runner = VoodooPlayground.createRunner('#demo', { preset: 'counter' });
  *   runner.run('<p v-data="{ n: 2 }">{ n * 21 }</p>');
@@ -86,7 +86,7 @@ export interface Runner {
 declare const __VOODOO_VERSION__: string | undefined;
 
 /** Kept on the latest published version by `scripts/stamp-version.mjs`. */
-const PINNED_RUNTIME = 'https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js';
+const PINNED_RUNTIME = 'https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js';
 
 /**
  * The CDN build used when nothing better is known: the version this file was

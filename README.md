@@ -28,7 +28,7 @@ Save this as `index.html` and open it. There is nothing to install and nothing t
 <!doctype html>
 <html>
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js" defer></script>
 </head>
 <body>
 
@@ -83,7 +83,7 @@ more than it gives.
 **From a CDN:**
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/voodoojs@1.0.0/dist/voodoo.full.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/voodoojs@1.1.0/dist/voodoo.full.min.js" defer></script>
 ```
 
 The library starts itself once the page is ready.
